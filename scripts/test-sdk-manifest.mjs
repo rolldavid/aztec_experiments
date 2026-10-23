@@ -54,7 +54,7 @@ function fixture(t) {
   }
   inputs['scripts/patch-pxe-preference-page.mjs']=fs.readFileSync(new URL('./patch-pxe-preference-page.mjs',import.meta.url),'utf8');
   for(const pin of PREFERENCE_PAGE_PINS){
-    const source=fs.readFileSync(new URL('./testing/fixtures/pxe-preference-page-6.0.0-rc.3/'+pin.path,import.meta.url),'utf8');
+    const source=fs.readFileSync(new URL('./testing/fixtures/pxe-preference-page-6.0.0/'+pin.path,import.meta.url),'utf8');
     assert.equal(hash(source),pin.before);
     inputs['node_modules/@aztec-labs/pxe/'+pin.path]=transformPreferencePage(source,pin.path);
   }

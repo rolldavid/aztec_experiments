@@ -11,7 +11,7 @@ import {createConnection} from 'node:net';
 import {retryUntil} from '@aztec-labs/foundation/retry';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-const silent=Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,()=>{}]));
+const silent=Object.assign(Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k=>[k,()=>{}])),{isLevelEnabled:()=>false});
 const requireCondition=(condition)=>assert(condition,'Qualification condition failed');
 const scopeOf=s=>({chainId:String(s.chainId),version:String(s.rollupVersion),rollup:s.queryNode.rollupAddress});
 

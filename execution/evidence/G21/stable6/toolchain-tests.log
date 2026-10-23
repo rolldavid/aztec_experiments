@@ -1,0 +1,41 @@
+✔ labelled fixtures accept exact labs rc3 and foundation rc6, with scoped closure (4.929917ms)
+✔ labelled fixtures reject release label mismatch (4.585875ms)
+✔ labelled fixtures reject missing map (3.639833ms)
+✔ labelled fixtures reject unknown direct package (3.174958ms)
+✔ labelled fixtures reject unused direct pin (2.900708ms)
+✔ labelled fixtures reject range declaration (2.62825ms)
+✔ labelled fixtures reject range pin (2.557166ms)
+✔ labelled fixtures reject blanket rc3 foundation downgrade (3.452166ms)
+✔ labelled fixtures reject duplicate declarations (3.41925ms)
+✔ labelled fixtures reject missing lock closure (2.994334ms)
+✔ labelled fixtures reject direct and closure disagree (2.954625ms)
+✔ labelled fixtures reject stale lock root (2.581375ms)
+✔ labelled fixtures reject extra lock root (2.9325ms)
+✔ labelled fixtures reject missing direct lock (3.115834ms)
+✔ labelled fixtures reject stale transitive lock (3.2015ms)
+✔ labelled fixtures reject missing integrity (2.902875ms)
+✔ labelled fixtures reject linked lock (2.791542ms)
+✔ labelled fixtures reject unreviewed closure member (2.665375ms)
+✔ labelled fixtures reject unused closure pin (2.987083ms)
+✔ labelled fixtures reject lock path escape (2.797666ms)
+✔ labelled fixtures reject old installed SDK (2.467125ms)
+✔ labelled fixtures reject wrong installed identity (2.175209ms)
+✔ labelled fixtures reject old installed transitive (2.395041ms)
+✔ missing installed package is a failure (3.444625ms)
+✔ nested scoped lock cannot hide an older installed SDK (3.450167ms)
+✔ unsupported optional native platform may be absent, current platform may not (3.20575ms)
+✔ stable Darwin-arm64 and Linux-x64 versions are pinned (0.548333ms)
+✔ unmeasured platforms cannot use native historical pins or BB overrides (0.178833ms)
+✔ historical package binding cannot authorize current platform execution (0.098125ms)
+✔ Linux-x64 wrong checksum rejects before the labelled execution boundary (2.648167ms)
+✔ Linux-x64 matching fixture hash still rejects the wrong reported version (2.465917ms)
+✔ Linux-x64 matching labelled hash and version use the bounded version invocation (2.552583ms)
+✔ current platform rejects a wrong binary checksum before execution (2.234458ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 156.969375

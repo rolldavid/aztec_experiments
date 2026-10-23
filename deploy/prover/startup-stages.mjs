@@ -25,7 +25,7 @@ const failure = () => new Error('ROLLING_STARTUP_DIAGNOSTIC_UNAVAILABLE');
 export const SOURCE_PLAN = Object.freeze([
   {
     "path": "/usr/src/yarn-project/aztec/dest/cli/cmds/start_node.js",
-    "sha256": "1d89163502863e60d6c0d5e03dcd00e23d483795ffdcd8a312e3ea275b8a626a",
+    "sha256": "95718719871d8697d18ef9a016191226789886bc13553fa98ab3665161373953",
     "points": [
       {
         "phase": "registry-guard",
@@ -61,7 +61,7 @@ export const SOURCE_PLAN = Object.freeze([
   },
   {
     "path": "/usr/src/yarn-project/aztec-node/dest/factory.js",
-    "sha256": "5ad06917c2c49b1baab89bc4012863aedb9356890d4cc57e6ea3a756e5a239d5",
+    "sha256": "0b0d8dba5f040db72ff44f08b5fdc230f4eabddd250b7e0b0265aa64b33f560b",
     "points": [
       {
         "phase": "factory-bb",
@@ -95,7 +95,7 @@ export const SOURCE_PLAN = Object.freeze([
       },
       {
         "phase": "factory-snapshot",
-        "before": "    await trySnapshotSync(config, log);",
+        "before": "    await trySnapshotSync(config, log, options.genesis);",
         "after": "    const epochCache = await EpochCache.create"
       },
       {
@@ -200,7 +200,7 @@ export const SOURCE_PLAN = Object.freeze([
 },
 {
   "path": "/usr/src/yarn-project/archiver/dest/archiver.js",
-  "sha256": "1a3bd29d0d314de82b7ce1e8072f173f5a1a363eb312e9f6c7570bc4f7a95e18",
+  "sha256": "6c500f138087a2c5b2edf106069ad88b4d19148a2e18602d66781d01ec8b09fe",
   "points": [
     {
       "phase": "archiver-blob-test",
@@ -244,7 +244,7 @@ export const SOURCE_PLAN = Object.freeze([
 },
 {
   "path": "/usr/src/yarn-project/archiver/dest/modules/l1_synchronizer.js",
-  "sha256": "595956f62d7476709058cf327dc0b43d4e1b31eb2e18803cd8eaf9cf0a7da924",
+  "sha256": "1664988aa705166e0d1822010ac88038fc3ba0c168ac870c8072ad8e438c41ca",
   "points": [],
   "insertions": [
     {
@@ -256,9 +256,16 @@ export const SOURCE_PLAN = Object.freeze([
       "anchor": "        this.l1BlockNumber = currentL1BlockNumber;",
       "after": true,
       "text": "\n__rollingStartupObserve(\"local\",currentL1BlockNumber);\n"
-    },
+    }
+  ]
+},
+{
+  "path": "/usr/src/yarn-project/archiver/dest/modules/checkpoint_ingestor.js",
+  "sha256": "b2f48427b788480ce15c05f1951ac08cc7a8070591f597913a5a04959ea8c2c2",
+  "points": [],
+  "insertions": [
     {
-      "anchor": "            for (const checkpoint of validCheckpoints){",
+      "anchor": "        for (const checkpoint of published){",
       "after": true,
       "text": "\n__rollingStartupObserve(\"checkpoint\",checkpoint.checkpoint.number);\n"
     }
@@ -419,7 +426,7 @@ let recorder;
 export function mark(phase,state) { return recorder?.(phase,state) ?? false; }
 export function observe(kind,datum) { return recorder?.observe(kind,datum) ?? false; }
 export function installRuntimeAdapter() {
-  if (process.version !== 'v24.21.0' || import.meta.url !== HOOK_URL) throw failure();
+  if (process.version !== 'v24.22.1' || import.meta.url !== HOOK_URL) throw failure();
   const prepared = new Map();
   // Validate the entire exact-source closure BEFORE the application imports.
   for (const plan of SOURCE_PLAN) {

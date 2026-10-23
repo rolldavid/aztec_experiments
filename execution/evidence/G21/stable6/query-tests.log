@@ -1,0 +1,223 @@
+✔ historical HTTP composition: identical anchors and headers share work only within each request phase (295.922209ms)
+✔ development HTTP composition: real inspector, official schemas and genuine optional absence (144.306958ms)
+✔ development HTTP composition: changed chain identity blocks personalized forward after bounded read retry without fallback (81.027833ms)
+✔ development HTTP composition: changed rollup identity blocks personalized forward after bounded read retry without fallback (83.651416ms)
+✔ development HTTP composition: changed rollup version blocks personalized forward after bounded read retry without fallback (85.491292ms)
+✔ development HTTP composition: changed proof mode blocks personalized forward after bounded read retry without fallback (88.957959ms)
+✔ development HTTP composition: changed world synchronization blocks personalized forward after bounded read retry without fallback (82.07675ms)
+✔ development HTTP composition: changed world fork blocks personalized forward after bounded read retry without fallback (81.579208ms)
+✔ development HTTP composition: changed L1 lag blocks personalized forward after bounded read retry without fallback (85.318583ms)
+✔ development HTTP composition: changed unavailable upstream blocks personalized forward after bounded read retry without fallback (77.766834ms)
+✔ development HTTP composition: unhealthy bootstrap refuses branded client before personalized query (22.208625ms)
+✔ development HTTP composition: schema-valid response above 16 MiB passes aligned 32 MiB limits (197.112875ms)
+✔ development HTTP composition: response above 32 MiB rejects with one attempt (156.999083ms)
+✔ development HTTP composition: aggregate batch above 32 MiB rejects both individually bounded responses (138.156584ms)
+✔ development query-only service: actual client/inspector, no deployment or proof lifecycle (106.032ms)
+✔ development query-only service: identity refuses private forward (72.46125ms)
+✔ development query-only service: proof policy refuses private forward (73.790792ms)
+✔ development query-only service: sync refuses private forward (75.564875ms)
+✔ development query-only service: stale refuses private forward (78.961458ms)
+✔ development query-only service: close waits for actual held upstream SDK response (100.386333ms)
+[12:53:16.373] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {}
+[12:53:16.383] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:50905/v1/node: Error: Error 503 from server http://127.0.0.1:50905/v1/node: Trusted node request rejected
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:68:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+[12:53:17.394] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:50905/v1/node: Error: Error 503 from server http://127.0.0.1:50905/v1/node: Trusted node request rejected
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:68:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+[12:53:19.404] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:50905/v1/node: Error: Error 503 from server http://127.0.0.1:50905/v1/node: Trusted node request rejected
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:68:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+✔ development operator SDK: CLI auth reaches real inspector and stale state blocks reads (6095.130875ms)
+[12:53:22.414] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {}
+[12:53:22.439] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:50932/v1/node: Error: Error fetching from host http://127.0.0.1:50932/v1/node: [TypeError: fetch failed] {
+  [cause]: SocketError: other side closed
+      at Socket.onHttpSocketEnd (node:internal/deps/undici/undici:7833:26)
+      at Socket.emit (node:events:526:24)
+      at endReadableNT (node:internal/streams/readable:1764:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'UND_ERR_SOCKET',
+    socket: {
+      localAddress: '127.0.0.1',
+      localPort: 50933,
+      remoteAddress: '127.0.0.1',
+      remotePort: 50932,
+      remoteFamily: 'IPv4',
+      timeout: undefined,
+      bytesWritten: 451,
+      bytesRead: 0
+    }
+  }
+}
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:34:15)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:68:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+[12:53:23.440] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:50932/v1/node: Error: Error fetching from host http://127.0.0.1:50932/v1/node: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:50932
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:2021:16) {
+    errno: -61,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 50932
+  }
+}
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:34:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:68:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+[12:53:25.442] ERROR: foundation:retry Error while retrying JsonRpcClient request to http://127.0.0.1:50932/v1/node: Error: Error fetching from host http://127.0.0.1:50932/v1/node: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:50932
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:2021:16) {
+    errno: -61,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 50932
+  }
+}
+    at defaultFetch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:34:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async retry (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/retry/index.js:54:20)
+    at async file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/fetch.js:68:16
+    at async Timeout.sendBatch (file:///Users/zac/Documents/ChatGPT/Anonymous%20Message%20Board/rolling-lead-bok/node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js:68:43)
+✔ development operator SDK: admitted request drains before authenticated service closure (6026.210833ms)
+[12:53:28.444] WARN: json-rpc:client Failed to fetch from the remote server 
+    err: {}
+✔ development operator store fixture: actual openPXEStore rejects incomplete globals and opens with full restored surface (39.486583ms)
+✔ development operator artifact preflight: four actual lazy loaders fail bare and pass pinned adapter in fresh children (907.476084ms)
+✔ development operator PXE: actual read-only cached SDK route authenticates without wallet or proof (722.844583ms)
+✔ normal deployment CLI test seam rejects changed source and missing or duplicate terminal entry (1.494ms)
+✔ normal deployment CLI loads its built SDK and opens and closes its actual store (1505.919667ms)
+✔ normal deployment CLI bundle exposes its actual synthetic address constructor (1214.630458ms)
+✔ normal deployment CLI initializes and destroys exact embedded sync WASM without network (1830.966084ms)
+✔ normal bundled CLI node authenticates and rejects credential and readiness failures (13744.654667ms)
+✔ normal bundled CLI read-only PXE uses its actual authenticated cached node and store (2540.734916ms)
+✔ normal bundled CLI admitted request drains before service and child closure (7327.281458ms)
+✔ internal diagnostics require genuine error provenance and never inspect forged getters (1.071334ms)
+✔ internal diagnostic captures bounded detached public snapshots at TIP_ORDER (1.067459ms)
+✔ internal diagnostic captures bounded detached public snapshots at STATE_NOT_SYNCED (0.18175ms)
+✔ internal diagnostic captures bounded detached public snapshots at CHECKPOINT_PRUNED (0.187292ms)
+✔ internal diagnostic captures bounded detached public snapshots at IMPOSSIBLE_FINALITY (0.164959ms)
+✔ internal diagnostic captures bounded detached public snapshots at SAME_HEIGHT_HASH (0.17275ms)
+✔ internal diagnostic captures bounded detached public snapshots at METADATA_MISMATCH (0.204125ms)
+✔ internal diagnostics preserve both different snapshots without relaxing persistent mismatch (0.653375ms)
+✔ internal canonical diagnostic identifies checkpointed fence without leaking malformed fields (0.361291ms)
+✔ internal canonical diagnostic identifies proposed fence without leaking malformed fields (0.216541ms)
+✔ internal canonical diagnostic identifies final fence without leaking malformed fields (0.167875ms)
+✔ internal canonical diagnostic redacts invalid coordinates and does not evaluate unused hash getter (0.2135ms)
+✔ internal malformed or upstream errors have no diagnostic authority (0.289166ms)
+✔ development fake: bounded public readiness, only public methods and canonical recheck (0.209541ms)
+✔ development fake: one complete fresh snapshot handles measured 1420/1419 head transition (0.243083ms)
+✔ development fake: finality transition gets one complete fresh snapshot (0.134042ms)
+✔ development fake: persistent head mismatch stops at two snapshots (0.333917ms)
+✔ development fake: persistent finality mismatch stops at two snapshots (0.107583ms)
+✔ development fake: fresh snapshot still rejects identity (0.136458ms)
+✔ development fake: fresh snapshot still rejects unsynced (0.117417ms)
+✔ development fake: fresh snapshot still rejects malformed (0.11225ms)
+✔ development fake: fresh snapshot still rejects same-height fork (0.109958ms)
+✔ development fake: fresh snapshot still rejects canonical reorg (0.149875ms)
+✔ development fake: fresh snapshot still rejects stale (0.135917ms)
+✔ development fake: fresh snapshot still rejects transport (0.127125ms)
+✔ development fake: unsynced does not reacquire a snapshot (0.117625ms)
+✔ development fake: malformed does not reacquire a snapshot (0.081709ms)
+✔ development fake: same-height fork does not reacquire a snapshot (0.08225ms)
+✔ development fake: impossible finality does not reacquire a snapshot (0.113709ms)
+✔ development fake: pruned checkpoint does not reacquire a snapshot (0.077083ms)
+✔ development fake: canonical reorg does not reacquire a snapshot (0.139166ms)
+✔ development fake: transport does not reacquire a snapshot (0.106209ms)
+✔ development fake: rejects wrong chain before sync/private calls (0.080375ms)
+✔ development fake: rejects wrong version before sync/private calls (0.059ms)
+✔ development fake: rejects wrong rollup before sync/private calls (0.06525ms)
+✔ development fake: rejects wrong proof policy before sync/private calls (0.066333ms)
+✔ development fake: rejects unsynced trees (0.09275ms)
+✔ development fake: rejects world lag (0.0925ms)
+✔ development fake: rejects forked world (0.074375ms)
+✔ development fake: rejects finality mismatch (0.093916ms)
+✔ development fake: rejects pruned checkpoint (0.073084ms)
+✔ development fake: rejects tip order (0.08775ms)
+✔ development fake: rejects same-height fork (0.079583ms)
+✔ development fake: rejects missing anchor (0.102083ms)
+✔ development fake: rejects incorrect header coordinate (0.119417ms)
+✔ development fake: rejects reorg during inspection (0.132625ms)
+✔ development fake: exact lag boundary, stale and future clocks (0.248958ms)
+✔ development fake: rejects missing/malformed timestamp undefined (0.087667ms)
+✔ development fake: rejects missing/malformed timestamp 990 (0.066666ms)
+✔ development fake: rejects missing/malformed timestamp 990 (0.062041ms)
+✔ development fake: rejects missing/malformed timestamp -1 (0.061292ms)
+✔ development fake: bounded configuration and explicit disabled-proof chain (0.325625ms)
+✔ development fake: thrown errors/getters cannot leak into evidence (0.155458ms)
+✔ development fake: mutable getter projection retains only the validated read (0.102416ms)
+✔ development fake: missing node method is fixed unavailable, never an alternate lookup (0.118459ms)
+✔ development fake: mismatched snapshot drains held peer before reacquisition (10.585167ms)
+✔ development fake: grouped readiness drains a held peer after falsy rejection undefined (1.156125ms)
+✔ development fake: grouped readiness drains a held peer after falsy rejection null (0.301375ms)
+✔ development fake: grouped readiness drains a held peer after falsy rejection false (0.242708ms)
+✔ development fake: grouped readiness drains a held peer after falsy rejection 0 (0.22125ms)
+✔ development fake: fulfilled tip snapshot cannot be rewritten while its peer is pending (0.343916ms)
+✔ development fake: first canonical pair drains before rejection after grouped freshness (0.315625ms)
+✔ development fake: canonical reads wait for held grouped freshness and reject its reorg (0.208458ms)
+✔ mock transport: rejects unapproved URL before any request (0.493791ms)
+✔ mock transport: one request on failure; no retry or secret cause, strict redirect policy (1.416ms)
+✔ mock transport: redirect fails without retry (13.456792ms)
+✔ mock transport: invalid JSON fails without retry (7.086666ms)
+✔ mock transport: HTTP failure fails without retry (1.864ms)
+✔ mock transport: transient 502 retries one read batch then uses normal SDK validation (11.4265ms)
+✔ mock transport: transient 503 retries one read batch then uses normal SDK validation (7.826667ms)
+✔ mock transport: transient 504 retries one read batch then uses normal SDK validation (7.772125ms)
+✔ mock transport: bridge witness read batch retries identical bytes and cancels gateway body (9.612792ms)
+✔ mock transport: persistent gateway read failure is bounded to two attempts (3.15175ms)
+✔ mock transport: mutation never triggers gateway retry (7.937084ms)
+✔ mock transport: mixed batch never triggers gateway retry (7.459417ms)
+✔ mock transport: simulation never triggers gateway retry (7.269375ms)
+✔ mock transport: RPC rejection never triggers gateway retry (6.173125ms)
+✔ mock transport: malformed JSON never triggers gateway retry (7.355667ms)
+✔ mock transport: schema rejection never triggers gateway retry (6.571375ms)
+✔ mock transport: version rejection never triggers gateway retry (7.5375ms)
+✔ mock transport: unknown transport never triggers gateway retry (7.105625ms)
+✔ mock transport: HTTP 408 never triggers gateway retry (6.193458ms)
+✔ mock transport: HTTP 429 never triggers gateway retry (6.041167ms)
+✔ mock transport: missing bridge witness remains a valid empty result without retry (7.066042ms)
+✔ mock transport with real SDK schema: brand, public inspection, no submission retries (7.530208ms)
+✔ mock transport: explicit loopback development allowed, version header mismatch rejected (0.559542ms)
+✔ actual installed PXE cache and recording wrappers accept immutable branded facade (8.84875ms)
+✔ mock transport: 32 MiB client cap cancels bounded stream before reading remaining chunks, once (1.988208ms)
+✔ actual safeRPC with labelled Fetch: independent public metadata coalesces without merging the final fence (6.311ms)
+✔ development fake: timestamp failure drains held synchronization peer before rejection (0.428459ms)
+✔ development fake: synchronization failure drains held timestamp before rejection (0.273375ms)
+✔ explicit checkpoint readiness authenticates measured1471/1470 historical state and reports honest heads (0.387166ms)
+✔ explicit historical readiness rejects world below anchor (0.154583ms)
+✔ explicit historical readiness rejects world above proposed (0.116333ms)
+✔ explicit historical readiness rejects world fork at own height (0.1175ms)
+✔ explicit historical readiness rejects pruned anchor (0.181875ms)
+✔ explicit historical readiness rejects finality mismatch (0.192417ms)
+✔ explicit historical readiness rejects not synced (0.110584ms)
+✔ explicit historical readiness rejects stale (0.229667ms)
+✔ explicit historical readiness preserves selected canonical fence (0.161125ms)
+✔ explicit historical readiness preserves world canonical fence (0.095042ms)
+✔ explicit historical readiness preserves final-selected canonical fence (0.110584ms)
+✔ explicit historical readiness preserves final-world canonical fence (0.129ms)
+✔ historical readiness accepts only explicit closed tiers (0.082667ms)
+✔ native local readiness uses canonical synchronized state despite idle or advanced chain clock (0.279125ms)
+✔ native local clock policy cannot excuse a different network or canonical fork (0.161125ms)
+ℹ tests 138
+ℹ suites 0
+ℹ pass 138
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45139.517208

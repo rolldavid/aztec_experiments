@@ -71,11 +71,11 @@ export const DERIVED_G1_BYTES = 75497472;
 export function validateCrsManifest(manifest) {
   // SDK and foundation packages intentionally have different release versions.
   const foundationVersion = pins.aztecPackages?.['@aztec-foundation/bb.js'];
-  if (manifest.schemaVersion !== 2 || manifest.aztecVersion !== pins.aztec || pins.aztec !== '6.0.0-rc.3' ||
-      foundationVersion !== '6.0.0-rc.6') throw new Error('CRS manifest version mismatch');
+  if (manifest.schemaVersion !== 2 || manifest.aztecVersion !== pins.aztec || pins.aztec !== '6.0.0' ||
+      foundationVersion !== '6.0.0') throw new Error('CRS manifest version mismatch');
   if (manifest.provenance?.package !== '@aztec-foundation/bb.js' || manifest.provenance.version !== foundationVersion ||
       manifest.provenance.source !== 'node_modules/@aztec-foundation/bb.js/dest/node/crs/net_crs.js' ||
-      manifest.provenance.sourceSha256 !== 'd73da83a2b35584632dc8a70abaaeaa1c762e6f24bd0c778e47fe85919f5a98d') {
+      manifest.provenance.sourceSha256 !== '0663244d7a3b93f98e1320ff8ead7fe69d969086dc84ef0b56ce85cf91772500') {
     throw new Error('Invalid CRS downloader provenance');
   }
   const expectedNames = ['g1.dat', 'g2.dat', 'grumpkin_g1.dat'];
@@ -106,7 +106,7 @@ export function validateCrsManifest(manifest) {
     method: 'bb-srs-init-v1', packageVersion: foundationVersion, inputName: 'g1.dat',
     inputSha256: manifest.files[0].sha256, g2Sha256: manifest.files[1].sha256,
     wasmSource: 'node_modules/@aztec-foundation/bb.js/dest/node/barretenberg_wasm/barretenberg-threads.wasm.gz',
-    wasmSha256: 'e607fbe6c12815c080d66025878e7a8772cc23633cfe0864112720f55ee8497d',
+    wasmSha256: '37cdf1b493602e7b625f70564ba09716930adcbbfa606595bca7703d877d83b6',
   };
   if (!derived.derivation || Object.keys(derived.derivation).sort().join() !== Object.keys(expectedDerivation).sort().join() ||
       Object.entries(expectedDerivation).some(([key, value]) => derived.derivation[key] !== value) ||

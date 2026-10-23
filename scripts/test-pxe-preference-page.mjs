@@ -11,7 +11,7 @@ import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVER
 const root=fileURLToPath(new URL('../',import.meta.url));
 const installed=await realpath(join(root,'node_modules/@aztec-labs/pxe'));
 const sha=x=>createHash('sha256').update(x).digest('hex');
-const pristine=join(root,'scripts/testing/fixtures/pxe-preference-page-6.0.0-rc.3');
+const pristine=join(root,'scripts/testing/fixtures/pxe-preference-page-6.0.0');
 const source=Object.fromEntries(await Promise.all(PREFERENCE_PAGE_PINS.map(async p=>{
   const text=await readFile(join(pristine,p.path),'utf8');
   assert.equal(sha(text),p.before,'Pristine fixture changed');return [p.path,text];
@@ -29,7 +29,7 @@ async function copy(t) {
   return directory;
 }
 
-test('source pin is exact pristine rc3 original; transformed TS and JS are exact output pins',()=>{
+test('source pin is exact pristine stable6 original; transformed TS and JS are exact output pins',()=>{
   for(const pin of PREFERENCE_PAGE_PINS){assert.equal(sha(source[pin.path]),pin.before);assert.equal(sha(transformPreferencePage(source[pin.path],pin.path)),pin.after);}
 });
 test('installed package inspection accepts only a complete original or complete reviewed patched closure',async()=>{
@@ -44,7 +44,7 @@ async function ownedInstallFixture(t) {
   for(const pin of PREFERENCE_PAGE_PINS){await mkdir(join(target,pin.path,'..'),{recursive:true});await writeFile(join(target,pin.path),source[pin.path]);}
   await cp(join(root,'toolchain.json'),join(repository,'toolchain.json'));
   // Labelled minimum package metadata for the physical installation fixture.
-  await writeFile(join(target,'package.json'),JSON.stringify({name:'@aztec-labs/pxe',version:'6.0.0-rc.3',type:'module'}));
+  await writeFile(join(target,'package.json'),JSON.stringify({name:'@aztec-labs/pxe',version:'6.0.0',type:'module'}));
   await mkdir(join(repository,'scripts'),{recursive:true});
   const installer=join(repository,'scripts/patch-pxe-preference-page.mjs');
   await cp(join(root,'scripts/patch-pxe-preference-page.mjs'),installer);
@@ -958,7 +958,7 @@ if(process.env.ROLLING_PREFERENCE_PAGE_NATIVE==='1') {
           assert.equal((await f.publicBlock(await anchorHeader.toBlockParameter())).header.getBlockNumber(),anchorNumber);await assert.rejects(f.publicBlock({number:anchorNumber-1,hash:await anchorHeader.hash()}),/Synthetic anchored selector hash differs/);
           const raw={
             getBlockHashMembershipWitness:f.node.getBlockHashMembershipWitness.bind(f.node),
-            getNodeInfo:async()=>({nodeVersion:'6.0.0-rc.3',l1ChainId:31337,rollupVersion:1,realProofs:false,
+            getNodeInfo:async()=>({nodeVersion:'6.0.0',l1ChainId:31337,rollupVersion:1,realProofs:false,
               l1ContractAddresses:Object.fromEntries(L1ContractsNames.map(key=>[key,EthAddress.fromString(network.rollup)])),
               protocolContractAddresses:Object.fromEntries(ProtocolContractsNames.map(key=>[key,AztecAddress.fromFieldUnsafe(new Fr(1))])),txsLimits:{gas:{daGas:1,l2Gas:1}}}),
             getChainTips:async()=>({proposed:blockId,checkpointed:tip,proven:tip,finalized:tip}),

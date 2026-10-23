@@ -5,18 +5,18 @@ Only public pins are committed. Capability URLs belong in owner-only external fi
 """
 import argparse, ast, base64, datetime as dt, gzip, hashlib, ipaddress, io, json, lzma, os, pathlib, re, signal, stat, subprocess, sys, tokenize, urllib.parse
 
-IMAGE = "azteclabs/aztec@sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651"
+IMAGE = "azteclabs/aztec@sha256:59b10cc8e89bb9226db1f771a5abbe5d5f8d71483c00c7472187e6ddc7adab8d"
 NODE_SHA = "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c"
-BB_SHA = "fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f"
-BB_VERSION = "6.0.0-rc.6"
-CATALOG_SHA = "d5666fcdab5a99c23155f12e6de8cf8e58f95e869f418c39ddefd512f2901fb5"
+BB_SHA = "5bbb64800d431c6760a70d8723be4eaf37ed10e8fbfe2842bb85b8436180c130"
+BB_VERSION = "6.0.0"
+CATALOG_SHA = "ff57b667233a813dc2b7eacfe02e3cd2d2427ac9701bf0825ba0b561e3dc6b15"
 NETWORK = {'testnet': {'bootnodes': ['enr:-LO4QA4kHKdUJOirQ4NxtI-gjBNLRK1GPeKtmz664Uph-EqLW1B3EkCqu6ul5C7dejOBWbEWMOPZc07I0Bl8bmW5Vn0EhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIlCfmYlzZWNwMjU2azGhAoRffgRFcK_rV5ddbmtUW9cyXrPwrDFL18OFRVejOOXDg3VkcIKd0A', 'enr:-LO4QO3-kuKH3c-RgaxYBWk0PiV-97B4wnvHcgMxYpB-1WjoctKlpY3Fuh29AESLhBn1WtQXE-1G0Umo_VhTcu7bLloEhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIicStolzZWNwMjU2azGhAxUvKI8xXnGpkj2VjRZk9VmMbtfHZUoszOvvl76qFrGeg3VkcIKd0A', 'enr:-LO4QNTdBJe-2tIfXpzJmu4Tise0rRdPSn2gwQMtkVPe40szAdpWRgixGub2iUXMcxSQuQ8nkKh-GSvQpRKqw2XzUhQEhWF6dGVjqDAwLTExMTU1MTExLTAwMDAwMDAwLTAtMjI3ODAyMzktMmRhOWY4MDGCaWSCdjSCaXCEIrZz14lzZWNwMjU2azGhApwZiWnsA8TFqvz-sGDrgbi1AypT4QXJfFWdYOz2yeVtg3VkcIKd0A', 'enr:-Nu4QLjG2KMKvsVOjnhELmYmUO-auKssB_HPKNJitPOwXN0IYC5XPwUwZucnlAE0towcJ9lemeu4gmZkRnYWiGL_lkIHhWF6dGVjsDAwLTExMTU1MTExLWViZDk5ZmYwLTg0NTIzMTcxMy0xMmU5YWEzNi0yMjllYWRiN4JpZIJ2NINpcDaQKgEE-AJiEJUAAAAAAAAAAolzZWNwMjU2azGhA5_JMPCAGUHSS3vWQU3LlQoXnUOaO7AUNylXu2ieLTlKhHRjcDaCnJCEdWRwNoKckIN2ZXKFMi4xLjI', 'enr:-Ku4QHA70JBzwsnhlg-Y-Ud_vH_xAJtaoIAGpEGwvBFu8jHxEEVBrzMCrgRTqYpwDgPgyWPEtEGg-pWlxsK3Gq1VGa4EhWF6dGVjoDAwLS0wMDAwMDAwMC0wLTIyNzgwMjM5LTBjNzU3NmQzgmlkgnY0gmlwhNU65vmJc2VjcDI1NmsxoQLj0Km-mQSLz-0Wz8JBhBv9r0AhFbctdeO0yuT-gqUlPYN1ZHCCndA'], 'snapshots': ['https://aztec-labs-snapshots.com/testnet/', 'https://files5.blacknodes.net/Aztec/', 'https://snapshots-data.aztec.graphops.xyz/'], 'blobFileStoreUrls': ['https://aztec-labs-snapshots.com/testnet/blobs'], 'txCollectionFileStoreUrls': ['https://aztec-labs-snapshots.com/testnet/txs'], 'registryAddress': '0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba', 'feeAssetHandlerAddress': '0x5602c39a6e9c5ace589f64f754927bcda4f4bfc9', 'l1ChainId': 11155111}}
 
-# Public rc3 compatibility snapshot, not fresh network clearance or a deployed board.
+# Public stable6 compatibility snapshot, not fresh network clearance or a deployed board.
 # Query-only qualification never allocates a proof queue or worker.
 QUALIFICATION = {'service': {'serviceMode':'query-only','proofs':'real','host':'127.0.0.1','port':0,'origins':[],
-    'chainId':'11155111','rollupVersion':'3409706519',
-    'queryNode':{'url':'http://127.0.0.1:8082/','rollupAddress':'0xed1eb2eb670b42e2fb5a478c076a264b9604089d','maxLagSeconds':120}},
+    'chainId':'11155111','rollupVersion':'679261766',
+    'queryNode':{'url':'http://127.0.0.1:8082/','rollupAddress':'0x1f435a7f2da358caf887a470faeee7d5d5f4efba','maxLagSeconds':120}},
     'adminUrl':'http://127.0.0.1:8882/','adminKeyFile':'/var/lib/rolling-admin/qualification-key','recoveryTimeoutMs':180000}
 
 class Invalid(ValueError):
@@ -992,14 +992,14 @@ def _execute(config, attestation_source):
 
 
 # Dedicated records from the exact pinned process with an explicit configuration-provider adapter; not adversarial attestation.
-STARTUP_HELPER_SHA = 'f10d47fa2f26f50197bb36c44c75f2d34b41a2e5726caed26c935e42f2c69d15'
+STARTUP_HELPER_SHA = '9ba19ef372042d5eaf37710c05bf13ebb9fc9c0e51295feaada2968b866a1240'
 # Entire relative-import closure. SDK imports intentionally resolve in the image.
 STARTUP_SOURCES = {
     'deploy/prover/startup-stages.mjs': STARTUP_HELPER_SHA,
     'prover/compact-node-transform.mjs': 'd7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545',
     'prover/compact-node-registration.mjs': '07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c',
     'prover/compact-block-native.mjs': '6fc4e562fea1a2d544d742b8e58a8941724cbd6b7d7e67d4231e02a586707888',
-    'shared/trusted-private-node.mjs': 'dca64303273cac0a8aa70eb8867d2ade5c60d4dbe9085ab6d49b7025956d955b',
+    'shared/trusted-private-node.mjs': '98fb669ac0b4e20d124cc1517bd0b9753062d1c0b52a0624e017524fe681be31',
     'shared/rolling/compact-client.mjs': '3be616f60d7267ccf71f537ddd117ac78ea4e85a29bfd37c487e06b8c257060e',
 }
 STARTUP_ADAPTER = 'publicnode-config-v1'

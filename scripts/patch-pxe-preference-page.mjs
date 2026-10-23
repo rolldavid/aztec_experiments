@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 // Cursor/root/validator source is opt-in; whole cold recovery remains unqualified.
 const sha = value => createHash('sha256').update(value).digest('hex');
 export const PREFERENCE_PAGE_PINS = Object.freeze([
-  Object.freeze({path:'src/pxe.ts', before:'514cf7905733732522db9f301437d9ec5a1fd3b4a5ee3939980f76ffb4396ebd', after:'cf61d2140a6505cf0ad24f8160aedc875c1ac7204663b25a018bd03da30c71bc'}),
-  Object.freeze({path:'dest/pxe.js', before:'94d98c0a13a0d6a2724ecf03f790461e13328b8aebac3d243f373e982d76a360', after:'0798708eb9f6f215ae1348697140fbebc65872ea5d6396dc1ea1f5636ca5603e'}),
+  Object.freeze({path:'src/pxe.ts', before:'2fef28f00ab3bc21ebb7626257ecd605acba5ab5e86fa195dbadd5af5b4850d9', after:'54e2824fcb1f15c2b249b0d39fec65776912d18c8b7855eb4c9e4af2e2156095'}),
+  Object.freeze({path:'dest/pxe.js', before:'02dbb8da2a09982cf678a014e8438f5b17f2310af5691b94743a4dfa38cd9375', after:'9a999fce9d016ef4846e9c897cba20b7e9716fe5582f241e1dc9f28f67f0881f'}),
   // rc3 adds queue-pressure timing and warnings; the transform preserves them.
   Object.freeze({path:'src/operation_queue.ts', before:'a78c45878393d8713fdce1de1cda326ec3af6772b092215c8096044d3ab61246', after:'d46768a384214ea5786a60e83b3c417fd788547904cf65f1a0c756616b91d5db'}),
   Object.freeze({path:'dest/operation_queue.js', before:'f8856a4145c38e831d077bc33c5e67f778ea1ad367b3ff93c486175d4c9019b6', after:'a2373a39553acc1ffc6f4cf9be0cc6eb07cefdb033881492601dd92abd15e360'}),
@@ -755,7 +755,7 @@ export async function patchInstalledPreferencePage(root) {
   // pins. The SDK build separately verifies the complete locked package closure.
   const toolchain=JSON.parse(await readFile(join(repository,'toolchain.json'),'utf8'));
   const packageMetadata=JSON.parse(await readFile(join(expected,'package.json'),'utf8'));
-  if(toolchain.node!==process.versions.node||toolchain.aztec!=='6.0.0-rc.3'||packageMetadata.name!=='@aztec-labs/pxe'||packageMetadata.version!==toolchain.aztec)throw Error('PREFERENCE_PAGE_PATCH_VERSION');
+  if(toolchain.node!==process.versions.node||toolchain.aztec!=='6.0.0'||packageMetadata.name!=='@aztec-labs/pxe'||packageMetadata.version!==toolchain.aztec)throw Error('PREFERENCE_PAGE_PATCH_VERSION');
   // Hard-linked targets also share writable bytes with another tree.
   for(const relative of [...PREFERENCE_PAGE_PINS.map(pin=>pin.path),PREFERENCE_PAGE_COMPACT_PIN.generated,PREFERENCE_PAGE_RECOVERY_PIN.generated]) {
     try {if((await lstat(join(expected,relative))).nlink!==1)throw Error('PREFERENCE_PAGE_PATCH_OWNING_TREE');}

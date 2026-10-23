@@ -165,7 +165,7 @@ export async function inspectTrustedNode(node, options) {
 }
 
 const discard=()=>{};
-const silent=Object.freeze({debug:discard,info:discard,warn:discard,error:discard,trace:discard,verbose:discard,fatal:discard});
+const silent=Object.freeze({debug:discard,info:discard,warn:discard,error:discard,trace:discard,verbose:discard,fatal:discard,isLevelEnabled:()=>false});
 // Bounded engineering default aligned with prover/private-query.mjs (32 MiB).
 const MAX_RESPONSE_BYTES=32*1024*1024;
 function endpoint(value, allowLocalDev) {

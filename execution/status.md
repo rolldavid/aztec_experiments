@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 21 October same-wallet fresh test signup implemented and published as6f1317ca. Explicit #/new-account uses configured portal deposit nonce for deterministic fresh Aztec generation, retains selected generation across signout, bypasses old browser custody, and auto-opens chooser.80 focused checks pass, independent review no blockers, live user Chrome chooser and five public hashes verified. No new payment was sent for this frontend change; no contracts redeployed or running processes restarted. See evidence/G21/fresh-account.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 23 October: stable6 node synchronized on canonical rollup0x1f435a7f2da358caf887a470faeee7d5d5f4efba/version679261766. SDK/contracts/CRS rebuilt; image Node24.22.1 guard and new RPC logger interface fixed. Linux BB6.0.0 hash/version verified;138 query/trusted-node tests and33 toolchain tests pass. Clean runtime packaging and fresh deployment in progress; app NOT yet restored/published. Owner discards old application state, no migration/recovery/archive.
 
 ## Ready internal work
 

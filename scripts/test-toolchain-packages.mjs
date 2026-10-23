@@ -67,15 +67,12 @@ test('unsupported optional native platform may be absent, current platform may n
   entry.os = [process.platform]; assert.throws(f.check, /ENOENT/);
   entry.os = []; assert.throws(f.check, /Invalid optional/);
 });
-test('measured Darwin-arm64 and Linux-x64 rc6 versions are pinned; old evidence remains historical', () => {
+test('stable Darwin-arm64 and Linux-x64 versions are pinned', () => {
   assert.equal(pins.node, '24.21.0');
   assert.equal(pins.nativeProverPackage, pins.aztecPackages[bb]);
   assert.deepEqual(Object.keys(pins.nativeProver), ['darwin-arm64', 'linux-x64']);
-  assert.deepEqual(pins.nativeProver['darwin-arm64'], {version:'6.0.0-rc.6', sha256:'8acdba0ecf928087e60bdca0206a508f109e7b62ca621b08fa62263509090217'});
-  assert.deepEqual(pins.nativeProver['linux-x64'], {version:'6.0.0-rc.6', sha256:'fa4b12adaefd5684b53b802346b9fe839ab3d6a4a829a5ea4efd6bd200e0829f'});
-  assert.equal(pins.nativeProverEvidence['linux-x64'].scope, 'version-only');
-  assert.equal(pins.nativeProverEvidence['linux-x64'].receiptSha256, 'b5c70e2421737afb8f1e767dc6a52778acf515e4f158cea2504de84495965f2f');
-  assert.equal(pins.nativeProverEvidence['linux-x64'].reviewSha256, '45f528840c5bd23d6c7fa15374bfd7b935984dd843cf8535d3f05f122d03fe59');
+  assert.deepEqual(pins.nativeProver['darwin-arm64'], {version:'6.0.0', sha256:'f3af6634d08980744f6c9d18010f65b4fd2bbcf23f99e62fd81078ca9b35aa7e'});
+  assert.deepEqual(pins.nativeProver['linux-x64'], {version:'6.0.0', sha256:'5bbb64800d431c6760a70d8723be4eaf37ed10e8fbfe2842bb85b8436180c130'});
   assert.equal(Object.keys(pins.nativeProverHistory['6.0.0-rc.1']).length, 4);
   assert.equal(pins.nativeProverHistory['6.0.0-rc.1']['darwin-arm64'].sha256, '0c0661547b0e8a856090627c51673bb72db0f34da88166281c5fb080d508b953');
 });
@@ -127,7 +124,7 @@ test('historical package binding cannot authorize current platform execution', (
 function withNativeExecutionDouble(callback) {
   const original = childProcess.execFileSync;
   const calls = [];
-  let output = '6.0.0-rc.6\n';
+  let output = '6.0.0\n';
   try {
     childProcess.execFileSync = (...args) => { calls.push(args); return output; };
     syncBuiltinESMExports();
@@ -160,7 +157,7 @@ test('Linux-x64 matching fixture hash still rejects the wrong reported version',
     pins.nativeProver['linux-x64'] = {...previousPin, sha256:createHash('sha256').update(fs.readFileSync(binary)).digest('hex')};
     withNativeExecutionDouble(({calls, output}) => {
       output('6.0.0-rc.1\n');
-      onMeasuredPlatform(() => assert.throws(bbBinary, /Expected prover 6\.0\.0-rc\.6, received 6\.0\.0-rc\.1/), 'linux', 'x64');
+      onMeasuredPlatform(() => assert.throws(bbBinary, /Expected prover 6\.0\.0, received 6\.0\.0-rc\.1/), 'linux', 'x64');
       assert.deepEqual(calls, [[binary, ['--version'], {encoding:'utf8', timeout:10000}]]);
     });
   } finally {

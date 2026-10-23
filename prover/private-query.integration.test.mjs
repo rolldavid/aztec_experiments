@@ -32,7 +32,7 @@ async function composition(t,{queryOnly=false,operatorKey,compactBlocks}={}) {
   const id = n => ({number:n,hash:hex(n)}), tip = n => ({block:id(n),checkpoint:{number:n,hash:hex(n)}});
   // Same schema-valid NodeInfo/BlockData shape as shared trusted-node unit tests,
   // transported through real HTTP and both real production adapters here.
-  const info = {nodeVersion:'6.0.0-rc.3',l1ChainId:31337,rollupVersion:1,realProofs:true,
+  const info = {nodeVersion:'6.0.0',l1ChainId:31337,rollupVersion:1,realProofs:true,
     l1ContractAddresses:Object.fromEntries(L1ContractsNames.map(name=>[name,rollup])),
     protocolContractAddresses:Object.fromEntries(['classRegistry','feeJuice','instanceRegistry','multiCallEntrypoint'].map(name=>[name,hex(1)])),
     txsLimits:{gas:{daGas:100,l2Gas:100}}};
@@ -44,7 +44,7 @@ async function composition(t,{queryOnly=false,operatorKey,compactBlocks}={}) {
   const handlers = {
     getEncodedEnr:()=>encodedEnr,
     getNodeInfo:()=>info,
-    getBlock:n=>{assert.equal(n,0);return undefined;}, // Schema-valid absent genesis: SDK uses its pinned genesis constant.
+    getBlock:n=>{assert.equal(n,0);return {header:BlockHeader.empty(),archive:AppendOnlyTreeSnapshot.empty(),hash:hex(0),number:0,checkpointNumber:0,indexWithinCheckpoint:0};}, // Synthetic canonical genesis matches getBlockData(0) and the current node API.
     getBlockNumber:()=>8,
     getChainTips:()=>tips,
     getWorldStateSyncStatus:()=>state,
@@ -99,6 +99,8 @@ async function composition(t,{queryOnly=false,operatorKey,compactBlocks}={}) {
 const unavailable = error => error.code==='BB_TRUSTED_NODE_UNAVAILABLE'
   && !Object.hasOwn(error,'cause') && !String(error.stack).includes('SYNTHETIC_PRIVATE_SENTINEL');
 const publicGate = ['getNodeInfo','getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp','getBlockData','getBlockData','getBlockData'];
+const checkpointGate=[...publicGate,'getBlockData'];
+const proposedContractRead=[...checkpointGate,...publicGate,'getContract',...publicGate];
 
 test('historical HTTP composition: identical anchors and headers share work only within each request phase',async t=>{
   const f=await composition(t,{compactBlocks:{tier:'checkpointed',origins:[]}});
@@ -139,11 +141,12 @@ test('development HTTP composition: real inspector, official schemas and genuine
   const ids=batches.flat().map(item=>{assert.equal(item.jsonrpc,'2.0');assert(['number','string'].includes(typeof item.id));return item.id;});
   assert.equal(ids.length,7);assert.equal(new Set(ids).size,7);
   assert.equal(f.frontRequests,expected.length);
-  // Every frontend batch still performs all seven server readiness reads.
-  assert.deepEqual(f.calls,expected.flatMap(batch=>[...publicGate,...batch.map(([method])=>method.slice(6))]));
-  assert.equal(f.calls.length,35);
+  // Metadata has checkpointed before/after fences. Exact header reads reuse
+  // those canonical headers inside this request only.
+  assert.deepEqual(f.calls,expected.flatMap(batch=>[...checkpointGate,...batch.filter(([method])=>method!=='aztec_getBlockData').map(([method])=>method.slice(6)),...checkpointGate]));
+  assert.equal(f.calls.length,68);
   f.reset();assert.equal(await node.getContract(address,8),undefined);
-  assert.deepEqual(f.calls,[...publicGate,'getContract']);assert.equal(f.frontRequests,1);
+  assert.deepEqual(f.calls,proposedContractRead);assert.equal(f.frontRequests,1);
   const health=await(await fetch(f.url+'/healthz')).json();assert.equal(health.proofs,'real');assert.deepEqual(health.query,{enabled:true,ready:true});
 });
 
@@ -156,15 +159,15 @@ for(const [label,mutate,expected] of [
   ['world fork',f=>{f.state.latestBlockHash=hex(99);},publicGate.slice(0,4)],
   ['L1 lag',f=>{f.setLag(121);},publicGate.slice(0,6)],
   ['unavailable upstream',f=>{f.setFailure(true);},['HTTP-failure']],
-])test('development HTTP composition: changed '+label+' blocks personalized forward without retry/fallback',async t=>{
+])test('development HTTP composition: changed '+label+' blocks personalized forward after bounded read retry without fallback',async t=>{
   const f=await composition(t),node=await f.create();
   f.reset();mutate(f);await assert.rejects(node.getContract(address,8),unavailable);
-  assert.equal(f.frontRequests,1);assert.deepEqual(f.calls,expected);assert(!f.calls.includes('getContract'));
+  assert.equal(f.frontRequests,2);assert.deepEqual(f.calls,[...expected,...expected]);assert(!f.calls.includes('getContract'));
 });
 
 test('development HTTP composition: unhealthy bootstrap refuses branded client before personalized query',async t=>{
   const f=await composition(t);f.setLag(121);f.reset();await assert.rejects(f.create(),unavailable);
-  assert.equal(f.frontRequests,1);assert.deepEqual(f.calls,publicGate.slice(0,6));assert(!f.calls.includes('getContract'));
+  assert.equal(f.frontRequests,2);assert.deepEqual(f.calls,[...publicGate.slice(0,6),...publicGate.slice(0,6)]);assert(!f.calls.includes('getContract'));
   const health=await(await fetch(f.url+'/healthz')).json();assert.equal(health.ready,true);assert.deepEqual(health.query,{enabled:true,ready:false,reason:'unavailable'});
 });
 
@@ -194,7 +197,7 @@ test('development HTTP composition: aggregate batch above 32 MiB rejects both in
 test('development query-only service: actual client/inspector, no deployment or proof lifecycle',async t=>{
  const f=await composition(t,{queryOnly:true}),node=await f.create();assert(isTrustedPrivateNode(node));
  assert.deepEqual(f.service.stats(),{serviceMode:'query-only',proofJobsEnabled:false,queueAllocated:false,workerAllocated:false});
- f.reset();assert.equal(await node.getContract(address,8),undefined);assert.deepEqual(f.calls,[...publicGate,'getContract']);
+ f.reset();assert.equal(await node.getContract(address,8),undefined);assert.deepEqual(f.calls,proposedContractRead);
  assert.deepEqual(await verifyQueryOnlyService(f.service,f.url),{passed:true,proofEndpointsDisabled:true,queueAllocated:false,workerAllocated:false});
 });
 for(const [label,mutate,expected] of [
@@ -204,13 +207,13 @@ for(const [label,mutate,expected] of [
  ['stale',f=>{f.setLag(121);},publicGate.slice(0,6)],
 ])test('development query-only service: '+label+' refuses private forward',async t=>{
  const f=await composition(t,{queryOnly:true}),node=await f.create();f.reset();mutate(f);
- await assert.rejects(node.getContract(address,8),unavailable);assert.deepEqual(f.calls,expected);assert(!f.calls.includes('getContract'));
+ await assert.rejects(node.getContract(address,8),unavailable);assert.deepEqual(f.calls,[...expected,...expected]);assert(!f.calls.includes('getContract'));
 });
 test('development query-only service: close waits for actual held upstream SDK response',async t=>{
  const f=await composition(t,{queryOnly:true}),node=await f.create();const gate=f.hold('getContract');
  const query=node.getContract(address,8).catch(()=>undefined);let closed=false;
  try{
-  await gate.entered;const closing=f.service.close().then(()=>{closed=true;});await new Promise(r=>setImmediate(r));assert.equal(closed,false);
+  await Promise.race([gate.entered,query.then(()=>{throw Error('Query completed before held upstream entry');})]);const closing=f.service.close().then(()=>{closed=true;});await new Promise(r=>setImmediate(r));assert.equal(closed,false);
   gate.release();await closing;await query;assert.equal(closed,true);
  }finally{gate.release();await f.service.close();await query;}
 });
@@ -250,7 +253,7 @@ test('development operator SDK: admitted request drains before authenticated ser
  const f=await operatorComposition(t),gate=f.hold('getContract');
  const pending=f.node.getContract(address,8).then(value=>({status:'fulfilled',value}),()=>({status:'rejected'}));let closed=false,closing;
  try{
-  await gate.entered;closing=f.service.close().then(()=>{closed=true;});
+  await Promise.race([gate.entered,pending.then(()=>{throw Error('Operator request completed before held upstream entry');})]);closing=f.service.close().then(()=>{closed=true;});
   await new Promise(resolve=>setImmediate(resolve));assert.equal(closed,false);
   gate.release();await closing;assert.equal(closed,true);
   // closeAndDrain closes downstream sockets while awaiting admitted upstream work.
@@ -376,7 +379,7 @@ test('development operator PXE: actual read-only cached SDK route authenticates 
  }
 });
 
-const deploymentCliSourceSha256='2015c9706c63e02f1662940b6fbe23c447a932e80762674f32add8907eede098';
+const deploymentCliSourceSha256='77df144932142e3a2c45bae100a74643e77484e7153faeada29a38565071808f';
 const deploymentCliTerminal="main().catch(e => { log('Deployment setup failed. Check explicit RPC endpoints and private wallet files.', 'error'); __realProcess.exit(1); });";
 function bundleTestEntry(source,expectedSha256,hash,terminal) {
  assert.equal(hash(source),expectedSha256,'Actual deployment CLI source changed');
@@ -395,8 +398,8 @@ test('normal deployment CLI test seam rejects changed source and missing or dupl
 });
 
 const embeddedWasmPins=Object.freeze([
- Object.freeze({file:'barretenberg.js',sourceSha256:'3abf7ca6a4533246587e7f1c8a51340df6265c37baa1e8ed8bdb48404c26c276',urlChars:5234137,urlSha256:'360856269fc9f9aaeb50227a944858c15ba82cdc49c4c9aa19fca54447215327',gzipBytes:3925580,gzipSha256:'05461544db2f06ad1c92b984c0377cc50059c220a5da6c32e20ffbc700c3efe2'}),
- Object.freeze({file:'barretenberg-threads.js',sourceSha256:'12fed31fe0b0ddac67d6725140672f3d4d905b66b9c2d03920411e02aa7d3bd9',urlChars:5236673,urlSha256:'52553c3f65af237da4ae40ced66fe52f576947739c0d1cac634093df601140cc',gzipBytes:3927482,gzipSha256:'e607fbe6c12815c080d66025878e7a8772cc23633cfe0864112720f55ee8497d'}),
+ Object.freeze({file:'barretenberg.js',sourceSha256:'71a1c1cc53c8548a43886bb1b43c0e745c34c81bdc8d62e76b0e00c4c18b6b45',urlChars:5423213,urlSha256:'80ccf39496f67783f34ffa2aab88603851af76105929564af0c204a7b5ceaeee',gzipBytes:4067387,gzipSha256:'c40c797fc7e25d6e89ef8d6aa0e819eef5f572b11703a81e5a543805a5987f34'}),
+ Object.freeze({file:'barretenberg-threads.js',sourceSha256:'5911db92900f2fafe519cc6d0e87846932381961eb98a3dd94e83e3367187fe2',urlChars:5428825,urlSha256:'9fe7dc0e8a684a969ca0b0c9c505264bfbc59e8d50c3eb5f3f0ee04e01ba2ee2',gzipBytes:4071596,gzipSha256:'37cdf1b493602e7b625f70564ba09716930adcbbfa606595bca7703d877d83b6'}),
 ]);
 function identifyEmbeddedWasm(input,init,hash,pins) {
  assert.equal(typeof input,'string','Embedded asset must be an exact string');
@@ -434,7 +437,7 @@ async function normalCliFixture(mode,{origin='http://127.0.0.1:1',key='ab'.repea
  if(process.env.BILLBOARD_TEST_CLI_ROOT)assert.equal(manifestHash,process.env.BILLBOARD_TEST_CLI_MANIFEST_SHA256,'Explicit normal SDK root requires its reviewed manifest hash');
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'cli-store-'));
  const field=n=>'0x'+n.toString(16).padStart(64,'0'),addr=n=>'0x'+n.toString(16).padStart(40,'0');
- const manifest={schemaVersion:1,profile:'local-test',network:{nodeUrl:endpoint.origin+'/v1/node',ethRpcUrl:'http://127.0.0.1:1/',chainId:'31337',rollupVersion:'1',rollup:addr(1),inbox:addr(2),outbox:addr(3)},actors:{aztecDeployer:field(4),ethereumDeployer:addr(5)},board:{salt:'0',minDeposit:'1',maxDeposit:'1000',baseCooldown:'1',kMultiplier:'4',censorWindow:'60',maxSaveUp:'16',censor:field(6),policy:'Controlled public fixture.'},artifacts:{boardJsonSha256:field(7),boardClassId:field(8),portalCreationSha256:field(9),portalRuntimeMetadataSha256:field(10)}};
+ const manifest={schemaVersion:2,profile:'local-test',network:{nodeUrl:endpoint.origin+'/v1/node',ethRpcUrl:'http://127.0.0.1:1/',chainId:'31337',rollupVersion:'1',rollup:addr(1),inbox:addr(2),outbox:addr(3)},actors:{aztecDeployer:field(4),ethereumDeployer:addr(5)},board:{salt:'0',minDeposit:'1',maxDeposit:'1000',baseCooldown:'1',kMultiplier:'4',censorWindow:'60',maxSaveUp:'16',kind:'rolling',policy:'Controlled public fixture.'},artifacts:{boardJsonSha256:field(7),boardClassId:field(8),portalCreationSha256:field(9),portalRuntimeMetadataSha256:field(10)}};
  const manifestPath=path.join(directory,'public-manifest.json');fs.writeFileSync(manifestPath,JSON.stringify(manifest),{flag:'wx',mode:0o600});
  const child=`
   import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';
@@ -583,7 +586,7 @@ test('normal bundled CLI node authenticates and rejects credential and readiness
  try{
   const positive=await normalCliFixture('auth-positive',{origin:f.url,key});
   assert.deepEqual(positive.requests.flatMap(x=>x.methods),['aztec_getNodeInfo','aztec_getContract']);
-  assert.deepEqual(f.calls,[...publicGate,'getNodeInfo',...publicGate,'getContract']);
+  assert.deepEqual(f.calls,[...checkpointGate,'getNodeInfo',...checkpointGate,...proposedContractRead]);
   for(const mode of ['auth-missing','auth-wrong','auth-path','auth-facade']){
    f.reset();const negative=await normalCliFixture(mode,{origin:f.url,key});assert(negative.requests.length>0);assert.deepEqual(f.calls,[]);
   }

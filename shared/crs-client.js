@@ -11,13 +11,13 @@
     && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
 
   function validateManifest(manifest) {
-    if (manifest?.schemaVersion !== 2 || manifest.aztecVersion !== '6.0.0-rc.3' || !Array.isArray(manifest.files) || manifest.files.length !== 3) {
+    if (manifest?.schemaVersion !== 2 || manifest.aztecVersion !== '6.0.0' || !Array.isArray(manifest.files) || manifest.files.length !== 3) {
       throw new Error('Missing or incompatible build-pinned CRS manifest');
     }
     // This manifest binds SDK rc3 to its independently versioned foundation rc6.
-    if (manifest.provenance?.package !== '@aztec-foundation/bb.js' || manifest.provenance.version !== '6.0.0-rc.6'
+    if (manifest.provenance?.package !== '@aztec-foundation/bb.js' || manifest.provenance.version !== '6.0.0'
         || manifest.provenance.source !== 'node_modules/@aztec-foundation/bb.js/dest/node/crs/net_crs.js'
-        || manifest.provenance.sourceSha256 !== 'd73da83a2b35584632dc8a70abaaeaa1c762e6f24bd0c778e47fe85919f5a98d') {
+        || manifest.provenance.sourceSha256 !== '0663244d7a3b93f98e1320ff8ead7fe69d969086dc84ef0b56ce85cf91772500') {
       throw new Error('Invalid pinned CRS entry: downloader provenance');
     }
     const files = new Map();
@@ -39,11 +39,11 @@
       || derived.numPoints !== files.get('g1.dat').numPoints || derived.format !== 'bn254-g1-uncompressed-64-byte'
       || !/^[a-f0-9]{64}$/.test(derived.sha256)
       || !hasKeys(provenance, ['method', 'packageVersion', 'inputName', 'inputSha256', 'g2Sha256', 'wasmSource', 'wasmSha256'])
-      || provenance.method !== 'bb-srs-init-v1' || provenance.packageVersion !== '6.0.0-rc.6'
+      || provenance.method !== 'bb-srs-init-v1' || provenance.packageVersion !== '6.0.0'
       || provenance.inputName !== 'g1.dat' || provenance.inputSha256 !== files.get('g1.dat').sha256
       || provenance.g2Sha256 !== files.get('g2.dat').sha256
       || provenance.wasmSource !== 'node_modules/@aztec-foundation/bb.js/dest/node/barretenberg_wasm/barretenberg-threads.wasm.gz'
-      || provenance.wasmSha256 !== 'e607fbe6c12815c080d66025878e7a8772cc23633cfe0864112720f55ee8497d') {
+      || provenance.wasmSha256 !== '37cdf1b493602e7b625f70564ba09716930adcbbfa606595bca7703d877d83b6') {
       throw new Error('Invalid pinned CRS entry: derivedG1');
     }
     const verifier = manifest.verifierG1;

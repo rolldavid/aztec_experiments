@@ -191,11 +191,11 @@ test('new repeated-operation anchors are unique and mandatory, successful checkp
  for(const plan of SOURCE_PLAN.filter(p=>p.insertions)){
   const source=readFileSync(resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),'utf8');
   for(const insertion of plan.insertions){assert.equal(source.split(insertion.anchor).length,2);assert.throws(()=>transformSource(source.replace(insertion.anchor,''),plan));assert.throws(()=>transformSource(source+'\n'+insertion.anchor,plan));}
-  if(plan.path.endsWith('/l1_synchronizer.js')){const transformed=transformSource(source,plan);assert(transformed.indexOf('__rollingStartupObserve("checkpoint"')>transformed.indexOf('await elapsed(()=>execInSpan(this.tracer, \'Archiver.addCheckpoints\''));}
+  if(plan.path.endsWith('/checkpoint_ingestor.js')){const transformed=transformSource(source,plan);assert.match(transformed,/await this\.persistBatch\(plan, progress\);\s*this\.logDownloaded\(plan\.published\)/);assert(transformed.indexOf('__rollingStartupObserve("checkpoint"')>transformed.indexOf('logDownloaded(published) {'));}
  }
 });
 
-test('rc3 factory keeps the complete admission fee provider call and rejects historical or altered pins',()=>{
+test('stable factory keeps the complete admission fee provider call and rejects historical or altered pins',()=>{
  const plan=SOURCE_PLAN.find(p=>p.path.endsWith('/aztec-node/dest/factory.js'));
  const source=readFileSync(resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),'utf8');
  const call='        const p2pClient = await createP2PClient(config, archiver, peerProofVerifier, worldStateSynchronizer, epochCache, new AdmissionMinFeesProvider(nextBlockPredictor, feeProvider), packageVersion, dateProvider, telemetry, deps.p2pClientDeps, initialBlockHash);';
@@ -207,30 +207,26 @@ test('rc3 factory keeps the complete admission fee provider call and rejects his
  assert.equal(readFileSync(resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),'utf8'),source);
 });
 
-test('rc3 actual batch rollback block remains byte-identical and preserves awaited rewind and original rejection (labelled store doubles)',async()=>{
- const plan=SOURCE_PLAN.find(p=>p.path.endsWith('/l1_synchronizer.js'));
+test('stable checkpoint ingestor preserves awaited rollback and original rejection (labelled store doubles)',async()=>{
+ const plan=SOURCE_PLAN.find(p=>p.path.endsWith('/checkpoint_ingestor.js'));
  const source=readFileSync(resolve('node_modules/@aztec-labs',plan.path.replace('/usr/src/yarn-project/','')),'utf8'),transformed=transformSource(source,plan);
- const begin='                const restoreTo = syncPointBeforeBatch ?? this.l1Constants.l1StartBlock;';
- const end='        }while (searchEndBlock < currentL1BlockNumber)';
- assert.equal(source.split(begin).length,2);assert.equal(source.split(end).length,2);
- const body=text=>text.slice(text.indexOf(begin),text.indexOf(end)).replace(/            }\n$/,'');
- assert.equal(body(transformed),body(source),'the complete original catch body, including rethrow, is unchanged');
- assert(transformed.includes("import { resolveCheckpointAttestationsFromCalldata } from './validation.js';"));
- const observation=transformed.indexOf('__rollingStartupObserve("checkpoint"');
- assert(observation>transformed.indexOf('batchPersisted = true;'));
- assert(observation<transformed.indexOf(begin),'checkpoint observation stays inside successful batch before outer failure handler');
- assert.throws(()=>transformSource(source,{...plan,sha256:'118889e3b8a157aa748ffd3b4977c6c2fa87d8149d6668862c673fa0b71e7d7a'}));
- assert.throws(()=>transformSource(source.replace('!batchPersisted && currentSyncPoint !== undefined','currentSyncPoint !== undefined'),plan));
- const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
- const run=new AsyncFunction('syncPointBeforeBatch','batchPersisted','searchStartBlock','searchEndBlock','err',body(transformed));
+ const method=(text,start,end)=>text.slice(text.indexOf(start),text.indexOf(end,text.indexOf(start)));
+ const ingest=text=>method(text,'async ingestBatch(', '\n    /**');
+ const restore=text=>method(text,'async restoreSyncPointAfterFailedBatch(', '\n    logDownloaded(');
+ assert.equal(ingest(transformed),ingest(source),'complete ingestion and catch/rethrow remain unchanged');
+ assert.equal(restore(transformed),restore(source),'complete rollback remains unchanged');
+ assert.match(ingest(transformed),/await this\.persistBatch\(plan, progress\);\s*this\.logDownloaded\(plan\.published\)/);
+ assert(transformed.indexOf('__rollingStartupObserve("checkpoint"')>transformed.indexOf('logDownloaded(published) {'));
+ assert.throws(()=>transformSource(source.replace('!progress.persisted && currentSyncPoint !== undefined','currentSyncPoint !== undefined'),plan));
+ const Class=new Function('return class { '+ingest(transformed)+'\n'+restore(transformed)+' }')();
  for(const [before,persisted,current,expected]of [[10n,false,20n,10n],[undefined,false,20n,5n],[10n,true,20n,null],[10n,false,8n,null],[10n,false,undefined,null]]){
   const error={private:'NOT_RECORDED'},writes=[];let release;let reads=0;
-  const blocks={async getSynchedL1BlockNumber(){assert.equal(this,blocks);reads++;return current;},setSynchedL1BlockNumber(value){assert.equal(this,blocks);writes.push(value);return new Promise(resolve=>{release=resolve;});}};
-  const context={stores:{blocks},l1Constants:{l1StartBlock:5n},log:{warn(){}}};
-  const pending=run.call(context,before,persisted,1n,2n,error);
+  const blocks={async getSynchedL1BlockNumber(){assert.equal(this,blocks);return ++reads===1?before:current;},setSynchedL1BlockNumber(value){assert.equal(this,blocks);writes.push(value);return new Promise(resolve=>{release=resolve;});}};
+  const instance=new Class();Object.assign(instance,{deps:{stores:{blocks},l1Constants:{l1StartBlock:5n},log:{warn(){}}},planBatch:async()=>({}),persistBatch:async(_plan,progress)=>{progress.persisted=persisted;throw error;},logDownloaded:()=>assert.fail('failed batch must not report downloaded')});
+  const pending=instance.ingestBatch([],{searchStartBlock:1n,searchEndBlock:2n},{},false);
   const rejected=assert.rejects(pending,e=>e===error);
   await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(reads,1);assert.deepEqual(writes,expected===null?[]:[expected]);
+  assert.equal(reads,2);assert.deepEqual(writes,expected===null?[]:[expected]);
   if(expected!==null){let settled=false;void pending.catch(()=>{settled=true;});await Promise.resolve();assert.equal(settled,false,'rewind completion is awaited before original error escapes');release();}
   await rejected;
  }

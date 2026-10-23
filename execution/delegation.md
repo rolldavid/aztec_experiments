@@ -765,3 +765,7 @@ Root owns shared account/runtime integration. funding_investigation implements p
 21October follow-up: flow_scope_efficiency implements single-action social/profile flows; post_path_review reader integration and independent panel review; post_publish_plan MetaMask E2E harness investigation; root live disposable-wallet test and publication.
 
 21 October: fresh_account_review independently investigated same-wallet deterministic test account generations and portal support. Read-only; no contract change required. Root implements and publishes.
+
+23 October availability restoration: root owns service diagnosis, source integration and publication. network_upgrade_check independently verifies actual testnet version and necessary upgrade scope read-only. No automatic contract redeployment; preserve working services and existing state.
+
+23 October stable6 migration: stable_sdk_patch_review reviews exact upstream patch compatibility; stable_release_packaging traces existing publish tools. Root owns source/package updates and deployment. Owner explicitly discards all old application state; clean network deployment without archival/migration/recovery work.

@@ -5,27 +5,27 @@
     {
       "name": "RollingBoard",
       "path": "billboard/target/rolling_contract-RollingBoard.json",
-      "sha256": "a3017e14c9f4c38a1414f9bdf54be24be81d85e3bf9fb663d337ed4ce1493f4d"
+      "sha256": "1d4b51ae08830c2bddf9625caebc30c76b006cf80933c76f1baadb5879ef9f8a"
     },
     {
       "name": "PrivateBok",
       "path": "experiments/private-bok/target/private_bok-PrivateBok.json",
-      "sha256": "0095bc9599401ef052436c1e6aec34903fad7745e3ff8bee2ea682d4586b65af"
+      "sha256": "59b7c7315589a777bc9d1637d05cb1e9de4cdc876e8d33496b4667ee97438487"
     }
   ],
   "inputs": {
-    "apps/src/billboard/private_fee_artifact.json": "0f1266bfe011c8ccac93f6ff00191e436ecda7c02f64fe9629fd6d7665660827",
-    "noir-dependencies.json": "bafc55482a422c076bb5a0622e5f14c4a3bb525fedc95dee884a3afbfce9e717",
-    "toolchain.json": "8a5ade97648d006124ee1a7f2e40c55375be90d116f3c4c90e2e56456f89d8a8",
-    "package-lock.json": "eeff963f7828637d0bf1368b36c9735959f1c1afd95a430bee4a46b6aacee99e",
+    "apps/src/billboard/private_fee_artifact.json": "fbe378fc7323a5ad90c87797b90ca41b45d61f719e65e0883b9d01304d02337f",
+    "noir-dependencies.json": "e0154393e605b29232952afe540e04ae9ef6521ec2cbaa93871048ffc0a6d920",
+    "toolchain.json": "54a5bf67f67ceab2f8894b834a88ecac221bfeef5021cb7cd399ea10901598e4",
+    "package-lock.json": "bfe89933145d2a6de03603c1726df9c235d19717779eeb04ac70e7a0c862ef7b",
     "scripts/build-contracts.mjs": "1bd2d6ed0d608989180e08070b1ef46f45429c1b5855328e87fc818eec456cb8",
     "scripts/check-noir-dependencies.mjs": "17be15dc0297b52fe959b9581067284c19e8426ecfc72463c1bd36c963123549",
     "scripts/normalize-noir.mjs": "d1dc22ad5e50d016e9e1fce6d8c5d3cadc21db431b4eb94717a347f5c0c69a5d",
     "billboard/Nargo.toml": "c2ebd5861978eb15cf7f0f7501c1a849d1db8907ad17f9c8e2082128046b3973",
-    "billboard/rolling_contract/Nargo.toml": "713c597eadf4b54bc6b037d738101e5983009a0e42c83d0bb3050a3f35f87f73",
+    "billboard/rolling_contract/Nargo.toml": "ee0cd500ffa7b4d3fcc3caf703a57d1b7e806edfcbdf134285b7077bb489c172",
     "billboard/rolling_contract/build.mjs": "15d1e661f625f9acc5fc11f36024d5bc83e960f9f75d334fb99c292ca24222ea",
     "experiments/private-bok/Nargo.toml": "fdfdce9b51ea0d14e2b84bb4b9be0f173a1bef1a01713889ec103b291b9d7f59",
-    "experiments/private-bok/escrow/Nargo.toml": "af34bbe690537ebb19a7d1985c9fdfb00f2622fa8983f2471879843c6eeefc29",
+    "experiments/private-bok/escrow/Nargo.toml": "607bff6f3626e5d5f12ea8ca5496616db884e2f74be8df4e81e010898ef7b51f",
     "experiments/private-bok/build.mjs": "813b1b41c66b0f6ff255d23a1ac45541a4d87042fe9521f135c203f4cfb89da0",
     "billboard/rolling_contract/src/admission.nr": "266a21b6305e8d10f5fdad8084d19d53197e4c7814a1ca1ae8a42037bc0f1786",
     "billboard/rolling_contract/src/encoding.nr": "32d1ddbca7c6cdf607a24ad1ecdf7ab4be6667877cf7c34b3cf370a02efcfd07",

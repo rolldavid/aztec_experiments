@@ -62,7 +62,7 @@ export const OPERATOR_NODE_METHODS = Object.freeze([
   "getAllowedPublicSetup"
 ]);
 const operatorMethods = new Set(OPERATOR_NODE_METHODS);
-const silent = Object.assign(() => {}, Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k => [k, () => {}])));
+const silent = Object.assign(() => {}, Object.fromEntries(['trace','debug','verbose','info','warn','error','fatal'].map(k => [k, () => {}])),{isLevelEnabled:()=>false});
 const unavailable = () => Object.assign(Error('Trusted node unavailable'), {code: 'BB_TRUSTED_NODE_UNAVAILABLE'});
 const errorResponse = (id, code = -32000) => ({jsonrpc: '2.0', id, error: {code, message: 'Trusted node request rejected'}});
 

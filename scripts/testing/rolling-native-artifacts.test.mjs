@@ -32,7 +32,7 @@ test('all actual protocol, standard and mapped kernel real/simulated/VK artifact
   const adapter=installRollingNativeArtifacts(),oldFetch=globalThis.fetch;let requests=0;
   globalThis.fetch=async()=>{requests++;throw Error('LOCAL_ARTIFACT_TEST_NETWORK_FORBIDDEN');};
   try{
-    const initial=adapter.observation();assert.equal(initial.artifactCount,60);assert.equal(initial.nodeVersion,'24.21.0');assert.equal(initial.packageVersion,'6.0.0-rc.3');
+    const initial=adapter.observation();assert.equal(initial.artifactCount,60);assert.equal(initial.nodeVersion,'24.21.0');assert.equal(initial.packageVersion,'6.0.0');
     assert.throws(()=>installRollingNativeArtifacts(),{code:'ROLLING_NATIVE_ARTIFACTS_CONFIG'});
     const {LazyProtocolContractsProvider}=await import('@aztec-labs/protocol-contracts/providers/lazy');
     const {BundledProtocolContractsProvider}=await import('@aztec-labs/protocol-contracts/providers/bundle');
