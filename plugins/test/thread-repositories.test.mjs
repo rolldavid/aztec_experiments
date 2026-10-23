@@ -396,6 +396,9 @@ test('browser scenario patch keeps unchanged scenarios and validates whole plan 
  const beforeAppend=JSON.parse((await s.call('read_file',{path:'browser-tests.json'})).text);
  const schema=s.definitions.find(tool=>tool.function.name==='edit_browser_plan').function.parameters;
  assert.deepEqual(schema.required,[]);assert.equal(schema.additionalProperties,false);
+ const singleAppend=await s.call('edit_browser_plan',{append:[scenario('actual model append-only shape')]});
+ assert.equal(singleAppend.browserPlan.steps,89);assert.equal(singleAppend.browserPlan.scenarios.length,5);
+ await s.call('edit_browser_plan',{remove:[4]});
  const appended=await s.call('edit_browser_plan',{append:[scenario('append-only regression'),scenario('second appended scenario')]});
  assert.equal(appended.browserPlan.steps,91);assert.equal(appended.browserPlan.scenarios.length,6);
  const afterAppend=(await s.call('read_file',{path:'browser-tests.json'})).text;
