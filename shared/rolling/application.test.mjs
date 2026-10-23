@@ -1823,11 +1823,20 @@ test('immediate preparation rejects unrelated financial actions and caller fee o
  await assert.rejects(fixture().app.prepare({type:'withdraw',deposit:'9'},{immediate:true}));
 });
 
-test('immediate Bok preparation skips review estimates for both authorized request and exact saved post',async()=>{
- const f=bokFixture(),prepared=await f.app.prepare(bokAction(),{immediate:true});assert.equal(f.state.estimates,0);assert.equal(prepared.maximumFee,'100');
- const authorized=await f.app.submitPrepared(prepared.intentId);assert.equal(authorized.status,'authorized');assert.equal(f.state.estimates,1);
- const post=await f.app.prepareBokPost(authorized.intentId,{immediate:true});assert.equal(f.state.estimates,1);assert.equal(post.maximumFee,'100');
- await f.app.submitPrepared(post.intentId);assert.equal(f.state.estimates,2);assert.equal(f.state.sends,2);assert.equal(f.state.calls.at(-1).name,'post_with_bok');
+test('immediate Bok authorizes and publishes in one exact batch, estimate and send',async()=>{
+ const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){assert.equal(wallet,f.options.accountSession.wallet);this.name='batch';this.interactions=interactions;}};
+ const app=f.restart(),prepared=await app.prepare(bokAction(),{immediate:true});assert.equal(prepared.stage,'bok-atomic');assert.equal(f.state.estimates,0);assert.equal(prepared.maximumFee,'100');
+ const result=await app.submitPrepared(prepared.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+ const [authorize,post]=f.state.sent.payload.interactions;assert.equal(authorize.name,'authorize_request');assert.equal(post.name,'post_with_bok');assert.equal(authorize.args[0],post.args[6]);assert.equal(post.args[5],f.options.deployment.bok.pluginId);assert.equal(authorize.args[2],bokAction().budget);
+ assert.equal((await app.reconcile(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});
+test('immediate Bok batch rechecks balance and enforces total fee before sending',async()=>{
+ for(const change of ['credit','fee']){
+  const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.interactions=interactions;}};
+  const app=f.restart(),prepared=await app.prepare(bokAction(),{immediate:true});
+  if(change==='credit')f.state.bokCredit=0n;else f.state.fee=101n;
+  await assert.rejects(app.submitPrepared(prepared.intentId),{code:change==='credit'?'ROLLING_BOK_CREDIT_INSUFFICIENT':'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);
+ }
 });
 
 test('a shared account flow attests network once and a new flow validates again',async()=>{

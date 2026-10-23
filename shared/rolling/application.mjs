@@ -299,7 +299,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
-    nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(record.bok.phase==='post'?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.bokReleaseSource?{bokRelease:{sourceIntentId:record.bokReleaseSource.id}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
+    nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(['post','atomic'].includes(record.bok.phase)?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.bokReleaseSource?{bokRelease:{sourceIntentId:record.bokReleaseSource.id}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
     ...(record.nameAvailability?{nameAvailability:clone(record.nameAvailability)}:{}),...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
   async function checkBokRecord(record){const scopes=[record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope,record?.bokReleaseSource?.bok?.scope];if(scopes.some(Boolean)||record?.withdrawal?.kind==='bok')await ensureBok();for(const savedScope of scopes)if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value&&saved.value.id===id,'ROLLING_INTENT_NOT_FOUND');await checkBokRecord(saved.value);return saved;}
@@ -467,7 +467,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(record.bokReleaseSource)await checkBokRelease(record.bokReleaseSource,record.action.type);
       await checkModeration(record);
       if(record.bok)await checkBokThread(record.action,await contract());
-      if(record.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(record.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
+      if(['authorize','atomic'].includes(record.bok?.phase)){const available=await bokCredit();check(available>=BigInt(record.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
       if(record.bok?.phase==='post')await waitingBok(record);
   }
   async function checkActionRecoveryContext(record){
@@ -479,7 +479,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     }
     if(record.bok){
       await bokContext();const postArgs=plain(await argumentsFor(record.action,await contract(),record.nonce));
-      check(same(postArgs,record.bok.phase==='post'?record.args.slice(0,5):record.bok.postArgs),'ROLLING_RECOVERY_CONTEXT_CHANGED');
+      check(same(postArgs,['post','atomic'].includes(record.bok.phase)?record.args.slice(0,5):record.bok.postArgs),'ROLLING_RECOVERY_CONTEXT_CHANGED');
       check(await bokInvocationTarget(postArgs[2],record.nonce,record.action.content)===record.bok.target,'ROLLING_INTENT_CHANGED');
     }
     if(record.action.type==='name')await nameAvailability(record.action);
@@ -662,7 +662,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function selectedContract(record){return record.action.type==='claim-private-fee'?null:record.bok?.phase==='authorize'||['claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(record.action.type)?bokContract():contract();}
   async function interaction(board,record){
-    check((record.bok?.phase==='post'?'post_with_bok':methods[record.action.type])===record.method,'ROLLING_INTENT_CHANGED');
+    check((['post','atomic'].includes(record.bok?.phase)?'post_with_bok':methods[record.action.type])===record.method,'ROLLING_INTENT_CHANGED');
     if(record.action.type==='claim-private-fee'){
       check(typeof sdk.BatchCall==='function'&&same(record.args,[]),'ROLLING_FUNDING_UNAVAILABLE');
       // The existing payment method supplies FeeJuice.claim + mint_and_pay_fee.
@@ -674,6 +674,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const selectedArtifact=record.bok?.phase==='authorize'||['claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(record.action.type)?deployment.bok.artifact:deployment.board.artifact;
     const abi=[...selectedArtifact.functions,...(selectedArtifact.nonDispatchPublicFunctions??[])].find(f=>f.name===record.method);check(abi,'ROLLING_ABI_MISMATCH');
     let encoded=sdk.encodeArguments(abi,record.args).map(f=>f.toString());
+    if(record.bok?.phase==='atomic'){
+      check(typeof sdk.BatchCall==='function','ROLLING_BOK_UNAVAILABLE');
+      const authorization=[record.bok.requestId,record.bok.target,record.bok.budget];
+      const authorizationAbi=deployment.bok.artifact.functions.find(f=>f.name==='authorize_request');check(authorizationAbi,'ROLLING_ABI_MISMATCH');
+      encoded=[sdk.encodeArguments(authorizationAbi,authorization).map(f=>f.toString()),encoded];
+      // Both private calls enqueue public execution in this order. A failed post
+      // reverts the authorization as part of the same transaction.
+      call=new sdk.BatchCall(session.wallet,[(await bokContract()).methods.authorize_request(...authorization),call]);
+    }
     if(record.action.type==='claim-deposit'&&record.action.bokReceipt!==undefined){
       await checkBokRecord(record);check(record.fundingBok&&typeof sdk.BatchCall==='function','ROLLING_FUNDING_UNAVAILABLE');
       const bokAbi=deployment.bok.artifact.functions.find(f=>f.name==='claim');check(bokAbi,'ROLLING_ABI_MISMATCH');
@@ -843,6 +852,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const target=await bokInvocationTarget(draft,nonce,action.content);
         record.bok={scope:clone(bok),phase:'authorize',requestId,target,budget:String(budget),availableCredit:String(available),postArgs:args};
         record.args=[requestId,target,String(budget)];
+        if(immediate){record.bok.phase='atomic';record.method='post_with_bok';record.args=[...args,bok.pluginId,requestId];}
       }
       if(preferenceAction(record)){record.originalPreferenceHead=await preferenceHead();check(record.originalPreferenceHead.revision===action.expectedRevision,'ROLLING_RECOVERY_CONTEXT_CHANGED');}
       if(action.type==='read-marker')record.originalMarker=await markerContext(record);
