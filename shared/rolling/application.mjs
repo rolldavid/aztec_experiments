@@ -181,7 +181,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(bind&&bok&&!bokBindingVerified){
       // configure_plugin makes a plugin ID's adapter immutable. Establish this
       // deployment binding once; enabled state belongs to transaction simulation.
-      const plugin=await utility(await contract(),'get_plugin',[bok.pluginId]);
+      const plugin=await pluginRecord();
       check(field(plugin?.adapter,true)===field(bok.address,true),'ROLLING_BOK_UNAVAILABLE');
       await localGuard();bokBindingVerified=true;
     }
@@ -659,9 +659,30 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   const bokContract=async()=>{await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');return sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(bok.address))),deployment.bok.artifact,session.wallet);};
   const uint128=value=>{check(typeof value==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(value)&&BigInt(value)<(1n<<128n));return BigInt(value);};
+  async function pluginRecord(){
+    // get_plugin is a public ABI view, so Contract.simulate would execute a
+    // complete wallet transaction. V6 PluginRecord is two Packable fields in
+    // consecutive PublicMutable slots, keyed with the native Map derivation.
+    const artifact=deployment.board.artifact,slot=artifact.storageLayout?.plugins?.slot;
+    const matches=[...artifact.functions,...(artifact.nonDispatchPublicFunctions??[])].filter(fn=>fn.name==='get_plugin');
+    check(slot!==undefined&&BigInt(slot)>0n&&matches.length===1,'ROLLING_ABI_MISMATCH');
+    const fn=matches[0],layout=fn.returnType??fn.returnTypes?.[0],fields=layout?.fields;
+    check(fn.functionType==='public'&&fn.isStatic===true&&fn.parameters.length===1&&fn.parameters[0].type.kind==='field'&&
+      layout?.kind==='struct'&&fields?.length===2&&fields[0].name==='adapter'&&fields[0].type.kind==='struct'&&
+      fields[0].type.fields?.length===1&&fields[0].type.fields[0].name==='inner'&&fields[0].type.fields[0].type.kind==='field'&&
+      fields[1].name==='enabled'&&fields[1].type.kind==='boolean','ROLLING_ABI_MISMATCH');
+    const anchor=await balanceAnchor(),base=await sdk.deriveStorageSlotInMap(new sdk.Fr(BigInt(slot)),new sdk.Fr(BigInt(bok.pluginId)));
+    await guard();
+    const results=await Promise.allSettled([0n,1n].map(offset=>Promise.resolve().then(()=>session.node.getPublicStorageAt(
+      {hash:anchor.blockHash},deployment.board.address,new sdk.Fr(BigInt(base.toString())+offset)))));
+    const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;
+    const [adapter,enabled]=results.map(result=>chainValue(result.value));
+    check(enabled===0n||enabled===1n,'ROLLING_INVALID_RESPONSE');await checkBalanceAnchor(anchor);
+    return {adapter:field(adapter.toString()),enabled:enabled===1n};
+  }
   async function bokContext(){
     await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');await guard();
-    const plugin=await utility(await contract(),'get_plugin',[bok.pluginId]);
+    const plugin=await pluginRecord();
     check(plugin?.enabled===true&&field(plugin.adapter,true)===field(bok.address,true),'ROLLING_BOK_UNAVAILABLE');
     await guard();bokBindingVerified=true;return bokContract();
   }

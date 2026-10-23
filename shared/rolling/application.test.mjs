@@ -15,7 +15,7 @@ import {encodeArguments,loadContractArtifact,decodeFromAbi,getFunctionReturnType
 import {createL2Journal,l2JournalScopeText} from '../l2-journal.mjs';
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {Tx,TxHash,MinedTxReceipt,PendingTxReceipt,DroppedTxReceipt,mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
-import {BatchCall} from '@aztec-labs/aztec.js/contracts';
+import {BatchCall,Contract} from '@aztec-labs/aztec.js/contracts';
 import {PrivateMintAndPayFeePaymentMethod} from '../private-fee-payment.mjs';
 import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
 import {prepareFundingClaim as verifyFundingClaim} from './funding-receipts.mjs';
@@ -65,7 +65,7 @@ function fixture(){
     assert.equal(opts.transactionJournal,journal);if(state.failSend)throw Error('unknown after send');
     state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77),status:'checkpointed',blockNumber:1,blockHash:hex(42),transactionFee:2n}};return {receipt:{}};
   }};
-  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
+  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
@@ -1910,7 +1910,7 @@ test('cold atomic Bok binds immutable adapter once, and refuses a wrong deployme
   if(wrong)f.state.bokAdapter=8n;const app=f.restart();
   if(wrong){await assert.rejects(app.prepare(bokAction(),{immediate:true}),{code:'ROLLING_BOK_UNAVAILABLE'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);}
   else{const prepared=await app.prepare(bokAction(),{immediate:true});await app.submitPrepared(prepared.intentId);}
-  assert.equal(f.state.privateReads.filter(row=>row.name==='get_plugin').length,1);
+  assert.equal(f.state.privateReads.filter(row=>row.name==='get_plugin').length,0);assert.equal(f.state.pluginReads.length,2);
   assert.equal(f.state.privateReads.filter(row=>['balance_of','get_post'].includes(row.name)).length,0);
  }
 });
@@ -1991,4 +1991,38 @@ for(const reorg of [false,true])test(`cancelled unsent draft then reload acknowl
  if(reorg){f.options.accountSession.node.getBlock=async()=>({hash:{toString:()=>hex(999)}});await assert.rejects(reopened.prepare({type:'like',post:'6'},{immediate:true}),{code:'BB_SUBMISSION_UNKNOWN'});}
  else assert.equal((await reopened.prepare({type:'like',post:'6'},{immediate:true})).status,'prepared');
  assert.equal(f.state.sends,1);
+});
+test('cold Bok binding uses pinned native map storage without invoking the actual public getter simulation',async()=>{
+ const f=bokFixture(),at=f.options.sdk.Contract.at;let fullSimulations=0;
+ f.options.accountSession.wallet.simulateTx=async()=>{fullSimulations++;throw Error('Full wallet simulation must not read plugin registration');};
+ f.options.sdk.Contract.at=(address,artifact,wallet)=>{const mocked=at(address,artifact,wallet),actual=Contract.at(AztecAddress.fromStringUnsafe(address.toString()),artifact,wallet);return {methods:new Proxy(mocked.methods,{get(target,name){return name==='get_plugin'?actual.methods.get_plugin:target[name];}})};};
+ f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.name='batch';this.interactions=interactions;}};
+ const getter=artifact.nonDispatchPublicFunctions.find(fn=>fn.name==='get_plugin');assert.equal(getter.functionType,'public');
+ const app=f.restart(),prepared=await app.prepare(bokAction(),{immediate:true});await app.submitPrepared(prepared.intentId);
+ assert.equal(fullSimulations,0);assert.equal(f.state.pluginReads.length,2);assert(f.state.pluginReads.every(read=>read.reference.hash===hex(42)&&read.address===hex(1)));
+ const slot=await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(7));assert.deepEqual(f.state.pluginReads.map(read=>BigInt(read.slot)),[slot.toBigInt(),slot.toBigInt()+1n]);
+ assert.equal(f.state.sends,1);
+});
+for(const failure of ['unregistered','wrong-adapter','malformed-enabled','reorg','changed-anchor','context','transport','layout'])test(`anchored plugin binding rejects ${failure} before submission`,async()=>{
+ const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.interactions=interactions;}};
+ if(failure==='unregistered')f.state.bokAdapter=0n;
+ if(failure==='wrong-adapter')f.state.bokAdapter=8n;
+ if(failure==='malformed-enabled')f.state.pluginEnabledValue=2n;
+ if(failure==='reorg')f.options.accountSession.node.getBlockData=async()=>({header:{globalVariables:{blockNumber:1}},blockHash:hex(43)});
+ if(failure==='changed-anchor')f.state.beforePluginRead=async()=>{f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:100n},hash:async()=>hex(43)});};
+ if(failure==='context')f.state.beforePluginRead=async()=>{f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(4n);};
+ if(failure==='transport')f.state.beforePluginRead=async()=>{throw Error('read unavailable');};
+ if(failure==='layout'){const altered=structuredClone(artifact);altered.nonDispatchPublicFunctions.find(fn=>fn.name==='get_plugin').returnType.fields[1].type={kind:'field'};f.options.deployment.board.artifact=altered;}
+ await assert.rejects(f.restart().prepare(bokAction(),{immediate:true}));assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);
+});
+test('disabled registered Bok can prepare atomically but status remains unavailable and action validation remains authoritative',async()=>{
+ const f=bokFixture();f.state.bokEnabled=false;f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.interactions=interactions;}};
+ const app=f.restart();assert.deepEqual(await app.readBokStatus(),{available:false});const prepared=await app.prepare(bokAction(),{immediate:true});assert.equal(prepared.bok.phase,'atomic');assert.equal(f.state.sends,0);
+});
+
+test('parallel plugin storage reads drain the sibling before releasing a failed operation',async()=>{
+ const f=bokFixture(),base=await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(7));let entered,release,finished=false;
+ const started=new Promise(resolve=>entered=resolve),gate=new Promise(resolve=>release=resolve),original=f.options.accountSession.node.getPublicStorageAt;
+ f.options.accountSession.node.getPublicStorageAt=(ref,address,slot)=>{if(slot.toBigInt()===base.toBigInt()){entered();return gate.then(()=>new Fr(5));}if(slot.toBigInt()===base.toBigInt()+1n)throw Error('read failed');return original(ref,address,slot);};
+ const pending=f.restart().prepare(bokAction(),{immediate:true}).finally(()=>{finished=true;});const rejected=assert.rejects(pending,/read failed/);await started;await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false);release();await rejected;assert.equal(f.state.sends,0);
 });
