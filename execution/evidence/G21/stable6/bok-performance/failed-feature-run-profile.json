@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "requestId": "0x25205852e554204034e6f43db6fddb7bf2122530ac4dc4277b3afc11210d1836",
+  "clickUtc": "2026-10-23T22:03:08.045Z",
+  "workerStartUtc": "2026-10-23T22:03:52.052372+00:00",
+  "terminalUtc": "2026-10-23T22:07:26.223097+00:00",
+  "totalMs": 258178.09692382812,
+  "partition": [
+    {
+      "category": "browserToWorker",
+      "durationMs": 44007.372
+    },
+    {
+      "category": "otherWorker",
+      "durationMs": 1556.659
+    },
+    {
+      "category": "escrowGuard",
+      "durationMs": 4925.031
+    },
+    {
+      "category": "boardAndConversationReads",
+      "durationMs": 3024.373
+    },
+    {
+      "category": "repositoryTools",
+      "durationMs": 2354.276
+    },
+    {
+      "category": "providerPreflight",
+      "durationMs": 565.407
+    },
+    {
+      "category": "providerModel",
+      "durationMs": 104416.337
+    },
+    {
+      "category": "validationAndPublication",
+      "durationMs": 12222.971
+    },
+    {
+      "category": "operatorProof",
+      "durationMs": 6685.119
+    },
+    {
+      "category": "operatorSubmission",
+      "durationMs": 357.541
+    },
+    {
+      "category": "operatorConfirmation",
+      "durationMs": 78063.011
+    }
+  ],
+  "inclusiveStagesForAuditOnly": {
+    "escrow.open": {
+      "count": 1,
+      "inclusiveMonotonicMs": 377.037
+    },
+    "board.readRequest": {
+      "count": 20,
+      "inclusiveMonotonicMs": 1590.934
+    },
+    "escrow.request": {
+      "count": 4,
+      "inclusiveMonotonicMs": 710.407
+    },
+    "conversation.load": {
+      "count": 1,
+      "inclusiveMonotonicMs": 373.856
+    },
+    "conversation.assertCurrent": {
+      "count": 18,
+      "inclusiveMonotonicMs": 1059.738
+    },
+    "repository.admit": {
+      "count": 1,
+      "inclusiveMonotonicMs": 1202.566
+    },
+    "agent.history": {
+      "count": 1,
+      "inclusiveMonotonicMs": 0.096
+    },
+    "agent.open": {
+      "count": 1,
+      "inclusiveMonotonicMs": 0.424
+    },
+    "tool.list_files": {
+      "count": 2,
+      "inclusiveMonotonicMs": 63.952
+    },
+    "tool.read_file": {
+      "count": 7,
+      "inclusiveMonotonicMs": 5.4879999999999995
+    },
+    "agent.context": {
+      "count": 1,
+      "inclusiveMonotonicMs": 57.61
+    },
+    "provider.catalogue": {
+      "count": 16,
+      "inclusiveMonotonicMs": 88.34700000000002
+    },
+    "provider.balance": {
+      "count": 16,
+      "inclusiveMonotonicMs": 476.46199999999993
+    },
+    "provider.credits": {
+      "count": 16,
+      "inclusiveMonotonicMs": 477.033
+    },
+    "escrow.assertUsable": {
+      "count": 16,
+      "inclusiveMonotonicMs": 3497.4690000000005
+    },
+    "provider.completion": {
+      "count": 16,
+      "inclusiveMonotonicMs": 104416.337
+    },
+    "agent.model": {
+      "count": 16,
+      "inclusiveMonotonicMs": 111411.411
+    },
+    "tool.edit_file": {
+      "count": 6,
+      "inclusiveMonotonicMs": 705.9870000000001
+    },
+    "tool.edit_browser_plan": {
+      "count": 4,
+      "inclusiveMonotonicMs": 250.179
+    },
+    "tool.check_workspace": {
+      "count": 1,
+      "inclusiveMonotonicMs": 7920.645
+    },
+    "tool.write_file": {
+      "count": 1,
+      "inclusiveMonotonicMs": 128.469
+    },
+    "agent.accept": {
+      "count": 1,
+      "inclusiveMonotonicMs": 4302.326
+    },
+    "agent.close": {
+      "count": 1,
+      "inclusiveMonotonicMs": 56.596
+    },
+    "escrow.inspectOperation": {
+      "count": 2,
+      "inclusiveMonotonicMs": 340.213
+    },
+    "escrow.prove": {
+      "count": 1,
+      "inclusiveMonotonicMs": 6685.119
+    },
+    "escrow.send": {
+      "count": 1,
+      "inclusiveMonotonicMs": 357.541
+    },
+    "escrow.wait": {
+      "count": 1,
+      "inclusiveMonotonicMs": 78063.011
+    },
+    "escrow.finalize_reply": {
+      "count": 1,
+      "inclusiveMonotonicMs": 86009.457
+    },
+    "request.total": {
+      "count": 1,
+      "inclusiveMonotonicMs": 214170.725
+    }
+  },
+  "limitations": [
+    "Cross-host UTC alignment assumes synchronized host clocks; intra-stage durations use monotonic clocks.",
+    "Proving spans include wallet preparation unless separately instrumented.",
+    "Inclusive audit totals overlap and must not be summed.",
+    "Model HTTP duration does not isolate time to first token or decoding."
+  ],
+  "outcome": "failure reply settled; requested feature not published",
+  "validSuccessfulLatencyBenchmark": false,
+  "diagnosedCauses": [
+    "64-step cap rejected81steps and induced removal of existing coverage",
+    "Two checkbox selectors contained literal backslash-quote characters",
+    "Later test plan no longer operated reset and remove-all controls"
+  ]
+}

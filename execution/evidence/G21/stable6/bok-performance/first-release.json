@@ -1,0 +1,207 @@
+{
+  "commit": "4f15139c2c3e2b72be920ff3d503472276f7cbe3",
+  "bok": {
+    "published": true,
+    "commit": "4f15139c2c3e2b72be920ff3d503472276f7cbe3",
+    "source": "/opt/rolling-bok/releases/4f15139c2c3e2b72be920ff3d503472276f7cbe3",
+    "previousSource": "/opt/rolling-bok/releases/8efe8919cd1c019d82ff7b2d3d787c62f52de7c5",
+    "sourcePinsSha256": "a8b71c1dc1a4875437e6029c79e0ac4e5bfad9a244288840e50401498fd8c6a8",
+    "oldPid": "251846",
+    "newPid": "253891",
+    "proxyPid": "253892",
+    "configSha256": "38e3cf3ad1610a6c3aa74256058ae65b662469103c9c4f7367808ee53a81f1ff",
+    "unitSha256": "05c38e16a8df051509ca97cddbd40513fb3de0eea12e5915f47df4397ec910ad",
+    "fixture": {
+      "operation": "disposable-performance-baseline",
+      "invocationId": "0x3796b4de05377f444ac2def355064e1183978ab4050836280ce223c445e1a0b6",
+      "previousAccepted": "373e1afd74c0a3fa3b64aae811cc4ddbfdf93cf9",
+      "originalBaseline": "028da8d40cdd024b67e72956a411aa38a8886c83",
+      "acceptedRevision": "3419e610b4996adab18f6214695955c8fc587314",
+      "tree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92",
+      "sourceDigest": "a3706cc3889448a83a89e947d6e3fdfc10e5539f8423ff6fecccfef8f9397b05",
+      "files": [
+        "browser-tests.json",
+        "index.html",
+        "package.json",
+        "test.js"
+      ],
+      "hasClearCompleted": false,
+      "mirrorRemoteCommit": "36e02077030a46d9cea585e38b7fc9b1fac5c526",
+      "mirrorRemoteTree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92",
+      "publication": {
+        "published": true,
+        "repositoryId": "2ebf5226acfbe0908c2c87758187b7fe73018b30cc79f9e61484529a9cfcb477",
+        "threadId": "0x0a8965a3d6d531017a97a74b0c8cf52def931804156d625cf427ff795f8d1e83",
+        "acceptedRevision": "3419e610b4996adab18f6214695955c8fc587314",
+        "publicationId": "5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0",
+        "artifactUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/3419e610b4996adab18f6214695955c8fc587314/files/index.html",
+        "sourceUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/3419e610b4996adab18f6214695955c8fc587314/source.json",
+        "latestUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/",
+        "latestSourceUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/source.json"
+      }
+    },
+    "health": {
+      "status": "ready",
+      "active": 0,
+      "lastFailure": null,
+      "lastSuccess": null
+    },
+    "observedAt": "2026-10-23T21:23:58.266196+00:00"
+  },
+  "ui": {
+    "published": true,
+    "commit": "4f15139c2c3e2b72be920ff3d503472276f7cbe3",
+    "ui": "/opt/rolling-ui/releases/4f15139c2c3e2b72be920ff3d503472276f7cbe3",
+    "runningSource": "/opt/rolling-app/releases/ae9d60b807316d5ce0e2df38e47c4129fb8178e8",
+    "sourcePinsSha256": "8c8fb7882edb3ff8e7037e3cba7262770cd8d8cef6f22fe8bbd4e7cc9d77b341",
+    "pidsUnchanged": {
+      "rolling-application.service": 642411,
+      "rolling-application-proxy.service": 642414,
+      "rolling-node.service": 561964,
+      "rolling-query.service": 565186,
+      "board-prover.service": 651105,
+      "board-prover-proxy.service": 630307,
+      "rolling-moderator.service": 567551
+    }
+  },
+  "prover": {
+    "publishedAt": "2026-10-23T21:09:07.683287+00:00",
+    "threadsBefore": 1,
+    "threadsAfter": 8,
+    "configSha256Before": "4636b0cc69732870629d2ac1a041554bb9869ca3a61f523abacbcdf12969a607",
+    "configSha256After": "429e7f737ccf59b62ff1ca83f3f010c3339332ca5d88264f3e830ea5e83d5e3e",
+    "activationResultSha256Before": "0bee6b5d857945a3ac364c1d4ad8a47ceb3060c20fe5f7289c5271fabadb189e",
+    "activationResultSha256After": "7edd2fb8b60f7b5537aeb1ffb80ea92ce915a92f915a3d4b2737a8dbb741bb6f",
+    "pidBefore": 630292,
+    "pidAfter": 651105,
+    "source": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc",
+    "protectedPids": {
+      "board-prover-proxy": "630307",
+      "rolling-node": "561964",
+      "rolling-query": "565186",
+      "rolling-application": "642411",
+      "rolling-application-proxy": "642414"
+    },
+    "health": {
+      "ready": true,
+      "proofs": "real",
+      "queue": {
+        "jobs": 0,
+        "bytes": 0,
+        "running": false,
+        "submitted": 0,
+        "completed": 0,
+        "failed": 0
+      },
+      "query": {
+        "enabled": true,
+        "ready": true
+      }
+    },
+    "memoryLimitBytes": 25769803776,
+    "queueMode": "existing single serial worker, unchanged"
+  },
+  "proofThreadBenchmark": {
+    "scope": "same private input, existing native worker, no transaction broadcast",
+    "results": [
+      {
+        "threads": 1,
+        "durationMs": 21668.106505,
+        "proofBytes": 111552
+      },
+      {
+        "threads": 4,
+        "durationMs": 8599.800646,
+        "proofBytes": 111552
+      },
+      {
+        "threads": 8,
+        "durationMs": 5609.342177999999,
+        "proofBytes": 111552
+      }
+    ],
+    "source": "live /opt/board-prover/releases/rolling-8fed2c764e5b62fc native worker",
+    "observedAt": "2026-10-23T21:05:54Z",
+    "hostLogicalCpus": 16,
+    "inputBytes": 1042635,
+    "proofVerification": "AztecClientBackend.prove verifies native proof before returning",
+    "productionQueueAfter": {
+      "jobs": 0,
+      "bytes": 0,
+      "running": false,
+      "submitted": 6,
+      "completed": 6,
+      "failed": 0
+    },
+    "productionReadyAfter": true,
+    "limitations": "One sequential run per thread count on the same input; measures worker startup plus proof and verification, not browser end-to-end time."
+  },
+  "publicReadback": [
+    {
+      "path": "/wallet/runtime.json",
+      "sha256": "2f249a00eabc1fc51221243989708bf7a553bb86adcc75faf5f38511d9ad70bb",
+      "headers": {
+        "cache-control": "no-store",
+        "age": null,
+        "etag": "\"dmcj8a4dat9k-39i\"",
+        "x-cache": "Miss from cloudfront",
+        "content-type": "application/json"
+      },
+      "scriptsMatch": true,
+      "scriptHashes": {
+        "/wallet/ethers.js": "532950515fd29ae9f7a21ceb2b68100815024d7944c3d5a92246d5b900bd703b",
+        "/wallet/aztec_bundle.js": "556b3df471b22d7d3abefca576cda8b21b227ce046869854b591ccf0c9d75e25",
+        "/wallet/crs-client.js": "636ea244e87b31e1eae97d1c2e78e8fa3faf91287280c3253d3bddbf90fdd503",
+        "/wallet/wallet-providers.js": "2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c",
+        "/wallet/claim-secret-store.js": "34cf9515e93a3051a4694df3c0e18cef690f04d885dcc09cd79510b86a7adb2e",
+        "/wallet/ethereum-account-session.js": "5fa0ad446a3073ff210a048250738b7e5cd0123d80c5166d8ed5b16c3414a14b",
+        "/wallet/account.js": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2",
+        "/wallet/engine.js": "81e0354b8878b13cff1d9193e0fb364bc7ef0eeef4409ba0babe9610de0efd34"
+      }
+    },
+    {
+      "path": "/performance.mjs",
+      "sha256": "af8d6028d06b65b81bea22259e6b470d002e045896412af2d205143cc6d89937",
+      "headers": {
+        "cache-control": "no-store",
+        "age": null,
+        "etag": "\"dmcj8a4ocy0j-1uq\"",
+        "x-cache": "Miss from cloudfront",
+        "content-type": "text/javascript; charset=utf-8"
+      },
+      "matchesPublishedSource": true
+    },
+    {
+      "path": "/prover/healthz",
+      "sha256": "6a5f078da010e82d87fbb8f495db4815a8ac42049cd4bded2b724dc885ed79eb",
+      "headers": {
+        "cache-control": "no-store",
+        "age": null,
+        "etag": null,
+        "x-cache": "Miss from cloudfront",
+        "content-type": "application/json"
+      },
+      "health": {
+        "ready": true,
+        "proofs": "real",
+        "queue": {
+          "jobs": 0,
+          "bytes": 0,
+          "running": false,
+          "submitted": 0,
+          "completed": 0,
+          "failed": 0
+        },
+        "query": {
+          "enabled": true,
+          "ready": true
+        }
+      }
+    }
+  ],
+  "cloudfrontInvalidation": {
+    "id": "IA0GEEFY8A74M0T9ILOUULM30P",
+    "status": "Completed"
+  },
+  "fullPostToReplyAcceptance": "Root is running the retained real browser benchmark; publication is not a new end-to-end success claim."
+}

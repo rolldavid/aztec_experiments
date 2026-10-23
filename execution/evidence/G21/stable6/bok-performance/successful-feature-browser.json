@@ -1,0 +1,113 @@
+{
+  "requestId": "0x2d0a77d5b4314149668362981926d23d9f4f7fee21b89d6058cdcbf1f927be3c",
+  "timeOrigin": 1792792668338.815,
+  "postToReplyRenderedMs": 205939.28499996662,
+  "method": "Actual post interaction mark to final reply DOM commit in same browser monotonic clock. Reply appeared automatically. Inclusive spans overlap and must not be summed.",
+  "measures": [
+    {
+      "name": "rolling.action.sync",
+      "start": 1524750.544999957,
+      "duration": 4215.475000023842
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 1531373.4749999046,
+      "duration": 3627.695000052452
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 1524750.334999919,
+      "duration": 10260.450000047684
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 1536093.6299999952,
+      "duration": 3270.4950000047684
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 1539364.1549999714,
+      "duration": 327.06499993801117
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 1536093.5249999762,
+      "duration": 3700.6050000190735
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 1539794.1349999905,
+      "duration": 0.16499996185302734
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 1539794.3049999475,
+      "duration": 989.1499999761581
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 1540783.4749999046,
+      "duration": 23615.730000019073
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 1564399.2149999142,
+      "duration": 1300.3000000715256
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 1658158.8799999952,
+      "duration": 487.47499990463257
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1658637.7049999237,
+      "duration": 8.615000009536743
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 1524337.544999957,
+      "duration": 135481.25
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 1535010.8449999094,
+      "duration": 124802.77000010014
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 1565699.544999957,
+      "duration": 94119.24500000477
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 1659814.269999981,
+      "duration": 416.74000000953674
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1660226.8299999237,
+      "duration": 4.170000076293945
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 1659828.8700000048,
+      "duration": 4194.365000009537
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 1672807.3999999762,
+      "duration": 1384.8650000095367
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 1729774.9449999332,
+      "duration": 501.9300000667572
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1730263.2350000143,
+      "duration": 13.59499990940094
+    }
+  ]
+}

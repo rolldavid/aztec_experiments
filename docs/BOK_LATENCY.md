@@ -5,6 +5,54 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
+## Comparable feature run — 3m26s, remaining work explicit
+
+The identical **Clear completed** request, starting from the same original app
+source, now completes in **205.939 seconds from Post to the automatically rendered
+reply**, versus464.264 seconds: **55.6% faster**. Canonical worker completion was
+206.435 seconds. Two Aztec transactions succeeded; no Ethereum transaction was
+needed. Accepted revision `12e36fda2ab57895ea7e1d8811b762de4cb9c93f` passed198
+real desktop/mobile browser checks. A separate browser check verified checked
+habits disappear, unchecked habits survive reload, and the button disables when
+nothing is checked.
+
+| Measured stage | Previous seconds | New seconds | Change |
+| --- | ---: | ---: | ---: |
+| Browser preparation |13.944|10.260|26% faster|
+| Browser fee estimation |15.486|3.701|76% faster|
+| Browser proving, including transport/local work |37.196|23.616|37% faster|
+| Model calls |192.671 (14 calls)|56.062 (6 calls)|71% faster|
+| Board/conversation reads |3.482|1.186|66% faster|
+| Validation and publication, including GitHub mirror |13.068|12.396|5% faster|
+| Worker proof |6.619|6.550|1% faster|
+| Final checkpoint wait |56.215|73.958|32% slower|
+
+These are comparable categories, not a disjoint sum: browser confirmation and
+Bok processing now overlap after canonical proposed-state verification. The linked
+partition assigns each millisecond once. This result does **not** meet the target
+of20–50% improvement in every application-controlled stage. Validation, repository
+work and proving are still being investigated.
+
+The browser remote prover now uses8threads. A same-input comparison measured
+21.668s at1thread,8.600s at4threads and5.609s at8threads, with verified proofs.
+The worker already used4threads through the native singleton, despite an ignored
+later1thread option. Explicit initialization now removes that ambiguity; it is
+not a claimed worker speedup. The same worker input measured10.246s at1thread,
+4.937s at4threads and5.159s at8threads. These isolated proof timings are not the
+whole application proof stage.
+
+The final reply was sent at22:25:24.095UTC and its checkpoint appeared on Ethereum
+at22:26:36UTC. This deployment's Rollup has72-second slots. The native sequencer
+pipelines proposals for the next slot, and the Rollup rejects publication before
+that slot starts. Node observation followed by22:26:38.498. Therefore most of this
+sample's74-second wait was the actual public testnet protocol schedule, not an
+application timeout. Required completion remains checkpointed; proposed inclusion
+is not labelled settled.
+
+Evidence: [browser](../execution/evidence/G21/stable6/bok-performance/successful-feature-browser.json),
+[partition](../execution/evidence/G21/stable6/bok-performance/successful-feature-profile.json),
+[publication](../execution/evidence/G21/stable6/bok-performance/successful-feature-publication.json).
+
 ## Single-execution investigation — performance follow-up
 
 The first attempt to reuse the SDK's simulated private execution exposed an SDK
@@ -35,9 +83,9 @@ was also rejected: selecting more fee notes can increase private gas and make an
 otherwise affordable transaction fail. This audit does not claim that the
 fallback is minimal; it documents why those two shortcuts are not equivalent.
 
-The changes passed focused native-orchestration and worker checks. A new real
-browser proof and comparable complete request are required before claiming an
-end-to-end latency improvement from this revision.
+The changes passed focused native-orchestration and worker checks, then actual
+browser and worker proofs in the comparable successful run above. The low-credit
+fallback remains outside that ordinary funded-path performance claim.
 
 ## Successful two-transaction test
 

@@ -1,0 +1,29 @@
+{
+  "scope": "Isolated gate rerun only; no model request, transaction or publication",
+  "corrections": [
+    "Plan capacity256 instead of64",
+    "Two selectors changed to plain input[type=checkbox]"
+  ],
+  "generatedApplicationUnchanged": true,
+  "originalCoveragePreserved": true,
+  "observations": [
+    {
+      "diagnostic": "original-call8-plan-corrected-selectors",
+      "scenarios": 6,
+      "steps": 81
+    },
+    {
+      "revision": "fd68e41afacd716cae8c89c00170c03b90400346",
+      "passed": true,
+      "testCount": 1,
+      "browser": {
+        "passed": true,
+        "browserVersion": "153.0.8010.12",
+        "checks": 176,
+        "artifactSha256": "c422ec4cb054068d3b152600740940934fab371b9e7b729ee24ae71636da9ae6",
+        "planSha256": "2516f377dcbcf620bfa768d744a24fcf7b6a65086ba23ea19a177a02f16fe5ae",
+        "policyHash": "bf234b237bb7f3c9b80d4b2ff9fe5658722faa5f8b458646d79e2270b84d6b47"
+      }
+    }
+  ]
+}

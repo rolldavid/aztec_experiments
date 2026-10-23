@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "requestId": "0x2d0a77d5b4314149668362981926d23d9f4f7fee21b89d6058cdcbf1f927be3c",
+  "clickUtc": "2026-10-23T22:23:12.528Z",
+  "workerStartUtc": "2026-10-23T22:24:02.442328+00:00",
+  "terminalUtc": "2026-10-23T22:26:38.962983+00:00",
+  "terminalResult": "success",
+  "totalMs": 206434.98291015625,
+  "workerMonotonicMs": 156520.655,
+  "partition": [
+    {
+      "category": "browserToWorker",
+      "durationMs": 49914.328
+    },
+    {
+      "category": "otherWorker",
+      "durationMs": 1121.6
+    },
+    {
+      "category": "escrowGuard",
+      "durationMs": 2598.052
+    },
+    {
+      "category": "boardAndConversationReads",
+      "durationMs": 1186.062
+    },
+    {
+      "category": "repositoryTools",
+      "durationMs": 1644.143
+    },
+    {
+      "category": "providerPreflight",
+      "durationMs": 669.874
+    },
+    {
+      "category": "providerModel",
+      "durationMs": 56061.75
+    },
+    {
+      "category": "validationAndPublication",
+      "durationMs": 7872.853
+    },
+    {
+      "category": "publication_static",
+      "durationMs": 60.332
+    },
+    {
+      "category": "publication_mirror",
+      "durationMs": 4463.215
+    },
+    {
+      "category": "operatorProof",
+      "durationMs": 6550.062
+    },
+    {
+      "category": "operatorSubmission",
+      "durationMs": 335.034
+    },
+    {
+      "category": "operatorConfirmation",
+      "durationMs": 73957.679
+    }
+  ],
+  "inclusiveStagesForAuditOnly": {
+    "escrow.open": {
+      "count": 1,
+      "inclusiveMonotonicMs": 361.663
+    },
+    "board.readRequest": {
+      "count": 10,
+      "inclusiveMonotonicMs": 550.1890000000001
+    },
+    "escrow.request": {
+      "count": 4,
+      "inclusiveMonotonicMs": 664.998
+    },
+    "conversation.load": {
+      "count": 1,
+      "inclusiveMonotonicMs": 335.423
+    },
+    "conversation.assertCurrent": {
+      "count": 8,
+      "inclusiveMonotonicMs": 300.53499999999997
+    },
+    "repository.admit": {
+      "count": 1,
+      "inclusiveMonotonicMs": 1184.125
+    },
+    "agent.history": {
+      "count": 1,
+      "inclusiveMonotonicMs": 0.143
+    },
+    "agent.open": {
+      "count": 1,
+      "inclusiveMonotonicMs": 0.452
+    },
+    "tool.list_files": {
+      "count": 2,
+      "inclusiveMonotonicMs": 69.91799999999999
+    },
+    "tool.read_file": {
+      "count": 7,
+      "inclusiveMonotonicMs": 58.63500000000001
+    },
+    "agent.context": {
+      "count": 1,
+      "inclusiveMonotonicMs": 78.21
+    },
+    "provider.catalogue": {
+      "count": 6,
+      "inclusiveMonotonicMs": 128.38400000000001
+    },
+    "provider.balance": {
+      "count": 6,
+      "inclusiveMonotonicMs": 541.137
+    },
+    "provider.credits": {
+      "count": 6,
+      "inclusiveMonotonicMs": 541.49
+    },
+    "escrow.assertUsable": {
+      "count": 6,
+      "inclusiveMonotonicMs": 1264.759
+    },
+    "provider.completion": {
+      "count": 6,
+      "inclusiveMonotonicMs": 56061.74999999999
+    },
+    "agent.model": {
+      "count": 6,
+      "inclusiveMonotonicMs": 58864.46
+    },
+    "tool.write_file": {
+      "count": 1,
+      "inclusiveMonotonicMs": 126.663
+    },
+    "tool.edit_file": {
+      "count": 2,
+      "inclusiveMonotonicMs": 246.063
+    },
+    "tool.finish_workspace": {
+      "count": 1,
+      "inclusiveMonotonicMs": 7787.385
+    },
+    "publication.static": {
+      "count": 1,
+      "inclusiveMonotonicMs": 60.332
+    },
+    "publication.mirror": {
+      "count": 1,
+      "inclusiveMonotonicMs": 4463.215
+    },
+    "agent.accept": {
+      "count": 1,
+      "inclusiveMonotonicMs": 4609.015
+    },
+    "agent.close": {
+      "count": 1,
+      "inclusiveMonotonicMs": 8.244
+    },
+    "escrow.inspectOperation": {
+      "count": 2,
+      "inclusiveMonotonicMs": 306.631
+    },
+    "escrow.prove": {
+      "count": 1,
+      "inclusiveMonotonicMs": 6550.062
+    },
+    "escrow.send": {
+      "count": 1,
+      "inclusiveMonotonicMs": 335.034
+    },
+    "escrow.wait": {
+      "count": 1,
+      "inclusiveMonotonicMs": 73957.679
+    },
+    "escrow.finalize_reply": {
+      "count": 1,
+      "inclusiveMonotonicMs": 81699.483
+    },
+    "request.total": {
+      "count": 1,
+      "inclusiveMonotonicMs": 156520.655
+    }
+  },
+  "providerCalls": [
+    {
+      "span": 26,
+      "durationMs": 3723.498,
+      "result": "success"
+    },
+    {
+      "span": 35,
+      "durationMs": 1722.625,
+      "result": "success"
+    },
+    {
+      "span": 45,
+      "durationMs": 43686.273,
+      "result": "success"
+    },
+    {
+      "span": 55,
+      "durationMs": 1368.78,
+      "result": "success"
+    },
+    {
+      "span": 64,
+      "durationMs": 4012.001,
+      "result": "success"
+    },
+    {
+      "span": 73,
+      "durationMs": 1548.573,
+      "result": "success"
+    }
+  ],
+  "samePriorityCrossCategoryOverlapMs": 0,
+  "method": "Sweep all interval boundaries and count each millisecond exactly once. Worker spans end at logged UTC and extend backwards by their monotonic duration. Specific child spans take precedence over enclosing validation/acceptance; provider wrappers and agent.model are never added. Browser transaction spans stop at worker admission, so proposed-state overlap cannot double count worker time. All unexplained time remains residual.",
+  "limitations": [
+    "Cross-host UTC alignment assumes synchronized host clocks; intra-stage durations use monotonic clocks.",
+    "Proving spans include wallet preparation unless separately instrumented.",
+    "Inclusive audit totals overlap and must not be summed.",
+    "Model HTTP duration does not isolate time to first token or decoding."
+  ],
+  "featureResult": "published",
+  "workerSource": "acdd3ab1178869369facdf1b21d16595cc234d88",
+  "browserSource": "c23dc39a",
+  "comparison": "Identical Clear completed task and original a25ff3c2 baseline tree restored through normal publish before run"
+}

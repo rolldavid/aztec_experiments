@@ -1,0 +1,35 @@
+{
+  "scope": "same private input, existing native worker, no transaction broadcast",
+  "results": [
+    {
+      "threads": 1,
+      "durationMs": 21668.106505,
+      "proofBytes": 111552
+    },
+    {
+      "threads": 4,
+      "durationMs": 8599.800646,
+      "proofBytes": 111552
+    },
+    {
+      "threads": 8,
+      "durationMs": 5609.342177999999,
+      "proofBytes": 111552
+    }
+  ],
+  "source": "live /opt/board-prover/releases/rolling-8fed2c764e5b62fc native worker",
+  "observedAt": "2026-10-23T21:05:54Z",
+  "hostLogicalCpus": 16,
+  "inputBytes": 1042635,
+  "proofVerification": "AztecClientBackend.prove verifies native proof before returning",
+  "productionQueueAfter": {
+    "jobs": 0,
+    "bytes": 0,
+    "running": false,
+    "submitted": 6,
+    "completed": 6,
+    "failed": 0
+  },
+  "productionReadyAfter": true,
+  "limitations": "One sequential run per thread count on the same input; measures worker startup plus proof and verification, not browser end-to-end time."
+}

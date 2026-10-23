@@ -1,0 +1,143 @@
+{
+  "timeOrigin": 1792792668338.815,
+  "rows": [
+    {
+      "name": "rolling.reader.load",
+      "start": 1054.6599999666214,
+      "duration": 596.1699999570847,
+      "startedAt": "2026-10-23T21:57:49.393475+00:00"
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1647.3349999189377,
+      "duration": 3.465000033378601,
+      "startedAt": "2026-10-23T21:57:49.986150+00:00"
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 34953.37999999523,
+      "duration": 3351.2099999189377,
+      "startedAt": "2026-10-23T21:58:23.292195+00:00"
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 47820.93499994278,
+      "duration": 1178.6100000143051,
+      "startedAt": "2026-10-23T21:58:36.159750+00:00"
+    },
+    {
+      "name": "rolling.action.sync",
+      "start": 320460.44499993324,
+      "duration": 3378.024999976158,
+      "startedAt": "2026-10-23T22:03:08.799260+00:00"
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 325931.3299999237,
+      "duration": 2585.2599999904633,
+      "startedAt": "2026-10-23T22:03:14.270145+00:00"
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 320460.24000000954,
+      "duration": 8066.469999909401,
+      "startedAt": "2026-10-23T22:03:08.799055+00:00"
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 329366.9549999237,
+      "duration": 2820.8550000190735,
+      "startedAt": "2026-10-23T22:03:17.705770+00:00"
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 332187.83499991894,
+      "duration": 232.27500009536743,
+      "startedAt": "2026-10-23T22:03:20.526650+00:00"
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 329366.85499989986,
+      "duration": 3149.7900000810623,
+      "startedAt": "2026-10-23T22:03:17.705670+00:00"
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 332516.6699999571,
+      "duration": 0.46000003814697266,
+      "startedAt": "2026-10-23T22:03:20.855485+00:00"
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 332517.12999999523,
+      "duration": 751.2799999713898,
+      "startedAt": "2026-10-23T22:03:20.855945+00:00"
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 333268.439999938,
+      "duration": 23993.84500002861,
+      "startedAt": "2026-10-23T22:03:21.607255+00:00"
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 357262.30499994755,
+      "duration": 2125.6150000095367,
+      "startedAt": "2026-10-23T22:03:45.601120+00:00"
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 434293.83999991417,
+      "duration": 482.4800000190735,
+      "startedAt": "2026-10-23T22:05:02.632655+00:00"
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 434772.0499999523,
+      "duration": 4.245000004768372,
+      "startedAt": "2026-10-23T22:05:03.110865+00:00"
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 319828.0149999857,
+      "duration": 115492.47500002384,
+      "startedAt": "2026-10-23T22:03:08.166830+00:00"
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 328526.75999999046,
+      "duration": 106788.81999993324,
+      "startedAt": "2026-10-23T22:03:16.865575+00:00"
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 359387.9349999428,
+      "duration": 75932.53999996185,
+      "startedAt": "2026-10-23T22:03:47.726750+00:00"
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 435316.44499993324,
+      "duration": 359.86500000953674,
+      "startedAt": "2026-10-23T22:05:03.655260+00:00"
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 435673.89999997616,
+      "duration": 2.399999976158142,
+      "startedAt": "2026-10-23T22:05:04.012715+00:00"
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 435320.99000000954,
+      "duration": 3225.8399999141693,
+      "startedAt": "2026-10-23T22:05:03.659805+00:00"
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 445533.69499993324,
+      "duration": 1324.8100000619888,
+      "startedAt": "2026-10-23T22:05:13.872510+00:00"
+    }
+  ]
+}

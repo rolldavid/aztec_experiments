@@ -1,0 +1,39 @@
+{
+  "receipts": [
+    {
+      "producedRevision": "12e36fda2ab57895ea7e1d8811b762de4cb9c93f",
+      "readRevision": "3419e610b4996adab18f6214695955c8fc587314",
+      "validation": {
+        "passed": true,
+        "testsPassed": true,
+        "buildPassed": true,
+        "testCount": 1,
+        "sourceDigest": "c74320029fa4829c8609f49175a18de1a743d6cb1145861e53063dd27ebe85eb",
+        "artifactSha256": "e0f34b46e806b040edaf242cd328bcf3d4891fc68c128fd42f3d479d3cbb8fdd"
+      },
+      "browser": {
+        "passed": true,
+        "checks": 198,
+        "browserVersion": "153.0.8010.12",
+        "planSha256": "f3ade0561abfe10ae903f71060da67dd22020c48c7dbaca2c5ada110e1124ee8",
+        "policyHash": "bf234b237bb7f3c9b80d4b2ff9fe5658722faa5f8b458646d79e2270b84d6b47",
+        "artifactSha256": "e0f34b46e806b040edaf242cd328bcf3d4891fc68c128fd42f3d479d3cbb8fdd"
+      },
+      "publication": {
+        "status": "complete"
+      }
+    }
+  ],
+  "requestId": "0x2d0a77d5b4314149668362981926d23d9f4f7fee21b89d6058cdcbf1f927be3c",
+  "aztecTransactions": [
+    "0x133fb1c4f3b8e648c39007f85512ddb8dd6061a3e27582ed07ca0c6737fe9586",
+    "0x1ae9e68a9e369e431703a7bc95dc896720ede1b91202c7cbbb396763f506e183"
+  ],
+  "ethereumTransactions": 0,
+  "manualPublishedAppCheck": {
+    "checkedHabitRemoved": true,
+    "uncheckedHabitRetainedAfterReload": true,
+    "clearCompletedDisabledWhenNoCheckedHabits": true,
+    "actualPublishedRevision": "12e36fda2ab57895ea7e1d8811b762de4cb9c93f"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "completedAt": "2026-10-23T22:16:09.070792+00:00",
+  "sameInput": true,
+  "applicationPidPreserved": true,
+  "configurationPreserved": true,
+  "inputBytes": 1252514,
+  "results": [
+    {
+      "threads": 1,
+      "nativeInitMs": 55.39169700000001,
+      "proveAndVerifyMs": 10245.826174,
+      "totalMs": 10301.221885,
+      "compressedProofBytes": 111552,
+      "verifiedByNativeSdk": true
+    },
+    {
+      "threads": 4,
+      "nativeInitMs": 55.163893,
+      "proveAndVerifyMs": 4937.153115,
+      "totalMs": 4992.321542,
+      "compressedProofBytes": 111552,
+      "verifiedByNativeSdk": true
+    },
+    {
+      "threads": 8,
+      "nativeInitMs": 55.675432999999984,
+      "proveAndVerifyMs": 5159.470090999999,
+      "totalMs": 5215.148055,
+      "compressedProofBytes": 111552,
+      "verifiedByNativeSdk": true
+    }
+  ],
+  "sample": "actual Bok final settlement proof captured 2026-10-23",
+  "module": "@aztec-foundation/bb.js/dest/node/index.js",
+  "release": "ccf80f1448b03ad825cc0e40bc67b8d0bb815027",
+  "replaySha256": "a338fa4a2f5de688ca6e10b89fba240e14f9b01bf2ff096c6d85b88e7e04442b",
+  "recommendedThreads": 4,
+  "speedupPercent": 51.81303068044808,
+  "scope": "offline native proof and verification only; no model calls or transactions; one sample per thread count; live service unchanged"
+}

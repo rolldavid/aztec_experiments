@@ -1,0 +1,59 @@
+{
+  "network": {
+    "chainId": 11155111,
+    "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+    "version": 679261766,
+    "slotDurationSeconds": 72,
+    "epochDurationSlots": 32,
+    "genesisTime": 1792668252
+  },
+  "transaction": {
+    "hash": "0x1ae9e68a9e369e431703a7bc95dc896720ede1b91202c7cbbb396763f506e183",
+    "submittedAt": "2026-10-23T22:25:24.094931Z",
+    "blockNumber": 1783,
+    "checkpointNumber": 1646,
+    "slot": 1752,
+    "blockHash": "0x110a69ef9b2fd9d57a06dbccad4352365bb7e94f937838227137b9a71571d2ce",
+    "firstObservedProposedAt": "2026-10-23T22:26:26.487160Z",
+    "observedCheckpointedAt": "2026-10-23T22:26:38.498260Z"
+  },
+  "ethereum": {
+    "checkpointTransactionHash": "0x9d38b20ff3ed74dbaead974b81a5bae377469a5aae2bb418ed31e129ff5b766c",
+    "blockNumber": 11979650,
+    "blockHash": "0xe30244f5f0f46c23eafcdecb4a115a3ef89e16e0b648e8ab47e5f26b8c6788f9",
+    "timestamp": 1792794396,
+    "timestampUtc": "2026-10-23T22:26:36Z"
+  },
+  "decomposition": {
+    "submitToL1BlockTimestampSeconds": 71.905069,
+    "L1TimestampToReceiptObservationSeconds": 2.49826,
+    "totalSeconds": 74.403329,
+    "observerPollSeconds": 2,
+    "nativeApplicationPollSeconds": 1,
+    "applicationInitialDelaySeconds": 0,
+    "applicationTimeoutSeconds": 0
+  },
+  "semantics": {
+    "proposedIsSettled": false,
+    "proposerPipeliningSlotOffset": 1,
+    "targetSlotMustEqualL1CurrentSlot": true,
+    "checkpointCannotBePublishedBeforeTargetSlot": true,
+    "exactFirstProposalArrivalKnown": false
+  },
+  "sources": [
+    "node_modules/@aztec-labs/epoch-cache/dest/epoch_cache.js:14",
+    "node_modules/@aztec-labs/sequencer-client/dest/sequencer/sequencer.js:820",
+    "node_modules/@aztec-labs/sequencer-client/dest/sequencer/checkpoint_proposal_job.js:657",
+    "node_modules/@aztec-labs/sequencer-client/dest/publisher/sequencer-publisher.js:1175",
+    "https://github.com/AztecProtocol/aztec-packages/blob/v6.0.0/l1-contracts/src/core/libraries/rollup/ProposeLib.sol#L385",
+    "https://github.com/AztecProtocol/aztec-packages/blob/v6.0.0/l1-contracts/src/core/libraries/TimeLib.sol#L38"
+  ],
+  "pinnedSdkSourceSha256": {
+    "node_modules/@aztec-labs/epoch-cache/dest/epoch_cache.js": "6f3dd20b0cdac06bf7bdcda3921e479f11a72562be659ca7101eee9b0273a590",
+    "node_modules/@aztec-labs/sequencer-client/dest/sequencer/sequencer.js": "b596a4fc4fdbbefa08054a43c5318b5f66346e90675429c9d7f2ed84aab6fb10",
+    "node_modules/@aztec-labs/sequencer-client/dest/sequencer/checkpoint_proposal_job.js": "cc4d07db6c24c002a3dc2d8727746b2602adb5316f58f55cadfdc90cf6071722",
+    "node_modules/@aztec-labs/sequencer-client/dest/publisher/sequencer-publisher.js": "03400b956e2f357cd508a8d918608a27b7c2a2e1e72d88ea2da5a5a4869cd629",
+    "node_modules/@aztec-labs/aztec.js/dest/utils/node.js": "9b46834c47f13de74f3e99fd86d5b01025330d3252e8c1a3d8b471ac41246610"
+  },
+  "networkLimitScope": "This deployed rollup has 72-second slots and its current official sequencer pipelines one slot ahead. This is not a universal Aztec transaction duration. Once assigned slot1752, this checkpoint cannot settle on L1 before that slot starts."
+}
