@@ -9843,10 +9843,10 @@
   },
   "current_operating_request": {
     "id": "G21-bok-latency2-20261023",
-    "status": "active",
+    "status": "complete",
     "owner": "root",
     "branch": "codex/rolling-chat-account-ux",
-    "at": "2026-10-23T20:02:32Z",
+    "at": "2026-10-23T20:39:20.081089+00:00",
     "request": "Collapse remaining Bok transaction dependencies where possible and eliminate duplicated browser preparation, board reads, validation and handoffs.",
     "scope": [
       "Browser post preparation, request authorization and submission",
@@ -9854,8 +9854,8 @@
       "Browser response rendering and terminal settlement",
       "Existing services, funded disposable test identity and monthly hosting budget"
     ],
-    "source": "9450d64b",
-    "verification": "Proxy shutdown fixed and exercised: held feed clean EOF; app451ms, proxy4ms. Core ae9d60b8 and Bok6beaebe9 deployed; native measured fee simulation/proof and precise browser-plan feedback live. Failed test finalization now canonical at block1675; charge83256/refund166744. No successful new two-transaction app publication benchmark yet. Owner reaffirms all old test application state disposable; no preservation, migration or backward compatibility work.",
+    "source": "8efe8919cd1c019d82ff7b2d3d787c62f52de7c5",
+    "verification": "Fresh actual app update succeeded: user Post to automatic reply464.264s, worker terminal464.974s; two canonical request transactions at blocks1684/1688. New app373e1afd mirrored GitHubbb82cd36; actual Clear completed browser behavior/reload/no runtime errors passed. Charge86098/refund163902 microUSDC verified, all9 services healthy. Proxy held-feed shutdown verified451ms app/4ms proxy. Old application data is disposable; no migration requirement. Prompt-only grouping correction independently approved and76tests pass; published and ready at20:38:22Z, BokPID251846/proxy251848, no speed claim for wording change.",
     "budget": "USD1500/month ongoing hosting; no additional hosts created",
     "paths": [
       "execution/evidence/G21/stable6/",
@@ -9864,7 +9864,7 @@
       "docs/BOK_LATENCY.md"
     ],
     "currentHandover": "START_HERE.md",
-    "nextAction": "Fund operator fee balance for fresh test, run actual app update through automatic browser reply and canonical two-transaction accounting, record latency and publish evidence.",
-    "bokSource": "6beaebe922a5934834dc9f4389551c6422971657"
+    "nextAction": "Owner can test the published two-transaction flow. Future performance work should target remaining193s model generation and160s testnet confirmation observed in this workload; prompt grouping is deployed but has no separate latency measurement. Overall historical production qualification remains separate.",
+    "bokSource": "8efe8919cd1c019d82ff7b2d3d787c62f52de7c5"
   }
 }

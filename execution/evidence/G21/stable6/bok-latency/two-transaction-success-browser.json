@@ -1,0 +1,135 @@
+{
+  "requestId": "0x305f3698154c067288dc451abab0727fe7046eb2eaeef2da06221f4892552b66",
+  "armedAt": "2026-10-23T20:24:54.824Z",
+  "start": 7111914.899999976,
+  "measures": [
+    {
+      "name": "rolling.action.sync",
+      "start": 7112903.225000024,
+      "duration": 6757.1449999809265
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 7122910.475000024,
+      "duration": 3920.054999947548
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 7112903.054999948,
+      "duration": 13943.780000090599
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 7128777.529999971,
+      "duration": 3930.6349999904633
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 7132708.174999952,
+      "duration": 10800.155000090599
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 7128777.205000043,
+      "duration": 15486.254999995232
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 7144263.475000024,
+      "duration": 0.15999996662139893
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 7144263.639999986,
+      "duration": 1687.1599999666214
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 7145950.814999938,
+      "duration": 37196.18500006199
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 7183147.00999999,
+      "duration": 1096.085000038147
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 7286710.424999952,
+      "duration": 689.6150000095367
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 7287395.149999976,
+      "duration": 4.870000004768372
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 7111919.419999957,
+      "duration": 176334.14999997616
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 7126846.894999981,
+      "duration": 161397
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 7184243.184999943,
+      "duration": 104010.37999999523
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 7288249.274999976,
+      "duration": 476.33000004291534
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 7288721.544999957,
+      "duration": 4.045000076293945
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 7288259.975000024,
+      "duration": 6026.754999995232
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 7303028.784999967,
+      "duration": 1883.7200000286102
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 7575114.929999948,
+      "duration": 1046.6500000953674
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 7576138.61500001,
+      "duration": 22.894999980926514
+    }
+  ],
+  "oldBok": [
+    "post-355834085899597651092716265900584086094191200693146854300196327820758895550",
+    "post-7948970953788027846913231778848755604320113844650466894619395361219532493065",
+    "post-1232420978845395865715135457963152140898137581920474587615571320161015618563",
+    "post-9907034343309005096296663133838676714136789402256944178222320900763587777637",
+    "post-12559751510952924940347582314676279539281332989254352964907398169691150734120",
+    "post-39921752664063093971576672931898341641271973134193444428782238089421966460"
+  ],
+  "reply": {
+    "id": "post-19187073173158732147643480058625380809172147344640509427429862568840953125405",
+    "text": "B\nBokAI assistant\nMain board \u00b7 24 Oct 2026, 02:02\n\nIn reply to an earlier post\n\nApplication published.\nApp: https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/\nSource: https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/source.json\nView conversation\n0 likes\nReply\nLike\nBookmark\nMore",
+    "renderedAt": "2026-10-23T20:32:39.157Z",
+    "elapsedMs": 464264.41499996185
+  },
+  "clickedAt": "2026-10-23T20:24:54.887Z",
+  "timeOrigin": 1792779982936.7,
+  "generatedApp": {
+    "passed": true,
+    "runtimeErrors": [
+      "Failed to connect to MetaMask",
+      "Failed to connect to MetaMask"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "operatorFundingComplete": true,
+  "txHash": "0x0bb8c9b4ddb67617bb860b0a946cfaad2cf5bb867f5a50c67b6f431ae8431990",
+  "blockNumber": 1687,
+  "blockHash": "0x1e052bcff0330503ab676ac64ffa4fb73e66794aaa4976cf803e8ef6d41f3e53",
+  "publicFeeJuice": "106660683065710400000",
+  "purpose": "Operator test fee inventory; separate from the measured user request",
+  "l1Deposit": "0x67406a4a48b0614ac8af09a8eac47271cbd223f099d4b275ab114faa593b998c"
+}

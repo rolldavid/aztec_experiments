@@ -1,11 +1,59 @@
-# Bok request latency — 23 October 2026
+# Bok request latency — 24 October 2026
 
 This investigation measures from the browser's actual Post click through the
 canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
-## Current two-transaction release
+## Successful two-transaction test
+
+The new feature update completed automatically in **464.264 seconds (7m44s)**
+from the actual Post click to the visible reply. Canonical worker completion was
+464.974 seconds. Exactly two request transactions succeeded: post plus full budget
+reservation at block1684, then reply plus charge/refund at1688. The0.25USDC budget
+charged0.086098USDC and refunded0.163902USDC, with no reserved balance remaining.
+
+Bok added **Clear completed** to Daily Three, published a new app revision and
+GitHub commit, and passed its browser gate. A separate actual browser check
+confirmed disabled/enabled states, removal of checked habits, retention of
+unchecked habits after reload, and no runtime errors. The main page displayed the
+reply automatically without reload or operator continuation of this request.
+
+| Measured work | Seconds |
+| --- | ---: |
+| Browser click to confirmed post |176.334|
+| Of that: browser proof |37.196|
+| Of that: first checkpoint wait |104.010|
+| Model processing,14 calls |192.671|
+| Board and conversation reads |3.482|
+| Validation and publication |13.068|
+| Final proof |6.619|
+| Final checkpoint wait |56.215|
+| Other worker work, including guards/tools/handoffs |15.960|
+
+The browser subrows overlap its total; worker rows do not overlap. The complete
+worker partition is288.014 seconds; admission followed post confirmation within
+one second. This run is about55% shorter than the17m01 baseline, but this
+is an existing-app feature update, not an identical fresh-generation workload.
+The previous three-transaction success took7m23s: this run did **not** beat it.
+Its longer first checkpoint wait and14 versus10 model calls outweighed the
+removed transaction. Two transactions reduce dependencies, not network block time.
+
+The operator's test fee inventory was replenished separately during this run;
+that administrative deposit/claim is not a third transaction in the user request.
+No user-flow step waited for that funding, and the request had no manual retry.
+
+The largest remaining component is model processing. The measured source6beaebe9
+still instructed edits to be spread across responses. Prompt correction8efe8919
+is deployed and groups small exact edits, retaining complete JSON and normal validation;
+76 model checks pass and independent review approved it. This wording change is
+after the benchmark; no additional latency improvement is claimed for it.
+
+Evidence: [browser](../execution/evidence/G21/stable6/bok-latency/two-transaction-success-browser.json),
+[partition](../execution/evidence/G21/stable6/bok-latency/two-transaction-success-profile.json),
+[canonical accounting and publication](../execution/evidence/G21/stable6/bok-latency/two-transaction-success-canonical-publication.json).
+
+## Two-transaction implementation and earlier failures
 
 The live path now uses two Aztec transactions: the user's post reserves its full
 Bok budget, and Bok's final reply settles actual usage and refunds the remainder.
@@ -48,8 +96,8 @@ The remaining preflight failure was reproduced as HTTP429: thirteen concurrent
 RPC batches exceeded the query gateway's eight-request limit. An SDK semaphore
 now permits four concurrent batches and releases capacity on every outcome. It
 adds no retries or delays. The exact live guard then passed in296ms with every
-response HTTP200;143 integrated operations/escrow checks passed. The original
-unsent request is continuing, followed by a separate clean benchmark.
+response HTTP200;143 integrated operations/escrow checks passed. The earlier request was subsequently completed as a failure; the successful
+fresh benchmark is recorded above.
 
 The resumed attempt did not publish an app: its generated test plan exceeded64
 steps, while generic tool feedback hid that specific cause. It exhausted16 model
@@ -63,7 +111,7 @@ The subsequent fixes expose exact test-plan reasons and field paths, and use
 native atomic simulation/proving with SDK measured gas and standard10% padding.
 They preserve the single proof and one synchronization scope. Focused integrated
 checks passed88 tests (30 existing opt-in skips) for plan feedback and48 for fees
-and exact-authority dropped-finalization handling. Live acceptance is pending.
+and exact-authority dropped-finalization handling. The fresh acceptance above passed.
 
 The proxy shutdown issue is independently fixed: the application drains before
 its proxy stops. A real held browser feed reached clean EOF; the application
@@ -270,8 +318,8 @@ with standard padding, and proves once. The failed test's exact final batch was
 confirmed at block1675: measured maximum7.718352075606FEE, actual4.1196781591484FEE.
 Its original16 provider calls and billing were unchanged; canonical charge83256
 and refund166744 microUSDC. The failure reply rendered automatically. This was an
-operator-intervened failed request, not a successful latency benchmark. The next
-fresh test will measure the normal path through actual application publication.
+operator-intervened failed request, not a successful latency benchmark. The fresh test above subsequently measured the normal path through actual
+application publication.
 
 The owner reiterates that all old test application data is disposable. Retaining
 old releases, accounts or incomplete runs is not a delivery requirement; do not

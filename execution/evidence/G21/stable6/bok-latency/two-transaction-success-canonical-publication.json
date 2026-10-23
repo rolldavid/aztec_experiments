@@ -1,0 +1,220 @@
+{
+  "observedAt": "2026-10-23T20:35:36.407209+00:00",
+  "core": {
+    "observedAt": "2026-10-23T20:34:28.019812+00:00",
+    "services": {
+      "rolling-application.service": {
+        "MainPID": "642411",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "rolling-application-proxy.service": {
+        "MainPID": "642414",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board-prover.service": {
+        "MainPID": "630292",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board-prover-proxy.service": {
+        "MainPID": "630307",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "rolling-node.service": {
+        "MainPID": "561964",
+        "NRestarts": "69",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "rolling-query.service": {
+        "MainPID": "565186",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "rolling-moderator.service": {
+        "MainPID": "567551",
+        "NRestarts": "31",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    }
+  },
+  "bok": {
+    "observedAt": "2026-10-23T20:34:26.529629+00:00",
+    "receiver": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+    "pluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02",
+    "services": {
+      "rolling-bok-testnet.service": {
+        "MainPID": "250128",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "rolling-bok-artifact-proxy.service": {
+        "MainPID": "250129",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "requests": [
+      {
+        "requestId": "0x00f0cfd0e2db1c35636e787d05300fe050aa1d80c8019f1eb9803170757be4b8",
+        "postId": "0x083ecbbe9e2208386547eddae7de4459a953e442977e452d4960ea47f7cc0354",
+        "phase": "finished",
+        "finished": true,
+        "callCount": 16
+      },
+      {
+        "requestId": "0x2e48590e79bf7557f82445a6610af29d7956e170e80203109df1820e80cf7d1c",
+        "postId": "0x131e354f22ef1d63b668eb094ab255824ca27326d41d698fcbe8df628febc579",
+        "phase": "finished",
+        "finished": true,
+        "callCount": 2
+      },
+      {
+        "requestId": "0x305f3698154c067288dc451abab0727fe7046eb2eaeef2da06221f4892552b66",
+        "postId": "0x2b5593f5bf0d89a612bea1247bfb9696579fc76a3b404fb844f0e7e35dd8d3d6",
+        "phase": "finished",
+        "finished": true,
+        "callCount": 14
+      }
+    ],
+    "health": {
+      "status": "ready",
+      "active": 0,
+      "lastFailure": null
+    }
+  },
+  "canonical": {
+    "requestId": "0x305f3698154c067288dc451abab0727fe7046eb2eaeef2da06221f4892552b66",
+    "receiver": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+    "pluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02",
+    "anchor": {
+      "number": 1689,
+      "hash": "0x0aa5781e3e06b91e4bc0ec50fdff79f535686e41f7e29e55bdc5e7a78741a200"
+    },
+    "state": "4",
+    "sequence": "1",
+    "budget": "250000",
+    "available": "0",
+    "reserved": "0",
+    "charged": "86098",
+    "refunded": "163902",
+    "primaryDone": "1",
+    "secondaryDone": "1",
+    "receipt": "0x066ab76cfe9f1ba58071e0e17be034a341a5f6733d8fd438ab8493762164d398",
+    "aggregateCharge": "86098",
+    "finished": true,
+    "phase": "finished",
+    "operations": [
+      {
+        "method": "finalize_reply",
+        "phase": "submission-unknown",
+        "txHash": "0x26c61c838a2692111ca9152b51b7c6fb6f806f92f74ca3244b747e65d3196988"
+      }
+    ],
+    "transactions": [
+      {
+        "method": "authorize_and_post",
+        "txHash": "0x2f10435e7b4290f8301a600a2968fb035590a34781f405f3fa47c1a6f4b0c572",
+        "status": "checkpointed",
+        "executionResult": "success",
+        "blockNumber": 1684,
+        "blockHash": "0x1ceea8836869571088c0db2e1579d581a48e3e40826c895ebc6c36f7a1d52631",
+        "checkpointed": true,
+        "canonical": true
+      },
+      {
+        "method": "finalize_reply",
+        "txHash": "0x26c61c838a2692111ca9152b51b7c6fb6f806f92f74ca3244b747e65d3196988",
+        "status": "checkpointed",
+        "executionResult": "success",
+        "blockNumber": 1688,
+        "blockHash": "0x0a28d8ddb9c1809205305fd7f94565c1188060173aec108c06a5172bc9144ea0",
+        "checkpointed": true,
+        "canonical": true
+      }
+    ]
+  },
+  "publication": {
+    "requestId": "0x305f3698154c067288dc451abab0727fe7046eb2eaeef2da06221f4892552b66",
+    "observedAt": "2026-10-23T20:31:55.305739+00:00",
+    "repositories": [
+      {
+        "repositoryId": "2ebf5226acfbe0908c2c87758187b7fe73018b30cc79f9e61484529a9cfcb477",
+        "status": "accepted",
+        "readRevision": "028da8d40cdd024b67e72956a411aa38a8886c83",
+        "producedRevision": "373e1afd74c0a3fa3b64aae811cc4ddbfdf93cf9",
+        "acceptedRevision": "373e1afd74c0a3fa3b64aae811cc4ddbfdf93cf9",
+        "validation": {
+          "passed": true,
+          "revision": "373e1afd74c0a3fa3b64aae811cc4ddbfdf93cf9",
+          "sourceDigest": "3ca2dc4f2c72525ad2d5676bffa77b5411059c24c876c50dbc3676e6bfeeddb1",
+          "testCount": 1,
+          "testsPassed": true,
+          "buildPassed": true,
+          "artifactSha256": "a4b9c9be47445020bd8a67d0a67a4b5323f2e036ce8d531b2d2ec2eb580cdeff"
+        },
+        "publicationStatus": "complete",
+        "publication": {
+          "published": true,
+          "repositoryId": "2ebf5226acfbe0908c2c87758187b7fe73018b30cc79f9e61484529a9cfcb477",
+          "threadId": "0x0a8965a3d6d531017a97a74b0c8cf52def931804156d625cf427ff795f8d1e83",
+          "acceptedRevision": "373e1afd74c0a3fa3b64aae811cc4ddbfdf93cf9",
+          "publicationId": "5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0",
+          "artifactUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/373e1afd74c0a3fa3b64aae811cc4ddbfdf93cf9/files/index.html",
+          "sourceUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/373e1afd74c0a3fa3b64aae811cc4ddbfdf93cf9/source.json"
+        },
+        "updatedAt": "2026-10-23T20:31:34.141377+00:00"
+      }
+    ],
+    "mirrors": [
+      {
+        "acceptedRevision": "373e1afd74c0a3fa3b64aae811cc4ddbfdf93cf9",
+        "remoteCommit": "bb82cd36626cdf141107ed9ddfd6e2f295b94b9a",
+        "remoteTree": null,
+        "complete": true,
+        "sourceDigest": "3ca2dc4f2c72525ad2d5676bffa77b5411059c24c876c50dbc3676e6bfeeddb1",
+        "poolSlot": 1420006279
+      }
+    ]
+  },
+  "public": {
+    "artifact": {
+      "status": 200,
+      "sha256": "0f683cf1835a39ee41d80bca908614f0068131d50dd42be01634c4e5bee5d9ae",
+      "bytes": 7585
+    },
+    "source": {
+      "status": 200,
+      "sha256": "50b47b696e02b542f97a4de675030580802bb0e49ba9b4db5c8dcdc655414d2f",
+      "bytes": 25597
+    },
+    "proverHealth": {
+      "status": 200,
+      "sha256": "983f74ab4703cb5763c4e02140668ff8afdbdbc65cebe417afa540ebdfd0ed2a",
+      "bytes": 152,
+      "health": {
+        "ready": true
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "commit": "8efe8919cd1c019d82ff7b2d3d787c62f52de7c5",
+  "source": "/opt/rolling-bok/releases/8efe8919cd1c019d82ff7b2d3d787c62f52de7c5",
+  "previousSource": "/opt/rolling-bok/releases/6beaebe922a5934834dc9f4389551c6422971657",
+  "sourcePinSha256": "1c2bae95066d192e115087375a43cee3dae7a067970c6d25d6d1cc33651f0a79",
+  "files": {
+    "plugins/agent.mjs": "82241f3596068c23abec12293ff38c63c742fbf79eea7805ae03306a72584410"
+  },
+  "oldPid": "250128",
+  "oldProxyPid": "250129",
+  "status": "ready",
+  "configUnchanged": true,
+  "startedAt": "2026-10-23T20:38:22.443813+00:00",
+  "newPid": "251846",
+  "newProxyPid": "251848",
+  "configSha256": "38e3cf3ad1610a6c3aa74256058ae65b662469103c9c4f7367808ee53a81f1ff",
+  "unitSha256": "a0324f425052caf9010b5e3baa4265ddde15f3be7ea7a7f5164e45151d5bf61a",
+  "statePreserved": true,
+  "indexGeneration": "12",
+  "normalOwnedResume": true
+}
