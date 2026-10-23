@@ -44,8 +44,24 @@ export function hostedRepositoryNamespace(config,scope){
  return value;
 }
 
+// Operator-selected concurrency for the native prover, independent of job concurrency.
+export function hostedNativeProverThreads(config){
+ const threads=config.nativeProverThreads===undefined?1:config.nativeProverThreads;
+ assert(Number.isInteger(threads)&&threads>=1&&threads<=16,'nativeProverThreads must be an integer from 1 to 16');
+ return threads;
+}
+
+// SDK hashing and proving share this singleton. Initialize it before wallet/account
+// work, and reject an earlier incompatible initialization instead of ignoring options.
+export async function initializeHostedNativeProver(options){
+ const native=await Barretenberg.initSingleton(options);
+ for(const key of ['backend','bbPath','threads'])assert.equal(native.options[key],options[key],'Native prover singleton configuration mismatch: '+key);
+ return options;
+}
+
 /** Composition root: only this module knows which implementations are selected. */
 export async function runHostedService({config,env=process.env,onError=error=>console.error('Plugin action failed:',error.message)}) {
+ const nativeProverThreads=hostedNativeProverThreads(config);
   assert(config.applicationProfile===undefined||config.applicationProfile==='rolling','Unsupported hosted application profile');
   if(config.applicationProfile==='rolling')return runRollingHostedService({config,env,onError});
   if(!env.VENICE_WALLET_PRIVATE_KEY)throw Error('Configure VENICE_WALLET_PRIVATE_KEY locally before starting the service');
@@ -59,7 +75,7 @@ export async function runHostedService({config,env=process.env,onError=error=>co
   if(config.development&&String(info.l1ChainId)!=='31337')throw Error('Development mode requires a disposable local chain');
   if(String(info.l1ChainId)!==descriptor.scope.chainId||String(info.rollupVersion)!==descriptor.scope.rollupVersion||String(info.l1ContractAddresses.rollupAddress).toLowerCase()!==descriptor.scope.rollupAddress)throw Error('Service network identity mismatch');
   const proverEnabled=provingEnabledForNode(info);
-  const wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled,...(proverEnabled?{proverOrOptions:{backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:1}}:{})}});
+  const wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe:{proverEnabled,...(proverEnabled?{proverOrOptions:await initializeHostedNativeProver({backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:nativeProverThreads})}:{})}});
   let server,closed=false;
   async function close(){if(closed)return;closed=true;const failures=[];for(const cleanup of [()=>server?.close(),()=>wallet.stop()]){try{await cleanup();}catch(error){failures.push(error);}}if(failures.length)throw new AggregateError(failures,'Service cleanup failed');}
   try{
@@ -206,6 +222,7 @@ function hostedReceiptClaims(directory,lease){
 }
 
 export async function runHostedBillingReconciliation({config,receiptFile,env=process.env}){
+ const nativeProverThreads=hostedNativeProverThreads(config);
  let lease,wallet,result,failed=false,cleanupFailed=false;
  try{
   const {rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState,readHostedBillingReceipt,readHostedPrivateFile}=await import('./operations.mjs');
@@ -227,7 +244,7 @@ export async function runHostedBillingReconciliation({config,receiptFile,env=pro
   const [{jsonStringify},{loadRollingArtifacts},{createPrivateBokEscrow}]=await Promise.all([import('@aztec-labs/foundation/json-rpc'),import('../prover/rolling-artifacts.mjs'),import('./private-bok-escrow.mjs')]);
   const node=createAztecNodeClient(config.nodeUrl,{fetch:operatorNodeFetch({endpoint:config.nodeUrl,key,serialize:jsonStringify})});
   const info=await node.getNodeInfo();assert.equal(info.realProofs,!config.development);assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);
-  const actor=await readHostedActor(config),pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:1}));
+  const actor=await readHostedActor(config),pxe=await rollingPxeOptions(config.development,async()=>initializeHostedNativeProver({backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:nativeProverThreads}));
   wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe});
   const account=await wallet.createSchnorrInitializerlessAccount(actor.secret,actor.salt,actor.signingKey,'public Bok operator');assert.equal(String(account.address),config.operatorAddress);assert(await getFeeJuiceBalance(account.address,node)>0n);
   const [,bokRaw]=loadRollingArtifacts(),artifact=loadContractArtifact(bokRaw);
@@ -265,6 +282,7 @@ export function hostedTerminalNode(node,anchor,development){
 
 /** Explicit Rolling composition; the legacy account escrow is never selected. */
 export async function runRollingHostedService({config,env=process.env,onError=()=>{}}){
+ const nativeProverThreads=hostedNativeProverThreads(config);
  assert(Array.isArray(config.connectedRepositories??[])&&(config.connectedRepositories??[]).length<=32,'Invalid connected repository configuration');
  const [{rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState,readHostedPrivateFile},{loadRollingArtifacts},{jsonStringify},
   {getContractClassFromArtifact},{createPrivateBokEscrow},{createRollingPersistentPublicIndex},{createRollingPublicSqliteStore},{ownRollingPersistentPublicIndex}]=await Promise.all([
@@ -290,7 +308,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const node=createAztecNodeClient(config.nodeUrl,{fetch:operatorNodeFetch({endpoint:config.nodeUrl,key,serialize:jsonStringify})});
   const info=await node.getNodeInfo();assert.equal(info.realProofs,!config.development);assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);
   const actor=await readHostedActor(config);
-  const pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:1}));
+  const pxe=await rollingPxeOptions(config.development,async()=>initializeHostedNativeProver({backend:BackendType.NativeUnixSocket,...await prepareInProcessNativeRuntime({}),threads:nativeProverThreads}));
   wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe});
   const account=await wallet.createSchnorrInitializerlessAccount(actor.secret,actor.salt,actor.signingKey,'public Bok operator');
   assert.equal(String(account.address),config.operatorAddress);assert(await getFeeJuiceBalance(account.address,node)>0n);

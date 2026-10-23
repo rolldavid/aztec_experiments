@@ -1,11 +1,12 @@
 // Labelled controlled canonical-chain/provider ports; no external services or real proofs.
 import test from 'node:test';
+import {Barretenberg,BackendType} from '@aztec-foundation/bb.js';
 import assert from 'node:assert/strict';
 import {runPrivateBokRequest,startEscrowService,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall,hostedReceivedFirstCall} from '../escrow-service.mjs';
 import {bokReceiptClaims} from '../private-bok-metering.mjs';
 import {validateVeniceBilling} from '../venice-metered.mjs';
 import {validateDescriptor,API_VERSION,unpackText} from '../protocol.mjs';
-import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable,hostedRepositoryNamespace} from '../main.mjs';
+import {publishAcceptedRevision,recoverAcceptedHostedRevision,hostedRecoveryScanner,runHostedBillingReconciliation,acquireHostedLease,serializeHostedEscrow,hostedTerminalNode,hostedRequestDispatchable,hostedRepositoryNamespace,hostedNativeProverThreads,runHostedService,runRollingHostedService,initializeHostedNativeProver} from '../main.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -1040,4 +1041,24 @@ test('operator-pinned repository namespace survives plugin upgrades without chan
  const nextScope={...oldScope,receiver:f(10)},config={pluginId:f(2),repositoryNamespace:existing};
  assert.equal(hostedRepositoryNamespace(config,nextScope),existing);assert.equal(nextScope.receiver,f(10));
  for(const repositoryNamespace of ['',null,12,{},'x'.repeat(4097),'bad\0namespace','bad\nnamespace'])assert.throws(()=>hostedRepositoryNamespace({repositoryNamespace},oldScope),/namespace/);
+});
+
+test('hosted native prover concurrency defaults to one and accepts bounded operator selection',()=>{
+ assert.equal(hostedNativeProverThreads({}),1);
+ for(const threads of [1,4,8,16])assert.equal(hostedNativeProverThreads({nativeProverThreads:threads}),threads);
+ for(const threads of [null,0,-1,17,1.5,NaN,Infinity,'4',true,{},[]])assert.throws(()=>hostedNativeProverThreads({nativeProverThreads:threads}),/nativeProverThreads/);
+});
+test('all hosted entry points reject invalid native prover concurrency before external work',async()=>{
+ for(const start of [runHostedService,runRollingHostedService,runHostedBillingReconciliation]){
+  await assert.rejects(start({config:{nativeProverThreads:0},env:{}}),/nativeProverThreads/);
+ }
+});
+test('hosted native prover concurrency initializes the shared singleton before use and rejects mismatched reuse',async t=>{
+ const options={backend:BackendType.NativeUnixSocket,bbPath:'/pinned/bb',threads:4};
+ const seen=[];const init=t.mock.method(Barretenberg,'initSingleton',async value=>{seen.push(value);return {options:{...value}};});
+ assert.equal(await initializeHostedNativeProver(options),options);assert.deepEqual(seen,[options]);
+ for(const prior of [{},{...options,threads:1},{...options,backend:BackendType.Wasm},{...options,bbPath:'/other/bb'}]){
+  init.mock.mockImplementation(async()=>({options:prior}));
+  await assert.rejects(initializeHostedNativeProver(options),/singleton configuration mismatch/);
+ }
 });
