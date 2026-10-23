@@ -50,12 +50,29 @@ test('exact edits preserve all other bytes and reject ambiguous, stale or oversi
  try{
   assert(session.definitions.some(d=>d.function.name==='edit_file'));
   for(const edit of [{old_text:'repeat',new_text:'once'},{old_text:'absent',new_text:'x'},{old_text:'',new_text:'x'},{old_text:'First',new_text:'x'.repeat(100000)},{old_text:'First',new_text:'\ud800'},{old_text:'First',new_text:'x',extra:true}]){
-   await assert.rejects(session.call('edit_file',{path:'file.txt',...edit}));assert.equal(await fs.readFile(path.join(work,'file.txt'),'utf8'),initial);
+   await assert.rejects(session.call('edit_file',{path:'file.txt',edits:[edit]}));assert.equal(await fs.readFile(path.join(work,'file.txt'),'utf8'),initial);
   }
-  await assert.rejects(session.call('edit_file',{path:'missing.txt',old_text:'x',new_text:'y'}),{code:'ENOENT'});
-  assert.deepEqual(await session.call('edit_file',{path:'file.txt',old_text:'unique 🌍',new_text:'updated 日本語'}),{edited:'file.txt'});
+  for(const [edits,reason]of [
+   [[{old_text:'First',new_text:'Changed'},{old_text:'missing',new_text:'x'}],/Edit 1 old_text/],
+   [[{old_text:'First',new_text:'Changed'},{old_text:'Changed',new_text:'Again'}],/Edit 1 old_text/],
+   [[{old_text:'First café',new_text:'x'},{old_text:'café',new_text:'y'}],/overlap/],
+   [[{old_text:'First',new_text:'x'},{old_text:'First',new_text:'y'}],/overlap/],
+   [[],/1 to 32/],
+   [Array(33).fill({old_text:'First',new_text:'x'}),/1 to 32/],
+  ]){await assert.rejects(session.call('edit_file',{path:'file.txt',edits}),reason);assert.equal(await fs.readFile(path.join(work,'file.txt'),'utf8'),initial);}
+  await assert.rejects(session.call('edit_file',{path:'file.txt',old_text:'First',new_text:'x'}),/Use path and an edits array/);
+  await assert.rejects(session.call('edit_file',{path:'missing.txt',edits:[{old_text:'x',new_text:'y'}]}),{code:'ENOENT'});
+  assert.deepEqual(await session.call('edit_file',{path:'file.txt',edits:[{old_text:'unique 🌍',new_text:'updated 日本語'}]}),{edited:'file.txt'});
   assert.equal(await fs.readFile(path.join(work,'file.txt'),'utf8'),initial.replace('unique 🌍','updated 日本語'));
-  await session.call('edit_file',{path:'file.txt',old_text:'repeat repeat\r\n',new_text:''});assert(!(await session.call('read_file',{path:'file.txt'})).text.includes('repeat'));
+  await session.call('edit_file',{path:'file.txt',edits:[{old_text:'repeat repeat\r\n',new_text:''}]});assert(!(await session.call('read_file',{path:'file.txt'})).text.includes('repeat'));
+  await fs.chmod(path.join(work,'file.txt'),0o755);
+  const original=(await session.call('read_file',{path:'file.txt'})).text;
+  const result=await session.call('edit_file',{path:'file.txt',edits:[{old_text:'updated 日本語',new_text:'First café'},{old_text:'First',new_text:'last'},{old_text:' café',new_text:' unchanged'}]});
+  assert.deepEqual(result,{edited:'file.txt'});
+  assert.equal((await session.call('read_file',{path:'file.txt'})).text,original.replace('First café','last unchanged').replace('updated 日本語','First café'));
+  assert.equal((await fs.stat(path.join(work,'file.txt'))).mode&0o777,0o755);
+  assert.deepEqual(await fs.readdir(work),['file.txt'],'no temporary edits are retained');
+
  }finally{await session.close();}
 });
 

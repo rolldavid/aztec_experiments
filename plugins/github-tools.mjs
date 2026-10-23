@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {randomUUID} from 'node:crypto';
 import {BROWSER_PLAN_MAX_STEPS,browserPlanDiagnostic,validateBrowserPlan} from './browser-validation.mjs';
 import {STATIC_SOURCE_REQUIREMENTS} from './isolated-execution.mjs';
 import {repositoryGit} from './thread-repositories.mjs';
@@ -18,7 +19,7 @@ function browserPlanText(text){
  let plan;try{plan=JSON.parse(text);}catch{throw Error('Use valid JSON in browser-tests.json.');}
  return browserPlanSummary(plan);
 }
-const scenarioSchema={type:'object',properties:{name:{type:'string'},path:{type:'string'},steps:{type:'array',minItems:1,maxItems:BROWSER_PLAN_MAX_STEPS,items:{type:'object'}}},required:['name','path','steps'],additionalProperties:false};
+const scenarioSchema={type:'object',properties:{name:{type:'string'},path:{type:'string'},steps:{type:'array',description:'expectChecked applies only to checkbox or radio inputs. To assert a button is disabled, use expectCount with selector button:disabled and count 1; use button:enabled for enabled state.',minItems:1,maxItems:BROWSER_PLAN_MAX_STEPS,items:{type:'object'}}},required:['name','path','steps'],additionalProperties:false};
 
 
 /** GitHub implementation of the agent tool API. Writes stay in a fresh branch.
@@ -96,7 +97,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       definition('read_file','Read a UTF-8 repository file',{path:string}),
       definition('write_file','Write a UTF-8 file in the isolated checkout',{path:string,content:string}),
       definition('edit_browser_plan','Change only selected browser-tests.json scenarios. Indices refer to the current plan. Keep existing scenarios unless the requested change needs them changed. The complete resulting plan is checked before writing; returns the remaining step budget. Omitted or empty remove, replace and append arrays leave those operations unchanged. Provide at least one edit; for example, append alone can add scenarios. Use plain CSS selectors such as input[type=checkbox] or #clear-completed. JSON escaping is only transport syntax; do not double-escape the quotes delimiting CSS attribute values. Correct a failing selector without deleting the intended coverage.',{remove:{type:'array',maxItems:8,items:{type:'integer',minimum:0,maximum:7}},replace:{type:'array',maxItems:8,items:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:7},scenario:scenarioSchema},required:['index','scenario'],additionalProperties:false}},append:{type:'array',maxItems:8,items:scenarioSchema}},[]),
-      definition('edit_file','Replace one exact occurrence in an existing UTF-8 file. old_text must be nonempty and unique; use enough unchanged context. Prefer this for small changes instead of rewriting whole files.',{path:string,old_text:string,new_text:string}),
+      definition('edit_file','Apply all related exact replacements to one existing UTF-8 file in a single call. Each old_text must match once in the CURRENT original file; ranges must not overlap. Include every independent change you can prepare from the supplied source in edits. All edits are validated before one atomic write; a rejected edit leaves the entire file unchanged. Never match text introduced by another edit in this call.',{path:string,edits:{type:'array',minItems:1,maxItems:32,items:{type:'object',properties:{old_text:{type:'string',minLength:1},new_text:string},required:['old_text','new_text'],additionalProperties:false}}}),
       definition('read_pr','Read a PR in this repository',{number:{type:'integer',minimum:1}}),
       definition('create_pr','Publish current edits as a new pull request; never merge',{title:string,body:string}),
     ];
@@ -147,18 +148,31 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         }
         if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');const browserPlan=path.relative(work,file)==='browser-tests.json'?browserPlanText(args.content):undefined;await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);if(workspace)await workspace.retain();return {written:args.path,...(browserPlan?{browserPlan}:{})};}
         if(name==='edit_file'){
-          if(!args||Object.keys(args).sort().join()!=='new_text,old_text,path'||typeof args.old_text!=='string'||!args.old_text||typeof args.new_text!=='string'||
-            !args.old_text.isWellFormed()||!args.new_text.isWellFormed()||Buffer.byteLength(args.old_text)>100000||Buffer.byteLength(args.new_text)>100000)throw Error('Invalid exact edit');
+          if(!args||Object.keys(args).sort().join()!=='edits,path'||!Array.isArray(args.edits)||args.edits.length<1||args.edits.length>32)throw Error('Use path and an edits array containing 1 to 32 exact replacements.');
+          let argumentBytes=0;
+          for(const [i,edit]of args.edits.entries()){
+            if(!edit||Object.keys(edit).sort().join()!=='new_text,old_text'||typeof edit.old_text!=='string'||!edit.old_text||typeof edit.new_text!=='string'||!edit.old_text.isWellFormed()||!edit.new_text.isWellFormed())throw Error('Edit '+i+' requires a nonempty old_text string and a new_text string with no other fields.');
+            argumentBytes+=Buffer.byteLength(edit.old_text)+Buffer.byteLength(edit.new_text);
+          }
+          if(argumentBytes>100000)throw Error('Combined exact edit text exceeds 100000 bytes.');
           const oversized=await ensureFiles(),file=await safe(args.path);
           if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');
           const stat=await fs.stat(file);if(!stat.isFile()||stat.size>100000)throw Error('File too large');
-          const bytes=await fs.readFile(file),text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes),start=text.indexOf(args.old_text);
-          if(start<0||text.indexOf(args.old_text,start+1)!==-1)throw Error('Exact edit must match once; read current file and include unique context');
-          const next=text.slice(0,start)+args.new_text+text.slice(start+args.old_text.length);
+          const bytes=await fs.readFile(file),text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);
+          const edits=args.edits.map((edit,index)=>{
+            const start=text.indexOf(edit.old_text);
+            if(start<0||text.indexOf(edit.old_text,start+1)!==-1)throw Error('Edit '+index+' old_text must match exactly once in the original file; read current source and include unique context. File unchanged.');
+            return {start,end:start+edit.old_text.length,index,replacement:edit.new_text};
+          }).sort((a,b)=>a.start-b.start);
+          for(let i=1;i<edits.length;i++)if(edits[i].start<edits[i-1].end)throw Error('Edits '+edits[i-1].index+' and '+edits[i].index+' overlap in the original file. File unchanged.');
+          let next='',offset=0;for(const edit of edits){next+=text.slice(offset,edit.start)+edit.replacement;offset=edit.end;}next+=text.slice(offset);
           if(Buffer.byteLength(next)>100000)throw Error('File too large');
-          // All matching and size checks precede the single mutation. The owned
-          // session executes tools serially; retain the exact resulting revision.
-          const browserPlan=path.relative(work,file)==='browser-tests.json'?browserPlanText(next):undefined;await fs.writeFile(file,next);if(workspace)await workspace.retain();return {edited:args.path,...(browserPlan?{browserPlan}:{})};
+          const browserPlan=path.relative(work,file)==='browser-tests.json'?browserPlanText(next):undefined;
+          // All ranges refer to the same original bytes. Publish the complete
+          // validated result once, preserving executable permissions, then retain.
+          const temporary=file+'.bok-edit-'+randomUUID();
+          try{await fs.writeFile(temporary,next,{flag:'wx',mode:stat.mode&0o777});await fs.chmod(temporary,stat.mode&0o777);await fs.rename(temporary,file);}finally{await fs.rm(temporary,{force:true});}
+          if(workspace)await workspace.retain();return {edited:args.path,...(browserPlan?{browserPlan}:{})};
         }
         if(name==='read_pr'){
           if(workspace?.connection)throw Error('Connected repository PR reads are not exposed');

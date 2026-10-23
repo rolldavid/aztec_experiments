@@ -43,7 +43,7 @@ test('existing toolbox edits and accepts actual thread source across independent
  const toolbox=githubToolbox({repository:'owner/project',api,repositories,runCommand:async(command,args,options)=>{assert.equal(command,'git');return repositoryGit(args.map(arg=>arg==='https://github.com/owner/project.git'?pathToFileURL(seed).href:arg),options);}});
  const first=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});
  assert(!first.definitions.some(d=>d.function.name==='create_pr'));
- await first.call('edit_file',{path:'hello.txt',old_text:'later',new_text:'accepted from first participant'});
+ await first.call('edit_file',{path:'hello.txt',edits:[{old_text:'lat',new_text:'accepted'},{old_text:'er',new_text:' from first participant'}]});
  assert.equal(retains,1);
  const revision=await first.accept();await first.close();
  const check=await h.open(99);assert.equal((await repositoryGit(['rev-parse','--is-shallow-repository'],{cwd:check.repositoryPath})).stdout.trim(),'true');await repositoryGit(['fsck','--connectivity-only','--no-dangling'],{cwd:check.repositoryPath});await check.close();
