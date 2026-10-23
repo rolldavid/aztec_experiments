@@ -66,7 +66,7 @@ test('model can check and repair an empty thread; acceptance reuses only the exa
  const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async({sourceDirectory,revision})=>{validations++;const text=await fs.readFile(path.join(sourceDirectory,'app.js'),'utf8');if(text==='bad')throw Object.assign(Error('Isolated execution failed'),{code:'STATIC_FAILED',result:{passed:false,phase:'test',revision,log:'assertion failed'}});return {passed:true,revision,sourceDigest:'a'.repeat(64),log:'passed'};}});
  const toolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('Empty thread requires no external repository API')});
  const session=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});
- await session.call('write_file',{path:'app.js',content:'bad'});assert.equal((await session.call('check_workspace',{})).passed,false);assert.equal((await session.call('check_workspace',{})).passed,false);assert.equal(validations,1,'unchanged failing source reuses exact deterministic failure');
+ await session.call('write_file',{path:'app.js',content:'bad'});assert.equal((await session.call('check_workspace',{})).passed,false);
  await session.call('write_file',{path:'app.js',content:'good'});const checked=await session.call('check_workspace',{});assert.equal(checked.passed,true);assert.equal(validations,2);
  const accepted=await session.accept();assert.equal(accepted.acceptedRevision,checked.revision);assert.equal(validations,2,'unchanged source reuses exact isolated result');await session.close();
  const second=await toolbox.open({threadId:id(1),id:id(2),postId:id(10)});assert.equal((await second.call('read_file',{path:'app.js'})).text,'good');await second.call('check_workspace',{});await second.call('write_file',{path:'app.js',content:'changed'});await second.accept();assert.equal(validations,4,'edit invalidates previous isolated check');await second.close();
@@ -158,7 +158,7 @@ for(const changedAfterCheck of [false,true])test('agent terminal acceptance refu
  const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async({sourceDirectory,revision})=>{validations++;if(await fs.readFile(path.join(sourceDirectory,'app.js'),'utf8')!=='valid')throw Object.assign(Error('Invalid generated output'),{code:'STATIC_FAILED',result:{passed:false,phase:'test',revision}});return {passed:true,revision,sourceDigest:'a'.repeat(64)};},onAccepted:async()=>{published++;}});
  const actualToolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No external GitHub call')}),toolbox={open:args=>actualToolbox.open({...args,threadId:id(9)})};
  const model={complete:async()=>{calls++;const tools=calls===1?[{id:'write',function:{name:'write_file',arguments:JSON.stringify({path:'app.js',content:changedAfterCheck?'valid':'invalid'})}},{id:'check',function:{name:'check_workspace',arguments:'{}'}}]:[{id:'change',function:{name:'write_file',arguments:JSON.stringify({path:'app.js',content:'invalid after check'})}}];return {message:{role:'assistant',tool_calls:tools}};}};
- await assert.rejects(createAgent({model,toolbox,instructions:'Build',maxCalls:changedAfterCheck?2:1}).run({id:id(1),postId:id(9),text:'Build'}),/Invalid generated output/);assert.equal(published,0);assert.equal(validations,changedAfterCheck?2:1);assert.equal(calls,changedAfterCheck?2:1);
+ await assert.rejects(createAgent({model,toolbox,instructions:'Build',maxCalls:changedAfterCheck?2:1}).run({id:id(1),postId:id(9),text:'Build'}),/Invalid generated output/);assert.equal(published,0);assert.equal(validations,2);assert.equal(calls,changedAfterCheck?2:1);
  const next=await manager.open({threadId:id(9),invocationId:id(2),repository:'owner/project'});try{assert.equal(next.readRevision,null);}finally{await next.close();}
 });
 
@@ -343,4 +343,21 @@ test('thread admission and toolbox share one lease/session and cleanup before ag
  const interrupted=admittedRepositorySession(repositories,input);await interrupted.admit();await interrupted.close();assert.equal(closes,2);
  let failures=0;const failed=admittedRepositorySession({open:async()=>{failures++;throw Error('admission failed');}},input);
  await assert.rejects(failed.admit(),/admission failed/);await assert.rejects(failed.open(input),/admission failed/);await failed.close();assert.equal(failures,1);
+});
+
+for(const phase of ['setup','execution','handoff','test','build','browser'])test('unchanged source retries transient '+phase+' validation failures',async t=>{
+ const h=await fixture(t);let checks=0;
+ const manager=threadRepositories({...h.options,validateRevision:async({revision})=>{
+  if(++checks===1)throw Object.assign(Error('Temporary infrastructure failure'),{code:'STATIC_FAILED',result:{passed:false,revision,phase,transport:'transport',failure:{phase,kind:'transport',operation:'start',exitCode:null},outcome:{oomKilled:phase==='test',test:{code:null,limited:true}}}});
+  return {passed:true,revision,sourceDigest:'a'.repeat(64)};
+ }});
+ const session=await h.open(1,1,manager);await h.checkout(session);await fs.writeFile(path.join(session.work,'file.txt'),'changed');
+ await assert.rejects(session.check(),/Temporary infrastructure/);assert.equal((await session.check()).passed,true);await session.accept();assert.equal(checks,2);await session.close();
+});
+test('only known pure source prerequisites are reused until the source changes',async t=>{
+ const h=await fixture(t);let checks=0;
+ const manager=threadRepositories({...h.options,validateRevision:async({revision})=>{checks++;throw Object.assign(Error('Missing browser plan'),{code:'STATIC_FAILED',result:{passed:false,revision,phase:'input',requirement:'STATIC_BROWSER_TEST_REQUIRED',failure:{phase:'input',kind:'validation',operation:null,exitCode:null}}});}});
+ const session=await h.open(1,1,manager);await h.checkout(session);
+ await assert.rejects(session.check(),/Missing browser plan/);await assert.rejects(session.check(),/Missing browser plan/);assert.equal(checks,1);
+ await fs.writeFile(path.join(session.work,'file.txt'),'edit');await assert.rejects(session.check(),/Missing browser plan/);assert.equal(checks,2);await session.close();
 });

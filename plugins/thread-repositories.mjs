@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {fileState,readHostedPrivateFile} from './operations.mjs';
+import {STATIC_SOURCE_REQUIREMENTS} from './isolated-execution.mjs';
 const exec=promisify(execFile),sha=value=>createHash('sha256').update(value).digest('hex');
 const revision=value=>typeof value==='string'&&/^[0-9a-f]{40}$/.test(value);
 /** Trusted fixed Git operations only. Never use this port to execute generated
@@ -165,10 +166,13 @@ export function threadRepositories({directory,namespace,lease,git=repositoryGit,
     let validation;
     try{validation=(!unchanged||forceCheck)&&validateRevision?await validateRevision({sourceDirectory:work,revision:produced}):null;}
     catch(error){
-     // Deterministic source/build/browser failures remain failures for this
-     // exact tree and this session's fixed executor/policy. Infrastructure
-     // errors are not memoized; an edit or a new session must validate again.
-     if(error.code==='STATIC_FAILED'&&error.result?.passed===false&&error.result.revision===produced)failedCheck={tree,parent,error};
+     // Only pure source prerequisites are deterministic. Test/build/browser
+     // execution can fail transiently (daemon, transport, resource limits or
+     // handoff), even when its outer code is STATIC_FAILED. Never cache those.
+     const r=error.result,f=r?.failure;
+     if(error.code==='STATIC_FAILED'&&r?.passed===false&&r.revision===produced&&r.phase==='input'&&
+      Object.hasOwn(STATIC_SOURCE_REQUIREMENTS,r.requirement)&&!r.transport&&!r.outcome&&!r.cleanupFailure&&
+      f?.phase==='input'&&f.kind==='validation'&&f.operation===null&&f.exitCode===null)failedCheck={tree,parent,error};
      throw error;
     }
     if((!unchanged||forceCheck)&&validateRevision){assert(validation?.passed===true&&validation.revision===produced&&/^[0-9a-f]{64}$/.test(validation.sourceDigest),'Isolated revision validation failed');await git(['diff','--quiet',produced,'--'],{cwd:work});}
