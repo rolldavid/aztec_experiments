@@ -1,3 +1,4 @@
+import {executeRollingAction} from './wallet-action.mjs';
 // Labelled DOM and session doubles. No browser, crypto, RPC or real account.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,12 +35,13 @@ function dom(t){
 async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
-  readAccountStatus:async()=>{core.status++;return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
+  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed'};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
+ session.application.executeAction=(action,options)=>executeRollingAction(session.application,structuredClone(action),options);
  const runtime={getAccount:()=>account,account:{configure(){}},createSession:async options=>{onProgress=options.onProgress;core.sessions++;return session;}};
  const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime,onPublicEffect:()=>posting?.effect?.()});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
  await document.until(()=>(defaults.type?document.querySelector('[data-action-review]'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
@@ -178,7 +180,7 @@ for(const type of ['post','reply','quote','repost'])test(`one ${type} click subm
  assert(!button.textContent.includes('Review'));button.fire('click');button.fire('click');
  assert.equal(button.textContent,'Posting…');assert(button.disabled);await entered.promise;assert.equal(f.submissions.length,0);
  hold.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
- await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
+ await f.document.until(()=>f.core().status===2&&f.host.textContent.includes('0 USDC available'));assert.equal(f.reads(),1);
  assert.equal(f.document.querySelector('dialog').open,false);
  assert.deepEqual(f.submissions,['post-1']);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.prepared().content,'My exact message');assert.equal(f.prepared().type,type);
  if(type==='reply'){assert.equal(f.prepared().parent,'10');assert.equal(f.prepared().root,'1');}
@@ -229,8 +231,8 @@ test('confirmed post closes immediately while public feed refresh is still pendi
  const refresh=Promise.withResolvers(),started=Promise.withResolvers();const f=await fixture(t,{posting:{effect:()=>{started.resolve();return refresh.promise;}}});
  await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});const editor=f.document.querySelector('textarea');editor.value='Confirmed before feed refresh';editor.fire('input');
  const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});button.fire('click');await started.promise;
- assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');assert.deepEqual(f.submissions,['post-1']);
- refresh.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
+ assert.equal(f.document.querySelector('dialog').open,false);await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.deepEqual(f.submissions,['post-1']);
+ await f.document.until(()=>f.core().status===2);assert.equal(f.reads(),1);refresh.resolve();
 });
 
 test('Bok credit automatically quotes and keeps amount editable, discarding an obsolete price',{timeout:3000},async t=>{
@@ -339,4 +341,14 @@ test('explicit fresh account route opens wallet selection and continues into unf
 test('fresh account action reloads the existing page with a client-side route',async t=>{
  const f=signInFixture(t);const old=globalThis.location,location={hash:'#/home',reloads:0,reload(){this.reloads++;}};globalThis.location=location;t.after(()=>{globalThis.location=old;});
  await f.panel.initialize();f.panel.open();const start=f.document.querySelectorAll('button').find(b=>b.textContent==='Start new test account');assert(start);start.fire('click');assert.equal(location.hash,'#/new-account');assert.equal(location.reloads,1);
+});
+
+
+test('confirmed post releases UI while balance refresh runs; typing survives its completion',{timeout:3000},async t=>{
+ const pending=Promise.withResolvers(),started=Promise.withResolvers();const f=await fixture(t,{posting:{balanceRefresh:()=>{started.resolve();return pending.promise;}}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));const editor=f.document.querySelector('textarea');editor.value='First post';editor.fire('input');f.document.querySelector('[data-action-review]').fire('click');
+ await started.promise;await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.document.querySelector('dialog').open,false);
+ f.panel.open({type:'post'});const next=f.document.querySelector('textarea');next.value='Next draft while balance updates';next.fire('input');assert(f.document.body.textContent.includes('Balance (updating)'));
+ pending.resolve();await f.document.until(()=>!f.document.body.textContent.includes('Balance (updating)'));
+ assert.equal(f.document.querySelector('textarea'),next);assert.equal(next.value,'Next draft while balance updates');assert.equal(f.submissions.length,1);
 });

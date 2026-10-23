@@ -1081,3 +1081,14 @@ test('opening a private session performs no discarded synchronization; first acc
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input);assert.equal(f.state.syncs,0);
  await session.application.readAccountStatus();assert.equal(f.state.syncs,1);await session.close();
 });
+
+
+test('direct action holds one account lock and synchronization through prepare and send',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input),before=f.state.syncs,locks=f.state.events.filter(e=>e==='lock').length;
+ const action={type:'name',first:'Fresh',last:'Willow'},captured=[];
+ const execution=session.application.executeAction(action,{onPrepared:prepared=>{assert(f.state.active);captured.push(prepared);}});action.first='Changed';
+ await assert.rejects(execution,/unknown send/);
+ assert.equal(f.state.syncs-before,1);assert.equal(f.state.events.filter(e=>e==='lock').length-locks,1);assert.equal(f.state.sends,1);
+ assert.equal(captured.length,1);assert.equal(captured[0].status,'unknown');assert.equal(captured[0].action.first,'Fresh');
+ await assert.rejects(session.application.submitPrepared(captured[0].intentId),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);await session.close();
+});

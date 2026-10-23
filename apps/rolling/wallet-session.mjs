@@ -1,3 +1,5 @@
+import {executeRollingAction} from './wallet-action.mjs';
+import {measureRollingStage} from './performance.mjs';
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
 import {createDepositRefunds} from './deposit-refunds.mjs';
@@ -463,7 +465,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
  let refreshPhase=null;
- const synchronized=createSynchronizedRollingApplication({application:app,operationScope:()=>operationScope,synchronize:async()=>{refreshPhase?.('pxe-sync');await pxe.sync();refreshPhase?.('account-initialize');await initializeAccount();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
+ const synchronized=createSynchronizedRollingApplication({application:app,operationScope:()=>operationScope,synchronize:async()=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?'account.sync':'action.sync',()=>pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
  async function observedRead(name,call,args){
   const method=refreshMethods[name];if(!method)return locked(()=>call(...args));
   let step=method+'/lock',contextChecks=0;
@@ -476,6 +478,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  }
 
  const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>refreshMethods[name]?observedRead(name,call,args):locked(async()=>{const result=name==='submitPrepared'&&(topups||aggregate)?await submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId:args[0]}):await call(...args);if(name==='reconcile'&&result?.status==='confirmed'){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordConfirmedClaim(result);else if(result.action?.type==='claim-deposit'&&aggregate)await aggregate.recordConfirmedClaim(result);}return result;})])),
+  executeAction(input,options={}){const action=structuredClone(input),onPrepared=options.onPrepared;return locked(()=>executeRollingAction(synchronized,action,{onPrepared,submit:intentId=>['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)&&(topups||aggregate)?submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId}):synchronized.submitPrepared(intentId)}));},
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();

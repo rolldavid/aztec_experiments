@@ -1,3 +1,5 @@
+import {createReaderUpdates} from './reader-updates.mjs';
+import {beginRollingMeasure} from './performance.mjs';
 import {createPublicReader} from './reader-client.mjs';
 import {createPublicAvatar,createPublicProfile} from './profile-view.mjs';
 import {createMessageContent as richText,createInlineAction} from './model.mjs';
@@ -5,7 +7,7 @@ import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 const currentRoute=()=>location.hash==='#/new-account'?'/home':location.hash.slice(1)||'/home';
-let controller,sequence=0,route=currentRoute(),main,loadedPages=1;
+let controller,sequence=0,route=currentRoute(),main,loadedPages=1,renderActive=0;
 let walletPanel,privatePanel,savedItemsLoad,accountPreparation;
 async function preparePublicAssetCache(){
  if(!navigator.serviceWorker)return;
@@ -173,8 +175,11 @@ function boardOverview(data){
  }
  return section;
 }
-async function render(){
- controller?.abort();controller=new AbortController();const signal=controller.signal,current=++sequence;
+async function render({live=false}={}){
+ const finishTiming=beginRollingMeasure(live?'reader.update':'reader.load');
+ if(live)positions.set(route,captureRoutePosition(loadedPages));
+ controller?.abort();controller=new AbortController();const signal=controller.signal,current=++sequence;renderActive=current;
+ try{
  // Back navigation reloads the same number of pages against the current index.
  // Navigation cancellation owns this sequence; each request handles transport errors.
  const restoreSignal=signal,saved=positions.get(route);loadedPages=1;
@@ -186,7 +191,7 @@ async function render(){
   if(api==='thread'&&parts[2]){expectedRoot=parts[1];api='post';parameters={id:parts[2]};title='Linked post';}
  }
  else if(parts[0]!=='home'){shell('Page not found');return;}
- shell(title,{boardId:api==='board'?parameters.id:null});
+ if(!live)shell(title,{boardId:api==='board'?parameters.id:null});
  if(privateView){
   main.querySelector('.intro').textContent={following:'Posts from the people and boards you follow.',bookmarks:'Posts you saved for later.',notifications:'Updates from conversations you follow.'}[privateView];
   if(privatePanel?.privateStatus?.()!=='complete'){
@@ -202,11 +207,12 @@ async function render(){
    announce(title+': sign in to see your saved conversations.');return;
   }
  }
- const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');main.append(loading);
+ const contentHost=el('section',{class:'public-content'});if(!live)main.append(contentHost);
+ const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');contentHost.append(loading);
  if(api==='directory'){
-  main.querySelector('.intro').textContent='Find a community around something you care about.';main.append(button('Create a board',()=>openWallet({type:'subboard'})));
+  main.querySelector('.intro').textContent='Find a community around something you care about.';contentHost.append(button('Create a board',()=>openWallet({type:'subboard'})));
   const input=el('input',{type:'search',value:parameters.query,placeholder:'Find a topic or board','aria-label':'Search boards',maxlength:120});
-  const form=el('form',{class:'directory-search',onSubmit:event=>{event.preventDefault();location.hash='/directory/'+encodeURIComponent(input.value.trim());}},input,el('button',{class:'button',type:'submit'},'Search'));main.insertBefore(form,loading);
+  const form=el('form',{class:'directory-search',onSubmit:event=>{event.preventDefault();location.hash='/directory/'+encodeURIComponent(input.value.trim());}},input,el('button',{class:'button',type:'submit'},'Search'));contentHost.insertBefore(form,loading);
  }
  const container=el('section',{class:'feed','aria-label':title});let data;
  const seenIds=new Set(),seenCursors=new Set();let lastPosition=null,lastPositionHash=null;
@@ -239,6 +245,7 @@ async function render(){
  try{
   data=await read(api,parameters,restoreSignal);if(current!==sequence)return;
   if(expectedRoot&&(!data.post||data.post.record?.root!==expectedRoot))throw Error('Linked post does not belong to this conversation');
+  const finishDOM=beginRollingMeasure('reader.dom');
   append(data);
   let cursor=data.nextCursor;
   while(api!=='directory'&&cursor&&(loadedPages<(saved?.pages??1)||saved?.anchor&&!seenIds.has(saved.anchor.id.slice(5)))){
@@ -246,10 +253,10 @@ async function render(){
   }
   loading.remove();
   if(api==='board'){
-   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));main.append(boardOverview(data),preferenceButton('Follow board',2,parameters.id));
+   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));contentHost.append(boardOverview(data),preferenceButton('Follow board',2,parameters.id));
    const compose=document.querySelector('[data-board-compose]');if(compose)compose.disabled=Boolean(data.board?.rejected);
   }
-  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);main.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId),moderatorButton('Remove this avatar',{type:'moderate-avatar',name:parameters.nameId}));}
+  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);contentHost.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId),moderatorButton('Remove this avatar',{type:'moderate-avatar',name:parameters.nameId}));}
   document.title=main.querySelector('h1').textContent+' · Rolling Chat';
   if(!container.childElementCount){
    const copy=privateView?{following:['Find your people','Follow a board or a named author to see their posts here.'],bookmarks:['Save something worth returning to','Select Bookmark on a post to keep it here.'],notifications:['You’re all caught up','Follow a conversation to see new replies here.']}[privateView]:api==='directory'?['Find a board',cursor?'No matches on this page. Check the next page or try another search.':'No boards match. Try another topic or create a board.']:['Start the conversation','There are no posts here yet.'];
@@ -258,8 +265,8 @@ async function render(){
    else if(api==='home'||api==='board'&&!data.board?.rejected)empty.append(button('Write the first post',()=>openWallet({type:'post',subboard:api==='board'?parameters.id:'0'}),{class:'button primary'}));
    container.append(empty);
   }
-  main.append(container);
-  if(expectedRoot)main.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
+  contentHost.append(container);
+  if(expectedRoot)contentHost.append(el('p',{},link('Read the conversation from the beginning','/thread/'+expectedRoot)));
   let observer,inFlight=false,stopped=false;
   const stop=()=>{stopped=true;observer?.disconnect();};
   signal.addEventListener('abort',stop,{once:true});
@@ -277,18 +284,22 @@ async function render(){
     if(!cursor){stop();more.remove();}else more.disabled=false;
     if(added.length)focusResult(added[0]);
     else if(cursor){if(ownedFocus&&document.activeElement===document.body)more.focus({preventScroll:true});}
-    else{const end=el('p',{role:'status'},api==='directory'?'No more subboards.':'No more conversations.');main.append(end);focusResult(end);}
+    else{const end=el('p',{role:'status'},api==='directory'?'No more subboards.':'No more conversations.');contentHost.append(end);focusResult(end);}
     announce(api==='directory'?'Next search page checked.':'More conversations loaded.');
    }catch(error){
     if(signal.aborted||current!==sequence||stopped)return;
-    stop();more.remove();const failed=el('p',{role:'alert'},'The conversation changed or could not load. ',button('Refresh',()=>render()));main.append(failed);focusResult(failed);
+    stop();more.remove();const failed=el('p',{role:'alert'},'The conversation changed or could not load. ',button('Refresh',()=>render()));contentHost.append(failed);focusResult(failed);
    }finally{
     inFlight=false;more.removeAttribute('aria-busy');
     if(!stopped&&!signal.aborted&&current===sequence&&cursor)observer?.observe(more);
    }
   }
-  if(cursor)main.append(more);
-  main.append(el('details',{class:'feed-details'},el('summary',{},'About this feed'),el('p',{class:'quiet'},'Checked against chain block '+String(data.checkpoint?.number??''))));
+  if(cursor)contentHost.append(more);
+  contentHost.append(el('details',{class:'feed-details'},el('summary',{},'About this feed'),el('p',{class:'quiet'},'Checked against chain block '+String(data.checkpoint?.number??''))));
+  if(live){main.querySelector('.public-content')?.replaceWith(contentHost);announce('Conversations updated.');}
+  finishDOM();
+  updates.rendered(data.revision);
+  finishTiming();
   focusRoute(route,positions.get(route),current===1);
   // One request owner serves both automatic and keyboard paging. Re-observation
   // after each page fills short viewports, but never creates parallel requests.
@@ -297,13 +308,17 @@ async function render(){
    observer.observe(more);
   }
 
- }catch(error){if(signal.aborted)return;loading.remove();main.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':error.code==='READER_NOT_FOUND'?({board:'Board',profile:'Profile',post:'Post',thread:'Conversation'}[api]??'Page')+' not found':'Conversations could not load'),el('p',{},error.code==='READER_SYNCING'?'The feed is catching up with new posts. Try again shortly.':error.code==='READER_NOT_FOUND'?'This link does not point to an available '+({board:'board',profile:'profile',post:'post',thread:'conversation'}[api]??'page')+'.':'Check your connection, then try loading the conversations again.'),button('Try again',()=>render())));focusRoute(route,positions.get(route),current===1);}
+ }catch(error){if(signal.aborted)return;if(live){announce('Conversations could not refresh.');return;}loading.remove();contentHost.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':error.code==='READER_NOT_FOUND'?({board:'Board',profile:'Profile',post:'Post',thread:'Conversation'}[api]??'Page')+' not found':'Conversations could not load'),el('p',{},error.code==='READER_SYNCING'?'The feed is catching up with new posts. Try again shortly.':error.code==='READER_NOT_FOUND'?'This link does not point to an available '+({board:'board',profile:'profile',post:'post',thread:'conversation'}[api]??'page')+'.':'Check your connection, then try loading the conversations again.'),button('Try again',()=>render())));focusRoute(route,positions.get(route),current===1);}
+ }finally{finishTiming();if(renderActive===current)renderActive=0;void updates.flush();}
 }
-addEventListener('pagehide',()=>{sequence++;controller?.abort();});
-addEventListener('pageshow',event=>{if(event.persisted)render();});
+const updates=createReaderUpdates({refresh:()=>render({live:true}),canRefresh:()=>!renderActive&&!document.hidden&&!privateViews.has(route.split('/')[1])&&route.split('/')[1]!=='directory'&&!!main?.querySelector('.public-content')});
+addEventListener('pagehide',()=>{sequence++;controller?.abort();updates.stop();});
+addEventListener('pageshow',event=>{updates.start();if(event.persisted)render();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void updates.flush();});
 document.querySelector('.skip').addEventListener('click',skipToContent);
 addEventListener('hashchange',()=>{positions.set(route,captureRoutePosition(loadedPages));if(positions.size>40)positions.delete(positions.keys().next().value);route=currentRoute();render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});
+updates.start();
 render();
 // Restore this browser’s saved account without opening the panel or prompting a wallet.
 void accountPanel().catch(()=>{});

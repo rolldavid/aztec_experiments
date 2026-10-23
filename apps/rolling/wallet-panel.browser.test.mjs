@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import {chromium} from 'playwright';
-const fixture=`import {advanceAggregateClaim} from '/aggregate-wallet.mjs';
+const fixture=`import {executeRollingAction} from '/wallet-action.mjs';
+import {advanceAggregateClaim} from '/aggregate-wallet.mjs';
 import {mountRollingWalletPanel} from '/wallet-panel.mjs';
 import {selectPrivateViews} from '/private-views.mjs';
 const state={loads:0,sessions:0,prepares:0,sends:0,reconciles:0,cancels:0,closes:0,signIns:0,restores:0,effects:0,ended:0,owned:0,unlocked:true,options:null,failure:null,hold:null,release:null,fee:'fee-ready',profileCalls:0,bioVersion:'3',avatarVersion:'4'};
@@ -52,6 +53,7 @@ const topup=Object.fromEntries(['private-fee','bok'].map(kind=>{const local={};c
  async inspect(){return {paymentSaved:local.paid,claim:local.claim??null,privateFeeCap:'1000',claimAction:kind==='bok'?'claim-bok':'claim-private-fee'};},
  async checkpointClaim(value){local.claim=value;},async recover(){return {receipt:{txHash:'0x'+'1'.repeat(64),amount:'300'}};},async reviewRevertedClaim(){local.claim=null;}
  };return [kind,cap];}));
+application.executeAction=(action,options)=>executeRollingAction(application,structuredClone(action),options);
 const runtime={selectPrivateViews,
  fundingWallets:()=>state.walletChoices??[{id:'metamask',name:'MetaMask'}],fundingWalletStatus:()=>state.fundingWallet??(state.walletChoices?{connected:false}:{connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)}),
  async connectFundingWallet(id){state.walletConnects=(state.walletConnects??0)+1;state.walletSelected=id;await boundary('funding-wallet');state.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)};},
@@ -87,7 +89,7 @@ async function browserFixture(t){
   if(Object.hasOwn(diagnosticModules,req.url)){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL(diagnosticModules[req.url],import.meta.url)));return;}
   if(req.url==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
   if(req.url==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
-  if(!['/wallet-panel.mjs','/reader-client.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
+  if(!['/wallet-panel.mjs','/performance.mjs','/wallet-action.mjs','/reader-client.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':req.url.endsWith('.css')?'text/css':'text/javascript'});res.end(await fs.readFile(new URL('.'+req.url,import.meta.url)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();return new Promise(resolve=>server.close(resolve));});
  const browser=await chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});

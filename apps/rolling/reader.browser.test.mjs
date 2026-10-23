@@ -10,12 +10,13 @@ import {chromium} from 'playwright';
 const root=fileURLToPath(new URL('.',import.meta.url));
 const launchBrowser=()=>chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});
 test('public reader: navigation, unsafe content, failure recovery and narrow keyboard menu',async t=>{
- const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);let unavailable=false,longLabels=false;
+ const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);let unavailable=false,longLabels=false;
  const scope={boardAddress:'0x'+'1'.repeat(64)},identity={id:'7',first:'River',last:'Lane'};
  const post={id:'10',record:{root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'7'},text:'[Docs](https://example.com/docs?x=1&y=2)\nhttp://example.org/path [Unsafe](javascript:alert) [Data](data:text/html,hello) <img src=x onerror=alert(1)> 😀',timestamp:'1791734400',likes:'2',bot:null};
  const later={...post,id:'20',record:{...post.record,parent:'10'},text:'The linked reply is outside the first page.'};
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
+  if(url.pathname==='/api/events'){res.writeHead(204);res.end();return;}
   if(url.pathname.startsWith('/api/')){
    res.writeHead(unavailable?503:url.pathname==='/api/profile'&&url.searchParams.get('nameId')==='999'?404:200,{'content-type':'application/json'});
    const kind=url.pathname.slice(5),base={schemaVersion:1,scope,complete:true,checkpoint:{number:3,hash:'public'},revision:'1',names:{'7':identity},boards:{},nextCursor:null};
@@ -63,7 +64,7 @@ test('public reader: navigation, unsafe content, failure recovery and narrow key
 // These public records and the action-recorder module are labelled doubles.
 // The renderer is real; this checks routing/presentation, never a transaction.
 async function socialFixture(t,{wallet='recorder',policies=[]}={}){
- const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css','avatar-upload.mjs']);
+ const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css','avatar-upload.mjs']);
  if(wallet==='real')files.add('wallet-panel.mjs');
  const reason='<img src=x onerror=alert(1)> [unsafe](javascript:alert(1))';
  const record={root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'0'};
@@ -73,6 +74,7 @@ async function socialFixture(t,{wallet='recorder',policies=[]}={}){
  const malformed={...live,id:'13',mainVersion:'<script>VERSION_SENTINEL</script>',localVersion:'4294967296',text:null,removal:{reason:'No valid version provided',policy:'18446744073709551616'}};
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
+  if(url.pathname==='/api/events'){res.writeHead(204);res.end();return;}
   if(url.pathname.startsWith('/api/')){
    res.writeHead(200,{'content-type':'application/json'});
    const board={id:'20',name:'Workshop',slug:'workshop',description:'A public board',mainVersion:'8',mainRules:'Current rules',rules:'Local rules',rejected:true,rejection:{reason,mainVersion:'6'}};
@@ -154,10 +156,11 @@ test('real panel opening from removed Unlike stays lazy and sanitizes an unavail
 // are real. No wallet, proof or chain acceptance is inferred from these checks.
 async function pagingFixture(t,{observer='controlled',directory=false}={}){
  const state={calls:[],pending:[],hold:false,mode:'normal',active:0,peak:0,prepend:false};
- const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
+ const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
  const post=id=>({id:String(id),record:{root:String(id),parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Public item '+id+'\n'+('Visible public text.\n'.repeat(20)),timestamp:'1',likes:'0'});
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
+  if(url.pathname==='/api/events'){res.writeHead(204);res.end();return;}
   if(url.pathname.startsWith('/api/')){
    const cursor=url.searchParams.get('cursor');state.calls.push({path:url.pathname,cursor,keys:[...url.searchParams.keys()]});state.active++;state.peak=Math.max(state.peak,state.active);
    let finished=false;const finish=()=>{if(!finished){finished=true;state.active--;}};res.once('close',finish);
@@ -241,12 +244,13 @@ test('native browser intersection loads a page near the end without a button cli
 
 // Labelled board API fixtures exercise the production reader, not chain history.
 async function boardFixture(t,{rejected=false}={}){
- const state={calls:[],mode:'normal'},files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
+ const state={calls:[],mode:'normal'},files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
  const hostile='<img src=x onerror=alert(1)> Local rules are data';
  const board={id:'20',name:'Workshop',slug:'workshop',description:'Build useful things.',creationVersion:'1',mainVersion:'2',mainRules:'Current parent rules',rules:hostile,rejected,rejection:rejected?{reason:'<script>rejected()</script>',mainVersion:'2'}:null};
  const post=(id,boardId)=>({id,record:{root:id,parent:'0',reference:'0',kind:'1',subboard:boardId,name_id:'0'},text:rejected&&boardId==='20'?null:'Board post '+id,timestamp:'1',likes:'0',mainVersion:'1',localVersion:boardId==='0'?'0':'1'});
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
+  if(url.pathname==='/api/events'){res.writeHead(204);res.end();return;}
   if(url.pathname.startsWith('/api/')){
    state.calls.push(url.pathname+url.search);const id=url.searchParams.get('id'),cursor=url.searchParams.get('cursor');
    if(url.pathname==='/api/board'&&(id==='999'||state.mode==='unavailable')){res.writeHead(id==='999'?404:503,{'content-type':'application/json'});res.end('{}');return;}
@@ -302,12 +306,13 @@ test('unknown or malformed board route has no generic-feed fallback',async t=>{
 // Labelled private-session/public-HTTP doubles, real panel/reader/pure filter.
 // No proof, paid action or encrypted-chain recovery is represented by this fixture.
 async function privateViewFixture(t,{mutation=null,tombstone=null}={}){
- const files=new Set(['live.html','reader.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css','avatar-upload.mjs','wallet-panel.mjs']);
+ const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css','avatar-upload.mjs','wallet-panel.mjs']);
  const scope={chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.padStart(64,'0')},hash='0x'+'a'.repeat(64);
  const make=(id,block)=>({id,record:{root:'10',parent:id==='10'?'0':'10',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Public content '+id,timestamp:'1',likes:'0',position:{blockNumber:String(block),txIndexWithinBlock:'0',logIndexWithinTx:'0',blockHash:hash}});
  const requests=[],feed=[],state={hold:false,pending:[]};
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');requests.push(url.pathname+url.search);
+  if(url.pathname==='/api/events'){res.writeHead(204);res.end();return;}
   if(url.pathname.startsWith('/api/')){
    const next=url.searchParams.has('cursor');if(url.pathname==='/api/feed')feed.push(url.pathname+url.search);
    const posts=next?[make(mutation==='duplicate'?'10':'11',mutation==='order'?4:2)]:[make('10',3)];
@@ -565,4 +570,26 @@ test('G18 real reader retains the name selector across navigation and opens crea
  await select.selectOption('create');await page.getByLabel('First name',{exact:true}).waitFor();assert.equal(await page.locator('dialog[open]').count(),0);
  await page.getByRole('button',{name:'Cancel',exact:true}).click();assert.equal(await select.inputValue(),'7');
  await page.evaluate(()=>privateTest.options.onChange({invalidated:true}));await page.waitForFunction(()=>document.querySelector('[data-posting-name] select')?.value==='0');assert.equal(await select.locator('option[value="7"]').count(),0);
+});
+
+
+test('public revision notification renders a Bok response without navigation or polling',async t=>{
+ const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
+ const checkpoint={number:'12',hash:'0x'+'a'.repeat(64)},scope={boardAddress:'0x'+'1'.repeat(64)};
+ const request={id:'10',record:{root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'@bok please reply',timestamp:'1791734400',likes:'0',bot:null};
+ const response={...request,id:'11',record:{...request.record,parent:'10'},text:'Here is your answer.',bot:{}};
+ let revision='1',reads=0,stream,release;const connected=Promise.withResolvers();
+ const server=http.createServer(async(req,res)=>{
+  const url=new URL(req.url,'http://localhost');
+  if(url.pathname==='/api/events'){res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-store'});res.flushHeaders();stream=res;connected.resolve();return;}
+  if(url.pathname==='/api/thread'){reads++;if(release)await release.promise;res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({schemaVersion:1,scope,complete:true,checkpoint,revision,posts:revision==='1'?[request]:[request,response],nextCursor:null,names:{},boards:{}}));return;}
+  const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
+  res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
+ });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const browser=await launchBrowser(),page=await browser.newPage();t.after(async()=>{await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));});
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));await page.goto(`http://127.0.0.1:${server.address().port}/#/thread/10`);await page.locator('#post-10').waitFor();await connected.promise;
+ assert.equal(reads,1);release=Promise.withResolvers();revision='2';const refreshed=page.waitForRequest(url=>new URL(url.url()).pathname==='/api/thread');stream.write('event: revision\ndata: '+JSON.stringify({schemaVersion:1,revision,checkpoint})+'\n\n');
+ await refreshed;assert.equal(await page.locator('#post-10').count(),1);assert.equal(await page.getByText('Loading conversations…').count(),0);
+ release.resolve();await page.locator('#post-11').waitFor();assert.equal(await page.locator('#post-11 .author').textContent(),'Bok');assert.equal(reads,2);assert.deepEqual(errors,[]);
+ assert.equal(await page.evaluate(()=>performance.getEntriesByName('rolling.reader.update').length),1);
 });

@@ -1,3 +1,4 @@
+import {beginRollingMeasure,rollingStageObserver} from './performance.mjs';
 // Presentation only. Account restoration is delegated to the runtime; wallet prompts require a click.
 import {allowance,createMessageContent} from './model.mjs';
 import {createPublicReader} from './reader-client.mjs';
@@ -213,7 +214,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }});
  function invalidateBokBalance(){bokStatus=null;bokBalance.invalidate();}
  function bokBalanceText(){const {phase,value}=bokBalance.snapshot();return phase==='ready'?`${decimal(value.availableCredit,6)} USDC available`:phase==='loading'?'Checking balance…':phase==='error'?'Balance unavailable':phase==='unavailable'?'Bok is unavailable':'Balance not loaded';}
- function requestBokBalance(){if(!initializing&&!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length))void bokBalance.load();}
+ function requestBokBalance(){if(accountRefreshPending||accountRefreshNeeded)return;if(!initializing&&!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length))void bokBalance.load();}
  function addBokCredit(){
   if(initializing||busy||!session||!unlocked())return;
   topupKind='bok';topupInputs={amount:''};resetTopupQuote();topupSaved=null;view='topup';clearOperationFeedback();
@@ -320,12 +321,21 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function viewReady(){return rollingViewReady({view,type:draft.type,identityAttached:!!identityHost,namesLoaded,cursor,moderatorStatus,actionsLoaded});}
  function selectView(next){if(busy)return;clearOperationFeedback();view=next;if(next==='balances'&&!balances){void work(async()=>{const epoch=accountEpoch;balances=await session.application.readBalances({cursor:0});checkAccount(epoch);});return;}if(next==='preferences'&&!preferences)void work(recoverPreferences);else if(viewReady())render();else void work(loadView);}
+ let accountRefreshPending=null,accountRefreshNeeded=false,updatePostingBalance=()=>{};const transactionTiming=rollingStageObserver();
+ function requestAccountRefresh(){
+  if(!accountRefreshNeeded||accountRefreshPending||busy||!session||!unlocked())return;
+  accountRefreshNeeded=false;const epoch=accountEpoch,active=session;
+  accountRefreshPending=Promise.resolve().then(async()=>{
+   try{const next=await active.application.readAccountStatus();checkAccount(epoch);if(session!==active)return;status=next;intent=next.intent??null;}
+   catch{if(epoch===accountEpoch)accountRefreshNeeded=true;}
+  }).finally(()=>{accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();}});
+ }
  async function work(fn,failureMessage=nameFailure,{posting=false}={}){
-  if(busy)return;let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
-  try{if(initializationPending)await initializationPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
+  if(busy)return;const finishTiming=posting?beginRollingMeasure('post.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
+  try{if(initializationPending)await initializationPending;await accountRefreshPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
    try{if(setupMode){setupMode=null;note('');}postingInProgress=false;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    // Failed actions must expose their feedback even when the form was scrolled.
-   if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}}finally{finishOperation();}
+   if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}}finally{transactionTiming.complete();finishTiming();finishOperation();requestAccountRefresh();}
   }
  }
  function unlocked(){if(invalidated||reloadRequired)return false;const current=runtime?runtime.getAccount():null;if(accountIdentity&&current!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');return false;}return !!current;}
@@ -350,7 +360,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    const diagnostic=projectRollingInitialization(progress);
    if(epoch!==accountEpoch||invalidated||reloadRequired||!unlocked()||(['private-refresh','funding-claim'].includes(diagnostic?.stage)?!session:attempt!==initializationAttempt))return;
    if(diagnostic)dialog.setAttribute('data-rolling-initialization',JSON.stringify(diagnostic));
-   if(!busy&&bokBalance.pending&&diagnostic?.stage==='private-refresh')return;
+   if(!busy&&(bokBalance.pending||accountRefreshPending)&&diagnostic?.stage==='private-refresh')return;
    const fundingKind=view==='topup'&&topupKind==='bok'||intent?.action?.type==='claim-bok'?'bok':'posting',credit=fundingKind==='bok'?'Bok credit':'posting balance';
    if(diagnostic?.stage==='funding-claim'){
     // The continuation's actual stage supersedes the earlier Ethereum notice.
@@ -358,6 +368,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
    const stages=fundingAutomatic||fundingActiveCapability?{estimating:`Checking the cost of adding your ${credit}…`,preparing:`Preparing your ${credit}…`,proving:`Preparing your ${credit}…`,submitting:`Adding your ${credit}…`,confirming:`Waiting for your ${credit} to confirm…`}:postingInProgress?{estimating:'Preparing your post…',preparing:'Preparing your post…',proving:'Creating the proof for your post…',submitting:'Sending your post…',confirming:'Waiting for your post to confirm…'}:{estimating:'Checking the cost…',submitting:'Sending your action. Keep this page open…'};
    let stage;try{const own=Object.getOwnPropertyDescriptor(progress??{},'stage');if(own&&Object.hasOwn(own,'value')&&typeof own.value==='string')stage=own.value;}catch{}
+   transactionTiming.progress(stage);
    const setupMessages={'account-lock':'Opening your account…','trusted-node':'Connecting to the network…',deployment:'Checking the network…','account-derive':'Preparing your private account…','store-open':'Saving your account on this device…','pxe-create':'Preparing your private account…','account-register':'Preparing your private account…','contracts-register':'Preparing your private account…','initial-sync':'Syncing your account with the network…','journal-open':'Finishing account setup…','wallet-bind':'Finishing account setup…','account-manager':'Finishing account setup…','application-bind':'Finishing account setup…'};
    note(setupMode&&diagnostic?.stage==='session-initialization'?(setupMessages[diagnostic.step]??'Finishing account setup…'):setupMode&&diagnostic?.stage==='private-refresh'?'Checking your account balance…':diagnostic?.stage==='funding-claim'?fundingProgressMessage(diagnostic,fundingKind):Object.hasOwn(stages,stage)?stages[stage]:fundingAutomatic||fundingActiveCapability?(diagnostic?.stage==='private-refresh'?`Checking your ${credit}…`:`Adding your ${credit}…`):postingInProgress?'Posting…':'Loading your account…');
   }});}
@@ -757,7 +768,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
  }
  async function receive(result){
-  if(result.bok||['claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(result.action?.type))invalidateBokBalance();
+  if(result.bok||result.action?.type==='bok'||['claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(result.action?.type))invalidateBokBalance();
   recoveryInspection=null;intent=result;blocked=false;
   if(['confirmed','reverted'].includes(result.status)&&['preference','read-marker'].includes(result.action?.type))clearPreferences();
   if(['confirmed','reverted'].includes(result.status)&&['bio','avatar'].includes(result.action?.type))profileSnapshot=null;
@@ -767,6 +778,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(immediateTypes.has(result.action?.type)){if(postingTypes.has(result.action?.type)||['bio','avatar'].includes(result.action?.type)){draft={...draft,content:''};releasePreviews();}note('');if(dialog.open)dialog.close();}
    if(result.action?.type==='preference')preferenceUpdates.set(result.action.kind+':'+result.action.target,result.action.enabled);
    notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':actionLabel(result.action)+': done.';
+   if(postingTypes.has(result.action?.type)){
+    // Confirmation finishes the interaction. Feed and affected balance reads
+    // update independently, without holding the composer open or its busy state.
+    intent=null;accountRefreshNeeded=true;
+    void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{notice='Posted. The feed could not refresh; reload it to see your post.';if(!busy)render();});
+    return;
+   }
    try{await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
    if(result.action?.type==='name'){namesLoaded=false;identities=[];identityRecords=[];cursor=0;}
    if(result.action?.type==='transfer-moderator')moderatorStatus=null;
@@ -783,19 +801,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  async function executeAction(action,{immediate=immediateTypes.has(action.type),onResult=()=>{}}={}){
   const epoch=accountEpoch;checkAccount(epoch);blocked=true;
-  try{
-   if(action.type==='preference'||action.type==='read-marker'){
-    const head=await session.application.readPreferenceHead();checkAccount(epoch);
-    if(typeof head?.revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(head.revision))throw connectionFailure;
-    action.expectedRevision=head.revision;
-   }
-   intent=await session.application.prepare(action,...(immediate?[{immediate:true}]:[]));checkAccount(epoch);
-  }finally{blocked=false;}
-  if(!immediate){note('Review the saved action before confirming.');return intent;}
-  const send=async()=>{const id=intent.intentId;intent={...intent,status:'unknown'};blocked=true;const result=await session.application.submitPrepared(id);checkAccount(epoch);blocked=false;return result;};
-  let result=await send();intent=result;
-  if(action.type==='bok'&&result.status==='authorized'){intent=await session.application.prepareBokPost(result.intentId,{immediate:true});checkAccount(epoch);result=await send();}
-  onResult(result);await receive(result);return result;
+  if(immediate){
+   let result;
+   try{result=await session.application.executeAction(action,{onPrepared:prepared=>{checkAccount(epoch);intent=prepared;}});checkAccount(epoch);}finally{blocked=false;}
+   onResult(result);await receive(result);return result;
+  }
+  try{intent=await session.application.prepare(action);checkAccount(epoch);}finally{blocked=false;}
+  note('Review the saved action before confirming.');return intent;
  }
  let panelApi;
  async function act(defaults){
@@ -941,11 +953,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   };
   const cost=el('strong'),balance=el('strong');
   if(immediateTypes.has(draft.type)){
-   balance.textContent=typeof status?.privateFeeCredit==='string'?compactAmount(status.privateFeeCredit,18,4):status?.status==='fee-needed'?'0':'—';if(typeof status?.privateFeeCredit==='string')balance.setAttribute('title',decimal(status.privateFeeCredit,18));
-   content.append(el('div',{class:'composer-cost'},el('span',{},'Balance ',balance),el('span',{},'Max cost ',cost),el('small',{},'posting credits')));
+   const balanceLabel=el('span');
+   updatePostingBalance=()=>{balanceLabel.textContent=accountRefreshNeeded||accountRefreshPending?'Balance (updating) ':'Balance ';balance.textContent=typeof status?.privateFeeCredit==='string'?compactAmount(status.privateFeeCredit,18,4):status?.status==='fee-needed'?'0':'—';if(typeof status?.privateFeeCredit==='string')balance.setAttribute('title',decimal(status.privateFeeCredit,18));validate();};
+   content.append(el('div',{class:'composer-cost'},el('span',{},balanceLabel,balance),el('span',{},'Max cost ',cost),el('small',{},'posting credits')));
   }
   const review=button(reviewLabel(draft),prepareReview,true);
-  review.dataset.actionReview='';content.append(review);
+  review.dataset.actionReview='';content.append(review);updatePostingBalance();
   function validate(){
    let valid=rulesReady(draft)&&[...fields.values()].every(node=>!node.required||node.value.length>0);
    for(const id of IDS)if(fields.has(id))valid=valid&&field(fields.get(id).value);
@@ -963,7 +976,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='preference')valid=valid&&field(draft.kind===5?'0':fields.get('target').value)&&(draft.kind===2||draft.kind===5||BigInt(fields.get('target').value||'0')!==0n);
    if(kind==='read-marker')valid=valid&&field(fields.get('thread').value)&&BigInt(fields.get('thread').value||'0')!==0n&&/^(0|[1-9][0-9]{0,9})$/.test(fields.get('throughBlock').value)&&BigInt(fields.get('throughBlock').value)<=0xffffffffn;
    if(kind==='subboard')valid=valid&&/^[a-z0-9](?:[a-z0-9]|-(?!-)){1,38}[a-z0-9]$/.test(fields.get('slug').value);
-   const maximum=typeof session?.postingFeeLimit==='string'?(BigInt(session.postingFeeLimit)*(kind==='bok'?2n:1n)).toString():null;cost.textContent=maximum?compactAmount(maximum,18,4,true):'—';if(maximum)cost.setAttribute('title',decimal(maximum,18));
+   const maximum=typeof session?.postingFeeLimit==='string'?session.postingFeeLimit:null;cost.textContent=maximum?compactAmount(maximum,18,4,true):'—';if(maximum)cost.setAttribute('title',decimal(maximum,18));
    review.textContent=postingInProgress?'Posting…':reviewLabel(draft);review.dataset.unavailable=String(!valid);review.disabled=busy||!valid;return valid;
   }
   rulesView(draft,validate);
@@ -1156,6 +1169,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   // Existing names load when this selector is used, without opening a dialog.
  }
  function render(previousFocus=document.activeElement){
+  updatePostingBalance=()=>{};
   renderIdentityControls();
   if(!['funding','topup'].includes(view)||invalidated||reloadRequired)stopFunding();
   const hadFocus=dialog.contains(previousFocus);
@@ -1227,7 +1241,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
   }
  }
- function close(){if(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
+ function close(){if(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending&&!accountRefreshPending){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
  dialog.addEventListener('close',()=>{if(returnFocus?.isConnected)returnFocus.focus();});
  dialog.addEventListener('keydown',event=>{
