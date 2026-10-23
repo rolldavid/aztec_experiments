@@ -277,11 +277,23 @@ async function broker({installationPermissionProfile='restricted',creationTempla
    if(!entry.parent){entry.parent=repo.latest?repo.revisions[repo.latest].remoteCommit:slot?slot.genesisCommit:await head();assert(hex(entry.parent,40));await save();}
    // Final ref write is non-forced, with exactly captured predecessor rechecked.
    const intendedRef=entry.steps.ref;const current=await head();assert(current===entry.parent||(intendedRef&&current===entry.remoteCommit));
-   // Blobs are immutable and independent. Every original intent is durable
-   // before dispatch; per-blob permissions and exact-object reconciliation stay
-   // unchanged. Drain the entire bounded group even if one request fails.
-   for(let offset=0;offset<captured.files.length;offset+=3){
-    const results=await Promise.allSettled(captured.files.slice(offset,offset+3).map(f=>once(entry.steps,'blob:'+f.path,'POST',route+'/git/blobs',{content:f.data,encoding:'base64'},token,r=>{assert(r?.sha===f.gitSha);return {sha:r.sha};},()=>s.request('GET',route+'/git/blobs/'+f.gitSha,undefined,token))));
+   // Completed ancestors already keep their immutable blobs reachable in this
+   // exact repository. Reuse only acknowledged objects from the journal's
+   // verified parent chain, never a partial revision or another repository.
+   const knownBlobs=new Set(),ancestors=new Set();let ancestor=b.readRevision,parent=entry.parent;
+   while(ancestor!==null){
+    assert(hex(ancestor,40)&&!ancestors.has(ancestor)&&ancestors.size<64);ancestors.add(ancestor);
+    const prior=repo.revisions[ancestor];assert(prior?.complete===true&&prior.binding?.acceptedRevision===ancestor&&prior.binding.repositoryId===b.repositoryId&&prior.binding.threadId===b.threadId);
+    assert(hex(prior.remoteCommit,40)&&prior.remoteCommit===parent&&prior.steps?.commit?.done===true&&prior.steps.commit.result?.sha===parent&&prior.steps.ref?.done===true&&prior.steps.ref.result?.sha===parent);
+    for(const [label,step]of Object.entries(prior.steps))if(label.startsWith('blob:')&&step.done===true){assert(hex(step.result?.sha,40));knownBlobs.add(step.result.sha);}
+    ancestor=prior.binding.readRevision;parent=prior.parent;
+   }
+   // Existing current intents must still reconcile, even if an ancestor has
+   // identical bytes. New blobs retain their original per-write permission
+   // checks; drain each bounded group before leaving the broker's ownership.
+   const uploads=captured.files.filter(f=>entry.steps['blob:'+f.path]||!knownBlobs.has(f.gitSha));
+   for(let offset=0;offset<uploads.length;offset+=3){
+    const results=await Promise.allSettled(uploads.slice(offset,offset+3).map(f=>once(entry.steps,'blob:'+f.path,'POST',route+'/git/blobs',{content:f.data,encoding:'base64'},token,r=>{assert(r?.sha===f.gitSha);return {sha:r.sha};},()=>s.request('GET',route+'/git/blobs/'+f.gitSha,undefined,token))));
     for(const result of results)if(result.status==='rejected')throw result.reason;
    }
    const tree=await once(entry.steps,'tree','POST',route+'/git/trees',{tree:captured.files.map(f=>({path:f.path,mode:'100644',type:'blob',sha:f.gitSha}))},token,r=>{assert(r?.sha===captured.tree);return {sha:r.sha};},()=>s.request('GET',route+'/git/trees/'+captured.tree,undefined,token));

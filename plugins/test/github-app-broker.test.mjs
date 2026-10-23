@@ -369,3 +369,61 @@ test('one failed parallel blob drains all admitted uploads before broker release
  }});
  try{await assert.rejects(f.broker.sync(await receipt(f,2,null,Object.fromEntries(Array.from({length:6},(_,i)=>['f'+i+'.txt','value'+i])))));assert.equal(started,3);assert.equal(active,0);assert(!f.calls.some(c=>c.method==='POST'&&c.route.endsWith('/git/trees')));}finally{await f.close();}
 });
+
+test('completed ancestor blobs are reused across edits, rename and restart without new blob intents',async t=>{
+ const f=await poolFixture(t),thread=poolThread(3);await f.broker.ensureThread(thread);
+ const files=Object.fromEntries(Array.from({length:7},(_,i)=>['f'+i+'.txt','value'+i]));
+ const first={...await receipt(f,2,null,files),...thread};await f.broker.sync(first);await f.reopen();
+ const before=f.calls.length,second={...await receipt(f,3,first.acceptedRevision,{...files,'f0.txt':'edited'}),...thread};
+ const two=await f.broker.sync(second),calls=f.calls.slice(before);
+ assert.equal(calls.filter(c=>c.method==='POST'&&c.route.endsWith('/git/blobs')).length,1,'six byte-identical blobs need no upload');
+ assert.equal(calls.filter(c=>c.route.endsWith('/actions/permissions')).length,5,'fresh pool check plus checks before blob/tree/commit/ref');
+ assert.equal(calls.filter(c=>c.method==='POST'&&c.route.endsWith('/git/trees')).length,1);
+ assert.equal(calls.filter(c=>c.method==='POST'&&c.route.endsWith('/git/commits')).length,1);
+ assert.equal(calls.filter(c=>c.method==='PATCH').length,1);
+ await f.reopen();const renamed={...files,'f0.txt':'edited','renamed.txt':files['f6.txt']};delete renamed['f6.txt'];
+ const third={...await receipt(f,4,second.acceptedRevision,renamed),...thread},offset=f.calls.length;
+ assert.equal((await f.broker.sync(third)).remoteParent,two.remoteCommit);
+ assert.equal(f.calls.slice(offset).filter(c=>c.method==='POST'&&c.route.endsWith('/git/blobs')).length,0,'ancestor lookup crosses a revision which itself reused the blob');
+ const tree=f.calls.slice(offset).find(c=>c.method==='POST'&&c.route.endsWith('/git/trees')).body.tree;
+ assert(tree.some(x=>x.path==='renamed.txt'&&x.sha===git('blob',files['f6.txt'])));assert(!tree.some(x=>x.path==='f6.txt'));
+ const journal=JSON.parse(await fs.readFile(path.join(f.directory,'github-app-state.json'))),repo=Object.values(journal.repositories)[0];
+ assert.equal(Object.keys(repo.revisions[second.acceptedRevision].steps).filter(x=>x.startsWith('blob:')).length,1);
+ assert.equal(Object.keys(repo.revisions[third.acceptedRevision].steps).filter(x=>x.startsWith('blob:')).length,0);
+});
+for(const change of ['actions','head'])test('all-reused blobs retain fresh '+change+' admission before writes',async t=>{
+ const f=await poolFixture(t),thread=poolThread(3);await f.broker.ensureThread(thread);
+ const files={'app.cjs':'same'},first={...await receipt(f,2,null,files),...thread};await f.broker.sync(first);
+ if(change==='actions')f.remotes.get(901).actions=true;else f.heads.set(901,'f'.repeat(40));
+ const offset=f.calls.length;await assert.rejects(f.broker.sync({...await receipt(f,3,first.acceptedRevision,files),...thread}));
+ assert(!f.calls.slice(offset).some(c=>c.method!=='GET'&&!c.route.endsWith('/access_tokens')));
+});
+test('identical blobs in another thread repository still require their own upload',async t=>{
+ const f=await poolFixture(t),a=poolThread(3),b=poolThread(4),files={'app.cjs':'same'};
+ for(const thread of [a,b]){await f.broker.ensureThread(thread);await f.broker.sync({...await receipt(f,2,null,files),...thread});}
+ assert.equal(f.calls.filter(c=>c.method==='POST'&&c.route.endsWith('/git/blobs')).length,2);
+});
+for(const defect of ['incomplete','binding','commit','ref','parent'])test('ancestor '+defect+' cannot authorize blob reuse',async t=>{
+ const f=await poolFixture(t),thread=poolThread(3),files={'app.cjs':'same'};await f.broker.ensureThread(thread);
+ const first={...await receipt(f,2,null,files),...thread};await f.broker.sync(first);
+ const file=path.join(f.directory,'github-app-state.json'),journal=JSON.parse(await fs.readFile(file)),prior=Object.values(journal.repositories)[0].revisions[first.acceptedRevision];
+ if(defect==='incomplete')prior.complete=false;
+ if(defect==='binding')prior.binding.threadId='0x'+'a'.repeat(64);
+ if(defect==='commit')prior.steps.commit.done=false;
+ if(defect==='ref')prior.steps.ref.result.sha='f'.repeat(40);
+ if(defect==='parent')prior.binding.readRevision=first.acceptedRevision;
+ await fs.writeFile(file,JSON.stringify(journal));await f.reopen();const offset=f.calls.length;
+ await assert.rejects(f.broker.sync({...await receipt(f,3,first.acceptedRevision,files),...thread}));
+ assert(!f.calls.slice(offset).some(c=>c.method!=='GET'&&!c.route.endsWith('/access_tokens')));
+});
+test('an existing same-content blob intent is reconciled rather than skipped as ancestor reuse',async t=>{
+ const f=await poolFixture(t),thread=poolThread(3),files={'app.cjs':'same'};await f.broker.ensureThread(thread);
+ const first={...await receipt(f,2,null,files),...thread};await f.broker.sync(first);
+ const second={...await receipt(f,3,first.acceptedRevision,files),...thread};f.lose('POST','/git/trees');await assert.rejects(f.broker.sync(second));
+ const file=path.join(f.directory,'github-app-state.json'),journal=JSON.parse(await fs.readFile(file)),entry=Object.values(journal.repositories)[0].revisions[second.acceptedRevision];
+ const route='/repos/'+f.pool[0].fullName+'/git/blobs',body={content:Buffer.from(files['app.cjs']).toString('base64'),encoding:'base64'};
+ entry.steps['blob:app.cjs']={identity:sha(JSON.stringify(['POST',route,body])),done:false};await fs.writeFile(file,JSON.stringify(journal));
+ await f.reopen();const offset=f.calls.length;assert((await f.broker.sync(second)).mirrored);
+ const calls=f.calls.slice(offset);assert(calls.some(c=>c.method==='GET'&&c.route.endsWith('/git/blobs/'+git('blob',files['app.cjs']))));assert(!calls.some(c=>c.method==='POST'&&c.route.endsWith('/git/blobs')));
+ const final=JSON.parse(await fs.readFile(file));assert.equal(Object.values(final.repositories)[0].revisions[second.acceptedRevision].steps['blob:app.cjs'].done,true);
+});
