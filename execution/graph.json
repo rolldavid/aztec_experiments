@@ -9842,10 +9842,10 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "request": "Fix MetaMask connection failure in the live wallet chooser",
+    "request": "Substantial measured Post-to-Bok latency reduction; 20\u201350 percent improvement across all measured stages",
     "status": "active",
-    "execution_lane": "root source edits; bounded independent review and static-only packaging",
-    "checkpoint": "Reproduced generic sign-in failure in actual Chrome. Capture safe stage and error codes to identify cause before changing behavior.",
-    "next_action": "Diagnose, fix, test, review and publish the wallet connection repair."
+    "execution_lane": "root browser action path and integration; network agent chain/prover; fresh-account agent model/validation; packaging agent MetaMask repair publication",
+    "checkpoint": "Baseline464.264s. MetaMask fix b363e315 reviewed12tests and delegated through publication. Profiling exact sources and traces before targeted changes.",
+    "next_action": "Remove repeated preparation/proving/read/model work, deploy improvements and measure comparable end-to-end request."
   }
 }

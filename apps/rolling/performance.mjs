@@ -16,3 +16,20 @@ export function rollingStageObserver(){
   complete(){finish();stage=undefined;finish=()=>{};}
  });
 }
+
+// Opt-in developer trace for an actual browser run. Exposes durations only;
+// recording has no authority over application state or transaction progression.
+try{if(typeof document!=='undefined'&&globalThis.location.hash.endsWith('?profile=1')){
+ // Consume the diagnostic flag before the reader initializes its route.
+ const route=new URL(globalThis.location.href);route.hash=route.hash.slice(0,-10);history.replaceState(history.state,'',route);
+ const trace=[],panel=document.createElement('details'),title=document.createElement('summary'),output=document.createElement('pre');
+ title.textContent='Performance timings';panel.append(title,output);panel.dataset.rollingPerformance='';
+ const render=()=>{output.textContent=JSON.stringify({timeOrigin:performance.timeOrigin,measures:trace},null,2);};
+ const observer=new PerformanceObserver(list=>{try{
+  for(const entry of list.getEntries())if(/^rolling\.[a-z.-]{1,64}$/.test(entry.name))trace.push({name:entry.name,start:entry.startTime,duration:entry.duration});
+  if(trace.length>256)trace.splice(0,trace.length-256);render();
+ }catch{/* A diagnostic callback must not affect the application. */}});
+ observer.observe({type:'measure',buffered:true});
+ if(document.body)document.body.append(panel);else document.addEventListener('DOMContentLoaded',()=>{try{document.body.append(panel);}catch{}},{once:true});
+ render();
+}}catch{/* Optional profiling cannot interrupt the application. */}
