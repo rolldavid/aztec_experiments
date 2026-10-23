@@ -156,7 +156,7 @@
     const check=()=>{if(!journal||typeof journal.assertCanStart!=='function'||typeof journal.prepare!=='function'||!route||!isPrivateWalletForNode(wallet,node)||wallet.sendTx!==route.sendTx||route.journal!==journal||wallet._transactionJournal!==journal)throw Object.assign(new Error('Built-in recovery capability changed.'),{code:'BB_JOURNAL_INVALID'});};
     check();
     return Object.freeze({
-      checkpoint:async()=>{check();const saved=await journal.assertCanStart();check();return {encoded:saved.encoded};},
+      checkpoint:async(options)=>{check();const saved=await journal.assertCanStart(options);check();return {encoded:saved.encoded};},
       send:async(payload,options,lifecycle)=>{
         check();if(options.transactionJournal!==journal||typeof lifecycle?.guard!=='function'||typeof lifecycle?.signed!=='function')throw Object.assign(new Error('Invalid pre-proof lifecycle.'),{code:'BB_JOURNAL_INVALID'});
         const token={},bound=Object.freeze({guard:lifecycle.guard,signed:lifecycle.signed,check,journal});preproofLifecycles.set(token,bound);
@@ -191,7 +191,7 @@
         if(lifecycle){lifecycle.check();if(lifecycle.journal!==journal)throw Object.assign(new Error('Invalid pre-proof journal.'),{code:'BB_JOURNAL_INVALID'});await lifecycle.guard('pre-proof');}
         if (opts.journalOperation && !journal) throw Object.assign(new Error('Durable transaction journal is required.'), {code:'BB_JOURNAL_INVALID'});
         if (opts.journalOperation && journal) journal.setOperation(opts.journalOperation);
-        const previousJournal = journal ? await journal.assertCanStart() : null;
+        const previousJournal = journal ? await journal.assertCanStart(lifecycle?undefined:{fresh:true}) : null;
         const fixedGas = !!opts.fee?.gasSettings;
         const checkedGas = fixedGas ? a.GasSettings.from(opts.fee.gasSettings) : null;
         log(fixedGas ? '  Using configured gas limits...' : '  Estimating gas (simulating tx)...', 'info');

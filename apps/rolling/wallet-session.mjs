@@ -366,7 +366,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    begin('journal-open');
    const privateStore=sdk.createBrowserJournalStorage();
    await guard();const journal=await sdk.createL2Journal({storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
-    scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard});
+    scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard,operationScope:()=>operationScope});
    begin('wallet-bind');
    await guard();const wallet=routing.createAztecWallet(sdk,pxe,node,node,silent,secret,{contextGuard:guard,transactionJournal:journal,progress:stage=>{try{onProgress?.({stage});}catch{/* Display failures cannot change submission. */}}});
    if(wallet.aztecNode!==node||wallet.pxe!==pxe||!routing.isPrivateWalletForNode(wallet,node))throw fail('ROLLING_PRIVATE_ROUTE');

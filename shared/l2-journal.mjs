@@ -36,8 +36,8 @@ export function l2JournalScopeText(scope) {
  * The latest transaction is retained after success. A subsequent request must
  * acknowledge its exact hash, after a fresh canonical receipt check.
  */
-export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,node,acknowledgeTx,crypto=globalThis.crypto,waitOptions={},contextGuard,reconcileOnly=false} ) {
-  if(typeof reconcileOnly!=='boolean')throw invalid();
+export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,node,acknowledgeTx,crypto=globalThis.crypto,waitOptions={},contextGuard,reconcileOnly=false,operationScope} ) {
+  if(typeof reconcileOnly!=='boolean'||(operationScope!==undefined&&typeof operationScope!=='function'))throw invalid();
   const slot=await createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:l2JournalScopeText(scope),keyDomain:'AZTEC_BB_L2_JOURNAL_KEY_V1',crypto});
   let acknowledged=acknowledgeTx,lastHash=null,operation=null,replacement=null;
   function containsApplicationNullifier(tx,value) {
@@ -68,14 +68,37 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       return {...saved,tx};
     }catch{throw invalid();}
   }
-  async function assertCanStart() {
-    const previous=await read();
+  // Only the owning account lock supplies this identity. A canonical permit is
+  // local to that operation and exact authenticated journal bytes; it is never
+  // carried across actions or used at a proof boundary without revalidation.
+  let canonicalPermit=null;
+  const ownedScope=()=>{try{const value=operationScope?.();if(value!=null&&typeof value!=='object')throw invalid();return value??null;}catch(error){canonicalPermit=null;throw error;}};
+  async function checkedScope(expected){try{if(expected&&contextGuard)await contextGuard();if(ownedScope()!==expected)throw fail();}catch(error){canonicalPermit=null;throw error;}}
+  async function rememberCanonical(saved,receipt,owner){
+    if(!owner||!receipt)return;
+    await checkedScope(owner);
+    if((await read()).encoded!==saved.encoded)throw fail();
+    await checkedScope(owner);
+    canonicalPermit={owner,encoded:saved.encoded,hash:saved.tx.getTxHash().toString()};
+  }
+  async function assertCanStart(options){try{return await checkedCanStart(options);}catch(error){canonicalPermit=null;throw error;}}
+  async function checkedCanStart(options={}) {
+    if(!options||typeof options!=='object'||Reflect.ownKeys(options).some(key=>key!=='fresh'))throw invalid();
+    const requested=Object.getOwnPropertyDescriptor(options,'fresh');
+    if(requested&&(!Object.hasOwn(requested,'value')||typeof requested.value!=='boolean'))throw invalid();
+    const owner=ownedScope();await checkedScope(owner);
+    const previous=await read();await checkedScope(owner);
+    if(requested?.value||!owner||canonicalPermit?.owner!==owner||canonicalPermit?.encoded!==previous.encoded)canonicalPermit=null;
     if(previous.tx) {
       if(replacement?.encoded===previous.encoded) {await rejectedAttempts(previous,{requireMissingAnchor:replacement.requireMissingAnchor});return previous;}
       if(acknowledged!==previous.tx.getTxHash().toString())throw fail();
-      // A previous display or cached receipt cannot authorize a replacement
-      // after a reorg. This check intentionally does not regenerate stale proofs.
-      await waitForCanonicalReceipt(node,previous.tx,waitOptions);
+      // Prior displays never authorize a replacement. Within the current owned
+      // operation only, reuse the canonical check until an explicit proof fence.
+      if(canonicalPermit?.hash!==previous.tx.getTxHash().toString()){
+        canonicalPermit=null;
+        const receipt=await waitForCanonicalReceipt(node,previous.tx,waitOptions);
+        await rememberCanonical(previous,receipt,owner);
+      }
       // A canonical revert resolves this journal entry. The PXE owns any
       // per-secret tagging dependency when preparing the next transaction;
       // it must not become a wallet-wide finality lock.
@@ -221,9 +244,11 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
     assertCanStart,prepare,confirmed,
     async inspect(){const saved=await read();return saved.value?{operation:saved.value.operation??null,txHash:saved.value.txHash,predecessorTxHashes:(saved.value.replacements??[]).map(item=>item.txHash),...(saved.value.applicationNullifier?{applicationNullifier:saved.value.applicationNullifier}:{})}:null;},
     async inspectOutcome(){
+      const owner=ownedScope();await checkedScope(owner);canonicalPermit=null;
       const saved=await read();if(!saved.tx)return null;
       const receipt=await readCanonicalReceipt(node,saved.tx.getTxHash(),waitOptions);
       if((await read()).encoded!==saved.encoded)throw fail();
+      await rememberCanonical(saved,receipt,owner);
       return {operation:saved.value.operation??null,txHash:saved.value.txHash,applicationNullifier:saved.value.applicationNullifier??null,outcome:receipt?.executionResult??'pending',receipt};
     },
     /** Read-only status, not a permit. Each row is bound to exact authenticated Tx

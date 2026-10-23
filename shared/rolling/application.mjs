@@ -412,8 +412,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(savedContextMatches(record,consent,head,marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
     check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');await guard();
   }
-  async function journalCommitment(){
-    const prior=await localPreproof.checkpoint();
+  async function journalCommitment(fresh=false){
+    const prior=await localPreproof.checkpoint(fresh?{fresh:true}:undefined);
     check(prior&&Object.hasOwn(prior,'encoded')&&(prior.encoded===null||typeof prior.encoded==='string'),'ROLLING_RECOVERY_REQUIRED');
     const bytes=new TextEncoder().encode(JSON.stringify(prior.encoded));
     return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -1063,7 +1063,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           await guard();check(await privateStore.readRecoveryEpoch()===attempt.epoch,'ROLLING_RECOVERY_REQUIRED');
           const current=await savedIntent(id);check(current.encoded===active.encoded&&same(current.value.preproof,attempt)&&
             current.value.status===(phase==='signed'?'submitting':'pre-proof'),'ROLLING_RECOVERY_REQUIRED');
-          if(phase==='pre-proof')check(await journalCommitment()===attempt.predecessor,'ROLLING_RECOVERY_REQUIRED');
+          if(phase==='pre-proof')check(await journalCommitment(true)===attempt.predecessor,'ROLLING_RECOVERY_REQUIRED');
           else {const tx=await session.journal.inspect();check(tx?.operation===operation(id)&&tx.txHash===current.value.txHash,'ROLLING_RECOVERY_REQUIRED');}
           await checkPreproofPreferenceContext(current.value,{synchronize:true});
           await guard();check(await privateStore.readRecoveryEpoch()===attempt.epoch&&(await savedIntent(id)).encoded===active.encoded,'ROLLING_RECOVERY_REQUIRED');

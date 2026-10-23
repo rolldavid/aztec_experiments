@@ -34,6 +34,42 @@ for(const backend of ['file','indexeddb']) {
   assert.equal(result.status,'available');assert.equal(result.attempts[0].txHash,String(f.tx.getTxHash()));assert.equal(await storage.read(key),before);
   await assert.rejects(reopened.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(writes,0);assert.equal(reopened.lastTxHash,null);assert.equal(f.sent.length,0);
  }));
+ test(`${backend}: owned predecessor checks reuse only within the exact operation and refresh both proof boundaries`,()=>withStorage(async f=>{
+  let owner={},receipts=0,blocks=0;const receipt=f.node.getTxReceipt,block=f.node.getBlock;
+  f.node.getTxReceipt=async(...args)=>{receipts++;return receipt(...args);};f.node.getBlock=async(...args)=>{blocks++;return block(...args);};
+  const j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  const observe=async()=>{const found=await j.inspectOutcome();j.confirmed(found.receipt);};
+  await observe();await j.assertCanStart(); // prepare
+  await observe();await j.assertCanStart();await j.assertCanStart(); // submit + commitment
+  await j.assertCanStart({fresh:true});await j.assertCanStart(); // pre-proof + engine
+  assert.deepEqual({receipts,blocks},{receipts:3,blocks:3});
+  await j.assertCanStart({fresh:true}); // post-proof, always live
+  assert.deepEqual({receipts,blocks},{receipts:4,blocks:4});
+  owner={};await j.assertCanStart();assert.equal(receipts,5); // separate action cannot reuse
+  owner=null;await j.assertCanStart();await j.assertCanStart();assert.equal(receipts,7);
+ }));
+ test(`${backend}: separate prepare and submit operation scopes still revalidate and reuse their own checks`,()=>withStorage(async f=>{
+  let owner={},reads=0;const receipt=f.node.getTxReceipt;f.node.getTxReceipt=async(...args)=>{reads++;return receipt(...args);};
+  const j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  let found=await j.inspectOutcome();j.confirmed(found.receipt);await j.assertCanStart();assert.equal(reads,1);
+  owner={};found=await j.inspectOutcome();j.confirmed(found.receipt);await j.assertCanStart();await j.assertCanStart();await j.assertCanStart({fresh:true});await j.assertCanStart();assert.equal(reads,3);
+ }));
+ test(`${backend}: fresh proof boundary rejects reorg and failed refresh cannot leave a reusable permit`,()=>withStorage(async f=>{
+  const owner={},j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');const found=await j.inspectOutcome();j.confirmed(found.receipt);
+  f.reorg();await assert.rejects(j.assertCanStart({fresh:true}),{code:'BB_SUBMISSION_UNKNOWN'});await assert.rejects(j.assertCanStart(),{code:'BB_SUBMISSION_UNKNOWN'});assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: operation and account changes during a canonical read cannot mint a permit`,()=>withStorage(async f=>{
+  let owner={},valid=true;const j=await f.newSession({operationScope:()=>owner,contextGuard:()=>{if(!valid)throw Error('changed account');}});
+  await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');const original=f.node.getBlock;f.node.getBlock=async(...args)=>{const result=await original(...args);owner={};return result;};
+  await assert.rejects(j.inspectOutcome(),{code:'BB_RECOVERY_REQUIRED'});f.node.getBlock=original;
+  const found=await j.inspectOutcome();j.confirmed(found.receipt);valid=false;await assert.rejects(j.assertCanStart(),/changed account/);valid=true;f.reorg();await assert.rejects(j.assertCanStart(),{code:'BB_SUBMISSION_UNKNOWN'});
+ }));
+ test(`${backend}: authenticated journal revision change invalidates the previous permit`,()=>withStorage(async f=>{
+  const owner={},j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');const found=await j.inspectOutcome();j.confirmed(found.receipt);
+  let reads=0;const receipt=f.node.getTxReceipt;f.node.getTxReceipt=async(...args)=>{reads++;return receipt(...args);};
+  const previous=await j.assertCanStart();j.setOperation('new-envelope');await j.prepare(f.tx,previous);const revised=await j.assertCanStart();assert.equal(reads,1,'Same Tx hash in a new authenticated envelope needs a new canonical observation');
+  await j.prepare(Tx.random(),revised);await assert.rejects(j.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.sent.length,0);
+ }));
  test(`${backend}: read-only outcome never rebroadcasts or acknowledges`,()=>withStorage(async f=>{
   const journal=await f.newSession();journal.setOperation('post');await journal.prepare(f.tx,await journal.assertCanStart());
   const reopened=await f.newSession();assert.equal((await reopened.inspectOutcome()).outcome,'pending');assert.equal(f.sent.length,0);await assert.rejects(reopened.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});

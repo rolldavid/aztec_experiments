@@ -110,3 +110,11 @@ test('user positive pre-proof captures lifecycle functions before asynchronous p
  await started;lifecycle.guard=()=>assert.fail('replaced guard');lifecycle.signed=()=>assert.fail('replaced checkpoint');release();await pending;
  assert.equal(checkpoints,1);assert.equal(f.calls.submit,1);
 });
+
+for(const lifecycle of [true,false])test(`user engine predecessor freshness reaches journal at proof boundaries: lifecycle=${lifecycle}`,async()=>{
+ const reads=[],journal={assertCanStart:async options=>{reads.push(options?.fresh===true);return {encoded:null};},setOperation:()=>{},prepare:async()=>{},confirmed:()=>{}};
+ const f=fixture('user',{transactionJournal:journal});
+ if(lifecycle){const cap=f.routing.createPreproofRecovery(f.wallet,f.node,journal);await cap.send({},{from:'fixture',transactionJournal:journal,journalOperation:'test',wait:{timeout:0.03,interval:0.01}},{guard:async phase=>{if(phase==='pre-proof')await cap.checkpoint({fresh:true});},signed:async()=>{}});assert.deepEqual(reads,[true,false,true]);}
+ else{await f.send();assert.deepEqual(reads,[true]);}
+ assert.equal(f.calls.proof,1);assert.equal(f.calls.submit,1);
+});

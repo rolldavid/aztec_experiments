@@ -22,6 +22,7 @@ import {prepareFundingClaim as verifyFundingClaim} from './funding-receipts.mjs'
 import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
 import {createRollingApplication} from './application.mjs';
+import {executeRollingAction} from '../../apps/rolling/wallet-action.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 // REQUIRED: run only after normal profile-protocol build/processing. Never invent
@@ -331,7 +332,7 @@ async function realJournalFixture(base){
   node.getTxReceipt=async hash=>receipts.get(hash.toString());
   node.getBlock=async()=>({hash:{toString:()=>hex(42)}});
   const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
-  const newJournal=()=>createL2Journal({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scope,Tx:JournalTx,node,waitOptions:{timeoutMs:1000,intervalMs:1}});
+  const newJournal=()=>createL2Journal({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scope,Tx:JournalTx,node,waitOptions:{timeoutMs:1000,intervalMs:1},operationScope:f.options.accountSession.operationScope,contextGuard:f.options.contextGuard});
   f.options.accountSession.journal=await newJournal();
   async function install(operation,status='checkpointed',result='success'){
     const journal=f.options.accountSession.journal,previous=await journal.assertCanStart();
@@ -1585,7 +1586,7 @@ async function preproofFixture(base){
  const f=await realJournalFixture(base);let epoch='a'.repeat(64),serial=900;
  Object.assign(f.options.privateStore,{readRecoveryEpoch:async()=>epoch,ensureRecoveryEpoch:async()=>epoch??='b'.repeat(64),rotateRecoveryEpoch:async()=>epoch='c'.repeat(64)});
  f.options.accountSession.wallet.pxe.sync=async()=>{};
- const cap={checkpoint:async()=>{const p=await f.options.accountSession.journal.assertCanStart();return {encoded:p.encoded};},send:async(payload,opts,lifecycle)=>{
+ const cap={checkpoint:async options=>{(f.state.checkpointOptions??=[]).push(options);const p=await f.options.accountSession.journal.assertCanStart(options);return {encoded:p.encoded};},send:async(payload,opts,lifecycle)=>{
   f.state.proofs=(f.state.proofs??0)+1;const journal=f.options.accountSession.journal;journal.setOperation(opts.journalOperation);const prior=await journal.assertCanStart();
   await lifecycle.guard('pre-proof');if(f.state.interrupt==='proof')throw Error('proof interrupted');
   if(f.state.pauseProof)await f.state.pauseProof;if(f.state.beforeJournal)await f.state.beforeJournal();await lifecycle.guard('pre-proof');
@@ -1966,4 +1967,19 @@ test('posting policy storage overlaps screening and rejects a changed canonical 
   if(reorg){await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);}
   else{assert.equal((await pending).status,'prepared');assert.equal(f.state.estimates,0);}
  }
+});
+
+test('application requests fresh predecessor verification immediately before and after proof',async()=>{
+ const f=await preproofFixture(),prepared=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(prepared.intentId);
+ assert.deepEqual(f.state.checkpointOptions.map(options=>options?.fresh===true),[false,true,true]);assert.equal(f.state.sends,1);
+});
+
+for(const separate of [false,true])test(`real application canonical predecessor reads across ${separate?'separate prepare/submit':'one executeAction'} scopes`,async()=>{
+ let owner={};const base=fixture();base.options.accountSession.operationScope=()=>owner;
+ const f=await preproofFixture(base),first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);
+ const predecessor=(await f.options.accountSession.journal.inspect()).txHash,node=f.options.accountSession.node,originalReceipt=node.getTxReceipt,originalBlock=node.getBlock;let receiptReads=0,blockReads=0;
+ node.getTxReceipt=async hash=>{if(String(hash)===predecessor)receiptReads++;return originalReceipt(hash);};node.getBlock=async(...args)=>{blockReads++;return originalBlock(...args);};
+ owner={};const action={type:'unlike',post:'5'};
+ if(separate){const prepared=await f.app.prepare(action,{immediate:true});owner={};await f.app.submitPrepared(prepared.intentId);}else await executeRollingAction(f.app,action);
+ assert.equal(receiptReads,4,'Initial, submit observation and both fresh proof boundaries');assert.equal(blockReads,5,'Four predecessor blocks plus the new outcome block');assert.equal(f.state.sends,2);
 });
