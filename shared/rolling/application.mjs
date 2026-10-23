@@ -1032,7 +1032,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await checkActionSubmission(saved.value);
       const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
       const preparedPayment=await measure('action.fee-prepare',()=>payment(saved.value.action,saved.value));
-      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard}));
+      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
       let attempt=null,active;
@@ -1048,7 +1048,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       await (await slot()).write(saved,{...saved.value,status:attempt?'pre-proof':'submitting',...(attempt?{preproof:attempt}:{})});
       active=await savedIntent(id);await guard();progress('submitting');
-      const options={from:session.owner,fee:{gasSettings:estimated.gasSettings},simulationValidation:estimated.simulationValidation,
+      const options={from:session.owner,fee:{gasSettings:estimated.gasSettings},simulationValidation:estimated.simulationValidation,atomicSimulation:estimated.atomicSimulation===true,
         transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok&&saved.value.bok.phase!=='atomic'?{beforeSubmit:async()=>{
           await checkBokThread(saved.value.action,await contract());
           if(saved.value.bok.phase==='post')await waitingBok(saved.value);else await bokContext();await guard();

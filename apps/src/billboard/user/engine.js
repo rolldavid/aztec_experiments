@@ -240,6 +240,16 @@
         // Reuse the immediately preceding strict simulation only when its
         // one-shot capability still matches this exact wallet, payload and
         // anchor. Ordinary callers validate once here under the final budget.
+        const atomicSimulation=opts.atomicSimulation===true;
+        if(atomicSimulation&&(!fixedGas||opts.simulationValidation!==undefined||typeof this.pxe.simulateAndProveTx!=='function'))throw Object.assign(Error('Atomic transaction preparation is unavailable.'),{code:'BB_SIMULATION_CHANGED'});
+        const validateSimulation=result=>{
+          if (!result.publicInputs || (result.publicInputs.forPublic && !result.publicOutput?.txEffect?.revertCode?.isOK()) || result.publicOutput?.revertReason) {
+            throw Object.assign(new Error('Transaction simulation did not complete successfully. No proof or transaction was submitted.'), {code:'BB_SIMULATION_FAILED'});
+          }
+          const gas=result.gasUsed;
+          if (['daGas','l2Gas'].some(key=>gas.totalGas[key]>finalGasSettings.gasLimits[key]||gas.teardownGas[key]>finalGasSettings.teardownGasLimits[key]))throw Object.assign(Error('This transaction exceeds the configured fee limits.'),{code:'BB_GAS_LIMIT_EXCEEDED'});
+          return gas;
+        };
         let validatedGas;
         if (opts.simulationValidation !== undefined) {
           if (!fixedGas || feeOpts2.walletFeePaymentMethod || typeof a.consumePrivateFeeSimulationValidation !== 'function') {
@@ -249,7 +259,7 @@
             wallet:this, payload:executionPayload, from:opts.from, gasSettings:feeOpts2.gasSettings,
             additionalScopes:opts.additionalScopes, sendMessagesAs:opts.sendMessagesAs,
           });
-        } else {
+        } else if(!atomicSimulation) {
           const finalSimulation = await this.simulateViaEntrypoint(executionPayload, {
             from: opts.from, feeOptions: feeOpts2, skipTxValidation: false, skipFeeEnforcement: false,
             additionalScopes: opts.additionalScopes, sendMessagesAs: opts.sendMessagesAs,
@@ -259,17 +269,20 @@
           }
           validatedGas = finalSimulation.gasUsed;
         }
-        if (['daGas', 'l2Gas'].some(key => validatedGas.totalGas[key] > finalGasSettings.gasLimits[key] || validatedGas.teardownGas[key] > finalGasSettings.teardownGasLimits[key])) {
+        if (!atomicSimulation && ['daGas', 'l2Gas'].some(key => validatedGas.totalGas[key] > finalGasSettings.gasLimits[key] || validatedGas.teardownGas[key] > finalGasSettings.teardownGasLimits[key])) {
           throw Object.assign(new Error('This transaction exceeds the configured fee limits. No proof or transaction was submitted.'), {code:'BB_GAS_LIMIT_EXCEEDED'});
         }
         this._progress('proving');
         log('  Proving tx (can take minutes)...', 'info');
 
         const txRequest = await this.createTxExecutionRequestFromPayloadAndFee(executionPayload, opts.from, feeOpts2);
-        const provenTx = await measured('proveTx',()=>this.pxe.proveTx(txRequest, {
-          scopes: this.scopesFrom(opts.from, opts.additionalScopes ?? [], opts.sendMessagesAs),
-          senderForTags: this.senderForTagsFrom(opts.from, opts.sendMessagesAs),
-        }));
+        const proveOpts={scopes:this.scopesFrom(opts.from,opts.additionalScopes??[],opts.sendMessagesAs),senderForTags:this.senderForTagsFrom(opts.from,opts.sendMessagesAs)};
+        const provenTx = atomicSimulation
+          ? await measured('simulateAndProveTx',()=>this.pxe.simulateAndProveTx(txRequest,{
+            ...proveOpts,simulatePublic:true,skipTxValidation:false,skipFeeEnforcement:false,
+            prepareProve:async result=>{validateSimulation(result);return {proveTxRequest:txRequest,proveOpts};},
+          }))
+          : await measured('proveTx',()=>this.pxe.proveTx(txRequest,proveOpts));
         const tx = await measured('toTx',()=>provenTx.toTx());
         const txHash = tx.getTxHash();
         log('  Proving complete. Submitting to node...', 'success');

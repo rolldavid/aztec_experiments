@@ -28,7 +28,7 @@ function allocate(budget,lower,caps,prices){
  for(let i=0;i<2;i++)if(rates[i]){const extra=min(BigInt(caps[dimensions[i]]-values[i]),remaining/rates[i]);values[i]+=Number(extra);remaining-=extra*rates[i];}
  return new Gas(...values);
 }
-export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},simulator=createPrivateFeeSimulator(wallet,node)}){
+export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,simulator=createPrivateFeeSimulator(wallet,node)}){
  const ceiling=GasSettings.from(prepared.gasSettings),available=BigInt(prepared.availableCredit),network=(await node.getNodeInfo()).txsLimits.gas;
  const caps=new Gas(Math.min(ceiling.gasLimits.daGas,network.daGas,MAX_TX_DA_GAS),Math.min(ceiling.gasLimits.l2Gas,network.l2Gas,MAX_PROCESSABLE_L2_GAS));
  const settings=(gasLimits,teardownGasLimits)=>GasSettings.from({gasLimits,teardownGasLimits,maxFeesPerGas:ceiling.maxFeesPerGas,maxPriorityFeesPerGas:ceiling.maxPriorityFeesPerGas});
@@ -41,6 +41,9 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  const boundedFee=bounded.getFeeLimit().toBigInt();
  if(boundedFee<=available){
   const reservation=boundedFee||1n;await guard();const payload=await payloadFor(reservation);
+  // Immediate sends validate and prove this exact bounded payload in one PXE operation.
+  // Reviews and low-credit reservation searches still simulate here.
+  if(deferSimulation)return {payload,gasSettings:bounded,reservation,maximumFee:boundedFee,passes:0,atomicSimulation:true};
   const simulationPXE=wallet.pxe,inputSnapshot=snapshotPrivateFeeSimulationInput(payload,from,bounded);
   const result=await simulator.public(payload,from,bounded,true);
   if(!successful(result))throw result.publicOutput?.revertReason??fail('BB_SIMULATION_FAILED');

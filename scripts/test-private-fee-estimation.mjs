@@ -177,3 +177,10 @@ for(const phase of ['simulation','validation-anchor','consume-anchor'])test('sim
  }
  assert.equal(h.sends.length,0);
 });
+test('immediate funded send defers exactly one strict simulation to atomic proving',async()=>{
+ const h=fixture({available:10000n});
+ const result=await estimatePrivateFeeTransaction({...h.input,deferSimulation:true});
+ assert.equal(result.atomicSimulation,true);assert.equal(result.passes,0);assert.equal(h.calls.length,0);
+ assert.equal(result.payload.calls[0].args[0].toBigInt(),result.maximumFee);
+ assert(result.maximumFee<=h.input.prepared.availableCredit);
+});
