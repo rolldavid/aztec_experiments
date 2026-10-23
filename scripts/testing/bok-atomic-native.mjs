@@ -95,8 +95,7 @@ try{
  const count=async()=> (await board.methods.get_post_count().simulate({from:operator})).result;
  const beforeBalance=await balance();
  await send(new BatchCall(wallet,[bok.methods.authorize_request(request,target,600n),board.methods.post_with_bok(depositId,nonce,draft,...empty,new Fr(1),request)]),owner,'authorize-post',true);
- assert.equal((await state()).state,2n);assert.equal(await balance(),beforeBalance-600n);assert.equal(await count(),1n);report.checks.push('authorization precedes board activation in one transaction');
- await send(bok.methods.reserve(request,0,600n),operator,'reserve');
+ assert.equal((await state()).state,2n);assert.equal((await state()).reserved,600n);assert.equal((await state()).available,0n);assert.equal(await balance(),beforeBalance-600n);assert.equal(await count(),1n);report.checks.push('authorization, board activation and full budget reservation share the posting transaction');
  const reserved=await state(),receiptHash=Fr.random(),reply=Array(32).fill(Fr.ZERO);reply[0]=new Fr(BigInt('0x'+Buffer.from('Done').toString('hex').padEnd(62,'0')));
  const final=version=>new BatchCall(wallet,[bok.methods.settle(request,0,120n,receiptHash),bok.methods.publish_reply(request,new Fr(1),reply,4,version,0),bok.methods.finish(request)]);
  await send(final(99),operator,'final-revert',true,true);
@@ -116,6 +115,7 @@ try{
  const beforeBadBalance=await balance();
  await send(new BatchCall(wallet,[bok.methods.authorize_request(badId,badTarget,600n),board.methods.post_with_bok(secondDeposit,badNonce,{...draft,expected_main_policy_version:99},...empty,new Fr(1),badId)]),owner,'authorize-post-revert',true,true);
  assert.equal(await balance(),beforeBadBalance);assert.equal((await bok.methods.request(badId).simulate({from:operator})).result.state,0n);assert.equal(await count(),2n);report.checks.push('authorization and post rollback together');
+ assert(!report.transactions.some(row=>row.label==='reserve'));report.checks.push('successful invocation requires exactly posting and final reply transactions');
  report.passed=true;await save();console.log('NATIVE_PASSED',output);
 }catch(error){report.error={name:error.name,message:error.message,stack:error.stack};await save();console.error('NATIVE_FAILED',error.message);process.exitCode=1;}
 finally{if(wallet)await wallet.stop();if(network)await network.stop();}

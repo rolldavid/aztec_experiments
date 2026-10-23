@@ -43,20 +43,18 @@ unconstrained fn active() -> (TestEnvironment, AztecAddress, AztecAddress, Aztec
 
 unconstrained fn expired_reserved() -> (TestEnvironment, AztecAddress, AztecAddress, AztecAddress) {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
     let before = env.view_public(PrivateBok::at(a).request(10));
     env.mine_block_at(before.deadline); env.call_private(user, PrivateBok::at(a).expire(10));
     let after = env.view_public(PrivateBok::at(a).request(10));
-    assert_eq(after.state, 3); assert_eq(after.reserved, 400); assert_eq(after.refunded, 200);
+    assert_eq(after.state, 3); assert_eq(after.reserved, 600); assert_eq(after.refunded, 0);
     assert_eq(after.available, 0); assert(after.primary_done); assert(!after.secondary_done);
-    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 600);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 400);
     (env, a, user, op)
 }
 
 #[test]
 unconstrained fn full_private_credit_request_charge_refund_and_withdrawal() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
     env.call_public(op, PrivateBok::at(a).settle(10, 0, 120, 301));
     let r = env.view_public(PrivateBok::at(a).request(10));
     assert_eq(r.available, 480); assert_eq(r.reserved, 0); assert_eq(r.charged, 120); assert_eq(r.sequence, 1);
@@ -81,10 +79,9 @@ unconstrained fn waiting_request_is_cancellable() {
     assert_eq(r.state, 4); assert(r.primary_done & r.secondary_done);
 }
 
-#[test]
-unconstrained fn active_unreserved_request_is_cancellable() {
+#[test(should_fail_with = "Reservation unresolved")]
+unconstrained fn activated_budget_cannot_be_cancelled_during_paid_work() {
     let (env, a, user, _, _) = active(); env.call_private(user, PrivateBok::at(a).cancel(10));
-    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
 }
 
 #[test]
@@ -101,9 +98,8 @@ unconstrained fn expiry_releases_only_unused_credit_then_reconciles_reserved_cha
 #[test]
 unconstrained fn uncertain_call_fences_early_and_reconciles_without_another_call() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
     env.call_public(op, PrivateBok::at(a).close_uncertain(10));
-    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 600);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 400);
     env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 0, 303));
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
 }
@@ -111,7 +107,6 @@ unconstrained fn uncertain_call_fences_early_and_reconciles_without_another_call
 #[test]
 unconstrained fn zero_refunds_mark_both_channels_without_completing_zero_notes() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 600));
     env.call_public(op, PrivateBok::at(a).close_uncertain(10));
     env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 600, 304));
     let r = env.view_public(PrivateBok::at(a).request(10));
@@ -165,25 +160,24 @@ unconstrained fn activation_replay_rejected() { let (env, a, _, _, board) = acti
 unconstrained fn user_cannot_reserve() { let (env, a, user, _, _) = active(); env.call_public(user, PrivateBok::at(a).reserve(10, 0, 1)); }
 #[test(should_fail_with = "Reservation unresolved")]
 unconstrained fn second_reservation_cannot_replace_unresolved_liability() {
-    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 1)); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 2));
+    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 1));
 }
 #[test(should_fail_with = "Invalid actual charge")]
 unconstrained fn overcharge_rejected() {
-    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10)); env.call_public(op, PrivateBok::at(a).settle(10, 0, 11, 99));
+    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).settle(10, 0, 601, 99));
 }
 #[test(should_fail_with = "Wrong call sequence")]
 unconstrained fn settlement_replay_rejected() {
-    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10));
-    env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99)); env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99));
+    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99)); env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99));
 }
 #[test(should_fail_with = "No owned request control")]
 unconstrained fn wrong_owner_cannot_cancel() { let (env, a, _, other, _) = active(); env.call_private(other, PrivateBok::at(a).cancel(10)); }
 #[test(should_fail_with = "Reservation unresolved")]
 unconstrained fn owner_cannot_cancel_unknown_spending() {
-    let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10)); env.call_private(user, PrivateBok::at(a).cancel(10));
+    let (env, a, user, op, _) = active(); env.call_private(user, PrivateBok::at(a).cancel(10));
 }
 #[test(should_fail_with = "Request not active")]
-unconstrained fn finish_replay_rejected() { let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).finish(10)); env.call_public(op, PrivateBok::at(a).finish(10)); }
+unconstrained fn finish_replay_rejected() { let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).settle(10, 0, 0, 111)); env.call_public(op, PrivateBok::at(a).finish(10)); env.call_public(op, PrivateBok::at(a).finish(10)); }
 #[test(should_fail_with = "Request not expirable")]
 unconstrained fn expiry_replay_cannot_complete_primary_again() { let (env, a, user, _) = expired_reserved(); env.call_private(user, PrivateBok::at(a).expire(10)); }
 #[test(should_fail_with = "Request not fenced")]
@@ -223,7 +217,6 @@ fn recipient_commitment_is_salted_and_domain_bound() {
 #[test]
 unconstrained fn successive_settled_calls_conserve_credit() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 200));
     env.call_public(op, PrivateBok::at(a).settle(10, 0, 150, 301));
     env.call_public(op, PrivateBok::at(a).reserve(10, 1, 450));
     env.call_public(op, PrivateBok::at(a).settle(10, 1, 70, 302));
@@ -260,34 +253,32 @@ unconstrained fn direct_public_cancellation_cannot_bypass_control_note() {
 }
 #[test(should_fail_with = "EMITNULLIFIER: Attempted to emit duplicate nullifier")]
 unconstrained fn receipt_cannot_charge_two_calls() {
-    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10));
-    env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99));
+    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99));
     env.call_public(op, PrivateBok::at(a).reserve(10, 1, 10)); env.call_public(op, PrivateBok::at(a).settle(10, 1, 1, 99));
 }
 #[test(should_fail_with = "Request not cancellable")]
 unconstrained fn private_cancel_after_terminal_completion_rejected() {
-    let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).finish(10));
+    let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).settle(10, 0, 0, 111)); env.call_public(op, PrivateBok::at(a).finish(10));
     env.call_private(user, PrivateBok::at(a).cancel(10));
 }
 #[test(should_fail_with = "Request not active")]
 unconstrained fn finish_after_private_cancel_rejected() {
-    let (env, a, user, op, _) = active(); env.call_private(user, PrivateBok::at(a).cancel(10));
+    let (env, a, user, op, _) = funded(); env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 600)); env.call_private(user, PrivateBok::at(a).cancel(10));
     env.call_public(op, PrivateBok::at(a).finish(10));
 }
 #[test(should_fail_with = "Request not expirable")]
 unconstrained fn expiry_after_finish_rejected() {
-    let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).finish(10));
+    let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).settle(10, 0, 0, 111)); env.call_public(op, PrivateBok::at(a).finish(10));
     env.call_private(user, PrivateBok::at(a).expire(10));
 }
 #[test(should_fail_with = "Request not fenced")]
 unconstrained fn ordinary_completion_cannot_use_secondary_channel() {
-    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).finish(10));
+    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).settle(10, 0, 0, 111)); env.call_public(op, PrivateBok::at(a).finish(10));
     env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 0, 99));
 }
 #[test(should_fail_with = "No active uncertain reservation")]
 unconstrained fn fencing_replay_rejected() {
-    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10));
-    env.call_public(op, PrivateBok::at(a).close_uncertain(10)); env.call_public(op, PrivateBok::at(a).close_uncertain(10));
+    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).close_uncertain(10)); env.call_public(op, PrivateBok::at(a).close_uncertain(10));
 }
 #[test(should_fail_with = "Request not active")]
 unconstrained fn ordinary_settle_after_fencing_rejected() {
@@ -295,13 +286,12 @@ unconstrained fn ordinary_settle_after_fencing_rejected() {
 }
 #[test(should_fail_with = "Expire then reconcile")]
 unconstrained fn late_ordinary_settle_requires_expiry_transition() {
-    let (env, a, _, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10));
-    let r = env.view_public(PrivateBok::at(a).request(10)); env.mine_block_at(r.deadline);
+    let (env, a, _, op, _) = active(); let r = env.view_public(PrivateBok::at(a).request(10)); env.mine_block_at(r.deadline);
     env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99));
 }
 #[test(should_fail_with = "Invalid actual charge")]
 unconstrained fn late_reconciliation_cannot_overcharge() {
-    let (env, a, _, op) = expired_reserved(); env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 401, 99));
+    let (env, a, _, op) = expired_reserved(); env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 601, 99));
 }
 #[test(should_fail_with = "Wrong call sequence")]
 unconstrained fn late_reconciliation_requires_original_call_sequence() {
@@ -340,8 +330,7 @@ unconstrained fn board_recomputes_the_authorized_target() {
 
 #[test(should_fail_with = "Only operator")]
 unconstrained fn forged_operator_settle_rejected() {
-    let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10));
-    env.call_public(user, PrivateBok::at(a).settle(10, 0, 1, 99));
+    let (env, a, user, op, _) = active(); env.call_public(user, PrivateBok::at(a).settle(10, 0, 1, 99));
 }
 #[test(should_fail_with = "Only operator")]
 unconstrained fn forged_operator_finish_rejected() { let (env, a, user, _, _) = active(); env.call_public(user, PrivateBok::at(a).finish(10)); }
@@ -350,13 +339,12 @@ unconstrained fn receipt_cannot_charge_two_requests() {
     let (env, a, user, op, board) = active();
     env.call_private(user, PrivateBok::at(a).authorize_request(11, 43, 400));
     env.call_public(board, PrivateBok::at(a).on_invocation(11, 43));
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 10)); env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99));
-    env.call_public(op, PrivateBok::at(a).reserve(11, 0, 10)); env.call_public(op, PrivateBok::at(a).settle(11, 0, 1, 99));
+    env.call_public(op, PrivateBok::at(a).settle(10, 0, 1, 99));
+    env.call_public(op, PrivateBok::at(a).settle(11, 0, 1, 99));
 }
 #[test]
 unconstrained fn zero_normal_refund_closes_both_channels() {
-    let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).reserve(10, 0, 600));
-    env.call_public(op, PrivateBok::at(a).settle(10, 0, 600, 99)); env.call_public(op, PrivateBok::at(a).finish(10));
+    let (env, a, user, op, _) = active(); env.call_public(op, PrivateBok::at(a).settle(10, 0, 600, 99)); env.call_public(op, PrivateBok::at(a).finish(10));
     let r = env.view_public(PrivateBok::at(a).request(10)); assert(r.primary_done & r.secondary_done); assert_eq(r.refunded, 0);
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 400);
 }
@@ -400,10 +388,10 @@ unconstrained fn unrelated_unfunded_user_can_expire_active_request() {
     env.mine_block_at(before.deadline + 1);
     env.call_private(other, PrivateBok::at(a).expire(10));
     let after = env.view_public(PrivateBok::at(a).request(10));
-    assert_eq(after.state, 4); assert_eq(after.available, 0); assert_eq(after.reserved, 0);
-    assert_eq(after.charged, 0); assert_eq(after.refunded, 600);
-    assert(after.primary_done & after.secondary_done);
-    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
+    assert_eq(after.state, 3); assert_eq(after.available, 0); assert_eq(after.reserved, 600);
+    assert_eq(after.charged, 0); assert_eq(after.refunded, 0);
+    assert(after.primary_done & !after.secondary_done);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 400);
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(other)), 0);
     assert_eq(env.view_public(PrivateBok::at(a).earned()), 0);
 }
@@ -413,15 +401,14 @@ unconstrained fn unrelated_unfunded_user_can_expire_reserved_request_at_deadline
     let (mut env, a, user, op, board) = active();
     let other = env.create_light_account();
     assert((other != user) & (other != op) & (other != board));
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
     let before = env.view_public(PrivateBok::at(a).request(10));
     env.mine_block_at(before.deadline);
     env.call_private(other, PrivateBok::at(a).expire(10));
     let after = env.view_public(PrivateBok::at(a).request(10));
-    assert_eq(after.state, 3); assert_eq(after.available, 0); assert_eq(after.reserved, 400);
-    assert_eq(after.charged, 0); assert_eq(after.refunded, 200);
+    assert_eq(after.state, 3); assert_eq(after.available, 0); assert_eq(after.reserved, 600);
+    assert_eq(after.charged, 0); assert_eq(after.refunded, 0);
     assert(after.primary_done); assert(!after.secondary_done);
-    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 600);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 400);
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(other)), 0);
     env.call_public(op, PrivateBok::at(a).reconcile(10, 0, 120, 305));
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 880);
@@ -449,7 +436,6 @@ unconstrained fn active_expiry_before_deadline_rejected() {
 #[test(should_fail_with = "Request not expired")]
 unconstrained fn reserved_expiry_before_deadline_rejected() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
     let r = env.view_public(PrivateBok::at(a).request(10));
     env.mine_block_at(r.deadline - 1);
     env.call_private(user, PrivateBok::at(a).expire(10));
@@ -478,7 +464,6 @@ unconstrained fn reply_unknown_request() {
 #[test(should_fail_with="Reservation unresolved")]
 unconstrained fn reply_reservation_fenced() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 100));
     env.call_public(op, PrivateBok::at(a).publish_reply(10, 77, [0; 32], 0, 1, 0));
 }
 
@@ -492,14 +477,14 @@ unconstrained fn reply_at_deadline_rejected() {
 #[test(should_fail_with="Request not active")]
 unconstrained fn reply_after_finish_rejected() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).finish(10));
+    env.call_public(op, PrivateBok::at(a).settle(10, 0, 0, 111)); env.call_public(op, PrivateBok::at(a).finish(10));
     env.call_public(op, PrivateBok::at(a).publish_reply(10, 77, [0; 32], 0, 1, 0));
 }
 
 #[test(should_fail_with="Request not active")]
 unconstrained fn reply_uncertain_request_rejected() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 100)); env.call_public(op, PrivateBok::at(a).close_uncertain(10));
+    env.call_public(op, PrivateBok::at(a).close_uncertain(10));
     env.call_public(op, PrivateBok::at(a).publish_reply(10, 77, [0; 32], 0, 1, 0));
 }
 
@@ -574,7 +559,6 @@ unconstrained fn owned_requests_retained_control_cannot_cancel_twice() {
 #[test]
 unconstrained fn owned_requests_track_reservation_charge_and_release_without_public_owner() {
     let (env, a, user, op, _) = active();
-    env.call_public(op, PrivateBok::at(a).reserve(10, 0, 400));
     assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 0)), [10, 0, 0, 0, 0, 0, 0, 0]);
     env.call_public(op, PrivateBok::at(a).settle(10, 0, 120, 301));
     env.call_public(op, PrivateBok::at(a).finish(10));
@@ -582,4 +566,16 @@ unconstrained fn owned_requests_track_reservation_charge_and_release_without_pub
     let r = env.view_public(PrivateBok::at(a).request(10));
     assert_eq(r.charged, 120); assert_eq(r.refunded, 480); assert_eq(r.reserved, 0);
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 880);
+}
+
+#[test]
+unconstrained fn activation_locks_full_authorized_budget_without_operator_transaction() {
+    let (env, a, user, op, _) = active();
+    let r = env.view_public(PrivateBok::at(a).request(10));
+    assert_eq(r.state, 2); assert_eq(r.sequence, 0); assert_eq(r.reserved, 600);
+    assert_eq(r.available, 0); assert_eq(r.charged, 0); assert_eq(r.refunded, 0);
+    assert_eq(r.available + r.reserved + r.charged + r.refunded, r.budget);
+    env.call_public(op, PrivateBok::at(a).settle(10, 0, 0, 901));
+    env.call_public(op, PrivateBok::at(a).finish(10));
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
 }

@@ -160,6 +160,10 @@ pub contract PrivateBok {
         assert(request.state == WAITING, "Request not waiting");
         assert(request.invocation_hash == derived_invocation_hash, "Invocation target mismatch");
         assert(self.context.timestamp() < request.deadline, "Request expired");
+        // The posting transaction activates exactly the budget its owner authorized.
+        // Lock it now so paid execution needs no separate operator transaction.
+        assert((request.available == request.budget) & (request.reserved == 0), "Invalid activation budget");
+        request.reserved = request.available; request.available = 0;
         request.state = ACTIVE;
         Accounting::save(self.context, self.storage, request_id, request);
     }
