@@ -142,6 +142,14 @@ function _watchRememberedAccount(){
  _sessionChannel=new BroadcastChannel('rolling-chat-account-session-v1');
  _sessionChannel.onmessage=()=>{if(window.walletState.aztec)_invalidateWalletContext();};
 }
+// Browser sessions are a cache. A previous SDK may derive a different account
+// address; discard that obsolete record instead of blocking Ethereum sign-in.
+async function _loadRememberedWallet(store,scope){
+ const saved=await store.load(scope);
+ if(!saved)return null;
+ try{return {...saved,prepared:await _prepareWallet(saved.wallet)};}
+ catch(error){if(error?.code!=='BB_ACCOUNT_RECORD_INVALID')throw error;await store.clear(scope);return null;}
+}
 async function _openEthereumAccount(providerId,{freshAccount=false}={}){
  const store=window.BillboardEthereumSession,scope=_ethereumScope(),generation=_walletGeneration;
  const address=window.walletState.ethAccount.toLowerCase(),signer=window.walletState.ethSigner,transport=window.walletState.ethTransport;
@@ -152,7 +160,7 @@ async function _openEthereumAccount(providerId,{freshAccount=false}={}){
  };
  await navigator.locks.request('rolling-chat-account-session:'+scope.origin+':'+scope.chainId,async()=>{
   await guard();
-  const saved=await store.load(scope);await guard();
+  const saved=freshAccount?null:await _loadRememberedWallet(store,scope);await guard();
   let raw,testAccount=await store.selectedTestAccount(scope,address);await guard();
   if(freshAccount){
    if(!['11155111','31337'].includes(scope.chainId))throw Object.assign(Error('Fresh test accounts are only available on test networks.'),{code:'BB_TEST_ACCOUNT_NETWORK'});
@@ -168,7 +176,7 @@ async function _openEthereumAccount(providerId,{freshAccount=false}={}){
    const signature=await signer.signMessage(message);await guard();
    raw=await store.derive({ethers,signature,message,address});await guard();
   }
-  const prepared=await _prepareWallet(raw);await guard();
+  const prepared=!freshAccount&&saved?.metadata.ethereumAddress===address?saved.prepared:await _prepareWallet(raw);await guard();
   prepared.ethereumAddress=address;
   await store.save(scope,{secretKey:prepared.secretKey,salt:prepared.salt,address:prepared.address.toString()},{ethereumAddress:address,providerId,...(testAccount==='0'?{}:{testAccount})});await guard();
   _watchRememberedAccount();_sessionChannel?.postMessage({type:'account-changed'});
@@ -180,9 +188,9 @@ async function restoreRememberedAccount(){
   if(window.walletState.aztec)return true;
   const scope=_ethereumScope(),generation=_walletGeneration;
   return navigator.locks.request('rolling-chat-account-session:'+scope.origin+':'+scope.chainId,async()=>{
-   const saved=await window.BillboardEthereumSession.load(scope);
+   const saved=await _loadRememberedWallet(window.BillboardEthereumSession,scope);
    if(!saved)return false;
-   const prepared=await _prepareWallet(saved.wallet);
+   const prepared=saved.prepared;
    _assertWalletLive();if(generation!==_walletGeneration)throw Error('Wallet context changed.');
    prepared.ethereumAddress=saved.metadata.ethereumAddress;
    _watchRememberedAccount();_activateWallet(prepared);return true;

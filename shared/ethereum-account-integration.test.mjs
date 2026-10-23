@@ -93,3 +93,24 @@ test('cancelled fresh signature retains the original account and selected genera
 test('test account creation is rejected on mainnet before signing or reading the portal',async()=>{
  const f=fixture({chainId:'1'});await assert.rejects(f.signIn({freshAccount:true}),{code:'BB_TEST_ACCOUNT_NETWORK'});assert(!f.calls.includes('personal_sign'));assert(!f.calls.includes('eth_call'));assert.equal(f.context.walletState.aztec,null);
 });
+
+async function obsoleteSession(first){
+ await first.signIn();
+ const store=first.context.BillboardEthereumSession,saved=await store.load(scope);
+ await store.save(scope,{...saved.wallet,address:'0x'+'01'.repeat(32)},saved.metadata);
+}
+test('obsolete cached address is discarded on automatic restore and Ethereum sign-in succeeds',async()=>{
+ const first=fixture();await obsoleteSession(first);
+ const next=fixture({indexedDB:first.indexedDB});
+ assert.equal(await next.account.restoreRemembered(),false);
+ assert.equal(await next.context.BillboardEthereumSession.load(scope),null);
+ assert.deepEqual(next.calls,[]);
+ await next.signIn();assert(next.context.walletState.aztec);
+ assert.equal(next.calls.filter(x=>x==='personal_sign').length,1);
+ const reload=fixture({indexedDB:first.indexedDB});assert.equal(await reload.account.restoreRemembered(),true);
+});
+test('clicking a wallet without automatic restore also discards an obsolete cached address',async()=>{
+ const first=fixture();await obsoleteSession(first);
+ const next=fixture({indexedDB:first.indexedDB});await next.signIn();
+ assert(next.context.walletState.aztec);assert.equal(next.calls.filter(x=>x==='personal_sign').length,1);
+});
