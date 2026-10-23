@@ -1,3 +1,15 @@
+## Owner instruction — disposable test state (24 October 2026)
+
+This application is not live production. All old application data is disposable.
+Do not spend implementation time preserving, migrating, recovering or maintaining
+backward compatibility with data from old releases: accounts, posts, balances,
+databases, caches and incomplete test flows may be discarded or replaced whenever
+that simplifies delivery. Do not add migration or recovery machinery for old test
+state. This supersedes older preservation/migration instructions in project records.
+Keep authorized infrastructure credentials and security controls; these are not old
+application data. Reuse healthy compatible fixtures when useful, but never make
+preserving them a requirement or a reason to delay the requested work.
+
 ## Current checkout entry point
 
 Read [START_HERE.md](START_HERE.md) first for current hosting, authority, outstanding work and the published handover. Historical task records do not restart stopped campaigns.
