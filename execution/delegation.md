@@ -785,3 +785,9 @@ Stable6 review complete: network_upgrade_check verified fresh handover identitie
 23 October browser hosting contract: root implements sharedpolicy and mandatory isolatedbrowser gate. network_upgrade_check independently audits/reviews policy and validation. stable_release_packaging investigates/stages reviewed browserimage and narrow Bok rollout. No core restart or new host.
 
 23 October browser hosting contract complete: root integrated commit9a10e11; network_upgrade_check approved source and exact operator package; stable_release_packaging qualified the final real executor and deployed Bok-only. All639 pins, public opaque-origin policy headers and9 running services verified. No active delegation remains.
+
+23 October latency: root owns browser-to-render path and integration; stable_release_packaging extracts sanitized real server timeline; network_upgrade_check audits serial accounting/proof dependencies and reviews improvements. No service changes delegated yet.
+
+23 October latency iteration2: root owns retainedChrome timing and integration. network_upgrade_check implemented reviewed board snapshot/read optimization and reproduced/fixed detached-control browser coverage; fresh_account_review independently approved both. stable_release_packaging activates exact reviewed e6007512 Bok-only after real isolated-executor qualification; root alone sends next benchmark. No core or contract changes.
+
+23 October latency complete: root verified the real request and automatic browser reply, integrated reviewed components and final report. fresh_account_review independently partitioned timing and activated the root-reviewed static-only ab72 panel; stable_release_packaging independently verified9services/canonical accounting/publication and pushed source identity. No active delegation or pending transaction remains. The successful repeat retained existing HTML; no fresh-generation speed guarantee is claimed.

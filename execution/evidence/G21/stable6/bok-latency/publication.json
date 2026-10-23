@@ -1,0 +1,171 @@
+{
+  "application": {
+    "activated": true,
+    "commit": "d0f079eb4c8732725dae88661a3d6cd69d0d2101",
+    "appPid": 595647,
+    "proxyPid": 595753,
+    "proxyAction": "restart",
+    "runningSource": "/opt/rolling-app/releases/ui-d0f079eb4c87",
+    "ui": "/opt/rolling-ui/releases/d0f079eb4c8732725dae88661a3d6cd69d0d2101",
+    "previousRunningSource": "/opt/rolling-upgrade-6.0.0",
+    "previousConfiguredSource": "/opt/rolling-app/releases/ui-ee6195e5eb21",
+    "protectedPids": {
+      "rolling-application-proxy.service": 594732,
+      "rolling-node.service": 561964,
+      "rolling-query.service": 565186,
+      "board-prover.service": 565979,
+      "rolling-moderator.service": 567551
+    },
+    "configHashes": {
+      "/etc/rolling-app/public.json": "6922f0b79d4035f487456f3d67951755dd75754474ed8f18b7e3a38993f00e13",
+      "/etc/rolling-app/wallet.json": "ba9e697e21d1b97e3bd6bcaff95f0ce7ab71630b7173ecbe53570af4c189d7f0",
+      "/etc/rolling-app/relay.json": "0edf30a7f7f0331de346143c17d7e30e931662e1ce114c860d53ee13761d07d5",
+      "/etc/rolling-query/config.json": "0704a35449d5380941d9d22147a6015ac2a68d84e5ad49fc82ad37263e7aa2d6",
+      "/etc/board-prover/config.json": "60373b0548a1213ed7013fc16c74351b368abf62a129d7bf2fd42360c8cfcb53",
+      "/var/lib/rolling-bootstrap-private/moderator-current/config.json": "c0c3c4e471b886fa200b14821fca76436e2e51aac2d7c085b105db968ceca392"
+    }
+  },
+  "public": {
+    "/performance.mjs": {
+      "status": 200,
+      "sha256": "ac636c7a6ab48b03cc96f6b30fe681de9af0126ae1a0a65b4c566918b541aa99"
+    },
+    "/reader-updates.mjs": {
+      "status": 200,
+      "sha256": "a1c3dabb174f4a7666aa264ab5ff2cb2370546e3adb2537c00fd6f24b7e19e6a"
+    },
+    "/wallet-action.mjs": {
+      "status": 200,
+      "sha256": "c6050b1c4f2277a30262bdcc8fdad96e9c6d9f2f984ded21d5324dcf01c3f525"
+    },
+    "/wallet/runtime.json": {
+      "status": 200,
+      "sha256": "26a487e7c1b5fc16fa43fd91a274ec0ee3a43f4d6001231717e53f00ed394ae7"
+    }
+  },
+  "initialBok": {
+    "commit": "f603acde66d9e433b33166302418fe6826a0bf37",
+    "source": "/opt/rolling-bok/releases/f603acde66d9e433b33166302418fe6826a0bf37",
+    "previousSource": "/opt/rolling-bok/releases/9a10e11ecd6a6ef0c5110e128b4d627a763979b6",
+    "sourcePinSha256": "c509c1365cdf8bd1a46c169cc884dd18befeb636c6d9e3543c0ca42c48c62adb",
+    "sourceFileCount": 640,
+    "image": "sha256:3d3169b41e9cc39b6db208b733f3f9339fd8ecbc7260612a420b663c3cf77222",
+    "nativeQualificationSha256": "35d874a76aa3f940183f18d239479abcb274a3bb689ed6df9760883a2cef22a8",
+    "files": {
+      "plugins/agent.mjs": "f8b70103da573511a375e4d61c6a82cf6478583b29cd24b92b13d1a01f66fbb4",
+      "plugins/bok-timing.mjs": "768c363c22f8d38863f444b5f8b66c4578392c47b54d19adc7bea6a4f29da514",
+      "plugins/escrow-service.mjs": "77e1b34f8fb5da2dab668a8fa300888365983cdb47680c3ec27581e16377b7ad",
+      "plugins/github-tools.mjs": "ca9d9746e0feed4762a54baf121a85b898c479c7c41691b9a11b4912e58c3216",
+      "plugins/main.mjs": "ce37fcd67306d2e17241e85653720b865bd39ea8ac3c34fcd5656926c8ef8a56",
+      "plugins/private-bok-escrow.mjs": "edc73d5e2c5ebb01867c2e664607fa87e5e32d9762d3ca22b015c23a247b8a70",
+      "plugins/private-bok-metering.mjs": "bbb5bc9f8e3468b051cd245c2ba8a96da96a9a3126aefb289b73d69050245cd4",
+      "plugins/venice-metered.mjs": "319898a1fe4d25e6b8b04f5a272b6b0e29da2d5ab5014c216193b65b8d8a8e47"
+    },
+    "oldPid": "227057",
+    "oldProxyPid": "227059",
+    "status": "started",
+    "startedAt": "2026-10-23T12:34:14.654360+00:00",
+    "newPid": "228700",
+    "newProxyPid": "228702",
+    "unitSha256": "40385b1e463047810ccd744fed721baa545ac2db52f45a443d529a27c21aae1b",
+    "statePreserved": true
+  },
+  "bok": {
+    "commit": "e600751259d9cdbf79651a8ce8d615caac289e5c",
+    "source": "/opt/rolling-bok/releases/e600751259d9cdbf79651a8ce8d615caac289e5c",
+    "pid": 233946,
+    "proxyPid": 233948,
+    "sourcePinCount": 640,
+    "sourcePinSha256": "e148f03bba7b54b5133744aaec104b7d32a673de24cc393484ace16396c8b7d0",
+    "verification": "final-health.json",
+    "activationReceipt": {
+      "commit": "e600751259d9cdbf79651a8ce8d615caac289e5c",
+      "source": "/opt/rolling-bok/releases/e600751259d9cdbf79651a8ce8d615caac289e5c",
+      "previousSource": "/opt/rolling-bok/releases/f603acde66d9e433b33166302418fe6826a0bf37",
+      "sourcePinSha256": "e148f03bba7b54b5133744aaec104b7d32a673de24cc393484ace16396c8b7d0",
+      "sourceFileCount": 640,
+      "image": "sha256:3d3169b41e9cc39b6db208b733f3f9339fd8ecbc7260612a420b663c3cf77222",
+      "files": {
+        "plugins/agent.mjs": "c517ddcf95b241ec58284e63fe32303c937e82f9e1f2061bf36a723d302f559e",
+        "plugins/aztec.mjs": "1c1511ee4a4037267138be05ce261e3c0d49217d75d6cf8e60dbc313e07022fa",
+        "plugins/browser-validation.mjs": "64b846b8516527de58f8cd07acd87a447487dd62436de85f0f8213be93ac2208",
+        "plugins/escrow-service.mjs": "52fa0b43abc01a723f05b854e6ba2d4479cafcb810ce0b5a9fca0a721d4a08d2"
+      },
+      "oldPid": "228700",
+      "oldProxyPid": "228702",
+      "status": "ready",
+      "startedAt": "2026-10-23T13:19:08.286608+00:00",
+      "newPid": "233946",
+      "newProxyPid": "233948",
+      "unitSha256": "21aff3f5822823f174dece7e8edc351c5dbef7de2491f0dc57f8235078cb2a44",
+      "statePreserved": true,
+      "health": {
+        "status": "ready",
+        "active": 0,
+        "lastFailure": null
+      },
+      "activationPreviousPid": "233732",
+      "activationPreviousProxyPid": "233737"
+    }
+  },
+  "ui": {
+    "activated": true,
+    "ui": "/opt/rolling-ui/releases/ab72bc43290d72c6209828a3bbfacc9cadb7f071",
+    "previousUi": "/opt/rolling-ui/releases/d0f079eb4c8732725dae88661a3d6cd69d0d2101",
+    "sourceCommit": "ab72bc43290d72c6209828a3bbfacc9cadb7f071",
+    "changedFile": "wallet-panel.mjs",
+    "readbacks": {
+      "wallet-panel.mjs": "6264eee796fd4bc321e2c2f86436e575eab863fc17c21014de16ff8b15c4dda4",
+      "wallet/runtime.json": "26a487e7c1b5fc16fa43fd91a274ec0ee3a43f4d6001231717e53f00ed394ae7",
+      "wallet/runtime.mjs": "9a752a2804e6ce19117a16a3b3ec6e493f334fdb3078f7a3070f570569ee254a",
+      "reader.mjs": "2877cb0d48dc3ac4cb753df9aec2442e58ffd4ba273bf754e5fb0c67ec078143",
+      "index.html": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87"
+    },
+    "services": {
+      "rolling-application.service": {
+        "pid": 595647,
+        "startTime": "28075050"
+      },
+      "rolling-application-proxy.service": {
+        "pid": 595753,
+        "startTime": "28077401"
+      },
+      "rolling-node.service": {
+        "pid": 561964,
+        "startTime": "26089999"
+      },
+      "rolling-query.service": {
+        "pid": 565186,
+        "startTime": "26326771"
+      },
+      "board-prover.service": {
+        "pid": 565979,
+        "startTime": "26371585"
+      },
+      "rolling-moderator.service": {
+        "pid": 567551,
+        "startTime": "26454568"
+      }
+    },
+    "servicesChanged": false,
+    "sourceUnitConfigChanges": false,
+    "browserCheck": "balance-live-browser.json"
+  },
+  "uiPublicReadback": {
+    "/wallet-panel.mjs": {
+      "status": 200,
+      "sha256": "6264eee796fd4bc321e2c2f86436e575eab863fc17c21014de16ff8b15c4dda4",
+      "bytes": 137494,
+      "cacheControl": "no-store",
+      "cloudfrontCache": "Miss from cloudfront"
+    },
+    "/wallet/runtime.json": {
+      "status": 200,
+      "sha256": "26a487e7c1b5fc16fa43fd91a274ec0ee3a43f4d6001231717e53f00ed394ae7",
+      "bytes": 4230,
+      "cacheControl": "no-store",
+      "cloudfrontCache": "Miss from cloudfront"
+    },
+    "verifiedAt": "2026-10-23T13:37:13.095141+00:00"
+  }
+}

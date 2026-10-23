@@ -32,3 +32,14 @@ All nine application processes were running at10:56:44UTC. Core PIDs were preser
 ## Mandatory browser validation
 
 Bok source9a10e11 is published with one shared hosting contract and mandatory Chromium checks before new app acceptance/publication. The gate binds captured source scenarios, built artifacts and policy; tests interactions/reload on desktop/mobile; returns failures to the existing repair loop. Nineteen focused browser checks passed. Exact server component qualification accepted the working fragment-state fixture in2.334s and rejected startup/click storage defects in1.188s/1.421s after passing Node tests/build. These fixtures qualify the gate, not another paid model/chain journey. Browser sandbox remains enabled without host access. Independent review approved implementation and deployment. At11:46:33UTC all9 services ran,639 source pins matched, public headers matched for Origin:null and the existing Daily Three app served. See bok-browser-gate.json.
+
+
+## Profiled Bok latency improvement — 23 October
+
+Published core d0f079eb, Bok e6007512 and UI ab72bc43. The flow now has three Aztec transactions: atomic user authorization/post, reservation, and atomic charge/reply/refund. No contracts or state were reset. Read operations share canonical snapshots, independent reads run concurrently, redundant board checks are removed, and feed revisions automatically reach the browser.
+
+First instrumented request failed after797.878s: the validator observed a detached checkbox as a nonexistent nth-of-type(0) control and caused six unnecessary test-plan rewrites. This is retained as failure evidence, not a successful benchmark. Atomic DOM capture fixed the reproduced race;23 actual browser tests and140 checks on the unchanged failed app passed. Real untested controls and permission failures remain rejected.
+
+Second request1963faf1…c0eb2a7 completed in443.421s versus the original1020.560s. Reply99070343…7883637 appeared automatically at440.354s without refresh. Final1a4135ce…095ea is canonical in block1286; charged45416microUSDC/refunded204584/reserved0 and both refund flags complete. The new accepted app revision028da8d4…6c83 retained existingHTML and published browser tests; this is not a new-app-generation or controlled identical-workload speedup claim. Full nonoverlapping timing, measurement limits, source identities and check counts are in [the report](../../../../docs/BOK_LATENCY.md) and [evidence directory](bok-latency/).
+
+All nine services were verified running after completion; real prover14completed/0failed. Static-only final balance publication preserved service PIDs/start times, configurations and SDK bytes. Native five-scenario atomic-batch qualification used official proofs-disabled development controls; actual testnet requests used real proofs. Broader production qualification remains separate.

@@ -1,0 +1,1589 @@
+{
+  "schemaVersion": 1,
+  "sources": {
+    "/tmp/bok-optimized-live-06.json": "9329766935fc18072f184ed957ae227bf0a19d2a6aa3a4b5b93fe22c03178763",
+    "/tmp/bok-latency-browser-run.json": "a01c5d68233641c336c180f462573f56220fad8662cfbd38d69c0ed4f0fd8562"
+  },
+  "startUtc": "2026-10-23T12:49:23.804Z",
+  "endUtc": "2026-10-23T13:02:41.681991+00:00",
+  "totalMs": 797877.9909667969,
+  "workerTotalMonotonicMs": 646259.949,
+  "method": "Worker intervals end at recorded wallTimeUs and extend backwards by monotonic durationMs. Browser intervals use timeOrigin+performance start. Sweep all boundaries, assign each millisecond once to deepest selected measured stage, excluding agent.model and escrow.reserve/finalize_reply enclosing spans. Background reader/account spans are excluded because they overlap worker work; leftover time remains explicitly unattributed. Instrumented other spans are unioned, so provider.credits/balance and agent.context/file reads are not double-counted. Millisecond-scale logging boundary overlaps are resolved by stated priority rather than added.",
+  "partition": [
+    {
+      "category": "browser_preproof",
+      "durationMs": 22246.07,
+      "seconds": 22.246,
+      "percent": 2.79
+    },
+    {
+      "category": "browser_proof",
+      "durationMs": 42215.0,
+      "seconds": 42.215,
+      "percent": 5.29
+    },
+    {
+      "category": "browser_to_worker_gap",
+      "durationMs": 3381.352,
+      "seconds": 3.381,
+      "percent": 0.42
+    },
+    {
+      "category": "browser_submission",
+      "durationMs": 1400.635,
+      "seconds": 1.401,
+      "percent": 0.18
+    },
+    {
+      "category": "browser_confirmation_wait",
+      "durationMs": 82374.985,
+      "seconds": 82.375,
+      "percent": 10.32
+    },
+    {
+      "category": "other_worker_work_and_gaps",
+      "durationMs": 16462.393,
+      "seconds": 16.462,
+      "percent": 2.06
+    },
+    {
+      "category": "other_instrumented_rpc_setup_tools",
+      "durationMs": 19060.607,
+      "seconds": 19.061,
+      "percent": 2.39
+    },
+    {
+      "category": "board_reads",
+      "durationMs": 82632.298,
+      "seconds": 82.632,
+      "percent": 10.36
+    },
+    {
+      "category": "worker_transaction_proving",
+      "durationMs": 12160.188,
+      "seconds": 12.16,
+      "percent": 1.52
+    },
+    {
+      "category": "worker_confirmation_wait",
+      "durationMs": 112427.36,
+      "seconds": 112.427,
+      "percent": 14.09
+    },
+    {
+      "category": "provider_http",
+      "durationMs": 290410.109,
+      "seconds": 290.41,
+      "percent": 36.4
+    },
+    {
+      "category": "validation_tools_and_acceptance",
+      "durationMs": 113106.993,
+      "seconds": 113.107,
+      "percent": 14.18
+    }
+  ],
+  "parts": [
+    {
+      "startMs": 0.0,
+      "endMs": 22246.06982421875,
+      "category": "browser_preproof"
+    },
+    {
+      "startMs": 22246.06982421875,
+      "endMs": 64461.06982421875,
+      "category": "browser_proof"
+    },
+    {
+      "startMs": 64461.06982421875,
+      "endMs": 64461.10986328125,
+      "category": "browser_to_worker_gap"
+    },
+    {
+      "startMs": 64461.10986328125,
+      "endMs": 65861.74487304688,
+      "category": "browser_submission"
+    },
+    {
+      "startMs": 65861.74487304688,
+      "endMs": 65861.77490234375,
+      "category": "browser_to_worker_gap"
+    },
+    {
+      "startMs": 65861.77490234375,
+      "endMs": 148236.76000976562,
+      "category": "browser_confirmation_wait"
+    },
+    {
+      "startMs": 148236.76000976562,
+      "endMs": 151618.0419921875,
+      "category": "browser_to_worker_gap"
+    },
+    {
+      "startMs": 151618.0419921875,
+      "endMs": 151618.89013671875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 151618.89013671875,
+      "endMs": 151845.3740234375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 151845.3740234375,
+      "endMs": 151846.03393554688,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 151846.03393554688,
+      "endMs": 153086.5810546875,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 153086.5810546875,
+      "endMs": 153087.34790039062,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 153087.34790039062,
+      "endMs": 153215.7958984375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 153215.7958984375,
+      "endMs": 157345.955078125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 157345.955078125,
+      "endMs": 160777.77001953125,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 160777.77001953125,
+      "endMs": 160786.81005859375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 160786.81005859375,
+      "endMs": 160786.94702148438,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 160786.94702148438,
+      "endMs": 160786.955078125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 160786.955078125,
+      "endMs": 162256.11303710938,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 162256.11303710938,
+      "endMs": 162256.1259765625,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 162256.1259765625,
+      "endMs": 162330.06103515625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 162330.06103515625,
+      "endMs": 162330.71215820312,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 162330.71215820312,
+      "endMs": 164631.96508789062,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 164631.96508789062,
+      "endMs": 164632.85522460938,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 164632.85522460938,
+      "endMs": 164748.73510742188,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 164748.73510742188,
+      "endMs": 164749.03491210938,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 164749.03491210938,
+      "endMs": 164832.166015625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 164832.166015625,
+      "endMs": 164832.55712890625,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 164832.55712890625,
+      "endMs": 165259.59106445312,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 165259.59106445312,
+      "endMs": 165267.86206054688,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 165267.86206054688,
+      "endMs": 165296.8291015625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 165296.8291015625,
+      "endMs": 165499.4501953125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 165499.4501953125,
+      "endMs": 171805.11108398438,
+      "category": "worker_transaction_proving"
+    },
+    {
+      "startMs": 171805.11108398438,
+      "endMs": 171979.39892578125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 171979.39892578125,
+      "endMs": 172336.23901367188,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 172336.23901367188,
+      "endMs": 172411.88623046875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 172411.88623046875,
+      "endMs": 217211.04711914062,
+      "category": "worker_confirmation_wait"
+    },
+    {
+      "startMs": 217211.04711914062,
+      "endMs": 217487.7568359375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 217487.7568359375,
+      "endMs": 217979.6689453125,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 217979.6689453125,
+      "endMs": 217986.10205078125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 217986.10205078125,
+      "endMs": 218569.53393554688,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 218569.53393554688,
+      "endMs": 218569.708984375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 218569.708984375,
+      "endMs": 221140.93603515625,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 221140.93603515625,
+      "endMs": 223279.248046875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 223279.248046875,
+      "endMs": 226473.67993164062,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 226473.67993164062,
+      "endMs": 226493.96899414062,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 226493.96899414062,
+      "endMs": 226505.57690429688,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 226505.57690429688,
+      "endMs": 226505.84008789062,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 226505.84008789062,
+      "endMs": 227707.78002929688,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 227707.78002929688,
+      "endMs": 227708.45703125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 227708.45703125,
+      "endMs": 227763.78002929688,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 227763.78002929688,
+      "endMs": 227764.0029296875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 227764.0029296875,
+      "endMs": 228157.44897460938,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 228157.44897460938,
+      "endMs": 228171.84692382812,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 228171.84692382812,
+      "endMs": 228501.02490234375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 228501.02490234375,
+      "endMs": 228501.36010742188,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 228501.36010742188,
+      "endMs": 231188.61010742188,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 231188.61010742188,
+      "endMs": 231298.34790039062,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 231298.34790039062,
+      "endMs": 232909.97998046875,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 232909.97998046875,
+      "endMs": 232928.19018554688,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 232928.19018554688,
+      "endMs": 232929.2880859375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 232929.2880859375,
+      "endMs": 232929.35302734375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 232929.35302734375,
+      "endMs": 232929.80395507812,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 232929.80395507812,
+      "endMs": 232929.828125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 232929.828125,
+      "endMs": 232930.02709960938,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 232930.02709960938,
+      "endMs": 232930.19116210938,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 232930.19116210938,
+      "endMs": 234550.85009765625,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 234550.85009765625,
+      "endMs": 234551.89819335938,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 234551.89819335938,
+      "endMs": 234598.51708984375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 234598.51708984375,
+      "endMs": 234598.67797851562,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 234598.67797851562,
+      "endMs": 234975.39794921875,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 234975.39794921875,
+      "endMs": 234992.85913085938,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 234992.85913085938,
+      "endMs": 235299.77807617188,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 235299.77807617188,
+      "endMs": 235300.01220703125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 235300.01220703125,
+      "endMs": 236497.31909179688,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 236497.31909179688,
+      "endMs": 238636.20092773438,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 238636.20092773438,
+      "endMs": 261335.0400390625,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 261335.0400390625,
+      "endMs": 261363.59008789062,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 261363.59008789062,
+      "endMs": 261539.2900390625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 261539.2900390625,
+      "endMs": 261539.42114257812,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 261539.42114257812,
+      "endMs": 262859.6630859375,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 262859.6630859375,
+      "endMs": 262860.89501953125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 262860.89501953125,
+      "endMs": 262911.33203125,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 262911.33203125,
+      "endMs": 262911.5439453125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 262911.5439453125,
+      "endMs": 263570.0300292969,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 263570.0300292969,
+      "endMs": 263585.291015625,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 263585.291015625,
+      "endMs": 264002.4260253906,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 264002.4260253906,
+      "endMs": 264002.7849121094,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 264002.7849121094,
+      "endMs": 266607.7648925781,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 266607.7648925781,
+      "endMs": 266737.3708496094,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 266737.3708496094,
+      "endMs": 268255.54296875,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 268255.54296875,
+      "endMs": 268273.56005859375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 268273.56005859375,
+      "endMs": 279618.75,
+      "category": "validation_tools_and_acceptance"
+    },
+    {
+      "startMs": 279618.75,
+      "endMs": 279618.9208984375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 279618.9208984375,
+      "endMs": 282637.1599121094,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 282637.1599121094,
+      "endMs": 282638.5241699219,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 282638.5241699219,
+      "endMs": 282703.8181152344,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 282703.8181152344,
+      "endMs": 282703.8859863281,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 282703.8859863281,
+      "endMs": 283109.25390625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 283109.25390625,
+      "endMs": 283126.7548828125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 283126.7548828125,
+      "endMs": 283558.60791015625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 283558.60791015625,
+      "endMs": 283558.8981933594,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 283558.8981933594,
+      "endMs": 286675.6530761719,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 286675.6530761719,
+      "endMs": 286779.9509277344,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 286779.9509277344,
+      "endMs": 307300.4719238281,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 307300.4719238281,
+      "endMs": 307319.96484375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 307319.96484375,
+      "endMs": 307437.4099121094,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 307437.4099121094,
+      "endMs": 307437.52392578125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 307437.52392578125,
+      "endMs": 310558.4609375,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 310558.4609375,
+      "endMs": 310560.0578613281,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 310560.0578613281,
+      "endMs": 310603.1579589844,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 310603.1579589844,
+      "endMs": 310603.2028808594,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 310603.2028808594,
+      "endMs": 310993.27099609375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 310993.27099609375,
+      "endMs": 311010.10595703125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 311010.10595703125,
+      "endMs": 311325.60888671875,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 311325.60888671875,
+      "endMs": 311326.0090332031,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 311326.0090332031,
+      "endMs": 312479.6770019531,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 312479.6770019531,
+      "endMs": 314622.201171875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 314622.201171875,
+      "endMs": 316721.2041015625,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 316721.2041015625,
+      "endMs": 316782.7009277344,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 316782.7009277344,
+      "endMs": 333020.7800292969,
+      "category": "validation_tools_and_acceptance"
+    },
+    {
+      "startMs": 333020.7800292969,
+      "endMs": 333020.921875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 333020.921875,
+      "endMs": 334977.5109863281,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 334977.5109863281,
+      "endMs": 334979.4580078125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 334979.4580078125,
+      "endMs": 335043.31396484375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 335043.31396484375,
+      "endMs": 335043.4011230469,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 335043.4011230469,
+      "endMs": 335468.3291015625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 335468.3291015625,
+      "endMs": 335486.7919921875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 335486.7919921875,
+      "endMs": 335918.2119140625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 335918.2119140625,
+      "endMs": 335918.56201171875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 335918.56201171875,
+      "endMs": 338736.4519042969,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 338736.4519042969,
+      "endMs": 338839.0910644531,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 338839.0910644531,
+      "endMs": 360886.8239746094,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 360886.8239746094,
+      "endMs": 360909.4938964844,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 360909.4938964844,
+      "endMs": 361048.73388671875,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 361048.73388671875,
+      "endMs": 361048.9921875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 361048.9921875,
+      "endMs": 363478.64111328125,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 363478.64111328125,
+      "endMs": 363480.7590332031,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 363480.7590332031,
+      "endMs": 363525.9909667969,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 363525.9909667969,
+      "endMs": 363526.23291015625,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 363526.23291015625,
+      "endMs": 363900.416015625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 363900.416015625,
+      "endMs": 363920.6328125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 363920.6328125,
+      "endMs": 364237.52587890625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 364237.52587890625,
+      "endMs": 364237.8779296875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 364237.8779296875,
+      "endMs": 366779.89990234375,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 366779.89990234375,
+      "endMs": 366882.8288574219,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 366882.8288574219,
+      "endMs": 370232.5568847656,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 370232.5568847656,
+      "endMs": 370250.6628417969,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 370250.6628417969,
+      "endMs": 388493.5439453125,
+      "category": "validation_tools_and_acceptance"
+    },
+    {
+      "startMs": 388493.5439453125,
+      "endMs": 388493.6931152344,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 388493.6931152344,
+      "endMs": 390850.1140136719,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 390850.1140136719,
+      "endMs": 390852.72900390625,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 390852.72900390625,
+      "endMs": 390950.4069824219,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 390950.4069824219,
+      "endMs": 390950.5080566406,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 390950.5080566406,
+      "endMs": 391348.3200683594,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 391348.3200683594,
+      "endMs": 391366.64013671875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 391366.64013671875,
+      "endMs": 391680.7561035156,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 391680.7561035156,
+      "endMs": 391681.1340332031,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 391681.1340332031,
+      "endMs": 394751.4929199219,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 394751.4929199219,
+      "endMs": 394861.2180175781,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 394861.2180175781,
+      "endMs": 465961.6279296875,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 465961.6279296875,
+      "endMs": 465982.89794921875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 465982.89794921875,
+      "endMs": 466100.2619628906,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 466100.2619628906,
+      "endMs": 466100.5939941406,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 466100.5939941406,
+      "endMs": 467344.998046875,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 467344.998046875,
+      "endMs": 467348.5,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 467348.5,
+      "endMs": 467403.212890625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 467403.212890625,
+      "endMs": 467403.4328613281,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 467403.4328613281,
+      "endMs": 467771.35791015625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 467771.35791015625,
+      "endMs": 467801.1298828125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 467801.1298828125,
+      "endMs": 468124.625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 468124.625,
+      "endMs": 468124.9768066406,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 468124.9768066406,
+      "endMs": 470829.5759277344,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 470829.5759277344,
+      "endMs": 470939.9621582031,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 470939.9621582031,
+      "endMs": 473563.43505859375,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 473563.43505859375,
+      "endMs": 473582.2878417969,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 473582.2878417969,
+      "endMs": 473624.8889160156,
+      "category": "validation_tools_and_acceptance"
+    },
+    {
+      "startMs": 473624.8889160156,
+      "endMs": 473625.1760253906,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 473625.1760253906,
+      "endMs": 474851.8659667969,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 474851.8659667969,
+      "endMs": 474855.9538574219,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 474855.9538574219,
+      "endMs": 475331.669921875,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 475331.669921875,
+      "endMs": 475353.0529785156,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 475353.0529785156,
+      "endMs": 475997.5520019531,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 475997.5520019531,
+      "endMs": 475997.9489746094,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 475997.9489746094,
+      "endMs": 479110.5939941406,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 479110.5939941406,
+      "endMs": 479220.52685546875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 479220.52685546875,
+      "endMs": 508363.126953125,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 508363.126953125,
+      "endMs": 508385.4208984375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 508385.4208984375,
+      "endMs": 508509.9499511719,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 508509.9499511719,
+      "endMs": 508510.23193359375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 508510.23193359375,
+      "endMs": 511222.73193359375,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 511222.73193359375,
+      "endMs": 511227.1279296875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 511227.1279296875,
+      "endMs": 511689.22509765625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 511689.22509765625,
+      "endMs": 511719.4460449219,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 511719.4460449219,
+      "endMs": 512033.18505859375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 512033.18505859375,
+      "endMs": 512033.7419433594,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 512033.7419433594,
+      "endMs": 514715.52490234375,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 514715.52490234375,
+      "endMs": 514828.64111328125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 514828.64111328125,
+      "endMs": 517207.8420410156,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 517207.8420410156,
+      "endMs": 517232.93701171875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 517232.93701171875,
+      "endMs": 530204.2141113281,
+      "category": "validation_tools_and_acceptance"
+    },
+    {
+      "startMs": 530204.2141113281,
+      "endMs": 530204.3391113281,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 530204.3391113281,
+      "endMs": 531424.9440917969,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 531424.9440917969,
+      "endMs": 531429.9560546875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 531429.9560546875,
+      "endMs": 531498.5939941406,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 531498.5939941406,
+      "endMs": 531498.6730957031,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 531498.6730957031,
+      "endMs": 531914.3630371094,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 531914.3630371094,
+      "endMs": 531938.1970214844,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 531938.1970214844,
+      "endMs": 532388.955078125,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 532388.955078125,
+      "endMs": 532389.5358886719,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 532389.5358886719,
+      "endMs": 534979.3879394531,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 534979.3879394531,
+      "endMs": 535083.9860839844,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 535083.9860839844,
+      "endMs": 555050.8181152344,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 555050.8181152344,
+      "endMs": 555072.1040039062,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 555072.1040039062,
+      "endMs": 555209.9030761719,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 555209.9030761719,
+      "endMs": 555210.0200195312,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 555210.0200195312,
+      "endMs": 556485.9599609375,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 556485.9599609375,
+      "endMs": 556491.5600585938,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 556491.5600585938,
+      "endMs": 556548.1340332031,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 556548.1340332031,
+      "endMs": 556548.1940917969,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 556548.1940917969,
+      "endMs": 556937.6979980469,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 556937.6979980469,
+      "endMs": 556960.5859375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 556960.5859375,
+      "endMs": 557414.8449707031,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 557414.8449707031,
+      "endMs": 557415.6721191406,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 557415.6721191406,
+      "endMs": 560174.166015625,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 560174.166015625,
+      "endMs": 562436.7280273438,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 562436.7280273438,
+      "endMs": 566295.375,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 566295.375,
+      "endMs": 566317.6860351562,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 566317.6860351562,
+      "endMs": 584583.2790527344,
+      "category": "validation_tools_and_acceptance"
+    },
+    {
+      "startMs": 584583.2790527344,
+      "endMs": 584583.501953125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 584583.501953125,
+      "endMs": 586872.708984375,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 586872.708984375,
+      "endMs": 586878.4560546875,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 586878.4560546875,
+      "endMs": 586931.8349609375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 586931.8349609375,
+      "endMs": 586931.9318847656,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 586931.9318847656,
+      "endMs": 587307.083984375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 587307.083984375,
+      "endMs": 587336.5930175781,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 587336.5930175781,
+      "endMs": 587652.333984375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 587652.333984375,
+      "endMs": 587652.9599609375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 587652.9599609375,
+      "endMs": 590815.6469726562,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 590815.6469726562,
+      "endMs": 590920.7980957031,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 590920.7980957031,
+      "endMs": 673099.2080078125,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 673099.2080078125,
+      "endMs": 673121.4489746094,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 673121.4489746094,
+      "endMs": 673241.7739257812,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 673241.7739257812,
+      "endMs": 673241.8291015625,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 673241.8291015625,
+      "endMs": 674960.2700195312,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 674960.2700195312,
+      "endMs": 674977.0090332031,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 674977.0090332031,
+      "endMs": 675481.2429199219,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 675481.2429199219,
+      "endMs": 675506.8740234375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 675506.8740234375,
+      "endMs": 675855.9389648438,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 675855.9389648438,
+      "endMs": 675856.71484375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 675856.71484375,
+      "endMs": 678908.8879394531,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 678908.8879394531,
+      "endMs": 679015.7058105469,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 679015.7058105469,
+      "endMs": 681136.1818847656,
+      "category": "provider_http"
+    },
+    {
+      "startMs": 681136.1818847656,
+      "endMs": 681159.2021484375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 681159.2021484375,
+      "endMs": 699228.6201171875,
+      "category": "validation_tools_and_acceptance"
+    },
+    {
+      "startMs": 699228.6201171875,
+      "endMs": 699229.0939941406,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 699229.0939941406,
+      "endMs": 717161.0480957031,
+      "category": "validation_tools_and_acceptance"
+    },
+    {
+      "startMs": 717161.0480957031,
+      "endMs": 717161.1520996094,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 717161.1520996094,
+      "endMs": 717200.916015625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 717200.916015625,
+      "endMs": 717208.1630859375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 717208.1630859375,
+      "endMs": 719079.205078125,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 719079.205078125,
+      "endMs": 719118.7958984375,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 719118.7958984375,
+      "endMs": 719234.1398925781,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 719234.1398925781,
+      "endMs": 719235.6450195312,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 719235.6450195312,
+      "endMs": 719262.3759765625,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 719262.3759765625,
+      "endMs": 719449.0209960938,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 719449.0209960938,
+      "endMs": 725303.5480957031,
+      "category": "worker_transaction_proving"
+    },
+    {
+      "startMs": 725303.5480957031,
+      "endMs": 725469.798828125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 725469.798828125,
+      "endMs": 725796.5439453125,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 725796.5439453125,
+      "endMs": 725867.0590820312,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 725867.0590820312,
+      "endMs": 793495.2580566406,
+      "category": "worker_confirmation_wait"
+    },
+    {
+      "startMs": 793495.2580566406,
+      "endMs": 793784.5642089844,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 793784.5642089844,
+      "endMs": 794294.74609375,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 794294.74609375,
+      "endMs": 794294.7861328125,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 794294.7861328125,
+      "endMs": 794578.7670898438,
+      "category": "other_instrumented_rpc_setup_tools"
+    },
+    {
+      "startMs": 794578.7670898438,
+      "endMs": 794618.12890625,
+      "category": "other_worker_work_and_gaps"
+    },
+    {
+      "startMs": 794618.12890625,
+      "endMs": 797869.6169433594,
+      "category": "board_reads"
+    },
+    {
+      "startMs": 797869.6169433594,
+      "endMs": 797877.9909667969,
+      "category": "other_worker_work_and_gaps"
+    }
+  ],
+  "inclusiveStagesForAuditOnly": {
+    "escrow.open": {
+      "count": 1,
+      "inclusiveMonotonicMs": 226.484
+    },
+    "board.readRequest": {
+      "count": 36,
+      "inclusiveMonotonicMs": 82632.29900000001
+    },
+    "escrow.request": {
+      "count": 4,
+      "inclusiveMonotonicMs": 643.653
+    },
+    "agent.history": {
+      "count": 1,
+      "inclusiveMonotonicMs": 0.137
+    },
+    "agent.open": {
+      "count": 1,
+      "inclusiveMonotonicMs": 1469.158
+    },
+    "tool.list_files": {
+      "count": 2,
+      "inclusiveMonotonicMs": 84.453
+    },
+    "tool.read_file": {
+      "count": 6,
+      "inclusiveMonotonicMs": 2.9979999999999998
+    },
+    "agent.context": {
+      "count": 1,
+      "inclusiveMonotonicMs": 73.935
+    },
+    "provider.catalogue": {
+      "count": 16,
+      "inclusiveMonotonicMs": 953.197
+    },
+    "provider.balance": {
+      "count": 16,
+      "inclusiveMonotonicMs": 6668.090999999999
+    },
+    "provider.credits": {
+      "count": 16,
+      "inclusiveMonotonicMs": 6669.4259999999995
+    },
+    "escrow.inspectOperation": {
+      "count": 4,
+      "inclusiveMonotonicMs": 1057.792
+    },
+    "escrow.prove": {
+      "count": 2,
+      "inclusiveMonotonicMs": 12160.188
+    },
+    "escrow.send": {
+      "count": 2,
+      "inclusiveMonotonicMs": 683.585
+    },
+    "escrow.wait": {
+      "count": 2,
+      "inclusiveMonotonicMs": 112427.35999999999
+    },
+    "escrow.reserve": {
+      "count": 1,
+      "inclusiveMonotonicMs": 52182.207
+    },
+    "escrow.assertUsable": {
+      "count": 16,
+      "inclusiveMonotonicMs": 6298.004999999999
+    },
+    "provider.completion": {
+      "count": 16,
+      "inclusiveMonotonicMs": 290410.10900000005
+    },
+    "agent.model": {
+      "count": 16,
+      "inclusiveMonotonicMs": 440774.192
+    },
+    "tool.write_file": {
+      "count": 7,
+      "inclusiveMonotonicMs": 932.402
+    },
+    "tool.check_workspace": {
+      "count": 7,
+      "inclusiveMonotonicMs": 95175.03900000002
+    },
+    "agent.accept": {
+      "count": 1,
+      "inclusiveMonotonicMs": 17931.954
+    },
+    "agent.close": {
+      "count": 1,
+      "inclusiveMonotonicMs": 39.764
+    },
+    "escrow.finalize_reply": {
+      "count": 1,
+      "inclusiveMonotonicMs": 74510.567
+    },
+    "request.total": {
+      "count": 1,
+      "inclusiveMonotonicMs": 646259.949
+    }
+  },
+  "crossCategorySamePriorityOverlapMs": 0,
+  "replyVisibleUtc": "2026-10-23T13:02:38.134Z",
+  "replyVisibleBeforeWorkerTerminalMs": 3547.990966796875,
+  "limitations": [
+    "Cross-machine wall clock alignment assumes recorded UTC clocks agree; within-stage duration uses monotonic clocks.",
+    "escrow.prove includes the complete native wallet prove call; it is not isolated BB arithmetic.",
+    "Other worker residual includes uninstrumented RPC, orchestration and logging gaps and is not attributed solely to network.",
+    "Checkpoint-wait stages include their observation and verification overhead, not just consensus time."
+  ]
+}

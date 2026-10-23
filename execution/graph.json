@@ -9842,28 +9842,29 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "id": "G21-bok-browser-contract-20261023",
-    "status": "complete",
+    "id": "G21-bok-latency-20261023",
+    "status": "done",
     "owner": "root",
     "branch": "codex/rolling-chat-account-ux",
-    "at": "2026-10-23T11:46:33.301373+00:00",
-    "request": "Eliminate generated-app assumptions about unsupported hosting permissions through shared policy and browser validation before publication.",
+    "at": "2026-10-23T13:40:49.724912+00:00",
+    "request": "Profile and dramatically reduce actual Post-to-settled-and-rendered Bok response latency.",
     "scope": [
-      "Bok authoring guidance, isolated browser validation and static publication",
-      "Current hosting policy and declared interaction coverage",
-      "Existing core and Bok hosts and public routes",
-      "Persistent services within existing monthly budget"
+      "Browser post preparation, request authorization and submission",
+      "Bok detection, model/tool work, proving, accounting and reply publication",
+      "Browser response rendering and terminal settlement",
+      "Existing services, funded disposable test identity and monthly hosting budget"
     ],
-    "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
-    "verification": "Shared hosting contract and mandatory artifact/plan/policy-bound browser gate independently reviewed and published. Nineteen actual browser checks passed. Final server executor accepted working interactions/reload and rejected startup/click-only storage failures after passing Node/build. All639 source pins verified, public opaque-origin headers match, all9 application services running, existing app served.",
+    "source": "ab72bc43290d72c6209828a3bbfacc9cadb7f071",
+    "verification": "Real-proof repeat:443.421s terminal,440.354s automatic DOM reply;3 Aztec transactions,0 Ethereum; canonical charge45416/refund204584/reserved0. Existing HTML unchanged; new browser tests published, not a controlled fresh-generation benchmark. Validator race repaired;23 real-browser checks,140 unchanged-candidate checks,193 integrated checks and57 balance checks passed. All9 services healthy; final UI-only publication preserves PIDs/configs/assets.",
     "budget": "USD1500/month ongoing hosting; no additional hosts created",
     "paths": [
       "execution/evidence/G21/stable6/",
       "execution/infrastructure-ledger.json",
-      "START_HERE.md"
+      "START_HERE.md",
+      "docs/BOK_LATENCY.md"
     ],
     "currentHandover": "START_HERE.md",
-    "nextAction": "No remaining work for this request. Continue from the next explicit user feedback; broader historical campaigns remain stopped.",
-    "bokSource": "9a10e11ecd6a6ef0c5110e128b4d627a763979b6"
+    "nextAction": "Owner may test the published application. No pending request, active delegation or scheduled work. See docs/BOK_LATENCY.md for measured remaining chain/model/browser bottlenecks.",
+    "bokSource": "e600751259d9cdbf79651a8ce8d615caac289e5c"
   }
 }

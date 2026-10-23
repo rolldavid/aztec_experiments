@@ -1,0 +1,55 @@
+{
+  "reviewedCommits": {
+    "readOptimization": "4b54213f",
+    "userAtomic": "758b1547",
+    "feedNotifications": "d5bb3515",
+    "browserFlow": "7e363e04",
+    "browserRevisionFix": "c2021153",
+    "timingContext": "880da7d7",
+    "mainTiming": "72efb6bd",
+    "timingLimit": "46ff683d",
+    "operatorAtomic": "f603acde"
+  },
+  "logicalRpcGuardCount": {
+    "beforePerProviderCall": 380,
+    "afterPerProviderCall": 29,
+    "method": "counted adapter fixture; not wall-clock measurement"
+  },
+  "transactionCount": {
+    "before": 6,
+    "candidate": 3,
+    "proof": "Five native contract/SDK scenarios with proofs disabled, followed by successful real-proof testnet user batch, reservation and final reply/settlement batch; second request canonical block1286."
+  },
+  "nativeTestsPassed": 5,
+  "focusedOperatorChecksPassed": 148,
+  "browserFocusedChecksPassed": 72,
+  "timingProviderFocusedChecksPassed": 120,
+  "applicationChecks": {
+    "passingInitial": 296,
+    "totalInitial": 298,
+    "twoFailuresReproducedOnBaseline": true,
+    "fixedFixtureBoundaryAndRerun": 4
+  },
+  "publicServerChecks": {
+    "initialPass": 47,
+    "initialTotal": 48,
+    "staleStepCountUpdatedAfterExistingOptimization": true,
+    "focusedRerunPass": 9
+  },
+  "integratedFocusedChecks": 159,
+  "secondIteration": {
+    "boardReadCommit": "ba089896",
+    "sourceGuidanceCommit": "207b7102",
+    "browserCoverageCommit": "e6007512",
+    "focusedBoardAndHostedPass": 129,
+    "actualBrowserPass": 23,
+    "integratedPass": 193,
+    "integratedOptInSkipped": 16,
+    "actualFailedAppCorrectedChecks": 140,
+    "oldCodeReproducedPhantomSelector": true,
+    "balanceRefreshCommit": "ab72bc43",
+    "balanceFocusedPass": 57,
+    "review": "fresh_account_review approved board snapshots, atomic DOM capture, generation guidance and balance refresh; root reviewed exact static-only publisher"
+  },
+  "reportReview": "fresh_account_review verified nonoverlapping443.421s total, source/accounting/revision/service claims, links and prominent existing-HTML/noncontrolled-workload caveat. Two wording corrections applied."
+}

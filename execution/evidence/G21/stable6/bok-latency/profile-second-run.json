@@ -1,0 +1,236 @@
+{
+  "requestId": "0x1963faf148cb8bb50f9386a5b52306325b7fd36051a31c31641582cdac0eb2a7",
+  "outcome": "published-existing-HTML-with-new-browser-test-plan",
+  "browserClickedAt": "2026-10-23T13:21:42.979Z",
+  "automaticReplyRenderedAt": "2026-10-23T13:29:03.335Z",
+  "clickToAutomaticReplyMs": 440354.27,
+  "terminalAt": "2026-10-23T13:29:06.399967+00:00",
+  "clickToTerminalMs": 443420.9670410156,
+  "backendMs": 288529.379,
+  "browser": {
+    "prepareMs": 24307,
+    "estimateMs": 15736,
+    "proveMs": 48728,
+    "confirmMs": 53863,
+    "postCompleteMs": 151672
+  },
+  "provider": {
+    "model": "kimi-k2-5",
+    "callCount": 10,
+    "promptTokens": 91089,
+    "completionTokens": 6007,
+    "cachedTokens": 78304,
+    "primaryReasoning": "provider default; not explicit",
+    "maxCalls": 16,
+    "maxTokens": 4096
+  },
+  "stageTotalsNestedDoNotSum": {
+    "escrow.open": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 212.085
+    },
+    "board.readRequest": {
+      "success": 14,
+      "error": 0,
+      "durationMs": 26346.149
+    },
+    "escrow.request": {
+      "success": 4,
+      "error": 0,
+      "durationMs": 813.1949999999999
+    },
+    "agent.history": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 0.126
+    },
+    "agent.open": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 1636.261
+    },
+    "tool.list_files": {
+      "success": 2,
+      "error": 0,
+      "durationMs": 81.023
+    },
+    "tool.read_file": {
+      "success": 3,
+      "error": 1,
+      "durationMs": 1.6199999999999999
+    },
+    "agent.context": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 70.042
+    },
+    "provider.catalogue": {
+      "success": 10,
+      "error": 0,
+      "durationMs": 635.521
+    },
+    "provider.balance": {
+      "success": 10,
+      "error": 0,
+      "durationMs": 3967.1340000000005
+    },
+    "provider.credits": {
+      "success": 10,
+      "error": 0,
+      "durationMs": 3968.1699999999996
+    },
+    "escrow.inspectOperation": {
+      "success": 4,
+      "error": 0,
+      "durationMs": 1131.134
+    },
+    "escrow.prove": {
+      "success": 2,
+      "error": 0,
+      "durationMs": 12296.154
+    },
+    "escrow.send": {
+      "success": 2,
+      "error": 0,
+      "durationMs": 658.343
+    },
+    "escrow.wait": {
+      "success": 2,
+      "error": 0,
+      "durationMs": 101040.02600000001
+    },
+    "escrow.reserve": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 58584.854
+    },
+    "escrow.assertUsable": {
+      "success": 10,
+      "error": 0,
+      "durationMs": 4467.667
+    },
+    "provider.completion": {
+      "success": 10,
+      "error": 0,
+      "durationMs": 96282.38900000001
+    },
+    "agent.model": {
+      "success": 10,
+      "error": 0,
+      "durationMs": 196505.188
+    },
+    "tool.check_workspace": {
+      "success": 4,
+      "error": 0,
+      "durationMs": 13090.975999999999
+    },
+    "tool.write_file": {
+      "success": 3,
+      "error": 0,
+      "durationMs": 458.881
+    },
+    "agent.accept": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 6655.292
+    },
+    "agent.close": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 5.976
+    },
+    "escrow.finalize_reply": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 56971.857
+    },
+    "request.total": {
+      "success": 1,
+      "error": 0,
+      "durationMs": 288529.379
+    }
+  },
+  "canonicalAccounting": {
+    "requestId": "0x1963faf148cb8bb50f9386a5b52306325b7fd36051a31c31641582cdac0eb2a7",
+    "anchor": {
+      "number": 1286,
+      "hash": "0x177ac92bdf5684d41d3d74736bcb212d894976f8ac451e294f8822c2223c99e3"
+    },
+    "state": "4",
+    "sequence": "1",
+    "budget": "250000",
+    "available": "0",
+    "reserved": "0",
+    "charged": "45416",
+    "refunded": "204584",
+    "primaryDone": "1",
+    "secondaryDone": "1",
+    "receipt": "0x1b4bab4f0dedb1b4cb092d198d31929a7cb8e41da8952e9f73fd0ee66b85732e"
+  },
+  "transactions": [
+    {
+      "method": "reserve",
+      "phase": "submission-unknown",
+      "txHash": "0x1851bc70763381d2480b3d892c5a1a375052cf1364b0f6de17ef2ddb92d50320",
+      "result": {
+        "status": "succeeded",
+        "canonical": true,
+        "txHash": "0x1851bc70763381d2480b3d892c5a1a375052cf1364b0f6de17ef2ddb92d50320",
+        "transactionFee": "1371321469411400000",
+        "blockNumber": 1283,
+        "blockHash": "0x0b5d2910ee2ee861d17ed427c4d00310db3178c6a4c67a5d1abe6d8af6b320d9"
+      }
+    },
+    {
+      "method": "finalize_reply",
+      "phase": "submission-unknown",
+      "txHash": "0x1a4135cea8c6b1781164b3e6dac9d4a46ca102132f02489fe014b53bfd9095ea",
+      "result": {
+        "status": "succeeded",
+        "canonical": true,
+        "txHash": "0x1a4135cea8c6b1781164b3e6dac9d4a46ca102132f02489fe014b53bfd9095ea",
+        "transactionFee": "4177053168328400000",
+        "blockNumber": 1286,
+        "blockHash": "0x177ac92bdf5684d41d3d74736bcb212d894976f8ac451e294f8822c2223c99e3"
+      }
+    }
+  ],
+  "publicReply": {
+    "id": "9907034343309005096296663133838676714136789402256944178222320900763587777637",
+    "text": "Application published.\nApp: https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/\nSource: https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/source.json",
+    "bot": {
+      "pluginId": "6451051",
+      "requestId": "11484471015594783039558563524694978162900079738349317777953887963974344815271",
+      "target": "8677437344271364283947311366191512321547282630883309573812015526008840612922",
+      "parent": "3272532592646077720079016186271537723733247828609291379259960485765763769507"
+    },
+    "position": {
+      "blockNumber": "1286",
+      "blockHash": "0x177ac92bdf5684d41d3d74736bcb212d894976f8ac451e294f8822c2223c99e3",
+      "txHash": "0x1a4135cea8c6b1781164b3e6dac9d4a46ca102132f02489fe014b53bfd9095ea",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "1"
+    }
+  },
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null
+  },
+  "publication": {
+    "revision": "028da8d40cdd024b67e72956a411aa38a8886c83",
+    "htmlUnchanged": true,
+    "htmlSha256": "31dd18b10de8ac81f3ae24f0fd1b58d9aa702c16f40908394fc2ddc1caa19eaa",
+    "change": "new browser-tests.json; no new application implementation",
+    "accepted": true,
+    "qualification": "actual isolated browser gate passed; root owns visible browser acceptance"
+  },
+  "evidence": [
+    "/tmp/bok-second-live-04.json",
+    "/tmp/bok-second-extras-02.json",
+    "/tmp/bok-second-canonical-result.json",
+    "/tmp/bok-second-final-public-reply.json",
+    "/tmp/bok-second-public-source.json"
+  ]
+}

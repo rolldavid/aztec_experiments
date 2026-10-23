@@ -1,0 +1,220 @@
+{
+  "observedAt": "2026-10-23T13:36:51.803951+00:00",
+  "services": {
+    "bok": {
+      "observedAt": "2026-10-23T13:36:02.312865+00:00",
+      "services": [
+        {
+          "unit": "rolling-bok-testnet.service",
+          "MainPID": "233946",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        },
+        {
+          "unit": "rolling-bok-artifact-proxy.service",
+          "MainPID": "233948",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        }
+      ],
+      "allRunning": true,
+      "health": {
+        "status": "ready",
+        "active": 0,
+        "lastFailure": null
+      },
+      "source": "/opt/rolling-bok/releases/e600751259d9cdbf79651a8ce8d615caac289e5c",
+      "sourcePinsVerified": true,
+      "sourcePinSha256": "e148f03bba7b54b5133744aaec104b7d32a673de24cc393484ace16396c8b7d0"
+    },
+    "core": {
+      "observedAt": "2026-10-23T13:36:04.204959+00:00",
+      "services": [
+        {
+          "unit": "rolling-node.service",
+          "MainPID": "561964",
+          "NRestarts": "69",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        },
+        {
+          "unit": "rolling-query.service",
+          "MainPID": "565186",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        },
+        {
+          "unit": "board-prover.service",
+          "MainPID": "565979",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        },
+        {
+          "unit": "board-prover-proxy.service",
+          "MainPID": "566049",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        },
+        {
+          "unit": "rolling-application.service",
+          "MainPID": "595647",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        },
+        {
+          "unit": "rolling-application-proxy.service",
+          "MainPID": "595753",
+          "NRestarts": "0",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        },
+        {
+          "unit": "rolling-moderator.service",
+          "MainPID": "567551",
+          "NRestarts": "31",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running"
+        }
+      ],
+      "allRunning": true
+    }
+  },
+  "public": {
+    "observedAt": "2026-10-23T13:36:16.333801+00:00",
+    "urls": {
+      "source": {
+        "url": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/source.json",
+        "status": 200,
+        "sha256": "07a900412871020380a7424b1b71bfad4aa7c05a37783339721fef8e1e39ac89",
+        "revision": "028da8d40cdd024b67e72956a411aa38a8886c83",
+        "manifest": [
+          {
+            "path": "browser-tests.json",
+            "sha256": "9596f940ed2b4d27268ba725a815ba758409f0873d9096e87927a84538aa4e61",
+            "bytes": 5056
+          },
+          {
+            "path": "index.html",
+            "sha256": "31dd18b10de8ac81f3ae24f0fd1b58d9aa702c16f40908394fc2ddc1caa19eaa",
+            "bytes": 7180
+          },
+          {
+            "path": "package.json",
+            "sha256": "93ab3361541f7470bd4cb6ca359b4d4cf8ddc7d26f4fb23bf8341e024cef3549",
+            "bytes": 160
+          },
+          {
+            "path": "test.js",
+            "sha256": "aaef908a2b5386ee65602a50ae0ef379701ca4c803e1ca278f639d1d01ea7b56",
+            "bytes": 4940
+          }
+        ]
+      },
+      "app": {
+        "url": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/028da8d40cdd024b67e72956a411aa38a8886c83/files/index.html",
+        "status": 200,
+        "sha256": "31dd18b10de8ac81f3ae24f0fd1b58d9aa702c16f40908394fc2ddc1caa19eaa"
+      },
+      "latest": {
+        "url": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/",
+        "status": 200,
+        "sha256": "31dd18b10de8ac81f3ae24f0fd1b58d9aa702c16f40908394fc2ddc1caa19eaa"
+      },
+      "prover": {
+        "url": "https://d30njln0kead8n.cloudfront.net/prover/healthz",
+        "status": 200,
+        "sha256": "74d3bfc616f168c33e4d8a5f9df0c409652e3e166d7bda965e417bedab7315a7",
+        "health": {
+          "ready": true,
+          "proofs": "real",
+          "queue": {
+            "jobs": 0,
+            "bytes": 0,
+            "running": false,
+            "submitted": 14,
+            "completed": 14,
+            "failed": 0
+          },
+          "query": {
+            "enabled": true,
+            "ready": true
+          }
+        }
+      },
+      "feed": {
+        "url": "https://d30njln0kead8n.cloudfront.net/api/home",
+        "status": 200,
+        "sha256": "9e228d292b43ffce175722c0d75350f0ca688b826045f15b4119258eb5e5218f",
+        "complete": true,
+        "checkpoint": {
+          "number": 1291,
+          "hash": "0x1237c582dff8e72bf6b52192d64d816c6e220b6eb954edcd526f8cc3972b632a"
+        },
+        "replyPresent": true
+      }
+    }
+  },
+  "secondRequestAccounting": {
+    "requestId": "0x1963faf148cb8bb50f9386a5b52306325b7fd36051a31c31641582cdac0eb2a7",
+    "anchor": {
+      "number": 1286,
+      "hash": "0x177ac92bdf5684d41d3d74736bcb212d894976f8ac451e294f8822c2223c99e3"
+    },
+    "state": "4",
+    "sequence": "1",
+    "budget": "250000",
+    "available": "0",
+    "reserved": "0",
+    "charged": "45416",
+    "refunded": "204584",
+    "primaryDone": "1",
+    "secondaryDone": "1",
+    "receipt": "0x1b4bab4f0dedb1b4cb092d198d31929a7cb8e41da8952e9f73fd0ee66b85732e"
+  },
+  "secondRequestPublicReply": {
+    "id": "9907034343309005096296663133838676714136789402256944178222320900763587777637",
+    "text": "Application published.\nApp: https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/\nSource: https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/source.json",
+    "bot": {
+      "pluginId": "6451051",
+      "requestId": "11484471015594783039558563524694978162900079738349317777953887963974344815271",
+      "target": "8677437344271364283947311366191512321547282630883309573812015526008840612922",
+      "parent": "3272532592646077720079016186271537723733247828609291379259960485765763769507"
+    },
+    "position": {
+      "blockNumber": "1286",
+      "blockHash": "0x177ac92bdf5684d41d3d74736bcb212d894976f8ac451e294f8822c2223c99e3",
+      "txHash": "0x1a4135cea8c6b1781164b3e6dac9d4a46ca102132f02489fe014b53bfd9095ea",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "1"
+    }
+  },
+  "git": {
+    "commit": "ab72bc43290d72c6209828a3bbfacc9cadb7f071",
+    "verifiedVia": "git ls-remote --heads origin",
+    "branches": [
+      "master",
+      "codex/rolling-chat-draft3",
+      "codex/rolling-chat-account-ux"
+    ]
+  },
+  "limitations": [
+    "UI static release is publishing independently; no old UI pointer assertion was used.",
+    "Existing application HTML unchanged; accepted revision adds browser plan.",
+    "Node/moderator NRestarts are historical counters; their running PIDs remained unchanged."
+  ]
+}

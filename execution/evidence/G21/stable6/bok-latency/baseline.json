@@ -1,0 +1,744 @@
+{
+  "requestId": "0x1b5981cb4001ffacd074ac2497c7f142046d489ed321bdb98488b0e0c22df9c0",
+  "runtimeCommit": "a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5",
+  "readOnlyInvestigation": true,
+  "start": "2026-10-23T10:37:28.818Z",
+  "end": "2026-10-23T10:54:29.378Z",
+  "elapsedSeconds": 1020.56,
+  "transactions": [
+    {
+      "stage": "browser_authorize",
+      "txHash": "0x0a911d12e0b5b3ba868c0b667fdd4de78ef071a37d71f98ecd0a6881d78e140e",
+      "blockNumber": 1103,
+      "protocolTimestamp": "2026-10-23T10:39:48+00:00"
+    },
+    {
+      "stage": "browser_post",
+      "txHash": "0x020170394b42216b507bd2d9504c4e7c09837dc73bc83f8ddb643e39ea8df1e1",
+      "blockNumber": 1105,
+      "protocolTimestamp": "2026-10-23T10:42:12+00:00"
+    },
+    {
+      "stage": "reserve",
+      "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364",
+      "blockNumber": 1107,
+      "protocolTimestamp": "2026-10-23T10:44:36+00:00"
+    },
+    {
+      "stage": "settle",
+      "txHash": "0x2daaa7913e5e23e9ad8d73c13a5fbf7c518e6ee9a67f4a27ac85acac42aa93f9",
+      "blockNumber": 1113,
+      "protocolTimestamp": "2026-10-23T10:51:48+00:00"
+    },
+    {
+      "stage": "publish_reply",
+      "txHash": "0x03c76c6762d494a710c2611d13f5e75c5e32165c4622a652ee4c702a18d5db28",
+      "blockNumber": 1115,
+      "protocolTimestamp": "2026-10-23T10:53:00+00:00"
+    },
+    {
+      "stage": "finish",
+      "txHash": "0x01d27fa53a53d5b88280ce658033d3e4dfadc244ef84e5a0f5ee6a627794257d",
+      "blockNumber": 1116,
+      "protocolTimestamp": "2026-10-23T10:54:12+00:00"
+    }
+  ],
+  "counts": {
+    "ethereumTransactionsInThisRequest": 0,
+    "browserAztecTransactions": 2,
+    "operatorAztecTransactions": 4,
+    "providerCalls": 8,
+    "isolatedChecks": 2
+  },
+  "measures": [
+    {
+      "stage": "click_to_terminal",
+      "seconds": 1020.56,
+      "kind": "measured"
+    },
+    {
+      "stage": "click_to_static_publication_catalog",
+      "seconds": 801.244088,
+      "kind": "measured"
+    },
+    {
+      "stage": "static_publication_to_terminal",
+      "seconds": 219.315912,
+      "kind": "measured"
+    },
+    {
+      "stage": "publication_catalog_to_GitHub_receipt",
+      "seconds": 5.871993,
+      "kind": "measured enclosing interval, includes broker bookkeeping"
+    },
+    {
+      "stage": "failed_check_workspace_intent_to_cleanup",
+      "seconds": 0.395999,
+      "kind": "file boundary interval"
+    },
+    {
+      "stage": "passing_check_workspace_intent_to_cleanup",
+      "seconds": 0.429999,
+      "kind": "file boundary interval"
+    },
+    {
+      "stage": "repair_between_failed_and_successful_check_starts",
+      "seconds": 117.121862,
+      "kind": "enclosing interval; provider/RPC/tool components not separately recorded"
+    },
+    {
+      "stage": "first_quote_still_waiting_at_snapshot",
+      "secondsSinceClick": 403.140499,
+      "kind": "observed lower bound for pre-provider path"
+    },
+    {
+      "stage": "call5_possibly_sent_phase_observed_duration",
+      "secondsLowerBound": 52.080869,
+      "kind": "journal phase lower bound; not isolated provider HTTP time"
+    },
+    {
+      "stage": "previous_milestone_to_browser_authorize_protocol_timestamp",
+      "seconds": 139.182,
+      "kind": "mixed wall/protocol interval; not proof/inclusion duration"
+    },
+    {
+      "stage": "previous_milestone_to_browser_post_protocol_timestamp",
+      "seconds": 144.0,
+      "kind": "mixed wall/protocol interval; not proof/inclusion duration"
+    },
+    {
+      "stage": "previous_milestone_to_reserve_protocol_timestamp",
+      "seconds": 144.0,
+      "kind": "mixed wall/protocol interval; not proof/inclusion duration"
+    },
+    {
+      "stage": "previous_milestone_to_settle_protocol_timestamp",
+      "seconds": 432.0,
+      "kind": "mixed wall/protocol interval; not proof/inclusion duration"
+    },
+    {
+      "stage": "previous_milestone_to_publish_reply_protocol_timestamp",
+      "seconds": 72.0,
+      "kind": "mixed wall/protocol interval; not proof/inclusion duration"
+    },
+    {
+      "stage": "previous_milestone_to_finish_protocol_timestamp",
+      "seconds": 72.0,
+      "kind": "mixed wall/protocol interval; not proof/inclusion duration"
+    }
+  ],
+  "timeline": [
+    {
+      "time": "2026-10-23T10:37:28.818Z",
+      "stage": "browser_clicked_post",
+      "evidence": "root browser recorded timestamp"
+    },
+    {
+      "time": "2026-10-23T10:39:48+00:00",
+      "stage": "browser_authorize_block_protocol_time",
+      "blockNumber": 1103,
+      "txHash": "0x0a911d12e0b5b3ba868c0b667fdd4de78ef071a37d71f98ecd0a6881d78e140e",
+      "evidence": "canonical Aztec block header; not wall-clock observation time"
+    },
+    {
+      "time": "2026-10-23T10:42:12+00:00",
+      "stage": "browser_post_block_protocol_time",
+      "blockNumber": 1105,
+      "txHash": "0x020170394b42216b507bd2d9504c4e7c09837dc73bc83f8ddb643e39ea8df1e1",
+      "evidence": "canonical Aztec block header; not wall-clock observation time"
+    },
+    {
+      "time": "2026-10-23T10:44:11.958499+00:00",
+      "stage": "read_only_job_snapshot",
+      "journalLastModifiedAt": "2026-10-23T10:43:06.745642+00:00",
+      "hostedPhase": "running",
+      "calls": [
+        {
+          "id": 0,
+          "phase": "quoted",
+          "toolNames": []
+        }
+      ],
+      "operations": [
+        {
+          "method": "reserve",
+          "phase": "submission-unknown",
+          "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+        }
+      ],
+      "evidenceFile": "/tmp/rolling-bok-job-a4a4c5f8-a604-4df4-ad4b-65df2aa4a7fb.json"
+    },
+    {
+      "time": "2026-10-23T10:44:36+00:00",
+      "stage": "reserve_block_protocol_time",
+      "blockNumber": 1107,
+      "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364",
+      "evidence": "canonical Aztec block header; not wall-clock observation time"
+    },
+    {
+      "time": "2026-10-23T10:45:35.157533+00:00",
+      "stage": "read_only_job_snapshot",
+      "journalLastModifiedAt": "2026-10-23T10:45:34.941468+00:00",
+      "hostedPhase": "running",
+      "calls": [
+        {
+          "id": 0,
+          "phase": "received",
+          "toolNames": [
+            "list_files"
+          ]
+        },
+        {
+          "id": 1,
+          "phase": "possibly-sent",
+          "toolNames": []
+        }
+      ],
+      "operations": [
+        {
+          "method": "reserve",
+          "phase": "submission-unknown",
+          "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+        }
+      ],
+      "evidenceFile": "/tmp/rolling-bok-job-def5d13a-2900-48f1-b6ed-bbc201cebef7.json"
+    },
+    {
+      "time": "2026-10-23T10:46:56.936483+00:00",
+      "stage": "read_only_job_snapshot",
+      "journalLastModifiedAt": "2026-10-23T10:46:50.665373+00:00",
+      "hostedPhase": "running",
+      "calls": [
+        {
+          "id": 0,
+          "phase": "received",
+          "toolNames": [
+            "list_files"
+          ]
+        },
+        {
+          "id": 1,
+          "phase": "received",
+          "toolNames": [
+            "read_file",
+            "read_file",
+            "read_file"
+          ]
+        },
+        {
+          "id": 2,
+          "phase": "received",
+          "toolNames": [
+            "write_file"
+          ]
+        }
+      ],
+      "operations": [
+        {
+          "method": "reserve",
+          "phase": "submission-unknown",
+          "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+        }
+      ],
+      "evidenceFile": "/tmp/rolling-bok-job-b4dd6ac9-142f-489c-bc83-8d8e38dc72c6.json"
+    },
+    {
+      "time": "2026-10-23T10:48:20.268269+00:00",
+      "stage": "bok-static-01697d4c-11b3-4859-90b9-a4bbcfbdbe1d/intent.json",
+      "evidence": "retained file mtime; event completion boundary, not CPU time"
+    },
+    {
+      "time": "2026-10-23T10:48:20.608268+00:00",
+      "stage": "bok-static-01697d4c-11b3-4859-90b9-a4bbcfbdbe1d/outcome.json",
+      "evidence": "retained file mtime; event completion boundary, not CPU time"
+    },
+    {
+      "time": "2026-10-23T10:48:20.663268+00:00",
+      "stage": "bok-static-01697d4c-11b3-4859-90b9-a4bbcfbdbe1d/failure.json",
+      "evidence": "retained file mtime; event completion boundary, not CPU time"
+    },
+    {
+      "time": "2026-10-23T10:48:20.664268+00:00",
+      "stage": "bok-static-01697d4c-11b3-4859-90b9-a4bbcfbdbe1d/cleanup.json",
+      "evidence": "retained file mtime; event completion boundary, not CPU time"
+    },
+    {
+      "time": "2026-10-23T10:49:27.200120+00:00",
+      "stage": "read_only_job_snapshot",
+      "journalLastModifiedAt": "2026-10-23T10:48:35.119251+00:00",
+      "hostedPhase": "running",
+      "calls": [
+        {
+          "id": 0,
+          "phase": "received",
+          "toolNames": [
+            "list_files"
+          ]
+        },
+        {
+          "id": 1,
+          "phase": "received",
+          "toolNames": [
+            "read_file",
+            "read_file",
+            "read_file"
+          ]
+        },
+        {
+          "id": 2,
+          "phase": "received",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 3,
+          "phase": "received",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 4,
+          "phase": "received",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 5,
+          "phase": "possibly-sent",
+          "toolNames": []
+        }
+      ],
+      "operations": [
+        {
+          "method": "reserve",
+          "phase": "submission-unknown",
+          "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+        }
+      ],
+      "evidenceFile": "/tmp/rolling-bok-job-a9acc36c-d0a6-4d69-88b0-4aac7163d855.json"
+    },
+    {
+      "time": "2026-10-23T10:50:17.390131+00:00",
+      "stage": "bok-static-e24633a4-1d7c-4786-b840-3f5d4efa2fab/intent.json",
+      "evidence": "retained file mtime; event completion boundary, not CPU time"
+    },
+    {
+      "time": "2026-10-23T10:50:17.732130+00:00",
+      "stage": "bok-static-e24633a4-1d7c-4786-b840-3f5d4efa2fab/outcome.json",
+      "evidence": "retained file mtime; event completion boundary, not CPU time"
+    },
+    {
+      "time": "2026-10-23T10:50:17.761130+00:00",
+      "stage": "bok-static-e24633a4-1d7c-4786-b840-3f5d4efa2fab/result.json",
+      "evidence": "retained file mtime; event completion boundary, not CPU time"
+    },
+    {
+      "time": "2026-10-23T10:50:17.820130+00:00",
+      "stage": "bok-static-e24633a4-1d7c-4786-b840-3f5d4efa2fab/cleanup.json",
+      "evidence": "retained file mtime; event completion boundary, not CPU time"
+    },
+    {
+      "time": "2026-10-23T10:50:26.639758+00:00",
+      "stage": "read_only_job_snapshot",
+      "journalLastModifiedAt": "2026-10-23T10:50:26.629119+00:00",
+      "hostedPhase": "running",
+      "calls": [
+        {
+          "id": 0,
+          "phase": "received",
+          "toolNames": [
+            "list_files"
+          ]
+        },
+        {
+          "id": 1,
+          "phase": "received",
+          "toolNames": [
+            "read_file",
+            "read_file",
+            "read_file"
+          ]
+        },
+        {
+          "id": 2,
+          "phase": "received",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 3,
+          "phase": "received",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 4,
+          "phase": "received",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 5,
+          "phase": "received",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 6,
+          "phase": "received",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 7,
+          "phase": "quoted",
+          "toolNames": []
+        }
+      ],
+      "operations": [
+        {
+          "method": "reserve",
+          "phase": "submission-unknown",
+          "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+        }
+      ],
+      "evidenceFile": "/tmp/rolling-bok-job-efbf672f-f342-4a51-be2e-148639d8bcff.json"
+    },
+    {
+      "time": "2026-10-23T10:50:50.053088+00:00",
+      "stage": "static-publication/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/aa2e430d4ec9282be08e8d7274cd5fc4482852f2/source.json",
+      "evidence": "retained file mtime"
+    },
+    {
+      "time": "2026-10-23T10:50:50.055089+00:00",
+      "stage": "static-publication/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/aa2e430d4ec9282be08e8d7274cd5fc4482852f2/artifacts.json",
+      "evidence": "retained file mtime"
+    },
+    {
+      "time": "2026-10-23T10:50:50.059088+00:00",
+      "stage": "static-publication/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/aa2e430d4ec9282be08e8d7274cd5fc4482852f2/publication.json",
+      "evidence": "retained file mtime"
+    },
+    {
+      "time": "2026-10-23T10:50:50.062088+00:00",
+      "stage": "static-publication/catalog.json",
+      "evidence": "retained file mtime"
+    },
+    {
+      "time": "2026-10-23T10:50:55.934081+00:00",
+      "stage": "github-app/github-app-state.json",
+      "evidence": "retained file mtime"
+    },
+    {
+      "time": "2026-10-23T10:50:55.939081+00:00",
+      "stage": "thread-repositories/2ebf5226acfbe0908c2c87758187b7fe73018b30cc79f9e61484529a9cfcb477/revisions.json",
+      "evidence": "retained file mtime"
+    },
+    {
+      "time": "2026-10-23T10:51:48+00:00",
+      "stage": "settle_block_protocol_time",
+      "blockNumber": 1113,
+      "txHash": "0x2daaa7913e5e23e9ad8d73c13a5fbf7c518e6ee9a67f4a27ac85acac42aa93f9",
+      "evidence": "canonical Aztec block header; not wall-clock observation time"
+    },
+    {
+      "time": "2026-10-23T10:52:00.801281+00:00",
+      "stage": "read_only_job_snapshot",
+      "journalLastModifiedAt": "2026-10-23T10:51:59.076992+00:00",
+      "hostedPhase": "reply-intent",
+      "calls": [
+        {
+          "id": 0,
+          "phase": "settled",
+          "toolNames": [
+            "list_files"
+          ]
+        },
+        {
+          "id": 1,
+          "phase": "settled",
+          "toolNames": [
+            "read_file",
+            "read_file",
+            "read_file"
+          ]
+        },
+        {
+          "id": 2,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 3,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 4,
+          "phase": "settled",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 5,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 6,
+          "phase": "settled",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 7,
+          "phase": "settled",
+          "toolNames": []
+        }
+      ],
+      "operations": [
+        {
+          "method": "reserve",
+          "phase": "submission-unknown",
+          "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+        },
+        {
+          "method": "settle",
+          "phase": "submission-unknown",
+          "txHash": "0x2daaa7913e5e23e9ad8d73c13a5fbf7c518e6ee9a67f4a27ac85acac42aa93f9"
+        },
+        {
+          "method": "publish_reply",
+          "phase": "preparing"
+        }
+      ],
+      "evidenceFile": "/tmp/rolling-bok-job-2ca8d2e6-c7a1-4c57-893e-f3c7d6df1264.json"
+    },
+    {
+      "time": "2026-10-23T10:53:00+00:00",
+      "stage": "publish_reply_block_protocol_time",
+      "blockNumber": 1115,
+      "txHash": "0x03c76c6762d494a710c2611d13f5e75c5e32165c4622a652ee4c702a18d5db28",
+      "evidence": "canonical Aztec block header; not wall-clock observation time"
+    },
+    {
+      "time": "2026-10-23T10:54:04.147993+00:00",
+      "stage": "read_only_job_snapshot",
+      "journalLastModifiedAt": "2026-10-23T10:53:25.232888+00:00",
+      "hostedPhase": "reply-confirmed",
+      "calls": [
+        {
+          "id": 0,
+          "phase": "settled",
+          "toolNames": [
+            "list_files"
+          ]
+        },
+        {
+          "id": 1,
+          "phase": "settled",
+          "toolNames": [
+            "read_file",
+            "read_file",
+            "read_file"
+          ]
+        },
+        {
+          "id": 2,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 3,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 4,
+          "phase": "settled",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 5,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 6,
+          "phase": "settled",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 7,
+          "phase": "settled",
+          "toolNames": []
+        }
+      ],
+      "operations": [
+        {
+          "method": "reserve",
+          "phase": "submission-unknown",
+          "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+        },
+        {
+          "method": "settle",
+          "phase": "submission-unknown",
+          "txHash": "0x2daaa7913e5e23e9ad8d73c13a5fbf7c518e6ee9a67f4a27ac85acac42aa93f9"
+        },
+        {
+          "method": "publish_reply",
+          "phase": "submission-unknown",
+          "txHash": "0x03c76c6762d494a710c2611d13f5e75c5e32165c4622a652ee4c702a18d5db28"
+        },
+        {
+          "method": "finish",
+          "phase": "submission-unknown",
+          "txHash": "0x01d27fa53a53d5b88280ce658033d3e4dfadc244ef84e5a0f5ee6a627794257d"
+        }
+      ],
+      "evidenceFile": "/tmp/rolling-bok-job-ea35c439-0ba4-4c6f-bf63-52887f3f0667.json"
+    },
+    {
+      "time": "2026-10-23T10:54:12+00:00",
+      "stage": "finish_block_protocol_time",
+      "blockNumber": 1116,
+      "txHash": "0x01d27fa53a53d5b88280ce658033d3e4dfadc244ef84e5a0f5ee6a627794257d",
+      "evidence": "canonical Aztec block header; not wall-clock observation time"
+    },
+    {
+      "time": "2026-10-23T10:54:29.378Z",
+      "stage": "request_terminal_success",
+      "evidence": "original service health lastSuccess timestamp"
+    },
+    {
+      "time": "2026-10-23T10:55:53.005924+00:00",
+      "stage": "read_only_job_snapshot",
+      "journalLastModifiedAt": "2026-10-23T10:54:29.369812+00:00",
+      "hostedPhase": "finished",
+      "calls": [
+        {
+          "id": 0,
+          "phase": "settled",
+          "toolNames": [
+            "list_files"
+          ]
+        },
+        {
+          "id": 1,
+          "phase": "settled",
+          "toolNames": [
+            "read_file",
+            "read_file",
+            "read_file"
+          ]
+        },
+        {
+          "id": 2,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 3,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 4,
+          "phase": "settled",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 5,
+          "phase": "settled",
+          "toolNames": [
+            "write_file"
+          ]
+        },
+        {
+          "id": 6,
+          "phase": "settled",
+          "toolNames": [
+            "check_workspace"
+          ]
+        },
+        {
+          "id": 7,
+          "phase": "settled",
+          "toolNames": []
+        }
+      ],
+      "operations": [
+        {
+          "method": "reserve",
+          "phase": "submission-unknown",
+          "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+        },
+        {
+          "method": "settle",
+          "phase": "submission-unknown",
+          "txHash": "0x2daaa7913e5e23e9ad8d73c13a5fbf7c518e6ee9a67f4a27ac85acac42aa93f9"
+        },
+        {
+          "method": "publish_reply",
+          "phase": "submission-unknown",
+          "txHash": "0x03c76c6762d494a710c2611d13f5e75c5e32165c4622a652ee4c702a18d5db28"
+        },
+        {
+          "method": "finish",
+          "phase": "submission-unknown",
+          "txHash": "0x01d27fa53a53d5b88280ce658033d3e4dfadc244ef84e5a0f5ee6a627794257d"
+        }
+      ],
+      "evidenceFile": "/tmp/rolling-bok-job-78348689-d0d2-4f4b-a7d4-7d1e1744b31a.json"
+    }
+  ],
+  "missingInstrumentation": [
+    "No monotonic stage timings in private journal: provider quote/send/receive/tool and chain prove/send/receipt/checkpoint events have no timestamps.",
+    "Provider response stores only role/content/tool_calls; retained billing contains usage and price, not provider timing.",
+    "Bok, prover, query, application and node journals have zero log lines in10:37\u201310:55; moderator had35 lines but no matching transaction/block timing extracted.",
+    "Native proof generation and PXE synchronization cannot be separated from preparatory RPC work using retained evidence.",
+    "Canonical block header timestamps are protocol times; actual observed inclusion/checkpoint visibility times were not retained.",
+    "Existing observation snapshots bound transitions; they must not be reported as exact completion times.",
+    "GitHub5.872s interval includes local publication-to-broker bookkeeping; exact API spans absent."
+  ],
+  "evidenceFiles": [
+    "/tmp/bok-latency-snapshots.json",
+    "/tmp/bok-latency-details.json",
+    "/tmp/bok-latency-blocks.json",
+    "/tmp/bok-latency-publication.json",
+    "/tmp/bok-latency-core.json",
+    "/tmp/rolling-bok-fourth-complete-evidence.json"
+  ]
+}
