@@ -178,7 +178,8 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  * billing settles. Ports are dependency seams, not client-supplied authority. */
 /** First-call recovery retains the exact quote/input/operation identity. An
  * unsent reserve can be prepared once; a submitted reserve is observed only.
- * Neither path admits provider-entered calls or a repeated agent continuation. */
+ * Provider-entered calls are never admitted. Invocation preflight can repeat
+ * while the original first quote remains unsent; legacy reserve paths stay bounded. */
 function hostedFirstCall(original,submitted){
  const h=original.hostedPrivateBok,j=original.privateBok,e=original.privateBokEscrow;
  if(j?.accountingMode==='invocation-v1'){
@@ -186,7 +187,7 @@ function hostedFirstCall(original,submitted){
   // never crossed the dispatch boundary needs no reserve transaction or billing.
   try{
    assert(!submitted&&h?.phase==='running'&&j.version===2&&j.finished===false);
-   for(const key of ['preProviderRecoveryAttempted','submittedReservationContinuationAttempted'])assert(!Object.hasOwn(h,key));
+   assert(!Object.hasOwn(h,'submittedReservationContinuationAttempted'));
    assert.deepEqual(Object.keys(j.calls),['0']);assert.deepEqual(j.operations,{});assert(!Object.hasOwn(j,'aggregate'));
    const call=j.calls[0],b=h.binding,identity={network:b.network,escrow:b.escrow,requestId:b.requestId,target:b.target};
    assert.deepEqual(j.identity,identity);assert.equal(call.id,0);assert.equal(call.phase,'quoted');
