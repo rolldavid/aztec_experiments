@@ -22,11 +22,26 @@ test('parallel timing contexts stay isolated and nested same-request context pre
 });
 test('logging failure and record bound cannot fail or retry business operations',async()=>{
  let calls=0;await withBokTiming(id(1),()=>measureBokStage('agent.model',async()=>++calls),{emit:()=>{throw Error('logging failure');}});assert.equal(calls,1);
- const records=[];await withBokTiming(id(1),async()=>{for(let i=0;i<140;i++)await measureBokStage('agent.model',async()=>++calls);},{emit:r=>records.push(r)});
- assert.equal(records.length,256);assert.equal(calls,141);
+ const records=[];await withBokTiming(id(1),async()=>{for(let i=0;i<1030;i++)await measureBokStage('agent.model',async()=>++calls);},{emit:r=>records.push(r)});
+ assert.equal(records.length,2048);assert.equal(calls,1031);
+});
+test('long multi-call runs retain final proof and checkpoint timing after 128 earlier spans',async()=>{
+ const records=[];
+ await withBokTiming(id(1),async()=>{
+  for(let call=0;call<64;call++)for(let stage=0;stage<10;stage++)await measureBokStage('agent.model',async()=>true);
+  await measureBokStage('escrow.prove',async()=>true);await measureBokStage('escrow.wait',async()=>true);
+ },{emit:r=>records.push(r)});
+ assert.deepEqual(records.slice(-4).map(r=>[r.stage,r.result]),[['escrow.prove','started'],['escrow.prove','success'],['escrow.wait','started'],['escrow.wait','success']]);
+ assert.equal(records.at(-1).span,642);
 });
 test('fixed port wrapper retains receiver and metadata without exposing unknown names',async()=>{
  const records=[],port=Object.freeze({identity:'public',reserve(){return this.identity;},privateName(){return true;}});
  const wrapped=measureBokObjectStages(port,'escrow');await withBokTiming(id(1),async()=>{assert.equal(await wrapped.reserve('SECRET_ARGUMENT'),'public');assert(await wrapped.privateName());},{emit:r=>records.push(r)});
  assert.equal(records.length,2);assert.equal(records[0].stage,'escrow.reserve');assert(!JSON.stringify(records).includes('SECRET_ARGUMENT'));
+});
+test('whole-request and adapter-open stages retain enclosing and child durations',async()=>{
+ const records=[];
+ await withBokTiming(id(1),()=>measureBokStage('request.total',()=>measureBokStage('escrow.open',async()=>true)),{emit:r=>records.push(r)});
+ assert.deepEqual(records.map(r=>[r.stage,r.result]),[['request.total','started'],['escrow.open','started'],['escrow.open','success'],['request.total','success']]);
+ assert(records.at(-1).durationMs>=records[2].durationMs);
 });
