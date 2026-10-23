@@ -1,0 +1,25 @@
+{
+  "commit": "59872032f10c656d1adc86ad4c2af606e60d87de",
+  "source": "/opt/rolling-bok/releases/59872032f10c656d1adc86ad4c2af606e60d87de",
+  "previousSource": "/opt/rolling-bok/releases/two-tx-a6d3730972833dcb6efa165df209147a71438921",
+  "sourcePinSha256": "38fc12ab7d7767efcb5f69293c104174d07efa532265863fbbde59337a76f279",
+  "files": {
+    "plugins/agent.mjs": "bfee1009e92b91ad6cad0d8c6fa0ec81d6461b05fcc99e8e7ec7aa6fea2d39ab",
+    "plugins/main.mjs": "aa68914be14957e8aa77f311a879b16206fa8a5eefe1096088d2565a3311fd81",
+    "plugins/bok-timing.mjs": "4504459f3aa70d874e2642fa19c13c9ec8c3b8507c41680b46f337d3425a63ef",
+    "plugins/github-tools.mjs": "b4b06030698a307c375dc5ac6a8c2f13046de7e4cfc7ccda0dc070fb22e76a70",
+    "plugins/private-bok-metering.mjs": "cd0023f6ff377092a95af4339f2e9916c8f95fa1a01f0972878568005c50d619"
+  },
+  "oldPid": "244725",
+  "oldProxyPid": "244727",
+  "status": "ready",
+  "configChange": {
+    "limits.maxTokens": 8192
+  },
+  "startedAt": "2026-10-23T19:06:07.488213+00:00",
+  "newPid": "246656",
+  "newProxyPid": "246658",
+  "configSha256": "38e3cf3ad1610a6c3aa74256058ae65b662469103c9c4f7367808ee53a81f1ff",
+  "unitSha256": "318aaba3d95e49310dd301278b2bf778d89286b5cc32aa4b2ed1f803ec353b48",
+  "statePreserved": true
+}

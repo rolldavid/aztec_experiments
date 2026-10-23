@@ -1,0 +1,23 @@
+{
+  "requestId": "0x00f0cfd0e2db1c35636e787d05300fe050aa1d80c8019f1eb9803170757be4b8",
+  "outcome": "blocked_before_provider_dispatch",
+  "clickAt": "2026-10-23T19:06:40.179Z",
+  "postRenderedAfterMs": 118684,
+  "postRenderedAt": "2026-10-23T19:08:38.863Z",
+  "workerStartedAt": "2026-10-23T19:12:56.760110+00:00",
+  "workerEndedAt": "2026-10-23T19:13:00.347266+00:00",
+  "workerDurationMs": 3587.408,
+  "postRenderToWorkerStartMs": 257897.11010742188,
+  "lastStage": "escrow.assertUsable",
+  "providerCompletionCalls": 0,
+  "operatorTransactions": [],
+  "journalPhase": "running",
+  "callPhase": "possibly-sent",
+  "diagnostic": "Original assertUsable error discarded. Current state/deadline predicates all pass. Unconditional restart history replay delayed admission; failed pre-provider guard follows durable possibly-sent fence.",
+  "evidence": {
+    "trace": "/tmp/bok-two-repeat-trace01.json",
+    "canonicalRead": "/tmp/bok-two-repeat-reservation-result.json",
+    "index": "/tmp/bok-two-repeat-index-current-result.json",
+    "logs": "/tmp/bok-two-repeat-error-result.json"
+  }
+}

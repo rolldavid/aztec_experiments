@@ -1,0 +1,33 @@
+{
+  "kind": "bok",
+  "commit": "6beaebe922a5934834dc9f4389551c6422971657",
+  "source": "/opt/rolling-bok/releases/6beaebe922a5934834dc9f4389551c6422971657",
+  "previousSource": "/opt/rolling-bok/releases/1db773428a96885bb6f58ede64a4d6762bc8bf84",
+  "sourcePinsSha256": "7bc451d57ac1b91925f0aabcc42bac7cabc46ace9a4c05a014dab98477a99a9f",
+  "oldPid": "249769",
+  "oldProxyPid": "249770",
+  "status": "ready",
+  "replacement": {
+    "status": "canonical-final-replacement",
+    "requestId": "0x00f0cfd0e2db1c35636e787d05300fe050aa1d80c8019f1eb9803170757be4b8",
+    "originalTxHash": "0x10589a2afd800130bca6b4881ee21f0d0051d42ab29ac8538632de6603c467b8",
+    "txHash": "0x1d4baf2582e35f9976284bc1dd289b34570e1ee8616a2d7ae2f197060b6700a7",
+    "blockNumber": 1675,
+    "charge": "83256",
+    "refund": "166744",
+    "originalProviderCallsUnchanged": true
+  },
+  "startedAt": "2026-10-23T20:17:08.017896+00:00",
+  "newPid": "250128",
+  "newProxyPid": "250129",
+  "normalOwnedResume": true,
+  "currentGeneration": "12",
+  "unitSha256": "2d0589a3bd11683b4c5f14ff1f28d0c6b60f247adbe7e92d8c29e10afbaf83f7",
+  "health": {
+    "status": "ready",
+    "state": null,
+    "active": 0,
+    "cacheComparison": null,
+    "lastFailure": null
+  }
+}

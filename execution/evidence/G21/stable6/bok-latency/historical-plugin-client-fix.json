@@ -1,0 +1,22 @@
+{
+  "published": true,
+  "commit": "3ee4203be8f5f3866a30aa49e111598515f4e488",
+  "ui": "/opt/rolling-ui/releases/3ee4203be8f5f3866a30aa49e111598515f4e488",
+  "runningSource": "/opt/rolling-app/releases/two-tx-a6d3730972833dcb6efa165df209147a71438921",
+  "sourcePinsSha256": "180c39bbf44c6a19058a3691fe001a7904e71f3c87d54c40e07a38c285412215",
+  "pidsUnchanged": {
+    "rolling-application.service": 630303,
+    "rolling-application-proxy.service": 630328,
+    "rolling-node.service": 561964,
+    "rolling-query.service": 565186,
+    "board-prover.service": 630292,
+    "board-prover-proxy.service": 630307,
+    "rolling-moderator.service": 567551
+  },
+  "checks": {
+    "existingApplicationTests": 301,
+    "newFocusedTests": 8,
+    "publicRuntimeSha256": "3f0ffc4bbc2fa0a867b75db95e82a756efbaf9c635db83bfb0abcd3f3af36c70",
+    "retainedAccountOpenedWithoutReset": true
+  }
+}

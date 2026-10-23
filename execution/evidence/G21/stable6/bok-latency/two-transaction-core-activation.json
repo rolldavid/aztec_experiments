@@ -1,0 +1,35 @@
+{
+  "baseSourceCommit": "a6d3730972833dcb6efa165df209147a71438921",
+  "runtimePatchReceiptSha256": "65d03b85490625eadbd4874f599c01c15d1785d4909785ef4d5335ce989b4009",
+  "status": "ready",
+  "kind": "core",
+  "commit": "dd45627af0d048234e7d84d3c652349d7cc3ec4d",
+  "source": "/opt/rolling-app/releases/two-tx-a6d3730972833dcb6efa165df209147a71438921",
+  "health": {
+    "proverReady": true,
+    "indexReady": true
+  },
+  "observedAt": "2026-10-23T18:14:36.740253+00:00",
+  "pids": {
+    "rolling-application.service": 630303,
+    "board-prover.service": 630292,
+    "board-prover-proxy.service": 630307,
+    "rolling-application-proxy.service": 630328,
+    "rolling-node.service": 561964,
+    "rolling-query.service": 565186,
+    "rolling-moderator.service": 567551
+  },
+  "sourcePinsSha256": "1b5a19e2a1684993cdd213626002f796b6970b9c7d6654ce8242a7628d3bd097",
+  "oldReceiver": "0x29c5c41fae8d4d0460e30ba13c56160206e8bc54922df727275c9ecce88c9432",
+  "newReceiver": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+  "pluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02",
+  "proverScopeTransition": {
+    "originalManifestRetained": "8fed2c764e5b62fc626e985e6b022ef3908605c7401200d4f8f09e9e07157097",
+    "originalIntentSha256": "6c288db4c16896b8e0496f2273d9d2f427f28428e11c83fae9e0a3a5c5621eda",
+    "previousConfigSha256": "60373b0548a1213ed7013fc16c74351b368abf62a129d7bf2fd42360c8cfcb53",
+    "currentConfigSha256": "4636b0cc69732870629d2ac1a041554bb9869ca3a61f523abacbcdf12969a607",
+    "constructorAndPrivateCircuitEvidenceSha256": "7373d9f5ed65b03980007c8fc691243827b698f56fdb399daf9bdddae115713d",
+    "qualificationScope": "Existing native runtime and six unchanged private circuits; updated receiver allowlist only. This is not a new native package qualification."
+  },
+  "relaySpendPreserved": true
+}

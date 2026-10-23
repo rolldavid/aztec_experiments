@@ -1,0 +1,11 @@
+{
+  "source": "6fd9049d",
+  "cause": "The actual generated plan exceeded64 total steps, but check_workspace exposed only generic invalid browser tests. Sixteen model calls exhausted without publication.",
+  "fix": "Fixed validation reason and schema/index path propagate through captureStaticSource and check_workspace. Raw values/parser exceptions are not forwarded. Acceptance rules unchanged.",
+  "tests": {
+    "passed": 88,
+    "failed": 0,
+    "existingOptInSkipped": 30
+  },
+  "publication": "pending worker overlay"
+}

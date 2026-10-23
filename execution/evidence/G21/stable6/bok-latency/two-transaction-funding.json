@@ -1,0 +1,22 @@
+{
+  "ethereumTransactions": [
+    {
+      "hash": "0x36de2b7cb0521ea8de8fd34f952af7b262f8a3cdccd7bff868131927a0e3fb12",
+      "to": "0x7a8f48615719475d0f184609f4d5415158c7f36f",
+      "value": "0x16935e476c3b"
+    }
+  ],
+  "amountUSDC": "1",
+  "paymentConfirmations": 1,
+  "second": {
+    "ethereumTransaction": "0x73e4588d7f1b8aacb196fd02f748621e652d476b2f9b77c48b46ba55c159b8e9",
+    "amountUSDC": "0.1",
+    "automatic": true,
+    "submittedErrors": [],
+    "paymentConfirmations": 1
+  },
+  "automatic": false,
+  "manualContinuationRequired": true,
+  "firstAttemptDiagnostic": "Browser recorded network changes/disconnections; exact original submission error was not retained. Manual claim continuation confirmed one USDC. No causal attribution beyond those observations.",
+  "balanceAfterUSDC": "1.1"
+}

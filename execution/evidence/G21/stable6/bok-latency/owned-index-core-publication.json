@@ -1,0 +1,31 @@
+{
+  "kind": "core",
+  "commit": "ae9d60b807316d5ce0e2df38e47c4129fb8178e8",
+  "source": "/opt/rolling-app/releases/ae9d60b807316d5ce0e2df38e47c4129fb8178e8",
+  "previousSource": "/opt/rolling-app/releases/two-tx-a6d3730972833dcb6efa165df209147a71438921",
+  "sourcePinsSha256": "56d8e0f36ed2347b5800f1ceb61bccd1cbeb4b60cc45a14b7d50eaf4b1e830df",
+  "oldPid": "641875",
+  "oldProxyPid": "641878",
+  "status": "ready",
+  "startedAt": "2026-10-23T19:47:09.266118+00:00",
+  "newPid": "642411",
+  "newProxyPid": "642414",
+  "adoption": {
+    "adopted": true,
+    "generation": "3",
+    "checkpoint": {
+      "number": "1650",
+      "hash": "0x0d640b09fc6f23e2487c39876fe7d9d7c7deb6190e942038b900726785f50241"
+    },
+    "controlSha256": "2d3829f167cd690f6f94e52f018cb538407b4edc756c71482d8ba8e08635a55d"
+  },
+  "currentGeneration": "3",
+  "unitSha256": "b5156b4761babfd91be11295beb374ad3bdd6c0e0ed41a7e1991af6551a8e180",
+  "health": {
+    "status": null,
+    "state": "ready",
+    "active": null,
+    "cacheComparison": "service-owned",
+    "lastFailure": null
+  }
+}

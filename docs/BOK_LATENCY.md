@@ -5,7 +5,77 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
-## Published result
+## Current two-transaction release
+
+The live path now uses two Aztec transactions: the user's post reserves its full
+Bok budget, and Bok's final reply settles actual usage and refunds the remainder.
+The optional Bok contract was replaced; the board, account ownership, deposits,
+private fees, existing posts and generated-app repository were retained. No
+Ethereum transaction is needed for an already-funded request.
+
+The browser removes seven public-wallet simulations, reduces private utility
+checks from three to one, shares plugin metadata and an owning synchronization
+scope, and reads independent fee metadata concurrently. The worker shares
+canonical reads by block/index revision and keeps one admitted repository session.
+Generated-app validation still exercises the actual published environment.
+
+A live attempt on23October produced a canonical failure reply after291.281s; it
+is **not a successful latency result**. The provider reached4096 output tokens
+while rewriting two files and returned malformed second-call JSON despite a
+`tool_calls` finish reason. The entire batch was rejected before any edits ran.
+Exactly two chain transactions completed, charging0.024776USDC and refunding
+0.225224USDC from the0.25USDC allowance. No new app was published.
+
+The repair adds exact small file edits, removes guidance to group large rewrites,
+and requests up to8192 output tokens subject to the existing model and remaining
+budget bounds. Truncated/malformed batches still execute no tools and are never
+silently replayed. Combined affected checks passed345 tests with two existing
+opt-in skips; independent review approved the code and worker-only publication.
+The repeat confirmed the user post in118.684s, then exposed two more defects:
+startup replay delayed worker admission by257.897s, and a reservation guard failure
+was incorrectly recorded as a possibly sent provider call even though no provider
+execution began. This attempt is also excluded from successful latency results.
+
+The fixes explicitly resume private service-owned index state after version,
+scope, deployment and canonical-anchor checks, and place all pre-dispatch checks
+before the durable provider fence. Original unsent quotes can wait through repeated
+preflight failures; paid or possibly sent requests are not replayed. Default
+untrusted/imported caches still undergo full authentication. Root's integrated
+checks passed408 tests with two existing opt-in skips. These changes are live: core
+and Bok resumed generations3 and12 respectively, without full history replay.
+
+The remaining preflight failure was reproduced as HTTP429: thirteen concurrent
+RPC batches exceeded the query gateway's eight-request limit. An SDK semaphore
+now permits four concurrent batches and releases capacity on every outcome. It
+adds no retries or delays. The exact live guard then passed in296ms with every
+response HTTP200;143 integrated operations/escrow checks passed. The original
+unsent request is continuing, followed by a separate clean benchmark.
+
+The resumed attempt did not publish an app: its generated test plan exceeded64
+steps, while generic tool feedback hid that specific cause. It exhausted16 model
+calls in110.187s. The final transaction submission then failed; the original node
+reason was discarded. Read-only reconstruction found a concrete fee-admission
+problem: default network-maximum gas committed13.923754FEE against an operator
+balance of11.604265FEE. This is a sufficient current rejection condition, not a
+retained historical rejection message. Canonical charge/refund had not occurred.
+
+The subsequent fixes expose exact test-plan reasons and field paths, and use
+native atomic simulation/proving with SDK measured gas and standard10% padding.
+They preserve the single proof and one synchronization scope. Focused integrated
+checks passed88 tests (30 existing opt-in skips) for plan feedback and48 for fees
+and exact-authority dropped-finalization handling. Live acceptance is pending.
+
+The proxy shutdown issue is independently fixed: the application drains before
+its proxy stops. A real held browser feed reached clean EOF; the application
+stopped in451ms and the proxy in4ms, with normal exits and no forced termination.
+A new connection received live feed revisions after restart.
+
+Evidence: [proxy shutdown](../execution/evidence/G21/stable6/bok-latency/proxy-shutdown.json),
+[failed attempt](../execution/evidence/G21/stable6/bok-latency/two-transaction-failed-profile.json),
+[canonical accounting](../execution/evidence/G21/stable6/bok-latency/two-transaction-failed-canonical.json),
+[actual MetaMask funding](../execution/evidence/G21/stable6/bok-latency/two-transaction-funding.json).
+
+## Previous three-transaction result
 
 The repeat real-proof request completed in **443.421 seconds (7m23s)**, versus
 **1,020.560 seconds (17m01s)** for the earlier successful request: 577.139 seconds
@@ -22,7 +92,7 @@ generation benchmark or a controlled same-workload comparison**. Model output,
 repair count and testnet confirmation time vary. Do not attribute the whole
 577-second difference to the code changes, or promise this latency for every app.
 
-The live flow now sends **three Aztec transactions and zero Ethereum transactions**:
+That release sent **three Aztec transactions and zero Ethereum transactions**:
 
 1. Authorize Bok spending and publish the user's post together.
 2. Reserve the request's spending allowance before paid model work.
@@ -81,7 +151,7 @@ not retain separate proof, RPC, provider or rendering timings. Its block-header
 timestamps are protocol times, not observed receipt arrival times. Those cannot
 honestly be used to assign exact durations to individual old stages.
 
-## Changes
+## Previous-release changes
 
 - Combine user authorization and posting into one atomic transaction.
 - Combine operator settlement, authenticated reply and unused-credit refund into
@@ -101,7 +171,7 @@ honestly be used to assign exact durations to individual old stages.
   clearing drafts. The test found that a completed refund could otherwise leave
   a stale insufficient-balance display. This UI-only fix is also published.
 
-No contracts, account ownership or deployment addresses were changed.
+No contracts, account ownership or deployment addresses were changed in that earlier release.
 Real proofs, canonical checks, payment limits and generated-app sandboxing remain.
 
 ## First instrumented run: a real validator defect
@@ -135,7 +205,7 @@ the exact failure. Atomic DOM capture fixes it: the same failed app passes all
 140 checks unchanged. Regression tests still reject untested siblings and permission failures, and
 require coverage for controls that are explicitly re-enabled.
 
-## Interpretation and remaining opportunities
+## Previous-release interpretation and remaining opportunities
 
 The biggest measured waste was repeated transaction round trips and a validator
 race that forced unnecessary model repairs. Both are fixed and published. The
@@ -143,7 +213,7 @@ first instrumented run's 82.632 seconds of board reads fell to 26.346 seconds in
 the successful repeat, but this combines fewer model turns and cheaper reads:
 it is not an isolated per-read benchmark.
 
-The remaining targets are:
+The targets identified at that checkpoint were:
 
 - **Chain dependencies (154.903s):** three waits remain. Further reduction needs a
   specifically verified reservation/accounting design or lower checkpoint latency;
@@ -159,7 +229,7 @@ The remaining targets are:
   combined simulate/prove API would not demonstrate that the work disappeared.
 
 
-The normal flow waits for three dependent Aztec checkpoints, not proven or
+That release waited for three dependent Aztec checkpoints, not proven or
 finalized L1 settlement. SDK transaction waits have no elapsed-time failure
 deadline. One-second receipt polling is not the source of multi-minute waits.
 
@@ -169,7 +239,7 @@ upload or blockchain waits. The six-second Bok reservation proof is a smaller
 target. No unmeasured thread-count speedup is claimed. No hosts were added or resized;
 prover thread counts were unchanged.
 
-## Verification and publication
+## Previous-release verification and publication
 
 Five native contract/SDK scenarios checked transaction order, charge/refund and
 atomic rollback with native proofs disabled. The actual testnet runs then proved
@@ -192,3 +262,17 @@ Evidence: [successful request](../execution/evidence/G21/stable6/bok-latency/pro
 [first profile](../execution/evidence/G21/stable6/bok-latency/profile-first-run.json),
 [implementation checks](../execution/evidence/G21/stable6/bok-latency/implementation-checks.json),
 [publication](../execution/evidence/G21/stable6/bok-latency/publication.json).
+
+## Final fee correction deployed —24October IST
+
+Worker6beaebe9 uses the SDK combined simulation/proof path, estimates actual gas
+with standard padding, and proves once. The failed test's exact final batch was
+confirmed at block1675: measured maximum7.718352075606FEE, actual4.1196781591484FEE.
+Its original16 provider calls and billing were unchanged; canonical charge83256
+and refund166744 microUSDC. The failure reply rendered automatically. This was an
+operator-intervened failed request, not a successful latency benchmark. The next
+fresh test will measure the normal path through actual application publication.
+
+The owner reiterates that all old test application data is disposable. Retaining
+old releases, accounts or incomplete runs is not a delivery requirement; do not
+add migration, recovery or backward compatibility work for it.

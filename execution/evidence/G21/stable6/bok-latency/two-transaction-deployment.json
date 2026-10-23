@@ -1,0 +1,93 @@
+{
+  "pluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02",
+  "escrow": {
+    "version": 2,
+    "address": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+    "deployer": "0x0233a0ebe93af15f273c200ce05a893ae2c7e87c0b24196eec705c1d09f6ceaa",
+    "originalContractClassId": "0x00a1d7347b3931e365c56dfd7a76317651afcaf8a8af09728dd818dc197fe277",
+    "currentContractClassId": "0x00a1d7347b3931e365c56dfd7a76317651afcaf8a8af09728dd818dc197fe277",
+    "salt": "0x24b0d6a500873a1b1c16307e9216b66164e4ce1b25c8ee8eda8f5ca356e86e22",
+    "initializationHash": "0x1b18e366daf52ccc4cc05783d1fb98410546f40a7cff6b46d098470ca2cd6da6",
+    "immutablesHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "storage": {
+      "board": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+      "operator": "0x119fa1d976f386eb0b3577a9661c923ce02ca500fbc1e68096718aa7f24948e5",
+      "owner": "0x0233a0ebe93af15f273c200ce05a893ae2c7e87c0b24196eec705c1d09f6ceaa",
+      "l1_chain": "0x0000000000000000000000000000000000000000000000000000000000aa36a7",
+      "version": "0x00000000000000000000000000000000000000000000000000000000287cb646"
+    }
+  },
+  "portal": "0x9b4c7f1173d587fb1769c8bad0959eb8ff64ab48",
+  "deploymentTransaction": "0x0cd0008ed181ca8bb35c14bebbdd4dde7c38fa594dd121460faf585043a38ec6",
+  "bindingTransaction": "0x0a9879ce877ed58a0fadf6ed688d870f158e4c2247c63bd567761bc8458a5ef5",
+  "aggregate": {
+    "router": "0x83f9b76475b9e183b712474b2e61791f81b52fec",
+    "routerCodeHash": "0x95f2fad4cfa8fe06e714f0d4c0b5ec43b7c2b56492e289da9b37bb8bacf6d898",
+    "transactionHash": "0x6619e913634ffdb1c123b3b2047b7f225a4d802791dd49c38ff05ad1115257fe",
+    "blockNumber": 11978150,
+    "blockHash": "0xabcc1ff71ab9fb57f535f12f465e4a743ca41ad999d3e7bafe72e32fdf5c83d5"
+  },
+  "credit": {
+    "router": "0x7a8f48615719475d0f184609f4d5415158c7f36f",
+    "routerCodeHash": "0xeaa5a7f6f74be9df1d86de18b9d145b0b98cb82b35bd56445c7424506bc5e702",
+    "transactionHash": "0xf6fe7c8348d0a4e6dd8abaa5f83f3178c8322af4165930c33582799bdb3d2ee0",
+    "blockNumber": 11978158,
+    "blockHash": "0x2744725a4ea9bc4ff7f3407c24718f34c11e4135eb5c0d78749488626fdc11e7"
+  },
+  "schemaVersion": 1,
+  "source": "a6d3730972833dcb6efa165df209147a71438921",
+  "candidateFiles": 103,
+  "boardReplaced": false,
+  "accountsReplaced": false,
+  "repositoryNamespacePreserved": true,
+  "readiness": {
+    "status": "succeeded",
+    "scope": "portal-registration",
+    "canonical": true,
+    "escrow": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+    "portal": "0x9b4c7f1173d587fb1769c8bad0959eb8ff64ab48",
+    "pluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02",
+    "portalReady": true,
+    "registrationReady": true,
+    "hostedServiceReady": false
+  },
+  "registerReceipt": {
+    "observedAt": "2026-10-23T17:38:37.888Z",
+    "receipts": [
+      {
+        "hash": "0x09b1643593858b296beca08b9164d580ae29c0518999968f013f2cd2248e081a",
+        "status": "checkpointed",
+        "executionResult": "success",
+        "blockNumber": 1510,
+        "blockHash": "0x0dcd3af96b8b68fb03c171ecbe27769a42a7755dc1425624d9e09c6732556c6a",
+        "canonical": true
+      }
+    ]
+  },
+  "bindingReceipt": {
+    "observedAt": "2026-10-23T17:34:01.693Z",
+    "receipts": [
+      {
+        "hash": "0x0a9879ce877ed58a0fadf6ed688d870f158e4c2247c63bd567761bc8458a5ef5",
+        "status": "proven",
+        "executionResult": "success",
+        "blockNumber": 1501,
+        "blockHash": "0x1fb99b7cf0a3346557f485990181bc132167218f236323580aac144340a980a6",
+        "canonical": true
+      }
+    ]
+  },
+  "deploymentReceipt": {
+    "status": "succeeded",
+    "scope": "constructor-only",
+    "canonical": true,
+    "transactionHash": "0x0cd0008ed181ca8bb35c14bebbdd4dde7c38fa594dd121460faf585043a38ec6",
+    "blockNumber": 1496,
+    "blockHash": "0x07acaed6362154eafbb8a1eb35403992564cea8edbdc8eb8ebc71ba88a57094a",
+    "escrow": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+    "portalReady": false,
+    "registrationReady": false,
+    "hostedServiceReady": false,
+    "profile": "rolling-private-bok-constructor/v1"
+  }
+}

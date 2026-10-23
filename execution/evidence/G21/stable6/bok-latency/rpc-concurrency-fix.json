@@ -1,0 +1,13 @@
+{
+  "source": "1db773428a96885bb6f58ede64a4d6762bc8bf84",
+  "cause": "Thirteen concurrent RPC batches exceeded the eight-request query gateway limit during distinct latest and checkpointed snapshots; HTTP429 was reproduced.",
+  "fix": "Use SDK Semaphore with four in-flight batches. Preserve parallel reads and release the slot after response validation on every outcome. No retries or sleeps added.",
+  "verification": {
+    "integratedOperationsAndEscrowTests": 143,
+    "passed": 143,
+    "failed": 0,
+    "exactLiveReadOnlyGuardMs": 296,
+    "liveResponses": "all HTTP200"
+  },
+  "independentReview": "Root reviewed agent implementation before integration."
+}

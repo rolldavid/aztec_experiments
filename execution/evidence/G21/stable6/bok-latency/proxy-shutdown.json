@@ -1,0 +1,155 @@
+{
+  "source": "dd45627af0d048234e7d84d3c652349d7cc3ec4d",
+  "checks": {
+    "focusedHttpTests": 49,
+    "independentReview": true,
+    "effectiveSystemdOrderVerified": true,
+    "systemdAnalyzeVerify": true
+  },
+  "observations": [
+    {
+      "unit": "rolling-application.service",
+      "state": {
+        "MainPID": "630303",
+        "Result": "success",
+        "ExecMainCode": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    {
+      "unit": "rolling-application-proxy.service",
+      "state": {
+        "MainPID": "630328",
+        "Result": "success",
+        "ExecMainCode": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    {
+      "unit": "board-prover.service",
+      "state": {
+        "MainPID": "630292",
+        "Result": "success",
+        "ExecMainCode": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    {
+      "unit": "board-prover-proxy.service",
+      "state": {
+        "MainPID": "630307",
+        "Result": "success",
+        "ExecMainCode": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    {
+      "unit": "rolling-node.service",
+      "state": {
+        "MainPID": "561964",
+        "Result": "success",
+        "ExecMainCode": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    {
+      "unit": "rolling-query.service",
+      "state": {
+        "MainPID": "565186",
+        "Result": "success",
+        "ExecMainCode": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    {
+      "unit": "rolling-moderator.service",
+      "state": {
+        "MainPID": "567551",
+        "Result": "success",
+        "ExecMainCode": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    {
+      "timestamp": "1792779233659167",
+      "unit": "init.scope",
+      "message": "Stopping rolling-application.service - Rolling application reader and browser wallet..."
+    },
+    {
+      "timestamp": "1792779234110612",
+      "unit": "init.scope",
+      "message": "rolling-application.service: Deactivated successfully."
+    },
+    {
+      "timestamp": "1792779234110895",
+      "unit": "init.scope",
+      "message": "Stopped rolling-application.service - Rolling application reader and browser wallet."
+    },
+    {
+      "timestamp": "1792779234111115",
+      "unit": "init.scope",
+      "message": "rolling-application.service: Consumed 38.947s CPU time, 409.6M memory peak, 0B memory swap peak."
+    },
+    {
+      "timestamp": "1792779234114722",
+      "unit": "init.scope",
+      "message": "Stopping rolling-application-proxy.service - Private CloudFront entry point for Rolling application..."
+    },
+    {
+      "timestamp": "1792779234118450",
+      "unit": "init.scope",
+      "message": "rolling-application-proxy.service: Deactivated successfully."
+    },
+    {
+      "timestamp": "1792779234118679",
+      "unit": "init.scope",
+      "message": "Stopped rolling-application-proxy.service - Private CloudFront entry point for Rolling application."
+    },
+    {
+      "timestamp": "1792779234520205",
+      "unit": "init.scope",
+      "message": "Starting rolling-application.service - Rolling application reader and browser wallet..."
+    },
+    {
+      "timestamp": "1792779234556197",
+      "unit": "init.scope",
+      "message": "Started rolling-application.service - Rolling application reader and browser wallet."
+    },
+    {
+      "timestamp": "1792779234616262",
+      "unit": "init.scope",
+      "message": "Starting rolling-application-proxy.service - Private CloudFront entry point for Rolling application..."
+    },
+    {
+      "timestamp": "1792779234668450",
+      "unit": "init.scope",
+      "message": "Started rolling-application-proxy.service - Private CloudFront entry point for Rolling application."
+    }
+  ],
+  "browser": {
+    "status": 200,
+    "openedAt": "2026-10-23T18:07:32.649Z",
+    "first": ": connected\n\nevent: revision\ndata: {\"schemaVersion\":1,\"revision\":\"1f32c981-cd55-42ba-b1fb-33bb25d183e2:5:2611\",\"checkpoint\":{\"number\":1534,\"hash\":\"0x24ef7d4e072441da643eff677d7e388b35500cb97bec9e987d86a035d0ed0f11\"}}\n\n",
+    "endedAt": "2026-10-23T18:13:53.742Z",
+    "cleanEOF": true,
+    "after": {
+      "status": 200,
+      "at": "2026-10-23T18:27:22.476Z",
+      "first": ": connected\n\nevent: revision\ndata: {\"schemaVersion\":1,\"revision\":\"adf8d0d4-0032-48c1-b56c-762f1718918c:2:1458\",\"checkpoint\":{\"number\":1551,\"hash\":\"0x0c43b00a5b8319923e48f6e074b9ffc61b94748b81d0118a939de0212ec3eaa3\"}}\n\n"
+    }
+  }
+}

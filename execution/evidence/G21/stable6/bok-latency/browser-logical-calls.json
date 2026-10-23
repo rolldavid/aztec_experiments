@@ -1,0 +1,123 @@
+{
+  "schema": 1,
+  "measurement": "Logical application calls observed from existing focused test fixtures. Development doubles, not a native chain or wall-time benchmark.",
+  "beforeRevision": "061aa451",
+  "afterRevision": "be2232e1333a65f7a3d3d11f7ab6ba50e01ea4e4",
+  "scenario": "Warm session, main-board atomic Bok reply: prepare immediate then submit including retained late callback",
+  "testSource": "shared/rolling/application.test.mjs fixture/bokFixture/bokReplyFixture reused with assertions for exactly one strict estimate and one send",
+  "coldSessionCaveat": "Initial immutable plugin binding adds one get_plugin public simulation unless readBokStatus already verified it.",
+  "scopeCaveat": "Does not count SDK-internal RPCs or proof execution; private-fee implementation uses the fixture stub.",
+  "before": {
+    "preparationReads": [
+      "get_post",
+      "main_policy",
+      "get_screen_hints",
+      "get_plugin",
+      "balance_of"
+    ],
+    "logicalViewCalls": {
+      "get_post": 3,
+      "main_policy": 1,
+      "get_screen_hints": 1,
+      "get_plugin": 3,
+      "balance_of": 2
+    },
+    "publicWalletSimulations": 7,
+    "privateUtilities": 3,
+    "nodeCalls": [
+      {
+        "phase": "prepare",
+        "kind": "node",
+        "name": "getBlockData"
+      },
+      {
+        "phase": "submit",
+        "kind": "node",
+        "name": "getBlockData"
+      },
+      {
+        "phase": "after-proof-callback",
+        "kind": "node",
+        "name": "getBlockData"
+      }
+    ],
+    "strictTransactionSimulations": 1,
+    "sends": 1,
+    "feePreparations": 1,
+    "events": [
+      {
+        "phase": "prepare",
+        "kind": "node",
+        "name": "getBlockData"
+      },
+      {
+        "phase": "submit",
+        "kind": "node",
+        "name": "getBlockData"
+      },
+      {
+        "phase": "submit",
+        "kind": "sdk",
+        "name": "preparePrivateFeePayment"
+      },
+      {
+        "phase": "submit",
+        "kind": "sdk",
+        "name": "estimatePrivateFeeTransaction"
+      },
+      {
+        "phase": "after-proof-callback",
+        "kind": "node",
+        "name": "getBlockData"
+      }
+    ]
+  },
+  "after": {
+    "preparationReads": [
+      "get_screen_hints"
+    ],
+    "logicalViewCalls": {
+      "get_screen_hints": 1
+    },
+    "publicWalletSimulations": 0,
+    "privateUtilities": 1,
+    "nodeCalls": [
+      {
+        "phase": "prepare",
+        "kind": "node",
+        "name": "getPublicStorageAt"
+      },
+      {
+        "phase": "prepare",
+        "kind": "node",
+        "name": "getBlockData"
+      }
+    ],
+    "strictTransactionSimulations": 1,
+    "sends": 1,
+    "feePreparations": 1,
+    "events": [
+      {
+        "phase": "prepare",
+        "kind": "node",
+        "name": "getPublicStorageAt"
+      },
+      {
+        "phase": "prepare",
+        "kind": "node",
+        "name": "getBlockData"
+      },
+      {
+        "phase": "submit",
+        "kind": "sdk",
+        "name": "preparePrivateFeePayment"
+      },
+      {
+        "phase": "submit",
+        "kind": "sdk",
+        "name": "estimatePrivateFeeTransaction"
+      }
+    ]
+  },
+  "wallTimeClaim": null
+}

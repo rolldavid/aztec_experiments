@@ -1,0 +1,23 @@
+{
+  "baseSourceCommit": "a6d3730972833dcb6efa165df209147a71438921",
+  "runtimePatchReceiptSha256": "eff6ffc423d4f1771d0d14a39829da1e8544909de846f8122eb4f9b434643961",
+  "status": "ready",
+  "kind": "bok",
+  "commit": "dd45627af0d048234e7d84d3c652349d7cc3ec4d",
+  "source": "/opt/rolling-bok/releases/two-tx-a6d3730972833dcb6efa165df209147a71438921",
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null,
+    "lastSuccess": null
+  },
+  "observedAt": "2026-10-23T18:13:33.080402+00:00",
+  "pids": {
+    "rolling-bok-testnet.service": 244725,
+    "rolling-bok-artifact-proxy.service": 244727
+  },
+  "sourcePinsSha256": "10363306543f8ceb6ff08e47faea7d1c28328ff04a0551cb341814800e0df85d",
+  "oldReceiver": "0x29c5c41fae8d4d0460e30ba13c56160206e8bc54922df727275c9ecce88c9432",
+  "newReceiver": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+  "pluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02"
+}

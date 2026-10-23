@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate_verified_live_acceptance_pending",
+  "at": "2026-10-23T17:33:01.503973+00:00",
+  "source": "a6d3730972833dcb6efa165df209147a71438921",
+  "transactions": {
+    "posting": "authorize_request and board post reserve budget atomically",
+    "reply": "actual settlement, reply publication and remaining budget refund atomically",
+    "separateReservationRemoved": true
+  },
+  "checks": {
+    "contractNoirPassed": 75,
+    "contractRuntimeJsPassed": 241,
+    "integratedBrowserPassed": 545,
+    "integratedWorkerPassed": 167,
+    "integratedWorkerSkipped": 2,
+    "nativeAtomicQualifier": {
+      "passed": true,
+      "proofs": false,
+      "fixturePortal": "disposable EOA canonical Inbox messages; token custody not tested",
+      "transactions": [
+        {
+          "label": "deploy-board",
+          "txHash": "0x2b6798f2fc725cf5830362c40d38c7de052520b56849043086fc0447552400b7",
+          "executionResult": "success",
+          "blockNumber": 1
+        },
+        {
+          "label": "deploy-bok",
+          "txHash": "0x23fc31bc517cdc5ed2b4347580c493ad9f18e9fc740ed0194a17a25a5403bc6f",
+          "executionResult": "success",
+          "blockNumber": 2
+        },
+        {
+          "label": "configure",
+          "txHash": "0x198f59baa30ee2271bfcf095f5b3a00cb39900c0157162223f5a6269e1980f4f",
+          "executionResult": "success",
+          "blockNumber": 3
+        },
+        {
+          "label": "claim-credit",
+          "txHash": "0x2bce147e7c7e8cfd51c1683e42942b11267abbf4d00d59010805f865db4a7c6b",
+          "executionResult": "success",
+          "blockNumber": 5
+        },
+        {
+          "label": "claim-deposit",
+          "txHash": "0x25217fa93f332374451aae44d3650e5493a9e76344d1b6f8486a44905d663580",
+          "executionResult": "success",
+          "blockNumber": 7
+        },
+        {
+          "label": "authorize-post",
+          "txHash": "0x141e2ae5c6812609c0b1ceaf705727479e5d1d6298aa07d8fc76b7fe190b5a81",
+          "payloadCalls": [
+            "authorize_request",
+            "post_with_bok"
+          ],
+          "kernelCalls": [
+            {
+              "selector": "0x144ae897",
+              "address": "0x1352cb920ab19ad3664868149d9661c86ebbdfc5d93896f1dd8d5fe792564a85"
+            },
+            {
+              "selector": "0x2be5c5e1",
+              "address": "0x0d705b079b62362207ff8f422d6980064fdeb5e2faa1e4eaeadc866631d5a7b4"
+            }
+          ],
+          "payloadSelectors": [
+            "0x10f7ac1a",
+            "0x04cce454"
+          ],
+          "nonRevertible": 0,
+          "revertible": 2,
+          "executionResult": "success",
+          "blockNumber": 9
+        },
+        {
+          "label": "final-revert",
+          "txHash": "0x276a3db720075b4c179c4313fb157d457cb68ebc8cd0cbc1574690a73c6e9391",
+          "payloadCalls": [
+            "settle",
+            "publish_reply",
+            "finish"
+          ],
+          "kernelCalls": [
+            {
+              "selector": "0x515b0e67",
+              "address": "0x1352cb920ab19ad3664868149d9661c86ebbdfc5d93896f1dd8d5fe792564a85"
+            },
+            {
+              "selector": "0x7f96335a",
+              "address": "0x1352cb920ab19ad3664868149d9661c86ebbdfc5d93896f1dd8d5fe792564a85"
+            },
+            {
+              "selector": "0xaff23ea8",
+              "address": "0x1352cb920ab19ad3664868149d9661c86ebbdfc5d93896f1dd8d5fe792564a85"
+            }
+          ],
+          "payloadSelectors": [
+            "0x515b0e67",
+            "0x7f96335a",
+            "0xaff23ea8"
+          ],
+          "nonRevertible": 0,
+          "revertible": 3,
+          "executionResult": "reverted",
+          "blockNumber": 10
+        },
+        {
+          "label": "final-success",
+          "txHash": "0x2a2798a49e2fff5af5ec464c59102af7bafe38a5be359d52e0f21e364a89a800",
+          "payloadCalls": [
+            "settle",
+            "publish_reply",
+            "finish"
+          ],
+          "kernelCalls": [
+            {
+              "selector": "0x515b0e67",
+              "address": "0x1352cb920ab19ad3664868149d9661c86ebbdfc5d93896f1dd8d5fe792564a85"
+            },
+            {
+              "selector": "0x7f96335a",
+              "address": "0x1352cb920ab19ad3664868149d9661c86ebbdfc5d93896f1dd8d5fe792564a85"
+            },
+            {
+              "selector": "0xaff23ea8",
+              "address": "0x1352cb920ab19ad3664868149d9661c86ebbdfc5d93896f1dd8d5fe792564a85"
+            }
+          ],
+          "payloadSelectors": [
+            "0x515b0e67",
+            "0x7f96335a",
+            "0xaff23ea8"
+          ],
+          "nonRevertible": 0,
+          "revertible": 3,
+          "executionResult": "success",
+          "blockNumber": 11
+        },
+        {
+          "label": "rollback-claim-deposit",
+          "txHash": "0x0f813304c55a52db649c404d79ac988244ee18feaeeb75180c1c2e5420a3f14f",
+          "executionResult": "success",
+          "blockNumber": 13
+        },
+        {
+          "label": "authorize-post-revert",
+          "txHash": "0x192bf9c440e41abbf181915b556d58749debf3a6cbffa3f1559fbe32304e5e0a",
+          "payloadCalls": [
+            "authorize_request",
+            "post_with_bok"
+          ],
+          "kernelCalls": [
+            {
+              "selector": "0x144ae897",
+              "address": "0x1352cb920ab19ad3664868149d9661c86ebbdfc5d93896f1dd8d5fe792564a85"
+            },
+            {
+              "selector": "0x2be5c5e1",
+              "address": "0x0d705b079b62362207ff8f422d6980064fdeb5e2faa1e4eaeadc866631d5a7b4"
+            }
+          ],
+          "payloadSelectors": [
+            "0x10f7ac1a",
+            "0x04cce454"
+          ],
+          "nonRevertible": 0,
+          "revertible": 2,
+          "executionResult": "reverted",
+          "blockNumber": 15
+        }
+      ],
+      "checks": [
+        "authorization, board activation and full budget reservation share the posting transaction",
+        "failed reply rolls back settlement and refund",
+        "single final transaction settles120 publishes reply and refunds480",
+        "actual kernel forward execution order verified",
+        "authorization and post rollback together",
+        "successful invocation requires exactly posting and final reply transactions"
+      ],
+      "stage": "authorize-post-revert"
+    }
+  },
+  "privateCircuitEquality": [
+    {
+      "name": "authorize_request",
+      "bytecodeUnchanged": true,
+      "vkUnchanged": true,
+      "abiUnchanged": true
+    },
+    {
+      "name": "cancel",
+      "bytecodeUnchanged": true,
+      "vkUnchanged": true,
+      "abiUnchanged": true
+    },
+    {
+      "name": "claim",
+      "bytecodeUnchanged": true,
+      "vkUnchanged": true,
+      "abiUnchanged": true
+    },
+    {
+      "name": "expire",
+      "bytecodeUnchanged": true,
+      "vkUnchanged": true,
+      "abiUnchanged": true
+    },
+    {
+      "name": "subtract_more",
+      "bytecodeUnchanged": true,
+      "vkUnchanged": true,
+      "abiUnchanged": true
+    },
+    {
+      "name": "withdraw",
+      "bytecodeUnchanged": true,
+      "vkUnchanged": true,
+      "abiUnchanged": true
+    }
+  ],
+  "review": {
+    "contractRuntime": "stable_release_packaging",
+    "browser": "fresh_account_review",
+    "worker": "fresh_account_review after transient validation cache correction"
+  },
+  "liveAcceptance": "Not run yet. No speedup or published-state claim."
+}

@@ -1,0 +1,18 @@
+{
+  "source": "6beaebe9",
+  "observedBefore": {
+    "operatorBalanceFee": "11.6042651066834",
+    "sdkDefaultMaximumFee": "13.92375413638722",
+    "declaredL2Gas": 6540000,
+    "declaredDaGas": 117624,
+    "historicalRejectionReasonRetained": false
+  },
+  "fix": "Native PXE simulateAndProveTx with one synchronized anchor. Use SDK getGasLimits standard10 percent padding bounded by network admission, retain fee prices/calls/auth/nonce, prove once. Persist measured fee caps.",
+  "verification": {
+    "integratedTests": 48,
+    "passed": 48,
+    "failed": 0,
+    "realSdkTypes": true
+  },
+  "operatorAction": "Explicit once-only replacement of exact dropped final reply intent, no provider replay or new payment; pending live execution."
+}

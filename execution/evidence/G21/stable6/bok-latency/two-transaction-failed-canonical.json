@@ -1,0 +1,51 @@
+{
+  "requestId": "0x2e48590e79bf7557f82445a6610af29d7956e170e80203109df1820e80cf7d1c",
+  "receiver": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+  "pluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02",
+  "anchor": {
+    "number": 1583,
+    "hash": "0x160a40965eb0c9fd86bf28faf801cd61296a832f27df266b9047c4ca2bf01d14"
+  },
+  "state": "4",
+  "sequence": "1",
+  "budget": "250000",
+  "available": "0",
+  "reserved": "0",
+  "charged": "24776",
+  "refunded": "225224",
+  "primaryDone": "1",
+  "secondaryDone": "1",
+  "receipt": "0x1e5f7ac614b119f01c557391236ac491d504e9d4f182b5a86a77bd0be18f15c2",
+  "aggregateCharge": "24776",
+  "finished": true,
+  "phase": "finished",
+  "operations": [
+    {
+      "method": "finalize_reply",
+      "phase": "submission-unknown",
+      "txHash": "0x1440627230ae477da447632eb76eeeecb032db62a9a62270c11633f9ba87d2f1"
+    }
+  ],
+  "transactions": [
+    {
+      "method": "authorize_and_post",
+      "txHash": "0x02f89cbbdd20715378cbacac9126ecbf0412f7d7c4a2d241ed7046f736b36919",
+      "status": "checkpointed",
+      "executionResult": "success",
+      "blockNumber": 1578,
+      "blockHash": "0x14d1790126f47a27822eaec05b062f0c7c8ef0b674b38197319e31b804a1ba0e",
+      "checkpointed": true,
+      "canonical": true
+    },
+    {
+      "method": "finalize_reply",
+      "txHash": "0x1440627230ae477da447632eb76eeeecb032db62a9a62270c11633f9ba87d2f1",
+      "status": "checkpointed",
+      "executionResult": "success",
+      "blockNumber": 1580,
+      "blockHash": "0x0977b1c7cccfe2420a01298b38f97175bd5cf8936a3606a71b75b2ea656fb84b",
+      "checkpointed": true,
+      "canonical": true
+    }
+  ]
+}

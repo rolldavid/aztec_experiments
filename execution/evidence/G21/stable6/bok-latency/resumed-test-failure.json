@@ -1,0 +1,352 @@
+{
+  "requestId": "0x00f0cfd0e2db1c35636e787d05300fe050aa1d80c8019f1eb9803170757be4b8",
+  "result": "blocked-final-submission; no app publication or canonical accounting",
+  "resumedStartedAt": "2026-10-23T19:48:33.338001+00:00",
+  "resumedAttemptEndedAt": "2026-10-23T19:50:23.525100+00:00",
+  "resumedAttemptDurationMs": 110187.099,
+  "disjointPartitionMs": {
+    "other": 3598.496,
+    "boardReads": 2259.112,
+    "repositoryTools": 1153.033,
+    "escrowGuard": 4425.789,
+    "providerModel": 84909.177,
+    "providerPreflight": 7127.097,
+    "validation": 131.589,
+    "operatorProof": 6300.788,
+    "operatorSubmission": 282.018
+  },
+  "calls": [
+    {
+      "id": 0,
+      "phase": "received",
+      "charge": "5493",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 8876,
+        "completionTokens": 149,
+        "cachedTokens": 0,
+        "charge": "5493"
+      },
+      "tools": [
+        "read_file",
+        "read_file"
+      ]
+    },
+    {
+      "id": 1,
+      "phase": "received",
+      "charge": "5431",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 12936,
+        "completionTokens": 343,
+        "cachedTokens": 8864,
+        "charge": "5431"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 2,
+      "phase": "received",
+      "charge": "3525",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 13231,
+        "completionTokens": 146,
+        "cachedTokens": 12928,
+        "charge": "3525"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 3,
+      "phase": "received",
+      "charge": "3463",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 13401,
+        "completionTokens": 129,
+        "cachedTokens": 13216,
+        "charge": "3463"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 4,
+      "phase": "received",
+      "charge": "3728",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 13528,
+        "completionTokens": 200,
+        "cachedTokens": 13376,
+        "charge": "3728"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 5,
+      "phase": "received",
+      "charge": "3671",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 13729,
+        "completionTokens": 164,
+        "cachedTokens": 13504,
+        "charge": "3671"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 6,
+      "phase": "received",
+      "charge": "6533",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 13906,
+        "completionTokens": 975,
+        "cachedTokens": 13728,
+        "charge": "6533"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 7,
+      "phase": "received",
+      "charge": "3751",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 14885,
+        "completionTokens": 39,
+        "cachedTokens": 13888,
+        "charge": "3751"
+      },
+      "tools": [
+        "read_file"
+      ]
+    },
+    {
+      "id": 8,
+      "phase": "received",
+      "charge": "6314",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 16590,
+        "completionTokens": 595,
+        "cachedTokens": 14880,
+        "charge": "6314"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 9,
+      "phase": "received",
+      "charge": "4044",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 17209,
+        "completionTokens": 12,
+        "cachedTokens": 16576,
+        "charge": "4044"
+      },
+      "tools": [
+        "check_workspace"
+      ]
+    },
+    {
+      "id": 10,
+      "phase": "received",
+      "charge": "4571",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 17320,
+        "completionTokens": 204,
+        "cachedTokens": 17184,
+        "charge": "4571"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 11,
+      "phase": "received",
+      "charge": "4888",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 17420,
+        "completionTokens": 291,
+        "cachedTokens": 17312,
+        "charge": "4888"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 12,
+      "phase": "received",
+      "charge": "4966",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 17498,
+        "completionTokens": 310,
+        "cachedTokens": 17408,
+        "charge": "4966"
+      },
+      "tools": [
+        "edit_file"
+      ]
+    },
+    {
+      "id": 13,
+      "phase": "received",
+      "charge": "4051",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 17722,
+        "completionTokens": 19,
+        "cachedTokens": 17472,
+        "charge": "4051"
+      },
+      "tools": [
+        "read_file"
+      ]
+    },
+    {
+      "id": 14,
+      "phase": "received",
+      "charge": "12390",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 19755,
+        "completionTokens": 2098,
+        "cachedTokens": 17696,
+        "charge": "12390"
+      },
+      "tools": [
+        "write_file"
+      ]
+    },
+    {
+      "id": 15,
+      "phase": "received",
+      "charge": "6437",
+      "finishReason": "tool_calls",
+      "modelId": "kimi-k2-5",
+      "maxTokens": 8192,
+      "usage": {
+        "promptTokens": 21732,
+        "completionTokens": 280,
+        "cachedTokens": 19744,
+        "charge": "6437"
+      },
+      "tools": [
+        "check_workspace"
+      ]
+    }
+  ],
+  "aggregateCharge": "83256",
+  "feeAdmission": {
+    "balance": "11604265106683400000",
+    "currentDefaultMaximumFee": "13923754136387220000",
+    "historicalRejectionTextRetained": false
+  },
+  "schemaFailure": "Browser tests exceed 64 steps",
+  "candidate": "8b869478d368c1fcce52650a3a60f691e57641d1",
+  "userTx": "0x1b0554f36504aeeb04399e9ef6ff15c21084283446705cb33b9ba02b68fd2898",
+  "operatorAttemptTx": "0x10589a2afd800130bca6b4881ee21f0d0051d42ab29ac8538632de6603c467b8",
+  "canonicalObservation": {
+    "requestId": "0x00f0cfd0e2db1c35636e787d05300fe050aa1d80c8019f1eb9803170757be4b8",
+    "receiver": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+    "pluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02",
+    "anchor": {
+      "number": 1655,
+      "hash": "0x1619d613ef204001c7c90ec98bfffcb38af9f39678dbc97ca9bda97060c76444"
+    },
+    "state": "2",
+    "sequence": "0",
+    "budget": "250000",
+    "available": "0",
+    "reserved": "250000",
+    "charged": "0",
+    "refunded": "0",
+    "primaryDone": "0",
+    "secondaryDone": "0",
+    "receipt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "aggregateCharge": "83256",
+    "finished": false,
+    "phase": "final-intent",
+    "operations": [
+      {
+        "method": "finalize_reply",
+        "phase": "submission-unknown",
+        "txHash": "0x10589a2afd800130bca6b4881ee21f0d0051d42ab29ac8538632de6603c467b8"
+      }
+    ],
+    "transactions": [
+      {
+        "method": "authorize_and_post",
+        "txHash": "0x1b0554f36504aeeb04399e9ef6ff15c21084283446705cb33b9ba02b68fd2898",
+        "status": "finalized",
+        "executionResult": "success",
+        "blockNumber": 1591,
+        "blockHash": "0x29fb9296d311f7522516b632a7c87912693232cf125a527fa4c7d31b4bab7174",
+        "checkpointed": true,
+        "canonical": true
+      },
+      {
+        "method": "finalize_reply",
+        "txHash": "0x10589a2afd800130bca6b4881ee21f0d0051d42ab29ac8538632de6603c467b8",
+        "status": "dropped",
+        "blockHash": null,
+        "checkpointed": false,
+        "canonical": false
+      }
+    ]
+  }
+}

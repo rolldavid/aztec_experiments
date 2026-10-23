@@ -1,0 +1,27 @@
+{
+  "source": "ae9d60b807316d5ce0e2df38e47c4129fb8178e8",
+  "observedDefects": [
+    "Every process initialization started new index generation from deployment despite persisted complete same-scope state",
+    "Known pre-provider reservation guard failure occurred after possibly-sent was persisted",
+    "Hosted dispatcher excluded quoted invocation-v1 continuation"
+  ],
+  "changes": [
+    "Explicit private service-owned provenance permits same-generation resume with scope/version/deployment and canonical checkpoint/cursor checks; default untrusted caches still reauthenticate",
+    "All pre-dispatch guards finish before durable possibly-sent; actual provider execute follows write",
+    "Strict original unsent first quote can repeat preflight checks; paid/possibly-sent/received calls excluded"
+  ],
+  "review": {
+    "index": "Root independently approved network_upgrade_check implementation",
+    "dispatch": "stable_release_packaging and root independently approved fresh_account_review implementation"
+  },
+  "tests": {
+    "integratedPassed": 408,
+    "existingOptInSkipped": 2,
+    "failed": 0
+  },
+  "limitation": "A service account is trusted to maintain its private database; provenance is not cryptographic authentication of imported state.",
+  "publicationPrecheck": {
+    "coreResult": "Stopped before service shutdown: deployment process outside the DynamicUser mount namespace could not traverse private state directory. Existing service remained running.",
+    "nextAction": "Perform service-owned database reads and adoption inside retained service mount namespace, without changing directory permissions."
+  }
+}

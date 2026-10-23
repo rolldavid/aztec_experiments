@@ -9842,20 +9842,20 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "id": "G21-bok-latency-20261023",
-    "status": "done",
+    "id": "G21-bok-latency2-20261023",
+    "status": "active",
     "owner": "root",
     "branch": "codex/rolling-chat-account-ux",
-    "at": "2026-10-23T13:40:49.724912+00:00",
-    "request": "Profile and dramatically reduce actual Post-to-settled-and-rendered Bok response latency.",
+    "at": "2026-10-23T20:02:32Z",
+    "request": "Collapse remaining Bok transaction dependencies where possible and eliminate duplicated browser preparation, board reads, validation and handoffs.",
     "scope": [
       "Browser post preparation, request authorization and submission",
       "Bok detection, model/tool work, proving, accounting and reply publication",
       "Browser response rendering and terminal settlement",
       "Existing services, funded disposable test identity and monthly hosting budget"
     ],
-    "source": "ab72bc43290d72c6209828a3bbfacc9cadb7f071",
-    "verification": "Real-proof repeat:443.421s terminal,440.354s automatic DOM reply;3 Aztec transactions,0 Ethereum; canonical charge45416/refund204584/reserved0. Existing HTML unchanged; new browser tests published, not a controlled fresh-generation benchmark. Validator race repaired;23 real-browser checks,140 unchanged-candidate checks,193 integrated checks and57 balance checks passed. All9 services healthy; final UI-only publication preserves PIDs/configs/assets.",
+    "source": "9450d64b",
+    "verification": "Proxy shutdown fixed and exercised: held feed clean EOF; app451ms, proxy4ms. Core ae9d60b8 and Bok6beaebe9 deployed; native measured fee simulation/proof and precise browser-plan feedback live. Failed test finalization now canonical at block1675; charge83256/refund166744. No successful new two-transaction app publication benchmark yet. Owner reaffirms all old test application state disposable; no preservation, migration or backward compatibility work.",
     "budget": "USD1500/month ongoing hosting; no additional hosts created",
     "paths": [
       "execution/evidence/G21/stable6/",
@@ -9864,7 +9864,7 @@
       "docs/BOK_LATENCY.md"
     ],
     "currentHandover": "START_HERE.md",
-    "nextAction": "Owner may test the published application. No pending request, active delegation or scheduled work. See docs/BOK_LATENCY.md for measured remaining chain/model/browser bottlenecks.",
-    "bokSource": "e600751259d9cdbf79651a8ce8d615caac289e5c"
+    "nextAction": "Fund operator fee balance for fresh test, run actual app update through automatic browser reply and canonical two-transaction accounting, record latency and publish evidence.",
+    "bokSource": "6beaebe922a5934834dc9f4389551c6422971657"
   }
 }

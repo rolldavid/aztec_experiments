@@ -1,0 +1,40 @@
+{
+  "kind": "bok",
+  "commit": "1db773428a96885bb6f58ede64a4d6762bc8bf84",
+  "source": "/opt/rolling-bok/releases/1db773428a96885bb6f58ede64a4d6762bc8bf84",
+  "previousSource": "/opt/rolling-bok/releases/59872032f10c656d1adc86ad4c2af606e60d87de",
+  "sourcePinsSha256": "325a0781e778ea227313cc529767354bbe7776e07ff262643b8795d3fd551faa",
+  "oldPid": "246656",
+  "oldProxyPid": "246658",
+  "status": "ready",
+  "knownUnsentCorrection": {
+    "requestId": "0x00f0cfd0e2db1c35636e787d05300fe050aa1d80c8019f1eb9803170757be4b8",
+    "beforeSha256": "d85c794b420f75f5146c2ed826cc3e30322193bf4f9821d50fd6b0bb2cccedd3",
+    "afterSha256": "cc547b600b0a96e6c7bfc588f645448c7a5ccf90a1a56b81919bd8624c0c238a",
+    "changedField": "privateBok.calls.0.phase",
+    "before": "possibly-sent",
+    "after": "quoted",
+    "at": "2026-10-23T19:48:28.270618+00:00"
+  },
+  "startedAt": "2026-10-23T19:48:32.953622+00:00",
+  "newPid": "248306",
+  "newProxyPid": "248309",
+  "adoption": {
+    "adopted": true,
+    "generation": "12",
+    "checkpoint": {
+      "number": "1651",
+      "hash": "0x2981f65d6aeb6c052b86b5f92094f16ab561dc71fcfa26b26529de375521484b"
+    },
+    "controlSha256": "19ef939bc8bd85bebde4784f92accb37d1753c059c3fd33517f623daec1d96da"
+  },
+  "currentGeneration": "12",
+  "unitSha256": "2b3103497b40e19ad38da2c0d5a3a657023037dd7830316c7a09c6e6a3ba603a",
+  "health": {
+    "status": "ready",
+    "state": null,
+    "active": 0,
+    "cacheComparison": null,
+    "lastFailure": null
+  }
+}

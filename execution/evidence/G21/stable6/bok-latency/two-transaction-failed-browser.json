@@ -1,0 +1,127 @@
+{
+  "armedAt": "2026-10-23T18:50:29.908Z",
+  "start": 1453668.8799999952,
+  "measures": [
+    {
+      "name": "rolling.action.sync",
+      "start": 1454118.5399999619,
+      "duration": 6385.540000081062
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 1463873.4499999285,
+      "duration": 3619.430000066757
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 1454118.3600000143,
+      "duration": 13402.329999923706
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 1469361.0749999285,
+      "duration": 3858.6150000095367
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 1473219.705000043,
+      "duration": 9804.084999918938
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 1469360.8999999762,
+      "duration": 14651.875
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 1484012.794999957,
+      "duration": 0.5099999904632568
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 1484013.3049999475,
+      "duration": 1670.4000000953674
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 1485683.7200000286,
+      "duration": 57823.074999928474
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 1543506.814999938,
+      "duration": 3385.3400000333786
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 1598996.169999957,
+      "duration": 475.56000006198883
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1599446.9349999428,
+      "duration": 24.75499999523163
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 1453677.1299999952,
+      "duration": 147344.16499996185
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 1467520.814999938,
+      "duration": 133497.06500005722
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 1546892.1799999475,
+      "duration": 54129.110000014305
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 1601019.5349999666,
+      "duration": 390.86500000953674
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1601401.5,
+      "duration": 8.860000014305115
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 1601021.625,
+      "duration": 5699.580000042915
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 1617737.2250000238,
+      "duration": 2542.539999961853
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 1744298.894999981,
+      "duration": 631.7549999952316
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1744912.0299999714,
+      "duration": 18.580000042915344
+    }
+  ],
+  "oldBok": [
+    "post-355834085899597651092716265900584086094191200693146854300196327820758895550",
+    "post-7948970953788027846913231778848755604320113844650466894619395361219532493065",
+    "post-1232420978845395865715135457963152140898137581920474587615571320161015618563",
+    "post-9907034343309005096296663133838676714136789402256944178222320900763587777637"
+  ],
+  "reply": {
+    "id": "post-12559751510952924940347582314676279539281332989254352964907398169691150734120",
+    "text": "B\nBokAI assistant\nMain board \u00b7 24 Oct 2026, 00:25\n\nIn reply to an earlier post\n\nThe model returned an invalid tool response. This request is incomplete. No tools from that response were executed.\nView conversation\n0 likes\nReply\nLike\nBookmark\nMore",
+    "renderedAt": "2026-10-23T18:55:27.902Z",
+    "elapsedMs": 291280.6849999428
+  },
+  "clickedAt": "2026-10-23T18:50:36.620Z",
+  "timeOrigin": 1792779982936.7,
+  "result": "failed-generation",
+  "note": "Malformed second write_file arguments after full4096token completion; entire batch rejected, no app publication. This is failure-accounting evidence, not successful performance."
+}

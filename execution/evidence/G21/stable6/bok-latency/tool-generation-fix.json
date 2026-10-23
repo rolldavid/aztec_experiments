@@ -1,0 +1,23 @@
+{
+  "source": "59872032f10c656d1adc86ad4c2af606e60d87de",
+  "observedFailure": {
+    "request": "0x2e48590e79bf7557f82445a6610af29d7956e170e80203109df1820e80cf7d1c",
+    "completionTokens": 4096,
+    "providerFinishReason": "tool_calls",
+    "validFirstToolArgumentBytes": 8036,
+    "malformedSecondToolArgumentBytes": 5256,
+    "executedBatchTools": 0
+  },
+  "changes": [
+    "Exact single-occurrence edit_file tool; same file/path/size and retained-source controls",
+    "Compact edits guidance instead of grouped whole-file writes",
+    "Fresh invocation maxTokens8192, still clamped by model and remaining budget; saved limits unchanged"
+  ],
+  "verification": {
+    "passed": 345,
+    "skippedExistingOptIn": 2,
+    "failed": 0,
+    "independentReview": "fresh_account_review approved code and runtime payload"
+  },
+  "noClaim": "Live successful repeat pending"
+}
