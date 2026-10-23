@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "operation": "same-instance Bok r7i.xlarge to m8a.xlarge",
+  "instanceId": "i-0a7d9957f2b3d7f19",
+  "authorizedBy": "root reviewed plan and final independent packet review",
+  "packetSha256": "f736e1ab915cf758648102ab378666b61c0f91bba8939d240f33130a2a277788",
+  "prepareCommandId": "4bc6503d-6a03-4845-a543-e8c7560e1ce8",
+  "verifyCommandId": "e5b4452a-f8a8-4d59-a674-4542460b9a56",
+  "drainCompletedAt": "2026-10-23T23:43:26.244Z",
+  "verificationCompletedAt": "2026-10-23T23:45:26.067Z",
+  "drain": {
+    "prepared": true,
+    "workerStopped": true,
+    "proxyStopped": true,
+    "memoryMaxGiB": 12,
+    "configUnchanged": true
+  },
+  "verification": {
+    "verified": true,
+    "workerPid": 1180,
+    "physicalCores": 4,
+    "threadsPerCore": 1,
+    "memoryKiB": 16033364,
+    "memoryPeakBytes": 1027035136,
+    "nativeProverThreads": 4,
+    "nodeVersion": "v24.21.0",
+    "configurationAndOriginalUnitsUnchanged": true,
+    "oomEvents": 0
+  },
+  "ec2": {
+    "Id": "i-0a7d9957f2b3d7f19",
+    "Type": "m8a.xlarge",
+    "State": "running",
+    "CPU": {
+      "CoreCount": 4,
+      "ThreadsPerCore": 1
+    },
+    "Private": "172.31.45.95",
+    "Public": "18.206.217.210",
+    "ENI": "eni-09fd71a9b7ea33c9c",
+    "RootVolume": "vol-0ca9cecb276f3094b"
+  },
+  "corePidsAndStatesUnchanged": true,
+  "publicReadbacks": [
+    {
+      "url": "https://d30njln0kead8n.cloudfront.net/",
+      "status": 200,
+      "sha256": "0d8c01a4df092252df4974c0dcc4627596b81d7bffdc0bed3e6d4b30cbf4ca87",
+      "unchanged": true
+    },
+    {
+      "url": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/",
+      "status": 200,
+      "sha256": "5425527585b20ad27ad19cb891084b54a4fd9e500d1f5bda0301410c2e63aba0",
+      "unchanged": true
+    },
+    {
+      "url": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/source.json",
+      "status": 200,
+      "sha256": "54c179b7717ddcf2b20afd8861c0977936f19f6c803f335362e1ebb378d7f85a",
+      "unchanged": true
+    }
+  ],
+  "monthlyForecastUsd": "1444.046031780821917808219179",
+  "monthlySavingUsd": "18.891648",
+  "noNewResources": true,
+  "financialStateRollback": false,
+  "modelOrBlockchainCallsDuringChange": 0,
+  "qualification": "Hardware and service readiness passed; real next-workload proof speed remains unmeasured",
+  "ec2Health": [
+    {
+      "State": "running",
+      "System": "ok",
+      "Instance": "ok"
+    }
+  ],
+  "cpuReadback": {
+    "cpu": {
+      "Model name": "AMD EPYC 9R45",
+      "CPU(s)": "4",
+      "Thread(s) per core": "1",
+      "Core(s) per socket": "4",
+      "Socket(s)": "1",
+      "BogoMIPS": "5199.99"
+    },
+    "observedCpuMHz": [
+      4484.407,
+      4495.497,
+      4484.673,
+      4516.221
+    ],
+    "relevantFlags": [
+      "adx",
+      "avx2",
+      "avx512f",
+      "avx512ifma",
+      "bmi2",
+      "constant_tsc",
+      "nonstop_tsc"
+    ],
+    "exposedPerformanceEventSources": {
+      "software": "1",
+      "uprobe": "9",
+      "cpu": "4",
+      "tracepoint": "2",
+      "kprobe": "8"
+    }
+  },
+  "completedAt": "2026-10-23T23:48:22.337106+00:00",
+  "qualifiedStatus": "service-and-hardware-readiness-verified-real-proof-performance-pending"
+}

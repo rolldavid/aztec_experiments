@@ -2951,7 +2951,7 @@
   "budget_period": "monthly ongoing hosting from20October2026",
   "persistent_hosting_20261020": {
     "status": "persistent-services-restored",
-    "forecastUsd": 1462.937679780822,
+    "forecastUsd": 1444.046031780822,
     "monthlyCeilingUsd": 1500,
     "daysAssumed": 31,
     "forecastEvidence": "execution/evidence/G12/service-restoration-20261020/persistent/monthly-forecast.json",
@@ -2976,10 +2976,11 @@
     },
     "observedAt": "2026-10-20T08:02:48.361201+00:00",
     "scheduledAgentWork": "Deleted at owner request; no recurring agent monitoring. AWS monthly budget remains; not a hard spending cap.",
-    "cutoverEvidence": "execution/evidence/G12/persistent-hosting-20261020/cloud-persistent-readback.json"
+    "cutoverEvidence": "execution/evidence/G12/persistent-hosting-20261020/cloud-persistent-readback.json",
+    "latestForecastAmendment": "execution/evidence/G21/stable6/bok-performance/worker-m8a-activation.json"
   },
   "performance_host_20261024": {
-    "status": "proposed-not-executed",
+    "status": "active-readiness-verified-proof-performance-pending",
     "instanceId": "i-0a7d9957f2b3d7f19",
     "region": "us-east-1",
     "availabilityZone": "us-east-1a",
@@ -3024,6 +3025,11 @@
     "plan": "execution/evidence/G21/stable6/bok-performance/worker-m8a-plan.md",
     "evidence": "execution/evidence/G21/stable6/bok-performance/worker-m8a-cost-proposal.json",
     "authorizedScope": "Existing owner-authorized ongoing hosting and performance work; within1500monthly budget; normal service maintenance only; same instance, no new resources.",
-    "reservedMonthlyTotalUsd": "1462.937679780821917808219179"
+    "reservedMonthlyTotalUsd": "1462.937679780821917808219179",
+    "activatedAt": "2026-10-23T23:48:22.337106+00:00",
+    "activationEvidence": "execution/evidence/G21/stable6/bok-performance/worker-m8a-activation.json",
+    "actualWorkerMemoryMaxBytes": 12884901888,
+    "currentMonthlyForecastUsd": "1444.046031780821917808219179",
+    "rollbackReserveNote": "Keep prior1462.937679780822 reserved ceiling until real proof qualification; actual current type m8a.xlarge costs1444.046031780822 forecast. No new resources."
   }
 }

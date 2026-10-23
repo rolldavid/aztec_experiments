@@ -1,13 +1,12 @@
 # Active performance continuation — 24 October 2026
 
-Root owns integration, browser actions and infrastructure authorization. Published
-392bee96 completed the comparable request in167.038s; no benchmark is active.
-Network owns isolated removal of a duplicate same-operation predecessor receipt
-check, retaining fresh pre/post-proof checks. Packaging independently reviews
-source and infrastructure changes and has completed the native5.25s proof audit.
-Fresh-account owns read-onlym8a.xlarge capacity/memory/cost plan; no host change is
-authorized until exact plan review. Cheaper four physical cores may improve native
-proofs within the existing monthly allowance. No migration or new account work.
+Root owns integration and the next real browser comparison. Worker392bee96's
+previous result was167.038s; same host now m8a.xlarge with four physical cores,
+verified healthy. Network completed normal original-source fixture reset and
+owns read-only run observation. Packaging publishes browser1310bb4e, independently
+reviewed with405integrated tests. Fresh-account audits remaining argument-read
+serialization without changes. No concurrent service mutation during the benchmark.
+No migration or account reset is needed.
 
 ## Live component ownership — 2026-10-19T12:48Z
 

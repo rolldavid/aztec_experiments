@@ -1,0 +1,22 @@
+{
+    "CommandId": "f69d63e3-26de-4cbc-9cdf-27796535b914",
+    "InstanceId": "i-0a7d9957f2b3d7f19",
+    "Comment": "",
+    "DocumentName": "AWS-RunShellScript",
+    "DocumentVersion": "$DEFAULT",
+    "PluginName": "aws:runShellScript",
+    "ResponseCode": 0,
+    "ExecutionStartDateTime": "2026-10-23T23:48:38.352Z",
+    "ExecutionElapsedTime": "PT15.022S",
+    "ExecutionEndDateTime": "2026-10-23T23:48:53.352Z",
+    "Status": "Success",
+    "StatusDetails": "Success",
+    "StandardOutputContent": "{\"status\": \"ready\", \"source\": \"/opt/rolling-bok/releases/392bee960c08086f234f631e8cf5c157cfe3e63b\", \"sourcePinsSha256\": \"b2d29b28384abf67f698d1a4ceb0f85e1d676c66ed511a704c76d43fcc38d08a\", \"configSha256\": \"fc3543d2f224104fe9c6b0a6fc0fdbe6a455030e8a4d0f2b997ba4ddd0a3e636\", \"unitSha256\": \"0b840c1195bff04fe63322046df61b13cff3f08477e3e2a4f17088a972ef0344\", \"oldPid\": \"1180\", \"newPid\": \"2015\", \"newProxyPid\": \"2017\", \"indexGeneration\": \"12\", \"fixture\": {\"operation\": \"disposable-performance-baseline\", \"invocationId\": \"0x8ebaf86fc49414748b3a0104f0fa47e3b495e20b4dd6cc935367b0ff3628b2c1\", \"previousAccepted\": \"5544d5e5562e1af84aee74d35e105bae1319d723\", \"originalBaseline\": \"028da8d40cdd024b67e72956a411aa38a8886c83\", \"acceptedRevision\": \"a0bb1c25eaf35a2cff79fa167300ae4908ecc4d8\", \"tree\": \"a25ff3c2b161e73c2a40e59a73f25567d646bc92\", \"sourceDigest\": \"a3706cc3889448a83a89e947d6e3fdfc10e5539f8423ff6fecccfef8f9397b05\", \"files\": [\"browser-tests.json\", \"index.html\", \"package.json\", \"test.js\"], \"hasClearCompleted\": false, \"mirrorRemoteCommit\": \"7704c4c2747ebaefac4035c9a91e6425f8620cf0\", \"mirrorRemoteTree\": \"a25ff3c2b161e73c2a40e59a73f25567d646bc92\", \"publication\": {\"published\": true, \"repositoryId\": \"2ebf5226acfbe0908c2c87758187b7fe73018b30cc79f9e61484529a9cfcb477\", \"threadId\": \"0x0a8965a3d6d531017a97a74b0c8cf52def931804156d625cf427ff795f8d1e83\", \"acceptedRevision\": \"a0bb1c25eaf35a2cff79fa167300ae4908ecc4d8\", \"publicationId\": \"5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0\", \"artifactUrl\": \"https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/a0bb1c25eaf35a2cff79fa167300ae4908ecc4d8/files/index.html\", \"sourceUrl\": \"https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/a0bb1c25eaf35a2cff79fa167300ae4908ecc4d8/source.json\", \"latestUrl\": \"https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/\", \"latestSourceUrl\": \"https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/source.json\"}}, \"finishedAt\": \"2026-10-23T23:48:53.273449+00:00\"}\n",
+    "StandardOutputUrl": "",
+    "StandardErrorContent": "",
+    "StandardErrorUrl": "",
+    "CloudWatchOutputConfig": {
+        "CloudWatchLogGroupName": "",
+        "CloudWatchOutputEnabled": false
+    }
+}
