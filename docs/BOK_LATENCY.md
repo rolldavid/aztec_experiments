@@ -5,6 +5,40 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
+## Single-execution investigation — performance follow-up
+
+The first attempt to reuse the SDK's simulated private execution exposed an SDK
+mutation: synthetic kernel generation siloed a private log in place while the
+original partial witness still contained the unsiloed value. The real proof then
+failed. The failed attempt never reached transaction submission or model work;
+it is not a successful performance result.
+
+The pinned SDK patch now copies log fields before synthetic simulation, with a
+regression test using native log types. Ordinary funded posting no longer uses
+that synthetic kernel path at all. It executes the private program once, builds
+the actual kernel witnesses once, validates a detached copy of their public
+output with the node, and proves the original witnesses. Public validation still
+checks revert status, actual gas use, and transaction validity before the costly
+proof. It cannot alter the authoritative kernel output. Bok finalization uses the
+same explicit SDK capability, with a fresh fee-balance check before execution.
+
+This distinguishes three different kinds of state: simulation cannot change
+chain state; the native PXE can persist synchronized local facts and capsules;
+and transaction execution constructs transient notes, nullifiers and logs. The
+bug was mutation of a result later reused as proof input, not a simulated chain
+write. The new normal path removes that reuse boundary instead of relying on it.
+
+The low-credit estimator remains a separate fallback. Its repeated probes change
+fee reservation, gas limits, prices or teardown allowance. A reservation-only
+cache would therefore be incorrect. Starting from the maximum available credit
+was also rejected: selecting more fee notes can increase private gas and make an
+otherwise affordable transaction fail. This audit does not claim that the
+fallback is minimal; it documents why those two shortcuts are not equivalent.
+
+The changes passed focused native-orchestration and worker checks. A new real
+browser proof and comparable complete request are required before claiming an
+end-to-end latency improvement from this revision.
+
 ## Successful two-transaction test
 
 The new feature update completed automatically in **464.264 seconds (7m44s)**
