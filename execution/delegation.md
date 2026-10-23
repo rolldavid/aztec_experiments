@@ -1,13 +1,13 @@
-# Active performance work — 24 October 2026
+# Active performance continuation — 24 October 2026
 
-Root integrates and owns real browser transactions and evidence. Latest comparable
-run167.038s is verified, including published app and automatic balance refund.
-Fresh-account agent completed reviewed batched file edits; packaging completed
-independent simulation/validator review and exact392bee96worker publication. Network
-agent completed typed-checkbox correction and verified the canonical benchmark.
-All delegated lanes are idle; no benchmark or service mutation is in progress.
-Only existing hosts and authorized credentials; no state migration or host resize.
-Goal remains active. See docs/BOK_LATENCY.md for measurements and limitations.
+Root owns integration, browser actions and infrastructure authorization. Published
+392bee96 completed the comparable request in167.038s; no benchmark is active.
+Network owns isolated removal of a duplicate same-operation predecessor receipt
+check, retaining fresh pre/post-proof checks. Packaging independently reviews
+source and infrastructure changes and has completed the native5.25s proof audit.
+Fresh-account owns read-onlym8a.xlarge capacity/memory/cost plan; no host change is
+authorized until exact plan review. Cheaper four physical cores may improve native
+proofs within the existing monthly allowance. No migration or new account work.
 
 ## Live component ownership — 2026-10-19T12:48Z
 

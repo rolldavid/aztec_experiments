@@ -1,0 +1,175 @@
+{
+  "scope": "read-only installed native SDK audit; no live changes, paid calls or new proof capture/replay",
+  "liveMeasuredMs": {
+    "whole": 6509,
+    "nativeProving": 5250.5,
+    "witness": 841.6,
+    "unaccounted": 61.4
+  },
+  "callSequence": [
+    "prepareInProcessNativeRuntime and initializeHostedNativeProver run at hosted wallet initialization, outside each proof",
+    "BBPrivateKernelProver.createChonkProof calls cached Barretenberg.initSingleton",
+    "pako.ungzip for each compressed ACIR",
+    "serializeWitness then pako.ungzip for each witness Map",
+    "new AztecClientBackend is a lightweight JS wrapper, not a new native process",
+    "one chonkStart, followed by ordered chonkLoad(pinned VK) and chonkAccumulate(witness) per execution step",
+    "one chonkProve",
+    "encode unused raw proof MessagePack plus flatten proof fields",
+    "one chonkVerify using actual native proof and pinned hiding VK",
+    "one chonkCompressProof",
+    "construct ChonkProofWithPublicInputs; verify kernel public inputs match"
+  ],
+  "notRepeated": [
+    "NativeUnixSocket process startup on healthy warm singleton",
+    "CRS source-file verification during createChonkProof",
+    "Verification-key computation: supplied key bytes required, absent VK fails",
+    "Kernel/private witness execution inside createChonkProof"
+  ],
+  "observedRedundancy": [
+    "Witness Map is serialized to gzip then immediately ungzipped because the exposed serializer only returns compressed representation",
+    "ACIR is decompressed on every proof even for unchanged pinned circuits",
+    "AztecClientBackend.prove eagerly encodes raw MessagePack proof field which BBPrivateKernelProver does not consume"
+  ],
+  "localConversionEvidence": {
+    "node": "v24.21.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "scope": "public pinned circuit and synthetic witness conversion only; no real proof or private capture",
+    "circuits": [
+      {
+        "name": "private_kernel_init",
+        "compressedBytes": 98150,
+        "rawBytes": 1769264,
+        "pako": {
+          "medianMs": 6.473916000000003,
+          "minMs": 6.130458000000004,
+          "maxMs": 7.4957919999999945
+        },
+        "nativeZlib": {
+          "medianMs": 0.6703749999999786,
+          "minMs": 0.5110420000000033,
+          "maxMs": 5.021292000000017
+        }
+      },
+      {
+        "name": "hiding_kernel_to_public",
+        "compressedBytes": 33831,
+        "rawBytes": 391477,
+        "pako": {
+          "medianMs": 1.4960419999999885,
+          "minMs": 1.4177499999999554,
+          "maxMs": 1.5777909999999906
+        },
+        "nativeZlib": {
+          "medianMs": 0.16929099999998698,
+          "minMs": 0.15491600000001426,
+          "maxMs": 0.18758300000001782
+        }
+      }
+    ],
+    "witnesses": [
+      {
+        "syntheticFields": 1000,
+        "compressedBytes": 4467,
+        "rawBytes": 36624,
+        "serialize": {
+          "medianMs": 1.3967499999999973,
+          "minMs": 1.3070000000000164,
+          "maxMs": 1.4257910000000038
+        },
+        "pakoInflate": {
+          "medianMs": 0.15820899999999938,
+          "minMs": 0.14912499999996953,
+          "maxMs": 0.16662500000001046
+        },
+        "nativeInflate": {
+          "medianMs": 0.020125000000007276,
+          "minMs": 0.019166999999981726,
+          "maxMs": 0.024042000000008557
+        }
+      },
+      {
+        "syntheticFields": 10000,
+        "compressedBytes": 51959,
+        "rawBytes": 369624,
+        "serialize": {
+          "medianMs": 13.254707999999994,
+          "minMs": 12.868499999999983,
+          "maxMs": 13.299500000000023
+        },
+        "pakoInflate": {
+          "medianMs": 1.389458999999988,
+          "minMs": 1.3799999999999955,
+          "maxMs": 1.5077499999999873
+        },
+        "nativeInflate": {
+          "medianMs": 0.18500000000000227,
+          "minMs": 0.16295800000000327,
+          "maxMs": 0.21066600000000335
+        }
+      },
+      {
+        "syntheticFields": 100000,
+        "compressedBytes": 536867,
+        "rawBytes": 3768554,
+        "serialize": {
+          "medianMs": 214.5936670000001,
+          "minMs": 213.59012499999994,
+          "maxMs": 228.21454199999994
+        },
+        "pakoInflate": {
+          "medianMs": 14.205500000000029,
+          "minMs": 13.851708000000144,
+          "maxMs": 17.65908300000001
+        },
+        "nativeInflate": {
+          "medianMs": 1.8642909999998665,
+          "minMs": 1.6252920000001723,
+          "maxMs": 6.354416000000128
+        }
+      }
+    ]
+  },
+  "existingSameInputEvidence": {
+    "completedAt": "2026-10-23T22:16:09.070792+00:00",
+    "sameInput": true,
+    "applicationPidPreserved": true,
+    "configurationPreserved": true,
+    "inputBytes": 1252514,
+    "results": [
+      {
+        "threads": 1,
+        "nativeInitMs": 55.39169700000001,
+        "proveAndVerifyMs": 10245.826174,
+        "totalMs": 10301.221885,
+        "compressedProofBytes": 111552,
+        "verifiedByNativeSdk": true
+      },
+      {
+        "threads": 4,
+        "nativeInitMs": 55.163893,
+        "proveAndVerifyMs": 4937.153115,
+        "totalMs": 4992.321542,
+        "compressedProofBytes": 111552,
+        "verifiedByNativeSdk": true
+      },
+      {
+        "threads": 8,
+        "nativeInitMs": 55.675432999999984,
+        "proveAndVerifyMs": 5159.470090999999,
+        "totalMs": 5215.148055,
+        "compressedProofBytes": 111552,
+        "verifiedByNativeSdk": true
+      }
+    ],
+    "sample": "actual Bok final settlement proof captured 2026-10-23",
+    "module": "@aztec-foundation/bb.js/dest/node/index.js",
+    "release": "ccf80f1448b03ad825cc0e40bc67b8d0bb815027",
+    "replaySha256": "a338fa4a2f5de688ca6e10b89fba240e14f9b01bf2ff096c6d85b88e7e04442b",
+    "recommendedThreads": 4,
+    "speedupPercent": 51.81303068044808,
+    "scope": "offline native proof and verification only; no model calls or transactions; one sample per thread count; live service unchanged"
+  },
+  "interpretation": "Existing4thread replay4.937s excludes witness serialization and all decompression, yet is close to current total native stage5.2505s. Runs differ; subtraction is indicative, not a precise per-substage measurement.8threads was slower on same4CPU host. No evidence supports20% savings from JS conversion changes. Native prove/accumulate/verify/IPC remains dominant; distinguishing its internal CPU phases would require finer existing-API timing or native profiling, not another application simulation rewrite.",
+  "candidateForReview": "Small Node-only pako->zlib decompression substitution is byte-equivalent on tested public/synthetic inputs and locally8\u201310x faster for inflate, but likely only tens of milliseconds absolute. Raw uncompressed witness serializer would remove the actual compress/decompress roundtrip, but requires an authoritative pinned ABI API/implementation change; no handwritten format proposed. Neither candidate has a supported20% total-proof claim."
+}

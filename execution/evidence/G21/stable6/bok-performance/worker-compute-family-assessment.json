@@ -1,0 +1,175 @@
+{
+  "observedAt": "2026-10-23T23:32:41.603751+00:00",
+  "mode": "read-only; no paid jobs/provisioning/resize/config/service changes",
+  "currentHost": {
+    "cpu": {
+      "Architecture": "x86_64",
+      "CPU(s)": "4",
+      "On-line CPU(s) list": "0-3",
+      "Model name": "Intel(R) Xeon(R) Platinum 8488C",
+      "Thread(s) per core": "2",
+      "Core(s) per socket": "2",
+      "Socket(s)": "1"
+    },
+    "relevantCPUFlags": [
+      "adx",
+      "avx",
+      "avx2",
+      "avx512f",
+      "avx512ifma",
+      "bmi2"
+    ],
+    "memoryKiB": {
+      "MemTotal": 32310808,
+      "MemAvailable": 30454968,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "service": {
+      "MainPID": "266588",
+      "MemoryCurrent": "784191488",
+      "MemoryPeak": "816209920",
+      "EffectiveCPUs": "0-3",
+      "TasksCurrent": "17",
+      "CPUQuotaPerSecUSec": "infinity",
+      "AllowedCPUs": "",
+      "MemoryHigh": "infinity",
+      "MemoryMax": "25769803776",
+      "TasksMax": "256",
+      "ActiveEnterTimestamp": "Fri 2026-10-23 23:21:30 UTC"
+    },
+    "process": [
+      {
+        "Name": "MainThread",
+        "Pid": "266588",
+        "PPid": "1",
+        "VmRSS": "582644 kB",
+        "VmHWM": "720000 kB",
+        "Threads": "12"
+      },
+      {
+        "Name": "bb",
+        "Pid": "266618",
+        "PPid": "266588",
+        "VmRSS": "243384 kB",
+        "VmHWM": "270180 kB",
+        "Threads": "4"
+      },
+      {
+        "Name": "bb",
+        "Pid": "266619",
+        "PPid": "266588",
+        "VmRSS": "13908 kB",
+        "VmHWM": "13908 kB",
+        "Threads": "1"
+      }
+    ],
+    "staticExecutionLimits": {},
+    "nativeProverThreads": 4
+  },
+  "memoryCaveat": "MemoryPeak816209920bytes belongs only to service uptime since23:21:30UTC and may predate the current proof; not a complete worst-case proof/concurrent-validation peak. Generated Docker validation is a separate cgroup.",
+  "candidates": [
+    {
+      "Type": "m8a.xlarge",
+      "Cores": 4,
+      "ThreadsPerCore": 1,
+      "MemoryMiB": 16384,
+      "ClockGHz": 4.5,
+      "Architecture": [
+        "x86_64"
+      ],
+      "usdPerHour": "0.2434400000",
+      "monthlyForecastUsdIncludingExistingAllowances": "1444.046031780821917808219179",
+      "monthlyDeltaUsdIncluding20PercentTaxAllowance": "-18.89164800000",
+      "headroomUsd": "55.953968219178082191780821"
+    },
+    {
+      "Type": "m7a.xlarge",
+      "Cores": 4,
+      "ThreadsPerCore": 1,
+      "MemoryMiB": 16384,
+      "ClockGHz": 3.7,
+      "Architecture": [
+        "x86_64"
+      ],
+      "usdPerHour": "0.2318400000",
+      "monthlyForecastUsdIncludingExistingAllowances": "1433.689551780821917808219179",
+      "monthlyDeltaUsdIncluding20PercentTaxAllowance": "-29.24812800000",
+      "headroomUsd": "66.310448219178082191780821"
+    },
+    {
+      "Type": "c8a.xlarge",
+      "Cores": 4,
+      "ThreadsPerCore": 1,
+      "MemoryMiB": 8192,
+      "ClockGHz": 4.5,
+      "Architecture": [
+        "x86_64"
+      ],
+      "usdPerHour": "0.2155400000",
+      "monthlyForecastUsdIncludingExistingAllowances": "1419.136911780821917808219179",
+      "monthlyDeltaUsdIncluding20PercentTaxAllowance": "-43.80076800000",
+      "headroomUsd": "80.863088219178082191780821"
+    },
+    {
+      "Type": "c7a.xlarge",
+      "Cores": 4,
+      "ThreadsPerCore": 1,
+      "MemoryMiB": 8192,
+      "ClockGHz": 3.7,
+      "Architecture": [
+        "x86_64"
+      ],
+      "usdPerHour": "0.2052800000",
+      "monthlyForecastUsdIncludingExistingAllowances": "1409.976783780821917808219179",
+      "monthlyDeltaUsdIncluding20PercentTaxAllowance": "-52.96089600000",
+      "headroomUsd": "90.023216219178082191780821"
+    },
+    {
+      "Type": "c8i.xlarge",
+      "Cores": 2,
+      "ThreadsPerCore": 2,
+      "MemoryMiB": 8192,
+      "ClockGHz": 3.9,
+      "Architecture": [
+        "x86_64"
+      ],
+      "usdPerHour": "0.1874200000",
+      "monthlyForecastUsdIncludingExistingAllowances": "1394.031375780821917808219179",
+      "monthlyDeltaUsdIncluding20PercentTaxAllowance": "-68.90630400000",
+      "headroomUsd": "105.968624219178082191780821"
+    },
+    {
+      "Type": "c7i.xlarge",
+      "Cores": 2,
+      "ThreadsPerCore": 2,
+      "MemoryMiB": 8192,
+      "ClockGHz": 3.2,
+      "Architecture": [
+        "x86_64"
+      ],
+      "usdPerHour": "0.1785000000",
+      "monthlyForecastUsdIncludingExistingAllowances": "1386.067599780821917808219179",
+      "monthlyDeltaUsdIncluding20PercentTaxAllowance": "-76.87008000000",
+      "headroomUsd": "113.932400219178082191780821"
+    }
+  ],
+  "offeredAz": "All listed candidate types were returned by EC2 DescribeInstanceTypeOfferings inus-east-1a; offering does not guarantee available capacity.",
+  "recommendation": "m8a.xlarge is the best bounded qualification candidate:4physicalcores rather than2SMTcores,16GiB rather than8GiB compute options, recentAMD generation, and lower totalforecast than currenthost. Keep4nativeproverthreads. m7a.xlarge is an available cheaper conservative alternative whosefamily alreadyhosts core. No20percent performance gain is claimed without same-input verified proof measurement.",
+  "requiredQualification": [
+    "Same-input realnativeproof including verification, cold/warm comparable samples and wholeproofstage, no broadcast/modelcall.",
+    "Observe fullproofpluspermittedother-requestvalidation memorypeak and kernel/cgroupOOM counters before reducingphysicalRAM.",
+    "Review workerMemoryMax24GiB: it exceeds candidate16GiB. Use a measured bounded lowercap while retaininggeneratedDocker768MiB/2CPU/256PIDs/45swork limits andcredential/networkisolation.",
+    "Check actual4physicalcores/noSMT,CPUflags,pinnedbinarysupport,native4threads andnodeprovider behavior."
+  ],
+  "uptimeConstraint": "Same-instance family change requires EC2stop/start, so Bok and its artifactproxy have a maintenancegap even ifcore board staysup. A strict zero-Bok-downtime change needs a separate validated handoff andstateownershipplan; not included orperformed.",
+  "existingCorePlacement": "Do not move generatedvalidation onto core merely becauseRAMisfree. Its CPU/prover/nodecontention andhostcredential/Dockerboundary requireseparatereview. A temporary isolated offline nativeproofcomparison onexistingcorem7a canqualify CPUfamily without movingliveworker or addinga productionremoteproverroute.",
+  "budgetBasis": "Existing official$1500monthlyauthorization and ledger$1462.93767978082231dayforecast. All500GBnetwork,archives,$100bufferand20%taxallowancespreserved; nooptimisticbillingreduction.",
+  "sources": [
+    "AWS Pricing GetProducts currentLinuxSharedOnDemand us-east-1",
+    "AWS EC2 DescribeInstanceTypes/DescribeInstanceTypeOfferings",
+    "https://aws.amazon.com/ec2/instance-types/m8a/",
+    "https://aws.amazon.com/ec2/instance-types/c7a/",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html"
+  ]
+}

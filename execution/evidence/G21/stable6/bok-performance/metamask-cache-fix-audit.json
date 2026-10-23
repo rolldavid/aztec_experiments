@@ -1,0 +1,50 @@
+{
+  "url": "https://d30njln0kead8n.cloudfront.net/wallet/account.js",
+  "status": 200,
+  "sha256": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2",
+  "localSha256": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2",
+  "fixCommitSha256": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2",
+  "publicEqualsCurrentSource": true,
+  "publicEqualsFixCommit": true,
+  "headers": {
+    "Cache-Control": "no-store",
+    "ETag": "\"dmcijlyki893-ddm\"",
+    "Age": null,
+    "X-Cache": "Miss from cloudfront"
+  },
+  "currentCommit": "1e29940148f1365db5f62c7e139141d9c2409ab0",
+  "fixCommit": "b363e3159dcbd3f89240c54ee6a5949224039e84",
+  "fixIsAncestor": true,
+  "verifiedAt": "2026-10-23T23:34:06.706782+00:00",
+  "priorPublication": {
+    "evidence": "/tmp/bok-wallet-record-fix-result.json",
+    "status": "Success",
+    "receipt": {
+      "published": true,
+      "commit": "b363e3159dcbd3f89240c54ee6a5949224039e84",
+      "ui": "/opt/rolling-ui/releases/b363e3159dcbd3f89240c54ee6a5949224039e84",
+      "runningSource": "/opt/rolling-app/releases/ae9d60b807316d5ce0e2df38e47c4129fb8178e8",
+      "sourcePinsSha256": "97b0af1019498de5836407ec4f6a29772aebe72814cf82d37a38ff17ab97d929",
+      "pidsUnchanged": {
+        "rolling-application.service": 642411,
+        "rolling-application-proxy.service": 642414,
+        "rolling-node.service": 561964,
+        "rolling-query.service": 565186,
+        "board-prover.service": 630292,
+        "board-prover-proxy.service": 630307,
+        "rolling-moderator.service": 567551
+      }
+    }
+  },
+  "integrationTest": {
+    "file": "shared/ethereum-account-integration.test.mjs",
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1991.946958,
+    "log": "/tmp/bok-metamask-cache-integration-wasm.log",
+    "runtime": "Pinned Node24.21.0; actual ethers signatures, WebCrypto, IndexedDB fixture and pinned Aztec address derivation; extension transport injected.",
+    "cryptoBackend": "Official pinned BarretenbergSync WASM backend, threads1",
+    "limitation": "Default native shared-memory helper stalled before first test output and was terminated after bounded observation. Exact same tests passed using official WASM crypto; no source changes. No real MetaMask UI/user wallet/signin or transactions performed."
+  }
+}

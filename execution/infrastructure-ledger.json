@@ -2977,5 +2977,53 @@
     "observedAt": "2026-10-20T08:02:48.361201+00:00",
     "scheduledAgentWork": "Deleted at owner request; no recurring agent monitoring. AWS monthly budget remains; not a hard spending cap.",
     "cutoverEvidence": "execution/evidence/G12/persistent-hosting-20261020/cloud-persistent-readback.json"
+  },
+  "performance_host_20261024": {
+    "status": "proposed-not-executed",
+    "instanceId": "i-0a7d9957f2b3d7f19",
+    "region": "us-east-1",
+    "availabilityZone": "us-east-1a",
+    "before": {
+      "type": "r7i.xlarge",
+      "computeUsdPerHour": "0.26460",
+      "physicalCores": 2,
+      "threadsPerCore": 2,
+      "memoryGiB": 32,
+      "monthlyTotalUsd": "1462.937679780821917808219179"
+    },
+    "after": {
+      "type": "m8a.xlarge",
+      "computeUsdPerHour": "0.24344",
+      "physicalCores": 4,
+      "threadsPerCore": 1,
+      "memoryGiB": 16,
+      "monthlyTotalUsd": "1444.046031780821917808219179"
+    },
+    "monthlyBudgetUsd": "1500",
+    "forecastHours": 744,
+    "taxAllowanceFactor": "1.2",
+    "deltaMonthlyUsd": "-18.891648",
+    "newHeadroomUsd": "55.953968219178082191780821",
+    "unchangedAllowances": [
+      "EBS",
+      "archives",
+      "500GB networking",
+      "100USD billing and cleanup buffer",
+      "20 percent tax allowance"
+    ],
+    "newResourceCount": 0,
+    "rollbackMonthlyTotalUsd": "1462.937679780821917808219179",
+    "actualMemoryEvidence": {
+      "mainPid": 266588,
+      "peakBytes": 816209920,
+      "nativeChildrenSameCgroup": true,
+      "completedProofAt": "2026-10-23T23:24:20.051159Z",
+      "terminalRequestAt": "2026-10-23T23:25:28.101540Z"
+    },
+    "proposedWorkerMemoryMaxBytes": 12884901888,
+    "plan": "execution/evidence/G21/stable6/bok-performance/worker-m8a-plan.md",
+    "evidence": "execution/evidence/G21/stable6/bok-performance/worker-m8a-cost-proposal.json",
+    "authorizedScope": "Existing owner-authorized ongoing hosting and performance work; within1500monthly budget; normal service maintenance only; same instance, no new resources.",
+    "reservedMonthlyTotalUsd": "1462.937679780821917808219179"
   }
 }
