@@ -1,5 +1,5 @@
 {
-  "status": "published-but-browser-failed",
+  "status": "passed-after-repairs",
   "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
   "requestId": "0x0f9b7a755babd53644ac79415e55cfcc6cd655b4cf170f3027f634af225d1cbf",
   "target": "0x27585f1332b267d222895cb38b8393009e4a0a23f9498f201b8ddb64472dc622",
@@ -48,7 +48,7 @@
       "commit": "9fa821d7ba339878696f90b2041e5bf97cd4dd7a",
       "verification": "GitHub API verified by root agent; supplied in handoff"
     },
-    "applicationStatus": "Published source passed isolated build validation, but actual browser found localStorage SecurityError under existing CSP sandbox. Functional app verification failed; guidance fix pending."
+    "applicationStatus": "Original publication passed isolated build validation but failed actual browser initialization on blocked localStorage. Later real requests and published service fixes are recorded below; finalAttempt passed actual browser acceptance."
   },
   "browserFailure": {
     "message": "Failed to read the localStorage property from Window: The document is sandboxed and lacks the allow-same-origin flag.",
@@ -69,7 +69,7 @@
     "submittedAt": "2026-10-23T09:37:32.928Z",
     "sameBrowserAccount": true,
     "sameThread": true,
-    "status": "failed-validation-unsettled",
+    "status": "failed-validation-accounted-without-reply",
     "authorization": {
       "txHash": "0x0899b3432600431ab664e704eb0e3399cb97ea07ad40987f8f65567ad24064f8",
       "blockNumber": 1053,
@@ -114,7 +114,153 @@
     "serviceRepair": {
       "tests": "91 hosted-private-bok tests passed",
       "review": "network_upgrade_check: no blocking findings",
-      "scope": "Only typed STATIC_FAILED creates a fixed failure result and uses existing settlement/reply/finish. Fresh model-call allowance16, original journal limits and all monetary caps unchanged."
+      "scope": "Only typed STATIC_FAILED creates a fixed failure result and uses existing settlement/reply/finish. Fresh model-call allowance16, original journal limits and all monetary caps unchanged.",
+      "commit": "1ee60b605ef24623c67e55bbaca9b6374d8e19b8",
+      "originalRequestCompletion": "Existing operator reconcile-billing with original retained lastcall receipt. No model replay, journal editing or fabricated billing."
+    },
+    "finalAccounting": {
+      "requestId": "0x2fb7d9ff75bcf49346833ebebb9849eea3b6c8516d8e934321101336a8b40961",
+      "anchor": {
+        "number": 1071,
+        "hash": "0x1180fb8d79b17b8d2a9d1e253aaf273965980e3ae6931dbc421d14985ccbea87"
+      },
+      "state": "4",
+      "sequence": "1",
+      "budget": "250000",
+      "available": "0",
+      "reserved": "0",
+      "charged": "45751",
+      "refunded": "204249",
+      "primaryDone": "1",
+      "secondaryDone": "1",
+      "receipt": "0x05ff33932a443abb5c2aaeb35d3d11ba6206465a0d890d7ef1c7fa6a3bf202c1"
     }
-  }
+  },
+  "testFeeProvision": {
+    "sameEthereumAccount": true,
+    "faucetTx": "0x52ddce1661c23d790b13c610000e3e822ab1e2697c8fb83f215f44903200a4ba",
+    "mintedTestTokens": "1000",
+    "normalApplicationTopup": "100 fee tokens, actual MetaMask approve and deposit; automatic Aztec claim confirmed; posting balance105.031",
+    "aztecClaimTx": "0x2f6574cd592073c50ba4ed5906459ca9668ba15593f0aeedf16f9e84b8da93ff"
+  },
+  "thirdAttempt": {
+    "submittedAt": "2026-10-23T10:05:37.420Z",
+    "budgetMicroUsdc": "500000",
+    "source": "1ee60b605ef24623c67e55bbaca9b6374d8e19b8",
+    "sameAccountThreadAndRepository": true,
+    "status": "failed-before-publication",
+    "requestId": "0x0ac75bd06736573274a96137d9b0bb104e3407541b1ce04908be347e44a5c573",
+    "target": "0x22316a36e311f81a8abf989bb478ac782d3f8adfe34ee5a7851eebfcca5f7430",
+    "authorizationTx": "0x088ec2d778c2326c3190d747c2bd8f31cef7a0ff6995e8f49269e40b563fa714",
+    "postTx": "0x2c02c03cf47480fb6f06837f58cf9597d2e9a47fef92c9b5783515b4f99e6322",
+    "freshMaxCalls": 16,
+    "failureEvidence": {
+      "requestId": "0x0ac75bd06736573274a96137d9b0bb104e3407541b1ce04908be347e44a5c573",
+      "observedAt": "2026-10-23T10:22:25.450127+00:00",
+      "health": {
+        "status": "degraded",
+        "active": 0,
+        "lastFailure": {
+          "at": "2026-10-23T10:20:56.576Z",
+          "kind": "Error"
+        },
+        "lastSuccess": null
+      },
+      "providerCalls": 11,
+      "actualRetainedProviderCharge": "69293",
+      "canonicalObservations": [
+        {
+          "requestId": "0x0ac75bd06736573274a96137d9b0bb104e3407541b1ce04908be347e44a5c573",
+          "anchor": {
+            "number": 1090,
+            "hash": "0x1d09d547a3709b6431812022ba317f173788ca2855a0a6c21b8154b36d93673a"
+          },
+          "state": "2",
+          "sequence": "0",
+          "budget": "500000",
+          "available": "0",
+          "reserved": "500000",
+          "charged": "0",
+          "refunded": "0",
+          "primaryDone": "0",
+          "secondaryDone": "0",
+          "receipt": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "health": {
+            "status": "degraded",
+            "active": 0,
+            "lastFailure": {
+              "at": "2026-10-23T10:20:56.576Z",
+              "kind": "Error"
+            },
+            "lastSuccess": null
+          },
+          "temporaryOverrideRemoved": true
+        }
+      ],
+      "publication": "none; accepted revision remains first request",
+      "error": "underlying exception replaced by generic main.mjs onError",
+      "diagnosis": "Suspected accumulated input exceeding maxInputBytes; not confirmed by retained exception",
+      "failedDrafts": [
+        "1c0dc39e8773683c3a5d314e2c2a7c0ef25fbb70",
+        "9208e6de3792126bcce917cacd8ecc709c9dc94a",
+        "e0ce0db79b53ee7ee6a0ce7caf13f3debbe013d6"
+      ]
+    },
+    "serviceRepair": {
+      "commit": "a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5",
+      "tests": "174 hosted-private-bok and private-bok-metering checks passed",
+      "review": "network_upgrade_check: no blocking findings",
+      "scope": "Fresh context262144bytes; typed input-limit failure before paid call completes genuine usage settlement, authenticated failure reply and unused credit refund. Saved limits and financial caps unchanged."
+    },
+    "finalAccounting": [
+      {
+        "CommandId": "11ff09ff-a626-4ab8-b83a-a3bfaa14c1df",
+        "InstanceId": "i-0a7d9957f2b3d7f19",
+        "Comment": "",
+        "DocumentName": "AWS-RunShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "PluginName": "aws:runShellScript",
+        "ResponseCode": 0,
+        "ExecutionStartDateTime": "2026-10-23T10:36:54.583Z",
+        "ExecutionElapsedTime": "PT1.565S",
+        "ExecutionEndDateTime": "2026-10-23T10:36:55.583Z",
+        "Status": "Success",
+        "StatusDetails": "Success",
+        "StandardOutputContent": "{\"requestId\":\"0x0ac75bd06736573274a96137d9b0bb104e3407541b1ce04908be347e44a5c573\",\"anchor\":{\"number\":1100,\"hash\":\"0x17940a94be12b2f61936bef79b16bcc9eabe1562a3f9581c46fef90af84da743\"},\"state\":\"4\",\"sequence\":\"1\",\"budget\":\"500000\",\"available\":\"0\",\"reserved\":\"0\",\"charged\":\"69293\",\"refunded\":\"430707\",\"primaryDone\":\"1\",\"secondaryDone\":\"1\",\"receipt\":\"0x26d109f01064eeda1156f8b327d10e793fc864a466debca5a16963d0ea0647c8\"}\n{\"health\": {\"status\": \"ready\", \"active\": 0, \"lastFailure\": null, \"lastSuccess\": null}, \"temporaryOverrideRemoved\": true}\n",
+        "StandardOutputUrl": "",
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "CloudWatchOutputConfig": {
+          "CloudWatchLogGroupName": "",
+          "CloudWatchOutputEnabled": false
+        }
+      }
+    ]
+  },
+  "finalAttempt": {
+    "submittedAt": "2026-10-23T10:37:28.818Z",
+    "budgetMicroUsdc": "500000",
+    "source": "a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5",
+    "sameAccountThreadAndRepository": true,
+    "status": "finished-automatically",
+    "freshMaxCalls": 16,
+    "freshMaxInputBytes": 262144,
+    "requestId": "0x1b5981cb4001ffacd074ac2497c7f142046d489ed321bdb98488b0e0c22df9c0",
+    "target": "0x2d7f6dad3cfce5f1613f0222c7911cea95b06a5ad9aca2e46f3aa2fc02464101",
+    "authorizationTx": "0x0a911d12e0b5b3ba868c0b667fdd4de78ef071a37d71f98ecd0a6881d78e140e",
+    "postTx": "0x020170394b42216b507bd2d9504c4e7c09837dc73bc83f8ddb643e39ea8df1e1",
+    "authorizationCheckpoint": 1103,
+    "postCheckpoint": 1105,
+    "browserRemoteProofs": 2,
+    "observedBrowserErrors": [],
+    "composerClosed": true,
+    "postVisible": true,
+    "completeEvidence": "bok-complete.json",
+    "browserEvidence": "bok-browser.json",
+    "githubEvidence": "bok-github-verification.json",
+    "operatorIntervention": false
+  },
+  "originalAttemptStatus": "published-but-browser-failed"
 }

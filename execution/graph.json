@@ -9843,10 +9843,10 @@
   },
   "current_operating_request": {
     "id": "G21-stable6-restoration-20261023",
-    "status": "active",
+    "status": "complete",
     "owner": "root",
     "branch": "codex/rolling-chat-account-ux",
-    "at": "2026-10-23T08:55:12.283999+00:00",
+    "at": "2026-10-23T10:59:55.315116+00:00",
     "request": "Test a real @bok request end to end: create an app in selected repository and publish result.",
     "scope": [
       "Stable Aztec6.0.0 on canonical Sepolia rollup version679261766",
@@ -9855,7 +9855,7 @@
       "Persistent services within existing monthly budget"
     ],
     "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
-    "verification": "Second real request failed generated VM tests (missing window and DOM methods), exhausted8calls, and left250000microUSDC reserved. No revised app published. This reproduced missing normal failure-result settlement, not a provider uncertainty.",
+    "verification": "Actual @bok request1b5981cb completed automatically: generated/published aa2e430d, GitHub b578d796 allfiles independentlymatched,9actualbrowser checks passed, authenticatedreplyvisible, checkpoint1117 charged42482/refunded457518/reserved0. All9servicesactive/publicappandproverready;12proofscompleted/0failed. Prior failures and published fixes retained in evidence.",
     "budget": "USD1500/month ongoing hosting; no additional hosts created",
     "paths": [
       "execution/evidence/G21/stable6/",
@@ -9863,7 +9863,7 @@
       "START_HERE.md"
     ],
     "currentHandover": "START_HERE.md",
-    "nextAction": "Fix typed generated-validation failure settlement and increase fresh model-call allowance to16 within unchanged monetary caps; reconcile exact failed request through existing operator path; ask Bok to repair its app with concrete browser/test diagnostics and verify final publication.",
-    "bokSource": "7bc717a2044037178e3f26326cff160b444d8b8b"
+    "nextAction": "Owner can test the live application and generated app; no outstanding work for this real-request acceptance. Broader production gates and performance improvements are not claimed complete.",
+    "bokSource": "a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5"
   }
 }

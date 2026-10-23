@@ -1,0 +1,193 @@
+{
+  "observedAt": "2026-10-23T10:56:44.143171+00:00",
+  "hosts": {
+    "core": {
+      "status": "Success",
+      "observation": {
+        "services": [
+          {
+            "unit": "board-prover-proxy.service",
+            "MainPID": "566049",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          {
+            "unit": "board-prover.service",
+            "MainPID": "565979",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          {
+            "unit": "rolling-application-proxy.service",
+            "MainPID": "568553",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          {
+            "unit": "rolling-application.service",
+            "MainPID": "567540",
+            "NRestarts": "31",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          {
+            "unit": "rolling-egress.service",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "exited"
+          },
+          {
+            "unit": "rolling-moderator.service",
+            "MainPID": "567551",
+            "NRestarts": "31",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          {
+            "unit": "rolling-monitor.service",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "inactive",
+            "SubState": "dead"
+          },
+          {
+            "unit": "rolling-node.service",
+            "MainPID": "561964",
+            "NRestarts": "69",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          {
+            "unit": "rolling-query.service",
+            "MainPID": "565186",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          }
+        ]
+      },
+      "error": ""
+    },
+    "bok": {
+      "status": "Success",
+      "observation": {
+        "services": [
+          {
+            "unit": "rolling-bok-artifact-proxy.service",
+            "MainPID": "222076",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          {
+            "unit": "rolling-bok-testnet.service",
+            "MainPID": "222075",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running"
+          },
+          {
+            "unit": "rolling-egress.service",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "exited"
+          },
+          {
+            "unit": "rolling-monitor.service",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "inactive",
+            "SubState": "dead"
+          },
+          {
+            "unit": "rolling-node.service",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "ExecMainStatus": "0",
+            "ActiveState": "inactive",
+            "SubState": "dead"
+          }
+        ]
+      },
+      "error": ""
+    }
+  },
+  "public": {
+    "prover": {
+      "status": 200,
+      "body": {
+        "ready": true,
+        "proofs": "real",
+        "queue": {
+          "jobs": 0,
+          "bytes": 0,
+          "running": false,
+          "submitted": 12,
+          "completed": 12,
+          "failed": 0
+        },
+        "query": {
+          "enabled": true,
+          "ready": true
+        }
+      }
+    },
+    "application": {
+      "status": 200,
+      "body": {
+        "schemaVersion": 1,
+        "state": "ready",
+        "scope": {
+          "chainId": "11155111",
+          "rollupVersion": "679261766",
+          "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+          "boardAddress": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+          "classId": "0x0593ff56fceb4afb79463d591a25a1078fd5860e18a5774ef6d6525b31dac58e",
+          "bok": {
+            "address": "0x29c5c41fae8d4d0460e30ba13c56160206e8bc54922df727275c9ecce88c9432",
+            "classId": "0x14dfcc3846ae5f244eca1359846276be464fc8c787a75612d1ff29d113c9e021",
+            "operatorAddress": "0x119fa1d976f386eb0b3577a9661c923ce02ca500fbc1e68096718aa7f24948e5",
+            "deployer": "0x0233a0ebe93af15f273c200ce05a893ae2c7e87c0b24196eec705c1d09f6ceaa",
+            "salt": "0x14cb46bb4a8f828697189242caf02bda7d7a3afc2db817fe7ebb0ce9421b3aae",
+            "deployment": {
+              "txHash": "0x2b6fb9c5eaeaa087cc86db48b11644038d18a575d485685241bac647300498a6",
+              "blockNumber": 951,
+              "blockHash": "0x0b8d1919d700d815abb0aabb78a87f47f610968438e722fba33a68908025362d"
+            }
+          }
+        },
+        "complete": true,
+        "authenticationEpoch": "abf39af7-d6c9-4045-a230-947bf2d5ce39",
+        "revision": "abf39af7-d6c9-4045-a230-947bf2d5ce39:1:210",
+        "checkpoint": {
+          "number": 1118,
+          "hash": "0x07dc19f87c3f16a3f1382bf6057a63cd3c728bd5bcdbd3b35055d57e8f020be6"
+        },
+        "cursor": {
+          "blockNumber": "1119",
+          "nextTxIndex": "0",
+          "block": null
+        },
+        "cacheComparison": "complete"
+      }
+    }
+  }
+}

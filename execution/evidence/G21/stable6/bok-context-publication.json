@@ -1,0 +1,39 @@
+{
+  "commandId": "77514cc3-b496-4cbc-b973-75294f213e65",
+  "status": "Success",
+  "receipt": {
+    "commit": "a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5",
+    "source": "/opt/rolling-bok/releases/a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5",
+    "packet": "/var/lib/rolling-bok-testnet/stable6-122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc/operator-reconciliation-0ac75bd06736573274a96137d9b0bb104e3407541b1ce04908be347e44a5c573",
+    "temporaryDropIn": "/run/systemd/system/rolling-bok-testnet.service.d/zz-billing-reconcile.conf",
+    "configSha256": "1f21eddb5a2b435af628212efc3eedf4b1f131d91dd92bd81820bba2ec682b82",
+    "initialJournalSha256": "87e23533c7627f2f15bf004e91f674c6ccca32c680e8d8031459921ba01d710d",
+    "sourcePinSha256": "f27c32b529ed22369d4a3375b3011ed833aa0b7260db1b45de22bdd790a33282",
+    "oldPid": "220046",
+    "recordedUsage": 69293,
+    "status": "normal-service-started",
+    "normalPid": "222075",
+    "proxyPid": "222076",
+    "reconciled": true,
+    "accountingPhase": "accounted-without-reply",
+    "aggregateCharge": "69293",
+    "operations": [
+      {
+        "method": "reserve",
+        "phase": "submission-unknown",
+        "txHash": "0x0ba9ca77b0971cfbf51ae639990504231b78443b5fb1915e0bf46d011d024f88"
+      },
+      {
+        "method": "settle",
+        "phase": "submission-unknown",
+        "txHash": "0x21e1e614bf578907565bb9d3541d197351bb3e23aa43bd3a2d05e9bff778bc7b"
+      },
+      {
+        "method": "finish",
+        "phase": "submission-unknown",
+        "txHash": "0x22f60c955c1e9bfa78396b61449d272b741e0d7ab9d250714cecd57713fbb667"
+      }
+    ]
+  },
+  "error": ""
+}

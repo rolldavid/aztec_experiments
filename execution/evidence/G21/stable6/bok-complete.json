@@ -1,0 +1,140 @@
+{
+  "requestId": "0x1b5981cb4001ffacd074ac2497c7f142046d489ed321bdb98488b0e0c22df9c0",
+  "target": "0x2d7f6dad3cfce5f1613f0222c7911cea95b06a5ad9aca2e46f3aa2fc02464101",
+  "postId": "0x2d6ef7391f7fae529037e4b518ec0839ba2b0fe6db89909475c1bcca9718cdea",
+  "runtimeCommit": "a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5",
+  "hostedPhase": "finished",
+  "finished": true,
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null,
+    "lastSuccess": "2026-10-23T10:54:29.378Z"
+  },
+  "canonicalAccounting": {
+    "requestId": "0x1b5981cb4001ffacd074ac2497c7f142046d489ed321bdb98488b0e0c22df9c0",
+    "anchor": {
+      "number": 1117,
+      "hash": "0x2b48406f19521436cb00c20837baa539096d030e6a6edb84b97dda778c56f636"
+    },
+    "state": "4",
+    "sequence": "1",
+    "budget": "500000",
+    "available": "0",
+    "reserved": "0",
+    "charged": "42482",
+    "refunded": "457518",
+    "primaryDone": "1",
+    "secondaryDone": "1",
+    "receipt": "0x1f4c3fa664b879dd9b9a54bc678d06ff84134d2a437ff56da78d90e280c40af2"
+  },
+  "acceptedRevision": "aa2e430d4ec9282be08e8d7274cd5fc4482852f2",
+  "publication": {
+    "status": "complete",
+    "result": {
+      "published": true,
+      "repositoryId": "2ebf5226acfbe0908c2c87758187b7fe73018b30cc79f9e61484529a9cfcb477",
+      "threadId": "0x0a8965a3d6d531017a97a74b0c8cf52def931804156d625cf427ff795f8d1e83",
+      "acceptedRevision": "aa2e430d4ec9282be08e8d7274cd5fc4482852f2",
+      "publicationId": "5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0",
+      "artifactUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/aa2e430d4ec9282be08e8d7274cd5fc4482852f2/files/index.html",
+      "sourceUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/aa2e430d4ec9282be08e8d7274cd5fc4482852f2/source.json",
+      "latestUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/",
+      "latestSourceUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/source.json"
+    }
+  },
+  "validation": {
+    "passed": true,
+    "revision": "aa2e430d4ec9282be08e8d7274cd5fc4482852f2",
+    "sourceDigest": "4f6adbf52ff6670abfc8885947e548603fa46cb9d81a1ef00f4622832d648131",
+    "artifactSha256": "5c4cbb520794a0c4ea0acfe4fdd51d3d904830484e42e4908f660b009b084b2e",
+    "outputDirectory": "/var/lib/rolling-bok-testnet/stable6-122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc/static-artifacts/bok-static-e24633a4-1d7c-4786-b840-3f5d4efa2fab"
+  },
+  "github": {
+    "mirrored": true,
+    "repositoryId": "2ebf5226acfbe0908c2c87758187b7fe73018b30cc79f9e61484529a9cfcb477",
+    "threadId": "0x0a8965a3d6d531017a97a74b0c8cf52def931804156d625cf427ff795f8d1e83",
+    "acceptedRevision": "aa2e430d4ec9282be08e8d7274cd5fc4482852f2",
+    "sourceDigest": "4f6adbf52ff6670abfc8885947e548603fa46cb9d81a1ef00f4622832d648131",
+    "remoteRepositoryId": 1420006279,
+    "remoteCommit": "b578d796a56b5b510fbebb840e86080e211ff73f",
+    "remoteTree": "dbdc8a87d897a8c674c45d42fce009abe94caf0a",
+    "remoteParent": "9fa821d7ba339878696f90b2041e5bf97cd4dd7a",
+    "operatorUrl": "https://github.com/zac-williamson/rolling-chat-bok-pool-20261015-03/tree/b578d796a56b5b510fbebb840e86080e211ff73f"
+  },
+  "callCount": 8,
+  "toolNamesByCall": [
+    [
+      "list_files"
+    ],
+    [
+      "read_file",
+      "read_file",
+      "read_file"
+    ],
+    [
+      "write_file"
+    ],
+    [
+      "write_file"
+    ],
+    [
+      "check_workspace"
+    ],
+    [
+      "write_file"
+    ],
+    [
+      "check_workspace"
+    ],
+    []
+  ],
+  "actualProviderCharge": "42482",
+  "operations": [
+    {
+      "method": "reserve",
+      "phase": "submission-unknown",
+      "txHash": "0x25d2f9d48776cf7fda5f44f6fbe34459de34c175a41f18e3f6a4a9ad1ad31364"
+    },
+    {
+      "method": "settle",
+      "phase": "submission-unknown",
+      "txHash": "0x2daaa7913e5e23e9ad8d73c13a5fbf7c518e6ee9a67f4a27ac85acac42aa93f9"
+    },
+    {
+      "method": "publish_reply",
+      "phase": "submission-unknown",
+      "txHash": "0x03c76c6762d494a710c2611d13f5e75c5e32165c4622a652ee4c702a18d5db28"
+    },
+    {
+      "method": "finish",
+      "phase": "submission-unknown",
+      "txHash": "0x01d27fa53a53d5b88280ce658033d3e4dfadc244ef84e5a0f5ee6a627794257d"
+    }
+  ],
+  "timing": {
+    "browserClick": "2026-10-23T10:37:28.818Z",
+    "firstActiveObserved": "2026-10-23T10:42:46.261100+00:00",
+    "firstPassingBuildObserved": "2026-10-23T10:50:26.639758+00:00",
+    "publicationObserved": "2026-10-23T10:52:00.801281+00:00",
+    "finished": "2026-10-23T10:54:29.378Z"
+  },
+  "browserAcceptance": {
+    "reportedBy": "root",
+    "passedChecks": 9,
+    "coverage": [
+      "three-habit limit",
+      "Unicode",
+      "checked reload",
+      "reset",
+      "remove",
+      "malformed fragment",
+      "desktop1280",
+      "mobile390",
+      "opaque origin"
+    ],
+    "independentGitHubApiVerification": "root confirmed b578d796 source digest and request binding",
+    "latestPublicRoute": "root confirmed HTTP200 new app"
+  },
+  "operatorInterventionDuringRequest": false
+}

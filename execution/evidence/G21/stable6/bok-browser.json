@@ -1,0 +1,110 @@
+{
+  "at": "2026-10-23T10:56:58.773Z",
+  "app": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/aa2e430d4ec9282be08e8d7274cd5fc4482852f2/files/index.html",
+  "latest": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/latest/",
+  "acceptedRevision": "aa2e430d4ec9282be08e8d7274cd5fc4482852f2",
+  "httpStatus": 200,
+  "checks": [
+    "Added three habits including emoji and Japanese",
+    "Fourth habit rejected through keyboard; Add disabled",
+    "Two checkboxes and Unicode names preserved after actual reload",
+    "Reset clears checks, preserves names, survives reload",
+    "Desktop1280 and mobile390 controls fit viewport",
+    "Remove all works without native dialog and survives reload",
+    "Malformed fragment opens safely with no habits",
+    "Opaque-origin sandbox retained, storage unavailable",
+    "No application JavaScript errors"
+  ],
+  "viewports": [
+    {
+      "width": 1280,
+      "documentWidth": 1280,
+      "controls": [
+        {
+          "id": "",
+          "left": 471,
+          "right": 491
+        },
+        {
+          "id": "",
+          "left": 471,
+          "right": 491
+        },
+        {
+          "id": "",
+          "left": 471,
+          "right": 491
+        },
+        {
+          "id": "newInput",
+          "left": 450,
+          "right": 770.375
+        },
+        {
+          "id": "addBtn",
+          "left": 778.375,
+          "right": 830
+        },
+        {
+          "id": "resetBtn",
+          "left": 450,
+          "right": 552.859375
+        },
+        {
+          "id": "clearBtn",
+          "left": 560.859375,
+          "right": 658.890625
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "controls": [
+        {
+          "id": "",
+          "left": 57,
+          "right": 77
+        },
+        {
+          "id": "",
+          "left": 57,
+          "right": 77
+        },
+        {
+          "id": "",
+          "left": 57,
+          "right": 77
+        },
+        {
+          "id": "newInput",
+          "left": 36,
+          "right": 294.375
+        },
+        {
+          "id": "addBtn",
+          "left": 302.375,
+          "right": 354
+        },
+        {
+          "id": "resetBtn",
+          "left": 36,
+          "right": 138.859375
+        },
+        {
+          "id": "clearBtn",
+          "left": 146.859375,
+          "right": 244.890625
+        }
+      ]
+    }
+  ],
+  "isolation": {
+    "origin": "null",
+    "storageBlocked": true
+  },
+  "applicationErrors": [],
+  "excludedExtensionErrors": 8,
+  "bokRepliesVisible": 2,
+  "persistence": "Current URL retains/shares state; clean URL starts empty. Reset today is manual."
+}
