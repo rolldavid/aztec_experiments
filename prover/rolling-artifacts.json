@@ -10,7 +10,7 @@
     {
       "name": "PrivateBok",
       "path": "experiments/private-bok/target/private_bok-PrivateBok.json",
-      "sha256": "59b7c7315589a777bc9d1637d05cb1e9de4cdc876e8d33496b4667ee97438487"
+      "sha256": "fa048cab7d0f7c5b4c8ea4e1cd71af68cd34a01980cb00d3416c54f5adba3839"
     }
   ],
   "inputs": {
@@ -34,6 +34,6 @@
     "billboard/rolling_contract/src/preference_recovery.nr": "f1e33e08eeb2d6110454235cf836bc865fca53e673454d78a1a67dd6577467fd",
     "billboard/rolling_contract/src/preferences.nr": "7cdae41312403c4135f4ab621283c7a4bf52b0b6fb8c34d14a90e83386e4be30",
     "billboard/rolling_contract/src/profiles.nr": "b12124ca50d181f9798c24e3373f9ba358697fdb433cc7d696c3a69ac9d53efd",
-    "experiments/private-bok/escrow/src/main.nr": "3139a83a22a7dc3a22dcd20aeb5e7cbe0f142693e166ab668a96ea51c3074260"
+    "experiments/private-bok/escrow/src/main.nr": "e6f8a24e8899cbe15bd750e302288e44e8d442c321931f432f5e871469c81c9a"
   }
 }
