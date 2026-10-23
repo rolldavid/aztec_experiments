@@ -17,13 +17,13 @@ const requestFields = ['state','invocation_hash','sequence','deadline','budget',
 
 /** Existing pinned V6 SDK only; no wallet/node/service lifecycle is created here. */
 export async function createPrivateBokEscrow(options) {
- const [{Contract,BatchCall}, {Fr}, {AztecAddress}, {TxHash}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {waitForTx}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
+ const [{Contract,BatchCall}, {Fr}, {AztecAddress}, {TxHash,TxExecutionRequest,TxContext}, {GasSettings}, {getGasLimits}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {waitForTx}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
   import('@aztec-labs/aztec.js/contracts'), import('@aztec-labs/foundation/curves/bn254'),
-  import('@aztec-labs/stdlib/aztec-address'), import('@aztec-labs/stdlib/tx'),
+  import('@aztec-labs/stdlib/aztec-address'), import('@aztec-labs/stdlib/tx'), import('@aztec-labs/stdlib/gas'), import('@aztec-labs/wallet-sdk/base-wallet'),
   import('@aztec-labs/stdlib/contract'), import('@aztec-labs/stdlib/hash'), import('@aztec-labs/stdlib/abi'), import('@aztec-labs/aztec.js/node'),
   import('@aztec-labs/bb-prover/client/bundle'), import('@aztec-labs/bb-prover/client/lazy'),
  ]);
- return createPrivateBokEscrowFactory({Contract, BatchCall, Fr, AztecAddress, TxHash, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType,
+ return createPrivateBokEscrowFactory({Contract, BatchCall, Fr, AztecAddress, TxHash, TxExecutionRequest, TxContext, GasSettings, getGasLimits, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType,
   waitForTx,isTrustedProver: prover => prover instanceof BBBundlePrivateKernelProver || prover instanceof BBLazyPrivateKernelProver})(options);
 }
 
@@ -190,7 +190,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    assert.equal(replacement.originalTxHash,record.txHash,'Replacement original hash changed');
    assert.equal(replacement.argsDigest,record.argsDigest,'Replacement arguments changed');
    assert.deepEqual(replacement.args,record.args,'Replacement arguments changed');
-   assert.equal(replacement.method,'settle');assert.equal(record.method,'settle');
+   assert(['settle','finalize_reply'].includes(record.method));assert.equal(replacement.method,record.method);
    const observed=await inspectOne(operationId,true,read);
    // Observe both exact hashes: an original late inclusion is also authoritative,
    // while each included transaction keeps its own fee/effect history.
@@ -254,10 +254,28 @@ export function createPrivateBokEscrowFactory(sdk) {
      assert.equal(call.name,steps[i][0]);assert.equal(String(call.to),String(addr));assert.equal(call.type,'public');assert.equal(call.isStatic,false);
      assert.deepEqual(call.args.map(x=>x.toBigInt()),steps[i][1].flat().map(x=>BigInt(x)),'Payload arguments changed');
     }
-    const fee=await wallet.completeFeeOptions({from:op,feePayer:payload.feePayer});
-    const txRequest=await wallet.createTxExecutionRequestFromPayloadAndFee(payload,op,fee);
-    const proven=await measureBokStage('escrow.prove',()=>wallet.pxe.proveTx(txRequest,{scopes:wallet.scopesFrom(op,[]),senderForTags:wallet.senderForTagsFrom(op)}));
+    const [fee,maxTxGasLimits]=await Promise.all([
+     wallet.completeFeeOptions({from:op,feePayer:payload.feePayer,forEstimation:true}),wallet.getMaxTxGasLimits(),
+    ]);
+    const simulationRequest=await wallet.createTxExecutionRequestFromPayloadAndFee(payload,op,fee);
+    let estimatedGasSettings;
+    const proveOpts={scopes:wallet.scopesFrom(op,[]),senderForTags:wallet.senderForTagsFrom(op)};
+    // Native atomic estimation/proving shares one anchor and sync. Estimation's
+    // deliberately high limits must never become the submitted fee commitment.
+    const proven=await measureBokStage('escrow.prove',()=>wallet.pxe.simulateAndProveTx(simulationRequest,{
+     ...proveOpts,simulatePublic:true,skipTxValidation:false,skipFeeEnforcement:true,
+     prepareProve:async simulation=>{
+      assert(simulation.publicInputs?.forPublic&&simulation.publicOutput?.txEffect?.revertCode?.isOK()&&!simulation.publicOutput?.revertReason,'Escrow simulation failed');
+      const gasSettings=sdk.GasSettings.from({...fee.gasSettings,...sdk.getGasLimits(simulation.gasUsed,maxTxGasLimits)});estimatedGasSettings=gasSettings;
+      await recordUpdate({estimatedMaximumFee:String(gasSettings.getFeeLimit().toBigInt()),estimatedGas:{gasLimits:{daGas:gasSettings.gasLimits.daGas,l2Gas:gasSettings.gasLimits.l2Gas},teardownGasLimits:{daGas:gasSettings.teardownGasLimits.daGas,l2Gas:gasSettings.teardownGasLimits.l2Gas}}});
+      // Only gas limits change. Keep the exact account authorization, nonce,
+      // calls and fee prices; do not call a wallet/PXE method under its queue lock.
+      const proveTxRequest=sdk.TxExecutionRequest.from({...simulationRequest,txContext:sdk.TxContext.from({...simulationRequest.txContext,gasSettings})});
+      return {proveTxRequest,proveOpts};
+     },
+    }));
     assert(!proven.chonkProof.isEmpty(),'Missing proof');const tx=await proven.toTx();
+    assert.deepEqual(tx.data.constants.txContext.gasSettings.toBuffer(),estimatedGasSettings.toBuffer(),'Proven fee settings changed');
     assert.equal(String(tx.data.feePayer),String(op),'Operator fee payer changed');
     assert.equal(tx.data.constants.txContext.chainId.toBigInt(),BigInt(chainId),'Proven chain mismatch');
     assert.equal(tx.data.constants.txContext.version.toBigInt(),BigInt(version),'Proven version mismatch');
@@ -288,10 +306,15 @@ export function createPrivateBokEscrowFactory(sdk) {
    const {operationId,argsDigest,originalTxHash}=authority??{};
    assert(/^[0-9a-f]{64}$/.test(operationId));hex(originalTxHash);
    const original=journal().operations[operationId];
-   assert(original?.method==='settle'&&original.phase==='submission-unknown','Submitted settlement required');
+   assert(['settle','finalize_reply'].includes(original?.method)&&original.phase==='submission-unknown','Submitted settlement required');
    assert.equal(original.argsDigest,argsDigest);assert.equal(digest(original.args),argsDigest);
    assert.equal(original.txHash,originalTxHash);assert(/^[0-9a-f]{64}$/.test(original.transactionSha256));
-   assert.equal(original.args.length,4);scope(original.args[0]);sequence(original.args[1]);
+   assert.equal(original.args.length,original.method==='finalize_reply'?9:4);scope(original.args[0]);sequence(original.args[1]);
+   if(original.method==='finalize_reply'){
+    assert.equal(typeof sdk.BatchCall,'function','Native batch capability required');hex(original.args[4]);
+    assert(Array.isArray(original.args[5])&&original.args[5].length===32);original.args[5].forEach(value=>hex(value));
+    assert(Number.isSafeInteger(original.args[6])&&original.args[6]>0&&original.args[6]<=992);sequence(original.args[7]);sequence(original.args[8]);
+   }
    const charge=integer(original.args[2],128);hex(original.args[3]);assert(charge>0n);
    if(original.replacement)return waitForOperation(operationId);
    const check=async()=>{
@@ -311,12 +334,12 @@ export function createPrivateBokEscrowFactory(sdk) {
     return checkpoint;
    };
    const admitted=await check();if(!admitted)return inspect(operationId);
-   await update(operationId,{replacement:{method:'settle',args:original.args,argsDigest,originalTxHash,
+   await update(operationId,{replacement:{method:original.method,args:original.args,argsDigest,originalTxHash,
     originalTransactionSha256:original.transactionSha256,proofMode,phase:'preparing',
     reservation:JSON.stringify(admitted.request,(_key,value)=>typeof value==='bigint'?'bigint:'+value:value),anchor:admitted.anchor}});
    // Admission is consumed before proving. Any failure or ambiguous submission
    // can only inspect this lineage; it never produces another replacement.
-   return perform('settle',[id,original.args[1],charge,original.args[3]],operationId,true,check);
+   return perform(original.method,[id,original.args[1],charge,...original.args.slice(3)],operationId,true,check);
   };
   const port={identity,mode:Object.freeze({proofMode,nodeVerifiesProofs:proofMode==='real',pxeProofMode:proofMode,finality,controlledSettlement:development}),
    request:exclusive(async value=>{scope(value);const {instance,...result}=await anchored();return result;}),
