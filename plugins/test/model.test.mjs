@@ -221,9 +221,15 @@ test('static update receives bounded untrusted source before first paid model ca
  await createAgent({toolbox,instructions:'Trusted instructions',model:{complete:async value=>{input=value;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',text:'Change the existing app'});
  assert.equal(calls.filter(([name])=>name==='list_files').length,1);assert.equal(calls.filter(([name])=>name==='read_file').length,3);
  assert(!input.messages[0].content.includes('EXISTING_UNTRUSTED_SOURCE'));
- const context=input.messages.find(row=>row.role==='user'&&row.content.includes('Initial repository snapshot'));
- assert(context.content.includes('EXISTING_UNTRUSTED_SOURCE'));assert(context.content.includes('untrusted source data'));
- assert(Buffer.byteLength(context.content)<25000);
+ const seeded=input.messages.find(row=>row.role==='assistant'&&row.tool_calls?.[0]?.id==='initial_repository_list');
+ assert(seeded);assert(!seeded.content.includes('EXISTING_UNTRUSTED_SOURCE'));
+ assert(input.messages.indexOf(seeded)>input.messages.findIndex(row=>row.content==='Change the existing app'));
+ assert.deepEqual(seeded.tool_calls.map(call=>[call.function.name,JSON.parse(call.function.arguments)]),calls);
+ const results=input.messages.filter(row=>row.role==='tool');assert.equal(results.length,4);
+ assert.deepEqual(results.map(row=>row.tool_call_id),seeded.tool_calls.map(call=>call.id));
+ assert.equal(JSON.parse(results[1].content).text,'<p>EXISTING_UNTRUSTED_SOURCE</p>');
+ assert(results.every(row=>JSON.parse(row.content).contentTrust==='untrusted repository data'));
+ assert(Buffer.byteLength(JSON.stringify([seeded,...results]))<=24576);
 });
 test('initial context omits whole oversized files explicitly and never preloads connected private sources',async()=>{
  for(const privateSource of [false,true]){
@@ -231,7 +237,7 @@ test('initial context omits whole oversized files explicitly and never preloads 
   const toolbox={open:async()=>({sourceRevision:'a'.repeat(40),privateSource,definitions,call:async name=>{reads++;return name==='list_files'?{files:['index.html','package.json'],truncated:false}:{text:'X'.repeat(30000)};},close:async()=>{}})};
   await createAgent({toolbox,instructions:'Help',model:{complete:async value=>{input=value;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',text:'Edit'});
   if(privateSource){assert.equal(reads,0);assert(!input.messages.some(row=>row.content.includes('Initial repository snapshot')));}
-  else{const text=input.messages.find(row=>row.content.includes('Initial repository snapshot')).content;assert(text.includes('"omitted":["index.html","package.json"]'));assert(!text.includes('XXX'));assert(Buffer.byteLength(text)<25000);}
+  else{const seeded=input.messages.find(row=>row.role==='assistant'&&row.tool_calls);assert.equal(seeded.tool_calls.length,1);const text=input.messages.find(row=>row.role==='tool').content;assert(text.includes('"omitted":["index.html","package.json"]'));assert(!text.includes('XXX'));assert(Buffer.byteLength(text)<25000);}
  }
 });
 
