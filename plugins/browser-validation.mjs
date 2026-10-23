@@ -46,29 +46,50 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
  const files=new Map(artifacts.map(f=>[f.path,Buffer.from(f.data,'base64')]));
  const html=artifacts.filter(f=>f.path.toLowerCase().endsWith('.html'));if(!files.has('index.html')||html.length>16)throw Error('Provide index.html and at most 16 HTML pages');
  const browser=await chromium.launch({headless:true,chromiumSandbox:true,timeout:remaining()});
- // Host-owned control identity, shared by discovery and action accounting.
- const identify=element=>{
-  if(element.tagName==='LABEL')element=element.control??element;
-  for(const attribute of ['id','data-testid','aria-label','name']){
-   const value=element.getAttribute(attribute);
-   if(value&&document.querySelectorAll('['+attribute+'="'+CSS.escape(value)+'"]').length===1)return attribute+':'+value;
+ // Eligibility and identity must come from the same DOM task. Rerendering
+ // between separate locator calls can otherwise identify a detached old node.
+ const captureControls=(elements,{discovery=false}={})=>{
+  const visible=element=>{
+   const style=getComputedStyle(element);
+   if(style.visibility!=='visible')return false;
+   // Match controls with display:contents through their rendered descendants.
+   if(style.display==='contents')return [...element.childNodes].some(child=>{
+    if(child.nodeType===Node.ELEMENT_NODE)return visible(child);
+    if(child.nodeType!==Node.TEXT_NODE)return false;
+    const range=document.createRange();range.selectNode(child);const rect=range.getBoundingClientRect();
+    return rect.width>0&&rect.height>0;
+   });
+   if(element.checkVisibility&&!element.checkVisibility())return false;
+   const rect=element.getBoundingClientRect();return rect.width>0&&rect.height>0;
+  };
+  const identify=element=>{
+   if(element.tagName==='LABEL')element=element.control??element;
+   if(!element.isConnected)return null;
+   for(const attribute of ['id','data-testid','aria-label','name']){
+    const value=element.getAttribute(attribute);
+    if(value&&document.querySelectorAll('['+attribute+'="'+CSS.escape(value)+'"]').length===1)return attribute+':'+value;
+   }
+   const parts=[];for(let current=element;current&&current!==document.body;current=current.parentElement){
+    const siblings=[...current.parentElement?.children??[]].filter(e=>e.tagName===current.tagName);
+    const index=siblings.indexOf(current);if(index<0)return null;
+    parts.push(current.tagName.toLowerCase()+':nth-of-type('+(index+1)+')');
+   }
+   return parts.reverse().join('>');
+  };
+  if(discovery){
+   if(globalThis.origin!=='null')throw Error('Hosting sandbox did not create an opaque origin');
+   if(document.querySelector('a[download],a[target]:not([target=""]):not([target="_self"]),form[target]:not([target=""]):not([target="_self"])'))throw Error('Hosting does not support downloads or popup targets; use in-page controls');
+   if(elements.length>256)throw Error('Too many interactive controls for browser validation');
   }
-  const parts=[];for(let current=element;current&&current!==document.body;current=current.parentElement){
-   const siblings=[...current.parentElement?.children??[]].filter(e=>e.tagName===current.tagName);
-   parts.push(current.tagName.toLowerCase()+':nth-of-type('+(siblings.indexOf(current)+1)+')');
-  }
-  return parts.reverse().join('>');
+  return elements.filter(element=>element.isConnected&&(!discovery||(
+   visible(element)&&!element.matches(':disabled')&&element.closest('[aria-disabled="true"],[aria-disabled="false"]')?.getAttribute('aria-disabled')!=='true'&&
+   !(element.tagName==='A'&&new URL(element.getAttribute('href'),location.href).origin!==location.origin)
+  ))).map(identify).filter(identity=>identity!==null);
  };
  const discover=async(page,scope)=>{
-  if(await page.evaluate(()=>globalThis.origin)!=='null')throw Error('Hosting sandbox did not create an opaque origin');
-  if(await page.locator('a[download],a[target]:not([target=""]):not([target="_self"]),form[target]:not([target=""]):not([target="_self"])').count())throw Error('Hosting does not support downloads or popup targets; use in-page controls');
   const controls=page.locator('button,input:not([type=hidden]),select,textarea,[role=button],[contenteditable=true],a[href],[role=link]');
-  const count=await controls.count();if(count>256)throw Error('Too many interactive controls for browser validation');
-  for(let i=0;i<count;i++){
-   const item=controls.nth(i);if(!await item.isVisible()||!await item.isEnabled())continue;
-   const external=await item.evaluate(e=>e.tagName==='A'&&new URL(e.getAttribute('href'),location.href).origin!==location.origin);
-   if(!external)encountered.add(scope+await item.evaluate(identify));
-  }
+  const identities=await controls.evaluateAll(captureControls,{discovery:true});
+  for(const identity of identities)encountered.add(scope+identity);
  };
  try{
   for(const viewport of [{width:1280,height:800},{width:390,height:844}]){
@@ -114,7 +135,8 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
      for(const step of scenario.steps){
       page.setDefaultTimeout(remaining());const locator=step.selector===undefined?null:page.locator(step.selector).nth(step.index??0);
       if(['fill','click','check','select','press'].includes(step.action)){
-       await locator.waitFor({state:'visible',timeout:remaining()});exercised.add(scope+await locator.evaluate(identify));
+       await locator.waitFor({state:'visible',timeout:remaining()});
+       for(const identity of await locator.evaluateAll(captureControls))exercised.add(scope+identity);
       }
       switch(step.action){
        case 'fill':await locator.fill(step.value);break;
