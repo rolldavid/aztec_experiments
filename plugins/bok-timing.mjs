@@ -35,3 +35,26 @@ export function measureBokObjectStages(object,prefix){
   key,typeof value==='function'&&allowed.includes(key)?(...args)=>measureBokStage(prefix+'.'+key,()=>Reflect.apply(value,object,args)):value,
  ])));
 }
+
+// Aggregate native SDK timings only; never serialize SDK objects, function names,
+// RPC arguments, proof inputs, or per-oracle values. Observation cannot fail a tx.
+export function recordBokProofProfile(stats){
+ try{
+  const context=contexts.getStore();if(!context||(context.proofProfiles??0)>=16)return;
+  const timings=stats?.timings;if(!timings||typeof timings!=='object')return;
+  const values={};
+  for(const key of ['total','sync','proving','validation','unaccounted']){
+   const value=timings[key];if(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=Number.MAX_SAFE_INTEGER/1000)values[key+'Ms']=Math.round(value*1000)/1000;
+  }
+  if(Array.isArray(timings.perFunction)&&timings.perFunction.length<=256){
+   const times=timings.perFunction.map(entry=>entry?.time);
+   if(times.every(value=>typeof value==='number'&&Number.isFinite(value)&&value>=0)){
+    const sum=times.reduce((total,value)=>total+value,0);
+    if(Number.isFinite(sum)&&sum<=Number.MAX_SAFE_INTEGER/1000){values.witnessMs=Math.round(sum*1000)/1000;values.functionCount=times.length;}
+   }
+  }
+  if(!Object.keys(values).length)return;
+  context.proofProfiles=(context.proofProfiles??0)+1;
+  const pending=context.emit({requestId:context.requestId,event:'escrow.proof_profile',...values});pending?.catch?.(()=>{});
+ }catch{/* Profiling never changes proof, submission, or accounting behavior. */}
+}

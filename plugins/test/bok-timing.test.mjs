@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {withBokTiming,measureBokStage,measureBokObjectStages} from '../bok-timing.mjs';
+import {withBokTiming,measureBokStage,measureBokObjectStages,recordBokProofProfile} from '../bok-timing.mjs';
 const id=n=>'0x'+String(n).repeat(64);
 test('timing records only bounded public identifiers and monotonic durations, retaining original outcomes',async()=>{
  const records=[],secret=Error('PRIVATE_PROMPT_OR_CREDENTIAL');
@@ -44,4 +44,22 @@ test('whole-request and adapter-open stages retain enclosing and child durations
  await withBokTiming(id(1),()=>measureBokStage('request.total',()=>measureBokStage('escrow.open',async()=>true)),{emit:r=>records.push(r)});
  assert.deepEqual(records.map(r=>[r.stage,r.result]),[['request.total','started'],['escrow.open','started'],['escrow.open','success'],['request.total','success']]);
  assert(records.at(-1).durationMs>=records[2].durationMs);
+});
+
+test('native proof profile emits fixed numeric aggregates without function or oracle data',async()=>{
+ const records=[];
+ await withBokTiming(id(1),async()=>recordBokProofProfile({timings:{total:10.12345,sync:1,proving:6,validation:1,unaccounted:0.5,secret:'SECRET',perFunction:[{time:1,functionName:'SECRET',oracles:{SECRET:99}},{time:0.5}]},nodeRPCCalls:{SECRET:'SECRET'}}),{emit:r=>records.push(r)});
+ assert.deepEqual(records,[{requestId:id(1),event:'escrow.proof_profile',totalMs:10.123,syncMs:1,provingMs:6,validationMs:1,unaccountedMs:0.5,witnessMs:1.5,functionCount:2}]);
+});
+test('native proof profile ignores malformed values and cannot interrupt transaction processing',async()=>{
+ const records=[];
+ recordBokProofProfile({timings:{total:1}});
+ await withBokTiming(id(1),async()=>{
+  recordBokProofProfile({timings:{total:Infinity,sync:NaN,proving:-1,validation:'SECRET',perFunction:[{time:'SECRET'}]}});
+  recordBokProofProfile({get timings(){throw Error('SECRET');}});
+  for(let i=0;i<20;i++)recordBokProofProfile({timings:{total:1}});
+ },{emit:r=>records.push(r)});
+ assert.equal(records.length,16);assert(records.every(r=>r.totalMs===1));assert(!JSON.stringify(records).includes('SECRET'));
+ await withBokTiming(id(1),async()=>recordBokProofProfile({timings:{total:1}}),{emit:()=>{throw Error('logging failure');}});
+ await withBokTiming(id(1),async()=>recordBokProofProfile({timings:{total:1}}),{emit:async()=>{throw Error('async logging failure');}});
 });

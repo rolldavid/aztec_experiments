@@ -1,4 +1,4 @@
-import {measureBokStage} from './bok-timing.mjs';
+import {measureBokStage,recordBokProofProfile} from './bok-timing.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -268,6 +268,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     const txRequest=await wallet.createTxExecutionRequestFromPayloadAndFee(payload,op,fee);
     const proveOpts={scopes:wallet.scopesFrom(op,[]),senderForTags:wallet.senderForTagsFrom(op)};
     const proven=await measureBokStage('escrow.prove',()=>wallet.pxe.proveTxWithPublicValidation(txRequest,proveOpts));
+    recordBokProofProfile(proven.stats);
     assert(!proven.chonkProof.isEmpty(),'Missing proof');const tx=await proven.toTx();
     assert.deepEqual(tx.data.constants.txContext.gasSettings.toBuffer(),fee.gasSettings.toBuffer(),'Proven fee settings changed');
     assert.equal(String(tx.data.feePayer),String(op),'Operator fee payer changed');
