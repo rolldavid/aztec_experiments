@@ -27,6 +27,8 @@ export function validatedPxeProve(source){
             perFunction,
             unaccounted: totalTime - ((syncTime ?? 0) + (proving ?? 0) + perFunction.reduce((acc, { time })=>acc + time, 0))`, `            proving,
             validation: validationTime,
+            privateWitness: executionSteps.filter(step => step.kind === CircuitKind.App).reduce((total, step) => total + step.timings.witgen, 0),
+            kernelWitness: executionSteps.filter(step => step.kind === CircuitKind.Kernel || step.kind === CircuitKind.HidingKernel).reduce((total, step) => total + step.timings.witgen, 0),
             perFunction,
             unaccounted: totalTime - ((syncTime ?? 0) + (proving ?? 0) + (validationTime ?? 0) + perFunction.reduce((acc, { time })=>acc + time, 0))`);
  source=replace(source,'    // Public API\n',`    // Validate actual kernel output before expensive proof generation. No

@@ -272,6 +272,7 @@
         const provenTx = atomicSimulation
           ? await measured('proveTxWithPublicValidation',()=>this.pxe.proveTxWithPublicValidation(txRequest,proveOpts))
           : await measured('proveTx',()=>this.pxe.proveTx(txRequest,proveOpts));
+        try{a.recordProofTimings?.(provenTx.stats);}catch{/* Diagnostics cannot interrupt a completed proof. */}
         const tx = await measured('toTx',()=>provenTx.toTx());
         const txHash = tx.getTxHash();
         log('  Proving complete. Submitting to node...', 'success');

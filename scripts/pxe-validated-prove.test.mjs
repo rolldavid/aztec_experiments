@@ -8,6 +8,7 @@ import {Gas,GasSettings} from '@aztec-labs/stdlib/gas';
 import {PrivateKernelTailCircuitPublicInputs,PartialPrivateTailPublicInputsForPublic} from '@aztec-labs/stdlib/kernel';
 import {PrivateSimulationResult,TxProvingResult} from '@aztec-labs/stdlib/tx';
 import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs';
+import {CircuitKind} from '@aztec-foundation/bb.js';
 const pxeSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url),'utf8');
 const kernelSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js',import.meta.url),'utf8');
 const pxe=validatedPxeProve(pxeSource),kernel=validatedKernelProve(kernelSource);
@@ -38,7 +39,7 @@ test('failed validation stops native kernel orchestration before expensive proof
  const h=kernelHarness();await assert.rejects(h.instance.proveWithKernels({},h.execution,{simulate:false,skipFeeEnforcement:false,profileMode:'none',beforeProof:async()=>{h.calls.push('validate');throw Error('revert');}}),/revert/);
  assert.deepEqual(h.calls,['kernel','tail','hiding','validate']);
 });
-function pxeHarness(failure){
+function pxeHarness(failure,executionSteps=[]){
  const calls=[],publicInputs=inputs(),execution={entrypoint:{taggingIndexRanges:[],contractClassLogs:[],nestedExecutionResults:[]},publicFunctionCalldata:[]};
  const request={txContext:{gasSettings:GasSettings.empty()}};
  const ctx={changeSetId:3,syncTime:0,anchorBlockHeader:{},recording:{stats:()=>({})},totalMs:()=>0};
@@ -50,15 +51,24 @@ function pxeHarness(failure){
   log={debug(){}};senderTaggingStore={};node={isValidTx:async(tx,opts)=>{calls.push('validate');assert.equal(opts.isSimulation,true);assert.equal(opts.skipFeeEnforcement,false);return {result:failure==='invalid'?'invalid':'valid'};}};
   #getSimulatorForTx=()=>({});#executePrivate=async()=>{calls.push('private');return execution;};
   #simulatePublicCalls=async(tx,skipFee)=>{calls.push('public');assert.equal(skipFee,false);return {txEffect:{revertCode:{isOK:()=>failure!=='revert'}},gasUsed:{totalGas:failure==='gas'?new Gas(2**32-1,2**32-1):Gas.empty(),teardownGas:Gas.empty()}};};
-  #prove=async(_request,_creator,_execution,_anchor,config)=>{calls.push('kernel');await config.beforeProof?.(publicInputs);calls.push('proof');return {publicInputs,chonkProof:{},executionSteps:[]};};
+  #prove=async(_request,_creator,_execution,_anchor,config)=>{calls.push('kernel');await config.beforeProof?.(publicInputs);calls.push('proof');return {publicInputs,chonkProof:{},executionSteps};};
   ${prove}
   ${privateProve}
   ${validate}
- })`,{calls,ctx,assert,request,publicInputs,execution,failure,Gas,Timer,PrivateSimulationResult,TxProvingResult,inspect:()=>'',persistSenderTaggingIndexRangesForTx:async()=>calls.push('tags')});
+ })`,{calls,ctx,assert,request,publicInputs,execution,executionSteps,CircuitKind,failure,Gas,Timer,PrivateSimulationResult,TxProvingResult,inspect:()=>'',persistSenderTaggingIndexRangesForTx:async()=>calls.push('tags')});
  return {instance:new Class(),request,calls};
 }
 test('native PXE validates actual kernel output inside one queue operation, then proves and persists tags',async()=>{
  const h=pxeHarness();await h.instance.proveTxWithPublicValidation(h.request,{scopes:[]});assert.deepEqual(h.calls,['queue','private','kernel','public','validate','proof','tags','commit']);
+});
+test('native proof aggregates use circuit kinds, preserve existing totals and execute no extra stages',async()=>{
+ const steps=[{kind:CircuitKind.App,functionName:'private_kernel_reset',timings:{witgen:11}},
+ {kind:CircuitKind.Kernel,functionName:'private-secret',timings:{witgen:7}},
+ {kind:CircuitKind.HidingKernel,functionName:'private-secret-2',timings:{witgen:3}}];
+ const h=pxeHarness(undefined,steps),proven=await h.instance.proveTxWithPublicValidation(h.request,{scopes:[]});
+ assert.equal(proven.stats.timings.privateWitness,11);assert.equal(proven.stats.timings.kernelWitness,10);
+ assert.equal(proven.stats.timings.unaccounted,-21,'new numeric aggregates are not subtracted again');
+ assert.deepEqual(h.calls,['queue','private','kernel','public','validate','proof','tags','commit']);
 });
 for(const failure of ['revert','gas','invalid'])test('native PXE '+failure+' discards before proof or tag persistence',async()=>{
  const h=pxeHarness(failure);await assert.rejects(h.instance.proveTxWithPublicValidation(h.request,{scopes:[]}));

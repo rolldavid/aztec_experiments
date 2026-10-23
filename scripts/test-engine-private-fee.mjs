@@ -828,7 +828,7 @@ test('wallet rechecks pending reverted finality before simulation, proof or subm
  await assert.rejects(wallet.sendTx({}, {from:owner,fee:{gasSettings:gas()}}),{code:'BB_TRANSACTION_FINALITY_PENDING'});assert.deepEqual(calls,[]);
 });
 for(const failure of [null,'revert','gas'])test('atomic private simulation and proof: '+failure,async()=>{
- const c=context(),calls=[],txHash=TxHash.fromBigInt(42n),receipt=minedReceipt(txHash),request={signed:'request'};
+ const c=context(),calls=[],txHash=TxHash.fromBigInt(42n),receipt=minedReceipt(txHash),request={signed:'request'},stats={timings:{total:123}};
  class BaseWallet {
   constructor(pxe){this.pxe=pxe;}
   async completeFeeOptions(options){return {gasSettings:options.gasSettings};}
@@ -839,11 +839,11 @@ for(const failure of [null,'revert','gas'])test('atomic private simulation and p
  const pxe={async proveTxWithPublicValidation(value,options){
   assert.equal(value,request);assert.equal(options.senderForTags,owner);calls.push('validate');
   if(failure)throw Object.assign(Error('native validation failed'),{code:failure==='gas'?'BB_GAS_LIMIT_EXCEEDED':'BB_SIMULATION_FAILED'});
-  calls.push('prove');return {toTx:async()=>({getTxHash:()=>txHash})};
+  calls.push('prove');return {stats,toTx:async()=>({getTxHash:()=>txHash})};
  },async proveTx(){throw Error('duplicate proving');}};
  const node={async sendTx(){calls.push('send');},async getTxReceipt(){return receipt;},async getBlock(){return {hash:canonicalBlockHash};}};
- const wallet=c.BillboardPrivateFeeRouting.createAztecWallet({...transactionOutcomes,BaseWallet,GasSettings},pxe,node,node,()=>{},Fr.ONE);
+ const wallet=c.BillboardPrivateFeeRouting.createAztecWallet({...transactionOutcomes,BaseWallet,GasSettings,recordProofTimings(value){assert.equal(value,stats);calls.push('timings');throw Error('diagnostic sink unavailable');}},pxe,node,node,()=>{},Fr.ONE);
  const pending=wallet.sendTx({}, {from:owner,fee:{gasSettings:gas()},atomicSimulation:true});
  if(failure){await assert.rejects(pending,{code:failure==='gas'?'BB_GAS_LIMIT_EXCEEDED':'BB_SIMULATION_FAILED'});assert.deepEqual(calls,['validate']);}
- else{await pending;assert.deepEqual(calls,['validate','prove','send']);}
+ else{await pending;assert.deepEqual(calls,['validate','prove','timings','send']);}
 });
