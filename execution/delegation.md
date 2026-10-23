@@ -1,3 +1,13 @@
+# Active performance work — 24 October 2026
+
+Root integrates and owns real browser transactions. Network agent independently
+reviews changes and publishes exact approved releases; it traced checkpoint delay
+to the deployed72-second pipelined slot schedule. Fresh-account agent owns isolated
+browser validation and redundant model discovery work. Packaging agent owns native
+proof diagnostics/builds and measurement-driven proof optimization. Existing hosts
+and authorized credentials only; no old-state migration. Current successful
+comparable result205.939s is recorded in docs/BOK_LATENCY.md; goal remains active.
+
 ## Live component ownership — 2026-10-19T12:48Z
 
 Controls owns docs-only D8 portable release packet in isolated checkout from6382a970: README link/onboarding, concise execution/release and feature/specification catalogs plus only referenced summary evidence. Funding owns existing fee-payment/aggregate-claim composition and focused checks, investigating funded-wallet use of existing credit. Reviewer independently diagnoses/reviews those source changes. Lead owns live wallet withdrawal, graph and integration. Both new ETH payments are mined and preserved; no repeat payments or claim trials before repair.
