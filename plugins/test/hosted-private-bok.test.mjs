@@ -752,29 +752,40 @@ function invocationFixture(){
  x.args.provider.execute=async()=>{x.events.push('paid');assert(Object.values(x.store.read().privateBok.calls).some(c=>c.phase==='possibly-sent'));if(x.control.timeout)throw Error('unknown provider');
   const q={modelId:'fixture',inputBound:100,maxTokens:10,inputPrice:1000000000n,outputPrice:1000000000n,cachePrice:null,maximum:110n};
   const billing=validateVeniceBilling({providerId:'invocation-'+(++count),modelId:'fixture',promptTokens:4,completionTokens:2,cachedTokens:0,inputPrice:'1000000000',outputPrice:'1000000000',cachePrice:null,charge:'6'},q);
-  return {message:{role:'assistant',content:'public reply'},billing,charge:6n,receipt:billing.receipt};};return x;
+  return {message:{role:'assistant',content:'public reply'},billing,charge:6n,receipt:billing.receipt};};
+ x.args.escrow.assertUsable=async()=>x.args.escrow.request(x.args.request.requestId);
+ x.row.secondary_done=false;
+ x.args.escrow.finalize_reply=async(request,sequence,charge,receipt,pluginId,fields,length,mainVersion,localVersion,operation)=>{
+  assert.equal(x.store.read().hostedPrivateBok.phase,'final-intent');assert.equal(request,x.args.request.requestId);assert.equal(pluginId,x.args.request.pluginId);
+  assert.equal(sequence,x.row.sequence);assert.equal(mainVersion,x.current.mainVersion);assert.equal(localVersion,x.current.localVersion);
+  assert(!x.ops.has(operation.operationId),'Atomic final transaction is submitted once');x.events.push('finalize_reply');
+  if(x.control.finalReverted){x.ops.set(operation.operationId,{status:'failed',canonical:true,method:'finalize_reply',argsDigest:operation.argsDigest});return;}
+  x.row.charged+=charge;x.row.refunded+=x.row.available+x.row.reserved-charge;x.row.available=0n;x.row.reserved=0n;x.row.sequence++;x.row.receipt=receipt;x.row.state=4;x.row.secondary_done=true;x.current.replied=true;
+  x.ops.set(operation.operationId,{status:'succeeded',canonical:true,method:'finalize_reply',argsDigest:operation.argsDigest});
+ };
+ return x;
 }
 test('hosted invocation accounting meters multiple calls under one reserve and settles before authenticated reply',async()=>{
  const x=invocationFixture();x.args.runAgent=async({model})=>{
   for(let i=0;i<3;i++){await model.complete({messages:[{role:'user',content:'same canonical invocation'}],maxTokens:10});assert.equal(x.row.reserved,1000n);assert.equal(x.row.sequence,0);}
   return {replyText:'accepted public result',revision:{acceptedRevision:'a'.repeat(40)}};
  };
- await x.run();assert.deepEqual(x.events,['reserve','paid','paid','paid','settle','publish_reply','finish']);assert.equal(x.row.charged,18n);assert.equal(x.row.refunded,982n);
+ await x.run();assert.deepEqual(x.events,['reserve','paid','paid','paid','finalize_reply']);assert.equal(x.row.charged,18n);assert.equal(x.row.refunded,982n);
  assert.equal(x.store.read().privateBok.accountingMode,'invocation-v1');await x.run();assert.equal(x.events.filter(v=>v==='paid').length,3);
 });
 test('hosted invocation accounting retains produced result across unsettled chain operation and resumes without agent',async()=>{
  const x=invocationFixture(),inspect=x.args.escrow.inspectOperation;let pending=true,agents=0;
- x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='settle'?{status:'pending'}:inspect(id);
+ x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='finalize_reply'?{status:'pending'}:inspect(id);
  const agent=x.args.runAgent;x.args.runAgent=async input=>{agents++;return agent(input);};
- await assert.rejects(x.run(),/unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'result-ready');assert.equal(x.row.charged,6n);assert.equal(x.row.reserved,0n);
- pending=false;await x.run();assert.equal(agents,1);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ await assert.rejects(x.run(),/unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'final-intent');assert.equal(x.row.charged,6n);assert.equal(x.row.reserved,0n);
+ pending=false;await x.run();assert.equal(agents,1);assert.deepEqual(x.events,['reserve','paid','finalize_reply']);
 });
 test('hosted invocation accounting preserves accepted revision recovery without replaying paid calls',async()=>{
  const x=invocationFixture();let agents=0;
  x.args.runAgent=async({model})=>{agents++;await model.complete({messages:[],maxTokens:10});throw Error('accepted result acknowledgement lost');};
  await assert.rejects(x.run(),/acknowledgement/);assert.equal(x.store.read().privateBok.calls[0].phase,'received');
  x.args.recoverAccepted=async()=>({replyText:'Application published. Original accepted source.'});await x.run();
- assert.equal(agents,1);assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ assert.equal(agents,1);assert.deepEqual(x.events,['reserve','paid','finalize_reply']);
 });
 test('hosted invocation accounting closes unknown original provider without a model or tool replay',async()=>{
  const x=invocationFixture();x.control.timeout=true;await assert.rejects(x.run(),/unknown/);const original=x.store.read(),c=original.privateBok.calls[0];
@@ -788,7 +799,7 @@ test('hosted invocation accounting closes unknown original provider without a mo
 
 test('hosted invocation result-ready is discoverable after restart without model admission',async t=>{
  const x=invocationFixture(),inspect=x.args.escrow.inspectOperation;
- x.args.escrow.inspectOperation=async id=>x.ops.get(id)?.method==='settle'?{status:'pending'}:inspect(id);
+ x.args.escrow.inspectOperation=async id=>x.ops.get(id)?.method==='finalize_reply'?{status:'pending'}:inspect(id);
  await assert.rejects(x.run(),/unresolved/);
  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'bok-invocation-restart-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));
  const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'public',receiver:f(5)},request={...x.args.request,threadId:f(9)},id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
@@ -802,7 +813,7 @@ test('hosted invocation result-ready is discoverable after restart without model
 test('generated validation failure settles actual invocation usage and refunds unused credit',async()=>{
  const x=invocationFixture();let agents=0;
  x.args.runAgent=async({model})=>{agents++;for(let i=0;i<2;i++)await model.complete({messages:[],maxTokens:10});throw Object.assign(Error('Untrusted generated source diagnostic'),{code:'STATIC_FAILED'});};
- await x.run();assert.deepEqual(x.events,['reserve','paid','paid','settle','publish_reply','finish']);
+ await x.run();assert.deepEqual(x.events,['reserve','paid','paid','finalize_reply']);
  assert.equal(x.row.charged,12n);assert.equal(x.row.refunded,988n);assert.equal(x.row.reserved,0n);
  assert.equal(x.store.read().hostedPrivateBok.phase,'finished');
  await x.run();assert.equal(agents,1);assert.equal(x.events.filter(e=>e==='paid').length,2);
@@ -810,12 +821,12 @@ test('generated validation failure settles actual invocation usage and refunds u
 
 test('generated failure result resumes pending settlement without another model call',async()=>{
  const x=invocationFixture(),inspect=x.args.escrow.inspectOperation;let pending=true,agents=0;
- x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='settle'?{status:'pending'}:inspect(id);
+ x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='finalize_reply'?{status:'pending'}:inspect(id);
  x.args.runAgent=async({model})=>{agents++;await model.complete({messages:[],maxTokens:10});throw Object.assign(Error('failed tests'),{code:'STATIC_FAILED'});};
  await assert.rejects(x.run(),/unresolved/);const saved=x.store.read().hostedPrivateBok;
- assert.equal(saved.phase,'result-ready');assert.match(saved.result.replyText,/checks failed/);assert.equal(saved.result.revision,undefined);assert(!saved.result.replyText.includes('failed tests'));
+ assert.equal(saved.phase,'final-intent');assert.match(unpackText(saved.args[2],saved.args[3]),/checks failed/);assert(!unpackText(saved.args[2],saved.args[3]).includes('failed tests'));
  pending=false;await x.run();assert.equal(agents,1);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
- assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+ assert.deepEqual(x.events,['reserve','paid','finalize_reply']);
 });
 
 for(const code of ['STATIC_UNAVAILABLE','STATIC_CLEANUP_REQUIRED','STATIC_RECORD_FAILED','UNKNOWN_PROVIDER'])test('unresolved '+code+' is not converted to a generated validation failure',async()=>{
@@ -838,4 +849,64 @@ test('configured code context above 64 KiB reaches provider while exact bound re
  const x=invocationFixture();x.args.limits={...x.args.limits,maxInputBytes:262144};
  x.args.runAgent=async({model})=>{await model.complete({messages:[{role:'user',content:'x'.repeat(70000)}],maxTokens:10});await model.complete({messages:[{role:'user',content:'x'.repeat(262145)}],maxTokens:10});assert.fail('Oversized request reached model');};
  await x.run();assert.equal(x.events.filter(e=>e==='paid').length,1);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.row.reserved,0n);
+});
+
+test('canonical atomic reply reversion closes genuine billing without retrying the reply or agent',async()=>{
+ const x=invocationFixture();x.control.finalReverted=true;
+ assert.deepEqual(await x.run(),{status:'accounted-without-reply',replayed:false});
+ assert.deepEqual(x.events,['reserve','paid','finalize_reply','close_uncertain','reconcile']);assert.equal(x.current.replied,false);
+ assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.row.state,4);
+ assert.equal(x.store.read().hostedPrivateBok.replyFailure,'canonical-revert');
+ await x.run();assert.equal(x.events.filter(x=>x==='finalize_reply').length,1);assert.equal(x.events.filter(x=>x==='paid').length,1);
+});
+test('accounting-only path resumes its original settlement after canonical batch reversion',async()=>{
+ const x=invocationFixture();x.control.finalReverted=true;const inspect=x.args.escrow.inspectOperation;let pending=true;
+ x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='reconcile'?{status:'pending'}:inspect(id);
+ await assert.rejects(x.run(),/unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'accounting-only');
+ pending=false;assert.equal((await x.run()).status,'accounted-without-reply');assert.deepEqual(x.events,['reserve','paid','finalize_reply','close_uncertain','reconcile']);
+});
+for(const missing of ['canonical','argsDigest','method'])test('unbound failed final receipt cannot authorize accounting-only close: '+missing,async()=>{
+ const x=invocationFixture();x.control.finalReverted=true;const inspect=x.args.escrow.inspectOperation;
+ x.args.escrow.inspectOperation=async id=>{const r=await inspect(id);if(r.method==='finalize_reply'){const changed={...r};delete changed[missing];return changed;}return r;};
+ await assert.rejects(x.run(),/unresolved/);assert.deepEqual(x.events,['reserve','paid','finalize_reply']);assert.equal(x.row.reserved,1000n);
+});
+test('successful final receipt without canonical refund or authenticated board reply cannot report success',async()=>{
+ for(const missing of ['refund','reply']){
+  const x=invocationFixture(),finalize=x.args.escrow.finalize_reply;
+  x.args.escrow.finalize_reply=async(...args)=>{await finalize(...args);if(missing==='refund')x.row.secondary_done=false;else x.current.replied=false;};
+  await assert.rejects(x.run(),missing==='refund'?/accounting mismatch/:/Authenticated Rolling reply/);
+  assert.equal(x.store.read().hostedPrivateBok.phase,'final-intent');assert.deepEqual(x.events,['reserve','paid','finalize_reply']);
+ }
+});
+
+test('canonical final batch revert remains reconcilable after request is fenced before resume',async()=>{
+ const x=invocationFixture();x.control.finalReverted=true;const inspect=x.args.escrow.inspectOperation;let pending=true;
+ x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='finalize_reply'?{status:'pending'}:inspect(id);
+ await assert.rejects(x.run(),/unresolved/);assert.equal(x.store.read().hostedPrivateBok.phase,'final-intent');
+ x.row.state=3;x.row.refunded+=x.row.available;x.row.available=0n;pending=false;
+ assert.equal((await x.run()).status,'accounted-without-reply');assert.deepEqual(x.events,['reserve','paid','finalize_reply','reconcile']);
+ assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.row.state,4);assert.equal(x.current.replied,false);
+});
+test('expired active canonical final revert fences then reconciles known billing without attempting settle',async()=>{
+ const x=invocationFixture();x.control.finalReverted=true;x.row.deadline=0n;
+ x.args.escrow.settle=async()=>assert.fail('Expired ACTIVE request must not attempt settle');
+ assert.equal((await x.run()).status,'accounted-without-reply');
+ assert.deepEqual(x.events,['reserve','paid','finalize_reply','close_uncertain','reconcile']);
+ assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.row.state,4);assert.equal(x.current.replied,false);
+});
+
+for(const canonical of [true,false])test('concurrent expiry racing failed-final accounting fence requires canonical close failure: '+canonical,async()=>{
+ const x=invocationFixture();x.control.finalReverted=true;
+ x.args.escrow.close_uncertain=async(id,op)=>{x.events.push('close_uncertain');x.row.state=3;x.row.refunded+=x.row.available;x.row.available=0n;x.ops.set(op.operationId,{status:'failed',canonical,method:'close_uncertain',argsDigest:op.argsDigest});};
+ if(canonical){assert.equal((await x.run()).status,'accounted-without-reply');assert.deepEqual(x.events,['reserve','paid','finalize_reply','close_uncertain','reconcile']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);}
+ else{await assert.rejects(x.run(),/unresolved/);assert.deepEqual(x.events,['reserve','paid','finalize_reply','close_uncertain']);assert.equal(x.row.charged,0n);}
+});
+
+test('concurrent expiry accounting resumes original included reconciliation after lost observation',async()=>{
+ const x=invocationFixture();x.control.finalReverted=true;const inspect=x.args.escrow.inspectOperation;let pending=true;
+ x.args.escrow.close_uncertain=async(id,op)=>{x.events.push('close_uncertain');x.row.state=3;x.row.refunded+=x.row.available;x.row.available=0n;x.ops.set(op.operationId,{status:'failed',canonical:true,method:'close_uncertain',argsDigest:op.argsDigest});};
+ x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='reconcile'?{status:'pending'}:inspect(id);
+ await assert.rejects(x.run(),/unresolved/);assert.equal(x.row.state,4);assert.equal(x.store.read().hostedPrivateBok.phase,'accounting-only');
+ pending=false;assert.equal((await x.run()).status,'accounted-without-reply');
+ assert.deepEqual(x.events,['reserve','paid','finalize_reply','close_uncertain','reconcile']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
 });

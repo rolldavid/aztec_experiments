@@ -1,3 +1,4 @@
+import {measureBokStage} from './bok-timing.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -11,18 +12,18 @@ const integer = (value, bits) => {
 const amount = value => { assert(typeof value === 'bigint', 'Amount must be bigint'); return integer(value, 128); };
 const sequence = value => { assert(Number.isSafeInteger(value) && value >= 0 && value <= 0xffffffff, 'Invalid call sequence'); return value; };
 const statuses = ['pending', 'proposed', 'checkpointed', 'proven', 'finalized', 'dropped'];
-const methods = ['reserve','settle','close_uncertain','reconcile','finish','publish_reply'];
+const methods = ['reserve','settle','close_uncertain','reconcile','finish','publish_reply','finalize_reply'];
 const requestFields = ['state','invocation_hash','sequence','deadline','budget','available','reserved','charged','refunded','primary_refund','secondary_refund','primary_done','secondary_done','receipt'];
 
 /** Existing pinned V6 SDK only; no wallet/node/service lifecycle is created here. */
 export async function createPrivateBokEscrow(options) {
- const [{Contract}, {Fr}, {AztecAddress}, {TxHash}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {waitForTx}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
+ const [{Contract,BatchCall}, {Fr}, {AztecAddress}, {TxHash}, {getContractClassFromArtifact}, {deriveStorageSlotInMap}, {getFunctionReturnType}, {waitForTx}, {BBBundlePrivateKernelProver}, {BBLazyPrivateKernelProver}] = await Promise.all([
   import('@aztec-labs/aztec.js/contracts'), import('@aztec-labs/foundation/curves/bn254'),
   import('@aztec-labs/stdlib/aztec-address'), import('@aztec-labs/stdlib/tx'),
   import('@aztec-labs/stdlib/contract'), import('@aztec-labs/stdlib/hash'), import('@aztec-labs/stdlib/abi'), import('@aztec-labs/aztec.js/node'),
   import('@aztec-labs/bb-prover/client/bundle'), import('@aztec-labs/bb-prover/client/lazy'),
  ]);
- return createPrivateBokEscrowFactory({Contract, Fr, AztecAddress, TxHash, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType,
+ return createPrivateBokEscrowFactory({Contract, BatchCall, Fr, AztecAddress, TxHash, getContractClassFromArtifact, deriveStorageSlotInMap, getFunctionReturnType,
   waitForTx,isTrustedProver: prover => prover instanceof BBBundlePrivateKernelProver || prover instanceof BBLazyPrivateKernelProver})(options);
 }
 
@@ -204,7 +205,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    assert(record?.txHash&&record.phase==='submission-unknown','Original submitted operation required');
    assert.equal(typeof sdk.waitForTx,'function','Native receipt observer required');
    try{
-    await sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality,timeout:0,dontThrowOnRevert:true});
+    await measureBokStage('escrow.wait',()=>sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality,timeout:0,dontThrowOnRevert:true}));
    }catch{
     // A dropped transaction or a lost receipt response is not permission to send
     // again. Preserve authoritative failure/fee evidence if it is now available.
@@ -245,28 +246,42 @@ export function createPrivateBokEscrowFactory(sdk) {
   const perform=async(method,args,operationId,replacement=false,beforeSend=null)=>{
    const recordUpdate=changes=>replacement?update(operationId,{replacement:{...journal().operations[operationId].replacement,...changes}}):update(operationId,changes);
    try{
-    const encoded=args.map((v,i)=>Array.isArray(v)?v.map(value=>Fr.fromString(value)):i===0||(method==='publish_reply'&&i===1)||((method==='settle'||method==='reconcile')&&i===3)?Fr.fromString(v):v);
-    const interaction=contract.methods[method](...encoded),payload=await interaction.request({from:op,additionalScopes:[]});
-    assert.equal(payload.calls.length,1);const call=payload.calls[0];
-    assert.equal(call.name,method);assert.equal(String(call.to),String(addr));assert.equal(call.type,'public');assert.equal(call.isStatic,false);
-    assert.deepEqual(call.args.map(x=>x.toBigInt()),args.flat().map(x=>BigInt(x)),'Payload arguments changed');
+    const steps=method==='finalize_reply'?[['settle',args.slice(0,4)],['publish_reply',[args[0],...args.slice(4)]],['finish',[args[0]]]]:[[method,args]];
+    const interactions=steps.map(([name,values])=>contract.methods[name](...values.map((v,i)=>Array.isArray(v)?v.map(value=>Fr.fromString(value)):i===0||(name==='publish_reply'&&i===1)||((name==='settle'||name==='reconcile')&&i===3)?Fr.fromString(v):v)));
+    const interaction=method==='finalize_reply'?new sdk.BatchCall(wallet,interactions):interactions[0];
+    const payload=await interaction.request({from:op,additionalScopes:[]});
+    assert.equal(payload.calls.length,steps.length);
+    for(const [i,call] of payload.calls.entries()){
+     assert.equal(call.name,steps[i][0]);assert.equal(String(call.to),String(addr));assert.equal(call.type,'public');assert.equal(call.isStatic,false);
+     assert.deepEqual(call.args.map(x=>x.toBigInt()),steps[i][1].flat().map(x=>BigInt(x)),'Payload arguments changed');
+    }
     const fee=await wallet.completeFeeOptions({from:op,feePayer:payload.feePayer});
     const txRequest=await wallet.createTxExecutionRequestFromPayloadAndFee(payload,op,fee);
-    const proven=await wallet.pxe.proveTx(txRequest,{scopes:wallet.scopesFrom(op,[]),senderForTags:wallet.senderForTagsFrom(op)});
+    const proven=await measureBokStage('escrow.prove',()=>wallet.pxe.proveTx(txRequest,{scopes:wallet.scopesFrom(op,[]),senderForTags:wallet.senderForTagsFrom(op)}));
     assert(!proven.chonkProof.isEmpty(),'Missing proof');const tx=await proven.toTx();
     assert.equal(String(tx.data.feePayer),String(op),'Operator fee payer changed');
     assert.equal(tx.data.constants.txContext.chainId.toBigInt(),BigInt(chainId),'Proven chain mismatch');
     assert.equal(tx.data.constants.txContext.version.toBigInt(),BigInt(version),'Proven version mismatch');
-    const calls=tx.getPublicCallRequestsWithCalldata();assert.equal(calls.length,1,'Unexpected public calls');
-    assert.equal(String(calls[0].request.contractAddress),String(addr));assert.equal(String(calls[0].request.msgSender),String(op));
-    assert.equal(String(calls[0].functionSelector),String(call.selector));assert.deepEqual(calls[0].args.map(x=>x.toBigInt()),call.args.map(x=>x.toBigInt()));
+    const calls=tx.getPublicCallRequestsWithCalldata();assert.equal(calls.length,payload.calls.length,'Unexpected public calls');
+    // The stable6 native SDK exposes public calls in execution order; the
+    // contract integration qualifier checks this against an actual mined batch.
+    const expected=payload.calls;
+    for(const [i,call] of calls.entries()){
+     assert.equal(String(call.request.contractAddress),String(addr));assert.equal(String(call.request.msgSender),String(op));
+     assert.equal(String(call.functionSelector),String(expected[i].selector));assert.deepEqual(call.args.map(x=>x.toBigInt()),expected[i].args.map(x=>x.toBigInt()));
+    }
+    if(method==='finalize_reply'){
+     assert.equal(tx.data.getNonRevertiblePublicCallRequests().length,0,'Final batch must be entirely revertible');
+     assert.equal(tx.data.getRevertiblePublicCallRequests().length,3,'Final batch must contain exactly three revertible calls');
+     assert.equal(tx.data.getTeardownPublicCallRequest(),undefined,'Unexpected final batch teardown');
+    }
     const hash=hex(tx.getTxHash());
     await anchored();await lease.assertHeld();
     if(beforeSend&&!await beforeSend()){await recordUpdate({phase:'superseded-before-send'});return inspect(operationId);}
     await recordUpdate({phase:'submission-unknown',txHash:hash,transactionSha256:bytesHash(tx.toBuffer())});
     await held();
     // An exception may mean accepted-but-response-lost. Never send this action again.
-    try{await node.sendTx(tx);}catch{await recordUpdate({submissionError:true});}
+    try{await measureBokStage('escrow.send',()=>node.sendTx(tx));}catch{await recordUpdate({submissionError:true});}
     return await waitForOperation(operationId);
    }catch{if(!poisoned)await recordUpdate({failure:'operation-unresolved'});throw Error('Escrow operation unresolved; inspect original intent');}
   };
@@ -315,6 +330,12 @@ export function createPrivateBokEscrowFactory(sdk) {
    close_uncertain:exclusive((request,operation)=>send('close_uncertain',[request],operation)),
    reconcile:exclusive((request,callId,actual,receipt,operation)=>send('reconcile',[request,sequence(callId),amount(actual),hex(receipt)],operation)),
    finish:exclusive((request,operation)=>send('finish',[request],operation)),
+   finalize_reply:exclusive((request,callId,actual,receipt,pluginId,fields,length,mainVersion,localVersion,operation)=>{
+    assert.equal(typeof sdk.BatchCall,'function','Native batch capability required');
+    assert(Array.isArray(fields)&&fields.length===32);const message=fields.map(value=>hex(value));
+    assert(Number.isSafeInteger(length)&&length>0&&length<=992);
+    return send('finalize_reply',[request,sequence(callId),amount(actual),hex(receipt),hex(pluginId),message,Number(integer(length,16)),sequence(mainVersion),sequence(localVersion)],operation);
+   }),
    publish_reply:exclusive((request,pluginId,fields,length,mainVersion,localVersion,operation)=>{
     assert(Array.isArray(fields)&&fields.length===32);const message=fields.map(value=>hex(value));
     assert(Number.isSafeInteger(length)&&length>0&&length<=992);

@@ -22,12 +22,13 @@ async function fixture(overrides={}){
  const effect={l2BlockHash:new Field(blockHash),l2BlockNumber:10,data:{txHash:new Field(txHash),transactionFee:new Field(7),revertCode:{isOK:()=>receipt.executionResult==='success'},toBuffer:()=>Buffer.from('unit fake canonical effect')}};
  const readAnchors=[];
  const artifact={name:'PrivateBok',storageLayout:Object.fromEntries(['operator','board','l1_chain','version','requests'].map((n,i)=>[n,{slot:new Field(i+1)}])),functions:[],nonDispatchPublicFunctions:[{name:'request',returnType:{kind:'struct',fields:names.map(name=>({name,type:({state:8,sequence:32,deadline:64,budget:128,available:128,reserved:128,charged:128,refunded:128})[name]?{kind:'integer',sign:'unsigned',width:({state:8,sequence:32,deadline:64,budget:128,available:128,reserved:128,charged:128,refunded:128})[name]}:{kind:name.endsWith('_done')?'boolean':'field'}}))}}]};
- let lastCall;
+ let lastCall,payloadCalls;
  const methods=new Proxy({}, {get:(_,name)=>(...args)=>({request:async()=>{
   lastCall={name,to:new Field(address),selector:new Field(9),type:'public',isStatic:false,args:args.flat().map(x=>new Field(x instanceof Field?x.toBigInt():x))};
   return {calls:[lastCall]};
  }})});
- const sdk={waitForTx:async()=>receipt,Fr:Field,AztecAddress:Field,TxHash:Field,Contract:{at:async()=>({methods})},getContractClassFromArtifact:async()=>({id:new Field(classId)}),deriveStorageSlotInMap:async()=>new Field(100),getFunctionReturnType:fn=>fn.returnType,isTrustedProver:p=>p?.trusted===true};
+ class BatchCall {constructor(_wallet,interactions){this.interactions=interactions;}async request(){return {calls:(await Promise.all(this.interactions.map(i=>i.request()))).flatMap(p=>p.calls)};}}
+ const sdk={BatchCall,waitForTx:async()=>receipt,Fr:Field,AztecAddress:Field,TxHash:Field,Contract:{at:async()=>({methods})},getContractClassFromArtifact:async()=>({id:new Field(classId)}),deriveStorageSlotInMap:async()=>new Field(100),getFunctionReturnType:fn=>fn.returnType,isTrustedProver:p=>p?.trusted===true};
  const node={getNodeInfo:async()=>({l1ChainId:chainId,realProofs:nodeProofs,rollupVersion:1,l1ContractAddresses:{rollupAddress:rollup}}),
   getBlock:async tag=>typeof tag==='number'&&blockMismatch?{...block,hash:new Field(99)}:block,
   getContract:async()=>({currentContractClassId:new Field(actualClass)}),
@@ -35,8 +36,9 @@ async function fixture(overrides={}){
   sendTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).flatMap(r=>[r,...(r.replacement?[r.replacement]:[])]).some(r=>r.txHash===txHash&&r.phase==='submission-unknown'),'exact durable hash before send');sends++;if(sendLost)throw Error('Secret raw transport error');},
   getTxReceipt:async()=>receipt,getTxEffect:async()=>effect};
  const tx={data:{feePayer:new Field(operator),constants:{txContext:{get chainId(){return new Field(chainId);},version:new Field(1)}}},getTxHash:()=>new Field(txHash),toBuffer:()=>Buffer.from('unit fake transaction'),
-  getPublicCallRequestsWithCalldata:()=>[{request:{contractAddress:new Field(wrongCall?99:address),msgSender:new Field(operator)},functionSelector:lastCall.selector,args:lastCall.args}]};
- const wallet={registerContract:async()=>{},completeFeeOptions:async()=>({}),createTxExecutionRequestFromPayloadAndFee:async()=>({}),scopesFrom:()=>[],senderForTagsFrom:()=>new Field(operator),
+  getPublicCallRequestsWithCalldata:()=>(payloadCalls??[lastCall]).map(c=>({request:{contractAddress:new Field(wrongCall?99:address),msgSender:new Field(operator)},functionSelector:c.selector,args:c.args}))};
+ tx.data.getNonRevertiblePublicCallRequests=()=>[];tx.data.getRevertiblePublicCallRequests=()=>payloadCalls??[lastCall];tx.data.getTeardownPublicCallRequest=()=>undefined;
+ const wallet={registerContract:async()=>{},completeFeeOptions:async()=>({}),createTxExecutionRequestFromPayloadAndFee:async p=>{payloadCalls=p.calls;return {};},scopesFrom:()=>[],senderForTagsFrom:()=>new Field(operator),
   pxe:{proverEnabled:real,proofCreator:{trusted:true},proveTx:async()=>{assert(Object.values(saved.privateBokEscrow.operations).flatMap(r=>[r,...(r.replacement?[r.replacement]:[])]).some(r=>r.phase==='preparing'),'intent before proof');proofs++;if(proofFailed)throw Error('private witness must not escape');return {chonkProof:{isEmpty:()=>false},toTx:async()=>tx};}}};
  const store={read:()=>saved,write:async next=>{if(writeFailure)throw Error('disk secret');saved=structuredClone(next);}};
  const lease={assertHeld:async()=>assert(held,'lost lease')};
@@ -415,4 +417,23 @@ test('unit fake: distinct latest block and reorg during final guard remain autho
  f.options.node.getPublicStorageAt=originalRead;
  let numbered=0;f.options.node.getBlock=async tag=>{if(typeof tag==='number'&&++numbered===5)return {...f.block,hash:new Field(99)};return originalBlock(tag);};
  await assert.rejects(f.port.assertUsable(f.id,0,400n),/Canonical block changed during reservation guard/);
+});
+
+test('unit fake: atomic final reply proves and submits one exact ordered three-call transaction',async()=>{
+ const f=await fixture(),fields=Array(32).fill(H(0)),args=[f.id,0,120n,H(88),H(89),fields,1,0,0],op=f.op('finalize_reply',args);
+ const result=await f.port.finalize_reply(...args,op);assert.equal(result.status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ const requests=f.tx.getPublicCallRequestsWithCalldata();assert.deepEqual(requests.map(c=>c.args.length),[4,37,1]);
+ assert.equal(f.journal().operations[op.operationId].method,'finalize_reply');
+ await (await f.create()).finalize_reply(...args,op);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+});
+test('unit fake: atomic final reply rejects non-revertible calls before broadcast',async()=>{
+ const f=await fixture();f.tx.data.getNonRevertiblePublicCallRequests=()=>[{}];
+ const args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0];
+ await assert.rejects(f.port.finalize_reply(...args,f.op('finalize_reply',args)),/unresolved/);assert.deepEqual(f.counts(),{proofs:1,sends:0});
+});
+test('unit fake: final batch pending/lost acknowledgement observes one original hash',async()=>{
+ const f=await fixture();f.set('sendLost',true);f.receipt.status='pending';
+ const args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],op=f.op('finalize_reply',args);
+ assert.equal((await f.port.finalize_reply(...args,op)).status,'pending');const next=await f.create();f.receipt.status='checkpointed';
+ assert.equal((await next.finalize_reply(...args,op)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});
 });

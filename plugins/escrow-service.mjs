@@ -242,6 +242,25 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  if(saved?.phase==='finished')return {status:'finished',replayed:false};
  if(saved?.phase==='accounted-without-reply')return {status:'accounted-without-reply',replayed:false};
  const invocation=(store.read().privateBok?.accountingMode??(store.read().privateBok?'per-call':accountingMode))==='invocation-v1';
+ const finishWithoutReply=async()=>{
+  await metering.finish();await save({...saved,phase:'accounted-without-reply',replyFailure:'canonical-revert'});
+  return {status:'accounted-without-reply',replayed:false};
+ };
+ if(saved?.phase==='accounting-only'){assert(invocation,'Atomic final reply requires invocation accounting');return finishWithoutReply();}
+ const finishAtomic=async()=>{
+  try{await metering.finishWithReply(saved.args);}
+  catch(error){
+   if(error?.code!=='BOK_FINAL_BATCH_REVERTED')throw error;
+   // Canonical reversion rolled back settlement and reply together. Close only
+   // accounting from genuine retained receipts; never repeat the failed reply.
+   saved={...saved,phase:'accounting-only',replyFailure:'canonical-revert'};await save(saved);return finishWithoutReply();
+  }
+  const published=await board.readRequest(request.postId);
+  assert(published?.replied&&published.target===request.target&&published.requestId===request.requestId&&published.pluginId===request.pluginId,'Authenticated Rolling reply unavailable');
+  await save({...saved,phase:'finished'});return {status:'finished',replayed:false};
+ };
+ if(saved?.phase==='final-intent'){assert(invocation,'Atomic final reply requires invocation accounting');return finishAtomic();}
+
  let result=saved?.phase==='result-ready'?saved.result:undefined;
  if(saved?.phase==='result-ready')assert(invocation&&result&&typeof result.replyText==='string'&&saved.resultDigest===digest(result),'Saved result binding unavailable');
  const resumeUnsubmitted=hostedUnsubmittedFirstCall(store.read()),resumeSubmitted=hostedSubmittedFirstCall(store.read());
@@ -255,7 +274,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  if(resumeReceived)await metering.validateReconciliation(0,store.read().privateBok.calls[0].billing);
  if(saved?.phase==='running'&&!resumeFirstCall&&invocation&&typeof recoverAccepted==='function'){
   const calls=Object.values(store.read().privateBok.calls);assert(calls.length&&calls.every(c=>['received','settled'].includes(c.phase)),'Hosted request unresolved; original billing required');
-  await metering.settle();result=await recoverAccepted(current);
+  result=await recoverAccepted(current);
  }else if(saved?.phase==='running'&&!resumeFirstCall&&typeof recoverAccepted==='function'){
   assert(current.usable&&!current.replied,'Invocation no longer usable');
   const journal=structuredClone(store.read().privateBok),calls=Object.values(journal?.calls??{});
@@ -309,11 +328,14 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  }
  if(result&&invocation){
   if(saved?.phase!=='result-ready'){packText(result.replyText);assert(Buffer.byteLength(JSON.stringify(result))<=65536,'Hosted result bound');saved={binding,phase:'result-ready',result,resultDigest:digest(result)};await save(saved);}
-  await metering.settle();
  }
  if(result){
   const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target&&fresh.requestId===request.requestId&&fresh.pluginId===request.pluginId&&fresh.threadId===current.threadId&&fresh.predecessorsClear===true,'Invocation changed before reply');
   const packed=packText(result.replyText),args=[request.requestId,request.pluginId,packed.fields,packed.length,fresh.mainVersion,fresh.localVersion];
+  if(invocation&&store.read().privateBok?.reservation){
+   saved={binding,phase:'final-intent',args,...(result.recoveredRevision?{recoveredRevision:result.recoveredRevision}:{})};await save(saved);
+   return finishAtomic();
+  }
   const argsDigest=digest(args),operationId=digest({binding,method:'publish_reply',argsDigest});
   saved={binding,phase:'reply-intent',args,operation:{operationId,argsDigest},...(result.recoveredRevision?{recoveredRevision:result.recoveredRevision}:{})};await save(saved);
   // Intent is durable before invoking the chain port; absence on restart is NOT

@@ -138,8 +138,8 @@ export async function hostedRequestDispatchable({request,directory,scope,pluginI
  if(!saved)return true;
  const identity={network:`eip155-${scope.chainId}:aztec-${scope.rollupVersion}:${scope.rollupAddress}`,escrow:scope.receiver,requestId:request.requestId,target:request.target};
  assert.deepEqual(saved.binding,{...identity,postId:request.postId,pluginId});assert.equal(request.pluginId,pluginId);
- assert(['running','result-ready','reply-intent','reply-confirmed','finished','accounting-recovery','accounted-without-reply'].includes(saved.phase),'Unknown hosted phase');
- if(['result-ready','reply-intent','reply-confirmed'].includes(saved.phase))return true;
+ assert(['running','result-ready','accounting-only','final-intent','reply-intent','reply-confirmed','finished','accounting-recovery','accounted-without-reply'].includes(saved.phase),'Unknown hosted phase');
+ if(['result-ready','accounting-only','final-intent','reply-intent','reply-confirmed'].includes(saved.phase))return true;
  if(saved.phase!=='running')return false;
  if(hostedUnsubmittedFirstCall(original)||hostedSubmittedFirstCall(original)||hostedReceivedFirstCall(original))return true;
  const journal=original.privateBok,calls=Object.values(journal?.calls??{});
@@ -171,7 +171,7 @@ export function hostedRecoveryScanner({directory,scope,pluginId,board,lease}){
     const bytes=Buffer.alloc(stat.size+1);const {bytesRead}=await handle.read(bytes,0,bytes.length,0);assert.equal(bytesRead,stat.size);
     saved=JSON.parse(bytes.subarray(0,bytesRead).toString('utf8')).hostedPrivateBok;
    }catch{throw Error('Invalid hosted recovery journal');}finally{await handle?.close();}
-   if(!saved||!['result-ready','reply-intent','reply-confirmed'].includes(saved.phase))continue;
+   if(!saved||!['result-ready','accounting-only','final-intent','reply-intent','reply-confirmed'].includes(saved.phase))continue;
    const b=saved.binding;assert(b&&b.network===network&&b.escrow===scope.receiver&&b.pluginId===pluginId&&field(b.requestId)&&field(b.target)&&field(b.postId),'Hosted recovery identity changed');
    const id=createHash('sha256').update(JSON.stringify({scope,requestId:b.requestId,target:b.target})).digest('hex');
    assert.equal(entry.name,id+'.json','Hosted recovery filename changed');

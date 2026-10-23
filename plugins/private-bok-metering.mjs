@@ -335,6 +335,7 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
   }
   let observed=await escrow.inspectOperation(operationId);
   if(observed?.status==='pending'&&typeof escrow.waitForOperation==='function')observed=await escrow.waitForOperation(operationId);
+  if(method==='finalize_reply'&&observed?.status==='failed'&&observed.canonical===true&&observed.method===method&&observed.argsDigest===argsDigest)throw Object.assign(Error('Final reply transaction reverted; accounting only'),{code:'BOK_FINAL_BATCH_REVERTED'});
   if(observed?.status!=='succeeded'||observed.canonical!==true||observed.method!==method||observed.argsDigest!==argsDigest)throw Error('Chain operation unresolved; inspect original transaction');
  };
  const reservationMatches=r=>{
@@ -375,9 +376,31 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
  };
  const settle=async()=>{
   let j=journal();if(!j.reservation)return {settled:true};
+  // An atomic final reply may be replaced by accounting-only actions only after
+  // its exact receipt proves the whole batch reverted. Unknown is never failure.
+  let failedFinal=false;
+  for(const [id,op] of Object.entries(j.operations))if(op.method==='finalize_reply'){
+   const failed=await escrow.inspectOperation(id);
+   if(failed?.status!=='failed'||failed.canonical!==true||failed.method!==op.method||failed.argsDigest!==op.argsDigest)throw Error('Original final transaction unresolved');
+   failedFinal=true;
+  }
   const a=aggregate();if(j.aggregate&&hash(j.aggregate)!==hash(a))throw Error('Aggregate billing changed');
   if(!j.aggregate){j.aggregate=a;await save(j);}
   let r=await read(),method;
+  if(failedFinal&&(r.state===2||Object.values(journal().operations).some(op=>op.method==='close_uncertain'))){
+   if(r.state===2&&!reservationMatches(r))throw Error('Failed final reservation changed');
+   // Reconcile known billing even if the active request has crossed its deadline.
+   // This fences only chain liability; retained received billing is unchanged.
+   try{await operate('close_uncertain',[binding.requestId]);}
+   catch(error){
+    const close=Object.entries(journal().operations).find(([,op])=>op.method==='close_uncertain');
+    const outcome=close&&await escrow.inspectOperation(close[0]);r=await read();
+    // Concurrent canonical expiry may fence the same reservation first. Only an
+    // exact reverted close receipt plus that fenced state permits reconciliation.
+    if(outcome?.status!=='failed'||outcome.canonical!==true||outcome.method!=='close_uncertain'||outcome.argsDigest!==close[1].argsDigest||!((r.state===3&&reservationMatches(r))||(r.state===4&&settlementMatches(r,a))))throw error;
+   }
+   r=await read();
+  }
   if(reservationMatches(r)&&[2,3].includes(r.state)){
    method=r.state===3?'reconcile':'settle';
    if(method==='reconcile')for(const [id,op]of Object.entries(journal().operations))if(op.method==='settle'){
@@ -404,8 +427,33 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
   if(['possibly-sent','fenced'].includes(c.phase)){await fence(id);throw Error('Provider outcome unknown; original receipt required');}
   if(!['quoted','reserved'].includes(c.phase))throw Error('Invalid call journal phase');return {callId:id,readyForComplete:true,replyAvailable:false};
  };
+ const finishWithReply=async replyArgs=>{
+  if(typeof escrow.finalize_reply!=='function')throw Error('Atomic final reply capability required');
+  if(!Array.isArray(replyArgs)||replyArgs.length!==6||replyArgs[0]!==binding.requestId)throw Error('Final reply identity changed');
+  let j=journal();const a=aggregate();
+  if(j.aggregate&&hash(j.aggregate)!==hash(a))throw Error('Aggregate billing changed');
+  const prior=Object.values(j.operations);if(prior.some(o=>!['reserve','finalize_reply'].includes(o.method)))throw Error('Atomic final reply requires original unsettled invocation');
+  if(!j.aggregate){j.aggregate=a;await save(j);}
+  const args=[binding.requestId,j.reservation.sequence,BigInt(a.charge),a.receipt,...replyArgs.slice(1)];
+  const argsDigest=hash(args.map(x=>typeof x==='bigint'?String(x):x));
+  const operationId=hash({identity:binding,accountingMode:'invocation-v1',method:'finalize_reply',argsDigest});
+  const existing=Object.entries(j.operations).filter(([,op])=>op.method==='finalize_reply');
+  if(existing.length){
+   if(existing.length!==1||existing[0][0]!==operationId||existing[0][1].argsDigest!==argsDigest)throw Error('Original final transaction binding changed');
+   // Observe an existing exact transaction even after expiry/fencing. Its
+   // canonical revert is authority for accounting-only reconciliation.
+  }else{
+   const before=await read();
+   if(before.state!==2||!reservationMatches(before))throw Error('Final reply reservation changed');
+  }
+  await operate('finalize_reply',args);
+  const observed=await escrow.request(binding.requestId),after=validated(observed);
+  if(!settlementMatches(after,a)||after.state!==4||after.available!==0n||after.reserved!==0n||observed.request.secondary_done!==true)throw Error('Final reply accounting mismatch');
+  j=journal();for(const c of Object.values(j.calls))c.phase='settled';await save({...j,finished:true});
+  return {finished:true,charge:a.charge,receipt:a.receipt};
+ };
  return {
-  settle:exclusive(settle),validateReconciliation:exclusive(validateReconciliation),resume:exclusive(resume),
+  finishWithReply:exclusive(finishWithReply),settle:exclusive(settle),validateReconciliation:exclusive(validateReconciliation),resume:exclusive(resume),
   complete:exclusive(async(id,input)=>{
    callId(id);const serialized=JSON.stringify(input);if(typeof serialized!=='string'||Buffer.byteLength(serialized)>cap.maxInputBytes)throw Object.assign(Error('Request input limit'),{code:'BOK_INPUT_LIMIT'});
    const frozen=JSON.parse(serialized);if(!uint(frozen.maxTokens,cap.maxTokens)||!frozen.maxTokens)throw Error('Request output limit');const inputDigest=hash(frozen);let j=journal(),c=j.calls[id];
