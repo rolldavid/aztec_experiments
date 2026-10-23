@@ -40,13 +40,37 @@ for(const backend of ['file','indexeddb']) {
   const j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
   const observe=async()=>{const found=await j.inspectOutcome();j.confirmed(found.receipt);};
   await observe();await j.assertCanStart(); // prepare
-  await observe();await j.assertCanStart();await j.assertCanStart(); // submit + commitment
+  await j.assertCanStart({predecessor:{operation:null,txHash:String(f.tx.getTxHash())}});await j.assertCanStart(); // submit + commitment
   await j.assertCanStart({fresh:true});await j.assertCanStart(); // pre-proof + engine
-  assert.deepEqual({receipts,blocks},{receipts:3,blocks:3});
+  assert.deepEqual({receipts,blocks},{receipts:2,blocks:2});
   await j.assertCanStart({fresh:true}); // post-proof, always live
-  assert.deepEqual({receipts,blocks},{receipts:4,blocks:4});
-  owner={};await j.assertCanStart();assert.equal(receipts,5); // separate action cannot reuse
-  owner=null;await j.assertCanStart();await j.assertCanStart();assert.equal(receipts,7);
+  assert.deepEqual({receipts,blocks},{receipts:3,blocks:3});
+  owner={};await j.assertCanStart();assert.equal(receipts,4); // separate action cannot reuse
+  owner=null;await j.assertCanStart();await j.assertCanStart();assert.equal(receipts,6);
+ }));
+ test(`${backend}: explicit predecessor checks capture identity and reject changed scope, journal or reorg`,()=>withStorage(async f=>{
+  let owner={},reads=0,onGuard=()=>{};const receipt=f.node.getTxReceipt;f.node.getTxReceipt=async(...args)=>{reads++;return receipt(...args);};
+  const j=await f.newSession({operationScope:()=>owner,contextGuard:async()=>onGuard()});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  const expected={operation:null,txHash:String(f.tx.getTxHash())};
+  const found=await j.inspectOutcome();j.confirmed(found.receipt);assert.equal(reads,1);
+  const changing={...expected};onGuard=()=>{changing.txHash=field();};await j.assertCanStart({predecessor:changing});assert.equal(reads,1,'caller mutation cannot change captured expectation');onGuard=()=>{};
+  await assert.rejects(j.assertCanStart({predecessor:{...expected,txHash:field()}}),{code:'BB_RECOVERY_REQUIRED'});
+  await j.assertCanStart({predecessor:expected});assert.equal(reads,2,'identity mismatch invalidates permit');
+  owner={};await j.assertCanStart({predecessor:expected});assert.equal(reads,3,'new operation requires fresh receipt');
+  owner={};f.reorg();await assert.rejects(j.assertCanStart({predecessor:expected}),{code:'BB_SUBMISSION_UNKNOWN'});
+  await assert.rejects(j.assertCanStart({predecessor:expected}),{code:'BB_SUBMISSION_UNKNOWN'});assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: predecessor permit never covers changed authenticated journal bytes`,()=>withStorage(async f=>{
+  const owner={},j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  const found=await j.inspectOutcome();j.confirmed(found.receipt);const prior=await j.assertCanStart();
+  j.setOperation('replacement-fixture');await j.prepare(Tx.random({randomProof:true}),prior);
+  await assert.rejects(j.assertCanStart({predecessor:{operation:null,txHash:String(f.tx.getTxHash())}}),{code:'BB_RECOVERY_REQUIRED'});assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: expected predecessor cannot acknowledge a pending transaction`,()=>withStorage(async f=>{
+  const owner={},stable=await f.newSession({operationScope:()=>owner});
+  await stable.prepare(f.tx,await stable.assertCanStart());f.setStatus('pending');
+  await assert.rejects(stable.assertCanStart({predecessor:{operation:null,txHash:String(f.tx.getTxHash())}}),{code:'BB_RECOVERY_REQUIRED'});
+  assert.equal(stable.lastTxHash,null);assert.equal(f.sent.length,0);
  }));
  test(`${backend}: separate prepare and submit operation scopes still revalidate and reuse their own checks`,()=>withStorage(async f=>{
   let owner={},reads=0;const receipt=f.node.getTxReceipt;f.node.getTxReceipt=async(...args)=>{reads++;return receipt(...args);};

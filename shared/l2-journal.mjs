@@ -83,21 +83,38 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   }
   async function assertCanStart(options){try{return await checkedCanStart(options);}catch(error){canonicalPermit=null;throw error;}}
   async function checkedCanStart(options={}) {
-    if(!options||typeof options!=='object'||Reflect.ownKeys(options).some(key=>key!=='fresh'))throw invalid();
+    if(!options||typeof options!=='object'||Reflect.ownKeys(options).some(key=>!['fresh','predecessor'].includes(key)))throw invalid();
     const requested=Object.getOwnPropertyDescriptor(options,'fresh');
     if(requested&&(!Object.hasOwn(requested,'value')||typeof requested.value!=='boolean'))throw invalid();
+    let predecessor;
+    if(Object.hasOwn(options,'predecessor')){
+      const descriptor=Object.getOwnPropertyDescriptor(options,'predecessor'),value=descriptor?.value;
+      if(!descriptor||!Object.hasOwn(descriptor,'value')||!value||![Object.prototype,null].includes(Object.getPrototypeOf(value))||Reflect.ownKeys(value).sort().join()!=='operation,txHash')throw invalid();
+      const entries=['operation','txHash'].map(key=>{const d=Object.getOwnPropertyDescriptor(value,key);if(!d||!Object.hasOwn(d,'value'))throw invalid();return [key,d.value];});
+      predecessor=Object.fromEntries(entries);
+      if(predecessor.operation!==null)expectedOperation(predecessor.operation);
+      if(typeof predecessor.txHash!=='string'||!/^0x[0-9a-f]{64}$/.test(predecessor.txHash))throw invalid();
+    }
     const owner=ownedScope();await checkedScope(owner);
     const previous=await read();await checkedScope(owner);
+    if(predecessor&&(!previous.tx||previous.value.operation!==predecessor.operation||previous.tx.getTxHash().toString()!==predecessor.txHash))throw fail();
     if(requested?.value||!owner||canonicalPermit?.owner!==owner||canonicalPermit?.encoded!==previous.encoded)canonicalPermit=null;
     if(previous.tx) {
-      if(replacement?.encoded===previous.encoded) {await rejectedAttempts(previous,{requireMissingAnchor:replacement.requireMissingAnchor});return previous;}
-      if(acknowledged!==previous.tx.getTxHash().toString())throw fail();
+      if(!predecessor&&replacement?.encoded===previous.encoded) {await rejectedAttempts(previous,{requireMissingAnchor:replacement.requireMissingAnchor});return previous;}
+      if(!predecessor&&acknowledged!==previous.tx.getTxHash().toString())throw fail();
       // Prior displays never authorize a replacement. Within the current owned
       // operation only, reuse the canonical check until an explicit proof fence.
       if(canonicalPermit?.hash!==previous.tx.getTxHash().toString()){
         canonicalPermit=null;
-        const receipt=await waitForCanonicalReceipt(node,previous.tx,waitOptions);
+        const receipt=predecessor?await readCanonicalReceipt(node,previous.tx.getTxHash(),waitOptions):await waitForCanonicalReceipt(node,previous.tx,waitOptions);
+        if(!receipt)throw fail();
         await rememberCanonical(previous,receipt,owner);
+      }
+      // Only this exact authenticated predecessor, checked canonically in the
+      // owning operation, can be acknowledged without another receipt read.
+      if(predecessor){
+        if(!owner&&(await read()).encoded!==previous.encoded)throw fail();
+        await checkedScope(owner);acknowledged=predecessor.txHash;
       }
       // A canonical revert resolves this journal entry. The PXE owns any
       // per-secret tagging dependency when preparing the next transaction;

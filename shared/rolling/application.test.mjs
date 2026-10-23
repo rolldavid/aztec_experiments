@@ -1981,7 +1981,7 @@ for(const separate of [false,true])test(`real application canonical predecessor 
  node.getTxReceipt=async hash=>{if(String(hash)===predecessor)receiptReads++;return originalReceipt(hash);};node.getBlock=async(...args)=>{blockReads++;return originalBlock(...args);};
  owner={};const action={type:'unlike',post:'5'};
  if(separate){const prepared=await f.app.prepare(action,{immediate:true});owner={};await f.app.submitPrepared(prepared.intentId);}else await executeRollingAction(f.app,action);
- assert.equal(receiptReads,4,'Initial, submit observation and both fresh proof boundaries');assert.equal(blockReads,5,'Four predecessor blocks plus the new outcome block');assert.equal(f.state.sends,2);
+ assert.equal(receiptReads,separate?4:3,'One owned initial observation, fresh separate submit if needed, and both proof boundaries');assert.equal(blockReads,separate?5:4,'Predecessor blocks plus the new outcome block');assert.equal(f.state.sends,2);
 });
 
 for(const reorg of [false,true])test(`cancelled unsent draft then reload acknowledges only its canonical predecessor: ${reorg}`,async()=>{

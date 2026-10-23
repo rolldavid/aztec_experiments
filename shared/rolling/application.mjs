@@ -1049,10 +1049,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const inspected=await session.journal.inspectReplacement(operation(id),{requireMissingAnchor:true});
         check(inspected.status==='available'&&inspected.txHash===saved.value.replacementReview.sourceTxHash,'ROLLING_RECOVERY_REQUIRED');
         await session.journal.allowReplacement(operation(id),{requireMissingAnchor:true});
-      }else if(saved.value.predecessor){
-        const found=await session.journal.inspectOutcome();acknowledge(found,saved.value.predecessor);
       }
-      await session.journal.assertCanStart(); // Before private simulation, not merely before send.
+      // Reuse only the exact predecessor observation owned by this locked action.
+      // A separate submit/reload has no permit and performs a fresh canonical read.
+      await session.journal.assertCanStart(!replacing&&saved.value.predecessor?{predecessor:saved.value.predecessor}:undefined); // Before private simulation, not merely before send.
       await checkActionSubmission(saved.value);
       const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
       const preparedPayment=await measure('action.fee-prepare',()=>payment(saved.value.action,saved.value));
