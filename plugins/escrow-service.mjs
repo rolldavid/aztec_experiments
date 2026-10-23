@@ -299,10 +299,12 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
    const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target,'Invocation changed before paid call');
    const response=await metering.complete(call++,input);assert(response.replyAvailable,'Recovered billing has no recoverable reply');return response;
   }}});}catch(error){
-   // Generated source failing validation is a completed attempt, not unknown
-   // provider billing. Settle actual usage and return unused credit normally.
-   if(error?.code!=='STATIC_FAILED')throw error;
-   result={replyText:'I could not finish this update because its checks failed. Nothing new was published. You can ask me to try again.'};
+   // Validation and pre-provider input limits have known billing outcomes.
+   // Complete accounting instead of leaving the user's credit reserved.
+   if(!['STATIC_FAILED','BOK_INPUT_LIMIT'].includes(error?.code))throw error;
+   result={replyText:error.code==='BOK_INPUT_LIMIT'
+    ?'This update exceeded the working context limit. Nothing new was published. Please split the remaining changes into a smaller request.'
+    :'I could not finish this update because its checks failed. Nothing new was published. You can ask me to try again.'};
   }
  }
  if(result&&invocation){

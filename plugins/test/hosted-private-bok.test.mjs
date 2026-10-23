@@ -823,3 +823,19 @@ for(const code of ['STATIC_UNAVAILABLE','STATIC_CLEANUP_REQUIRED','STATIC_RECORD
  await assert.rejects(x.run(),/unresolved boundary/);assert.equal(x.store.read().hostedPrivateBok.phase,'running');
  assert.deepEqual(x.events,['reserve','paid']);assert.equal(x.row.charged,0n);assert.equal(x.row.refunded,0n);
 });
+
+for(const paidCalls of [0,2])test(`input limit after ${paidCalls} paid calls finishes genuine accounting without another provider call`,async()=>{
+ const x=invocationFixture();let agents=0;
+ x.args.limits={...x.args.limits,maxInputBytes:1024};
+ x.args.runAgent=async({model})=>{agents++;for(let i=0;i<paidCalls;i++)await model.complete({messages:[],maxTokens:10});await model.complete({messages:[{role:'user',content:'x'.repeat(1025)}],maxTokens:10});assert.fail('Oversized request reached model');};
+ await x.run();assert.equal(x.events.filter(e=>e==='paid').length,paidCalls);
+ assert.equal(x.row.charged,BigInt(paidCalls*6));assert.equal(x.row.refunded,1000n-BigInt(paidCalls*6));assert.equal(x.row.reserved,0n);
+ const saved=x.store.read();assert.equal(saved.hostedPrivateBok.phase,'finished');assert.match(unpackText(saved.hostedPrivateBok.args[2],saved.hostedPrivateBok.args[3]),/working context limit/);assert.equal(saved.hostedPrivateBok.result?.revision,undefined);
+ await x.run();assert.equal(agents,1);assert.equal(x.events.filter(e=>e==='paid').length,paidCalls);
+});
+
+test('configured code context above 64 KiB reaches provider while exact bound remains enforced',async()=>{
+ const x=invocationFixture();x.args.limits={...x.args.limits,maxInputBytes:262144};
+ x.args.runAgent=async({model})=>{await model.complete({messages:[{role:'user',content:'x'.repeat(70000)}],maxTokens:10});await model.complete({messages:[{role:'user',content:'x'.repeat(262145)}],maxTokens:10});assert.fail('Oversized request reached model');};
+ await x.run();assert.equal(x.events.filter(e=>e==='paid').length,1);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);assert.equal(x.row.reserved,0n);
+});

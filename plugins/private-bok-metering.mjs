@@ -205,7 +205,7 @@ export function privateBokMetering({provider,escrow,store,identity,limits={},acc
  return {
   complete:exclusive(async(id,input)=>{
    callId(id);
-   const serialized=JSON.stringify(input);if(typeof serialized!=='string'||Buffer.byteLength(serialized)>cap.maxInputBytes)throw Error('Request input limit');
+   const serialized=JSON.stringify(input);if(typeof serialized!=='string'||Buffer.byteLength(serialized)>cap.maxInputBytes)throw Object.assign(Error('Request input limit'),{code:'BOK_INPUT_LIMIT'});
    const frozen=JSON.parse(serialized);
    if(!uint(frozen.maxTokens,cap.maxTokens)||!frozen.maxTokens)throw Error('Request output limit');
    const inputDigest=hash(frozen);let c=callRecord(id);
@@ -406,7 +406,7 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
  return {
   settle:exclusive(settle),validateReconciliation:exclusive(validateReconciliation),resume:exclusive(resume),
   complete:exclusive(async(id,input)=>{
-   callId(id);const serialized=JSON.stringify(input);if(typeof serialized!=='string'||Buffer.byteLength(serialized)>cap.maxInputBytes)throw Error('Request input limit');
+   callId(id);const serialized=JSON.stringify(input);if(typeof serialized!=='string'||Buffer.byteLength(serialized)>cap.maxInputBytes)throw Object.assign(Error('Request input limit'),{code:'BOK_INPUT_LIMIT'});
    const frozen=JSON.parse(serialized);if(!uint(frozen.maxTokens,cap.maxTokens)||!frozen.maxTokens)throw Error('Request output limit');const inputDigest=hash(frozen);let j=journal(),c=j.calls[id];
    if(c&&c.inputDigest!==inputDigest)throw Error('Call input changed');if(c&&!['quoted','reserved'].includes(c.phase))return resume(id);
    if(!c){
