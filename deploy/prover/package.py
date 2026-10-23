@@ -107,7 +107,7 @@ def main():
  assert hashlib.sha256((build/'amd64-linux/bb').read_bytes()).hexdigest()==linux_pin['sha256'], 'Linux prover differs from pinned official artifact'
  for child in build.iterdir():
   if child.name!='amd64-linux':shutil.rmtree(child) if child.is_dir() else child.unlink()
- (out/'node').mkdir();subprocess.run(['tar','-xf',str(pathlib.Path(args.node_archive).resolve()),'-C',str(out/'node'),'--strip-components=1'],check=True)
+ (out/'node').mkdir();subprocess.run(['tar','--no-same-owner','-xf',str(pathlib.Path(args.node_archive).resolve()),'-C',str(out/'node'),'--strip-components=1'],check=True)
  if rolling:rolling_resources(out,args.validation_node)
  files={str(f.relative_to(out)):hashlib.sha256(f.read_bytes()).hexdigest() for f in out.rglob('*') if f.is_file() and f.name!='.DS_Store' and not f.name.startswith('._')}
  (out/'prover-release.json').write_text(json.dumps({'schemaVersion':1,'platform':'linux-x64','applicationProfile':args.application_profile,'sourceCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),'files':files},indent=2))
