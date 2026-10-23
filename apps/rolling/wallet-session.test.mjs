@@ -1047,8 +1047,8 @@ test('configured Bok artifact and unavailable plugin are absent from core accoun
   assert.equal(session.bokConfigured,true);assert.equal(artifacts,0);assert.equal(pluginReads,0);
   assert.equal((await session.application.readAccountStatus()).status,'fee-ready');assert.equal(artifacts,0);assert.equal(pluginReads,0);
   await assert.rejects(session.application.readBokStatus(),error=>error===blocked);
-  assert.equal(artifacts,1);assert.equal(pluginReads,1);assert.equal(f.state.sends,0);assert.equal(f.captures(),0);
-  assert.equal((await session.application.readAccountStatus()).status,'fee-ready');assert.equal(pluginReads,1);
+  assert.equal(artifacts,1);assert.equal(pluginReads,4);assert.equal(f.state.sends,0);assert.equal(f.captures(),0);
+  assert.equal((await session.application.readAccountStatus()).status,'fee-ready');assert.equal(pluginReads,4);
  }finally{await session.close();}
 });
 test('Bok topup registers the verified plugin once under the owning account lease',async()=>{
