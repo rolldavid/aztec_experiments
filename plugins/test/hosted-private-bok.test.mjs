@@ -276,6 +276,26 @@ for(const development of [true,false])test('actual SDK board projection gates ca
   let terminal=false;
   const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development,isTerminalWithoutReply:async(_request,anchor)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});const captured=await hostedTerminalNode(node,anchor,development).getBlock('checkpointed');assert(captured.hash instanceof BlockHash);return terminal;}});
   assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
+  const originalNode={...node},counts={};let activeReads=0,peakReads=0;
+  for(const [name,fn]of Object.entries(originalNode))node[name]=async(...args)=>{
+   counts[name]=(counts[name]??0)+1;activeReads++;peakReads=Math.max(peakReads,activeReads);
+   try{await Promise.resolve();return await fn(...args);}finally{activeReads--;}
+  };
+  assert.equal((await port.readRequest(f(1))).usable,true);
+  assert.deepEqual(counts,{getNodeInfo:1,getBlock:2,getContract:1,getPublicStorageAt:4});
+  assert.equal(peakReads,5,'class and four independent storage reads run together');
+  Object.assign(node,originalNode);
+  // A failed parallel read must not release index ownership while other reads
+  // are still running. Rejection is delivered only after every read drains.
+  let releaseReads,readsStarted,storageReads=0,finished=false;
+  const gate=new Promise(resolve=>{releaseReads=resolve;}),started=new Promise(resolve=>{readsStarted=resolve;});
+  const readFailure=Error('controlled contract read failure');
+  node.getContract=async()=>{throw readFailure;};
+  node.getPublicStorageAt=async(...args)=>{if(++storageReads===4)readsStarted();await gate;return originalNode.getPublicStorageAt(...args);};
+  const draining=port.readRequest(f(1)).then(()=>{finished=true;assert.fail('failed read accepted');},error=>{finished=true;assert.equal(error,readFailure);});
+  await started;await Promise.resolve();assert.equal(finished,false);releaseReads();await draining;Object.assign(node,originalNode);
+  node.getPublicStorageAt=async(...args)=>{const value=await originalNode.getPublicStorageAt(...args);state.anchor=f(98);return value;};
+  await assert.rejects(port.readRequest(f(1)),/anchor/);state.anchor=f(99);Object.assign(node,originalNode);
   // A slow canonical prefix is retained across bounded pending scans. No
   // partial projection or generic poll failure is emitted while catching up.
   const readySync=index.sync,readyStatus=index.status,readyScan=index.scanPosts;
@@ -909,4 +929,19 @@ test('concurrent expiry accounting resumes original included reconciliation afte
  await assert.rejects(x.run(),/unresolved/);assert.equal(x.row.state,4);assert.equal(x.store.read().hostedPrivateBok.phase,'accounting-only');
  pending=false;assert.equal((await x.run()).status,'accounted-without-reply');
  assert.deepEqual(x.events,['reserve','paid','finalize_reply','close_uncertain','reconcile']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
+});
+
+
+test('three model calls perform one immediate board guard each without duplicate prequote reads',async()=>{
+ const x=invocationFixture(),read=x.args.board.readRequest;let reads=0;
+ x.args.board.readRequest=async(...args)=>{reads++;return read(...args);};
+ x.args.runAgent=async({model})=>{for(let i=0;i<3;i++)await model.complete({messages:[],maxTokens:10});return {replyText:'done'};};
+ await x.run();assert.equal(reads,6,'initial + three immediate paid guards + before reply + authenticated result');
+ assert.equal(x.events.filter(x=>x==='paid').length,3);
+});
+for(const changed of ['usable','replied','requestId','target','pluginId'])test('immediate paid guard rejects board '+changed+' changed during quote',async()=>{
+ const x=invocationFixture(),quote=x.args.provider.quote;
+ x.args.provider.quote=async(...args)=>{const result=await quote(...args);x.current[changed]=changed==='usable'?false:changed==='replied'?true:f(999);return result;};
+ await assert.rejects(x.run(),/unknown/);
+ assert.equal(x.events.filter(x=>x==='paid').length,0);assert.equal(x.row.charged,0n);
 });

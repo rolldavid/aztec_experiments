@@ -315,7 +315,8 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   saved=resumeReceived?saved:resumeSubmitted?{...saved,submittedReservationContinuationAttempted:true}:resumeUnsubmitted?{...saved,preProviderRecoveryAttempted:true}:{binding,phase:'running'};await save(saved);
   let call=0;
   try{result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
-   const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target,'Invocation changed before paid call');
+   // The guarded provider rechecks canonical board authority immediately before
+   // paid execution, after quoting and the reservation guard. Do not repeat it here.
    const response=await metering.complete(call++,input);assert(response.replyAvailable,'Recovered billing has no recoverable reply');return response;
   }}});}catch(error){
    // Validation and pre-provider input limits have known billing outcomes.

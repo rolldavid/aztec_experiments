@@ -82,22 +82,28 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
  const requestFrom=async post=>{
   if(!post?.invocation)return null;const invocation=post.invocation;
   if(toField(invocation.adapter)!==scope.receiver||toField(invocation.pluginId)!==pluginId)return null;
-  await checkScope();const head=await node.getBlock('checkpointed');
+  // Drain every independent read before releasing index ownership, including
+  // failures. All mutable values below remain bound to this one block hash.
+  const together=async reads=>{
+   const results=await Promise.allSettled(reads),failed=results.find(r=>r.status==='rejected');
+   if(failed)throw failed.reason;return results.map(r=>r.value);
+  };
+  const [,head]=await together([checkScope(),node.getBlock('checkpointed')]);
   assert(head&&Number.isSafeInteger(head.number));const anchor={number:head.number,hash:String(head.hash)};
-  const instance=await node.getContract(board,anchor);assert.equal(String(instance?.originalContractClassId),expectedClass);assert.equal(String(instance?.currentContractClassId),expectedClass);
   const read=slot=>node.getPublicStorageAt(anchor,board,slot);
-  const adapter=await read(pluginSlot),enabled=await read(new Fr(pluginSlot.toBigInt()+1n));
   const flaggedSlot=await deriveStorageSlotInMap(boardArtifact.storageLayout.post_flagged.slot,new Fr(BigInt(post.id)));
-  const flagged=(await read(flaggedSlot)).toBigInt()!==0n;
-  const mainVersion=Number((await read(boardArtifact.storageLayout.main_version.slot)).toBigInt());assert(Number.isSafeInteger(mainVersion)&&mainVersion>0);
-  let localAllowed=true;
-  if(post.record.subboard!=='0'){
-   const local=await deriveStorageSlotInMap(boardArtifact.storageLayout.subboards.slot,new Fr(BigInt(post.record.subboard)));
-   // Exact pinned SubboardRecord: exists, rules, metadata, creation_version, rejected, reason.
-   localAllowed=(await read(local)).toBigInt()===1n&&(await read(new Fr(local.toBigInt()+4n))).toBigInt()===0n;
-  }
+  const local=post.record.subboard==='0'?null:await deriveStorageSlotInMap(boardArtifact.storageLayout.subboards.slot,new Fr(BigInt(post.record.subboard)));
+  const [instance,adapter,enabled,flaggedValue,mainValue,...localValues]=await together([
+   node.getContract(board,anchor),read(pluginSlot),read(new Fr(pluginSlot.toBigInt()+1n)),
+   read(flaggedSlot),read(boardArtifact.storageLayout.main_version.slot),
+   ...(local?[read(local),read(new Fr(local.toBigInt()+4n))]:[]),
+  ]);
+  assert.equal(String(instance?.originalContractClassId),expectedClass);assert.equal(String(instance?.currentContractClassId),expectedClass);
+  const flagged=flaggedValue.toBigInt()!==0n;
+  const mainVersion=Number(mainValue.toBigInt());assert(Number.isSafeInteger(mainVersion)&&mainVersion>0);
+  // Exact pinned SubboardRecord: exists, rules, metadata, creation_version, rejected, reason.
+  const localAllowed=!local||(localValues[0].toBigInt()===1n&&localValues[1].toBigInt()===0n);
   // This contract's effective_policy/publish_plugin_reply define immutable local version 1.
-  assert.equal(String((await node.getBlock(head.number))?.hash),String(head.hash),'Board anchor changed');
   const identity={postId:toField(post.id),threadId:toField(post.record.root),order:String(post.order),requestId:toField(invocation.requestId),target:toField(invocation.target),pluginId,adapter:scope.receiver};
   const predecessorsClear=await rollingPredecessorsClear({index,request:identity,isTerminal:row=>isTerminalWithoutReply?.(row,anchor)??false,admission});
   assert.equal(String((await node.getBlock(head.number))?.hash),String(head.hash),'Board anchor changed during predecessor admission');
