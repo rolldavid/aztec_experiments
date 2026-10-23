@@ -860,6 +860,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
         const final=await outcome(prior,{history:true});check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
+      // Cancelling an unsent draft leaves its previous confirmed transaction in
+      // the journal. Re-establish that exact acknowledgement after a reload.
+      if(prior.value?.status==='cancelled'&&prior.value.predecessor)acknowledge(await session.journal.inspectOutcome(),prior.value.predecessor);
       const previousTx=await session.journal.assertCanStart();
       const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();

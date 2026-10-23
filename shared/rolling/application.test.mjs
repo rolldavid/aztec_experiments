@@ -1983,3 +1983,12 @@ for(const separate of [false,true])test(`real application canonical predecessor 
  if(separate){const prepared=await f.app.prepare(action,{immediate:true});owner={};await f.app.submitPrepared(prepared.intentId);}else await executeRollingAction(f.app,action);
  assert.equal(receiptReads,4,'Initial, submit observation and both fresh proof boundaries');assert.equal(blockReads,5,'Four predecessor blocks plus the new outcome block');assert.equal(f.state.sends,2);
 });
+
+for(const reorg of [false,true])test(`cancelled unsent draft then reload acknowledges only its canonical predecessor: ${reorg}`,async()=>{
+ const f=await realJournalFixture(),first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);
+ const draft=await f.app.prepare({type:'unlike',post:'5'},{immediate:true});await f.app.cancelPrepared(draft.intentId);
+ const reopened=await f.restartJournal();
+ if(reorg){f.options.accountSession.node.getBlock=async()=>({hash:{toString:()=>hex(999)}});await assert.rejects(reopened.prepare({type:'like',post:'6'},{immediate:true}),{code:'BB_SUBMISSION_UNKNOWN'});}
+ else assert.equal((await reopened.prepare({type:'like',post:'6'},{immediate:true})).status,'prepared');
+ assert.equal(f.state.sends,1);
+});
