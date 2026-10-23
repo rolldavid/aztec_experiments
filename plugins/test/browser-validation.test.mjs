@@ -110,7 +110,7 @@ test('actual browser still smoke-checks uncovered HTML and keeps each scenario c
   newContext:async options=>{contexts.push(options.viewport.width);return browser.newContext(options);},version:()=>browser.version(),close:()=>browser.close(),
  };}};
  const input={artifacts:[{path:'index.html',data:Buffer.from('<!doctype html><p>Ready</p>').toString('base64')},{path:'help.html',data:Buffer.from('<!doctype html><p>Help</p>').toString('base64')}],plan:validateBrowserPlan({version:1,scenarios:[...plan([]).scenarios,{...plan([]).scenarios[0],name:'second clean visit'}]}),origin:'https://artifacts.example',boardOrigin:'https://board.example',deadline:Date.now()+30000};
- const result=await exerciseBrowser(browserInput(input),observed);assert.deepEqual(contexts,[1280,1280,1280,390,390,390]);assert.equal(result.checks,14);
+ const result=await exerciseBrowser(browserInput(input),observed);assert.deepEqual(contexts.sort((a,b)=>a-b),[390,390,390,1280,1280,1280]);assert.equal(result.checks,14);
  input.artifacts[1].data=Buffer.from('<!doctype html><p>Help</p><script>localStorage.getItem("forbidden")</script>').toString('base64');
  await assert.rejects(exerciseBrowser(browserInput(input),observed),error=>/load help.html/.test(error.message)&&/localStorage|SecurityError/.test(error.message));
 });
@@ -127,4 +127,32 @@ for(const [name,selector]of [['quoted attribute','input[type="checkbox"]'],['int
  const result=await run('<input type="checkbox" data-name="a&quot;b">',[
   {action:'check',selector,checked:true},{action:'expectChecked',selector,checked:true},
  ]);assert.equal(result.passed,true);
+});
+
+test('parallel viewport failures drain both fresh contexts before browser closes',async()=>{
+ const events=[];let release,started;const secondStarted=new Promise(resolve=>{started=resolve;}),secondPending=new Promise(resolve=>{release=resolve;});
+ const chromium={launch:async()=>({newContext:async({viewport})=>{
+  const width=viewport.width;events.push('create:'+width);
+  return {setDefaultTimeout(){},setDefaultNavigationTimeout(){},route:async()=>{},exposeBinding:async()=>{},addInitScript:async()=>{},
+   newPage:async()=>{if(width===390){started();await secondPending;}throw Error('failed:'+width);},close:async()=>{events.push('close:'+width);}};
+ },close:async()=>{events.push('browser-close');}})};
+ const input=browserInput({artifacts:[{path:'index.html',data:Buffer.from('<p>Ready</p>').toString('base64')}],plan:plan([]),origin:'https://artifacts.example',boardOrigin:'https://board.example',deadline:Date.now()+30000});
+ let completed=false;const running=exerciseBrowser(input,chromium).finally(()=>{completed=true;});
+ await secondStarted;await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(events.slice(0,2),['create:1280','create:390']);assert(events.includes('close:1280'));assert.equal(completed,false);assert(!events.includes('browser-close'));
+ release();await assert.rejects(running,/1280px.*failed:1280/);
+ assert.deepEqual(events.slice(-2),['close:390','browser-close']);
+});
+
+test('reactive replacement retries identity capture without repeating the action',async()=>{
+ const contexts=[];
+ const chromium={launch:async()=>({newContext:async()=>{
+  const state={captures:0,clicks:0,closed:false};contexts.push(state);
+  const control={nth(){return this;},waitFor:async()=>{},evaluateAll:async()=>++state.captures===1?[]:['id:button'],click:async()=>{state.clicks++;}};
+  const page={on(){},setDefaultTimeout(){},goto:async()=>{},reload:async()=>{},locator:selector=>selector==='#button'?control:selector==='body'?{innerText:async()=>'Ready',nth(){return this;},waitFor:async()=>{}}:{evaluateAll:async()=>['id:button']}};
+  return {setDefaultTimeout(){},setDefaultNavigationTimeout(){},route:async()=>{},exposeBinding:async()=>{},addInitScript:async()=>{},newPage:async()=>page,close:async()=>{state.closed=true;}};
+ },version:()=> '153.0.8010.12',close:async()=>{}})};
+ const input=browserInput({artifacts:[{path:'index.html',data:Buffer.from('<button id="button">Ready</button>').toString('base64')}],plan:plan([{action:'click',selector:'#button'}]),origin:'https://artifacts.example',boardOrigin:'https://board.example',deadline:Date.now()+30000});
+ assert.equal((await exerciseBrowser(input,chromium)).checks,8);
+ assert.deepEqual(contexts,[{captures:2,clicks:1,closed:true},{captures:2,clicks:1,closed:true}]);
 });

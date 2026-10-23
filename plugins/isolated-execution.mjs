@@ -13,7 +13,7 @@ export const STATIC_SECCOMP_SHA256='322b86b4f7f5b597ed6a9c2cfd6193a4b249a51c8bc9
 const seccompProfile=fileURLToPath(new URL('../deploy/bok-browser-seccomp.json',import.meta.url));
 export const STATIC_NODE_VERSION='v24.21.0';
 export const STATIC_LIMITS=Object.freeze({sourceBytes:8*1024*1024,fileBytes:1024*1024,files:512,
- artifactBytes:1024*1024,logBytes:65536,workMs:45000,totalMs:60000,memory:805306368,pids:256});
+ artifactBytes:1024*1024,logBytes:65536,workMs:45000,totalMs:60000,memory:805306368,pids:256,cpus:2});
 export const STATIC_SOURCE_REQUIREMENTS=Object.freeze({
  STATIC_PACKAGE_REQUIRED:'Add package.json with a dependency-free build script that writes the published files to dist/.',
  STATIC_PACKAGE_INVALID:'Repair package.json so it is a valid JSON object.',
@@ -202,7 +202,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
    created=true;
    const result=await command(['create','--name',name,'--label','bok.static.owner='+name,'--pull','never','--platform','linux/amd64',
     '--network','none','--read-only','--cap-drop','ALL','--cap-add','SETUID','--cap-add','SETGID','--cap-add','KILL','--security-opt','no-new-privileges','--security-opt','seccomp='+seccompProfile,'--user','0:1000','--pids-limit',String(STATIC_LIMITS.pids),
-    '--memory','768m','--memory-swap','768m','--cpus','1','--cgroupns','private','--ipc','private','--shm-size','128m',
+    '--memory','768m','--memory-swap','768m','--cpus',String(STATIC_LIMITS.cpus),'--cgroupns','private','--ipc','private','--shm-size','128m',
     '--tmpfs','/work:rw,noexec,nosuid,nodev,size=67108864,uid=0,gid=1000,mode=0770',
     '--tmpfs','/tmp:rw,noexec,nosuid,nodev,size=134217728,uid=0,gid=1000,mode=0770',
     '--ulimit','nofile=256:256','--ulimit','fsize=8388608:8388608','--log-driver','none','--no-healthcheck','--restart','no',
@@ -213,7 +213,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
    assert.equal(result.code,0);const candidate=result.stdout.trim();assert(/^[0-9a-f]{64}$/.test(candidate));
    const c=await inspect(candidate);assert.equal(c.Id,candidate);assert.equal(c.Name,'/'+name);assert.equal(c.Config.Labels['bok.static.owner'],name);assert.equal(c.Image,STATIC_IMAGE);cid=candidate;
    assert(c.HostConfig.ReadonlyRootfs&&!c.HostConfig.Privileged&&c.HostConfig.NetworkMode==='none'&&c.Config.User==='0:1000');
-   assert.equal(c.Mounts.length,0);assert.equal(c.HostConfig.Memory,STATIC_LIMITS.memory);assert.equal(c.HostConfig.PidsLimit,STATIC_LIMITS.pids);assert.equal(c.HostConfig.MemorySwap,STATIC_LIMITS.memory);assert.equal(c.HostConfig.NanoCpus,1000000000);
+   assert.equal(c.Mounts.length,0);assert.equal(c.HostConfig.Memory,STATIC_LIMITS.memory);assert.equal(c.HostConfig.PidsLimit,STATIC_LIMITS.pids);assert.equal(c.HostConfig.MemorySwap,STATIC_LIMITS.memory);assert.equal(c.HostConfig.NanoCpus,STATIC_LIMITS.cpus*1000000000);
    assert.deepEqual([...c.HostConfig.CapAdd].sort(),['CAP_KILL','CAP_SETGID','CAP_SETUID']);assert.deepEqual(c.HostConfig.CapDrop,['ALL']);assert(c.HostConfig.SecurityOpt.includes('no-new-privileges'));
    assert.equal(c.HostConfig.CgroupnsMode,'private');assert.equal(c.HostConfig.PidMode,'');assert.equal(c.HostConfig.LogConfig.Type,'none');assert.equal(c.HostConfig.RestartPolicy.Name,'no');
    failureResult.phase='execution';

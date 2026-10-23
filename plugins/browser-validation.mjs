@@ -123,7 +123,9 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
   for(const identity of identities)encountered.add(scope+identity);
  };
  try{
-  for(const viewport of [{width:1280,height:800},{width:390,height:844}]){
+  // Independent viewport suites overlap actionability waits. Each scenario
+  // retains its own context; settle both suites before closing the browser.
+  const outcomes=await Promise.allSettled([{width:1280,height:800},{width:390,height:844}].map(async viewport=>{
    // Every scenario already performs the complete startup checks in a clean
    // context. Smoke only HTML entries without an exact matching scenario path.
    const covered=new Set(plan.scenarios.map(scenario=>scenario.path));
@@ -169,8 +171,17 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
       try{
       page.setDefaultTimeout(remaining());const locator=step.selector===undefined?null:page.locator(step.selector).nth(step.index??0);
       if(['fill','click','check','select','press'].includes(step.action)){
-       await locator.waitFor({state:'visible',timeout:remaining()});
-       for(const identity of await locator.evaluateAll(captureControls))exercised.add(scope+identity);
+       const identityDeadline=Date.now()+remaining();let identities=[];
+       // A reactive render can replace the matched element after visibility
+       // succeeds. Capture the replacement before acting instead of recording
+       // an empty coverage result while Playwright acts on the replacement.
+       while(!identities.length){
+        const timeout=Math.min(remaining(),identityDeadline-Date.now());
+        if(timeout<=0)throw Error('Visible control identity did not stabilize');
+        await locator.waitFor({state:'visible',timeout});
+        identities=await locator.evaluateAll(captureControls);
+       }
+       for(const identity of identities)exercised.add(scope+identity);
       }
       switch(step.action){
        case 'fill':await locator.fill(step.value);break;
@@ -200,7 +211,8 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
     }catch(error){throw Error(viewport.width+'px / '+scenario.name+': '+error.message);}
     finally{await context.close();}
    }
-  }
+  }));
+  const failed=outcomes.find(outcome=>outcome.status==='rejected');if(failed)throw failed.reason;
   const missing=[...encountered].filter(key=>!exercised.has(key));
   if(missing.length)throw Error('Add browser tests that operate these visible controls: '+missing.slice(0,20).join(', '));
   return {browserVersion:browser.version(),checks};
