@@ -288,7 +288,7 @@ for(const development of [true,false])test('actual SDK board projection gates ca
   // Real index metadata enables exact immutable storage reuse. Scope and both
   // canonical observations still occur; a new projection invalidates storage.
   const basicStatus=index.status,basicSync=index.sync;let revision='cache1',syncs=0;
-  index.status=()=>({state:'ready',complete:true,revision,checkpoint:{number:5,hash:f(99)}});
+  index.status=()=>({state:'ready',complete:true,revision,checkpoint:{number:'5',hash:f(99)}});
   index.sync=async()=>{syncs++;};
   await port.readRequest(f(1));for(const key of Object.keys(counts))delete counts[key];
   for(const [name,fn]of Object.entries(originalNode))node[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return fn(...args);};

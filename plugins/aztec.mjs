@@ -131,7 +131,8 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
   const current=index.status();
   if(current.state==='ready'&&current.complete===true&&current.checkpoint){
    const head=await node.getBlock('checkpointed'),after=index.status();
-   if(head&&head.number===current.checkpoint.number&&String(head.hash)===current.checkpoint.hash&&after.state==='ready'&&after.complete===true&&after.revision===current.revision)return true;
+   const number=Number(current.checkpoint.number);
+   if(Number.isSafeInteger(number)&&number>=0&&head&&head.number===number&&String(head.hash)===current.checkpoint.hash&&after.state==='ready'&&after.complete===true&&after.revision===current.revision)return true;
   }
   for(let steps=0;steps<32;steps++){
   assert(!admission.closed,'Canonical predecessor admission closed');
