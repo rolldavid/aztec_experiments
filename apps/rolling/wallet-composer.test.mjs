@@ -32,12 +32,12 @@ function dom(t){
  const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}})});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false}={}){
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
   readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
-  readBokStatus(){reads++;started.resolve();return balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
+  readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed'};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
@@ -58,6 +58,32 @@ test('typing @bok and editing/removing it stays immediate while a shared balance
  await f.document.until(()=>f.host.textContent.includes('1 USDC available'));
  assert.equal(f.document.querySelector('textarea'),editor);assert.equal(editor.value,'@bok this draft is still editable');assert.equal(f.reads(),1);
  assert.equal(f.document.querySelector('input[type=checkbox]'),null);assert(f.host.textContent.includes('Add credit'));
+});
+test('reopening a composer refreshes refunded Bok credit without replacing the draft or loading the account',{timeout:3000},async t=>{
+ const refund=Promise.withResolvers();
+ const f=await fixture(t,{balanceRead:count=>count===1?Promise.resolve({available:true,availableCredit:'326486'}):refund.promise});
+ await f.document.until(()=>f.host.textContent.includes('0.326486 USDC available'));const before=f.core();
+ assert.equal(f.panel.close(),true);f.panel.open({type:'reply',parent:'10',root:'1',subboard:'0'});
+ const editor=f.document.querySelector('textarea');editor.value='@bok keep my edited reply';editor.fire('input');
+ const budget=f.document.querySelector('.bok-invitation').querySelector('input');budget.value='0.5';budget.fire('input');
+ assert.equal(editor.disabled,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
+ assert.equal(f.document.querySelector('[data-action-review]').disabled,true);assert(f.host.textContent.includes('0.326486 USDC available · updating'));
+ await Promise.resolve();assert.equal(f.reads(),2);assert.deepEqual(f.core(),before);
+ editor.value+=' while the balance updates';editor.fire('input');assert.equal(f.reads(),2);
+ refund.resolve({available:true,availableCredit:'709008'});
+ await f.document.until(()=>f.host.textContent.includes('0.709008 USDC available'));assert.equal(f.document.querySelector('[data-action-review]').disabled,false);
+ assert.equal(f.document.querySelector('textarea'),editor);assert.equal(editor.value,'@bok keep my edited reply while the balance updates');
+ assert.equal(budget.value,'0.5');assert(f.host.textContent.includes('0.709008 USDC available'));assert.equal(f.reads(),2);assert.deepEqual(f.core(),before);
+});
+test('account-page Write a post also refreshes credit without reopening the account',{timeout:3000},async t=>{
+ const refund=Promise.withResolvers();
+ const f=await fixture(t,{defaults:{},balanceRead:count=>count===1?Promise.resolve({available:true,availableCredit:'3'}):refund.promise});
+ await f.document.until(()=>f.host.textContent.includes('0.000003 USDC available'));const before=f.core();
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Write a post').fire('click');
+ const editor=f.document.querySelector('textarea');assert(editor);assert.equal(editor.disabled,false);
+ await Promise.resolve();assert.equal(f.reads(),2);assert.deepEqual(f.core(),before);
+ refund.resolve({available:true,availableCredit:'7'});await f.document.until(()=>f.host.textContent.includes('0.000007 USDC available'));
+ assert.equal(f.document.querySelector('textarea'),editor);assert.deepEqual(f.core(),before);
 });
 test('basic signup does not start optional Bok work',{timeout:3000},async t=>{
  const f=await fixture(t,{fee:'collateral-pending'});assert.equal(f.reads(),0);assert.equal(f.document.querySelector('textarea').disabled,false);

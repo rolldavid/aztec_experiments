@@ -36,11 +36,11 @@ export function createBokBalanceQuery({identity,read,onChange=()=>{}}){
  function current(){const next=identity();if(next!==key){generation++;key=next;state={phase:'idle',value:null};}return next;}
  function snapshot(){current();return state;}
  function invalidate(){generation++;key=identity();state={phase:'idle',value:null};onChange();}
- function load(){
+ function load({refresh=false}={}){
   const owner=current();if(!owner)return Promise.resolve(null);
   if(pending)return pending;
-  if(state.phase!=='idle')return Promise.resolve(state.value);
-  const epoch=generation;state={phase:'loading',value:null};
+  if(!refresh&&state.phase!=='idle')return Promise.resolve(state.value);
+  const epoch=generation;state={phase:'loading',value:state.value};
   pending=Promise.resolve().then(()=>{if(current()!==owner||epoch!==generation)return null;return read();}).then(value=>{
    if(current()!==owner||epoch!==generation)return null;
    if(value?.available===true&&typeof value.availableCredit==='string'&&/^(0|[1-9][0-9]*)$/.test(value.availableCredit)&&BigInt(value.availableCredit)<1n<<128n)state={phase:'ready',value};
@@ -213,8 +213,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   bokStatus=bokBalance.snapshot().value;renderBokControls();updateBokForm();updateTopupQuote();
  }});
  function invalidateBokBalance(){bokStatus=null;bokBalance.invalidate();}
- function bokBalanceText(){const {phase,value}=bokBalance.snapshot();return phase==='ready'?`${decimal(value.availableCredit,6)} USDC available`:phase==='loading'?'Checking balance…':phase==='error'?'Balance unavailable':phase==='unavailable'?'Bok is unavailable':'Balance not loaded';}
- function requestBokBalance(){if(accountRefreshPending||accountRefreshNeeded)return;if(!initializing&&!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length))void bokBalance.load();}
+ function bokBalanceText(){const {phase,value}=bokBalance.snapshot();return value?.available===true?`${decimal(value.availableCredit,6)} USDC available${phase==='loading'?' · updating':''}`:phase==='loading'?'Checking balance…':phase==='error'?'Balance unavailable':phase==='unavailable'?'Bok is unavailable':'Balance not loaded';}
+ function requestBokBalance(refresh=false){if(accountRefreshPending||accountRefreshNeeded)return;if(!initializing&&!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length))void bokBalance.load({refresh});}
  function addBokCredit(){
   if(initializing||busy||!session||!unlocked())return;
   topupKind='bok';topupInputs={amount:''};resetTopupQuote();topupSaved=null;view='topup';clearOperationFeedback();
@@ -834,6 +834,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function chooseAction(type,name){
   if(busy||!unlocked()||intent||blocked)return;
   clearOperationFeedback();view='action';clearProfileDraft();draft={type,subboard:'0',content:'',name:name??selectedName};
+  if(COMPOSER_TYPES.has(type))requestBokBalance(true);
   if(viewReady()&&!name)render();else void work(loadView);
  }
  function namesView(){
@@ -1263,6 +1264,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(next.type==='preference'&&Number.isInteger(defaults.kind)&&defaults.kind>=1&&defaults.kind<=5&&field(defaults.target)&&typeof defaults.enabled==='boolean')Object.assign(next,{kind:defaults.kind,target:defaults.target,enabled:defaults.enabled});
    if(next.type==='read-marker'&&field(defaults.thread)&&typeof defaults.throughBlock==='string')Object.assign(next,{thread:defaults.thread,throughBlock:defaults.throughBlock});
    if(typeof defaults.content==='string'&&defaults.content.length<=10000)next.content=defaults.content;draft=next;}
+  // Refunds can arrive while the composer is closed. Refresh this optional
+  // snapshot in the background; typing and the unlocked session remain intact.
+  if(!dialog.open&&view==='action'&&COMPOSER_TYPES.has(draft.type))requestBokBalance(true);
   if(!dialog.open){returnFocus=document.activeElement;render();dialog.showModal();closeButton.focus();}
   if(!initializationPending)void initialize();
   if(initializing)return;

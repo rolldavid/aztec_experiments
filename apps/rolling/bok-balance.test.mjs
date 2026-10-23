@@ -28,3 +28,13 @@ test('missing, disabled and zero credit remain distinct; no zero substitutes for
   const query=createBokBalanceQuery({identity:()=>identity,read:async()=>result});await query.load();assert.equal(query.snapshot().phase,phase);
  }
 });
+
+test('explicit refresh retains the last display value and shares one pending read',async()=>{
+ const next=deferred(),identity={};let reads=0;
+ const query=createBokBalanceQuery({identity:()=>identity,read:()=>++reads===1?{available:true,availableCredit:'3'}:next.promise});
+ await query.load();const refreshing=query.load({refresh:true});
+ assert.deepEqual(query.snapshot(),{phase:'loading',value:{available:true,availableCredit:'3'}});
+ assert.equal(query.load({refresh:true}),refreshing);assert.equal(query.load(),refreshing);
+ await Promise.resolve();assert.equal(reads,2);next.resolve({available:true,availableCredit:'7'});await refreshing;
+ assert.equal(query.snapshot().value.availableCredit,'7');await query.load();assert.equal(reads,2);
+});
