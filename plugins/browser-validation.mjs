@@ -166,6 +166,7 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
      if(!(await page.locator('body').innerText()).trim()&&!(await page.locator('canvas,svg,img').count()))throw Error('Published page is empty: '+scenario.path);
      checks++;await discover(page,scope);
      for(const step of scenario.steps){
+      try{
       page.setDefaultTimeout(remaining());const locator=step.selector===undefined?null:page.locator(step.selector).nth(step.index??0);
       if(['fill','click','check','select','press'].includes(step.action)){
        await locator.waitFor({state:'visible',timeout:remaining()});
@@ -190,6 +191,10 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
       }
       checks++;await discover(page,scope);
       if(errors.length)throw Error(errors.join('\n'));
+      }catch(error){
+       if(typeof step.selector==='string'&&/\\["']/.test(step.selector))throw Error('The parsed selector contains a literal backslash before a quote. If that quote delimits an attribute value, use plain CSS such as input[type=checkbox] or input[type="checkbox"], without a second layer of JSON escaping. Correct the selector and keep the intended coverage. '+error.message);
+       throw error;
+      }
      }
      if(errors.length)throw Error(errors.join('\n'));
     }catch(error){throw Error(viewport.width+'px / '+scenario.name+': '+error.message);}

@@ -114,3 +114,17 @@ test('actual browser still smoke-checks uncovered HTML and keeps each scenario c
  input.artifacts[1].data=Buffer.from('<!doctype html><p>Help</p><script>localStorage.getItem("forbidden")</script>').toString('base64');
  await assert.rejects(exerciseBrowser(browserInput(input),observed),error=>/load help.html/.test(error.message)&&/localStorage|SecurityError/.test(error.message));
 });
+
+
+test('actual browser identifies extra quote escaping without silently repairing the selector',{skip:!actual,timeout:40000},async()=>{
+ const selector=JSON.parse(JSON.stringify({selector:String.raw`input[type=\"checkbox\"]`})).selector;
+ assert(selector.includes(String.fromCharCode(92,34)),'fixture retains literal backslash and quote after JSON decoding');
+ await assert.rejects(run('<input type="checkbox">',[
+  {action:'check',selector,checked:true},{action:'expectChecked',selector,checked:true},
+ ]),error=>error.message.includes('literal backslash before a quote')&&error.message.includes('input[type=checkbox]')&&error.message.includes('keep the intended coverage'));
+});
+for(const [name,selector]of [['quoted attribute','input[type="checkbox"]'],['intentional CSS quote escape',String.raw`input[data-name="a\"b"]`]])test('actual browser preserves matching '+name,{skip:!actual,timeout:40000},async()=>{
+ const result=await run('<input type="checkbox" data-name="a&quot;b">',[
+  {action:'check',selector,checked:true},{action:'expectChecked',selector,checked:true},
+ ]);assert.equal(result.passed,true);
+});
