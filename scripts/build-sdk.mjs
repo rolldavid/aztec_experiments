@@ -1,4 +1,4 @@
-import {reusePxeSimulation} from './pxe-simulation-reuse.mjs';
+import {reusePxeSimulation,preservePxeSimulationLogs} from './pxe-simulation-reuse.mjs';
 import {inspectPreferencePage,PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN} from './patch-pxe-preference-page.mjs';
 import {inspectIndexedDBAtomicity, INDEXEDDB_ATOMICITY_PINS} from './patch-indexeddb-atomicity.mjs';
 import {inspectPxeReorgAnchor,PXE_REORG_ANCHOR_PINS} from './patch-pxe-reorg-anchor.mjs';
@@ -45,6 +45,7 @@ const relocationPlugin = {
     builder.onLoad({ filter: /\.js$/ }, async ({ path: filename }) => {
       const relative = path.relative(root, filename).split(path.sep).join('/');
       if(relative==='node_modules/@aztec-labs/pxe/dest/pxe.js')return {contents:reusePxeSimulation(await fs.readFile(filename,'utf8')),loader:'js'};
+      if(relative==='node_modules/@aztec-labs/pxe/dest/contract_function_simulator/contract_function_simulator.js')return {contents:preservePxeSimulationLogs(await fs.readFile(filename,'utf8')),loader:'js'};
       const change = relocations.get(relative);
       if (!change) return;
       let contents = await fs.readFile(filename, 'utf8');
