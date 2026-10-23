@@ -196,7 +196,10 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
         if(action==='expectCount')return all.length===count;
         if(!e)return false;
         if(action==='expectText')return (e.textContent??'').includes(text);
-        if(action==='expectChecked')return e.checked===checked;
+        if(action==='expectChecked'){
+         if(!(e instanceof HTMLInputElement)||!['checkbox','radio'].includes(e.type))throw Error('expectChecked requires an input[type=checkbox] or input[type=radio]. For button state, use expectVisible with :enabled or :disabled.');
+         return e.checked===checked;
+        }
         return false;
        },step,{timeout:remaining()});
       }

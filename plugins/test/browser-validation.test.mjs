@@ -156,3 +156,22 @@ test('reactive replacement retries identity capture without repeating the action
  assert.equal((await exerciseBrowser(input,chromium)).checks,8);
  assert.deepEqual(contexts,[{captures:2,clicks:1,closed:true},{captures:2,clicks:1,closed:true}]);
 });
+
+for(const [name,html]of [['button','<button id="target">Clear completed</button>'],['text input','<input id="target" type="text">']])test('actual browser rejects expectChecked on a '+name+' with a specific type error',{skip:!actual,timeout:40000},async()=>{
+ await assert.rejects(run(html,[{action:'expectChecked',selector:'#target',checked:false}]),error=>
+  error.message.includes('expectChecked requires an input[type=checkbox] or input[type=radio]')&&error.message.includes(':enabled or :disabled')&&!error.message.includes('Timeout'));
+});
+test('actual browser expectChecked re-queries a replaced checkbox and supports radio state',{skip:!actual,timeout:40000},async()=>{
+ const result=await run(`<input id="target" type="checkbox"><input id="radio" type="radio"><script>
+ const target=document.querySelector('#target');
+ Object.defineProperty(target,'checked',{get(){
+  const replacement=document.createElement('input');replacement.type='checkbox';replacement.id='target';replacement.checked=true;target.replaceWith(replacement);return false;
+ }});
+ </script>`,[
+  {action:'expectChecked',selector:'#target',checked:true},
+  {action:'check',selector:'#target',checked:false},
+  {action:'expectChecked',selector:'#target',checked:false},
+  {action:'check',selector:'#radio',checked:true},
+  {action:'expectChecked',selector:'#radio',checked:true},
+ ]);assert.equal(result.passed,true);
+});
