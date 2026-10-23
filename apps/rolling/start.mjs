@@ -8,7 +8,7 @@ import {startRollingPublicServer,createRollingPublicIndexFromConfig} from '../..
 import {loadRollingWalletAssets} from '../../scripts/rolling-wallet-assets.mjs';
 const root=fileURLToPath(new URL('.',import.meta.url));
 const files=new Map([['/archive/','archive.html'],['/archive/snapshot.json','archive.json'],['/','live.html'],['/reader.mjs','reader.mjs'],['/reader-client.mjs','reader-client.mjs'],['/profile-view.mjs','profile-view.mjs'],['/avatar-upload.mjs','avatar-upload.mjs'],
- ['/model.mjs','model.mjs'],['/navigation.mjs','navigation.mjs'],['/style.css','style.css'],['/wallet-panel.mjs','wallet-panel.mjs'],['/wallet-cache-worker.mjs','wallet-cache-worker.mjs']]);
+ ['/performance.mjs','performance.mjs'],['/reader-updates.mjs','reader-updates.mjs'],['/wallet-action.mjs','wallet-action.mjs'],['/model.mjs','model.mjs'],['/navigation.mjs','navigation.mjs'],['/style.css','style.css'],['/wallet-panel.mjs','wallet-panel.mjs'],['/wallet-cache-worker.mjs','wallet-cache-worker.mjs']]);
 const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
  'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' blob: data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"};
 const compress=promisify(gzip),MAX_ASSET_BYTES=128*1024*1024,MAX_CACHE_BYTES=64*1024*1024,MAX_RESPONSE_BYTES=128*1024*1024;

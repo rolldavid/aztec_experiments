@@ -155,16 +155,18 @@ test('persistent owner serves decoded history only after canonical replay, inclu
  let previousCursor;
  for(const reopened of [false,true]){
   const index=await open();assert.equal(index.cacheStatus().trusted,false);assert.equal(index.cacheStatus().control!==null,reopened);assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});reads.length=0;
-  const progress=await synchronizeRollingPublicReader(index,Date.now()+30000);assert.equal(progress.steps,7);for(const number of [1,2,3])assert(reads.includes(number));
+  const progress=await synchronizeRollingPublicReader(index,Date.now()+30000);assert.equal(progress.steps,4);for(const number of [1,2,3])assert(reads.includes(number));
   if(previousCursor)assert.throws(()=>index.query('feed',{limit:1,cursor:previousCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
   const server=await startRollingPublicServer({index,pollMs:30000});servers.push(server);
   const read=createPublicReader({fetch:(url,options)=>fetch(server.url+url,options)}),page=await read('feed',{limit:1});
   assert.equal(page.posts[0].text,'Later');const status=await (await fetch(server.url+'/api/status')).json();assertRollingHTTPMetadata(page,status,'sqlite-v3');previousCursor=page.nextCursor;assert(previousCursor);
   assert.equal(index.cacheStatus().control.eventCount,'3');await server.close();
  }
- const index=await open();await synchronizeRollingPublicReader(index,Date.now()+30000);const cursor=index.query('feed',{limit:1}).nextCursor;
+ const index=await open();await synchronizeRollingPublicReader(index,Date.now()+30000);const cursor=index.query('feed',{limit:1}).nextCursor,contentRevision=index.status().contentRevision;
+ await index.sync();assert.equal(index.status().contentRevision,contentRevision);
  put(3,[await post(30,3,'Replacement')],50);await index.sync();assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
  await synchronizeRollingPublicReader(index,Date.now()+30000);assert.throws(()=>index.query('feed',{limit:1,cursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ assert.notEqual(index.status().contentRevision,contentRevision);
  assert.equal(index.query('post',{id:'20'}).post,null);assert.equal(index.query('post',{id:'30'}).post.text,'Replacement');
 });
 
@@ -340,4 +342,26 @@ test('status static and invalid requests do not request a new canonical cycle',a
  assert.equal((await fetch(server.url+'/api/status')).status,200);assert.equal(cycles,1);
  for(const [route,status] of [['/api/status',200],['/',200],['/api/owned_names',404],['/api/board',400],['/api/feed?limit=101',400]])assert.equal((await fetch(server.url+route)).status,status);
  assert.equal(cycles,1);
+});
+
+test('revision stream publishes ready content changes, ignores empty blocks and closes with server',async t=>{
+ let state={state:'ready',revision:'epoch:1',contentRevision:'epoch:0',checkpoint:{number:1,hash:'a'}};
+ const index={status:()=>({...state}),sync:async()=>{},query:()=>({})};
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());
+ // A normal request completes the initial authenticated sync.
+ await fetch(server.url+'/api/feed');
+ const response=await fetch(server.url+'/api/events');assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/text\/event-stream/);
+ const reader=response.body.getReader(),decoder=new TextDecoder();let text='';
+ const until=async pattern=>{while(!text.includes(pattern)){const row=await reader.read();assert.equal(row.done,false);text+=decoder.decode(row.value);}};
+ await until('epoch:1');assert.equal((text.match(/event: revision/g)??[]).length,1);
+ state={...state,revision:'epoch:2',checkpoint:{number:2,hash:'b'}};
+ await fetch(server.url+'/api/feed');
+ state={...state,revision:'epoch:3',contentRevision:'epoch:1',checkpoint:{number:3,hash:'c'}};
+ await fetch(server.url+'/api/feed');await until('epoch:3');assert(!text.includes('epoch:2'));
+ state={...state,revision:'epoch:4',contentRevision:'epoch:2',state:'syncing'};
+ assert.equal((await fetch(server.url+'/api/feed')).status,503);
+ state={...state,state:'ready'};await fetch(server.url+'/api/feed');await until('epoch:4');
+ for(const path of ['/api/events?owner=private','/api/events?revision=epoch:3'])assert.equal((await fetch(server.url+path)).status,400);
+ assert.equal((await fetch(server.url+'/api/events',{method:'POST'})).status,405);
+ await server.close();while(!(await reader.read()).done){};
 });

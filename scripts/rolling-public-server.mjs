@@ -17,6 +17,17 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     if(failures.length>1)throw new AggregateError(failures,'Public reader configuration and cleanup failed');throw error;
   }
   let closed=false,timer,turn,active,queued,closing;const requests=new Set();let fundingWindow=0,fundingRequests=0;
+  const subscribers=new Set();let published=null,lastContentRevision=null;
+  const eventText=value=>`event: revision\ndata: ${JSON.stringify(value)}\n\n`;
+  const publish=after=>{
+    if(after?.state!=='ready'||typeof after.revision!=='string'||!after.checkpoint)return;
+    const key=after.contentRevision??after.revision;
+    if(key===lastContentRevision)return;
+    lastContentRevision=key;published={schemaVersion:1,revision:after.revision,checkpoint:after.checkpoint};
+    for(const res of subscribers)if(!res.write(eventText(published)))res.destroy();
+  };
+  // Keep intermediary connections alive; this never decides operation success.
+  const heartbeat=setInterval(()=>{for(const res of subscribers)if(!res.write(': keepalive\n\n'))res.destroy();},15000);heartbeat.unref();
   // Polls and admitted reads share one serial owner. A read reserves the next
   // cycle, rather than reusing a snapshot whose acquisition already completed.
   const begin=()=>{
@@ -24,6 +35,7 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     clearTimeout(timer);const cycle=queued;queued=null;active=cycle;
     void (async()=>{let catchup=false,failed=false;try{
       const before=index.status?.().revision;await index.sync();const after=index.status?.();
+      publish(after);
       catchup=after?.state==='syncing'&&typeof after.revision==='string'&&after.revision!==before;
     }catch{failed=true;/* no stale fallback or raw upstream error logging */}
     active=null;cycle.resolve({catchup,failed});
@@ -74,6 +86,15 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
       }
       if(req.method!=='GET'){res.setHeader('Allow','GET');return reply(405,{schemaVersion:1,error:'method-not-allowed'});}
       if(req.headers['transfer-encoding']||req.headers['content-length']&&req.headers['content-length']!=='0')return reply(400,{schemaVersion:1,error:'invalid-request'});
+      if(url.pathname==='/api/events'){
+        if(url.search||req.headers['sec-fetch-site']&&!['same-origin','none'].includes(req.headers['sec-fetch-site']))return reply(400,{schemaVersion:1,error:'invalid-request'});
+        if(subscribers.size>=128)return reply(503,{schemaVersion:1,error:'unavailable'});
+        res.writeHead(200,{...headers,'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-store, no-transform','X-Accel-Buffering':'no'});
+        res.flushHeaders();res.write(': connected\n\n');subscribers.add(res);res.once('close',()=>subscribers.delete(res));
+        // A reconnect gets the newest authenticated view, even if its event was missed.
+        if(index.status().state==='ready'&&published)res.write(eventText(published));
+        return;
+      }
       const view=url.pathname.slice(5),allowed=Object.hasOwn(routes,view)?routes[view]:null;
       if(!allowed)return reply(404,{schemaVersion:1,error:'not-found'});
       const params={};for(const [key,value] of url.searchParams){if(!allowed.includes(key)||Object.hasOwn(params,key))return reply(400,{schemaVersion:1,error:'invalid-request'});params[key]=value;}
@@ -102,7 +123,7 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
   });
   server.requestTimeout=10000;server.headersTimeout=10000;server.maxHeadersCount=32;
   const close=()=>closing??=(async()=>{
-    closed=true;clearTimeout(timer);clearImmediate(turn);queued?.resolve({closed:true});queued=null;const failures=[],pending=Promise.allSettled([...requests]);
+    closed=true;clearInterval(heartbeat);for(const res of subscribers)res.end();subscribers.clear();clearTimeout(timer);clearImmediate(turn);queued?.resolve({closed:true});queued=null;const failures=[],pending=Promise.allSettled([...requests]);
     // Stop admission first; existing handlers may still be joining active sync.
     const listener=server.listening?new Promise(resolve=>server.close(error=>{if(error)failures.push(error);resolve();})):Promise.resolve();
     try{await active?.promise;}catch(error){failures.push(error);}

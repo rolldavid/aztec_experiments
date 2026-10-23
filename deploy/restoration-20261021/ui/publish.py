@@ -100,7 +100,7 @@ def export_assets(source,description,destination=None):
    link=destination/url.lstrip('/');public_directory(link.parent);os.link(target,link)
  if destination:public_file(destination/'wallet/runtime.json',json.dumps(description['runtime'],separators=(',',':')).encode())
 
-PUBLIC={'/':'live.html','/archive/':'archive.html','/archive/snapshot.json':'archive.json','/reader.mjs':'reader.mjs','/reader-client.mjs':'reader-client.mjs','/profile-view.mjs':'profile-view.mjs','/avatar-upload.mjs':'avatar-upload.mjs','/model.mjs':'model.mjs','/navigation.mjs':'navigation.mjs','/style.css':'style.css','/wallet-panel.mjs':'wallet-panel.mjs','/wallet-cache-worker.mjs':'wallet-cache-worker.mjs'}
+PUBLIC={'/':'live.html','/archive/':'archive.html','/archive/snapshot.json':'archive.json','/reader.mjs':'reader.mjs','/reader-client.mjs':'reader-client.mjs','/profile-view.mjs':'profile-view.mjs','/avatar-upload.mjs':'avatar-upload.mjs','/performance.mjs':'performance.mjs','/reader-updates.mjs':'reader-updates.mjs','/wallet-action.mjs':'wallet-action.mjs','/model.mjs':'model.mjs','/navigation.mjs':'navigation.mjs','/style.css':'style.css','/wallet-panel.mjs':'wallet-panel.mjs','/wallet-cache-worker.mjs':'wallet-cache-worker.mjs'}
 
 def activate():
  r=json.loads((P/'stage-result.json').read_text())

@@ -207,6 +207,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   const semantic=c=>{const {generation,revision,...rest}=c;return rest;};
   let control=null,previous=null,oldSequence=0n,loaded=false,busy=false,ready=false,unavailable=false,origin=null;
   let oldPages=null,comparisonDone=false,orphanedCache=false,failed=false,currentBlock=null;
+  let contentRevision=0;
   // A rejected native read invalidates this publication, not durable ownership.
   // Track the actual transport boundary even when the ABI decoder sanitizes it.
   // Schema/identity/storage failures never acquire this recovery permission.
@@ -216,7 +217,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     try{return await upstream[name](...args);}catch(error){upstreamFailed=true;throw error;}
   }]));
   const state=()=>({schemaVersion:3,state:unavailable?'unavailable':ready?'ready':loaded?'syncing':'authenticating',
-    scope,complete:ready,authenticationEpoch:epoch,revision:control?`${epoch}:${control.generation}:${control.revision}`:null,
+    scope,complete:ready,authenticationEpoch:epoch,contentRevision:`${epoch}:${contentRevision}`,revision:control?`${epoch}:${control.generation}:${control.revision}`:null,
     checkpoint:copy(control?.checkpoint??null),cursor:copy(control?.cursor??null),cacheComparison:comparisonDone?(orphanedCache?'canonical-prefix':'complete'):'pending'});
   function assertOwned(){check(same(storage.inspect().control,control),'PUBLIC_FEED_CONFLICT');}
   function status(){if(ready){try{assertOwned();}catch{ready=false;unavailable=true;}}return state();}
@@ -327,7 +328,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       const current=BigInt(retained.number)>BigInt(target.number)?null:await anchor(Number(retained.number));
       if(!current||current.hash!==retained.hash){
         currentBlock=null;
-        check(control.segmentCount!=='0');await recheck();control=storage.rollbackOne({expectedControl:control});
+        check(control.segmentCount!=='0');await recheck();control=storage.rollbackOne({expectedControl:control});contentRevision++;
         previous=null;comparisonDone=true;orphanedCache=true;
         await recheck();return state();
       }
@@ -387,6 +388,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       }
       await recheck(block);compareBefore(events,block,index===effects.length);
       control=index===effects.length?storage.completeBlock({expectedControl:control,block}):storage.commitTransaction({expectedControl:control,block,txIndex:String(index),txHash,events});
+      if(events.length)contentRevision++;
       if(previous&&!comparisonDone&&oldSequence===BigInt(previous.segmentCount))finishComparison();
       await recheck(block);
       // Completing the last transaction's block needs no separate scheduling
