@@ -476,22 +476,36 @@ test('invocation accounting requires shared receipt ownership and keeps fresh co
 });
 
 
-test('invocation uses one current reservation guard after its durable provider fence',async()=>{
+test('invocation checks reservation and provider preflight before its durable dispatch boundary',async()=>{
  const h=activatedFixture(),m=invocation(h),request=h.escrow.request,usable=h.escrow.assertUsable;
- let reads=0,guards=0;
+ let reads=0,guards=0,preflights=0;
  h.escrow.request=async(...args)=>{reads++;return request(...args);};
- h.escrow.assertUsable=async(...args)=>{guards++;assert.equal(h.store.read().privateBok.calls[guards-1].phase,'possibly-sent');return usable(...args);};
+ h.escrow.assertUsable=async(...args)=>{guards++;assert.equal(h.store.read().privateBok.calls[guards-1].phase,'quoted');return usable(...args);};
+ h.provider.beforeDispatch=async()=>{preflights++;assert.equal(preflights,guards);assert.equal(h.store.read().privateBok.calls[preflights-1].phase,'quoted');};
+ const execute=h.provider.execute;h.provider.execute=async(...args)=>{assert.equal(h.store.read().privateBok.calls[h.counts.execute].phase,'possibly-sent');return execute(...args);};
  for(let id=0;id<3;id++)await m.complete(id,input);
  assert.equal(reads,1,'Only initial budget sizing needs a separate request read');
- assert.equal(guards,3,'One authoritative mutable guard per paid call');assert.equal(h.counts.execute,3);
+ assert.equal(guards,3,'One authoritative mutable guard per paid call');assert.equal(preflights,3);assert.equal(h.counts.execute,3);
 });
-test('invocation refuses changed state at the final pre-provider guard',async()=>{
- for(const stage of ['quote','durable-fence']){
-  const h=activatedFixture(),m=invocation(h);await m.complete(0,input);
-  if(stage==='quote'){const quote=h.provider.quote;h.provider.quote=async(...args)=>{const result=await quote(...args);h.r.state=3;return result;};}
-  else {const write=h.store.write;h.store.write=async next=>{await write(next);if(next.privateBok?.calls[1]?.phase==='possibly-sent')h.r.state=3;};}
-  await assert.rejects(m.complete(1,input),/Reservation changed/);assert.equal(h.counts.execute,1);
+test('invocation preflight rejection leaves an unsent quote and permits its original input once',async()=>{
+ for(const stage of ['reservation','provider']){
+  const h=activatedFixture();let rejected=true;
+  if(stage==='reservation')h.escrow.assertUsable=async()=>{if(rejected)throw Error('known preflight rejection');return {canonical:true,request:{...h.r}};};
+  else h.provider.beforeDispatch=async()=>{if(rejected)throw Error('known preflight rejection');};
+  await assert.rejects(invocation(h).complete(0,input),/known preflight rejection/);
+  assert.equal(h.store.read().privateBok.calls[0].phase,'quoted');assert.equal(h.counts.execute,0);assert.equal(h.counts.close_uncertain,0);
+  assert.equal((await invocation(h).resume(0)).readyForComplete,true);
+  await assert.rejects(invocation(h).complete(0,{...input,maxTokens:9}),/Call input changed/);
+  rejected=false;assert.equal((await invocation(h).complete(0,input)).replyAvailable,true);
+  assert.equal(h.counts.quote,1);assert.equal(h.counts.execute,1);
+  await invocation(h).complete(0,input);assert.equal(h.counts.execute,1);
  }
+});
+test('invocation write failure at the dispatch boundary remains conservative without paid replay',async()=>{
+ const h=activatedFixture(),write=h.store.write;
+ h.store.write=async next=>{await write(next);if(next.privateBok.calls[0]?.phase==='possibly-sent')throw Error('durable write interrupted');};
+ await assert.rejects(invocation(h).complete(0,input),/durable write interrupted/);assert.equal(h.counts.execute,0);
+ h.store.write=write;await assert.rejects(invocation(h).resume(0),/outcome unknown/);assert.equal(h.counts.execute,0);
 });
 test('invocation retained response resume still validates current reservation before tool delivery',async()=>{
  const h=activatedFixture(),write=h.store.write;let interrupt=true;

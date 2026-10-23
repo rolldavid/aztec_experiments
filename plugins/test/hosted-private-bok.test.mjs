@@ -368,11 +368,12 @@ test('restarted confirmed reply must remain canonical and linked before releasin
  }
 });
 
-test('moderation drift during reservation prevents the actual provider call and preserves its fence',async()=>{
+test('moderation drift during reservation remains a known pre-provider rejection',async()=>{
  const x=fixture(),reserve=x.args.escrow.reserve;
  x.args.escrow.reserve=async(...args)=>{const result=await reserve(...args);x.current.usable=false;return result;};
- await assert.rejects(x.run(),/unknown/);
- assert.deepEqual(x.events,['reserve','close_uncertain']);assert.equal(x.row.reserved,110n);assert.equal(x.row.state,3);
+ await assert.rejects(x.run(),/Invocation changed before provider execution/);
+ assert.deepEqual(x.events,['reserve']);assert.equal(x.row.reserved,110n);assert.equal(x.row.state,2);
+ assert.equal(x.store.read().privateBok.calls[0].phase,'reserved');
  x.current.usable=true;await assert.rejects(x.run(),/unresolved/);assert(!x.events.includes('paid'));
 });
 
@@ -396,17 +397,19 @@ test('captured conversation guard runs after reservation and current policy befo
  await x.run();assert.equal(captures,1);assert.equal(guards,1);assert.equal(x.events.filter(x=>x==='paid').length,1);
  assert(!JSON.stringify(x.store.read()).includes('assertCurrent'));
 });
-test('history change during reservation fences provider without loading replacement context',async()=>{
+test('history change during reservation rejects before the paid boundary without replacing context',async()=>{
  const x=fixture();let changed=false,captures=0;const reserve=x.args.escrow.reserve;
  x.args.escrow.reserve=async(...args)=>{await reserve(...args);changed=true;};
  x.args.conversation={load:async()=>{captures++;return {assertCurrent:async()=>assert(!changed,'Original history changed')};}};
  const run=x.args.runAgent;x.args.runAgent=async input=>{await input.conversation.load({postId:input.postId});return run(input);};
- await assert.rejects(x.run(),/unknown/);assert.equal(captures,1);assert(!x.events.includes('paid'));assert.equal(x.row.reserved,110n);
+ await assert.rejects(x.run(),/Original history changed/);assert.equal(captures,1);assert(!x.events.includes('paid'));assert.equal(x.row.reserved,110n);
+ assert.equal(x.store.read().privateBok.calls[0].phase,'reserved');assert(!x.events.includes('close_uncertain'));
  await assert.rejects(x.run(),/unresolved/);assert.equal(captures,1);
 });
 test('conversation enabled request cannot execute provider without actual capture',async()=>{
  const x=fixture();x.args.conversation={load:()=>assert.fail('Must not silently load')};
- await assert.rejects(x.run(),/unknown/);assert(!x.events.includes('paid'));
+ await assert.rejects(x.run(),/Conversation must be captured/);assert(!x.events.includes('paid'));
+ assert.equal(x.store.read().privateBok.calls[0].phase,'reserved');
 });
 test('hosted projection preserves native checkpointed and numbered selectors in both proof modes',async()=>{
  const {hostedIndexNode}=await import('../main.mjs');const calls=[];
@@ -962,8 +965,19 @@ test('three model calls perform one immediate board guard each without duplicate
 for(const changed of ['usable','replied','requestId','target','pluginId'])test('immediate paid guard rejects board '+changed+' changed during quote',async()=>{
  const x=invocationFixture(),quote=x.args.provider.quote;
  x.args.provider.quote=async(...args)=>{const result=await quote(...args);x.current[changed]=changed==='usable'?false:changed==='replied'?true:f(999);return result;};
- await assert.rejects(x.run(),/unknown/);
+ await assert.rejects(x.run(),/Invocation changed before provider execution/);
  assert.equal(x.events.filter(x=>x==='paid').length,0);assert.equal(x.row.charged,0n);
+ assert.equal(x.store.read().privateBok.calls[0].phase,'quoted');assert(!x.events.includes('close_uncertain'));
+});
+
+for(const source of ['history','provider'])test('invocation '+source+' preflight rejects before the durable paid boundary',async()=>{
+ const x=invocationFixture();
+ if(source==='history'){
+  x.args.conversation={load:async()=>({assertCurrent:async()=>{throw Error('known preflight failure');}})};
+  const run=x.args.runAgent;x.args.runAgent=async input=>{await input.conversation.load({postId:input.postId});return run(input);};
+ }else x.args.provider.beforeDispatch=async()=>{throw Error('known preflight failure');};
+ await assert.rejects(x.run(),/known preflight failure/);
+ assert.equal(x.store.read().privateBok.calls[0].phase,'quoted');assert.deepEqual(x.events,[]);assert.equal(x.row.charged,0n);
 });
 
 test('hosted activated invocation with no model call replies and refunds in one final transaction',async()=>{

@@ -230,6 +230,7 @@ export function privateBokMetering({provider,escrow,store,identity,limits={},acc
    }
    const current=await read();if(current.state!==2||!reservedMatches(current,c))throw Error('Reservation changed');
    await escrow.assertUsable(binding.requestId,id,amount(c.quote.maximum));
+   await provider.beforeDispatch?.();
    await setCall(id,{phase:'possibly-sent'});
    // A disk sync or suspended process may cross the start margin. The paid call
    // must follow a fresh canonical check, with no journal I/O between them.
@@ -478,9 +479,10 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
     c={id,phase:'quoted',inputDigest,requestedTokens:frozen.maxTokens,quote:quoteJSON(q),available:String(available)};j.calls[id]=c;await save(j);
    }
    if(total()+amount(c.quote.maximum)>allowance())throw Error('Invocation allowance exceeded');
-   // Quote creation and journal persistence cannot authorize spending. Check
-   // mutable chain state once, after the durable fence and just before dispatch.
-   await setCall(id,{phase:'possibly-sent'});await reserved();
+   // Preflight failures are known not to have dispatched a paid request. Only
+   // the durable write immediately before execute crosses that boundary.
+   await reserved();await provider.beforeDispatch?.();
+   await setCall(id,{phase:'possibly-sent'});
    try{
     const result=await provider.execute(frozen,quoteFor(c)),b=billingFor(id,result?.billing);
     if(result.charge!==BigInt(b.charge)||result.receipt!==b.receipt)throw Error('Provider result mismatch');

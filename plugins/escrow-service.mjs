@@ -232,12 +232,12 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   const history=admittedHistory??await conversation.load(input);assert.equal(typeof history?.assertCurrent,'function');
   historyGuard=history.assertCurrent;return history;
  }}):undefined;
- const guardedProvider={quote:(...args)=>provider.quote(...args),execute:async(...args)=>{
+ const guardedProvider={quote:(...args)=>provider.quote(...args),beforeDispatch:async()=>{
   const final=await board.readRequest(request.postId);
   assert(final?.usable&&!final.replied&&final.requestId===request.requestId&&final.target===request.target&&final.pluginId===request.pluginId,'Invocation changed before provider execution');
   if(conversation){assert(historyGuard,'Conversation must be captured before billing');await historyGuard();}
-  return provider.execute(...args);
- }};
+  await provider.beforeDispatch?.();
+ },execute:(...args)=>provider.execute(...args)};
  const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits,accountingMode,claimReceipt});
  if(saved?.phase==='finished')return {status:'finished',replayed:false};
  if(saved?.phase==='accounted-without-reply')return {status:'accounted-without-reply',replayed:false};
@@ -321,7 +321,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   let call=0;
   try{result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
    // The guarded provider rechecks canonical board authority immediately before
-   // paid execution, after quoting and the reservation guard. Do not repeat it here.
+   // the durable dispatch boundary, after quoting and the reservation guard.
    const response=await metering.complete(call++,input);assert(response.replyAvailable,'Recovered billing has no recoverable reply');return response;
   }}});}catch(error){
    // Validation and pre-provider input limits have known billing outcomes.
