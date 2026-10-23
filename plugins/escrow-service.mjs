@@ -34,7 +34,7 @@ export async function reconcileHostedBilling({receipt,escrow,store,lease,limits,
  if(saved.billingRecovery)assert.deepEqual(saved.billingRecovery,recovery,'Original billing recovery changed');
  const checkedStore={read:()=>store.read(),write:async value=>{await lease.assertHeld();await store.write(value);}};
  const deny=async()=>{throw Error('Provider calls forbidden during billing recovery');};
- const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow,store:checkedStore,identity,limits,claimReceipt});
+ const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow,store:checkedStore,identity,limits,accountingMode:journal.accountingMode??'per-call',claimReceipt});
  await metering.validateReconciliation(receipt.callId,billing);
  // Retain the original evidence before any chain action. The metering journal
  // independently persists exact reconciliation intents before their sole sends.
@@ -79,7 +79,7 @@ export async function isHostedTerminalWithoutReply({request,escrow,store,anchor}
  const deny=async()=>{throw Error('Terminal admission is read only');};let observation;
  const readOnlyEscrow={identity:escrow.identity,request:async id=>{assert.equal(observation,undefined);observation=await escrow.request(id);return observation;}};
  for(const method of ['assertUsable','inspectOperation','reserve','settle','close_uncertain','reconcile','finish'])readOnlyEscrow[method]=deny;
- const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow:readOnlyEscrow,store:{read:()=>original,write:deny},identity,limits:journal.limits,claimReceipt:deny});
+ const metering=privateBokMetering({provider:{quote:deny,execute:deny},escrow:readOnlyEscrow,store:{read:()=>original,write:deny},identity,limits:journal.limits,accountingMode:journal.accountingMode??'per-call',claimReceipt:deny});
  const last=calls.at(-1);await metering.validateReconciliation(last.id,last.billing);
  assert.equal(observation.anchor?.number,anchor?.number,'Terminal checkpoint changed');assert.equal(observation.anchor?.hash,anchor?.hash,'Terminal checkpoint changed');
  assert(anchor&&Number.isSafeInteger(anchor.number)&&typeof anchor.hash==='string','Terminal checkpoint required');
@@ -241,7 +241,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits,accountingMode,claimReceipt});
  if(saved?.phase==='finished')return {status:'finished',replayed:false};
  if(saved?.phase==='accounted-without-reply')return {status:'accounted-without-reply',replayed:false};
- const invocation=(store.read().privateBok?.accountingMode??(store.read().privateBok?'per-call':accountingMode))==='invocation-v1';
+ const invocation=accountingMode==='invocation-v1';
  const finishWithoutReply=async()=>{
   await metering.finish();await save({...saved,phase:'accounted-without-reply',replyFailure:'canonical-revert'});
   return {status:'accounted-without-reply',replayed:false};
@@ -299,7 +299,12 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  }else if(saved&&!resumeFirstCall&&!['reply-intent','reply-confirmed','result-ready'].includes(saved.phase))throw Error('Hosted request unresolved; reconcile original journal without another paid call');
  if(!saved||resumeFirstCall){
   assert(!current.replied&&current.usable,'Invocation no longer usable');
-  const row=await escrow.request(request.requestId);assert(row.canonical&&row.request.state===2&&(resumeReceived?true:resumeSubmitted?row.request.sequence===0&&row.request.reserved===BigInt(store.read().privateBok.calls[0].quote.maximum):row.request.reserved===0n),'Active canonical request required');
+  const row=await escrow.request(request.requestId),r=row.request;
+  const fresh=invocation
+   ?r.sequence===0&&BigInt(r.available)===0n&&BigInt(r.reserved)===BigInt(r.budget)&&BigInt(r.reserved)>0n&&BigInt(r.charged)===0n&&BigInt(r.refunded)===0n&&BigInt(r.receipt)===0n
+   :r.reserved===0n;
+  const admitted=resumeReceived||(resumeSubmitted?r.sequence===0&&r.reserved===BigInt(store.read().privateBok.calls[0].quote.maximum):fresh);
+  assert(row.canonical===true&&r.state===2&&admitted,'Active canonical request required');
   if(!resumeFirstCall&&admitThread!==undefined){
    assert(typeof admitThread==='function'&&typeof conversation?.load==='function','Trusted thread admission unavailable');
    const history=await conversation.load({postId:request.postId});
@@ -333,7 +338,7 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
  if(result){
   const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target&&fresh.requestId===request.requestId&&fresh.pluginId===request.pluginId&&fresh.threadId===current.threadId&&fresh.predecessorsClear===true,'Invocation changed before reply');
   const packed=packText(result.replyText),args=[request.requestId,request.pluginId,packed.fields,packed.length,fresh.mainVersion,fresh.localVersion];
-  if(invocation&&store.read().privateBok?.reservation){
+  if(invocation){
    saved={binding,phase:'final-intent',args,...(result.recoveredRevision?{recoveredRevision:result.recoveredRevision}:{})};await save(saved);
    return finishAtomic();
   }

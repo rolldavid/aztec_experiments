@@ -421,11 +421,12 @@ test('completed accounting retains an undelivered response without authorizing a
 });
 
 
+function activatedFixture(){const h=fixture();h.r.available=0n;h.r.reserved=h.r.budget;return h;}
 function invocation(h,options={}){return h.create({accountingMode:'invocation-v1',claimReceipt:bokReceiptClaims({readJournals:async()=>[h.store.read()]}),...options});}
-test('invocation accounting reserves once and aggregates measured calls before finish',async()=>{
- const h=fixture(),m=invocation(h);
+test('invocation accounting adopts the posting reservation without a transaction and and aggregates measured calls before finish',async()=>{
+ const h=activatedFixture(),m=invocation(h);
  for(let i=0;i<3;i++){assert.equal((await m.complete(i,input)).replyAvailable,true);assert.equal(h.r.sequence,0);assert.equal(h.counts.settle,0);}
- assert.equal(h.counts.reserve,1);assert.equal(h.r.reserved,1000n);assert.equal(h.r.charged,0n);
+ assert.equal(h.counts.reserve,0);assert.equal(h.r.reserved,1000n);assert.equal(h.r.charged,0n);
  assert.equal(h.store.read().privateBok.accountingMode,'invocation-v1');assert(Object.values(h.store.read().privateBok.calls).every(c=>c.phase==='received'&&c.responseDelivered));
  const result=await m.settle();assert.equal(result.charge,'18');assert.equal(h.r.sequence,1);assert.equal(h.counts.settle,1);assert.equal(h.r.reserved,0n);
  await m.finish();assert.equal(h.r.refunded,982n);assert.equal(h.r.charged,18n);
@@ -433,34 +434,34 @@ test('invocation accounting reserves once and aggregates measured calls before f
  assert(Object.values(h.store.read().privateBok.calls).every(c=>c.response));
 });
 test('invocation accounting bounds each paid quote against remaining allowance',async()=>{
- const h=fixture(),m=invocation(h,{limits:{maxReservation:115n}});await m.complete(0,input);
- await assert.rejects(m.complete(1,input),/quote maximum/);assert.equal(h.counts.execute,1);assert.equal(h.r.reserved,115n);
- await m.finish();assert.equal(h.r.refunded,994n);assert.equal(h.counts.reserve,1);
+ const h=activatedFixture(),m=invocation(h,{limits:{maxReservation:115n}});await m.complete(0,input);
+ await assert.rejects(m.complete(1,input),/quote maximum/);assert.equal(h.counts.execute,1);assert.equal(h.r.reserved,1000n);
+ await m.finish();assert.equal(h.r.refunded,994n);assert.equal(h.counts.reserve,0);
 });
 test('invocation accounting unknown later provider fences whole allowance and reconciles exact cumulative billing',async()=>{
- const h=fixture(),m=invocation(h);await m.complete(0,input);h.controls.execute=()=>{throw Error('lost');};
+ const h=activatedFixture(),m=invocation(h);await m.complete(0,input);h.controls.execute=()=>{throw Error('lost');};
  await assert.rejects(m.complete(1,input),/outcome unknown/);assert.equal(h.r.state,3);assert.equal(h.r.reserved,1000n);
  await assert.rejects(invocation(h).complete(2,input),/sequence/);await assert.rejects(invocation(h).resume(1),/outcome unknown/);assert.equal(h.counts.execute,2);
  const b=bill({providerId:'fixture-response-2'});await invocation(h).reconcile(1,b);assert.equal(h.r.charged,12n);assert.equal(h.r.refunded,988n);assert.equal(h.counts.reconcile,1);assert.equal(h.counts.settle,0);assert.equal(h.counts.execute,2);
  await invocation(h).finish();assert.equal(h.r.state,4);
 });
 test('invocation accounting retains aggregate intent through unresolved settlement without provider or transaction replay',async()=>{
- const h=fixture(),m=invocation(h);await m.complete(0,input);h.controls.failBefore='settle';await assert.rejects(m.settle(),/unresolved/);
+ const h=activatedFixture(),m=invocation(h);await m.complete(0,input);h.controls.failBefore='settle';await assert.rejects(m.settle(),/unresolved/);
  const snapshot=structuredClone(h.store.read().privateBok.aggregate);delete h.controls.failBefore;
  await assert.rejects(invocation(h).settle(),/unresolved/);assert.equal(h.counts.settle,1);assert.equal(h.counts.execute,1);assert.deepEqual(h.store.read().privateBok.aggregate,snapshot);
 });
 test('invocation accounting recovers acknowledged settlement from its exact receipt only',async()=>{
- const h=fixture(),m=invocation(h);await m.complete(0,input);h.controls.after=method=>{if(method==='settle')h.controls.inspectUnknown=true;};
+ const h=activatedFixture(),m=invocation(h);await m.complete(0,input);h.controls.after=method=>{if(method==='settle')h.controls.inspectUnknown=true;};
  await assert.rejects(m.settle(),/unresolved/);assert.equal(h.r.sequence,1);delete h.controls.after;h.controls.inspectUnknown=false;
  await invocation(h).settle();assert.equal(h.counts.settle,1);assert.equal(h.counts.execute,1);
  h.r.receipt=f(444);await assert.rejects(invocation(h).settle(),/mismatch/);assert.equal(h.counts.settle,1);
 });
 test('invocation accounting rejects reorg reservation before another paid send',async()=>{
- const h=fixture(),m=invocation(h);await m.complete(0,input);h.r.sequence=1;await assert.rejects(m.complete(1,input),/Reservation changed/);assert.equal(h.counts.execute,1);
+ const h=activatedFixture(),m=invocation(h);await m.complete(0,input);h.r.sequence=1;await assert.rejects(m.complete(1,input),/Reservation changed/);assert.equal(h.counts.execute,1);
 });
-test('invocation accounting preserves historical per-call mode and original limits',async()=>{
+test('invocation accounting rejects mismatched historical mode without paid work',async()=>{
  const h=fixture();await h.create().complete(0,input);const before=structuredClone(h.store.read());
- const reopened=invocation(h);assert.equal(reopened.settle,undefined);await reopened.complete(1,input);assert.equal(h.counts.reserve,2);assert.equal(h.counts.settle,2);assert.equal(h.store.read().privateBok.accountingMode,undefined);assert.deepEqual(h.store.read().privateBok.limits,before.privateBok.limits);
+ assert.throws(()=>invocation(h),/accounting mode mismatch/);assert.deepEqual(h.store.read(),before);assert.equal(h.counts.execute,1);
 });
 test('invocation accounting shared receipt claims serialize across requests and retain historical ownership',async()=>{
  const states=[],guard=bokReceiptClaims({readJournals:async()=>states});let release,entered;const gate=new Promise(r=>release=r),started=new Promise(r=>entered=r);const billing=bill();
@@ -471,12 +472,12 @@ test('invocation accounting shared receipt claims serialize across requests and 
  await assert.rejects(guard({identity,callId:1,billing},async()=>assert.fail('duplicate')),/already owned/);
 });
 test('invocation accounting requires shared receipt ownership and keeps fresh coding default separate from old limits',()=>{
- const h=fixture();assert.throws(()=>h.create({accountingMode:'invocation-v1'}),/Serialized receipt/);
+ const h=activatedFixture();assert.throws(()=>h.create({accountingMode:'invocation-v1'}),/Serialized receipt/);
 });
 
 
 test('invocation uses one current reservation guard after its durable provider fence',async()=>{
- const h=fixture(),m=invocation(h),request=h.escrow.request,usable=h.escrow.assertUsable;
+ const h=activatedFixture(),m=invocation(h),request=h.escrow.request,usable=h.escrow.assertUsable;
  let reads=0,guards=0;
  h.escrow.request=async(...args)=>{reads++;return request(...args);};
  h.escrow.assertUsable=async(...args)=>{guards++;assert.equal(h.store.read().privateBok.calls[guards-1].phase,'possibly-sent');return usable(...args);};
@@ -486,16 +487,30 @@ test('invocation uses one current reservation guard after its durable provider f
 });
 test('invocation refuses changed state at the final pre-provider guard',async()=>{
  for(const stage of ['quote','durable-fence']){
-  const h=fixture(),m=invocation(h);await m.complete(0,input);
+  const h=activatedFixture(),m=invocation(h);await m.complete(0,input);
   if(stage==='quote'){const quote=h.provider.quote;h.provider.quote=async(...args)=>{const result=await quote(...args);h.r.state=3;return result;};}
   else {const write=h.store.write;h.store.write=async next=>{await write(next);if(next.privateBok?.calls[1]?.phase==='possibly-sent')h.r.state=3;};}
   await assert.rejects(m.complete(1,input),/Reservation changed/);assert.equal(h.counts.execute,1);
  }
 });
 test('invocation retained response resume still validates current reservation before tool delivery',async()=>{
- const h=fixture(),write=h.store.write;let interrupt=true;
+ const h=activatedFixture(),write=h.store.write;let interrupt=true;
  h.store.write=async next=>{if(interrupt&&next.privateBok?.calls[0]?.responseDelivered)throw Error('handoff interrupted');return write(next);};
  await assert.rejects(invocation(h).complete(0,input),/handoff interrupted/);interrupt=false;h.controls.unusable=true;
  await assert.rejects(invocation(h).resume(0),/near deadline/);assert.equal(h.counts.execute,1);assert.equal(h.store.read().privateBok.calls[0].responseDelivered,undefined);
  h.controls.unusable=false;assert.equal((await invocation(h).resume(0)).replyAvailable,true);assert.equal(h.counts.execute,1);
+});
+
+test('activation reservation rejects unreserved, partial, charged, refunded, wrong-sequence and wrong-receipt state before paid work',async()=>{
+ for(const patch of [{available:1000n,reserved:0n},{available:1n,reserved:999n},{sequence:1},{reserved:999n,charged:1n},{reserved:999n,refunded:1n},{receipt:f(99)}]){
+  const h=activatedFixture();Object.assign(h.r,patch);await assert.rejects(invocation(h).complete(0,input),/activated reservation/);
+  assert.equal(h.counts.quote,0);assert.equal(h.counts.execute,0);assert.equal(h.counts.reserve,0);
+ }
+});
+test('activated invocation with no provider calls refunds its full budget using a zero-charge receipt',async()=>{
+ const h=activatedFixture();await invocation(h).finish();assert.equal(h.r.state,4);assert.equal(h.r.refunded,1000n);assert.equal(h.r.charged,0n);assert.equal(h.counts.execute,0);assert.equal(h.counts.reserve,0);assert.equal(h.counts.settle,1);
+});
+
+test('activation accounting never requires a reserve capability',async()=>{
+ const h=activatedFixture();delete h.escrow.reserve;await invocation(h).complete(0,input);assert.equal(h.counts.execute,1);assert.equal(h.counts.reserve,0);
 });

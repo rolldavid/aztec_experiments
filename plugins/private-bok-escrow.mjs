@@ -218,12 +218,11 @@ export function createPrivateBokEscrowFactory(sdk) {
   };
   const usable=async(request,callId,maximum)=>{
    scope(request);sequence(callId);amount(maximum);
-   // A checkpointed read alone is insufficient: require the exact recorded reserve transaction.
-   const reservation=Object.entries(journal().operations).find(([,r])=>r.method==='reserve'&&r.argsDigest===digest([id,callId,String(maximum)]));
-   assert(reservation,'Reservation intent missing');const read=observation();
-   assert.equal((await inspect(reservation[0],read)).status,'succeeded','Reservation not checkpointed');
+   // The artifact-bound board callback reserves the owner's full budget in the
+   // posting transaction. Canonical state is authority, not a synthetic local tx.
+   const read=observation();
    const [r,latest]=await Promise.all([anchored(finality,read),anchored('latest',read)]);
-   for(const row of [r,latest])assert(row.request.state===2&&row.request.sequence===callId&&row.request.reserved===maximum&&maximum>0n,'Reservation not canonical');
+   for(const row of [r,latest])assert(row.request.state===2&&callId===0&&row.request.sequence===0&&row.request.reserved===maximum&&maximum===row.request.budget&&row.request.available===0n&&row.request.charged===0n&&row.request.refunded===0n&&BigInt(row.request.receipt)===0n&&maximum>0n,'Reservation not canonical');
    await held();const now=BigInt(Math.floor(Date.now()/1000)),chainTime=BigInt(latest.anchor.timestamp);
    assert((now>chainTime?now:chainTime)+180n<latest.request.deadline,'Reservation too close to expiry');
    // Recheck both snapshots at the guard boundary, including when both selectors
@@ -304,9 +303,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     const request=checkpoint.request;
     assert(request.state===2&&request.sequence===original.args[1]&&request.reserved>=charge,'Original reservation required');
     assert(BigInt(latest.anchor.timestamp)<request.deadline,'Settlement deadline reached');
-    const reserve=Object.entries(journal().operations).find(([,r])=>r.method==='reserve'&&r.argsDigest===digest([id,original.args[1],String(request.reserved)]));
-    assert(reserve,'Original reserve intent missing');
-    const reserved=await inspectOne(reserve[0]);assert(reserved.status==='succeeded'&&reserved.canonical,'Original reserve not canonical');
+    assert(request.sequence===0&&request.reserved===request.budget&&request.available===0n&&request.charged===0n&&request.refunded===0n&&BigInt(request.receipt)===0n,'Original activation reservation required');
     // Bind the exact reservation, cumulative budget and preceding receipt across
     // proof construction. A changed request cannot authorize this replacement.
     const retained=journal().operations[operationId].replacement?.reservation;

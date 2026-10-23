@@ -154,11 +154,11 @@ test('unit fake: policy evolution never admits changed identity or unrecognized 
  }
  const f=await fixture(),saved=structuredClone(f.store.read());saved.privateBokEscrow.binding.finality='finalized';await f.store.write(saved);await assert.rejects(f.create(),/identity mismatch/);
 });
-test('unit fake: reservation, canonical receipt and 180-second margin required before inference',async()=>{
- const f=await fixture();const op=f.op('reserve',[f.id,0,400n]);await f.port.reserve(f.id,0,400n,op);f.row.available=600n;f.row.reserved=400n;
- assert.equal((await f.port.assertUsable(f.id,0,400n)).canonical,true);
- f.row.deadline=BigInt(Math.floor(Date.now()/1000)+180);await assert.rejects(f.port.assertUsable(f.id,0,400n),/expiry/);
- f.row.deadline+=1000n;f.receipt.status='pending';await assert.rejects(f.port.assertUsable(f.id,0,400n),/checkpointed/);
+test('unit fake: posting reservation and 180-second margin required before inference',async()=>{
+ const f=await fixture();f.row.available=0n;f.row.reserved=1000n;
+ assert.equal((await f.port.assertUsable(f.id,0,1000n)).canonical,true);
+ f.row.deadline=BigInt(Math.floor(Date.now()/1000)+180);await assert.rejects(f.port.assertUsable(f.id,0,1000n),/expiry/);
+ f.row.deadline+=1000n;f.row.available=1n;f.row.reserved=999n;await assert.rejects(f.port.assertUsable(f.id,0,1000n),/Reservation not canonical/);
 });
 test('unit fake: conservation, target and operation digest mismatches fail closed',async()=>{
  const f=await fixture();const op=f.op('finish',[H(80)]);await assert.rejects(f.port.finish(f.id,op),/arguments mismatch/);
@@ -328,20 +328,18 @@ test('unit fake: lost native observation retains signed intent for state-driven 
 });
 
 async function replacementFixture(){
- const f=await fixture(),args=[f.id,7,'120',H(88)],operation=f.op('settle',args),reserve=f.op('reserve',[f.id,7,'400']);
- const originalHash=H(101),reserveHash=H(102),saved=structuredClone(f.store.read());
+ const f=await fixture(),args=[f.id,0,'120',H(88)],operation=f.op('settle',args);
+ const originalHash=H(101),saved=structuredClone(f.store.read());
  saved.privateBokEscrow.operations[operation.operationId]={method:'settle',args,argsDigest:operation.argsDigest,phase:'submission-unknown',proofMode:'disabled',txHash:originalHash,transactionSha256:'ab'.repeat(32),submissionError:true};
- saved.privateBokEscrow.operations[reserve.operationId]={method:'reserve',args:[f.id,7,'400'],argsDigest:reserve.argsDigest,phase:'submission-unknown',proofMode:'disabled',txHash:reserveHash,transactionSha256:'cd'.repeat(32)};
- await f.store.write(saved);Object.assign(f.row,{state:2n,sequence:7n,reserved:400n,available:600n});
+ await f.store.write(saved);Object.assign(f.row,{state:2n,sequence:0n,reserved:1000n,available:0n});
  let originalStatus='dropped',missing=false;
  const get=f.options.node.getTxReceipt;
  f.options.node.getTxReceipt=async hash=>{
   if(String(hash)===originalHash){if(missing)throw Error('unavailable');return{...f.receipt,txHash:new Field(originalHash),status:originalStatus};}
-  if(String(hash)===reserveHash)return{...f.receipt,txHash:new Field(reserveHash),status:'checkpointed'};
   return get(hash);
  };
  f.options.node.getTxEffect=async hash=>({...f.effect,data:{...f.effect.data,txHash:new Field(hash)}});
- return{...f,operation,originalHash,reserveHash,authority:{...operation,originalTxHash:originalHash},setOriginal:(status,unavailable=false)=>{originalStatus=status;missing=unavailable;}};
+ return{...f,operation,originalHash,authority:{...operation,originalTxHash:originalHash},setOriginal:(status,unavailable=false)=>{originalStatus=status;missing=unavailable;}};
 }
 test('explicit dropped settlement replacement retains both hashes, canonical fees and one-use lineage',async()=>{
  const f=await replacementFixture(),original=structuredClone(f.journal().operations[f.operation.operationId]);
@@ -351,18 +349,18 @@ test('explicit dropped settlement replacement retains both hashes, canonical fee
  assert.equal(saved.replacement.originalTxHash,f.originalHash);assert.equal(saved.replacement.txHash,H(56));
  assert.equal(saved.replacement.observation.transactionFee,'7');assert.deepEqual(f.counts(),{proofs:1,sends:1});
  const reopened=await f.create();assert.equal((await reopened.replaceDroppedOperation(f.authority)).status,'succeeded');
- assert.equal((await reopened.settle(f.id,7,120n,H(88),f.operation)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ assert.equal((await reopened.settle(f.id,0,120n,H(88),f.operation)).status,'succeeded');assert.deepEqual(f.counts(),{proofs:1,sends:1});
  f.setOriginal('checkpointed');assert.equal((await reopened.inspectOperation(f.operation.operationId)).txHash,f.originalHash);
  saved=f.journal().operations[f.operation.operationId];assert.equal(saved.includedHistory[0].transactionFee,'7');assert.equal(saved.replacement.includedHistory[0].transactionFee,'7');
 });
 test('replacement never admits missing/pending receipts, wrong authority or changed reservation',async()=>{
- for(const kind of ['pending','unavailable','hash','digest','sequence','amount','latest','reserve','proofPolicy','expired']){
+ for(const kind of ['pending','unavailable','hash','digest','sequence','amount','latest','activation','proofPolicy','expired']){
   const f=await replacementFixture(),authority={...f.authority};
   if(kind==='pending')f.setOriginal('pending');if(kind==='unavailable')f.setOriginal('dropped',true);
   if(kind==='hash')authority.originalTxHash=H(999);if(kind==='digest')authority.argsDigest='ef'.repeat(32);
   if(kind==='sequence')f.row.sequence=8n;if(kind==='amount'){f.row.reserved=100n;f.row.available=900n;}
   if(kind==='latest'){const get=f.options.node.getBlock;f.options.node.getBlock=async tag=>{if(tag==='latest')f.row.receipt=999n;return get(tag);};}
-  if(kind==='reserve'){const s=structuredClone(f.store.read());delete s.privateBokEscrow.operations[f.op('reserve',[f.id,7,'400']).operationId];await f.store.write(s);}
+  if(kind==='activation'){f.row.reserved=999n;f.row.available=1n;}
   if(kind==='proofPolicy')f.set('nodeProofs',true);if(kind==='expired')f.row.deadline=BigInt(f.block.header.globalVariables.timestamp);
   await assert.rejects(f.port.replaceDroppedOperation(authority));assert.deepEqual(f.counts(),{proofs:0,sends:0});
  }
@@ -396,11 +394,11 @@ function measureNode(node){
  return counts;
 }
 test('unit fake: one reservation observation shares identical checkpoint/latest snapshot',async()=>{
- const f=await fixture(),op=f.op('reserve',[f.id,0,400n]);await f.port.reserve(f.id,0,400n,op);f.row.available=600n;f.row.reserved=400n;
- const counts=measureNode(f.options.node),r=await f.port.assertUsable(f.id,0,400n);
- assert.equal(r.canonical,true);assert.equal(r.request.reserved,400n);assert.equal(r.anchor.hash,H(57));
+ const f=await fixture();f.row.available=0n;f.row.reserved=1000n;
+ const counts=measureNode(f.options.node),r=await f.port.assertUsable(f.id,0,1000n);
+ assert.equal(r.canonical,true);assert.equal(r.request.reserved,1000n);assert.equal(r.anchor.hash,H(57));
  assert.equal(counts.getNodeInfo,1);assert.equal(counts.getContract,1);assert.equal(counts.getPublicStorageAt,18);
- assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),29);
+ assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),24);
 });
 test('unit fake: independent pinned storage slots are read concurrently and fresh on the next guard',async()=>{
  const f=await fixture(),original=f.options.node.getPublicStorageAt;let active=0,peak=0;
@@ -409,14 +407,14 @@ test('unit fake: independent pinned storage slots are read concurrently and fres
  f.row.available=900n;f.row.charged=100n;assert.equal((await f.port.request(f.id)).request.charged,100n);
 });
 test('unit fake: distinct latest block and reorg during final guard remain authoritative',async()=>{
- const f=await fixture(),op=f.op('reserve',[f.id,0,400n]);await f.port.reserve(f.id,0,400n,op);f.row.available=600n;f.row.reserved=400n;
+ const f=await fixture();f.row.available=0n;f.row.reserved=1000n;
  const originalBlock=f.options.node.getBlock,originalRead=f.options.node.getPublicStorageAt;
  f.options.node.getBlock=async tag=>tag==='latest'||tag===11?{...f.block,number:11,hash:new Field(58)}:originalBlock(tag);
  f.options.node.getPublicStorageAt=async(anchor,...rest)=>{if(anchor.number===11&&Number(rest[1].toBigInt())===100)return new Field(3);return originalRead(anchor,...rest);};
- await assert.rejects(f.port.assertUsable(f.id,0,400n),/Reservation not canonical/);
+ await assert.rejects(f.port.assertUsable(f.id,0,1000n),/Reservation not canonical/);
  f.options.node.getPublicStorageAt=originalRead;
- let numbered=0;f.options.node.getBlock=async tag=>{if(typeof tag==='number'&&++numbered===5)return {...f.block,hash:new Field(99)};return originalBlock(tag);};
- await assert.rejects(f.port.assertUsable(f.id,0,400n),/Canonical block changed during reservation guard/);
+ let numbered=0;f.options.node.getBlock=async tag=>{if(typeof tag==='number'&&++numbered===2)return {...f.block,hash:new Field(99)};return originalBlock(tag);};
+ await assert.rejects(f.port.assertUsable(f.id,0,1000n),/Canonical block changed during reservation guard/);
 });
 
 test('unit fake: atomic final reply proves and submits one exact ordered three-call transaction',async()=>{

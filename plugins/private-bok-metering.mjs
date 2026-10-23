@@ -68,9 +68,10 @@ export function privateBokMetering({provider,escrow,store,identity,limits={},acc
  if(typeof binding.network!=='string'||!/^[A-Za-z0-9._:-]{1,96}$/.test(binding.network)||
   !field(binding.escrow)||!field(binding.requestId)||!field(binding.target))throw Error('Invalid request identity');
  if(escrow?.identity?.network!==binding.network||escrow?.identity?.escrow!==binding.escrow)throw Error('Chain port identity mismatch');
- for(const method of ['request','assertUsable','inspectOperation','reserve','settle','close_uncertain','reconcile','finish'])if(typeof escrow[method]!=='function')throw Error('Canonical chain port required');
+ for(const method of ['request','assertUsable','inspectOperation','settle','close_uncertain','reconcile','finish',...(accountingMode==='per-call'?['reserve']:[])])if(typeof escrow[method]!=='function')throw Error('Canonical chain port required');
  const savedMode=store.read().privateBok;
- const mode=savedMode?(savedMode.accountingMode??'per-call'):accountingMode;
+ const mode=accountingMode;
+ if(savedMode&&(savedMode.accountingMode??'per-call')!==mode)throw Error('Request accounting mode mismatch');
  if(!['per-call','invocation-v1'].includes(mode))throw Error('Unsupported accounting mode');
  const cap={maxCalls:limits.maxCalls??8,maxInputBytes:limits.maxInputBytes??65536,maxTokens:limits.maxTokens??(mode==='invocation-v1'?4096:1500),
   maxReservation:amount(limits.maxReservation??1000000n),maxBudget:amount(limits.maxBudget??1000000n)};
@@ -340,8 +341,18 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
  };
  const reservationMatches=r=>{
   const b=journal().reservation;if(!b)return false;
-  return r.sequence===b.sequence&&r.reserved===amount(b.maximum)&&r.budget===amount(b.before.budget)&&r.charged===amount(b.before.charged)&&r.available+r.refunded===amount(b.before.available)+amount(b.before.refunded)-r.reserved;
+  return r.sequence===b.sequence&&r.reserved===amount(b.maximum)&&r.budget===amount(b.before.budget)&&r.charged===amount(b.before.charged)&&r.available+r.reserved+r.refunded===amount(b.before.available)+amount(b.before.reserved)+amount(b.before.refunded);
  };
+ // The board activation in the owner's posting transaction already locked this
+ // full budget. Keep its actual canonical state; no operator reserve is sent.
+ const adoptReservation=async()=>{
+  const j=journal();if(j.reservation)return;
+  const r=await read();
+  if(r.state!==2||r.sequence!==0||r.available!==0n||r.reserved!==r.budget||r.charged!==0n||r.refunded!==0n||BigInt(r.receipt)!==0n)throw Error('Fresh activated reservation required');
+  j.reservation={sequence:r.sequence,maximum:String(r.reserved),before:{budget:String(r.budget),available:String(r.available),reserved:String(r.reserved),charged:String(r.charged),refunded:String(r.refunded)}};
+  await save(j);
+ };
+ const allowance=()=>{const maximum=amount(journal().reservation.maximum);return maximum<cap.maxReservation?maximum:cap.maxReservation;};
  const quoteFor=c=>quoteRecord(c.quote,amount(c.available),c.requestedTokens,cap);
  const billingFor=(id,value)=>{
   const j=journal(),c=j.calls[id];if(!c)throw Error('Missing original call');const b=validateVeniceBilling(value,quoteFor(c));
@@ -365,17 +376,17 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
   const after=await read();if(after.state!==3||after.available!==0n||!reservationMatches(after))throw Error('Uncertain call not fenced');await setCall(id,{phase:'fenced'});
  };
  const aggregate=()=>{
-  const j=journal(),calls=Object.values(j.calls);if(!calls.length||calls.some((c,i)=>c.id!==i||!['received','settled'].includes(c.phase)))throw Error('Unresolved provider call');
+  const j=journal(),calls=Object.values(j.calls);if(!j.reservation||calls.some((c,i)=>c.id!==i||!['received','settled'].includes(c.phase)))throw Error('Unresolved provider call');
   const receipts=calls.map(c=>({callId:c.id,inputDigest:c.inputDigest,receipt:measured(c).receipt,charge:c.billing.charge}));
   const charge=String(total());if(BigInt(charge)>amount(j.reservation.maximum))throw Error('Invocation allowance exceeded');
   const facts={domain:'rolling-bok-invocation-v1',identity:binding,sequence:j.reservation.sequence,maximum:j.reservation.maximum,receipts,charge};
   const receipt='0x'+(BigInt('0x'+hash(facts))%FIELD).toString(16).padStart(64,'0');if(!field(receipt))throw Error('Invalid aggregate receipt');return {facts,charge,receipt};
  };
  const settlementMatches=(r,a)=>{
-  const b=journal().reservation;return r.sequence===b.sequence+1&&r.reserved===0n&&r.receipt===a.receipt&&r.budget===amount(b.before.budget)&&r.charged===amount(b.before.charged)+BigInt(a.charge)&&[2,4].includes(r.state)&&r.available+r.refunded===amount(b.before.available)+amount(b.before.refunded)-BigInt(a.charge);
+  const b=journal().reservation;return r.sequence===b.sequence+1&&r.reserved===0n&&r.receipt===a.receipt&&r.budget===amount(b.before.budget)&&r.charged===amount(b.before.charged)+BigInt(a.charge)&&[2,4].includes(r.state)&&r.available+r.refunded===amount(b.before.available)+amount(b.before.reserved)+amount(b.before.refunded)-BigInt(a.charge);
  };
  const settle=async()=>{
-  let j=journal();if(!j.reservation)return {settled:true};
+  await adoptReservation();let j=journal();
   // An atomic final reply may be replaced by accounting-only actions only after
   // its exact receipt proves the whole batch reverted. Unknown is never failure.
   let failedFinal=false;
@@ -430,9 +441,9 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
  const finishWithReply=async replyArgs=>{
   if(typeof escrow.finalize_reply!=='function')throw Error('Atomic final reply capability required');
   if(!Array.isArray(replyArgs)||replyArgs.length!==6||replyArgs[0]!==binding.requestId)throw Error('Final reply identity changed');
-  let j=journal();const a=aggregate();
+  await adoptReservation();let j=journal();const a=aggregate();
   if(j.aggregate&&hash(j.aggregate)!==hash(a))throw Error('Aggregate billing changed');
-  const prior=Object.values(j.operations);if(prior.some(o=>!['reserve','finalize_reply'].includes(o.method)))throw Error('Atomic final reply requires original unsettled invocation');
+  const prior=Object.values(j.operations);if(prior.some(o=>o.method!=='finalize_reply'))throw Error('Atomic final reply requires original unsettled invocation');
   if(!j.aggregate){j.aggregate=a;await save(j);}
   const args=[binding.requestId,j.reservation.sequence,BigInt(a.charge),a.receipt,...replyArgs.slice(1)];
   const argsDigest=hash(args.map(x=>typeof x==='bigint'?String(x):x));
@@ -461,18 +472,12 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
    if(!c){
     const calls=Object.values(j.calls);if(j.finished||j.aggregate||calls.length!==id||calls.some(x=>!['received'].includes(x.phase)||!x.responseDelivered))throw Error('Request call sequence');
     if(calls.reduce((n,c)=>n+(c.response?Buffer.byteLength(JSON.stringify(c.response)):0),0)+1048576>4194304)throw Error('Retained response capacity reached; finish or reconcile the existing request');
-    let available;if(!j.reservation){
-     const r=await read();if(r.state!==2||r.sequence!==0||r.reserved!==0n||r.charged!==0n)throw Error('Fresh invocation required');
-     const maximum=r.available<cap.maxReservation?r.available:cap.maxReservation;
-     j.reservation={sequence:r.sequence,maximum:String(maximum),before:{budget:String(r.budget),available:String(r.available),charged:String(r.charged),refunded:String(r.refunded)}};available=maximum;
-    }else{available=amount(j.reservation.maximum)-total();}
+    await adoptReservation();j=journal();const available=allowance()-total();
     if(available<=0n)throw Object.assign(Error('Invocation budget exhausted'),{code:'INSUFFICIENT_BALANCE'});
     const q=quoteRecord(await provider.quote(frozen,available),available,frozen.maxTokens,cap);
     c={id,phase:'quoted',inputDigest,requestedTokens:frozen.maxTokens,quote:quoteJSON(q),available:String(available)};j.calls[id]=c;await save(j);
    }
-   const reservation=journal().reservation;
-   if(id===0&&c.phase==='quoted')await operate('reserve',[binding.requestId,reservation.sequence,amount(reservation.maximum)]);
-   if(total()+amount(c.quote.maximum)>amount(reservation.maximum))throw Error('Invocation allowance exceeded');
+   if(total()+amount(c.quote.maximum)>allowance())throw Error('Invocation allowance exceeded');
    // Quote creation and journal persistence cannot authorize spending. Check
    // mutable chain state once, after the durable fence and just before dispatch.
    await setCall(id,{phase:'possibly-sent'});await reserved();
