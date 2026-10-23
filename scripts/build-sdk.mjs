@@ -1,4 +1,5 @@
-import {reusePxeSimulation,preservePxeSimulationLogs} from './pxe-simulation-reuse.mjs';
+import {preservePxeSimulationLogs} from './pxe-simulation-logs.mjs';
+import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs';
 import {inspectPreferencePage,PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN} from './patch-pxe-preference-page.mjs';
 import {inspectIndexedDBAtomicity, INDEXEDDB_ATOMICITY_PINS} from './patch-indexeddb-atomicity.mjs';
 import {inspectPxeReorgAnchor,PXE_REORG_ANCHOR_PINS} from './patch-pxe-reorg-anchor.mjs';
@@ -44,8 +45,9 @@ const relocationPlugin = {
   setup(builder) {
     builder.onLoad({ filter: /\.js$/ }, async ({ path: filename }) => {
       const relative = path.relative(root, filename).split(path.sep).join('/');
-      if(relative==='node_modules/@aztec-labs/pxe/dest/pxe.js')return {contents:reusePxeSimulation(await fs.readFile(filename,'utf8')),loader:'js'};
+      if(relative==='node_modules/@aztec-labs/pxe/dest/pxe.js')return {contents:validatedPxeProve(await fs.readFile(filename,'utf8')),loader:'js'};
       if(relative==='node_modules/@aztec-labs/pxe/dest/contract_function_simulator/contract_function_simulator.js')return {contents:preservePxeSimulationLogs(await fs.readFile(filename,'utf8')),loader:'js'};
+      if(relative==='node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js')return {contents:validatedKernelProve(await fs.readFile(filename,'utf8')),loader:'js'};
       const change = relocations.get(relative);
       if (!change) return;
       let contents = await fs.readFile(filename, 'utf8');
@@ -129,7 +131,7 @@ const assets = [
 ];
 for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
 const inputs = [...new Set([...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
-  ...assets.map(([src]) => src), 'scripts/pxe-simulation-reuse.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
+  ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-validated-prove.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
   ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),

@@ -10,7 +10,7 @@ import {PrivateCircuitPublicInputs,PrivateLogData} from '@aztec-labs/stdlib/kern
 import {PrivateLog} from '@aztec-labs/stdlib/logs';
 import {computeSiloedPrivateLogFirstField} from '@aztec-labs/stdlib/hash';
 import {generateSimulatedProvingResult as upstream} from '@aztec-labs/pxe/simulator';
-import {preservePxeSimulationLogs} from './pxe-simulation-reuse.mjs';
+import {preservePxeSimulationLogs} from './pxe-simulation-logs.mjs';
 const moduleUrl=new URL('../node_modules/@aztec-labs/pxe/dest/contract_function_simulator/contract_function_simulator.js',import.meta.url);
 const source=await fs.readFile(moduleUrl,'utf8');
 const scratchRoot=new URL('../.build/',import.meta.url);await fs.mkdir(scratchRoot,{recursive:true});
