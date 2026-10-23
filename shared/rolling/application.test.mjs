@@ -244,8 +244,9 @@ test('durable fence failure prevents send; successfully saved pre-send fence can
   const f=fixture(),p=await f.app.prepare({type:'like',post:'5'});f.state.failCAS=true;
   await assert.rejects(f.app.submitPrepared(p.intentId),{code:'BB_JOURNAL_INVALID'});assert.equal(f.state.sends,0);
   f.state.failCAS=false;
-  const original=f.options.contextGuard;let guards=0;
-  f.options.contextGuard=async()=>{await original();if(++guards===4)throw Error('locked after fence');};
+  const original=f.options.contextGuard,write=f.options.privateStore.compareAndSwap;let fenced=false;
+  f.options.privateStore.compareAndSwap=async(...args)=>{await write(...args);fenced=true;};
+  f.options.contextGuard=async()=>{await original();if(fenced)throw Error('locked after fence');};
   await assert.rejects(f.restart().submitPrepared(p.intentId));assert.equal(f.state.sends,0);
   assert.equal((await f.app.reconcile(p.intentId)).status,'unknown');
 });
@@ -400,7 +401,7 @@ for(const reorg of [false,true])test(`acknowledged checkpointed revert rechecks 
 test('installed BaseWallet field-valued chain identity passes strict application binding',async()=>{
   const f=fixture();let chainId=31337,rollupVersion=1;
   let installed=new BaseWallet({}, {getNodeInfo:async()=>({l1ChainId:chainId,rollupVersion})});
-  f.options.accountSession.wallet.getChainInfo=()=>installed.getChainInfo();
+  f.options.accountSession.wallet.getChainInfo=()=>installed.getChainInfo();f.app=f.restart();
   assert.ok((await installed.getChainInfo()).chainId instanceof Fr);
   assert.equal((await f.app.readAccountStatus()).status,'fee-ready');
   for(const change of [()=>{chainId=31338;},()=>{chainId=31337;rollupVersion=2;}]){

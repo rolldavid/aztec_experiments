@@ -22,8 +22,9 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
   const publish=after=>{
     if(after?.state!=='ready'||typeof after.revision!=='string'||!after.checkpoint)return;
     const key=after.contentRevision??after.revision;
+    published={schemaVersion:1,revision:after.revision,checkpoint:after.checkpoint};
     if(key===lastContentRevision)return;
-    lastContentRevision=key;published={schemaVersion:1,revision:after.revision,checkpoint:after.checkpoint};
+    lastContentRevision=key;
     for(const res of subscribers)if(!res.write(eventText(published)))res.destroy();
   };
   // Keep intermediary connections alive; this never decides operation success.
