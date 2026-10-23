@@ -393,5 +393,16 @@ test('browser scenario patch keeps unchanged scenarios and validates whole plan 
  assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,before);
  const expanded=await s.call('edit_browser_plan',{remove:[],replace:[],append:[scenario('new feature coverage',80)]});
  assert.equal(expanded.browserPlan.steps,87);assert.deepEqual(JSON.parse((await s.call('read_file',{path:'browser-tests.json'})).text).scenarios.slice(0,3),JSON.parse(before).scenarios);
+ const beforeAppend=JSON.parse((await s.call('read_file',{path:'browser-tests.json'})).text);
+ const schema=s.definitions.find(tool=>tool.function.name==='edit_browser_plan').function.parameters;
+ assert.deepEqual(schema.required,[]);assert.equal(schema.additionalProperties,false);
+ const appended=await s.call('edit_browser_plan',{append:[scenario('append-only regression'),scenario('second appended scenario')]});
+ assert.equal(appended.browserPlan.steps,91);assert.equal(appended.browserPlan.scenarios.length,6);
+ const afterAppend=(await s.call('read_file',{path:'browser-tests.json'})).text;
+ assert.deepEqual(JSON.parse(afterAppend).scenarios.slice(0,4),beforeAppend.scenarios);
+ for(const [args,reason]of [[{append:[],typo:[]},/Use only append, remove and replace/],[{append:null},/append must be an array/],[{replace:{}},/replace must be an array/],[{remove:'0'},/remove must be an array/],[{append:Array(9).fill(scenario('extra'))},/at most 8 entries/],[{},/at least one browser scenario edit/],[{append:[],remove:[],replace:[]},/at least one browser scenario edit/]])await assert.rejects(s.call('edit_browser_plan',args),reason);
+ assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,afterAppend);
+ const replaced=await s.call('edit_browser_plan',{replace:[{index:5,scenario:scenario('replacement-only regression')}]});assert.equal(replaced.browserPlan.steps,91);
+ const removed=await s.call('edit_browser_plan',{remove:[5]});assert.equal(removed.browserPlan.steps,89);
  assert.equal((await s.call('finish_workspace',{})).passed,true);await s.accept();assert.equal(validations,1,'finish and acceptance share exact source validation');
 });
