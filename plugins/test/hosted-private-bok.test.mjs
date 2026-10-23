@@ -294,7 +294,26 @@ for(const confirmationTier of ['checkpointed','proposed'])for(const development 
   for(const [name,fn]of Object.entries(originalNode))node[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return fn(...args);};
   assert.equal((await port.readRequest(f(1))).usable,true);
   assert.equal(syncs,0,'unchanged canonical checkpoint skips full index synchronization');
-  assert.deepEqual(counts,{getBlock:3,getNodeInfo:1},'same hash and projection reuse anchored storage');
+  assert.deepEqual(counts,{getNodeInfo:1,getBlock:2},'same hash and projection reuse synchronized head and anchored storage');
+  // Ready-index head authentication and network identity start in one wave;
+  // the remaining numeric block read is the final, fresh canonical fence.
+  Object.assign(node,originalNode);let releaseScope,releaseHead;const starts=[];
+  const scopeGate=new Promise(resolve=>{releaseScope=resolve;}),headGate=new Promise(resolve=>{releaseHead=resolve;});
+  node.getNodeInfo=async()=>{starts.push('scope');await scopeGate;return originalNode.getNodeInfo();};
+  node.getBlock=async tag=>{starts.push(tag);if(tag===confirmationTier)await headGate;return originalNode.getBlock(tag);};
+  const parallelRead=port.readRequest(f(1));await new Promise(setImmediate);
+  try{assert.deepEqual(starts,['scope',confirmationTier]);}finally{releaseScope();releaseHead();}
+  assert.equal((await parallelRead).usable,true);assert.deepEqual(starts,['scope',confirmationTier,5]);
+  // A failed scope must drain the independent head read before its caller exits.
+  let releaseFailedHead,finishedScope=false;const failedHead=new Promise(resolve=>{releaseFailedHead=resolve;});
+  node.getNodeInfo=async()=>{throw Error('scope unavailable');};node.getBlock=async tag=>{await failedHead;return originalNode.getBlock(tag);};
+  const failedScope=port.readRequest(f(1)).catch(error=>{finishedScope=true;return error;});await new Promise(setImmediate);
+  assert.equal(finishedScope,false);releaseFailedHead();assert.match((await failedScope).message,/scope unavailable/);
+  // No reused ready observation may cross a projection mutation.
+  Object.assign(node,originalNode);const query=index.query;
+  index.query=(...args)=>{revision='changed-before-request';return query(...args);};
+  await assert.rejects(port.readRequest(f(1)),/projection changed after synchronization/);index.query=query;revision='cache1';
+  for(const [name,fn]of Object.entries(originalNode))node[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return fn(...args);};
   revision='cache2';await port.readRequest(f(1));assert.equal(counts.getContract,1);assert.equal(counts.getPublicStorageAt,4);
   post.text='changed indexed text';await port.readRequest(f(1));assert.equal(counts.getContract,2,'changed source invalidates even a defective unchanged revision');post.text='@bok hello';
   state.anchor=f(98);await assert.rejects(port.readRequest(f(1)),/anchor/);state.anchor=f(99);

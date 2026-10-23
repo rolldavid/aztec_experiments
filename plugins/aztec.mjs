@@ -80,21 +80,22 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
   const info=await node.getNodeInfo();assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);
   assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);assert.equal(info.realProofs,!development);
  };
- const requestFrom=async post=>{
+ const together=async reads=>{
+  const results=await Promise.allSettled(reads),failed=results.find(r=>r.status==='rejected');
+  if(failed)throw failed.reason;return results.map(r=>r.value);
+ };
+ const requestFrom=async(post,observation=null)=>{
   if(!post?.invocation)return null;const invocation=post.invocation;
   if(toField(invocation.adapter)!==scope.receiver||toField(invocation.pluginId)!==pluginId)return null;
   // Drain every independent read before releasing index ownership, including
   // failures. All mutable values below remain bound to this one block hash.
-  const together=async reads=>{
-   const results=await Promise.allSettled(reads),failed=results.find(r=>r.status==='rejected');
-   if(failed)throw failed.reason;return results.map(r=>r.value);
-  };
-  const [,head]=await together([checkScope(),node.getBlock(confirmationTier)]);
+  const head=observation?.head??(await together([...(observation?[]:[checkScope()]),Promise.resolve().then(()=>node.getBlock(confirmationTier))])).at(-1);
   assert(head&&Number.isSafeInteger(head.number));const anchor={number:head.number,hash:String(head.hash)};
   // Only immutable, hash-anchored storage is reused. Predecessor admission and
   // the canonical anchor are still observed for every guard. One entry bounds
   // memory and a changed index revision or post invalidates it immediately.
   const projection=index.status();
+  if(observation?.head)assert(projection.state==='ready'&&projection.complete===true&&projection.revision===observation.revision,'Board projection changed after synchronization');
   const cacheKey=projection.state==='ready'&&projection.complete===true&&typeof projection.revision==='string'
    ?JSON.stringify([anchor,projection.revision,post]):null;
   let values=cacheKey&&cachedState?.key===cacheKey?cachedState.values:null;
@@ -133,11 +134,11 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
   if(current.state==='ready'&&current.complete===true&&current.checkpoint){
    const head=await node.getBlock(confirmationTier),after=index.status();
    const number=Number(current.checkpoint.number);
-   if(Number.isSafeInteger(number)&&number>=0&&head&&head.number===number&&String(head.hash)===current.checkpoint.hash&&after.state==='ready'&&after.complete===true&&after.revision===current.revision)return true;
+   if(Number.isSafeInteger(number)&&number>=0&&head&&head.number===number&&String(head.hash)===current.checkpoint.hash&&after.state==='ready'&&after.complete===true&&after.revision===current.revision)return {head,revision:current.revision};
   }
   for(let steps=0;steps<32;steps++){
   assert(!admission.closed,'Canonical predecessor admission closed');
-  await index.sync();if(index.status().state==='ready')return true;
+  await index.sync();if(index.status().state==='ready')return {head:null};
  }return false;};
  return {
   async close(){admission.closed=true;await admission.pending?.catch(()=>{});},
@@ -159,6 +160,14 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
    }
    return {requests,nextCursor:page.nextAfter===null?null:{after:page.nextAfter,anchor:page.checkpoint}};
   },
-  async readRequest(postId){assert(await syncReady(),'Canonical public index not ready');return requestFrom(index.query('post',{id:BigInt(postId).toString()}).post);},
+  async readRequest(postId){
+   assert(!admission.closed,'Canonical predecessor admission closed');
+   // Scope and ready-index authentication are independent. Retain the selected
+   // head only within this read; requestFrom still checks the canonical anchor
+   // after predecessor admission and rejects a changed projection.
+   const [,observation]=await together([checkScope(),syncReady()]);
+   assert(observation,'Canonical public index not ready');
+   return requestFrom(index.query('post',{id:BigInt(postId).toString()}).post,observation);
+  },
  };
 }

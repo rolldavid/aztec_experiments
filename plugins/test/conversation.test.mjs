@@ -58,3 +58,19 @@ test('explicit proposed conversation starts before checkpoint and fences a remov
  const history=await rollingConversation({...options,confirmationTier:'proposed'}).load({postId:f(3)});await history.assertCurrent();
  assert.equal(history.messages.at(-1).text,'latest');h.state.reorg=true;await assert.rejects(history.assertCurrent());
 });
+
+for(const failHead of [false,true])test('conversation head and historic anchor run together and drain on '+(failHead?'head failure':'success'),async()=>{
+ const h=fixture(),history=await h.load(),original={...h.node};let releaseHead,releaseAnchor;const started=[];
+ const headGate=new Promise(resolve=>{releaseHead=resolve;}),anchorGate=new Promise(resolve=>{releaseAnchor=resolve;});
+ h.node.getBlock=async tag=>{started.push('head');await headGate;if(failHead)throw Error('head unavailable');return original.getBlock(tag);};
+ h.node.getBlockData=async n=>{started.push('anchor');await anchorGate;return original.getBlockData(n);};
+ let finished=false;const checking=history.assertCurrent().then(()=>{finished=true;return null;},error=>{finished=true;return error;});
+ await new Promise(setImmediate);assert.deepEqual(started,['head','anchor']);releaseHead();await new Promise(setImmediate);assert.equal(finished,false);
+ releaseAnchor();const error=await checking;if(failHead)assert.match(error.message,/head unavailable/);else assert.equal(error,null);
+});
+test('conversation concurrent anchors still reject a changed projection and historic reorg',async()=>{
+ for(const change of [h=>h.state.revision='changed',h=>h.state.reorg=true]){
+  const h=fixture(),history=await h.load(),read=h.node.getBlockData;
+  h.node.getBlockData=async n=>{change(h);return read(n);};await assert.rejects(history.assertCurrent());
+ }
+});

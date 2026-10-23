@@ -58,7 +58,6 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
    // canonical. Newer posts do not silently enter the already-paid summary.
    const current=status();assert(current.state==='ready'&&current.complete===true&&JSON.stringify(current.scope)===expected);
    assert(Number.isSafeInteger(current.checkpoint.number)&&current.checkpoint.number>=checkpoint.number);
-   const head=await node.getBlock(confirmationTier);assert(head&&current.checkpoint.number<=head.number);
    for(const saved of captured){
     const result=query('post',{id:BigInt(saved.id).toString()}),post=result.post;
     assert(result.revision===current.revision&&post);
@@ -69,8 +68,13 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
    else anchors.push(current.checkpoint);
    // Identical anchors need one read. Independent historic anchors are checked
    // together and fully drained before releasing the shared index lane.
-   const blocks=await together(anchors.map(anchor=>node.getBlockData(anchor.number)).concat(
-    head.number===confirmed.number||anchors.some(anchor=>anchor.number===confirmed.number)?[]:[node.getBlock(confirmed.number)]));
+   // The selected head and known historic anchors are independent reads.
+   // Start them together, retaining the conditional original-head read only
+   // when neither the current head nor an existing anchor authenticates it.
+   const headRead=Promise.resolve().then(()=>node.getBlock(confirmationTier));
+   const originalRead=headRead.then(head=>head?.number===confirmed.number||anchors.some(anchor=>anchor.number===confirmed.number)?null:node.getBlock(confirmed.number));
+   const [head,...blocks]=await together([headRead,...anchors.map(anchor=>Promise.resolve().then(()=>node.getBlockData(anchor.number))),originalRead]);
+   assert(head&&current.checkpoint.number<=head.number);
    for(let i=0;i<anchors.length;i++){const anchor=anchors[i],block=blocks[i];assert.equal(Number(block?.header?.globalVariables?.blockNumber),anchor.number);assert.equal(String(block?.blockHash),anchor.hash);}
    const confirmedIndex=anchors.findIndex(anchor=>anchor.number===confirmed.number);
    const originalHash=head.number===confirmed.number?String(head.hash):confirmedIndex>=0?String(blocks[confirmedIndex]?.blockHash):String(blocks.at(-1)?.hash);
