@@ -37,3 +37,12 @@ The proxy in this local check is native Node HTTP, not Caddy or systemd. On the
 host, separately hold `/api/events` open through Caddy during the coordinated
 restart and verify EOF, normal service exit (no SIGKILL/watchdog), listener
 readiness, and a new revision stream after restart. Root owns this live check.
+
+The Bok worker also drains active requests and their final accounting before
+exit. Install `bok-drain.conf` as
+`/etc/systemd/system/rolling-bok-testnet.service.d/request-drain.conf`, reload
+systemd, and verify its effective `TimeoutStopUSec=infinity` before stopping it.
+Its bound artifact proxy restarts after the worker. A deployment must compare
+both the inventory and hashes of request journals after draining; a request
+admitted between an idle check and shutdown must not be rolled back into an
+older configuration.
