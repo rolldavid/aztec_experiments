@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createReaderUpdates} from './reader-updates.mjs';
 import {beginRollingMeasure,rollingStageObserver} from './performance.mjs';
-const checkpoint={number:'12',hash:'0x'+'a'.repeat(64)};
+const checkpoint={number:12,hash:'0x'+'a'.repeat(64)};
 function fixture(refresh){let stream,allowed=true;
  class Events{constructor(url){assert.equal(url,'/api/events');stream=this;}addEventListener(name,fn){assert.equal(name,'revision');this.receive=fn;}close(){this.closed=true;}emit(revision){this.receive({data:JSON.stringify({schemaVersion:1,revision,checkpoint})});}}
  const updates=createReaderUpdates({refresh,EventSource:Events,canRefresh:()=>allowed});updates.start();return {updates,get stream(){return stream;},set allowed(value){allowed=value;}};
@@ -19,10 +19,15 @@ test('hidden or navigating page defers notifications without reads; malformed ev
  f.stream.receive({data:'{invalid'});f.allowed=true;await f.updates.flush();assert.equal(calls,1);f.updates.stop();
 });
 test('failure is not a polling/retry loop, new revision may trigger a new refresh',async()=>{
- let calls=0;const f=fixture(async()=>{calls++;throw Error('unavailable');});f.stream.emit('2');await f.updates.flush();await f.updates.flush();assert.equal(calls,1);f.stream.emit('3');await f.updates.flush();assert.equal(calls,2);f.updates.stop();
+ let calls=0;const f=fixture(async()=>{calls++;throw Error('unavailable');});f.stream.emit('2');await f.updates.flush();await Promise.resolve();assert.equal(calls,1);await f.updates.flush();assert.equal(calls,2);f.stream.emit('3');await f.updates.flush();assert.equal(calls,3);f.updates.stop();
 });
 test('measurements use monotonic start/end, finish only once, and never throw',()=>{
  let now=10;const measures=[],timing={now:()=>now,clearMeasures(){},measure:(name,value)=>measures.push([name,value])};const finish=beginRollingMeasure('reader.update',timing);now=22;finish();finish();assert.deepEqual(measures,[['rolling.reader.update',{start:10,end:22}]]);
  assert.doesNotThrow(beginRollingMeasure('broken',{now:()=>1,clearMeasures(){throw Error('disabled');}}));
  const progress=rollingStageObserver();progress.progress('proving');progress.progress('private-secret');progress.complete();
+});
+
+
+test('reported render failure retains notification for visibility resume without automatic retry',async()=>{
+ let calls=0;const f=fixture(async()=>{calls++;if(calls===1)return false;f.updates.rendered('2');return true;});f.stream.emit('2');await f.updates.flush();await Promise.resolve();assert.equal(calls,1);await f.updates.flush();assert.equal(calls,2);await f.updates.flush();assert.equal(calls,2);f.updates.stop();
 });

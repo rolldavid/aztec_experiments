@@ -4,14 +4,15 @@ export function createReaderUpdates({refresh,canRefresh=()=>true,EventSource=glo
  let source=null,rendered=null,pending=null,running=null,closed=true;
  function revision(event){
   try{const value=JSON.parse(event.data);
-   if(value?.schemaVersion!==1||typeof value.revision!=='string'||!value.revision.length||value.revision.length>200||typeof value.checkpoint?.number!=='string'||!/^\d+$/.test(value.checkpoint.number)||typeof value.checkpoint.hash!=='string'||!/^0x[0-9a-f]{64}$/.test(value.checkpoint.hash))return;
+   if(value?.schemaVersion!==1||typeof value.revision!=='string'||!value.revision.length||value.revision.length>200||!(Number.isSafeInteger(value.checkpoint?.number)&&value.checkpoint.number>=0||typeof value.checkpoint?.number==='string'&&/^(0|[1-9][0-9]*)$/.test(value.checkpoint.number)&&Number.isSafeInteger(Number(value.checkpoint.number)))||typeof value.checkpoint.hash!=='string'||!/^0x[0-9a-f]{64}$/.test(value.checkpoint.hash))return;
    pending=value.revision;void flush();
   }catch{/* Malformed public notifications never change the displayed feed. */}
  }
  function flush(){
   if(closed||running||!pending||pending===rendered||!canRefresh())return running??Promise.resolve();
   const selected=pending;pending=null;
-  running=Promise.resolve().then(refresh).catch(()=>{}).finally(()=>{running=null;if(pending&&pending!==selected)void flush();});
+  const retain=()=>{if(!closed&&!pending&&rendered!==selected)pending=selected;};
+  running=Promise.resolve().then(refresh).then(result=>{if(result===false)retain();},retain).finally(()=>{running=null;if(pending&&pending!==selected)void flush();});
   return running;
  }
  return Object.freeze({

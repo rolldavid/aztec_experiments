@@ -575,7 +575,7 @@ test('G18 real reader retains the name selector across navigation and opens crea
 
 test('public revision notification renders a Bok response without navigation or polling',async t=>{
  const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
- const checkpoint={number:'12',hash:'0x'+'a'.repeat(64)},scope={boardAddress:'0x'+'1'.repeat(64)};
+ const checkpoint={number:12,hash:'0x'+'a'.repeat(64)},scope={boardAddress:'0x'+'1'.repeat(64)};
  const request={id:'10',record:{root:'10',parent:'0',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'@bok please reply',timestamp:'1791734400',likes:'0',bot:null};
  const response={...request,id:'11',record:{...request.record,parent:'10'},text:'Here is your answer.',bot:{}};
  let revision='1',reads=0,stream,release;const connected=Promise.withResolvers();
