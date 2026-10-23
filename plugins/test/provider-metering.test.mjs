@@ -154,3 +154,20 @@ test('scope cannot close or dispatch twice while a paid response is outstanding'
  f.client.json=async(...args)=>{await blocked;return original(...args);};const pending=p.execute(input,q);
  await assert.rejects(p.execute(input,q),/unavailable/);assert.throws(()=>p.close(),/still executing/);release();await pending;p.close();assert.equal(f.counts().completions,1);
 });
+
+
+test('balance admission deducts holds captured before concurrent consumption',async()=>{
+ const f=scopedFixture(1),a=f.provider.invocation();const q=await a.quote(input,750000n);
+ let release,entered;const blocked=new Promise(r=>release=r),started=new Promise(r=>entered=r);
+ f.client.balance=async()=>{entered();await blocked;return {canConsume:true,balanceUsd:1};};
+ const b=f.provider.invocation(),admission=b.quote(input,250010n);await started;
+ const charged=await a.execute(input,q);assert.equal(charged.charge,47n);release();
+ await assert.rejects(admission,/funding/);a.close();b.close();
+});
+test('balance admission cannot reuse a hold released during its older balance read',async()=>{
+ const f=scopedFixture(1),a=f.provider.invocation();await a.quote(input,750000n);
+ let release,entered;const blocked=new Promise(r=>release=r),started=new Promise(r=>entered=r);
+ f.client.balance=async()=>{entered();await blocked;return {canConsume:true,balanceUsd:1};};
+ const b=f.provider.invocation(),admission=b.quote(input,750000n);await started;a.close();release();
+ await assert.rejects(admission,/funding/);b.close();
+});

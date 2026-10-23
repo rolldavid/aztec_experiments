@@ -56,7 +56,10 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
      if(closed)throw Error('Provider invocation closed');
      if(!admission){
       admission=readiness.then(async()=>{
-       const balance=await client.balance(),held=[...holds.values()].reduce((a,b)=>a+b,0n);
+       // Existing requests may consume or release their allocation while
+       // the balance response is in flight. Deduct the earlier full holds,
+       // never smaller later holds against a possibly earlier balance.
+       const held=[...holds.values()].reduce((a,b)=>a+b,0n),balance=await client.balance();
        if(!balance.canConsume||!Number.isFinite(balance.balanceUsd)||balance.balanceUsd<0||BigInt(Math.floor(balance.balanceUsd*1e6))-held<budget)throw Error('Operator Venice wallet needs funding');
        if(closed)throw Error('Provider invocation closed');
        remaining=budget;holds.set(key,remaining);
