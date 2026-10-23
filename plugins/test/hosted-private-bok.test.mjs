@@ -798,3 +798,28 @@ test('hosted invocation result-ready is discoverable after restart without model
  const scanner=hostedRecoveryScanner({directory,scope,pluginId:request.pluginId,lease,board:{readRequest:async()=>({...x.current,threadId:f(9)})}});
  try{assert.equal((await scanner())[0].requestId,request.requestId);}finally{await scanner.close();}
 });
+
+test('generated validation failure settles actual invocation usage and refunds unused credit',async()=>{
+ const x=invocationFixture();let agents=0;
+ x.args.runAgent=async({model})=>{agents++;for(let i=0;i<2;i++)await model.complete({messages:[],maxTokens:10});throw Object.assign(Error('Untrusted generated source diagnostic'),{code:'STATIC_FAILED'});};
+ await x.run();assert.deepEqual(x.events,['reserve','paid','paid','settle','publish_reply','finish']);
+ assert.equal(x.row.charged,12n);assert.equal(x.row.refunded,988n);assert.equal(x.row.reserved,0n);
+ assert.equal(x.store.read().hostedPrivateBok.phase,'finished');
+ await x.run();assert.equal(agents,1);assert.equal(x.events.filter(e=>e==='paid').length,2);
+});
+
+test('generated failure result resumes pending settlement without another model call',async()=>{
+ const x=invocationFixture(),inspect=x.args.escrow.inspectOperation;let pending=true,agents=0;
+ x.args.escrow.inspectOperation=async id=>pending&&x.ops.get(id)?.method==='settle'?{status:'pending'}:inspect(id);
+ x.args.runAgent=async({model})=>{agents++;await model.complete({messages:[],maxTokens:10});throw Object.assign(Error('failed tests'),{code:'STATIC_FAILED'});};
+ await assert.rejects(x.run(),/unresolved/);const saved=x.store.read().hostedPrivateBok;
+ assert.equal(saved.phase,'result-ready');assert.match(saved.result.replyText,/checks failed/);assert.equal(saved.result.revision,undefined);assert(!saved.result.replyText.includes('failed tests'));
+ pending=false;await x.run();assert.equal(agents,1);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
+ assert.deepEqual(x.events,['reserve','paid','settle','publish_reply','finish']);
+});
+
+for(const code of ['STATIC_UNAVAILABLE','STATIC_CLEANUP_REQUIRED','STATIC_RECORD_FAILED','UNKNOWN_PROVIDER'])test('unresolved '+code+' is not converted to a generated validation failure',async()=>{
+ const x=invocationFixture();x.args.runAgent=async({model})=>{await model.complete({messages:[],maxTokens:10});throw Object.assign(Error('unresolved boundary'),{code});};
+ await assert.rejects(x.run(),/unresolved boundary/);assert.equal(x.store.read().hostedPrivateBok.phase,'running');
+ assert.deepEqual(x.events,['reserve','paid']);assert.equal(x.row.charged,0n);assert.equal(x.row.refunded,0n);
+});

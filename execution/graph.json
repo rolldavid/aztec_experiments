@@ -9855,7 +9855,7 @@
       "Persistent services within existing monthly budget"
     ],
     "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
-    "verification": "Real Bok job committed source and published app/reply; contract confirms15988microUSDC charge and984012refund. Published browser app fails with localStorage SecurityError under opaque-origin sandbox. Functional acceptance remains incomplete.",
+    "verification": "Second real request failed generated VM tests (missing window and DOM methods), exhausted8calls, and left250000microUSDC reserved. No revised app published. This reproduced missing normal failure-result settlement, not a provider uncertainty.",
     "budget": "USD1500/month ongoing hosting; no additional hosts created",
     "paths": [
       "execution/evidence/G21/stable6/",
@@ -9863,6 +9863,7 @@
       "START_HERE.md"
     ],
     "currentHandover": "START_HERE.md",
-    "nextAction": "Correct Bok browser-host guidance after reproduced localStorage crash; publish Bok-only source; request a real same-thread revision and verify published controls, reload, reply and accounting."
+    "nextAction": "Fix typed generated-validation failure settlement and increase fresh model-call allowance to16 within unchanged monetary caps; reconcile exact failed request through existing operator path; ask Bok to repair its app with concrete browser/test diagnostics and verify final publication.",
+    "bokSource": "7bc717a2044037178e3f26326cff160b444d8b8b"
   }
 }

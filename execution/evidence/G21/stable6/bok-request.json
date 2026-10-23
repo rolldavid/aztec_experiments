@@ -58,6 +58,63 @@
   "repair": {
     "scope": "Correct public authoring instructions; retain existing opaque-origin CSP. Ask Bok to revise this same app through a real reply.",
     "focusedCheck": "29 static-publication tests passed, including real browser storage isolation and fragment persistence across reload.",
-    "fragmentLiveProbe": "Actual published artifact preserved location.hash across reload while localStorage remained blocked."
+    "fragmentLiveProbe": "Actual published artifact preserved location.hash across reload while localStorage remained blocked.",
+    "sourceCommit": "7bc717a2044037178e3f26326cff160b444d8b8b",
+    "review": "Independent network_upgrade_check: no blocking findings; source and test scope accepted."
+  },
+  "followup": {
+    "requestId": "0x2fb7d9ff75bcf49346833ebebb9849eea3b6c8516d8e934321101336a8b40961",
+    "target": "0x1c080b673e0a81db4b32b0d0277a061f6508fe6b34ebde1809904c399c287479",
+    "budgetMicroUsdc": "250000",
+    "submittedAt": "2026-10-23T09:37:32.928Z",
+    "sameBrowserAccount": true,
+    "sameThread": true,
+    "status": "failed-validation-unsettled",
+    "authorization": {
+      "txHash": "0x0899b3432600431ab664e704eb0e3399cb97ea07ad40987f8f65567ad24064f8",
+      "blockNumber": 1053,
+      "blockHash": "0x12e2c865ec99470a6de8be9216dc29ff65615fac94e566fff787c052e42bdb7a",
+      "executionResult": "success",
+      "canonical": true
+    },
+    "post": {
+      "txHash": "0x168fa0a92a1e797dcc8407b07dae607707ac02999e52a49c2aaeaf2ccffb678b",
+      "blockNumber": 1055,
+      "blockHash": "0x2b85eb4903916722f7528a2bd2ea0c1ba0693c86086c431c03a4d7cad71668dd",
+      "executionResult": "success",
+      "canonical": true
+    },
+    "observedBrowserErrors": [],
+    "browserRemoteProofs": 2,
+    "canonicalFailureAccounting": {
+      "requestId": "0x2fb7d9ff75bcf49346833ebebb9849eea3b6c8516d8e934321101336a8b40961",
+      "anchor": {
+        "number": 1062,
+        "hash": "0x06808549abdf72e7bd2682aed356283f69e0a40b61249aaa33ac98a8393cea33"
+      },
+      "state": "2",
+      "sequence": "0",
+      "budget": "250000",
+      "available": "0",
+      "reserved": "250000",
+      "charged": "0",
+      "refunded": "0",
+      "primaryDone": "0",
+      "secondaryDone": "0",
+      "receipt": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "failure": {
+      "draft": "9da258c60ac4d681834a58d1bc67278b8daf4666",
+      "modelCalls": 8,
+      "providerUsageMicroUsdc": "45751",
+      "published": false,
+      "testOutcome": "exit1, no timeout, no OOM; build did not run",
+      "diagnosis": "Generated VM test fixtures omit window and appendChild; final failed validation escaped normal settlement. Draft also uses raw btoa on Unicode and history.replaceState in an opaque origin."
+    },
+    "serviceRepair": {
+      "tests": "91 hosted-private-bok tests passed",
+      "review": "network_upgrade_check: no blocking findings",
+      "scope": "Only typed STATIC_FAILED creates a fixed failure result and uses existing settlement/reply/finish. Fresh model-call allowance16, original journal limits and all monetary caps unchanged."
+    }
   }
 }

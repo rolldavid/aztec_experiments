@@ -295,10 +295,15 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   }
   saved=resumeReceived?saved:resumeSubmitted?{...saved,submittedReservationContinuationAttempted:true}:resumeUnsubmitted?{...saved,preProviderRecoveryAttempted:true}:{binding,phase:'running'};await save(saved);
   let call=0;
-  result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
+  try{result=await runAgent({conversation:requestConversation,text:current.text,id:request.requestId,postId:request.postId,model:{complete:async input=>{
    const fresh=await board.readRequest(request.postId);assert(fresh?.usable&&!fresh.replied&&fresh.target===request.target,'Invocation changed before paid call');
    const response=await metering.complete(call++,input);assert(response.replyAvailable,'Recovered billing has no recoverable reply');return response;
-  }}});
+  }}});}catch(error){
+   // Generated source failing validation is a completed attempt, not unknown
+   // provider billing. Settle actual usage and return unused credit normally.
+   if(error?.code!=='STATIC_FAILED')throw error;
+   result={replyText:'I could not finish this update because its checks failed. Nothing new was published. You can ask me to try again.'};
+  }
  }
  if(result&&invocation){
   if(saved?.phase!=='result-ready'){packText(result.replyText);assert(Buffer.byteLength(JSON.stringify(result))<=65536,'Hosted result bound');saved={binding,phase:'result-ready',result,resultDigest:digest(result)};await save(saved);}
