@@ -1,3 +1,4 @@
+import {withBokTiming,measureBokStage,measureBokObjectStages} from './bok-timing.mjs';
 import {acquireHostedLease} from './hosted-lease.mjs';
 export {acquireHostedLease};
 import {prepareInProcessNativeRuntime} from '../prover/runtime.mjs';
@@ -341,16 +342,16 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   recoverPending=hostedRecoveryScanner({directory:config.stateDirectory,scope,pluginId:config.pluginId,board,lease});
   server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,recoverPending,host:config.host??'127.0.0.1',port:config.port??8787,
    onError:()=>onError(Error('Rolling hosted request requires reconciliation')),
-   canDispatch:request=>hostedRequestDispatchable({request,directory:config.stateDirectory,scope,pluginId:config.pluginId,lease,repositories,repository}),run:async request=>{
+   canDispatch:request=>hostedRequestDispatchable({request,directory:config.stateDirectory,scope,pluginId:config.pluginId,lease,repositories,repository}),run:request=>withBokTiming(request.requestId,()=>measureBokStage('request.total',async()=>{
     await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
     const store=await fileState(path.join(config.stateDirectory,id+'.json'));
-    const rawEscrow=await walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
-     requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'}));
-    const escrow=serializeHostedEscrow(rawEscrow,walletOperation);
+    const rawEscrow=await measureBokStage('escrow.open',()=>walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
+     requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'})));
+    const escrow=measureBokObjectStages(serializeHostedEscrow(rawEscrow,walletOperation),'escrow');
     const limits=store.read().privateBok?.limits??{maxCalls:16,maxTokens:4096,maxInputBytes:262144,...config.limits};
-    return runPrivateBokRequest({request,board,escrow,store,provider,conversation,accountingMode:'invocation-v1',claimReceipt,admitThread:mirror?async({threadId,invocationId})=>{const admission=await repositories.open({threadId,invocationId,repository});await admission.close();}:undefined,limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
+    return runPrivateBokRequest({request,board:measureBokObjectStages(board,'board'),escrow,store,provider,conversation,accountingMode:'invocation-v1',claimReceipt,admitThread:mirror?async({threadId,invocationId})=>{const admission=await repositories.open({threadId,invocationId,repository});await admission.close();}:undefined,limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
      bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:limits.maxCalls??16,maxTokens:limits.maxTokens??4096,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. A requested self-contained HTML page can remain one published index.html; keep dependency-free build/test support in source and copy the page to dist/index.html, without adding a framework. Use check_workspace to run isolated Node tests, builds and browser scenarios and repair failures before answering. The isolated build/test runner has Node, no network, and no dependency installation. '+HOSTING_GUIDANCE+' Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy. '+ARTIFACT_API_GUIDANCE})}).run(input)});
-   }});
+   }))});
   return {address:server.address,artifactAddress:artifactsServer.address(),close,
    setPublicationDisabled:input=>publicationOperation(async()=>{await lease.assertHeld();return publication.setDisabled(input);})};
  }catch{let cleanupFailed=false;try{await close();}catch{cleanupFailed=true;}throw Error(cleanupFailed?'Rolling hosted startup failed; owned cleanup requires attention':'Rolling hosted startup failed');}
