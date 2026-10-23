@@ -980,6 +980,27 @@ for(const source of ['history','provider'])test('invocation '+source+' preflight
  assert.equal(x.store.read().privateBok.calls[0].phase,'quoted');assert.deepEqual(x.events,[]);assert.equal(x.row.charged,0n);
 });
 
+test('hosted restart dispatches the exact unsent first invocation quote once without another reservation',async t=>{
+ const x=invocationFixture();let fail=true,quotes=0;
+ const quote=x.args.provider.quote;x.args.provider.quote=async(...args)=>{quotes++;return quote(...args);};
+ x.args.provider.beforeDispatch=async()=>{if(fail)throw Error('known preflight failure');};
+ await assert.rejects(x.run(),/known preflight failure/);
+ const original=structuredClone(x.store.read());assert.equal(hostedUnsubmittedFirstCall(original),true);assert.equal(hostedSubmittedFirstCall(original),false);
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'bok-unsent-invocation-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'public',receiver:f(5)},request={...x.args.request,threadId:f(9)},id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
+ const file=path.join(directory,id+'.json'),options={request,directory,scope,pluginId:request.pluginId,lease:{assertHeld:async()=>{}},repository:'owner/project',repositories:{hasAcceptedRecovery:()=>assert.fail('Unsent first quote does not need accepted work')}};
+ await fs.writeFile(file,JSON.stringify(original),{mode:0o600});assert.equal(await hostedRequestDispatchable(options),true);
+ for(const mutate of [v=>v.hostedPrivateBok.preProviderRecoveryAttempted=true,v=>v.privateBok.calls[0].phase='possibly-sent',v=>v.privateBok.calls[0].phase='received',v=>v.privateBok.calls[0].billing={},v=>v.privateBok.calls[0].response={},v=>v.privateBok.calls[0].responseDelivered=false,v=>v.privateBok.calls[1]={...v.privateBok.calls[0],id:1},v=>v.privateBok.identity.target=f(99),v=>v.privateBok.reservation.before.reserved='999',v=>v.privateBok.reservation.sequence=1,v=>v.privateBok.operations.x={},v=>v.privateBokEscrow={binding:v.privateBok.identity,operations:{x:{}}},v=>v.privateBok.aggregate={}]){
+  const changed=structuredClone(original);mutate(changed);assert.equal(hostedUnsubmittedFirstCall(changed),false);
+ }
+ const realEscrowShape=structuredClone(original);realEscrowShape.privateBokEscrow={version:1,binding:{...realEscrowShape.privateBok.identity,operator:f(11),board:f(12),classId:f(13),finality:'checkpointed',proofMode:'real'},operations:{}};
+ assert.equal(hostedUnsubmittedFirstCall(realEscrowShape),true);
+ fail=false;assert.equal((await x.run()).status,'finished');assert.deepEqual(x.events,['paid','finalize_reply']);assert.equal(quotes,1);
+ assert.equal(x.store.read().privateBok.calls[0].inputDigest,original.privateBok.calls[0].inputDigest);
+ assert.equal(x.store.read().hostedPrivateBok.phase,'finished');assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
+ await x.run();assert.deepEqual(x.events,['paid','finalize_reply']);
+});
+
 test('hosted activated invocation with no model call replies and refunds in one final transaction',async()=>{
  const x=invocationFixture();x.args.runAgent=async()=>({replyText:'No changes needed.'});
  await x.run();assert.deepEqual(x.events,['finalize_reply']);assert.equal(x.row.charged,0n);assert.equal(x.row.refunded,1000n);assert.equal(x.row.state,4);

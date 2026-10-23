@@ -181,7 +181,25 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  * Neither path admits provider-entered calls or a repeated agent continuation. */
 function hostedFirstCall(original,submitted){
  const h=original.hostedPrivateBok,j=original.privateBok,e=original.privateBokEscrow;
- if(j?.accountingMode==='invocation-v1')return false;
+ if(j?.accountingMode==='invocation-v1'){
+  // The posting transaction reserved the budget. A first quote whose preflight
+  // never crossed the dispatch boundary needs no reserve transaction or billing.
+  try{
+   assert(!submitted&&h?.phase==='running'&&j.version===2&&j.finished===false);
+   for(const key of ['preProviderRecoveryAttempted','submittedReservationContinuationAttempted'])assert(!Object.hasOwn(h,key));
+   assert.deepEqual(Object.keys(j.calls),['0']);assert.deepEqual(j.operations,{});assert(!Object.hasOwn(j,'aggregate'));
+   const call=j.calls[0],b=h.binding,identity={network:b.network,escrow:b.escrow,requestId:b.requestId,target:b.target};
+   assert.deepEqual(j.identity,identity);assert.equal(call.id,0);assert.equal(call.phase,'quoted');
+   assert(/^[0-9a-f]{64}$/.test(call.inputDigest));
+   for(const key of ['billing','response','responseDigest','responseDelivered','providerDiagnostic','finishReason'])assert(!Object.hasOwn(call,key));
+   const r=j.reservation;assert.equal(r.sequence,0);assert(typeof r.maximum==='string'&&/^[1-9][0-9]*$/.test(r.maximum));
+   assert.deepEqual(r.before,{budget:r.maximum,available:'0',reserved:r.maximum,charged:'0',refunded:'0'});
+   assert(typeof call.available==='string'&&/^[1-9][0-9]*$/.test(call.available)&&BigInt(call.available)<=BigInt(r.maximum));
+   assert(typeof call.quote.maximum==='string'&&/^[1-9][0-9]*$/.test(call.quote.maximum)&&BigInt(call.quote.maximum)<=BigInt(call.available));
+   if(e){assert(Object.entries(identity).every(([key,value])=>e.binding?.[key]===value));assert.deepEqual(e.operations,{});}
+   return true;
+  }catch{return false;}
+ }
  if(h?.phase!=='running'||Object.hasOwn(h,'submittedReservationContinuationAttempted')||(!submitted&&Object.hasOwn(h,'preProviderRecoveryAttempted'))||!j||j.finished||!e)return false;
  const calls=Object.values(j.calls??{}),ops=Object.entries(j.operations??{});
  if(calls.length!==1||calls[0].id!==0||calls[0].phase!=='quoted'||calls[0].billing||ops.length!==1||Object.keys(e.operations??{}).length!==1)return false;
