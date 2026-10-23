@@ -124,8 +124,10 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
  };
  try{
   for(const viewport of [{width:1280,height:800},{width:390,height:844}]){
-   // Smoke every HTML entry, then run each scenario with a clean context.
-   const runs=[...html.map(f=>({name:'load '+f.path,path:f.path,steps:[]})),...plan.scenarios];
+   // Every scenario already performs the complete startup checks in a clean
+   // context. Smoke only HTML entries without an exact matching scenario path.
+   const covered=new Set(plan.scenarios.map(scenario=>scenario.path));
+   const runs=[...html.filter(f=>!covered.has(f.path)).map(f=>({name:'load '+f.path,path:f.path,steps:[]})),...plan.scenarios];
    for(const scenario of runs){
     if(Date.now()>=deadline)throw Error('Browser validation exceeded work budget');
     const context=await browser.newContext({viewport,permissions:[],acceptDownloads:false});

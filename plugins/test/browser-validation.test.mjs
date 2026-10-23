@@ -95,3 +95,22 @@ for(const [name,html,steps,pattern] of [
 test('actual browser permits handled unavailable API with visible outcome',{skip:!actual,timeout:40000},async()=>{
  const receipt=await run('<output id="status">Loading</output><script>fetch("https://api.example/value").then(()=>status.textContent="Online").catch(()=>document.querySelector("#status").textContent="Unavailable");</script>',[{action:'expectText',selector:'#status',text:'Unavailable'}]);assert(receipt.passed);
 });
+
+test('actual browser shares a scenario startup check with its exact HTML smoke path',{skip:!actual,timeout:40000},async()=>{
+ const {chromium}=await import('playwright'),contexts=[];
+ const observed={launch:async options=>{const browser=await chromium.launch(options);return {
+  newContext:async options=>{contexts.push(options.viewport.width);return browser.newContext(options);},version:()=>browser.version(),close:()=>browser.close(),
+ };}};
+ const input={artifacts:[{path:'index.html',data:Buffer.from('<!doctype html><p>Ready</p>').toString('base64')}],plan:validateBrowserPlan(plan([])),origin:'https://artifacts.example',boardOrigin:'https://board.example',deadline:Date.now()+30000};
+ const result=await exerciseBrowser(browserInput(input),observed);assert.deepEqual(contexts,[1280,390]);assert.equal(result.checks,6,'one startup plus both scenario steps per viewport');
+});
+test('actual browser still smoke-checks uncovered HTML and keeps each scenario context fresh',{skip:!actual,timeout:40000},async()=>{
+ const {chromium}=await import('playwright'),contexts=[];
+ const observed={launch:async options=>{const browser=await chromium.launch(options);return {
+  newContext:async options=>{contexts.push(options.viewport.width);return browser.newContext(options);},version:()=>browser.version(),close:()=>browser.close(),
+ };}};
+ const input={artifacts:[{path:'index.html',data:Buffer.from('<!doctype html><p>Ready</p>').toString('base64')},{path:'help.html',data:Buffer.from('<!doctype html><p>Help</p>').toString('base64')}],plan:validateBrowserPlan({version:1,scenarios:[...plan([]).scenarios,{...plan([]).scenarios[0],name:'second clean visit'}]}),origin:'https://artifacts.example',boardOrigin:'https://board.example',deadline:Date.now()+30000};
+ const result=await exerciseBrowser(browserInput(input),observed);assert.deepEqual(contexts,[1280,1280,1280,390,390,390]);assert.equal(result.checks,14);
+ input.artifacts[1].data=Buffer.from('<!doctype html><p>Help</p><script>localStorage.getItem("forbidden")</script>').toString('base64');
+ await assert.rejects(exerciseBrowser(browserInput(input),observed),error=>/load help.html/.test(error.message)&&/localStorage|SecurityError/.test(error.message));
+});
