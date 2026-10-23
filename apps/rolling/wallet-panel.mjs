@@ -69,6 +69,8 @@ const button=(label,handler,primary=false)=>{const node=el('button',{type:'butto
 const paragraph=text=>el('p',{},text);
 const label=(text,control)=>el('label',{class:'form-field'},text,control);
 function accountFailure(failure){
+ const safeCode=value=>typeof value==='number'&&Number.isSafeInteger(value)?value:typeof value==='string'&&/^[A-Z][A-Z0-9_]{0,63}$/.test(value)?value:'unclassified';
+ console.warn('[wallet-sign-in]',safeCode(failure?.code),safeCode(failure?.info?.error?.code),safeCode(failure?.error?.code));
  const code=failure?.code;
  if(code===4001||code==='ACTION_REJECTED'||code==='BB_WALLET_REJECTED')return 'Sign-in cancelled in your wallet. Connect again when you are ready.';
  if(code==='BB_ACCOUNT_OWNER_MISMATCH')return 'Connect the Ethereum wallet you used to create this account.';

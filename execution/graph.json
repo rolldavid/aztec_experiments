@@ -9842,29 +9842,10 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "id": "G21-bok-latency2-20261023",
-    "status": "complete",
-    "owner": "root",
-    "branch": "codex/rolling-chat-account-ux",
-    "at": "2026-10-23T20:39:20.081089+00:00",
-    "request": "Collapse remaining Bok transaction dependencies where possible and eliminate duplicated browser preparation, board reads, validation and handoffs.",
-    "scope": [
-      "Browser post preparation, request authorization and submission",
-      "Bok detection, model/tool work, proving, accounting and reply publication",
-      "Browser response rendering and terminal settlement",
-      "Existing services, funded disposable test identity and monthly hosting budget"
-    ],
-    "source": "8efe8919cd1c019d82ff7b2d3d787c62f52de7c5",
-    "verification": "Fresh actual app update succeeded: user Post to automatic reply464.264s, worker terminal464.974s; two canonical request transactions at blocks1684/1688. New app373e1afd mirrored GitHubbb82cd36; actual Clear completed browser behavior/reload/no runtime errors passed. Charge86098/refund163902 microUSDC verified, all9 services healthy. Proxy held-feed shutdown verified451ms app/4ms proxy. Old application data is disposable; no migration requirement. Prompt-only grouping correction independently approved and76tests pass; published and ready at20:38:22Z, BokPID251846/proxy251848, no speed claim for wording change.",
-    "budget": "USD1500/month ongoing hosting; no additional hosts created",
-    "paths": [
-      "execution/evidence/G21/stable6/",
-      "execution/infrastructure-ledger.json",
-      "START_HERE.md",
-      "docs/BOK_LATENCY.md"
-    ],
-    "currentHandover": "START_HERE.md",
-    "nextAction": "Owner can test the published two-transaction flow. Future performance work should target remaining193s model generation and160s testnet confirmation observed in this workload; prompt grouping is deployed but has no separate latency measurement. Overall historical production qualification remains separate.",
-    "bokSource": "8efe8919cd1c019d82ff7b2d3d787c62f52de7c5"
+    "request": "Fix MetaMask connection failure in the live wallet chooser",
+    "status": "active",
+    "execution_lane": "root source edits; bounded independent review and static-only packaging",
+    "checkpoint": "Reproduced generic sign-in failure in actual Chrome. Capture safe stage and error codes to identify cause before changing behavior.",
+    "next_action": "Diagnose, fix, test, review and publish the wallet connection repair."
   }
 }

@@ -73,9 +73,11 @@ async function connectEthereumAccount(transport, walletName='Browser wallet', {s
     _bindEthereumProvider(transport);
     const generation=_walletGeneration;
     const connection={disconnected:false};_connectingEth=connection;
+    let stage='wallet-permission';
     try {
     // MetaMask account selection must not silently reuse an older site grant.
     if(selectAccount)await transport.request({method:'wallet_requestPermissions',params:[{eth_accounts:{}}]});
+    stage='wallet-network';
     const expected=typeof _getPublicConfig==='function'?_getPublicConfig()?.network?.chainId:null;
     if(expected!==null&&expected!==undefined){
       const chainId='0x'+BigInt(expected).toString(16);
@@ -86,8 +88,11 @@ async function connectEthereumAccount(transport, walletName='Browser wallet', {s
       }
     }
     const provider=new ethers.BrowserProvider(transport);
+    stage='wallet-accounts';
     const requested=await provider.send('eth_requestAccounts',[]);
+    stage='wallet-signer';
     const signer=await provider.getSigner(), account=await signer.getAddress();
+    stage='wallet-verification';
     const network=await provider.getNetwork();
     const chain=BigInt(await transport.request({method:'eth_chainId'}));
     const current=await transport.request({method:'eth_accounts'});
@@ -105,8 +110,14 @@ async function connectEthereumAccount(transport, walletName='Browser wallet', {s
     // The engine independently verifies signer, node and portal chain agreement.
     _wlog(window.walletState.ethWalletName+' connected: '+account,'success');
     _updateAccountState();
+    stage='account-sign-in';
     if(deriveAccount && !window.walletState.aztec)await _openEthereumAccount(providerId,{freshAccount});
     _checkReady();
+    } catch(error) {
+      // Never log wallet RPC payloads: personal_sign carries account key material.
+      const safeCode=value=>typeof value==='number'&&Number.isSafeInteger(value)?value:typeof value==='string'&&/^[A-Z][A-Z0-9_]{0,63}$/.test(value)?value:'unclassified';
+      console.warn('[account-sign-in]',stage,safeCode(error?.code),safeCode(error?.info?.error?.code),safeCode(error?.error?.code));
+      throw error;
     } finally {_connectingEth=null;}
   });
 }
