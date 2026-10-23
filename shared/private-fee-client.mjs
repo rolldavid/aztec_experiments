@@ -57,6 +57,22 @@ export async function requirePublishedPrivateFee(node,canonical) {
   check(instance,'PRIVATE_FEE_NOT_PUBLISHED');
   check(equal(instance.address,canonical.address)&&equal(instance.originalContractClassId,canonical.originalContractClassId)&&equal(instance.currentContractClassId,canonical.currentContractClassId)&&equal(await computeContractAddressFromInstance(instance),canonical.address),'PRIVATE_FEE_CLASS_MISMATCH');
 }
+// Session startup registers this class/instance before any action. Check the
+// native PXE's local records rather than writing the same class and instance
+// again for every fee preparation. Publication remains a fresh node check.
+async function privateFeeRegistered(wallet,canonical) {
+  const pxe=wallet.pxe;
+  if(typeof pxe?.getContractInstance!=='function'||typeof pxe?.getContractArtifact!=='function')return false;
+  const values=await Promise.allSettled([
+    ()=>pxe.getContractInstance(canonical.address),()=>pxe.getContractArtifact(canonical.currentContractClassId),
+  ].map(read=>Promise.resolve().then(read)));
+  const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+  const [instance,artifact]=values.map(value=>value.value);
+  return !!artifact&&!!instance&&equal(instance.address,canonical.address)&&
+    equal(instance.originalContractClassId,canonical.originalContractClassId)&&
+    equal(instance.currentContractClassId,canonical.currentContractClassId)&&
+    equal(await computeContractAddressFromInstance(instance),canonical.address);
+}
 export async function derivePrivateFeeAddress(privateFeeArtifact) { return (await derivePrivateFeeInstance(privateFeeArtifact)).address; }
 export async function derivePrivateFeeBridgeSecret({salt,owner}) {
   const fixedSalt=field(salt);check(!fixedSalt.isZero(),'PRIVATE_FEE_INVALID_CLAIM');
@@ -96,7 +112,9 @@ async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,e
   check(uint(walletChain.chainId,64)===chainId&&uint(walletChain.version,32)===version&&uint(nodeInfo.l1ChainId,64)===chainId&&uint(nodeInfo.rollupVersion,32)===version,'PRIVATE_FEE_CHAIN_MISMATCH');
   check(['feePerDaGas','feePerL2Gas'].every(key=>fixed.gasSettings.maxFeesPerGas[key]>=uint(minimum[key],128)),'PRIVATE_FEE_CAP_TOO_LOW');
   check(equal(canonical.address,payer),'PRIVATE_FEE_NONCANONICAL_ADDRESS');
-  await requirePublishedPrivateFee(node,canonical);
+  const binding=await Promise.allSettled([requirePublishedPrivateFee(node,canonical),privateFeeRegistered(wallet,canonical)]);
+  const bindingFailure=binding.find(value=>value.status==='rejected');if(bindingFailure)throw bindingFailure.reason;
+  const registered=binding[1].value;
   let paymentMethod,availableCredit,smallClaim;
   const privateBalance=async()=>{
     check(wallet.executeUtility,'PRIVATE_FEE_PROVIDER_REQUIRED');
@@ -113,7 +131,7 @@ async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,e
     paymentMethod=new PrivateMintAndPayFeePaymentMethod(payer,verifiedClaim,1n);
     if(amount<fixed.maximumFee)smallClaim=verifiedClaim;
   }
-  await wallet.registerContract(canonical,artifact);
+  if(!registered)await wallet.registerContract(canonical,artifact);
   if(smallClaim){
     const existing=await privateBalance();
     if(existing>=fixed.maximumFee){

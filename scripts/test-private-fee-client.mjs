@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { BarretenbergSync } from '@aztec-foundation/bb.js';
+import { BaseWallet } from '@aztec-labs/wallet-sdk/base-wallet';
 import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { ProtocolContractAddress } from '@aztec-labs/protocol-contracts';
 import { Gas,GasFees,GasSettings } from '@aztec-labs/stdlib/gas';
@@ -152,4 +153,40 @@ test('independent fee metadata reads start together and drain before a failure r
  const pending=preparePrivateFeePayment(input).finally(()=>{finished=true;});
  await started.promise;assert.equal(finished,false);assert.equal(state.registered,0);assert.equal(state.reads,0);
  gate.resolve();await assert.rejects(pending,{code:'PRIVATE_FEE_PREPARATION_FAILED'});assert.equal(finished,true);assert.equal(state.registered,0);
+});
+
+
+test('already registered native PXE avoids both class and instance rewrites, retaining fresh balances and public class checks',async()=>{
+ const {input,state}=fixture();let localInstances=0,localArtifacts=0,published=0;
+ input.wallet.pxe={getContractInstance:async()=>{localInstances++;return {...instance};},getContractArtifact:async()=>{localArtifacts++;return artifact;}};
+ input.node.getContract=async()=>{published++;return state.instance;};
+ assert.equal((await preparePrivateFeePayment(input)).availableCredit,1300n);
+ state.balance=72n;assert.equal((await preparePrivateFeePayment(input)).availableCredit,72n);
+ assert.deepEqual({registered:state.registered,balances:state.reads,localInstances,localArtifacts,published},{registered:0,balances:2,localInstances:2,localArtifacts:2,published:2});
+ state.instance.currentContractClassId=new Fr(9);
+ await assert.rejects(preparePrivateFeePayment(input),{code:'PRIVATE_FEE_CLASS_MISMATCH'});
+ assert.equal(state.reads,2);assert.equal(state.registered,0);
+});
+for(const missing of ['instance','artifact','class','preimage'])test('native local '+missing+' mismatch still registers the verified canonical fee contract',async()=>{
+ const {input,state}=fixture(),local={...instance};if(missing==='class')local.currentContractClassId=new Fr(9);if(missing==='preimage')local.salt=new Fr(9);
+ input.wallet.pxe={getContractInstance:async()=>missing==='instance'?undefined:local,getContractArtifact:async()=>missing==='artifact'?undefined:artifact};
+ await preparePrivateFeePayment(input);assert.equal(state.registered,1);assert.equal(state.reads,1);
+});
+test('local registration lookup failure drains concurrent publication before releasing operation',async()=>{
+ const {input,state}=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let finished=false;
+ input.wallet.pxe={getContractInstance:async()=>{throw Error('PRIVATE_SENTINEL');},getContractArtifact:async()=>artifact};
+ input.node.getContract=async()=>{entered.resolve();await gate.promise;return state.instance;};
+ const pending=preparePrivateFeePayment(input).finally(()=>finished=true);await entered.promise;
+ await new Promise(r=>setImmediate(r));assert.equal(finished,false);gate.resolve();
+ await assert.rejects(pending,{code:'PRIVATE_FEE_PREPARATION_FAILED'});assert.equal(state.reads,0);assert.equal(state.registered,0);
+});
+
+
+test('actual SDK BaseWallet registration path drops two redundant PXE writes for an initialized session',async()=>{
+ const {input,state}=fixture();let classWrites=0,instanceWrites=0;
+ const pxe={registerContractClass:async()=>{classWrites++;},registerContract:async()=>{instanceWrites++;return instance.address;}};
+ input.wallet.pxe=pxe;input.wallet.registerContract=BaseWallet.prototype.registerContract.bind(input.wallet);
+ await preparePrivateFeePayment(input);assert.deepEqual([classWrites,instanceWrites],[1,1]);
+ pxe.getContractInstance=async()=>({...instance});pxe.getContractArtifact=async()=>artifact;
+ await preparePrivateFeePayment(input);assert.deepEqual([classWrites,instanceWrites],[1,1]);assert.equal(state.reads,2);
 });
