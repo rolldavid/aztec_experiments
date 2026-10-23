@@ -1832,6 +1832,51 @@ test('immediate Bok authorizes and publishes in one exact batch, estimate and se
  const [authorize,post]=f.state.sent.payload.interactions;assert.equal(authorize.name,'authorize_request');assert.equal(post.name,'post_with_bok');assert.equal(authorize.args[0],post.args[6]);assert.equal(post.args[5],f.options.deployment.bok.pluginId);assert.equal(authorize.args[2],bokAction().budget);
  assert.equal((await app.reconcile(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
 });
+for(const priorOutcome of ['success','reverted'])test(`terminal ${priorOutcome} atomic Bok history permits the same account after plugin replacement`,async()=>{
+ const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.name='batch';this.interactions=interactions;}};
+ const app=f.restart(),prepared=await app.prepare(bokAction(),{immediate:true});await app.submitPrepared(prepared.intentId);
+ f.state.outcome.outcome=priorOutcome;await app.reconcile(prepared.intentId);
+ f.options.deployment.bok={...f.options.deployment.bok,address:hex(95),operator:hex(96),pluginId:hex(97)};f.state.bokAdapter=95n;f.state.privateReads.length=0;
+ const reopened=f.restart(),status=await reopened.readAccountStatus();
+ assert.equal(status.status,'fee-ready');assert.deepEqual(status.depositIds.map(BigInt),[9n]);assert.equal(status.privateFeeCredit,'100');assert.equal(f.state.sends,1);
+ assert(!f.state.privateReads.some(row=>['get_plugin','request','balance_of'].includes(row.name)));
+ await assert.rejects(reopened.submitPrepared(prepared.intentId),{code:'ROLLING_CONTEXT_CHANGED'});
+ await assert.rejects(reopened.reconcile(prepared.intentId),{code:'ROLLING_CONTEXT_CHANGED'});
+ const post=await reopened.prepare({type:'post',deposit:'9',content:'Same account, ordinary post',name:'0',subboard:'0'},{immediate:true});
+ assert.equal((await reopened.submitPrepared(post.intentId)).status,'confirmed');assert.equal(f.state.sends,2);assert.equal(f.state.sent.payload.name,'post');
+});
+test('terminal Bok history does not require the optional plugin resolver for direct fresh preparation',async()=>{
+ const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.name='batch';this.interactions=interactions;}};
+ const app=f.restart(),prepared=await app.prepare(bokAction(),{immediate:true});await app.submitPrepared(prepared.intentId);
+ delete f.options.deployment.bok;f.options.resolveBok=async()=>{throw Error('Historical plugin must not be loaded');};
+ await f.restart().prepare({type:'post',deposit:'9',content:'Same account',name:'0',subboard:'0'},{immediate:true});assert.equal(f.state.sends,1);
+});
+for(const canonical of ['unknown','missing','other-operation'])test(`terminal prior-plugin history still blocks when its canonical receipt is ${canonical}`,async()=>{
+ const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.name='batch';this.interactions=interactions;}};
+ const app=f.restart(),prepared=await app.prepare(bokAction(),{immediate:true});await app.submitPrepared(prepared.intentId);
+ f.options.deployment.bok.pluginId=hex(97);
+ if(canonical==='missing')f.state.outcome=null;else if(canonical==='unknown')f.state.outcome.outcome='unknown';else f.state.outcome.operation='different-operation';
+ const before=[...f.values.entries()],estimates=f.state.estimates,reopened=f.restart();assert.equal((await reopened.readAccountStatus()).status,'recovering');
+ await assert.rejects(reopened.prepare({type:'post',deposit:'9',content:'Must wait',name:'0',subboard:'0'},{immediate:true}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ assert.equal(f.state.sends,1);assert.equal(f.state.estimates,estimates);assert.deepEqual([...f.values.entries()],before);
+});
+test('prior-plugin reverted legacy post and release retain their funded continuation',async()=>{
+ for(const kind of ['post','release']){
+  const f=await interruptedBokFixture(),intent=kind==='post'?await f.app.prepareBokPost(f.authorizedId):await f.app.prepareBokRelease(f.authorizedId,{type:'cancel-bok-request'});
+  await f.app.submitPrepared(intent.intentId);f.state.outcome.outcome='reverted';await f.app.reconcile(intent.intentId);
+  f.options.deployment.bok.pluginId=hex(97);const before=[...f.values.entries()],reopened=f.restart();
+  await assert.rejects(reopened.readAccountStatus(),{code:'ROLLING_CONTEXT_CHANGED'});
+  await assert.rejects(reopened.prepare({type:'post',deposit:'9',content:'Cannot discard funded continuation',name:'0',subboard:'0'},{immediate:true}),{code:'ROLLING_CONTEXT_CHANGED'});
+  assert.equal(f.state.sends,2);assert.deepEqual([...f.values.entries()],before);
+ }
+});
+test('prior-plugin confirmed withdrawal cannot bypass its outstanding refund',async()=>{
+ const f=bokAccountingFixture(),intent=await f.app.prepare({type:'withdraw-bok',amount:'500',recipient:'0x'+'33'.repeat(20)});await f.app.submitPrepared(intent.intentId);
+ f.options.deployment.bok.pluginId=hex(97);const reopened=f.restart();
+ const status=await reopened.readAccountStatus();assert.equal(status.status,'recovering');assert.equal(status.intent.intentId,intent.intentId);
+ await assert.rejects(reopened.prepare({type:'post',deposit:'9',content:'Refund pending',name:'0',subboard:'0'},{immediate:true}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
+ assert.equal(f.state.sends,1);assert.equal((await reopened.readWithdrawal()).withdrawal.nonce,intent.withdrawal.nonce);
+});
 test('immediate Bok batch relies on strict contract simulation and enforces total fee before sending',async()=>{
  for(const change of ['credit','parent','plugin','fee']){
   const f=bokFixture();f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.interactions=interactions;}};

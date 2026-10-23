@@ -318,13 +318,21 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     // rechecks canonicality and rejects non-final reverted sender-tagging ranges.
     session.journal.confirmed(found.receipt);
   }
-  async function outcome(saved){
-    await checkBokRecord(saved.value);
+  // Historical receipts belong to this account/board journal, not whichever
+  // optional plugin is currently offered. Continuations and exits still require
+  // their original plugin; a local terminal label alone never proves completion.
+  const terminalHistory=record=>['confirmed','reverted'].includes(record.status)&&!record.withdrawal&&
+    !(record.status==='confirmed'&&record.bok?.phase==='authorize')&&
+    !(record.status==='reverted'&&(record.bok?.phase==='post'||record.bokReleaseSource));
+  async function outcome(saved,{history=false}={}){
+    const historical=history&&terminalHistory(saved.value);
+    if(!historical)await checkBokRecord(saved.value);
     const found=await session.journal.inspectOutcome();
     if(!found||found.operation!==operation(saved.value.id))return {...summary(saved.value),status:'unknown'};
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
     acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
     const next={...saved.value,...(saved.value.withdrawal?{actualNetworkFee:String(chainValue(found.receipt.transactionFee))}:{}),status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash,...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
+    if(historical&&!terminalHistory(next))await checkBokRecord(next);
     await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:next.bokReleaseSource&&next.status==='reverted'?{status:'bok-release-reverted'}:{})};
   }
   const preferenceAction=record=>['preference','read-marker'].includes(record.action.type);
@@ -811,9 +819,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(!session)return {status:'locked'};
       return exclusive(async()=>{await guard();const saved=await (await slot()).read();
         if(saved.value&&saved.value.status!=='cancelled'){
-          await checkBokRecord(saved.value);
+          if(!terminalHistory(saved.value))await checkBokRecord(saved.value);
           if(!['confirmed','reverted'].includes(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
-          const canonical=await outcome(saved);if(canonical.status==='confirmed'&&saved.value.withdrawal&&!await refundComplete({...saved.value,txHash:canonical.txHash}))return {status:'recovering',intent:canonical};if(!['confirmed','reverted'].includes(canonical.status))return {status:'recovering',intent:canonical};
+          const canonical=await outcome(saved,{history:true});if(canonical.status==='confirmed'&&saved.value.withdrawal&&!await refundComplete({...saved.value,txHash:canonical.txHash}))return {status:'recovering',intent:canonical};if(!['confirmed','reverted'].includes(canonical.status))return {status:'recovering',intent:canonical};
         }
         const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');
         let fee;try{fee=await payment();}catch(error){if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n)};throw error;}
@@ -851,7 +859,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok','like','unlike','preference','read-marker','name','bio','avatar','claim-deposit','claim-private-fee','claim-bok'].includes(input?.type));
       await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
-        const final=await outcome(prior);check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
+        const final=await outcome(prior,{history:true});check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
       const previousTx=await session.journal.assertCanStart();
       const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
