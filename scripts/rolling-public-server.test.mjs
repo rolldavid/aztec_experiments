@@ -365,3 +365,51 @@ test('revision stream publishes ready content changes, ignores empty blocks and 
  assert.equal((await fetch(server.url+'/api/events',{method:'POST'})).status,405);
  await server.close();while(!(await reader.read()).done){};
 });
+
+test('app-first shutdown ends a proxied live feed, drains funding, and restarts on the same ports', {timeout:5000}, async t=>{
+ // Real loopback HTTP, including a held-open stream. This exercises application
+ // drain semantics; systemd/Caddy ordering is verified separately on the host.
+ let release,entered,relayClosed=false,indexClosed=false,appStopped=false,proxyStopped=false;
+ const fundingGate=new Promise(resolve=>release=resolve),fundingEntered=new Promise(resolve=>entered=resolve);
+ const index={sync:async()=>{},status:()=>({state:'ready',revision:'before',contentRevision:'before',checkpoint:{number:1}}),query:()=>({}),close:()=>{indexClosed=true;}};
+ const fundingRelay={submit:async()=>{entered();await fundingGate;return {status:'confirmed'};},close:()=>{relayClosed=true;}};
+ const app=await startRollingPublicServer({index,fundingRelay,pollMs:30000});
+ const appPort=Number(new URL(app.url).port);
+ const proxyTo=(upstream,port=0)=>new Promise((resolve,reject)=>{
+  const proxy=http.createServer((req,res)=>{
+   const forwarded=http.request(upstream+req.url,{method:req.method,headers:req.headers,agent:false},incoming=>{
+    res.writeHead(incoming.statusCode,incoming.headers);incoming.pipe(res);
+   });
+   forwarded.on('error',()=>{if(!res.headersSent)res.writeHead(502);res.end();});
+   req.pipe(forwarded);
+  });
+  proxy.once('error',reject);proxy.listen(port,'127.0.0.1',()=>resolve(proxy));
+ });
+ const stopProxy=proxy=>new Promise((resolve,reject)=>proxy.close(error=>error&&error.code!=='ERR_SERVER_NOT_RUNNING'?reject(error):resolve()));
+ const proxy=await proxyTo(app.url),proxyPort=proxy.address().port,url=`http://127.0.0.1:${proxyPort}`;
+ let restarted,replacementProxy;
+ t.after(async()=>{release();await app.close();await stopProxy(proxy);await restarted?.close();if(replacementProxy)await stopProxy(replacementProxy);});
+ await fetch(url+'/api/feed');
+ const stream=await fetch(url+'/api/events'),reader=stream.body.getReader();
+ assert.equal(stream.status,200);assert.match(new TextDecoder().decode((await reader.read()).value),/: connected/);
+ const funding=fetch(url+'/api/funding/usdc',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+ await fundingEntered;
+ // The corrected unit ordering signals the app before asking the proxy to
+ // drain. The live stream must close even while the admitted funding is held.
+ const closingApp=app.close().then(()=>{appStopped=true;});
+ while(!(await reader.read()).done){}
+ assert.equal(appStopped,false);assert.equal(indexClosed,false);assert.equal(relayClosed,false);
+ const closingProxy=stopProxy(proxy).then(()=>{proxyStopped=true;});
+ assert.equal(proxyStopped,false);
+ release();const response=await funding;assert.equal(response.status,200);assert.deepEqual(await response.json(),{status:'confirmed'});
+ await closingApp;await closingProxy;
+ assert.equal(appStopped,true);assert.equal(proxyStopped,true);assert.equal(indexClosed,true);assert.equal(relayClosed,true);
+ // Proxy readiness depends only on its own listener: it can start before the
+ // upstream without an ExecStartPost-style dependency on application health.
+ replacementProxy=await proxyTo(app.url,proxyPort);
+ restarted=await startRollingPublicServer({port:appPort,pollMs:30000,index:{sync:async()=>{},status:()=>({state:'ready',revision:'after',contentRevision:'after',checkpoint:{number:2}}),query:()=>({})}});
+ assert.equal((await fetch(url+'/api/feed')).status,200);
+ const fresh=await fetch(url+'/api/events'),freshReader=fresh.body.getReader();let text='';
+ while(!text.includes('after')){const next=await freshReader.read();assert.equal(next.done,false);text+=new TextDecoder().decode(next.value);}
+ const closingRestart=restarted.close();while(!(await freshReader.read()).done){}await closingRestart;await stopProxy(replacementProxy);
+});

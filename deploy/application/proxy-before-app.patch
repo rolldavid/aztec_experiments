@@ -1,0 +1,13 @@
+--- /etc/systemd/system/rolling-application-proxy.service
++++ /etc/systemd/system/rolling-application-proxy.service
+@@ -1,8 +1,9 @@
+ [Unit]
+ Description=Private CloudFront entry point for Rolling application
+ Requires=rolling-application.service rolling-egress.service
+-After=rolling-application.service rolling-egress.service
++After=rolling-egress.service
++Before=rolling-application.service
+ BindsTo=rolling-application.service
+ 
+ [Service]
+ DynamicUser=yes
