@@ -80,7 +80,8 @@ async function broker({installationPermissionProfile='restricted',creationTempla
  // Preserve legacy config and every operation. This append-only authority record
  // binds the explicit operator profile without migrating or reopening old intents.
  if(broadProfile){const binding={profile:installationPermissionProfile,permissions:OWNER_APPROVED_20261014_PERMISSIONS};if(state.installationPermissionProfile)assert.deepEqual(state.installationPermissionProfile,binding);else{state.installationPermissionProfile=binding;await store.write(state);}}
- async function save(){try{assert(Buffer.byteLength(JSON.stringify(state))<=8*1024*1024);await store.write(state);}catch{poisoned=true;throw fail('GITHUB_BROKER_RECORD_FAILED');}}
+ let saving=Promise.resolve();
+ function save(){const task=saving.then(async()=>{try{if(poisoned)throw fail();assert(Buffer.byteLength(JSON.stringify(state))<=8*1024*1024);await store.write(state);}catch{poisoned=true;throw fail('GITHUB_BROKER_RECORD_FAILED');}});saving=task.catch(()=>{});return task;}
  async function owned(fn){if(busy||poisoned)throw fail('GITHUB_BROKER_UNAVAILABLE');busy=true;try{return await fn();}catch(e){const safeError=fail(['GITHUB_BROKER_UNRESOLVED','GITHUB_BROKER_RECORD_FAILED','GITHUB_BROKER_POOL_EXHAUSTED'].includes(e?.code)?e.code:undefined),d=getGitHubBrokerDiagnostic(e);if(d)diagnostics.set(safeError,d);throw safeError;}finally{busy=false;}}
  function session({poolMode=false}={}){const callLimit=poolMode?POOL_REQUEST_LIMIT:540;let calls=0;
   const jwt=()=>{const t=Math.floor(now()/1000),head=Buffer.from(JSON.stringify({alg:'RS256',typ:'JWT'})).toString('base64url'),body=Buffer.from(JSON.stringify({iat:t-60,exp:t+540,iss:String(appId)})).toString('base64url'),input=head+'.'+body;return input+'.'+sign('RSA-SHA256',Buffer.from(input),key).toString('base64url');};
@@ -129,12 +130,13 @@ async function broker({installationPermissionProfile='restricted',creationTempla
  async function poolRemote(c,s,{genesisHead=false}={}){
   const credential=await s.token(c.repositoryId,false,'pool'),route='/repos/'+c.fullName,r=await s.request('GET',route,undefined,credential);
   assert(r?.id===c.repositoryId&&r.full_name===c.fullName&&r.owner?.id===c.ownerId&&r.owner.login===owner&&r.owner.type==='User'&&r.private===true&&r.fork===false&&r.archived===false&&r.description===c.marker&&r.default_branch===c.defaultBranch);
-  assert.equal((await s.request('GET',route+'/actions/permissions',undefined,credential))?.enabled,false);
-  const commit=await s.request('GET',route+'/git/commits/'+c.genesisCommit,undefined,credential);assert(commit?.sha===c.genesisCommit&&commit.tree?.sha===c.genesisTree&&Array.isArray(commit.parents)&&commit.parents.length===0);
+  const observations=await Promise.allSettled([s.request('GET',route+'/actions/permissions',undefined,credential),s.request('GET',route+'/git/commits/'+c.genesisCommit,undefined,credential),s.request('GET',route+'/git/ref/heads/'+c.defaultBranch,undefined,credential)]);
+  for(const result of observations)if(result.status==='rejected')throw result.reason;
+  const [permissions,commit,ref]=observations.map(result=>result.value);assert.equal(permissions?.enabled,false);assert(commit?.sha===c.genesisCommit&&commit.tree?.sha===c.genesisTree&&Array.isArray(commit.parents)&&commit.parents.length===0);
   const tree=await s.request('GET',route+'/git/trees/'+c.genesisTree+'?recursive=1',undefined,credential);assert(tree?.sha===c.genesisTree&&tree.truncated===false&&Array.isArray(tree.tree)&&tree.tree.length===1);
   const leaf=tree.tree[0],bytes=Buffer.from('# Bok thread repository\n\nAwaiting assignment.\n');assert(leaf.path==='README.md'&&leaf.type==='blob'&&leaf.mode==='100644'&&leaf.size===bytes.length&&leaf.sha===git('blob',bytes));assert.equal(treeHash([{path:leaf.path,gitSha:leaf.sha}]),c.genesisTree);
   const blob=await s.request('GET',route+'/git/blobs/'+leaf.sha,undefined,credential);assert(blob?.sha===leaf.sha&&blob.encoding==='base64'&&typeof blob.content==='string');assert.deepEqual(Buffer.from(blob.content.replace(/\s/g,''),'base64'),bytes);
-  const ref=await s.request('GET',route+'/git/ref/heads/'+c.defaultBranch,undefined,credential);assert(ref?.ref==='refs/heads/'+c.defaultBranch&&ref.object?.type==='commit'&&hex(ref.object.sha,40));if(genesisHead)assert.equal(ref.object.sha,c.genesisCommit);
+  assert(ref?.ref==='refs/heads/'+c.defaultBranch&&ref.object?.type==='commit'&&hex(ref.object.sha,40));if(genesisHead)assert.equal(ref.object.sha,c.genesisCommit);
   return {id:c.repositoryId,branch:c.defaultBranch,head:ref.object.sha,credential};
  }
  if(state.pool!==undefined){assert(pool!==null&&state.pool.schema===1&&Array.isArray(state.pool.slots)&&state.pool.slots.length<=pool.length);for(let i=0;i<state.pool.slots.length;i++)assert.deepEqual(state.pool.slots[i],pool[i]);}
@@ -275,7 +277,13 @@ async function broker({installationPermissionProfile='restricted',creationTempla
    if(!entry.parent){entry.parent=repo.latest?repo.revisions[repo.latest].remoteCommit:slot?slot.genesisCommit:await head();assert(hex(entry.parent,40));await save();}
    // Final ref write is non-forced, with exactly captured predecessor rechecked.
    const intendedRef=entry.steps.ref;const current=await head();assert(current===entry.parent||(intendedRef&&current===entry.remoteCommit));
-   for(const f of captured.files)await once(entry.steps,'blob:'+f.path,'POST',route+'/git/blobs',{content:f.data,encoding:'base64'},token,r=>{assert(r?.sha===f.gitSha);return {sha:r.sha};},()=>s.request('GET',route+'/git/blobs/'+f.gitSha,undefined,token));
+   // Blobs are immutable and independent. Every original intent is durable
+   // before dispatch; per-blob permissions and exact-object reconciliation stay
+   // unchanged. Drain the entire bounded group even if one request fails.
+   for(let offset=0;offset<captured.files.length;offset+=3){
+    const results=await Promise.allSettled(captured.files.slice(offset,offset+3).map(f=>once(entry.steps,'blob:'+f.path,'POST',route+'/git/blobs',{content:f.data,encoding:'base64'},token,r=>{assert(r?.sha===f.gitSha);return {sha:r.sha};},()=>s.request('GET',route+'/git/blobs/'+f.gitSha,undefined,token))));
+    for(const result of results)if(result.status==='rejected')throw result.reason;
+   }
    const tree=await once(entry.steps,'tree','POST',route+'/git/trees',{tree:captured.files.map(f=>({path:f.path,mode:'100644',type:'blob',sha:f.gitSha}))},token,r=>{assert(r?.sha===captured.tree);return {sha:r.sha};},()=>s.request('GET',route+'/git/trees/'+captured.tree,undefined,token));
    const message='Accepted source '+b.acceptedRevision+'\n\nSource-Digest: '+b.sourceDigest+'\nRepository-ID: '+b.repositoryId+'\nThread-ID: '+b.threadId+'\nInvocation-ID: '+b.invocationId+'\n',author={name:'Bok source mirror',email:'bok-source@users.noreply.github.com',date:entry.date},seconds=Date.parse(entry.date)/1000;
    const commitBytes=Buffer.from('tree '+tree.sha+'\nparent '+entry.parent+'\nauthor '+author.name+' <'+author.email+'> '+seconds+' +0000\ncommitter '+author.name+' <'+author.email+'> '+seconds+' +0000\n\n'+message),expected=git('commit',commitBytes);

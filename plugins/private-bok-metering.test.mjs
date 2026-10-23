@@ -481,7 +481,7 @@ test('invocation checks reservation and provider preflight before its durable di
  let reads=0,guards=0,preflights=0;
  h.escrow.request=async(...args)=>{reads++;return request(...args);};
  h.escrow.assertUsable=async(...args)=>{guards++;assert.equal(h.store.read().privateBok.calls[guards-1].phase,'quoted');return usable(...args);};
- h.provider.beforeDispatch=async()=>{preflights++;assert.equal(preflights,guards);assert.equal(h.store.read().privateBok.calls[preflights-1].phase,'quoted');};
+ h.provider.beforeDispatch=async(originalQuote,available)=>{assert.deepEqual(originalQuote,quote);assert.equal(available,1000n-BigInt(preflights)*6n);preflights++;assert.equal(preflights,guards);assert.equal(h.store.read().privateBok.calls[preflights-1].phase,'quoted');};
  const execute=h.provider.execute;h.provider.execute=async(...args)=>{assert.equal(h.store.read().privateBok.calls[h.counts.execute].phase,'possibly-sent');return execute(...args);};
  for(let id=0;id<3;id++)await m.complete(id,input);
  assert.equal(reads,1,'Only initial budget sizing needs a separate request read');

@@ -110,8 +110,8 @@ export function hostedIndexNode(node,development){
  * without re-entering a model call. Private mirror URLs never enter replies. */
 export async function publishAcceptedRevision({publication,mirror,receipt}){
  if(receipt.connection){assert(mirror&&typeof mirror.syncConnected==='function','Connected repository broker unavailable');return mirror.syncConnected(receipt);}
- const result=await publication.publish(receipt);
- if(mirror)await mirror.sync(receipt);
+ const result=await measureBokStage('publication.static',()=>publication.publish(receipt));
+ if(mirror)await measureBokStage('publication.mirror',()=>mirror.sync(receipt));
  return result;
 }
 
@@ -360,10 +360,10 @@ export async function runRollingHostedService({config,env=process.env,onError=()
     const escrow=measureBokObjectStages(serializeHostedEscrow(rawEscrow,walletOperation),'escrow');
     const limits=store.read().privateBok?.limits??{maxCalls:16,maxTokens:8192,maxInputBytes:262144,...config.limits};
     const admitted=admittedRepositorySession(repositories,{threadId:request.threadId,invocationId:request.requestId,repository});
-    const toolbox=githubToolbox({repository,api,repositories:{open:admitted.open}});
-    try{return await runPrivateBokRequest({request,board:measureBokObjectStages(board,'board'),escrow,store,provider,conversation,accountingMode:'invocation-v1',claimReceipt,admitThread:mirror?()=>measureBokStage('repository.admit',()=>admitted.admit()):undefined,limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
-     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:limits.maxCalls??16,maxTokens:limits.maxTokens??8192,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. A requested self-contained HTML page can remain one published index.html; keep dependency-free build/test support in source and copy the page to dist/index.html, without adding a framework. Use check_workspace to run isolated Node tests, builds and browser scenarios and repair failures before answering. The isolated build/test runner has Node, no network, and no dependency installation. '+HOSTING_GUIDANCE+' Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy. '+ARTIFACT_API_GUIDANCE})}).run(input)});
-    }finally{await admitted.close();}
+    const toolbox=githubToolbox({repository,api,repositories:{open:admitted.open}}),invocationProvider=provider.invocation();
+    try{return await runPrivateBokRequest({request,board:measureBokObjectStages(board,'board'),escrow,store,provider:invocationProvider,conversation,accountingMode:'invocation-v1',claimReceipt,admitThread:mirror?()=>measureBokStage('repository.admit',()=>admitted.admit()):undefined,limits,recoverAccepted:current=>recoverAcceptedHostedRevision({repositories,repository,request:current}),runAgent:async({model,conversation,...input})=>
+     bokRunner({runner:createAgent({model,toolbox,conversation,summaryModelId,maxCalls:limits.maxCalls??16,maxTokens:limits.maxTokens??8192,instructions:'You are bok, the board development assistant. Answer the explicit request. Each thread has its own persistent source repository. For static applications, provide package.json with a build script, explicit Node tests, and dist output. A requested self-contained HTML page can remain one published index.html; keep dependency-free build/test support in source and copy the page to dist/index.html, without adding a framework. Use finish_workspace when the requested edits are complete to run isolated Node tests, builds and browser scenarios; repair any failures before finishing. The isolated build/test runner has Node, no network, and no dependency installation. '+HOSTING_GUIDANCE+' Preserve the explicit expected states and activation sequences in the latest request; never change expected values to match incorrect behavior. Node test success alone does not verify browser behavior. Host validation saves accepted revisions; tools cannot alter permissions or deploy. '+ARTIFACT_API_GUIDANCE})}).run(input)});
+    }finally{invocationProvider.close();await admitted.close();}
    }))});
   return {address:server.address,artifactAddress:artifactsServer.address(),close,
    setPublicationDisabled:input=>publicationOperation(async()=>{await lease.assertHeld();return publication.setDisabled(input);})};

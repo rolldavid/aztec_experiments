@@ -251,11 +251,11 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   const history=admittedHistory??await conversation.load(input);assert.equal(typeof history?.assertCurrent,'function');
   historyGuard=history.assertCurrent;return history;
  }}):undefined;
- const guardedProvider={quote:(...args)=>provider.quote(...args),beforeDispatch:async()=>{
+ const guardedProvider={quote:(...args)=>provider.quote(...args),beforeDispatch:async(...args)=>{
   const final=await board.readRequest(request.postId);
   assert(final?.usable&&!final.replied&&final.requestId===request.requestId&&final.target===request.target&&final.pluginId===request.pluginId,'Invocation changed before provider execution');
   if(conversation){assert(historyGuard,'Conversation must be captured before billing');await historyGuard();}
-  await provider.beforeDispatch?.();
+  await provider.beforeDispatch?.(...args);
  },execute:(...args)=>provider.execute(...args)};
  const metering=privateBokMetering({provider:guardedProvider,escrow,store,identity,limits,accountingMode,claimReceipt});
  if(saved?.phase==='finished')return {status:'finished',replayed:false};

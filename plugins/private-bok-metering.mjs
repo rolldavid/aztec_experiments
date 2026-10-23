@@ -481,7 +481,7 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
    if(total()+amount(c.quote.maximum)>allowance())throw Error('Invocation allowance exceeded');
    // Preflight failures are known not to have dispatched a paid request. Only
    // the durable write immediately before execute crosses that boundary.
-   await reserved();await provider.beforeDispatch?.();
+   await reserved();await provider.beforeDispatch?.(quoteFor(c),amount(c.available));
    await setCall(id,{phase:'possibly-sent'});
    try{
     const result=await provider.execute(frozen,quoteFor(c)),b=billingFor(id,result?.billing);

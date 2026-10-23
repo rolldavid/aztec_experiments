@@ -277,8 +277,8 @@ test('workspace prerequisite feedback identifies repair without leaking arbitrar
  const {githubToolbox}=await import('../github-tools.mjs');const {createIsolatedExecution}=await import('../isolated-execution.mjs');
  const h=await fixture(t),output=path.join(h.root,'output');await fs.mkdir(output);
  const execution=createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:h.options.directory,outputRoot:output,docker:path.join(h.root,'must-not-run-docker')});
- const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:input=>execution.execute(input)});
- const session=await githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No API')}).open({threadId:id(1),id:id(1),postId:id(9)});t.after(()=>session.close());
+ const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:input=>execution.execute(input)});let workspace;
+ const session=await githubToolbox({repository:'owner/project',repositories:{open:async input=>(workspace=await manager.open(input))},api:async()=>assert.fail('No API')}).open({threadId:id(1),id:id(1),postId:id(9)});t.after(()=>session.close());
  await session.call('write_file',{path:'index.html',content:'<!doctype html><title>Standalone</title>'});
  for(const [content,code,expected] of [[undefined,'STATIC_PACKAGE_REQUIRED',/package.json/],['PRIVATE_PARSE_SENTINEL','STATIC_PACKAGE_INVALID',/valid JSON/],['{}','STATIC_BUILD_REQUIRED',/scripts.build/],[JSON.stringify({scripts:{build:'node build.cjs'}}),'STATIC_TEST_REQUIRED',/test file/]]){
   if(content!==undefined)await session.call('write_file',{path:'package.json',content});
@@ -286,11 +286,14 @@ test('workspace prerequisite feedback identifies repair without leaking arbitrar
  }
  await session.call('write_file',{path:'main.test.cjs',content:"require('node:test')('fixture',()=>{});"});
  let missing=await session.call('check_workspace',{});assert.equal(missing.requirement.code,'STATIC_BROWSER_TEST_REQUIRED');
- await session.call('write_file',{path:'browser-tests.json',content:'PRIVATE_PARSE_SENTINEL'});
+ await assert.rejects(session.call('write_file',{path:'browser-tests.json',content:'PRIVATE_PARSE_SENTINEL'}),/valid JSON/);
+ // The independent execution gate must still reject bad source not written by a tool.
+ await fs.writeFile(path.join(workspace.work,'browser-tests.json'),'PRIVATE_PARSE_SENTINEL');
  missing=await session.call('check_workspace',{});assert.equal(missing.requirement.code,'STATIC_BROWSER_TEST_INVALID');assert(!JSON.stringify(missing).includes('PRIVATE_PARSE_SENTINEL'));
  assert.deepEqual(missing.requirement.detail,{code:'BROWSER_JSON',path:'$',message:'Use valid JSON in browser-tests.json.'});
  const steps=Array.from({length:63},()=>({action:'click',selector:'button'}));steps.push({action:'reload'},{action:'expectVisible',selector:'body'});
- await session.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[{name:'use app',path:'index.html',steps}]})});
+ await assert.rejects(session.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[{name:'use app',path:'index.html',steps}]})}),/64 steps/);
+ await fs.writeFile(path.join(workspace.work,'browser-tests.json'),JSON.stringify({version:1,scenarios:[{name:'use app',path:'index.html',steps}]}));
  const excessive=await session.call('check_workspace',{});assert.equal(excessive.passed,false);assert.equal(excessive.phase,'input');
  assert.equal(excessive.requirement.code,'STATIC_BROWSER_TEST_INVALID');
  assert.deepEqual(excessive.requirement.detail,{code:'BROWSER_STEP_LIMIT',path:'scenarios[0].steps[64]',message:'Use at most 64 steps across all scenarios.'});
@@ -370,4 +373,23 @@ test('only known pure source prerequisites are reused until the source changes',
  const session=await h.open(1,1,manager);await h.checkout(session);
  await assert.rejects(session.check(),/Missing browser plan/);await assert.rejects(session.check(),/Missing browser plan/);assert.equal(checks,1);
  await fs.writeFile(path.join(session.work,'file.txt'),'edit');await assert.rejects(session.check(),/Missing browser plan/);assert.equal(checks,2);await session.close();
+});
+
+test('browser scenario patch keeps unchanged scenarios and validates whole plan before writing',async t=>{
+ const {githubToolbox}=await import('../github-tools.mjs');const h=await fixture(t);let validations=0;
+ const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:async({revision})=>{validations++;return {passed:true,revision,sourceDigest:'a'.repeat(64)};}});
+ const toolbox=githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No API')});
+ const s=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});t.after(()=>s.close());
+ const scenario=(name,n=2)=>({name,path:'index.html',steps:[{action:'reload'},...Array.from({length:n-1},()=>({action:'expectVisible',selector:'p'}))]});
+ const original={version:1,scenarios:[scenario('untouched'),scenario('replace')]};
+ assert.equal((await s.call('write_file',{path:'browser-tests.json',content:JSON.stringify(original)})).browserPlan.remainingSteps,60);
+ const result=await s.call('edit_browser_plan',{remove:[],replace:[{index:1,scenario:scenario('replacement',3)}],append:[scenario('new')]});
+ assert.equal(result.browserPlan.steps,7);assert.equal(result.browserPlan.remainingSteps,57);
+ const before=(await s.call('read_file',{path:'browser-tests.json'})).text;assert.deepEqual(JSON.parse(before).scenarios[0],original.scenarios[0]);
+ for(const args of [{remove:[0,0],replace:[],append:[]},{remove:[0],replace:[{index:0,scenario:scenario('bad')}],append:[]},{remove:[],replace:[],append:[scenario('too many',64)]}])await assert.rejects(s.call('edit_browser_plan',args));
+ assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,before);
+ await assert.rejects(s.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[scenario('over limit',65)]})}),/64 steps/);
+ await assert.rejects(s.call('write_file',{path:'browser-tests.json',content:'{bad JSON'}),/valid JSON/);
+ assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,before);
+ assert.equal((await s.call('finish_workspace',{})).passed,true);await s.accept();assert.equal(validations,1,'finish and acceptance share exact source validation');
 });

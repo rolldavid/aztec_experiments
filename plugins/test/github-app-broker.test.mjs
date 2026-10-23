@@ -10,7 +10,7 @@ const sha=b=>createHash('sha256').update(b).digest('hex'),git=(type,b)=>createHa
 const approvedPermissions=Object.fromEntries(['installation_repositories','actions','actions_variables','administration','artifact_metadata','checks','contents','statuses','deployments','discussions','environments','issues','merge_queues','packages','pages','pull_requests','repository_creation','repository_hooks','repository_projects','workflows'].map(name=>[name,'write']).concat([['metadata','read']]));
 const keys=generateKeyPairSync('rsa',{modulusLength:2048}),owner='labelled-bok-fixture',ownerId=123,appId=456,installationId=789;
 // Controlled GitHub protocol double: no account, credential discovery or network.
-async function fixture({verifyGit=false,templateMode=false,broadProfile=false,requestStepMs=0}={}){const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-app-'))),directory=path.join(root,'state'),artifactRoot=path.join(root,'artifacts');for(const d of [directory,artifactRoot])await fs.mkdir(d,{mode:0o700});const privateKeyFile=path.join(root,'app.pem');await fs.writeFile(privateKeyFile,keys.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});
+async function fixture({verifyGit=false,templateMode=false,broadProfile=false,requestStepMs=0,beforeRequest=async()=>{}}={}){const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-app-'))),directory=path.join(root,'state'),artifactRoot=path.join(root,'artifacts');for(const d of [directory,artifactRoot])await fs.mkdir(d,{mode:0o700});const privateKeyFile=path.join(root,'app.pem');await fs.writeFile(privateKeyFile,keys.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});
  const templateBody=Buffer.from('Bok template\n'),templateBlob=git('blob',templateBody),templateTree=git('tree',Buffer.concat([Buffer.from('100644 README.md\0'),Buffer.from(templateBlob,'hex')])),creationTemplate={repositoryId:654,fullName:owner+'/bootstrap',commit:'e'.repeat(40)};
  const calls=[],objects=new Map();let actionsEnabled=true,repo=null,head='1'.repeat(40),lost=null,absent=false,badInstallation=false,leak=false;
  let observed=Date.parse('2026-10-13T00:00:00Z');const now=()=>observed;
@@ -19,7 +19,7 @@ async function fixture({verifyGit=false,templateMode=false,broadProfile=false,re
  const fetchImpl=async(url,options)=>{
   observed+=requestStepMs;
   assert.equal(new URL(url).origin,'https://api.github.com');assert.equal(options.redirect,'error');assert.equal(options.credentials,'omit');assert(options.signal);assert.equal(options.headers['X-GitHub-Api-Version'],'2026-03-10');
-  const route=new URL(url).pathname,body=options.body===undefined?undefined:JSON.parse(options.body),method=options.method;calls.push({route,method,body});let out;
+  const route=new URL(url).pathname,body=options.body===undefined?undefined:JSON.parse(options.body),method=options.method;calls.push({route,method,body});await beforeRequest({route,method,body,directory});let out;
   if(leak)throw Error('SYNTHETIC_TOKEN_PRIVATE_RAW');
   if(route.startsWith('/app/')){const token=options.headers.Authorization.slice(7),[h,p,s]=token.split('.');assert(verify('RSA-SHA256',Buffer.from(h+'.'+p),keys.publicKey,Buffer.from(s,'base64url')));const claims=JSON.parse(Buffer.from(p,'base64url'));assert.equal(claims.iss,String(appId));assert(claims.exp-claims.iat<=600);
    if(method==='GET')out={id:installationId,app_id:appId,target_type:'User',account:{type:'User',id:badInstallation?999:ownerId,login:owner},suspended_at:null,repository_selection:'selected',permissions:broadProfile?structuredClone(approvedPermissions):{administration:'write',contents:'write',metadata:'read'}};
@@ -53,7 +53,7 @@ async function fixture({verifyGit=false,templateMode=false,broadProfile=false,re
 async function receipt(f,n=2,readRevision=null,contents={'app.cjs':'module.exports='+n,'asset.png':Buffer.from([0,255,n])}){const revision=String(n).repeat(40),outputDirectory=path.join(f.artifactRoot,'bok-static-'+randomUUID());await fs.mkdir(outputDirectory,{mode:0o700});const files=Object.entries(contents).map(([path,text])=>{const b=Buffer.from(text);return {path,sha256:sha(b),bytes:b.length,data:b.toString('base64')};}),manifest=files.map(({data,...x})=>x),source=JSON.stringify({schema:1,revision,manifest,files});await fs.writeFile(path.join(outputDirectory,'source-snapshot.json'),source,{mode:0o600});await fs.writeFile(path.join(outputDirectory,'cleanup.json'),JSON.stringify({ownedContainerAbsent:true}),{mode:0o600});return {repositoryId:'a'.repeat(64),threadId:'0x'+'b'.repeat(64),invocationId:'0x'+String(n).repeat(64),readRevision,acceptedRevision:revision,validation:{passed:true,testsPassed:true,buildPassed:true,testCount:1,revision,sourceDigest:sha(JSON.stringify(manifest)),sourceManifest:manifest,sourceArchiveSha256:sha(source),outputDirectory}};}
 test('disabled broker neither reads credentials nor calls GitHub',async()=>{let calls=0;const b=await createGitHubAppBroker({fetchImpl:()=>{calls++;}});await assert.rejects(b.sync({}),{code:'GITHUB_BROKER_DISABLED'});await assert.rejects(b.assertAvailable());assert.equal(calls,0);});
 test('exact source and binary private mirror maps distinct commit identities and advances non-forced parent',async()=>{const f=await fixture({verifyGit:true});try{const a=await receipt(f),one=await f.broker.sync(a);assert(one.mirrored&&one.remoteCommit!==one.acceptedRevision);assert(one.operatorUrl.startsWith('https://github.com/'));assert.equal(one.url,undefined);assert.equal(one.acceptedRevision,a.acceptedRevision);const two=await f.broker.sync(await receipt(f,3,a.acceptedRevision));assert.equal(two.remoteParent,one.remoteCommit);assert.equal(f.calls.filter(c=>c.route.endsWith('/repos')&&c.method==='POST').length,1);const before=f.calls.filter(c=>['PATCH','POST'].includes(c.method)&&!c.route.endsWith('/access_tokens')).length;assert.deepEqual(await f.broker.sync(a),one);assert.equal(f.calls.filter(c=>['PATCH','POST'].includes(c.method)&&!c.route.endsWith('/access_tokens')).length,before);const journal=await fs.readFile(path.join(f.directory,'github-app-state.json'),'utf8');assert(!journal.includes('synthetic')&&!journal.includes('PRIVATE KEY'));}finally{await f.close();}});
-for(const point of [['POST','/repos'],['PUT','/actions/permissions'],['POST','/blobs'],['POST','/trees'],['POST','/commits'],['PATCH','/git/refs/heads/main']])test('lost '+point[1]+' response reconciles exact original intent without retransmission',async()=>{const f=await fixture();try{const r=await receipt(f);f.lose(...point);await assert.rejects(f.broker.sync(r));const count=f.calls.filter(c=>c.method===point[0]&&c.route.endsWith(point[1])).length;await f.reopen();const result=await f.broker.sync(r);assert(result.mirrored);const after=f.calls.filter(c=>c.method===point[0]&&c.route.endsWith(point[1])).length;assert.equal(after,count+(point[1]==='/blobs'?1:0));}finally{await f.close();}});
+for(const point of [['POST','/repos'],['PUT','/actions/permissions'],['POST','/blobs'],['POST','/trees'],['POST','/commits'],['PATCH','/git/refs/heads/main']])test('lost '+point[1]+' response reconciles exact original intent without retransmission',async()=>{const f=await fixture();try{const r=await receipt(f);f.lose(...point);await assert.rejects(f.broker.sync(r));const count=f.calls.filter(c=>c.method===point[0]&&c.route.endsWith(point[1])).length;await f.reopen();const result=await f.broker.sync(r);assert(result.mirrored);const after=f.calls.filter(c=>c.method===point[0]&&c.route.endsWith(point[1])).length;assert.equal(after,count);}finally{await f.close();}});
 for(const point of [['POST','/repos'],['PUT','/actions/permissions'],['POST','/commits'],['PATCH','/git/refs/heads/main']])test('unknown '+point[1]+' remains unresolved without replay',async()=>{const f=await fixture();try{const r=await receipt(f);f.lose(...point,'absent');await assert.rejects(f.broker.sync(r));const count=f.calls.filter(c=>c.method===point[0]&&c.route.endsWith(point[1])).length;await f.reopen();await assert.rejects(f.broker.sync(r),{code:'GITHUB_BROKER_UNRESOLVED'});assert.equal(f.calls.filter(c=>c.method===point[0]&&c.route.endsWith(point[1])).length,count);}finally{await f.close();}});
 test('owner/install mismatch fails before token mint or repo writes',async()=>{const f=await fixture();try{f.badInstallation();await assert.rejects(f.broker.sync(await receipt(f)));assert.equal(f.calls.length,1);}finally{await f.close();}});
 test('unrelated existing repository is never adopted',async()=>{const f=await fixture();try{f.collide();await assert.rejects(f.broker.sync(await receipt(f)));assert(!f.calls.some(c=>c.route.endsWith('/repos')&&c.method==='POST'));}finally{await f.close();}});
@@ -329,7 +329,7 @@ for(const count of [512,513])test('pool source file limit '+count+' retains per-
  const f=await poolFixture(t),a=poolThread(3);await f.broker.ensureThread(a);const r={...await receipt(f,2,null,Object.fromEntries(Array.from({length:count},(_,n)=>['file-'+String(n).padStart(3,'0')+'.txt','content-'+n]))),...a},before=f.calls.length;
  if(count===513){await assert.rejects(f.broker.sync(r));assert.equal(f.calls.length,before);return;}
  assert((await f.broker.sync(r)).mirrored);const calls=f.calls.slice(before);assert(calls.length<=1064);assert.equal(calls.filter(c=>c.method==='POST'&&c.route.endsWith('/git/blobs')).length,512);
- for(let i=0;i<calls.length;i++)if(calls[i].method!=='GET'&&!calls[i].route.endsWith('/access_tokens'))assert.equal(calls[i-1].route,'/repos/'+f.pool[0].fullName+'/actions/permissions');
+ let permissions=0,writes=0;for(const call of calls){if(call.route==='/repos/'+f.pool[0].fullName+'/actions/permissions')permissions++;if(call.method!=='GET'&&!call.route.endsWith('/access_tokens')){writes++;assert(permissions>writes,'each write has a distinct preceding Actions check, plus the initial identity check');}}assert.equal(permissions,writes+1);
 });
 
 test('pool appends new slots without changing prior admission or allocation',async t=>{
@@ -348,4 +348,24 @@ test('publication follows completed requests beyond the former overall broker de
  const f=await fixture({requestStepMs:30000});
  try{const result=await f.broker.sync(await receipt(f));assert.equal(result.mirrored,true);assert(f.calls.length>4);}
  finally{await f.close();}
+});
+
+
+test('immutable blob uploads overlap at most three, each after its durable intent',async()=>{
+ let active=0,peak=0;const f=await fixture({beforeRequest:async({route,method,body,directory})=>{
+  if(method!=='POST'||!route.endsWith('/git/blobs'))return;
+  active++;peak=Math.max(peak,active);
+  try{const journal=JSON.parse(await fs.readFile(path.join(directory,'github-app-state.json'))),steps=Object.values(Object.values(journal.repositories)[0].revisions)[0].steps;
+   assert(Object.values(steps).some(x=>!x.done&&x.identity===sha(JSON.stringify(['POST',route,body]))),'intent must be persisted before sending');
+   await new Promise(r=>setTimeout(r,20));
+  }finally{active--;}
+ }});
+ try{assert((await f.broker.sync(await receipt(f,2,null,Object.fromEntries(Array.from({length:7},(_,i)=>['f'+i+'.txt','value'+i]))))).mirrored);assert.equal(peak,3);assert.equal(active,0);}finally{await f.close();}
+});
+test('one failed parallel blob drains all admitted uploads before broker release',async()=>{
+ let active=0,started=0;const f=await fixture({beforeRequest:async({route,method})=>{
+  if(method!=='POST'||!route.endsWith('/git/blobs'))return;
+  const n=started++;active++;try{await new Promise(r=>setTimeout(r,n?30:1));if(n===0)throw Error('synthetic lost reply');}finally{active--;}
+ }});
+ try{await assert.rejects(f.broker.sync(await receipt(f,2,null,Object.fromEntries(Array.from({length:6},(_,i)=>['f'+i+'.txt','value'+i])))));assert.equal(started,3);assert.equal(active,0);assert(!f.calls.some(c=>c.method==='POST'&&c.route.endsWith('/git/trees')));}finally{await f.close();}
 });

@@ -117,3 +117,40 @@ test('concurrent quotes share an in-flight catalogue but later quotes refresh pr
  const provider=veniceMeteredProvider({client}),a=provider.quote(input,1000000n),b=provider.quote(input,1000000n);
  await entered;assert.equal(requests,1);release();await Promise.all([a,b]);await provider.quote(input,1000000n);assert.equal(requests,2);
 });
+
+function scopedFixture(balanceUsd=10){
+ let balances=0,catalogues=0,completions=0;const catalog={data:[{id:'kimi-k2-5',model_spec:structuredClone(spec)}]};
+ const client={balance:async()=>{balances++;return {canConsume:true,balanceUsd};},json:async path=>{if(path.endsWith('/models')){catalogues++;return catalog;}completions++;return valid();}};
+ const provider=veniceMeteredProvider({client});return {provider,client,catalog,counts:()=>({balances,catalogues,completions})};
+}
+test('admitted invocation reuses immutable catalogue and local actual-credit ledger',async()=>{
+ const f=scopedFixture(),p=f.provider.invocation();
+ const q1=await p.quote(input,1000000n),r1=await p.execute(input,q1);f.catalog.data[0].model_spec.pricing.input.usd=.7;
+ const q2=await p.quote(input,1000000n-r1.charge);assert.equal(q2.inputPrice,q1.inputPrice);await p.execute(input,q2);p.close();
+ assert.deepEqual(f.counts(),{balances:1,catalogues:1,completions:2});await assert.rejects(p.quote(input,1000000n));
+ const next=f.provider.invocation();const q3=await next.quote(input,1000000n);assert.notEqual(q3.inputPrice,q1.inputPrice);next.close();assert.equal(f.counts().balances,2);
+});
+test('concurrent invocation admissions cannot allocate the same operator credits',async()=>{
+ const f=scopedFixture(1),a=f.provider.invocation(),b=f.provider.invocation();
+ const results=await Promise.allSettled([a.quote(input,750000n),b.quote(input,750000n)]);assert.equal(results.filter(x=>x.status==='fulfilled').length,1);
+ a.close();b.close();const c=f.provider.invocation();await c.quote(input,750000n);c.close();
+});
+test('unknown provider outcome is never reused as available credit or replayed in its scope',async()=>{
+ const f=scopedFixture(1),p=f.provider.invocation(),q=await p.quote(input,1000000n);f.client.json=async()=>{throw Error('lost reply');};
+ await assert.rejects(p.execute(input,q));await assert.rejects(p.execute(input,q),/unavailable/);p.close();
+ f.client.json=async()=>f.catalog;const next=f.provider.invocation();await assert.rejects(next.quote(input,1000000n),/funding/);next.close();
+});
+
+test('fresh scope admits an original known-unsent quote before the durable dispatch boundary',async()=>{
+ const f=scopedFixture(),first=f.provider.invocation(),q=await first.quote(input,1000000n);first.close();
+ const resumed=f.provider.invocation();await resumed.beforeDispatch(q,1000000n);await resumed.execute(input,q);resumed.close();
+ assert.deepEqual(f.counts(),{balances:2,catalogues:1,completions:1},'resumption uses the original quote, one admission and one actual execution');
+});
+test('insufficient credits for an original quote fail during pre-dispatch, before execute',async()=>{
+ const f=scopedFixture(.1),scope=f.provider.invocation();await assert.rejects(scope.beforeDispatch({maximum:200000n},1000000n),/funding/);scope.close();assert.equal(f.counts().completions,0);
+});
+test('scope cannot close or dispatch twice while a paid response is outstanding',async()=>{
+ const f=scopedFixture(),p=f.provider.invocation(),q=await p.quote(input,1000000n);let release;const blocked=new Promise(r=>release=r),original=f.client.json;
+ f.client.json=async(...args)=>{await blocked;return original(...args);};const pending=p.execute(input,q);
+ await assert.rejects(p.execute(input,q),/unavailable/);assert.throws(()=>p.close(),/still executing/);release();await pending;p.close();assert.equal(f.counts().completions,1);
+});

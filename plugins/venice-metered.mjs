@@ -30,6 +30,7 @@ function summaryWithoutReasoning(input){
 }
 export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,maxTopUpUsd=5}){
  let readiness=Promise.resolve(),catalogue;
+ const holds=new Map();
  // Share only concurrent catalogue reads, never cached prices across calls.
  const models=()=>catalogue??=(measureBokStage('provider.catalogue',()=>client.json('/api/v1/models')).finally(()=>{catalogue=undefined;}));
  const ensureCredits=maximum=>{
@@ -43,6 +44,58 @@ export function veniceMeteredProvider({client,model='kimi-k2-5',autoTopUp=false,
   return check;
  };
  return {
+  // One admitted request owns one catalogue snapshot and credit allocation.
+  // Concurrent requests cannot allocate the same operator credits. The actual
+  // validated charge releases only the unused part of each quoted maximum.
+  invocation(){
+   let budget,remaining=0n,closed=false,uncertain=0n,admission,catalogueSnapshot,inflight=false;
+   const key=Symbol('provider invocation');
+   const scopedClient={
+    json:(path,options)=>path==='/api/v1/models'?(catalogueSnapshot??=client.json(path,options).then(structuredClone)):client.json(path,options),
+    balance:async()=>{
+     if(closed)throw Error('Provider invocation closed');
+     if(!admission){
+      admission=readiness.then(async()=>{
+       const balance=await client.balance(),held=[...holds.values()].reduce((a,b)=>a+b,0n);
+       if(!balance.canConsume||!Number.isFinite(balance.balanceUsd)||balance.balanceUsd<0||BigInt(Math.floor(balance.balanceUsd*1e6))-held<budget)throw Error('Operator Venice wallet needs funding');
+       if(closed)throw Error('Provider invocation closed');
+       remaining=budget;holds.set(key,remaining);
+      });
+      readiness=admission.catch(()=>{});
+     }
+     await admission;return {canConsume:!closed,balanceUsd:Number(remaining)/1e6};
+    },
+   };
+   const scoped=veniceMeteredProvider({model,autoTopUp:false,client:scopedClient});
+   return {
+    async beforeDispatch(quote,available){
+     if(closed||inflight||uncertain)throw Error('Provider invocation unavailable');
+     if(budget===undefined){if(typeof available!=='bigint'||available<=0n||available>BigInt(Number.MAX_SAFE_INTEGER))throw Error('Invalid invocation credit budget');budget=available;}
+     await scopedClient.balance();
+     if(typeof quote?.maximum!=='bigint'||quote.maximum<=0n||quote.maximum>remaining)throw Error('Provider invocation credits unavailable');
+    },
+    async quote(input,available){
+     if(closed||inflight||uncertain)throw Error('Provider invocation unavailable');
+     if(typeof available!=='bigint'||available<=0n||available>BigInt(Number.MAX_SAFE_INTEGER))throw Error('Invalid invocation credit budget');
+     if(budget===undefined)budget=available;
+     if(available>budget)throw Error('Invocation credit budget increased');
+     return scoped.quote(input,available);
+    },
+    async execute(input,quote){
+     if(closed||inflight||uncertain||!admission||quote.maximum>remaining)throw Error('Provider invocation credits unavailable');
+     inflight=true;
+     try{await admission;const result=await scoped.execute(input,quote);remaining-=result.charge;holds.set(key,remaining);return result;}
+     catch(error){uncertain=quote.maximum;throw error;}
+     finally{inflight=false;}
+    },
+    close(){
+     if(inflight)throw Error('Provider invocation is still executing');closed=true;
+     // Never reallocate the maximum of a possibly charged request. Existing
+     // billing reconciliation owns that outcome; this scope cannot replay it.
+     if(uncertain)holds.set(key,uncertain);else holds.delete(key);
+    },
+   };
+  },
   async quote(input,available){
    const modelId=input.modelId??model;
    const catalog=await models();

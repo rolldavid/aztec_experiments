@@ -240,3 +240,29 @@ test('new empty generated repository seeds its state without checkout or file re
  await createAgent({toolbox,instructions:'Build',model:{complete:async value=>{input=value;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',text:'Build'});
  assert(input.messages.some(row=>row.role==='user'&&row.content.includes('repository is empty')));
 });
+
+test('explicit final workspace check accepts without another paid turn',async()=>{
+ let calls=0,accepted=0,closed=0;const tool={function:{name:'finish_workspace'}};
+ const model={complete:async()=>{assert.equal(++calls,1);return {message:{role:'assistant',tool_calls:[{id:'f',function:{name:'finish_workspace',arguments:'{}'}}]}};}};
+ const toolbox={open:async()=>({definitions:[tool],call:async()=>({passed:true}),accept:async()=>{accepted++;return {repositoryId:'r',acceptedRevision:'a',publication:{latestUrl:'https://apps.example/app',latestSourceUrl:'https://apps.example/source'}};},close:async()=>{closed++;}})};
+ const result=await createAgent({model,toolbox,instructions:'Help'}).run({text:'Change app',id:'a',postId:'b'});
+ assert.equal(calls,1);assert.equal(accepted,1);assert.equal(closed,1);assert.match(result.replyText,/Application published/);
+});
+test('failed final check returns for repair before one successful acceptance',async()=>{
+ let calls=0,accepted=0;
+ const toolbox={open:async()=>({definitions:[{function:{name:'finish_workspace'}}],call:async()=>({passed:calls===2}),accept:async()=>{accepted++;},close:async()=>{}})};
+ const model={complete:async input=>{if(++calls===2)assert.match(input.messages.at(-1).content,/"passed":false/);return {message:{role:'assistant',tool_calls:[{id:'f'+calls,function:{name:'finish_workspace',arguments:'{}'}}]}};}};
+ await createAgent({model,toolbox,instructions:'Help'}).run({text:'Change app',id:'a',postId:'b'});assert.equal(calls,2);assert.equal(accepted,1);
+});
+for(const names of [['finish_workspace','edit_file'],['finish_workspace','finish_workspace']])test('finish must be unique and last before any tool mutation '+names,async()=>{
+ const model={complete:async()=>({message:{role:'assistant',tool_calls:names.map((name,i)=>({id:String(i),function:{name,arguments:'{}'}}))}})};
+ const toolbox={open:async()=>({definitions:[],call:()=>assert.fail('No partial tools'),accept:()=>assert.fail('No publication'),close:async()=>{}})};
+ await assert.rejects(createAgent({model,toolbox,instructions:'Help'}).run({text:'Change app',id:'a',postId:'b'}),{code:'MODEL_TOOL_RESPONSE_INVALID'});
+});
+
+test('failed edit cannot be hidden by a passing finish later in the same batch',async()=>{
+ let calls=0,checks=0,accepts=0;
+ const model={complete:async()=>{calls++;return {message:{role:'assistant',tool_calls:[{id:'edit',function:{name:'edit_file',arguments:'{}'}},{id:'finish',function:{name:'finish_workspace',arguments:'{}'}}]}};}};
+ const toolbox={open:async()=>({definitions:[{function:{name:'finish_workspace'}}],call:async name=>{if(name==='edit_file')throw Error('Exact edit missing');checks++;return {passed:true};},accept:async()=>{accepts++;},close:async()=>{}})};
+ const r=await createAgent({model,toolbox,instructions:'Help',maxCalls:1}).run({text:'Change app',id:'a',postId:'b'});assert.equal(checks,0);assert.equal(accepts,0);assert.match(r.replyText,/No update was published/);
+});

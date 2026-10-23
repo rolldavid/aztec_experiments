@@ -9,10 +9,10 @@ const methods={
  board:['readRequest'],conversation:['load','assertCurrent'],
 };
 const stages=new Set([
- 'request.total','repository.admit',
+ 'request.total','repository.admit','publication.static','publication.mirror',
  ...Object.entries(methods).flatMap(([prefix,names])=>names.map(name=>prefix+'.'+name)),
  'agent.history','agent.open','agent.context','agent.summary','agent.model','agent.accept','agent.close',
- 'tool.list_files','tool.read_file','tool.write_file','tool.edit_file','tool.read_pr','tool.create_pr','tool.check_workspace','tool.read_thread_messages','tool.other',
+ 'tool.list_files','tool.read_file','tool.write_file','tool.edit_file','tool.edit_browser_plan','tool.finish_workspace','tool.read_pr','tool.create_pr','tool.check_workspace','tool.read_thread_messages','tool.other',
  'provider.catalogue','provider.credits','provider.balance','provider.topup','provider.completion',
 ]);
 export function withBokTiming(requestId,operation,{emit=record=>console.info(JSON.stringify(record))}={}){

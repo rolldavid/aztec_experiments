@@ -1,13 +1,25 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {browserPlanDiagnostic} from './browser-validation.mjs';
+import {browserPlanDiagnostic,validateBrowserPlan} from './browser-validation.mjs';
 import {STATIC_SOURCE_REQUIREMENTS} from './isolated-execution.mjs';
 import {repositoryGit} from './thread-repositories.mjs';
 const trustedCommand=(command,args,options)=>{if(command!=='git')throw Error('Unsupported repository command');return repositoryGit(args,options);};
 const definition=(name,description,properties,required=Object.keys(properties))=>({type:'function',function:{name,description,parameters:{type:'object',properties,required,additionalProperties:false}}});
 const string={type:'string'};
 const pathKey=name=>name.normalize('NFC').toLowerCase();
+function browserPlanSummary(plan){
+ const count=Array.isArray(plan?.scenarios)?plan.scenarios.reduce((n,s)=>n+(Array.isArray(s?.steps)?s.steps.length:0),0):null;
+ try{validateBrowserPlan(plan);}catch(error){const d=browserPlanDiagnostic(error.browserPlan);if(d)throw Error(d.message+' At '+d.path+'.'+(count===null?'':' Proposed total: '+count+' steps; limit: 64.')+' File unchanged.');throw error;}
+ const steps=count;
+ return {steps,remainingSteps:64-steps,scenarios:plan.scenarios.map((s,index)=>({index,name:s.name,steps:s.steps.length}))};
+}
+function browserPlanText(text){
+ let plan;try{plan=JSON.parse(text);}catch{throw Error('Use valid JSON in browser-tests.json.');}
+ return browserPlanSummary(plan);
+}
+const scenarioSchema={type:'object',properties:{name:{type:'string'},path:{type:'string'},steps:{type:'array',minItems:1,maxItems:64,items:{type:'object'}}},required:['name','path','steps'],additionalProperties:false};
+
 
 /** GitHub implementation of the agent tool API. Writes stay in a fresh branch.
  * API transport is supplied by the host; no token enters the working directory.
@@ -83,6 +95,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       definition('list_files','List current workspace files, including uncommitted edits',{prefix:string}),
       definition('read_file','Read a UTF-8 repository file',{path:string}),
       definition('write_file','Write a UTF-8 file in the isolated checkout',{path:string,content:string}),
+      definition('edit_browser_plan','Change only selected browser-tests.json scenarios. Indices refer to the current plan. Keep existing scenarios unless the requested change needs them changed. The complete resulting plan is checked before writing; returns the exact 64-step budget. Empty arrays leave other scenarios unchanged.',{remove:{type:'array',maxItems:8,items:{type:'integer',minimum:0,maximum:7}},replace:{type:'array',maxItems:8,items:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:7},scenario:scenarioSchema},required:['index','scenario'],additionalProperties:false}},append:{type:'array',maxItems:8,items:scenarioSchema}}),
       definition('edit_file','Replace one exact occurrence in an existing UTF-8 file. old_text must be nonempty and unique; use enough unchanged context. Prefer this for small changes instead of rewriting whole files.',{path:string,old_text:string,new_text:string}),
       definition('read_pr','Read a PR in this repository',{number:{type:'integer',minimum:1}}),
       definition('create_pr','Publish current edits as a new pull request; never merge',{title:string,body:string}),
@@ -90,10 +103,11 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
     return {
       privateSource:!!workspace?.connection,
       sourceRevision:workspace&&!workspace.connection?workspace.readRevision:undefined,
-      definitions:workspace?[...definitions.filter(x=>x.function.name!=='create_pr'&&(!workspace.connection||x.function.name!=='read_pr')),definition('check_workspace','Run isolated Node tests, static build and mandatory browser scenarios under the real hosting policy for current source; repair failures before finishing',{})]:definitions,
+      definitions:workspace?[...definitions.filter(x=>x.function.name!=='create_pr'&&(!workspace.connection||x.function.name!=='read_pr')),definition('check_workspace','Run isolated Node tests, static build and mandatory browser scenarios under the real hosting policy for current source; repair failures before finishing',{}),definition('finish_workspace','Use as the final tool call once the requested edits are complete. Run the same mandatory isolated checks and finish immediately if they pass. Failures return for repair; no extra completion message is needed.',{})]:definitions,
       summary:reason=>workspace?.connection?'Connected repository work did not publish a pull request.':(workspace?reason:reason+(prUrl?' PR: '+prUrl:' No PR was published.')).slice(0,900),
       async call(name,args){
-        if(name==='check_workspace'&&workspace){
+        if((name==='check_workspace'||name==='finish_workspace')&&workspace){
+          if(!args||Object.keys(args).length)throw Error('Workspace checks take no arguments');
           await ensureFiles();let result;try{result=await workspace.check();}catch(error){if(error.code!=='STATIC_FAILED'||!error.result)throw error;result=error.result;}
           return {passed:result.passed,revision:result.revision,sourceDigest:result.sourceDigest,phase:result.phase,log:result.log?.slice(-12000),logTruncated:(result.log?.length??0)>12000,...(Object.hasOwn(STATIC_SOURCE_REQUIREMENTS,result.requirement)?{requirement:{code:result.requirement,message:STATIC_SOURCE_REQUIREMENTS[result.requirement],...(result.requirement==='STATIC_BROWSER_TEST_INVALID'&&browserPlanDiagnostic(result.browserPlan)?{detail:browserPlanDiagnostic(result.browserPlan)}:{})}}:{})};
         }
@@ -117,8 +131,18 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
           }
           return {files:current.slice(0,500),truncated:current.length>500};
         }
-        if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');return {text:await fs.readFile(file,'utf8')};}
-        if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);if(workspace)await workspace.retain();return {written:args.path};}
+        if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');const text=await fs.readFile(file,'utf8');let browserPlan;if(path.relative(work,file)==='browser-tests.json')try{browserPlan=browserPlanText(text);}catch{/* Invalid source remains readable for repair. */}return {text,...(browserPlan?{browserPlan}:{})};}
+        if(name==='edit_browser_plan'){
+          if(!args||Object.keys(args).sort().join()!=='append,remove,replace'||['append','remove','replace'].some(k=>!Array.isArray(args[k])||args[k].length>8))throw Error('Invalid browser scenario edits');
+          await ensureFiles();const file=await safe('browser-tests.json');const stat=await fs.stat(file);if(!stat.isFile()||stat.size>65536)throw Error('Browser plan exceeds 64 KiB');
+          const plan=JSON.parse(await fs.readFile(file,'utf8'));browserPlanSummary(plan);const used=new Set();
+          const index=n=>{if(!Number.isInteger(n)||n<0||n>=plan.scenarios.length||used.has(n))throw Error('Scenario index must exist and occur once');used.add(n);};
+          for(const n of args.remove)index(n);const replacements=new Map();
+          for(const row of args.replace){if(!row||Object.keys(row).sort().join()!=='index,scenario')throw Error('Invalid scenario replacement');index(row.index);replacements.set(row.index,row.scenario);}
+          const removed=new Set(args.remove),next={...plan,scenarios:plan.scenarios.flatMap((s,i)=>removed.has(i)?[]:[replacements.get(i)??s]).concat(args.append)};
+          const browserPlan=browserPlanSummary(next);await fs.writeFile(file,JSON.stringify(next,null,2)+'\n');if(workspace)await workspace.retain();return {edited:'browser-tests.json',browserPlan};
+        }
+        if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');const browserPlan=path.relative(work,file)==='browser-tests.json'?browserPlanText(args.content):undefined;await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);if(workspace)await workspace.retain();return {written:args.path,...(browserPlan?{browserPlan}:{})};}
         if(name==='edit_file'){
           if(!args||Object.keys(args).sort().join()!=='new_text,old_text,path'||typeof args.old_text!=='string'||!args.old_text||typeof args.new_text!=='string'||
             !args.old_text.isWellFormed()||!args.new_text.isWellFormed()||Buffer.byteLength(args.old_text)>100000||Buffer.byteLength(args.new_text)>100000)throw Error('Invalid exact edit');
@@ -131,7 +155,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
           if(Buffer.byteLength(next)>100000)throw Error('File too large');
           // All matching and size checks precede the single mutation. The owned
           // session executes tools serially; retain the exact resulting revision.
-          await fs.writeFile(file,next);if(workspace)await workspace.retain();return {edited:args.path};
+          const browserPlan=path.relative(work,file)==='browser-tests.json'?browserPlanText(next):undefined;await fs.writeFile(file,next);if(workspace)await workspace.retain();return {edited:args.path,...(browserPlan?{browserPlan}:{})};
         }
         if(name==='read_pr'){
           if(workspace?.connection)throw Error('Connected repository PR reads are not exposed');
