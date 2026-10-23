@@ -1,0 +1,237 @@
+{
+  "request": "Prevent generated apps assuming unavailable hosting capabilities",
+  "status": "complete; published and ready",
+  "sourceCommit": "9a10e11ecd6a6ef0c5110e128b4d627a763979b6",
+  "completedAt": "2026-10-23T11:38:15.710Z",
+  "component": {
+    "snapshot": "aa1cd51f0a4dc02a947198bf9adcef9bbae7d7e4aedbe0166d9c462fff05ad86",
+    "source": "/opt/rolling-bok-browser-qualification/aa1cd51f0a4dc02a947198bf9adcef9bbae7d7e4aedbe0166d9c462fff05ad86",
+    "hashes": {
+      "plugins/hosting-policy.mjs": "9cc6aa643008be0830e2938d7c40986f2f211edb5b557250312699de6708c463",
+      "plugins/browser-validation.mjs": "f62c9873a5ba940165557025a9033cc750379fdeadf7bd0c1425222bf21e346a",
+      "plugins/isolated-execution.mjs": "e9889fb270bf4b4ea244766211bc7fe1197ec7db4b9108eda41afe74e2feda46",
+      "deploy/bok-browser-seccomp.json": "322b86b4f7f5b597ed6a9c2cfd6193a4b249a51c8bc9cfba8ff1a485070b24e8",
+      "plugins/test/browser-executor-qualification.mjs": "55d0b403586b21f6473ebd213ca89a5083db8426fb9294021d5177677da982a7"
+    },
+    "exitCode": 0,
+    "stderr": "",
+    "result": {
+      "passed": true,
+      "image": "sha256:3d3169b41e9cc39b6db208b733f3f9339fd8ecbc7260612a420b663c3cf77222",
+      "seccompSha256": "322b86b4f7f5b597ed6a9c2cfd6193a4b249a51c8bc9cfba8ff1a485070b24e8",
+      "results": [
+        {
+          "name": "working fragment state",
+          "accepted": true,
+          "browser": {
+            "passed": true,
+            "browserVersion": "153.0.8010.12",
+            "checks": 16,
+            "artifactSha256": "e133c032948bcca00266b911697a8993602fee7a8cca65ce3d7946901289cd27",
+            "planSha256": "aab7b76863de60d39f17d3689abbfcd80b31e067d47442740ae6c93a4859eda0",
+            "policyHash": "bf234b237bb7f3c9b80d4b2ff9fe5658722faa5f8b458646d79e2270b84d6b47"
+          },
+          "image": "sha256:3d3169b41e9cc39b6db208b733f3f9339fd8ecbc7260612a420b663c3cf77222",
+          "durationMs": 2334,
+          "ownedContainersAbsent": true
+        },
+        {
+          "name": "startup storage",
+          "accepted": false,
+          "phase": "browser",
+          "diagnostic": "TAP version 13\n# Subtest: labelled passing Node boundary fixture\nok 1 - labelled passing Node boundary fixture\n  ---\n  duration_ms: 0.680968\n  type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 46.986873\nBrowser validation: 1280px / load index.html: Failed to read the 'localStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.\n",
+          "durationMs": 1188,
+          "ownedContainersAbsent": true
+        },
+        {
+          "name": "interaction storage",
+          "accepted": false,
+          "phase": "browser",
+          "diagnostic": "TAP version 13\n# Subtest: labelled passing Node boundary fixture\nok 1 - labelled passing Node boundary fixture\n  ---\n  duration_ms: 0.655095\n  type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 47.629739\nBrowser validation: 1280px / exercise: Failed to read the 'localStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.\n",
+          "durationMs": 1421,
+          "ownedContainersAbsent": true
+        }
+      ]
+    }
+  },
+  "localChecks": {
+    "browserTests": 19,
+    "browserTestsPassed": 19,
+    "integrationChecks": "225 passed across focused integration suite with corrected thread prerequisite test; 15 opt-in checks skipped. Final browser-only rerun adds 2 cases for 19 total.",
+    "negativeCoverage": [
+      "startup storage",
+      "click-only storage",
+      "native dialog",
+      "worker",
+      "missing control actions",
+      "duplicate anonymous controls",
+      "absolute internal links",
+      "popup attributes",
+      "query-resource routing mismatch",
+      "unhandled offline API",
+      "absent or mismatched publication receipt/policy/artifact/plan"
+    ]
+  },
+  "review": "network_upgrade_check approved final source and deployment documentation; final exact executor snapshot passed",
+  "limitations": "Checks exercised declared workflows and discovered control coverage under current policy, not every JavaScript path, external service or browser engine.",
+  "deployment": {
+    "observedAt": "2026-10-23T11:46:33.301373+00:00",
+    "publication": {
+      "commit": "9a10e11ecd6a6ef0c5110e128b4d627a763979b6",
+      "source": "/opt/rolling-bok/releases/9a10e11ecd6a6ef0c5110e128b4d627a763979b6",
+      "previousSource": "/opt/rolling-bok/releases/a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5",
+      "sourcePinSha256": "3dd1357e61e0fef3b2983f8efb64340840d787544b61cd4a923a1d624f6c8a07",
+      "sourceFileCount": 639,
+      "image": "sha256:3d3169b41e9cc39b6db208b733f3f9339fd8ecbc7260612a420b663c3cf77222",
+      "qualificationSnapshot": "aa1cd51f0a4dc02a947198bf9adcef9bbae7d7e4aedbe0166d9c462fff05ad86",
+      "files": {
+        "plugins/artifact-api.mjs": "ceac855cc5673658eee64b0819bf6e8b7f4ee1e8234bc91d388ea2319ddde9dc",
+        "plugins/browser-validation.mjs": "f62c9873a5ba940165557025a9033cc750379fdeadf7bd0c1425222bf21e346a",
+        "plugins/github-tools.mjs": "38f3a676ead317bc9624b103de69a4a29d9331c1a07da1df838218a6135f7e31",
+        "plugins/hosting-policy.mjs": "9cc6aa643008be0830e2938d7c40986f2f211edb5b557250312699de6708c463",
+        "plugins/isolated-execution.mjs": "e9889fb270bf4b4ea244766211bc7fe1197ec7db4b9108eda41afe74e2feda46",
+        "plugins/main.mjs": "b40ac12c90af87b5536b5b93de4e58ab97cddec0ad11c24ffd8e47be9e301a1f",
+        "plugins/static-publication.mjs": "0e01650c79cb8e3306a0346e712fda29df5e64cde2e0540777668de5a45d30e6",
+        "deploy/bok-browser-seccomp.json": "322b86b4f7f5b597ed6a9c2cfd6193a4b249a51c8bc9cfba8ff1a485070b24e8",
+        "deploy/bok-browser.Dockerfile": "98d220f04b631aa98d0b378100e1a828cb5852a1de3557f38d61fff18142b050",
+        "deploy/BOK_BROWSER_VALIDATION.md": "fafda05c56c58188cae1658f1b4e5f4cfe36167c5ce58a4bd36edc1da44c43bb"
+      },
+      "oldPid": "222075",
+      "oldProxyPid": "222076",
+      "status": "started",
+      "newPid": "227057",
+      "newProxyPid": "227059",
+      "unitSha256": "fabff489d3368a7cd96f99ccdf4077820bb0958500b5f61df284d19148254610",
+      "statePreserved": true
+    },
+    "bokHealth": {
+      "status": "ready",
+      "active": 0,
+      "lastFailure": null,
+      "lastSuccess": null
+    },
+    "sourcePinsVerified": true,
+    "services": [
+      {
+        "unit": "board-prover-proxy.service",
+        "MainPID": "566049",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "unit": "board-prover.service",
+        "MainPID": "565979",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "unit": "rolling-application-proxy.service",
+        "MainPID": "568553",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "unit": "rolling-application.service",
+        "MainPID": "567540",
+        "NRestarts": "31",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "unit": "rolling-moderator.service",
+        "MainPID": "567551",
+        "NRestarts": "31",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "unit": "rolling-node.service",
+        "MainPID": "561964",
+        "NRestarts": "69",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "unit": "rolling-query.service",
+        "MainPID": "565186",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "unit": "rolling-bok-artifact-proxy.service",
+        "MainPID": "227059",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      {
+        "unit": "rolling-bok-testnet.service",
+        "MainPID": "227057",
+        "NRestarts": "0",
+        "ExecMainStatus": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    ],
+    "public": {
+      "artifact": {
+        "status": 200,
+        "sha256": "31dd18b10de8ac81f3ae24f0fd1b58d9aa702c16f40908394fc2ddc1caa19eaa",
+        "headers": {
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "no-referrer",
+          "Access-Control-Allow-Origin": null,
+          "Cross-Origin-Resource-Policy": "cross-origin",
+          "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: https://dy2q03rao3se7.cloudfront.net; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors https://d30njln0kead8n.cloudfront.net; sandbox allow-scripts",
+          "Permissions-Policy": "camera=(), microphone=(), geolocation=(), clipboard-read=(), clipboard-write=(), display-capture=(), fullscreen=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), midi=(), screen-wake-lock=(), xr-spatial-tracking=()"
+        },
+        "headersMatch": false,
+        "containsDailyThree": true
+      },
+      "opaqueOriginRequest": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff",
+          "Referrer-Policy": "no-referrer",
+          "Access-Control-Allow-Origin": "*",
+          "Cross-Origin-Resource-Policy": "cross-origin",
+          "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: https://dy2q03rao3se7.cloudfront.net; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors https://d30njln0kead8n.cloudfront.net; sandbox allow-scripts",
+          "Permissions-Policy": "camera=(), microphone=(), geolocation=(), clipboard-read=(), clipboard-write=(), display-capture=(), fullscreen=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), midi=(), screen-wake-lock=(), xr-spatial-tracking=()"
+        },
+        "headersMatch": true
+      },
+      "boardStatus": 200,
+      "prover": {
+        "ready": true,
+        "proofs": "real",
+        "queue": {
+          "jobs": 0,
+          "bytes": 0,
+          "running": false,
+          "submitted": 12,
+          "completed": 12,
+          "failed": 0
+        },
+        "query": {
+          "enabled": true,
+          "ready": true
+        }
+      }
+    },
+    "corsNote": "CloudFront omits Access-Control-Allow-Origin on ordinary navigation and returns * for Origin:null. The opaque-origin request matches the shared policy. This is pre-existing conditional edge behavior."
+  }
+}

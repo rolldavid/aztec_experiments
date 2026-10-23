@@ -9843,19 +9843,19 @@
   },
   "current_operating_request": {
     "id": "G21-bok-browser-contract-20261023",
-    "status": "active",
+    "status": "complete",
     "owner": "root",
     "branch": "codex/rolling-chat-account-ux",
-    "at": "2026-10-23T10:59:55.315116+00:00",
+    "at": "2026-10-23T11:46:33.301373+00:00",
     "request": "Eliminate generated-app assumptions about unsupported hosting permissions through shared policy and browser validation before publication.",
     "scope": [
-      "Stable Aztec6.0.0 on canonical Sepolia rollup version679261766",
-      "Fresh application contracts, actors and state; no migration, recovery or archive work",
+      "Bok authoring guidance, isolated browser validation and static publication",
+      "Current hosting policy and declared interaction coverage",
       "Existing core and Bok hosts and public routes",
       "Persistent services within existing monthly budget"
     ],
     "source": "ee6195e5eb214f7a3b3f4c8d24585c34b81b9a11",
-    "verification": "Prior real app acceptance complete. Current audit found duplicated/incomplete hosting guidance and no real-browser publication gate.",
+    "verification": "Shared hosting contract and mandatory artifact/plan/policy-bound browser gate independently reviewed and published. Nineteen actual browser checks passed. Final server executor accepted working interactions/reload and rejected startup/click-only storage failures after passing Node/build. All639 source pins verified, public opaque-origin headers match, all9 application services running, existing app served.",
     "budget": "USD1500/month ongoing hosting; no additional hosts created",
     "paths": [
       "execution/evidence/G21/stable6/",
@@ -9863,7 +9863,7 @@
       "START_HERE.md"
     ],
     "currentHandover": "START_HERE.md",
-    "nextAction": "Implement shared versioned hosting contract and mandatory artifact-bound isolated browser validation; qualify and publish Bok-only runtime.",
-    "bokSource": "a6a70d5630ac7f1aa99bdc2cf54e21e4d61654c5"
+    "nextAction": "No remaining work for this request. Continue from the next explicit user feedback; broader historical campaigns remain stopped.",
+    "bokSource": "9a10e11ecd6a6ef0c5110e128b4d627a763979b6"
   }
 }
