@@ -121,7 +121,7 @@ export async function openRollingFundingRelay(input){
  check(url.href===ethereumUrl&&!url.username&&!url.password&&!url.search&&!url.hash&&(url.protocol==='https:'||config.development&&url.protocol==='http:'&&['127.0.0.1','[::1]'].includes(url.hostname)));
  check(typeof signerFile==='string'&&path.isAbsolute(signerFile)&&typeof stateDirectory==='string'&&path.isAbsolute(stateDirectory));
  await prepareFundingRelayState({stateDirectory,policy:config});
- const {acquireHostedLease}=await import('./main.mjs');
+ const {acquireHostedLease}=await import('./hosted-lease.mjs');
  const lease=await acquireHostedLease(stateDirectory);
  let provider;
  try{
