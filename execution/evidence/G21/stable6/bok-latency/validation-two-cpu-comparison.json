@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "experiment": "Isolated browser validation on identical accepted application source and plan",
+  "applicationRevision": "12e36fda2ab57895ea7e1d8811b762de4cb9c93f",
+  "applicationTree": "ce6b4e8d2f7c7696fbc6f73f1d6bfb94130eb463",
+  "browserPlanSha256": "f3ade0561abfe10ae903f71060da67dd22020c48c7dbaca2c5ada110e1124ee8",
+  "artifactSha256": "e0f34b46e806b040edaf242cd328bcf3d4891fc68c128fd42f3d479d3cbb8fdd",
+  "browserVersion": "153.0.8010.12",
+  "candidateCommit": "68c6225ccd36c1e70eb0411fb3472fb819f5c73a",
+  "scenarios": 7,
+  "steps": 92,
+  "browserChecks": 198,
+  "hostLogicalCpus": 4,
+  "unchangedBounds": {
+    "memoryBytes": 805306368,
+    "pids": 256,
+    "workMs": 45000,
+    "network": "none",
+    "browserContext": "fresh for every scenario",
+    "simultaneousValidationContainers": 1
+  },
+  "samples": [
+    {
+      "kind": "serial-baseline",
+      "startedAt": "2026-10-23T22:31:02.994Z",
+      "cpus": 1,
+      "concurrentViewportSuites": 1,
+      "elapsedMs": 7561.954,
+      "browserChecks": 198,
+      "passed": true,
+      "sanitizedResultSha256": "23cb9b652b2fd4d6e6339e7f00d2c856d009624a2b328b7ca25f49e2f9bfe44c"
+    },
+    {
+      "kind": "serial-profile-repeat",
+      "startedAt": "2026-10-23T22:32:06.421Z",
+      "cpus": 1,
+      "concurrentViewportSuites": 1,
+      "elapsedMs": 7625.004,
+      "browserChecks": 198,
+      "passed": true,
+      "sanitizedResultSha256": "e7f1c547e3b9b00f0656e627849c36ea0e3f4d788d8be91b6d7cd172cd224d29"
+    },
+    {
+      "kind": "parallel-one-cpu",
+      "startedAt": "2026-10-23T22:33:21.180Z",
+      "cpus": 1,
+      "concurrentViewportSuites": 2,
+      "elapsedMs": 6925.68,
+      "browserChecks": 198,
+      "passed": true,
+      "sanitizedResultSha256": "349f14f0d9e463c66d159eaa1bd6d2711a99aa20702110e8d8072bde66537705"
+    },
+    {
+      "kind": "parallel-two-cpu-profile",
+      "startedAt": "2026-10-23T22:35:06.720Z",
+      "cpus": 2,
+      "concurrentViewportSuites": 2,
+      "elapsedMs": 4225.64,
+      "browserChecks": 198,
+      "passed": true,
+      "sanitizedResultSha256": "a983cc76c70acf2be6aaa5c30e60f33735dda5449eae29cb106eff662069231a"
+    },
+    {
+      "kind": "exact-candidate",
+      "startedAt": "2026-10-23T22:40:20.108Z",
+      "cpus": 2,
+      "concurrentViewportSuites": 2,
+      "elapsedMs": 4298.298,
+      "browserChecks": 198,
+      "passed": true,
+      "sanitizedResultSha256": "91811bdbbd068bea242fdd7046858447abd89fa338cb9286df35b2d444b71dfe"
+    }
+  ],
+  "exactCandidateReductionPercent": 43.159,
+  "correctness": {
+    "browserValidationSuite": {
+      "tests": 33,
+      "passed": 33,
+      "failed": 0,
+      "skipped": 0,
+      "actualChromiumCases": 21,
+      "schemaAndControlledCases": 12
+    },
+    "newRegressions": [
+      "A failed viewport waits for the other viewport and both contexts to close before closing Chrome.",
+      "Reactive element replacement repeats only identity capture; the user action runs exactly once."
+    ],
+    "actualContainerChecks": [
+      "NanoCpus equals configured 2e9",
+      "Memory and swap equal 768MiB",
+      "PID limit equals256",
+      "Network remains none",
+      "Mandatory tests, build and all198 browser checks passed"
+    ]
+  },
+  "limitations": [
+    "Serial baseline includes numeric diagnostic instrumentation; exact candidate does not. The serial repeat was7.625s and the preceding production gate was7.787s.",
+    "These are same-source isolated validation timings, not full user-flow timings or model generation claims.",
+    "Parallel profile component durations overlap and must not be summed.",
+    "Two concurrent hosted requests may overlap a native proof and one validation container; the two-CPU container remains bounded.",
+    "No model calls, blockchain transactions, publication or active service changes were performed by these diagnostics."
+  ]
+}
