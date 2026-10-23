@@ -1,0 +1,185 @@
+{
+  "kind": "Ordinary post, diagnostic only; not comparable to full Bok workload",
+  "browserSource": "26998e9c",
+  "serverQueueDurationMs": 5579.73,
+  "observedServerQueue": "2026-10-23T22:48:15.995247Z to22:48:21.574950Z",
+  "timeOrigin": 1792795592710.85,
+  "measurements": [
+    {
+      "name": "rolling.reader.load",
+      "start": 1168.0600000619888,
+      "duration": 742.3099999427795
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 1905.25,
+      "duration": 5.085000038146973
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 36577.97000002861,
+      "duration": 3410.814999938011
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 50178.56500005722,
+      "duration": 1171.679999947548
+    },
+    {
+      "name": "rolling.action.sync",
+      "start": 86049.24500000477,
+      "duration": 1652.8150000572205
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 89817.22000002861,
+      "duration": 615.1599999666214
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 86049.07500004768,
+      "duration": 4393.7300000190735
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 91335.35000002384,
+      "duration": 648.9400000572205
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 91984.31000006199,
+      "duration": 242.86000001430511
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 91335.21000003815,
+      "duration": 987.1699999570847
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 92322.39499998093,
+      "duration": 0.4100000858306885
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 92322.81000006199,
+      "duration": 875.2999999523163
+    },
+    {
+      "name": "rolling.proof.transport.serialize",
+      "start": 99053.09000003338,
+      "duration": 708.7200000286102
+    },
+    {
+      "name": "rolling.proof.transport.submit",
+      "start": 99763.56500005722,
+      "duration": 3602.2599999904633
+    },
+    {
+      "name": "rolling.proof.transport.wait",
+      "start": 103365.92500007153,
+      "duration": 6786.370000004768
+    },
+    {
+      "name": "rolling.proof.local.decompress",
+      "start": 110154.86500000954,
+      "duration": 52.03999996185303
+    },
+    {
+      "name": "rolling.proof.local.verify",
+      "start": 110206.97500002384,
+      "duration": 372.75999999046326
+    },
+    {
+      "name": "rolling.proof.native.total",
+      "start": 93231.1700000763,
+      "duration": 17386.429999947548
+    },
+    {
+      "name": "rolling.proof.native.proof-transport",
+      "start": 99079.87000000477,
+      "duration": 11537.754999995232
+    },
+    {
+      "name": "rolling.proof.native.private-witness",
+      "start": 107487.4549999237,
+      "duration": 3130.1600000858307
+    },
+    {
+      "name": "rolling.proof.native.public-validation",
+      "start": 109435.56499993801,
+      "duration": 1182.0600000619888
+    },
+    {
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 109784.39499998093,
+      "duration": 833.2250000238419
+    },
+    {
+      "name": "rolling.proof.native.unaccounted",
+      "start": 109914.40000021458,
+      "duration": 703.2299997806549
+    },
+    {
+      "name": "rolling.proof.native.sync",
+      "start": 110617.6100000143,
+      "duration": 0
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 93198.125,
+      "duration": 18596.40499997139
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 111794.54000008106,
+      "duration": 923.1799999475479
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 173028.6549999714,
+      "duration": 493.0049999952316
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 173514.21500003338,
+      "duration": 7.419999957084656
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 85691.06500005722,
+      "duration": 88652.5149999857
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 90442.88499999046,
+      "duration": 83896.04000008106
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 112717.7350000143,
+      "duration": 61625.84000003338
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 174339.685000062,
+      "duration": 369.1100000143051
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 174705.75,
+      "duration": 3.034999966621399
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 174344.20000004768,
+      "duration": 3392.649999976158
+    }
+  ],
+  "limits": [
+    "Native aggregate measurements have synthetic start positions; use durations, not their apparent overlap positions.",
+    "Native proof-transport includes serialization, upload, wait and local verification; do not sum nested values twice.",
+    "Server admission/transit/upload are not split inside transport.submit.",
+    "No proof input captured."
+  ]
+}

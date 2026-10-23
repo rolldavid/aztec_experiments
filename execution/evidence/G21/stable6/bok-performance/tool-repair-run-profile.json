@@ -1,0 +1,45 @@
+{
+  "requestId": "0x2daf8f7c0d60e586089fcf8b9cfebbd480535f168af52a54583d41db3f3e2e91",
+  "clickAt": "2026-10-23T22:52:23.356000+00:00",
+  "admissionAt": "2026-10-23T22:53:04.727688+00:00",
+  "finishedAt": "2026-10-23T22:56:51.817790+00:00",
+  "clickToAdmissionSeconds": 41.371688,
+  "clickToFinishedSeconds": 268.46179,
+  "workerSeconds": 227.090225,
+  "partitions": {
+    "provider.completion": 147.445023,
+    "tool.finish_workspace": 3.961999,
+    "publication.static": 0.061473,
+    "publication.mirror": 4.013539,
+    "escrow.prove": 6.738669,
+    "escrow.wait": 55.120659,
+    "board.readRequest": 0.859679,
+    "otherWorkerSeconds": 8.889184
+  },
+  "modelCalls": 11,
+  "boardReads": 15,
+  "proofProfile": {
+    "totalMs": 6737.437,
+    "syncMs": 0.001,
+    "provingMs": 5410.598,
+    "validationMs": 345.687,
+    "unaccountedMs": 65.185,
+    "witnessMs": 915.966,
+    "functionCount": 4,
+    "wallTimeUs": "1792796155254267"
+  },
+  "canonicalFinal": {
+    "status": "succeeded",
+    "canonical": true,
+    "txHash": "0x0bc09cd0884f9c70515c6301a3f35a29f4f70675a99a738cdfc27517b1241c5c",
+    "transactionFee": "4177053168328400000",
+    "blockNumber": 1808,
+    "blockHash": "0x05951e289111c0d1150d8f00bc5008b256971fa5299ca701f66f683a0c2a4e7a"
+  },
+  "aggregateChargeMicroUSDC": "47305",
+  "acceptedRevision": "47f5931ccd584c8c3fc2c49bc7373e303bd46127",
+  "isolatedBrowserChecks": 174,
+  "planFailureEvidence": "focused-plan-edit-failure.json",
+  "outcome": "Feature successfully published, but slower than206s previous result because of needless model tool-repair loop and summary roundtrip.",
+  "clickToRenderMonotonicSeconds": 267.6160950000286
+}

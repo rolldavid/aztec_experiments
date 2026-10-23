@@ -1,0 +1,80 @@
+{
+  "requestId": "0x2daf8f7c0d60e586089fcf8b9cfebbd480535f168af52a54583d41db3f3e2e91",
+  "planEditShapes": [
+    {
+      "callId": 3,
+      "keys": [
+        "append"
+      ],
+      "arrayTypes": {
+        "remove": "NoneType",
+        "replace": "NoneType",
+        "append": "list"
+      },
+      "sizes": {
+        "append": 1
+      },
+      "exactFirstError": "Invalid browser scenario edits"
+    },
+    {
+      "callId": 4,
+      "keys": [
+        "append"
+      ],
+      "arrayTypes": {
+        "remove": "NoneType",
+        "replace": "NoneType",
+        "append": "list"
+      },
+      "sizes": {
+        "append": 1
+      },
+      "exactFirstError": "Invalid browser scenario edits"
+    },
+    {
+      "callId": 5,
+      "keys": [
+        "append"
+      ],
+      "arrayTypes": {
+        "remove": "NoneType",
+        "replace": "NoneType",
+        "append": "list"
+      },
+      "sizes": {
+        "append": 1
+      },
+      "exactFirstError": "Invalid browser scenario edits"
+    },
+    {
+      "callId": 6,
+      "keys": [
+        "append"
+      ],
+      "arrayTypes": {
+        "remove": "NoneType",
+        "replace": "NoneType",
+        "append": "list"
+      },
+      "sizes": {
+        "append": 1
+      },
+      "exactFirstError": "Invalid browser scenario edits"
+    },
+    {
+      "callId": 7,
+      "keys": [
+        "append"
+      ],
+      "arrayTypes": {
+        "remove": "NoneType",
+        "replace": "NoneType",
+        "append": "list"
+      },
+      "sizes": {
+        "append": 1
+      },
+      "exactFirstError": "Invalid browser scenario edits"
+    }
+  ]
+}

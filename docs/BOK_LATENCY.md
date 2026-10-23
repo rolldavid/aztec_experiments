@@ -53,6 +53,47 @@ Evidence: [browser](../execution/evidence/G21/stable6/bok-performance/successful
 [partition](../execution/evidence/G21/stable6/bok-performance/successful-feature-profile.json),
 [publication](../execution/evidence/G21/stable6/bok-performance/successful-feature-publication.json).
 
+## Instrumented repeat — successful publication, avoidable model regression
+
+The next identical feature request published revision`47f5931c` and passed174
+browser checks, but took267.616s to render (268.462s to worker completion).
+Validation fell to3.962s and validation plus static/GitHub publication to8.037s,
+38.5% below the original13.068s. Browser preparation was5.554s, fee estimation
+3.314s and proving22.827s. Fifteen board reads totalled0.860s.
+
+Model time grew to147.445s over11 calls. Five append-only scenario edits were
+rejected because the tool required two unused empty arrays and returned a generic
+error. Those calls spent37.722s; reading and rewriting the whole plan then spent
+53.971s. The interface now accepts focused operations and gives precise malformed
+input errors; complete resulting-plan validation remains unchanged. This is a
+confirmed performance defect, not model work required by the feature.
+
+The worker's native proof profile was6.737s: witness generation0.916s, proof5.411s,
+public validation0.346s, other0.065s and effectively zero synchronization. The final
+checkpoint wait was55.121s. The browser's native proof executed once with zero
+internal synchronization; its transport13.753s includes upload/admission4.561s,
+queue/result wait8.132s and serialization0.839s. Local verification was0.185s.
+These nested measurements must not be added to their containing totals.
+
+[Run partition](../execution/evidence/G21/stable6/bok-performance/tool-repair-run-profile.json),
+[browser measurements](../execution/evidence/G21/stable6/bok-performance/tool-repair-run-browser.json),
+[exact rejected argument shapes](../execution/evidence/G21/stable6/bok-performance/focused-plan-edit-failure.json).
+
+## Follow-up validation measurement
+
+The same accepted92-step plan and198 checks took7.562s with one CPU and serial
+viewport suites, versus4.298s with two CPUs and concurrent desktop/mobile suites:
+**43.2% less validation time**. Each scenario still has a fresh browser context;
+all coverage, permission and resource checks remain. Both suites drain before
+browser shutdown on failure. The generated-app execution lane still admits one
+container at a time, bounded to2CPUs,768MiB and256processes on the existing4CPU
+worker. This is an isolated same-source measurement, not another full-request result.
+
+The regression suite passed33 tests:21 actual Chromium cases and12 schema or
+controlled-boundary cases. An empty-control-identity race exposed by parallel
+execution was fixed without repeating the action or suppressing coverage.
+[Comparison evidence](../execution/evidence/G21/stable6/bok-latency/validation-two-cpu-comparison.json).
+
 ## Single-execution investigation — performance follow-up
 
 The first attempt to reuse the SDK's simulated private execution exposed an SDK
