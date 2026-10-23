@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 // Explicit stopped-consumer dependency bootstrap only. No runtime mutation,
 // retry, alternate node, retained orphan notes, or synthetic balance recovery.
 export const PXE_REORG_ANCHOR_PINS = Object.freeze([
-  Object.freeze({ path: 'src/block_synchronizer/block_synchronizer.ts', before: '82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72', previous: '5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20', after: 'f895806904e315a314a56ec80736f28a89453bf821fbb084d3e1a71701a652fd' }),
-  Object.freeze({ path: 'dest/block_synchronizer/block_synchronizer.js', before: 'bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a', previous: '9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78', after: 'c845d93e1fbe90855810a615607da8ac781f0c4d65f2dc2eb0c1ca4bf01f2771' }),
+  Object.freeze({ path: 'src/block_synchronizer/block_synchronizer.ts', before: '82e7349e9e56c4d0943f81a4c11cd5fed39f04b41044d5583f5fdfdedbe21b72', previous: '5a3680b79b182d9c7d291f8329abb3809489c6293ab7f9bb32ebe80d0e9bff20', preparation: 'f895806904e315a314a56ec80736f28a89453bf821fbb084d3e1a71701a652fd', after: '6015ca4a7f77a475f851f05438fd5493726a78c1c143e4cccffdf48f47d61c85' }),
+  Object.freeze({ path: 'dest/block_synchronizer/block_synchronizer.js', before: 'bf55d5e76660f5b59fca66380575a8ad15005e263dd6a6c8f9a8f79b4936a69a', previous: '9e5fc3fc5ee5578d582aac089a4c99f335f66fb01a041ecd79e0837ed68aae78', preparation: 'c845d93e1fbe90855810a615607da8ac781f0c4d65f2dc2eb0c1ca4bf01f2771', after: '13f20b367dabd3d6dcf4271847990953a24b326388c68577dccdeeb5bde7cff9' }),
 ]);
 const sha = value => createHash('sha256').update(value).digest('hex');
 function methods(ts) {
@@ -16,7 +16,7 @@ function methods(ts) {
   ${t('private ')}anchorEventFailed = false;
   ${t('private ')}syncTips${t(": Awaited<ReturnType<CachingAztecNode['getChainTips']>> | undefined")} = undefined;
 
-  ${t('private ')}syncPass${t(': { failed: boolean; pending: Set<Promise<unknown>> } | undefined')} = undefined;
+  ${t('private ')}syncPass${t(': { failed: boolean; pending: Set<Promise<unknown>>; headers: Map<string, Promise<BlockHeader>> } | undefined')} = undefined;
 
   ${t('private ')}observeSource${t('<T>')}(read${t(': () => Promise<T>')})${t(': Promise<T>')} {
     const pass = this.syncPass;
@@ -65,18 +65,41 @@ function methods(ts) {
   }
 
   ${t('private ')}async checkedHeader(block${t(': { number: number; hash: string }')}) {
-    // The hash parameter is an actual SDK BlockHash, for native AND RPC nodes.
-    // A hash-pinned cached response alone does not establish current canonicality.
-    const pinned = await this.node.getBlock({ hash: BlockHash.fromString(block.hash) });
-    const canonical = await this.node.getBlock(BlockNumber(block.number));
-    if (!pinned || !canonical || pinned.header.getBlockNumber() !== block.number ||
-        canonical.header.getBlockNumber() !== block.number ||
-        pinned.hash.toString() !== block.hash || canonical.hash.toString() !== block.hash ||
-        (await pinned.header.hash()).toString() !== block.hash ||
-        (await canonical.header.hash()).toString() !== block.hash) {
+    const pass = this.syncPass;
+    if (!pass) throw new Error('PXE_REORG_ANCHOR_SOURCE_FAILED');
+    const key = block.number + ':' + block.hash;
+    let pinned = pass.headers.get(key);
+    if (!pinned) {
+      // Immutable content can be shared only inside this sync pass. A later
+      // pass must fetch it again; canonical membership is NEVER cached here.
+      pinned = (async () => {
+        const value = await this.node.getBlock({ hash: BlockHash.fromString(block.hash) });
+        if (!value || value.header.getBlockNumber() !== block.number ||
+            value.hash.toString() !== block.hash ||
+            (await value.header.hash()).toString() !== block.hash) {
+          throw new Error('PXE_REORG_ANCHOR_UNAVAILABLE');
+        }
+        return value.header;
+      })();
+      pass.headers.set(key, pinned);
+    }
+    // Start independent reads together, but drain both even on failure. The
+    // numeric query remains fresh at EVERY previous canonicality boundary.
+    const [header, canonical] = await Promise.allSettled([
+      pinned,
+      (async () => {
+        const value = await this.node.getBlock(BlockNumber(block.number));
+        if (!value || value.header.getBlockNumber() !== block.number ||
+            value.hash.toString() !== block.hash ||
+            (await value.header.hash()).toString() !== block.hash) {
+          throw new Error('PXE_REORG_ANCHOR_UNAVAILABLE');
+        }
+      })(),
+    ]);
+    if (header.status === 'rejected' || canonical.status === 'rejected') {
       throw new Error('PXE_REORG_ANCHOR_UNAVAILABLE');
     }
-    return pinned.header;
+    return header.value;
   }
 
   ${t('private ')}async checkedSelectedAnchor() {
@@ -91,14 +114,18 @@ function methods(ts) {
     // An advancing tier is allowed only while BOTH its current header and the
     // captured pass's exact header are canonical. No orphan cache is authority.
     if (!this.sameAnchor(live, block)) await this.checkedHeader(live);
-    await this.checkedHeader(block);
+    const header = await this.checkedHeader(block);
     const afterTips = await this.node.getChainTips();
     const after = tier === 'proposed' ? afterTips.proposed : afterTips[tier].block;
     if (after.number < block.number ||
         (after.number === block.number && !this.sameAnchor(after, block))) {
       throw new Error('PXE_REORG_ANCHOR_CHANGED');
     }
-    if (!this.sameAnchor(after, live)) await this.checkedHeader(after);
+    // A stable tip hash commits to the same ancestry: the canonical header
+    // checked between these two fresh observations is still our proof of that
+    // membership. Do not query the identical numeric block a second time.
+    if (this.sameAnchor(after, live)) return { block, header };
+    await this.checkedHeader(after);
     // A reorg while checking the newer live header must not bless an orphan
     // captured header. Reauthenticate the exact pass anchor last.
     return { block, header: await this.checkedHeader(block) };
@@ -177,11 +204,14 @@ function methods(ts) {
 
 `;
 }
-function transformed(source, ts, previous = false) {
-  const begin = previous ? source.indexOf(ts ? '\n  private anchorEventFailed = false;' : '\n  anchorEventFailed = false;') : source.indexOf(ts ? '  private async doHandleBlockStreamEvent(' : '    async doHandleBlockStreamEvent(');
+function transformed(source, ts, previous = false, preparation = false) {
+  const begin = previous || preparation ? source.indexOf(ts ? '\n  private anchorEventFailed = false;' : '\n  anchorEventFailed = false;') : source.indexOf(ts ? '  private async doHandleBlockStreamEvent(' : '    async doHandleBlockStreamEvent(');
   const end = source.indexOf('/** Updates the anchor block header', begin);
   if (begin < 0 || end < 0) throw new Error('PXE_REORG_PATCH_LAYOUT');
   let result = source.slice(0, begin) + methods(ts) + '  ' + source.slice(end);
+  result = result.replace('this.node.wipeCache();', 'this.node.wipeCache();\n    this.syncPass?.headers.clear();');
+  if (preparation) return result.replace('const pass = { failed: false, pending: new Set' + (ts ? '<Promise<unknown>>' : '') + '() };',
+    'const pass = { failed: false, pending: new Set' + (ts ? '<Promise<unknown>>' : '') + '(), headers: new Map' + (ts ? '<string, Promise<BlockHeader>>' : '') + '() };');
   const handler = ts ? 'return this.eventQueue.put(() => this.doHandleBlockStreamEvent(event));' : 'return this.eventQueue.put(()=>this.doHandleBlockStreamEvent(event));';
   if (!previous && result.split(handler).length !== 2) throw new Error('PXE_REORG_PATCH_LAYOUT');
   if (!previous) result = result.replace(handler, `return this.eventQueue.put(async () => {
@@ -208,7 +238,7 @@ function transformed(source, ts, previous = false) {
   if (result.split(sync).length !== 2) throw new Error('PXE_REORG_PATCH_LAYOUT');
   result = result.replace(sync, `this.anchorEventFailed = false;
     this.syncTips = undefined;
-    const pass = { failed: false, pending: new Set${ts ? '<Promise<unknown>>' : ''}() };
+    const pass = { failed: false, pending: new Set${ts ? '<Promise<unknown>>' : ''}(), headers: new Map${ts ? '<string, Promise<BlockHeader>>' : ''}() };
     this.syncPass = pass;
     try {
       await this.blockStream.sync();
@@ -232,8 +262,8 @@ function transformed(source, ts, previous = false) {
 }
 export function transformPxeReorgAnchor(source, path) {
   const pin = PXE_REORG_ANCHOR_PINS.find(pin => pin.path === path);
-  if (!pin || typeof source !== 'string' || ![pin.before,pin.previous].includes(sha(source))) throw new Error('PXE_REORG_PATCH_SOURCE');
-  const output = transformed(source, path.endsWith('.ts'),sha(source)===pin.previous);
+  if (!pin || typeof source !== 'string' || ![pin.before,pin.previous,pin.preparation].includes(sha(source))) throw new Error('PXE_REORG_PATCH_SOURCE');
+  const output = transformed(source, path.endsWith('.ts'),sha(source)===pin.previous,sha(source)===pin.preparation);
   if (sha(output) !== pin.after) throw new Error('PXE_REORG_PATCH_OUTPUT');
   return output;
 }
@@ -251,7 +281,7 @@ async function checkedPaths(packageRoot) {
 }
 export async function inspectPxeReorgAnchor(packageRoot) {
   const paths = await checkedPaths(packageRoot);
-  const states = paths.map(({ pin, source }) => sha(source) === pin.before ? 'original' : sha(source) === pin.after ? 'patched' : sha(source) === pin.previous ? 'previous' : 'unknown');
+  const states = paths.map(({ pin, source }) => sha(source) === pin.before ? 'original' : sha(source) === pin.after ? 'patched' : sha(source) === pin.previous ? 'previous' : sha(source) === pin.preparation ? 'preparation' : 'unknown');
   if (states.includes('unknown') || states[0] !== states[1]) throw new Error('PXE_REORG_PATCH_STATE');
   return Object.freeze({ state: states[0], files: Object.freeze(paths.map(({ pin, source }) => Object.freeze({ path: pin.path, sha256: sha(source) }))) });
 }

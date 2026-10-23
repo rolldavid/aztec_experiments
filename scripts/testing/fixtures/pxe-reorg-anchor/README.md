@@ -11,3 +11,12 @@ LMDB, NoteStore, AnchorBlockStore and StagedWriteCoordinator. Synthetic headers,
 node responses, and directly inserted NoteDao fixtures are labelled in the test.
 They establish conservative rollback/atomicity and canonical anchor delivery,
 not real encrypted-note discovery, FPC balances, or historical incident cause.
+
+The `preparation-` pair captures the previously deployed, pass-owned reorg patch.
+Its exact hashes are the installer's `preparation` pins. The read-efficiency
+regression executes that implementation and its replacement against identical
+chain fixtures, counting actual node calls and requiring identical final state.
+Only hash-pinned data is shared within one sync. Numeric canonical checks and
+live tips remain fresh; a second numeric check is omitted only when the two
+fresh surrounding live tip identities match. Any tip change retains the final
+canonical reauthentication. SDK anchor/cache invalidation clears this cache too.

@@ -23,6 +23,7 @@ const installed = await realpath(join(repo, 'node_modules/@aztec-labs/pxe'));
 const installedBefore = await inspectPxeReorgAnchor(installed);
 const temporary = await realpath(await mkdtemp(join(tmpdir(), 'rolling-pxe-anchor-')));
 const sha = value => createHash('sha256').update(value).digest('hex');
+const { withCache } = await import(pathToFileURL(join(installed,'dest/node/caching_aztec_node.js')));
 const { NoteStore } = await import(pathToFileURL(join(installed, 'dest/storage/note_store/note_store.js')));
 const { AnchorBlockStore } = await import(pathToFileURL(join(installed, 'dest/storage/anchor_block_store/anchor_block_store.js')));
 const { StagedWriteCoordinator } = await import(pathToFileURL(join(installed, 'dest/storage/staged_write_coordinator.js')));
@@ -46,6 +47,9 @@ async function copyPackage(name) {
 }
 const originalRoot = await copyPackage('original'), patchedRoot = await copyPackage('patched');
 await patchPxeReorgAnchor(patchedRoot);
+const preparationRoot = await copyPackage('preparation');
+for (const pin of PINS) await writeFile(join(preparationRoot,pin.path),await readFile(join(repo,'scripts/testing/fixtures/pxe-reorg-anchor','preparation-'+pin.path.split('/').at(-1))));
+const { BlockSynchronizer: Preparation } = await import(pathToFileURL(join(preparationRoot,PINS[1].path)));
 const { BlockSynchronizer: Original } = await import(pathToFileURL(join(originalRoot,PINS[1].path)));
 const { BlockSynchronizer: Patched } = await import(pathToFileURL(join(patchedRoot,PINS[1].path)));
 const quiet = { trace(){}, debug(){}, verbose(){}, info(){}, warn(){}, error(){}, getBindings(){return {};} };
@@ -54,17 +58,18 @@ async function block(n, salt=0) {
   const header=BlockHeader.empty(); header.globalVariables.blockNumber=n; header.totalFees=new Fr(salt);
   return { header, hash:await header.hash(), archive:header.lastArchive, checkpointNumber:n, indexWithinCheckpoint:0 };
 }
-async function fixture(t,{Constructor=Patched,tier='checkpointed'}={}) {
+async function fixture(t,{Constructor=Patched,tier='checkpointed',cached=false}={}) {
   const chain=await Promise.all(Array.from({length:17},(_,n)=>block(n)));
   const db=await openTmpStore('rolling-reorg-regression',true,16384);
   const notes=new NoteStore(db),anchor=new AnchorBlockStore(db),tips=new L2TipsKVStore(db,'fixture',chain[0].hash);
   const writes=new StagedWriteCoordinator({kvStore:db,stagedStores:[notes]});
   const other=db.openMap('other-rollbackable');
-  const state={tip:0,selected:undefined,missing:false,prunes:[],wipes:0,nodeWipes:0,failRollback:false,reads:0};
+  const state={tip:0,selected:undefined,missing:false,prunes:[],wipes:0,nodeWipes:0,failRollback:false,reads:0,tipReads:0,hashReads:0,numberReads:0};
   const id=n=>({number:n,hash:chain[n].hash.toString()});
   const checkpoint=n=>({block:id(n),checkpoint:{number:n,hash:new Fr(n+1000).toString()}});
   const get=async q=> {
     state.reads++;
+    if(typeof q==='number'||q&&typeof q==='object'&&'number'in q)state.numberReads++;else state.hashReads++;
     if(state.onRead) { const override=await state.onRead(q); if(override?.handled)return override.value; }
     if(state.missing)return undefined;
     if(q&&typeof q==='object'&&'number'in q)q=q.number;
@@ -72,6 +77,7 @@ async function fixture(t,{Constructor=Patched,tier='checkpointed'}={}) {
     return typeof q==='number' ? q<=state.tip?chain[q]:undefined : chain.slice(0,state.tip+1).find(b=>b.hash.toString()===q.toString());
   };
   const node={getChainTips:async()=> {
+    state.tipReads++;
     const n=state.selected??state.tip;
     return {proposed:id(state.tip),checkpointed:checkpoint(tier==='proposed'?state.tip:n),
       proven:checkpoint(['proven','finalized'].includes(tier)?n:0),finalized:checkpoint(tier==='finalized'?n:0)};
@@ -79,7 +85,7 @@ async function fixture(t,{Constructor=Patched,tier='checkpointed'}={}) {
   wipeCache(){state.nodeWipes++;},getBlocks(){throw Error('Unexpected payload download');}};
   const rollbackables=[{async rollbackToBlock(n){state.prunes.push(n);await notes.rollbackToBlock(n);}},
     {async rollbackToBlock(n){await other.set('value',n);if(state.failRollback)throw Error('PRIVATE_SENTINEL');}}];
-  const sync=new Constructor(node,db,anchor,rollbackables,tips,{wipe(){state.wipes++;}},{syncChainTip:tier});
+  const sync=new Constructor(cached?withCache(node):node,db,anchor,rollbackables,tips,{wipe(){state.wipes++;}},{syncChainTip:tier});
   sync.log=quiet; sync.blockStream.log=quiet;
   t.after(async()=>{state.onRead=undefined;state.missing=false;await sync.stop();await db.close();});
   const owner=AztecAddress.fromFieldUnsafe(new Fr(102)),contract=AztecAddress.fromFieldUnsafe(new Fr(101));
@@ -299,4 +305,72 @@ test('stop drains a discarded successful prefetch before releasing sync ownershi
   release();await Promise.all([run,stop]);assert.equal(synced,true);assert.equal(stopped,true);
   assert.equal(f.sync.syncTips,undefined);assert.equal(f.sync.syncPass,undefined);
   assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),13);
+});
+
+
+test('preparation predecessor upgrades exactly; mixed pair cannot upgrade',async()=>{
+  assert.equal((await inspectPxeReorgAnchor(preparationRoot)).state,'preparation');
+  for(const pin of PINS){
+    const source=await readFile(join(preparationRoot,pin.path),'utf8');
+    assert.equal(sha(source),pin.preparation);
+    assert.equal(transformPxeReorgAnchor(source,pin.path),await readFile(join(patchedRoot,pin.path),'utf8'));
+  }
+  const root=await copyPackage('mixed-preparation');
+  await writeFile(join(root,PINS[0].path),await readFile(join(preparationRoot,PINS[0].path)));
+  await assert.rejects(patchPxeReorgAnchor(root),/PATCH_STATE/);
+});
+
+for(const cached of [false,true])for(const scenario of ['unchanged','advancing'])test('same-pass header verification reduces '+(cached?'actual cached SDK network':'synchronizer')+' reads: '+scenario,async t=>{
+  const before=await fixture(t,{Constructor:Preparation,cached}),after=await fixture(t,{cached});
+  const counts=[];
+  for(const f of [before,after]){
+    await f.advance(10);
+    for(const key of ['reads','tipReads','hashReads','numberReads'])f.state[key]=0;
+    if(scenario==='advancing')f.state.tip=12;
+    await f.sync.sync();
+    counts.push(Object.fromEntries(['reads','tipReads','hashReads','numberReads'].map(key=>[key,f.state[key]])));
+  }
+  assert.deepEqual(await after.snapshot(),await before.snapshot());
+  assert.equal(counts[1].tipReads,counts[0].tipReads,'Every fresh tip observation remains');
+  assert(counts[1].numberReads<counts[0].numberReads,'Matching bracketing tip identities reuse one canonical membership check');
+  assert(counts[1].hashReads<=counts[0].hashReads,'Repeated immutable downloads are never added');
+  assert.equal(after.sync.syncPass,undefined,'No header authority survives the operation');
+  const hashReads=after.state.hashReads;await after.sync.sync();
+  assert.equal(after.state.hashReads-hashReads,cached?0:1,'The new pass reauthenticates immutable content; SDK cache may serve the hash-pinned bytes');
+  t.diagnostic(JSON.stringify({scenario,cached,before:counts[0],after:counts[1]}));
+});
+
+test('independent pinned and canonical reads overlap, drain on failure, and canonicality is never cached',async t=>{
+  const f=await fixture(t);await f.advance(10);
+  f.sync.syncPass={failed:false,pending:new Set(),headers:new Map()};
+  let release,numberReached;const gate=new Promise(r=>release=r),number=new Promise(r=>numberReached=r);
+  let hashes=0,numbers=0;
+  f.state.onRead=async q=>{
+    if(q?.hash){hashes++;await gate;}
+    if(q===10){numbers++;numberReached();}
+  };
+  const first=f.sync.checkedHeader(f.id(10));
+  await number;assert.equal(hashes,1,'Hash lookup has started while canonical read completes');
+  release();await first;
+  await f.sync.checkedHeader(f.id(10));
+  assert.equal(hashes,1);assert.equal(numbers,2);
+  f.chain[10]=await block(10,99);
+  await assert.rejects(f.sync.checkedHeader({number:10,hash:(await (await f.anchor.getBlockHeader()).hash()).toString()}),/PXE_REORG_ANCHOR_UNAVAILABLE/);
+  f.sync.syncPass=undefined;
+});
+
+
+test('canonical lookup failure cannot release an unfinished immutable header request',async t=>{
+  const f=await fixture(t);await f.advance(10);
+  f.sync.syncPass={failed:false,pending:new Set(),headers:new Map()};
+  let release,entered;const gate=new Promise(r=>release=r),reading=new Promise(r=>entered=r);
+  f.state.onRead=async q=>{
+    if(q?.hash){entered();await gate;}
+    if(q===10)throw Error('PRIVATE_SENTINEL');
+  };
+  let finished=false;
+  const checking=f.sync.checkedHeader(f.id(10)).finally(()=>finished=true);
+  const rejected=assert.rejects(checking,/^Error: PXE_REORG_ANCHOR_UNAVAILABLE$/);
+  await reading;await new Promise(r=>setImmediate(r));assert.equal(finished,false);
+  release();await rejected;f.sync.syncPass=undefined;
 });
