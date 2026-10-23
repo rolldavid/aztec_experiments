@@ -781,3 +781,5 @@ Stable6 review complete: network_upgrade_check verified fresh handover identitie
 23 October Bok input-bound repair: root integrates focused metering/terminal changes. network_upgrade_check diagnoses and independently reviews. stable_release_packaging prepares existing exact receipt completion and narrow deployment; root retains actual browser acceptance.
 
 23 October real Bok acceptance complete: root actualbrowser9checks and independentGitHubfileverification passed; network_upgrade_check reviewedpublishedsource; stable_release_packaging confirmed canonical42482charge/457518refund/reserved0 and9servicesrunning. Allboundeddelegationscomplete.
+
+23 October browser hosting contract: root implements sharedpolicy and mandatory isolatedbrowser gate. network_upgrade_check independently audits/reviews policy and validation. stable_release_packaging investigates/stages reviewed browserimage and narrow Bok rollout. No core restart or new host.

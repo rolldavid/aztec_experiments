@@ -3,13 +3,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {isStaticContainerAbsent,captureStaticSource,validateStaticResult,createIsolatedExecution,STATIC_LIMITS,STATIC_NODE_VERSION} from '../isolated-execution.mjs';
+import {isStaticContainerAbsent,captureStaticSource,validateStaticResult,createIsolatedExecution,STATIC_LIMITS,STATIC_NODE_VERSION,STATIC_IMAGE} from '../isolated-execution.mjs';
 const revision='a'.repeat(40);
+const browserPlan={version:1,scenarios:[{name:'render and reload',path:'index.html',steps:[{action:'reload'},{action:'expectText',selector:'body',text:'Generated fixture'}]}]};
 async function fixture(){
  const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-static-')));
  const source=path.join(root,'invocation'),output=path.join(root,'output');await fs.mkdir(source);await fs.mkdir(output);
  await fs.writeFile(path.join(source,'package.json'),JSON.stringify({scripts:{build:'node build.cjs'}}));
- await fs.writeFile(path.join(source,'build.cjs'),"const fs=require('node:fs');fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','<!doctype html><title>Generated fixture</title>');");
+ await fs.writeFile(path.join(source,'build.cjs'),"const fs=require('node:fs');fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','<!doctype html><title>Generated fixture</title><p>Generated fixture</p>');");
+ await fs.writeFile(path.join(source,'browser-tests.json'),JSON.stringify(browserPlan));
  await fs.writeFile(path.join(source,'main.test.cjs'),"require('node:test')('generated test',()=>require('node:assert/strict').equal(2+2,4));");
  return {root,source,output,close:()=>fs.rm(root,{recursive:true,force:true})};
 }
@@ -32,10 +34,10 @@ for(const kind of ['symlink','hardlink','hidden credential','workflow','node_mod
   await assert.rejects(captureStaticSource(f.source));
  }finally{await f.close();}
 });
-const result=()=>({schema:1,node:STATIC_NODE_VERSION,testCount:1,test:{code:0,limited:false},build:{code:0,limited:false},logs:'',artifacts:[{path:'index.html',data:Buffer.from('<p>static</p>').toString('base64')}]});
+const result=()=>({schema:1,node:STATIC_NODE_VERSION,testCount:1,test:{code:0,limited:false},build:{code:0,limited:false},logs:'',browser:{passed:true,browserVersion:'153.0.8010.12',checks:4},artifacts:[{path:'index.html',data:Buffer.from('<p>static</p>').toString('base64')}]});
 test('bounded static result carries exact artifact bytes and hash',()=>{const x=validateStaticResult(result());assert.equal(x.artifacts[0].bytes.toString(),'<p>static</p>');assert.equal(x.artifacts[0].sha256.length,64);});
 for(const [label,mutate] of [
- ['zero test count',x=>x.testCount=0],['wrong runtime',x=>x.node='v24.0.0'],['failed test',x=>x.test.code=1],['missing build',x=>x.build=null],['timeout',x=>x.build.limited=true],
+ ['missing browser check',x=>x.browser=null],['failed browser check',x=>x.browser.passed=false],['zero test count',x=>x.testCount=0],['wrong runtime',x=>x.node='v24.0.0'],['failed test',x=>x.test.code=1],['missing build',x=>x.build=null],['timeout',x=>x.build.limited=true],
  ['traversal',x=>x.artifacts[0].path='../escape.html'],['absolute',x=>x.artifacts[0].path='/escape.html'],
  ['case collision',x=>x.artifacts.push({...x.artifacts[0],path:'INDEX.html'})],
  ['directory collision',x=>x.artifacts.push({...x.artifacts[0],path:'index.html/inside.js'})],
@@ -57,13 +59,13 @@ test('isolated boundary',async()=>{
  a.throws(()=>fs.writeFileSync('/etc/owned','no'));
  await a.rejects(fetch('http://169.254.169.254/latest/meta-data/',{signal:AbortSignal.timeout(250)}));
 });`);
-  const runner=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:20000});
-  assert.deepEqual(await runner.assertAvailable(),{available:true,image:'sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651',platform:'linux/amd64',expectedNode:STATIC_NODE_VERSION});
+  const runner=createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:f.root,outputRoot:f.output,workMs:20000});
+  assert.deepEqual(await runner.assertAvailable(),{available:true,image:STATIC_IMAGE,platform:'linux/amd64',expectedNode:STATIC_NODE_VERSION});
   const r=await runner.execute({sourceDirectory:f.source,revision});assert(r.testsPassed&&r.buildPassed);
   assert.equal(r.node,STATIC_NODE_VERSION);assert.equal(r.revision,revision);
   const archives=await Promise.all(['source-snapshot.json','artifacts.json'].map(n=>fs.readFile(path.join(r.outputDirectory,n),'utf8').then(JSON.parse)));
   assert.equal(archives[0].revision,revision);assert.equal(archives[1].files.length,r.artifacts.length);assert.equal((await captureStaticSource(path.join(r.outputDirectory,'source'))).sha256,r.sourceSha256);
-  assert.equal(await fs.readFile(path.join(r.outputDirectory,'dist/index.html'),'utf8'),'<!doctype html><title>Generated fixture</title>');
+  assert.equal(await fs.readFile(path.join(r.outputDirectory,'dist/index.html'),'utf8'),'<!doctype html><title>Generated fixture</title><p>Generated fixture</p>');
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(r.outputDirectory,'cleanup.json'))),{ownedContainerAbsent:true});
  }finally{await f.close();}
 });
@@ -78,7 +80,7 @@ for(const [kind,build] of [
 ])test('actual hostile generated '+kind+' remains owned and bounded',{skip:!actual,timeout:45000},async()=>{
  const f=await fixture();try{
   await fs.writeFile(path.join(f.source,'build.cjs'),build);
-  const run=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision});
+  const run=createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision});
   if(kind==='detached descendant'){const receipt=await run;assert(receipt.testsPassed);console.log(JSON.stringify({runtimeNode:receipt.node,image:receipt.image,limits:receipt.limits}));}else await assert.rejects(run,error=>{assert.equal(error.code,'STATIC_FAILED');assert.equal(error.result.passed,false);assert(!JSON.stringify(error.result).includes(f.root));return true;});
   const dirs=await fs.readdir(f.output);assert.equal(dirs.length,1);
   const cleanup=JSON.parse(await fs.readFile(path.join(f.output,dirs[0],'cleanup.json')));assert.equal(cleanup.ownedContainerAbsent,true);
@@ -101,7 +103,7 @@ test('root Git metadata is omitted while ordinary tracked dotfiles retain exact 
 });
 
 test('unavailable runtime returns only finite startup error',async()=>{
- const runner=createIsolatedExecution({workspaceRoot:'/unused',outputRoot:'/unused',docker:'/does-not-exist/synthetic-private-path'});
+ const runner=createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:'/unused',outputRoot:'/unused',docker:'/does-not-exist/synthetic-private-path'});
  await assert.rejects(runner.assertAvailable(),e=>e.code==='STATIC_UNAVAILABLE'&&!String(e).includes('synthetic-private-path'));
 });
 
@@ -121,7 +123,7 @@ test('actual generated child cannot signal or inspect the trusted driver',{skip:
  await a.rejects(fetch('http://127.0.0.1:9229/json/list',{signal:AbortSignal.timeout(500)}));
  fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','driver inspector unavailable');
 })().catch(()=>process.exitCode=1);`);
-  const r=await createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision});
+  const r=await createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision});
   assert(r.testsPassed&&r.buildPassed);assert.equal(r.node,STATIC_NODE_VERSION);
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(r.outputDirectory,'cleanup.json'))),{ownedContainerAbsent:true});
  }finally{await f.close();}
@@ -130,21 +132,21 @@ test('actual generated child cannot signal or inspect the trusted driver',{skip:
 for(const [name,body] of [['testfoo.cjs',"require('node:test')('must run',()=>{throw Error('EXPECTED_FAIL')});"],['main.test.cjs',"require('node:test').skip('cannot qualify');"]])test('actual explicit test count rejects '+name,{skip:!actual,timeout:45000},async()=>{
  const f=await fixture();try{
   await fs.rm(path.join(f.source,'main.test.cjs'));await fs.writeFile(path.join(f.source,name),body);
-  await assert.rejects(createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision}),e=>{
+  await assert.rejects(createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:f.root,outputRoot:f.output,workMs:20000}).execute({sourceDirectory:f.source,revision}),e=>{
    assert.equal(e.code,'STATIC_FAILED');if(name==='testfoo.cjs')assert(e.result.outcome.test.code!==0);else assert.equal(e.result.outcome.guestError,'test count');assert.equal(e.result.outcome.build,null);return true;
   });
   const [dir]=await fs.readdir(f.output);assert.deepEqual(JSON.parse(await fs.readFile(path.join(f.output,dir,'cleanup.json'))),{ownedContainerAbsent:true});
  }finally{await f.close();}
 });
 test('actual failed cleanup record poisons capability and blocks reopen until reconciliation',{skip:!actual,timeout:15000},async t=>{
- const f=await fixture(),runner=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output});
+ const f=await fixture(),runner=createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:f.root,outputRoot:f.output});
  try{
   const original=fs.writeFile;t.mock.method(fs,'writeFile',async function(file,...args){if(/\/(?:intent|cleanup)\.json$/.test(file))throw Error('synthetic persistence failure');return original.call(this,file,...args);});
   await assert.rejects(runner.execute({sourceDirectory:f.source,revision}),{code:'STATIC_RECORD_FAILED'});
   t.mock.restoreAll();
   await assert.rejects(runner.execute({sourceDirectory:f.source,revision}),{code:'STATIC_UNAVAILABLE'});
   await assert.rejects(runner.assertAvailable(),{code:'STATIC_UNAVAILABLE'});
-  await assert.rejects(createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output}).assertAvailable(),{code:'STATIC_UNAVAILABLE'});
+  await assert.rejects(createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:f.root,outputRoot:f.output}).assertAvailable(),{code:'STATIC_UNAVAILABLE'});
  }finally{t.mock.restoreAll();await f.close();}
 });
 
@@ -155,7 +157,7 @@ for(const mode of ['absent','owned','unavailable','foreign','transport','timeout
   const script=path.join(f.root,'docker.cjs'),docker=path.join(f.root,'docker'),marker=path.join(f.root,'create.json'),removed=path.join(f.root,'removed');
   await fs.writeFile(script,`const fs=require('node:fs'),a=require('node:assert/strict');
 const args=process.argv.slice(2),mode=${JSON.stringify(mode)},marker=${JSON.stringify(marker)},removed=${JSON.stringify(removed)};
-const image='sha256:44479404b67dde931cf8f202a3ce34703876e709ce124924251da8435d5d8651',id='b'.repeat(64);
+const image=${JSON.stringify(STATIC_IMAGE)},id='b'.repeat(64);
 a.equal(args.shift(),'--host');args.shift();
 const absent=target=>{process.stderr.write('Error response from daemon: No such container: '+target+'\\n');process.exitCode=1;};
 if(args[0]==='image')console.log(JSON.stringify({id:image,os:'linux',architecture:'amd64'}));
@@ -173,7 +175,7 @@ else throw Error('Unexpected CLI operation');
 `);
   const quote=value=>"'"+value.replaceAll("'","'\\''")+"'";
   await fs.writeFile(docker,'#!/bin/sh\nexec '+quote(process.execPath)+' '+quote(script)+' "$@"\n',{mode:0o700});
-  const runner=createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,docker});
+  const runner=createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:f.root,outputRoot:f.output,docker});
   const clean=['absent','owned'].includes(mode);let observed;
   await assert.rejects(runner.execute({sourceDirectory:f.source,revision}),error=>{
    observed=error;assert.equal(error.code,clean?'STATIC_FAILED':'STATIC_CLEANUP_REQUIRED');
@@ -185,7 +187,7 @@ else throw Error('Unexpected CLI operation');
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(f.output,dir,'cleanup.json'))),{ownedContainerAbsent:clean});
   assert.equal(await fs.access(removed).then(()=>true,()=>false),mode==='owned');
   if(clean)assert.equal((await runner.assertAvailable()).available,true);
-  else{await assert.rejects(runner.assertAvailable(),{code:'STATIC_UNAVAILABLE'});await assert.rejects(createIsolatedExecution({workspaceRoot:f.root,outputRoot:f.output,docker}).assertAvailable(),{code:'STATIC_UNAVAILABLE'});}
+  else{await assert.rejects(runner.assertAvailable(),{code:'STATIC_UNAVAILABLE'});await assert.rejects(createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:f.root,outputRoot:f.output,docker}).assertAvailable(),{code:'STATIC_UNAVAILABLE'});}
  }finally{await f.close();}
 });
 

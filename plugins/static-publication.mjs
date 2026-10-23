@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 import {constants} from 'node:fs';
 import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
+import {HOSTING_TYPES,hostingHeaders,hostingPolicyHash} from './hosting-policy.mjs';
+import {validateBrowserReceipt} from './browser-validation.mjs';
 import {fileState} from './operations.mjs';
 import {STATIC_LIMITS,STATIC_NODE_VERSION,validateStaticResult} from './isolated-execution.mjs';
 
@@ -10,7 +12,7 @@ const sha=b=>createHash('sha256').update(b).digest('hex');
 const hex=(s,n)=>typeof s==='string'&&new RegExp('^[0-9a-f]{'+n+'}$').test(s);
 const field=s=>typeof s==='string'&&/^0x[0-9a-f]{64}$/.test(s);
 const safe=p=>typeof p==='string'&&p.length<=240&&p.split('/').every(s=>/^[A-Za-z0-9.][A-Za-z0-9_.-]*$/.test(s)&&!['.','..','.git','.github','.aws','.ssh','.npmrc','node_modules','credentials','secrets'].includes(s.toLowerCase())&&!/^\.(?:env|yarnrc)(?:[.-]|$)/i.test(s));
-const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.cjs':'text/javascript; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.woff':'font/woff','.woff2':'font/woff2','.txt':'text/plain; charset=utf-8','.map':'application/json'};
+const types=HOSTING_TYPES;
 const SOURCE_ARCHIVE_MAX=14*1024*1024,ARTIFACT_ARCHIVE_MAX=2*1024*1024;
 const reject=()=>Object.assign(Error('Static publication rejected'),{code:'STATIC_PUBLICATION_REJECTED'});
 async function directory(p){assert(path.isAbsolute(p)&&await fs.realpath(p)===p);const s=await fs.lstat(p);assert(s.isDirectory()&&(s.mode&0o077)===0);}
@@ -42,7 +44,8 @@ async function archives(receipt,artifactRoot,b){
  for(const f of s.files){assert(f&&safe(f.path)&&!names.has(f.path.toLowerCase()));names.add(f.path.toLowerCase());const bytes=decode(f.data,STATIC_LIMITS.fileBytes);total+=bytes.length;assert(total<=STATIC_LIMITS.sourceBytes);assert.equal(f.bytes,bytes.length);assert.equal(f.sha256,sha(bytes));manifest.push({path:f.path,sha256:f.sha256,bytes:f.bytes});}
  assert.deepEqual(s.manifest,manifest);assert.deepEqual(v.sourceManifest,manifest);assert.equal(sha(JSON.stringify(manifest)),b.sourceDigest);
  for(const name of names)assert(![...names].some(other=>other.startsWith(name+'/')));
- const checked=validateStaticResult({schema:1,node:STATIC_NODE_VERSION,testCount:v.testCount,test:{code:0,limited:false},build:{code:0,limited:false},logs:'',artifacts:a.files.map(f=>({path:f.path,data:f.data}))});
+ const checked=validateStaticResult({schema:1,node:STATIC_NODE_VERSION,testCount:v.testCount,test:{code:0,limited:false},build:{code:0,limited:false},logs:'',browser:{passed:v.browser.passed,browserVersion:v.browser.browserVersion,checks:v.browser.checks},artifacts:a.files.map(f=>({path:f.path,data:f.data}))});
+ const plan=s.files.find(f=>f.path==='browser-tests.json');assert(plan,'Browser scenario source required');assert.equal(sha(JSON.stringify(JSON.parse(Buffer.from(plan.data,'base64')))),v.browser.planSha256);
  const output=checked.artifacts.map(f=>({path:f.path,bytes:f.bytes.length,sha256:f.sha256}));assert.deepEqual(v.artifacts,output);assert.equal(sha(JSON.stringify(output)),b.artifactSha256);
  for(let i=0;i<a.files.length;i++)assert.equal(a.files[i].sha256,output[i].sha256);
  assert(output.some(f=>f.path==='index.html'),'Static index.html required');
@@ -101,6 +104,7 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
    assert(orphans.size===0||(orphans.size===1&&orphans.has(pending)),'Retained publication must be reconciled first');
    if(old){assert(old.repositoryId===b.repositoryId&&old.threadId===b.threadId);const same=old.revisions[b.revision];if(same){assert.deepEqual(same.binding,b);await retained(path.join(root,b.id,b.revision),same);return urls(b);}assert.equal(old.latest,b.readRevision);assert(Object.keys(old.revisions).length<maxRevisions);assert(!Object.values(old.revisions).some(m=>m.binding.invocationId===b.invocationId));}
    else{assert.equal(b.readRevision,null);assert(Object.keys(state.threads).length<maxThreads);}
+   validateBrowserReceipt(receipt.validation.browser,{artifactSha256:b.artifactSha256,policyHash:hostingPolicyHash(origin,boardOrigin)});
    const data=await archives(receipt,artifactRoot,b),fileCount=data.files.length+3;assert(state.bytes+data.bytes<=maxBytes&&state.files+fileCount<=8192);
    const parent=path.join(root,b.id);await fs.mkdir(parent,{mode:0o700,recursive:true});await directory(parent);
    const target=path.join(parent,b.revision),metadata={schema:1,binding:b,manifest:data.manifest,bytes:data.bytes};
@@ -123,8 +127,7 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
   async handle(req,res){
    if(requests>=8){res.writeHead(503,{'Cache-Control':'no-store'});res.end();return;}requests++;
    try{
-    const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Access-Control-Allow-Origin':'*','Cross-Origin-Resource-Policy':'cross-origin',
-     'Content-Security-Policy':"default-src 'none'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src https: "+origin+"; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors "+boardOrigin+"; sandbox allow-scripts"};
+    const headers=hostingHeaders(origin,boardOrigin);
     const deny=(status=404)=>{res.writeHead(status,headers);res.end();};
     if(poisoned)return deny(503);if(!['GET','HEAD'].includes(req.method))return deny(405);
     if(req.headers.host!==url.host||req.headers.authorization||req.headers.cookie||typeof req.url!=='string'||req.url.length>1024||/[?#%\\]/.test(req.url))return deny(400);

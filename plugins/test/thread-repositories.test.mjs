@@ -89,16 +89,16 @@ test('publication lost acknowledgement reconciles the exact accepted receipt wit
 test('actual isolated repair becomes the exact durable thread revision',{skip:process.env.BOK_THREAD_CONTAINER_TESTS!=='1',timeout:120000},async t=>{
  const {githubToolbox}=await import('../github-tools.mjs'),{createIsolatedExecution}=await import('../isolated-execution.mjs');
  const h=await fixture(t),output=path.join(h.root,'artifacts');await fs.mkdir(output,{mode:0o700});let validations=0;
- const execution=createIsolatedExecution({workspaceRoot:h.root,outputRoot:output,workMs:30000});await execution.assertAvailable();
+ const execution=createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:h.root,outputRoot:output,workMs:30000});await execution.assertAvailable();
  const options={...h.options,startEmpty:true,validateRevision:input=>{validations++;return execution.execute(input).catch(error=>{console.log(JSON.stringify({isolatedFailure:error.result??{code:error.code}}));throw error;});}};
  const toolbox=manager=>githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No external GitHub')});
  const first=await toolbox(threadRepositories(options)).open({threadId:id(1),id:id(1),postId:id(9)});
  try{
-  for(const [file,content] of Object.entries({'package.json':JSON.stringify({scripts:{build:'node build.cjs'}}),'app.cjs':"module.exports='broken';",'main.test.cjs':"require('node:test')('application value',()=>require('node:assert/strict').equal(require('./app.cjs'),'working'));",'build.cjs':"const fs=require('node:fs');fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','<!doctype html><title>'+require('./app.cjs')+'</title>');"}))await first.call('write_file',{path:file,content});
+  for(const [file,content] of Object.entries({'browser-tests.json':JSON.stringify({version:1,scenarios:[{name:'render',path:'index.html',steps:[{action:'reload'},{action:'expectVisible',selector:'p'}]}]}),'package.json':JSON.stringify({scripts:{build:'node build.cjs'}}),'app.cjs':"module.exports='broken';",'main.test.cjs':"require('node:test')('application value',()=>require('node:assert/strict').equal(require('./app.cjs'),'working'));",'build.cjs':"const fs=require('node:fs');fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','<!doctype html><title>'+require('./app.cjs')+'</title><p>working</p>');"}))await first.call('write_file',{path:file,content});
   const failed=await first.call('check_workspace',{});console.log(JSON.stringify({negativeCheck:failed}));assert.equal(failed.passed,false);assert.match(failed.log,/application value/);
   await first.call('write_file',{path:'app.cjs',content:"module.exports='working';"});const checked=await first.call('check_workspace',{});assert.equal(checked.passed,true);
   const accepted=await first.accept();assert.equal(accepted.acceptedRevision,checked.revision);assert.equal(validations,2);assert.equal(accepted.validation.testsPassed,true);assert.equal(accepted.validation.buildPassed,true);
-  assert.equal(await fs.readFile(path.join(accepted.validation.outputDirectory,'dist/index.html'),'utf8'),'<!doctype html><title>working</title>');
+  assert.equal(await fs.readFile(path.join(accepted.validation.outputDirectory,'dist/index.html'),'utf8'),'<!doctype html><title>working</title><p>working</p>');
   console.log(JSON.stringify({acceptedRevision:accepted.acceptedRevision,sourceDigest:accepted.validation.sourceDigest,testsPassed:true,buildPassed:true,validations,proofs:'not involved; actual Git and isolated Node'}));
   await first.close();const next=await toolbox(threadRepositories(options)).open({threadId:id(1),id:id(2),postId:id(10)});
   try{assert.equal((await next.call('read_file',{path:'app.cjs'})).text,"module.exports='working';");assert.equal(await next.accept(),null);assert.equal(validations,2);}finally{await next.close();}
@@ -112,13 +112,13 @@ test('actual accepted Git and isolated artifact publish matching source over sep
  let publication,session;const server=http.createServer((req,res)=>{void publication.handle(req,res);});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  try{
   const origin='http://127.0.0.1:'+server.address().port;publication=await createStaticPublication({directory:published,artifactRoot:output,origin,boardOrigin:'http://127.0.0.1:4317',development:true});
-  const executor=createIsolatedExecution({workspaceRoot:h.root,outputRoot:output,workMs:30000});let validations=0;
+  const executor=createIsolatedExecution({origin,boardOrigin:'http://127.0.0.1:4317',workspaceRoot:h.root,outputRoot:output,workMs:30000});let validations=0;
   const options={...h.options,startEmpty:true,validateRevision:input=>{validations++;return executor.execute(input).catch(error=>{console.log(JSON.stringify({isolatedFailure:error.result??{code:error.code}}));throw error;});},onAccepted:receipt=>publication.publish(receipt)};
   const box=()=>githubToolbox({repository:'owner/project',repositories:threadRepositories(options),api:async()=>assert.fail('No external GitHub')});
   session=await box().open({threadId:id(1),id:id(1),postId:id(9)});
-  for(const [file,content] of Object.entries({'package.json':JSON.stringify({scripts:{build:'node build.cjs'}}),'main.test.cjs':"require('node:test')('value',()=>require('node:assert/strict').equal(2+2,4));",'build.cjs':"const fs=require('node:fs');fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','<!doctype html><title>Published</title>');"}))await session.call('write_file',{path:file,content});
+  for(const [file,content] of Object.entries({'browser-tests.json':JSON.stringify({version:1,scenarios:[{name:'render',path:'index.html',steps:[{action:'reload'},{action:'expectVisible',selector:'p'}]}]}),'package.json':JSON.stringify({scripts:{build:'node build.cjs'}}),'main.test.cjs':"require('node:test')('value',()=>require('node:assert/strict').equal(2+2,4));",'build.cjs':"const fs=require('node:fs');fs.mkdirSync('dist');fs.writeFileSync('dist/index.html','<!doctype html><title>Published</title><p>Published</p>');"}))await session.call('write_file',{path:file,content});
   const accepted=await session.accept(),app=await fetch(accepted.publication.latestUrl),source=await fetch(accepted.publication.latestSourceUrl);
-  assert.equal(app.status,200);assert.equal(source.status,200);assert.equal(app.headers.get('x-source-revision'),accepted.acceptedRevision);assert.equal(await app.text(),'<!doctype html><title>Published</title>');
+  assert.equal(app.status,200);assert.equal(source.status,200);assert.equal(app.headers.get('x-source-revision'),accepted.acceptedRevision);assert.equal(await app.text(),'<!doctype html><title>Published</title><p>Published</p>');
   const archive=await source.json();assert.equal(archive.revision,accepted.acceptedRevision);assert(!archive.files.some(f=>f.path.startsWith('.git/')));assert(archive.files.some(f=>f.path==='build.cjs'));assert.equal(validations,1);
   console.log(JSON.stringify({acceptedRevision:accepted.acceptedRevision,sourceDigest:accepted.validation.sourceDigest,artifactSha256:accepted.validation.artifactSha256,matchingHttpRevision:true,realGit:true,realIsolatedExecution:true,realHttp:true,externalGitHub:false}));
   await session.close();session=await box().open({threadId:id(1),id:id(2),postId:id(10)});assert.equal(await session.accept(),null);assert.equal(validations,1);
@@ -273,7 +273,7 @@ test('workspace listing reflects staged, untracked, ignored and deleted files wi
 test('workspace prerequisite feedback identifies repair without leaking arbitrary source errors',async t=>{
  const {githubToolbox}=await import('../github-tools.mjs');const {createIsolatedExecution}=await import('../isolated-execution.mjs');
  const h=await fixture(t),output=path.join(h.root,'output');await fs.mkdir(output);
- const execution=createIsolatedExecution({workspaceRoot:h.options.directory,outputRoot:output,docker:path.join(h.root,'must-not-run-docker')});
+ const execution=createIsolatedExecution({origin:'https://apps.example',boardOrigin:'https://board.example',workspaceRoot:h.options.directory,outputRoot:output,docker:path.join(h.root,'must-not-run-docker')});
  const manager=threadRepositories({...h.options,startEmpty:true,validateRevision:input=>execution.execute(input)});
  const session=await githubToolbox({repository:'owner/project',repositories:manager,api:async()=>assert.fail('No API')}).open({threadId:id(1),id:id(1),postId:id(9)});t.after(()=>session.close());
  await session.call('write_file',{path:'index.html',content:'<!doctype html><title>Standalone</title>'});
@@ -281,6 +281,10 @@ test('workspace prerequisite feedback identifies repair without leaking arbitrar
   if(content!==undefined)await session.call('write_file',{path:'package.json',content});
   const result=await session.call('check_workspace',{});assert.equal(result.passed,false);assert.equal(result.phase,'input');assert.equal(result.requirement.code,code);assert.match(result.requirement.message,expected);assert(!JSON.stringify(result).includes('PRIVATE_PARSE_SENTINEL'));
  }
+ await session.call('write_file',{path:'main.test.cjs',content:"require('node:test')('fixture',()=>{});"});
+ let missing=await session.call('check_workspace',{});assert.equal(missing.requirement.code,'STATIC_BROWSER_TEST_REQUIRED');
+ await session.call('write_file',{path:'browser-tests.json',content:'PRIVATE_PARSE_SENTINEL'});
+ missing=await session.call('check_workspace',{});assert.equal(missing.requirement.code,'STATIC_BROWSER_TEST_INVALID');assert(!JSON.stringify(missing).includes('PRIVATE_PARSE_SENTINEL'));
 });
 
 test('successful tool writes retain latest unaccepted source when later billing fails before validation',async t=>{

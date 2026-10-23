@@ -5,21 +5,24 @@ import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import {createHash,randomUUID} from 'node:crypto';
+import {hostingPolicyHash} from '../hosting-policy.mjs';
 import {createStaticPublication} from '../static-publication.mjs';
 import {createArtifactApi} from '../artifact-api.mjs';
 import {publishAcceptedRevision} from '../main.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex'),revision=n=>String(n).repeat(40),repositoryId='a'.repeat(64),threadId='0x'+'b'.repeat(64);
 // Labelled validated-executor receipt fixture; these tests qualify publication,
 // not a second execution run or a real accepted Git reference.
-async function receipt(artifactRoot,n=1,readRevision=null,{sourceExtra,artifactName='index.html',html}={}){
+async function receipt(f,n=1,readRevision=null,{sourceExtra,artifactName='index.html',html}={}){
+ const artifactRoot=f.artifactRoot;
+ const plan={version:1,scenarios:[{name:'fixture',path:'index.html',steps:[{action:'reload'},{action:'expectVisible',selector:'body'}]}]};
  const outputDirectory=path.join(artifactRoot,'bok-static-'+randomUUID());await fs.mkdir(outputDirectory,{mode:0o700});
- const contents={'package.json':'{"scripts":{"build":"node build.cjs"}}','main.test.cjs':"require('node:test')('fixture',()=>{});",'build.cjs':'// public source',...sourceExtra};
+ const contents={'browser-tests.json':JSON.stringify(plan),'package.json':'{"scripts":{"build":"node build.cjs"}}','main.test.cjs':"require('node:test')('fixture',()=>{});",'build.cjs':'// public source',...sourceExtra};
  const files=Object.entries(contents).sort(([a],[b])=>a.localeCompare(b)).map(([name,text])=>({path:name,sha256:sha(text),bytes:Buffer.byteLength(text),data:Buffer.from(text).toString('base64')}));
  const sourceManifest=files.map(({data,...f})=>f),source=JSON.stringify({schema:1,revision:revision(n),manifest:sourceManifest,files});
  const body=html??'<!doctype html><title>revision '+n+'</title>',manifest=[{path:artifactName,bytes:Buffer.byteLength(body),sha256:sha(body)}];
  const artifacts=JSON.stringify({schema:1,files:[{path:artifactName,sha256:sha(body),data:Buffer.from(body).toString('base64')}]});
  for(const [name,data] of [['source-snapshot.json',source],['artifacts.json',artifacts],['cleanup.json','{"ownedContainerAbsent":true}']])await fs.writeFile(path.join(outputDirectory,name),data,{mode:0o600});
- return {repositoryId,threadId,invocationId:'0x'+String(n).repeat(64),readRevision,acceptedRevision:revision(n),validation:{passed:true,revision:revision(n),sourceDigest:sha(JSON.stringify(sourceManifest)),sourceManifest,sourceArchiveSha256:sha(source),artifactArchiveSha256:sha(artifacts),artifacts:manifest,artifactSha256:sha(JSON.stringify(manifest)),testsPassed:true,testCount:1,buildPassed:true,outputDirectory}};
+ return {repositoryId,threadId,invocationId:'0x'+String(n).repeat(64),readRevision,acceptedRevision:revision(n),validation:{passed:true,revision:revision(n),sourceDigest:sha(JSON.stringify(sourceManifest)),sourceManifest,sourceArchiveSha256:sha(source),artifactArchiveSha256:sha(artifacts),artifacts:manifest,artifactSha256:sha(JSON.stringify(manifest)),testsPassed:true,testCount:1,buildPassed:true,browser:{passed:true,browserVersion:'153.0.8010.12',checks:4,artifactSha256:sha(JSON.stringify(manifest)),policyHash:hostingPolicyHash(f.config.origin,f.config.boardOrigin),planSha256:sha(JSON.stringify(plan))},outputDirectory}};
 }
 async function fixture(options={}){
  const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-publication-'))),directory=path.join(root,'published'),artifactRoot=path.join(root,'artifacts');
@@ -30,7 +33,7 @@ async function fixture(options={}){
 }
 test('actual local HTTP serves latest static bytes and matching exact source download',async()=>{
  const f=await fixture();try{
-  const r=await receipt(f.artifactRoot),p=await f.publisher.publish(r);assert(p.published);
+  const r=await receipt(f),p=await f.publisher.publish(r);assert(p.published);
   const page=await fetch(p.latestUrl);assert.equal(page.status,200);assert.match(await page.text(),/revision 1/);assert.equal(page.headers.get('x-source-revision'),r.acceptedRevision);
   assert.match(page.headers.get('content-security-policy'),/sandbox allow-scripts/);assert.match(page.headers.get('content-security-policy'),/worker-src 'none'/);assert.equal(page.headers.get('set-cookie'),null);assert.equal(page.headers.get('cache-control'),'no-store');
   const source=await fetch(p.sourceUrl);assert.equal(source.status,200);assert.match(source.headers.get('content-disposition'),/attachment/);const bytes=Buffer.from(await source.arrayBuffer());assert.equal(sha(bytes),r.validation.sourceArchiveSha256);
@@ -39,28 +42,32 @@ test('actual local HTTP serves latest static bytes and matching exact source dow
 });
 test('atomic latest transition hides old artifact AND source routes while retaining private history',async()=>{
  const f=await fixture();try{
-  const a=await receipt(f.artifactRoot),one=await f.publisher.publish(a),b=await receipt(f.artifactRoot,2,revision(1)),two=await f.publisher.publish(b);
+  const a=await receipt(f),one=await f.publisher.publish(a),b=await receipt(f,2,revision(1)),two=await f.publisher.publish(b);
   assert.match(await(await fetch(two.latestUrl)).text(),/revision 2/);assert.equal(one.latestUrl,two.latestUrl);assert.equal(one.latestSourceUrl,two.latestSourceUrl);
   const latestSource=await fetch(one.latestSourceUrl);assert.equal(latestSource.headers.get('x-source-revision'),b.acceptedRevision);assert.equal(sha(Buffer.from(await latestSource.arrayBuffer())),b.validation.sourceArchiveSha256);
   for(const url of [one.artifactUrl,one.sourceUrl])assert.equal((await fetch(url)).status,404);
   assert.equal((await fetch(two.sourceUrl)).status,200);assert((await fs.stat(path.join(f.directory,one.publicationId,revision(1),'source.json'))).isFile());
   await f.publisher.publish(a);assert.match(await(await fetch(two.latestUrl)).text(),/revision 2/);
   await assert.rejects(f.publisher.publish({...b,validation:{...b.validation,sourceDigest:'f'.repeat(64)}}),{code:'STATIC_PUBLICATION_REJECTED'});
-  const c=await receipt(f.artifactRoot,3,revision(1));await assert.rejects(f.publisher.publish(c));assert.match(await(await fetch(two.latestUrl)).text(),/revision 2/);
+  const c=await receipt(f,3,revision(1));await assert.rejects(f.publisher.publish(c));assert.match(await(await fetch(two.latestUrl)).text(),/revision 2/);
  }finally{await f.close();}
 });
 test('host-only moderation persists through revision change and service reopen',async()=>{
  const f=await fixture();try{
-  const a=await f.publisher.publish(await receipt(f.artifactRoot));await f.publisher.setDisabled({repositoryId,threadId,disabled:true});
+  const a=await f.publisher.publish(await receipt(f));await f.publisher.setDisabled({repositoryId,threadId,disabled:true});
   assert.equal((await fetch(a.latestUrl)).status,404);assert.equal((await fetch(a.sourceUrl)).status,404);assert.equal((await fetch(a.latestSourceUrl)).status,404);
-  const b=await f.publisher.publish(await receipt(f.artifactRoot,2,revision(1)));const reopened=await f.reopen();assert.equal((await fetch(b.latestUrl)).status,404);
+  const b=await f.publisher.publish(await receipt(f,2,revision(1)));const reopened=await f.reopen();assert.equal((await fetch(b.latestUrl)).status,404);
   await reopened.setDisabled({repositoryId,threadId,disabled:false});assert.equal((await fetch(b.latestUrl)).status,200);
   assert.equal((await fetch(b.latestUrl,{method:'POST'})).status,405);assert.equal((await fetch(b.latestUrl)).status,200);
  }finally{await f.close();}
 });
-for(const kind of ['source digest','artifact digest','revision','unpassed','private source','source link','outside root','missing cleanup','missing index'])test('publication rejects '+kind+' before changing latest',async()=>{
+for(const kind of ['missing browser','wrong browser policy','wrong browser artifact','wrong browser plan','source digest','artifact digest','revision','unpassed','private source','source link','outside root','missing cleanup','missing index'])test('publication rejects '+kind+' before changing latest',async()=>{
  const f=await fixture();try{
-  const r=await receipt(f.artifactRoot,1,null,kind==='private source'?{sourceExtra:{'.env':'SYNTHETIC_PRIVATE'}}:kind==='missing index'?{artifactName:'other.html'}:{});
+  const r=await receipt(f,1,null,kind==='private source'?{sourceExtra:{'.env':'SYNTHETIC_PRIVATE'}}:kind==='missing index'?{artifactName:'other.html'}:{});
+  if(kind==='missing browser')delete r.validation.browser;
+  if(kind==='wrong browser policy')r.validation.browser.policyHash='f'.repeat(64);
+  if(kind==='wrong browser artifact')r.validation.browser.artifactSha256='f'.repeat(64);
+  if(kind==='wrong browser plan')r.validation.browser.planSha256='f'.repeat(64);
   if(kind==='source digest')r.validation.sourceArchiveSha256='f'.repeat(64);
   if(kind==='artifact digest')r.validation.artifactArchiveSha256='f'.repeat(64);
   if(kind==='revision')r.validation.revision=revision(2);
@@ -74,7 +81,7 @@ for(const kind of ['source digest','artifact digest','revision','unpassed','priv
 });
 test('HTTP rejects credential headers, unknown paths and encoded traversal without serving metadata',async()=>{
  const f=await fixture();try{
-  const p=await f.publisher.publish(await receipt(f.artifactRoot));
+  const p=await f.publisher.publish(await receipt(f));
   for(const headers of [{authorization:'synthetic'},{cookie:'private=synthetic'}])assert.equal((await fetch(p.latestUrl,{headers})).status,400);
   const wrongHost=await new Promise((resolve,reject)=>{const req=http.get(p.latestUrl,{headers:{host:'wrong.example'}},res=>{res.resume();resolve(res.statusCode);});req.on('error',reject);});assert.equal(wrongHost,400);
   for(const suffix of ['%2e%2e/catalog.json','index.html?token=synthetic','.env','publication.json'])assert.notEqual((await fetch(p.latestUrl+suffix)).status,200);
@@ -83,14 +90,14 @@ test('HTTP rejects credential headers, unknown paths and encoded traversal witho
 });
 test('post-publication file mutation or symlink is never served',async()=>{
  const f=await fixture();try{
-  const p=await f.publisher.publish(await receipt(f.artifactRoot)),file=path.join(f.directory,p.publicationId,revision(1),'files','index.html');
+  const p=await f.publisher.publish(await receipt(f)),file=path.join(f.directory,p.publicationId,revision(1),'files','index.html');
   await fs.writeFile(file,'SYNTHETIC_CHANGED');const response=await fetch(p.latestUrl);assert.equal(response.status,503);assert(!String(await response.text()).includes('SYNTHETIC'));
   await fs.rm(file);await fs.symlink('/etc/passwd',file);assert.equal((await fetch(p.latestUrl)).status,503);
  }finally{await f.close();}
 });
 for(const file of ['files/index.html','source.json','artifacts.json'])for(const mutation of ['missing','changed'])test('accepted recovery rejects '+mutation+' retained '+file,async()=>{
  const f=await fixture();try{
-  const r=await receipt(f.artifactRoot),first=await f.publisher.publish(r),target=path.join(f.directory,first.publicationId,r.acceptedRevision,file);
+  const r=await receipt(f),first=await f.publisher.publish(r),target=path.join(f.directory,first.publicationId,r.acceptedRevision,file);
   assert.equal((await fetch(first.artifactUrl)).status,200);assert.equal((await fetch(first.sourceUrl)).status,200);
   const catalog=await fs.readFile(path.join(f.directory,'catalog.json'));let mirrors=0;
   if(mutation==='missing')await fs.unlink(target);else await fs.writeFile(target,'SYNTHETIC_CHANGED');
@@ -101,7 +108,7 @@ for(const file of ['files/index.html','source.json','artifacts.json'])for(const 
 });
 test('failed catalog update preserves immutable revision and safely resumes exact pending publication',async t=>{
  const f=await fixture();try{
-  const r=await receipt(f.artifactRoot),original=fs.rename;
+  const r=await receipt(f),original=fs.rename;
   t.mock.method(fs,'rename',async function(from,to){if(to===path.join(f.directory,'catalog.json'))throw Error('synthetic durability failure');return original.call(this,from,to);});
   await assert.rejects(f.publisher.publish(r));t.mock.restoreAll();await assert.rejects(f.publisher.publish(r));
   const publisher=await f.reopen(),p=await publisher.publish(r);assert.equal((await fetch(p.latestUrl)).status,200);
@@ -110,7 +117,7 @@ test('failed catalog update preserves immutable revision and safely resumes exac
 });
 test('reopened orphan blocks unrelated publication before quota can be bypassed',async t=>{
  const f=await fixture({maxBytes:2000});try{
-  const first=await receipt(f.artifactRoot),other={...await receipt(f.artifactRoot,2),repositoryId:'c'.repeat(64)},original=fs.rename;
+  const first=await receipt(f),other={...await receipt(f,2),repositoryId:'c'.repeat(64)},original=fs.rename;
   t.mock.method(fs,'rename',async function(from,to){if(to===path.join(f.directory,'catalog.json'))throw Error('synthetic save failure');return original.call(this,from,to);});
   await assert.rejects(f.publisher.publish(first));t.mock.restoreAll();
   const reopened=await f.reopen();await assert.rejects(reopened.publish(other));
@@ -122,7 +129,7 @@ test('reopened orphan blocks unrelated publication before quota can be bypassed'
 });
 test('bounded retention refuses capacity overflow and preserves latest',async()=>{
  const f=await fixture({maxRevisions:1});try{
-  const p=await f.publisher.publish(await receipt(f.artifactRoot));await assert.rejects(f.publisher.publish(await receipt(f.artifactRoot,2,revision(1))));assert.match(await(await fetch(p.latestUrl)).text(),/revision 1/);
+  const p=await f.publisher.publish(await receipt(f));await assert.rejects(f.publisher.publish(await receipt(f,2,revision(1))));assert.match(await(await fetch(p.latestUrl)).text(),/revision 1/);
  }finally{await f.close();}
 });
 test('separate HTTP origin is mandatory even for local development',async()=>{
@@ -132,7 +139,7 @@ test('separate HTTP origin is mandatory even for local development',async()=>{
 test('moderation change during an in-flight disk read prevents stale response',async t=>{
  const f=await fixture();let unblock;
  try{
-  const p=await f.publisher.publish(await receipt(f.artifactRoot)),original=fs.open;
+  const p=await f.publisher.publish(await receipt(f)),original=fs.open;
   let entered;const ready=new Promise(r=>entered=r),hold=new Promise(r=>unblock=r);
   t.mock.method(fs,'open',async function(file,...args){if(String(file).endsWith('/files/index.html')){entered();await hold;}return original.call(this,file,...args);});
   const pending=fetch(p.latestUrl);await ready;await f.publisher.setDisabled({repositoryId,threadId,disabled:true});unblock();assert.equal((await pending).status,404);
@@ -151,7 +158,7 @@ test('actual browser runs generated static JS with isolated storage and labelled
   const scopedData=await (await fetch(discovery.aliases[0].endpoint,{credentials:'omit'})).json();
   document.querySelector('#status').textContent=isolated&&window.externalAssetLoaded===true&&publicData.label==='inert public fixture'&&scopedData.label==='scoped fixture'?'isolated JS works':'failed';})();
   </script>`;
-  const p=await f.publisher.publish(await receipt(f.artifactRoot,1,null,{html}));
+  const p=await f.publisher.publish(await receipt(f,1,null,{html}));
   const {chromium}=await import('playwright');browser=await chromium.launch({headless:true});const context=await browser.newContext();let publicCalls=0,assetCalls=0;
   await context.route('**/*',async route=>{const url=route.request().url();if(url.startsWith(f.origin+'/'))return route.continue();if(url==='https://public-static-fixture.invalid/script.js'){assetCalls++;return route.fulfill({status:200,contentType:'application/javascript',body:'window.externalAssetLoaded=true;'});}if(url==='https://public-static-fixture.invalid/style.css'){assetCalls++;return route.fulfill({status:200,contentType:'text/css',body:'#status { color: rgb(12, 34, 56); }'});}if(url==='https://public-static-fixture.invalid/data'){publicCalls++;return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"label":"inert public fixture"}'});}return route.abort();});
   const page=await context.newPage();await page.goto(p.latestUrl);await page.locator('#status').filter({hasText:'isolated JS works'}).waitFor({timeout:5000});assert.equal(publicCalls,1);assert.equal(scopedCalls,1);assert.equal(assetCalls,2);assert.equal(await page.locator('#status').evaluate(el=>getComputedStyle(el).color),'rgb(12, 34, 56)');assert.equal(await page.evaluate(()=>window.origin),'null');
@@ -166,7 +173,7 @@ test('actual browser runs generated static JS with isolated storage and labelled
   const render=()=>document.querySelector('#count').textContent=String(count);render();
   document.querySelector('#increment').onclick=()=>{count=Math.min(3,count+1);location.replace('#'+encodeURIComponent(JSON.stringify({v:1,count})));render();};
   </script>`;
-  const statePage=await f.publisher.publish(await receipt(f.artifactRoot,2,revision(1),{html:stateHtml}));
+  const statePage=await f.publisher.publish(await receipt(f,2,revision(1),{html:stateHtml}));
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(statePage.latestUrl);assert.equal(await page.locator('#count').innerText(),'0');
   await page.locator('#increment').click();assert.equal(await page.locator('#count').innerText(),'1');
@@ -185,11 +192,11 @@ test('published thread API discovery and GET preserve moderation, public isolati
  try{
   artifactApi=await createArtifactApi({directory:f.root,config:{enabled:true,endpoints:[{repositoryId,threadId,alias:'forecast',url:'https://scoped-fixture.invalid/forecast',credentialEnv:'SCOPED_TOKEN',totalRequests:2}]},env:{SCOPED_TOKEN:secret},lease:{assertHeld:async()=>{}},fetch:async(url,options)=>{assert.equal(url,'https://scoped-fixture.invalid/forecast');assert.deepEqual(options.headers,{Accept:'application/json',Authorization:'Bearer '+secret});calls++;if(calls===2){enter();await hold;}return new Response('{"forecast":"sunny"}',{headers:{'content-type':'application/json','set-cookie':'never=forward','x-upstream':'private'}});}});
   f.config.artifactApi=artifactApi;f.publisher=await f.reopen();
-  const p=await f.publisher.publish(await receipt(f.artifactRoot)),prefix=f.origin+'/t/'+p.publicationId+'/api',endpoint=prefix+'/forecast';
+  const p=await f.publisher.publish(await receipt(f)),prefix=f.origin+'/t/'+p.publicationId+'/api',endpoint=prefix+'/forecast';
   const discovery=await fetch(prefix,{headers:{origin:'null'}});assert.equal(discovery.status,200);assert.equal(discovery.headers.get('access-control-allow-origin'),'*');assert.deepEqual(await discovery.json(),{aliases:[{alias:'forecast',method:'GET',endpoint:'/t/'+p.publicationId+'/api/forecast'}]});
   for(const url of [p.latestUrl,p.sourceUrl,p.latestSourceUrl,prefix]){const text=await(await fetch(url)).text();assert(!text.includes(secret)&&!text.includes('SCOPED_TOKEN')&&!text.includes('scoped-fixture.invalid'));}
   assert.equal((await fetch(endpoint,{method:'HEAD'})).status,405);assert.equal((await fetch(endpoint+'?url=https://other.invalid')).status,400);assert.equal((await fetch(endpoint,{method:'POST',body:'caller data'})).status,405);
-  const other=await f.publisher.publish({...await receipt(f.artifactRoot,2),threadId:'0x'+'c'.repeat(64)});
+  const other=await f.publisher.publish({...await receipt(f,2),threadId:'0x'+'c'.repeat(64)});
   assert.deepEqual(await(await fetch(f.origin+'/t/'+other.publicationId+'/api')).json(),{aliases:[]});assert.equal((await fetch(f.origin+'/t/'+other.publicationId+'/api/forecast')).status,404);assert.equal(calls,0);
   const result=await fetch(endpoint,{headers:{origin:'null','x-caller':'not forwarded'}});assert.equal(result.status,200);assert.deepEqual(await result.json(),{forecast:'sunny'});assert.equal(result.headers.get('set-cookie'),null);assert.equal(result.headers.get('x-upstream'),null);
   const pending=fetch(endpoint);await entered;await f.publisher.setDisabled({repositoryId,threadId,disabled:true});release();assert.equal((await pending).status,503);
@@ -200,7 +207,7 @@ test('published thread API discovery and GET preserve moderation, public isolati
 
 for(const kind of ['unfinished directory','corrupt pointer'])test('reopen rejects '+kind+' until operator reconciliation',async()=>{
  const f=await fixture();try{
-  const p=await f.publisher.publish(await receipt(f.artifactRoot));
+  const p=await f.publisher.publish(await receipt(f));
   if(kind==='unfinished directory')await fs.mkdir(path.join(f.directory,p.publicationId,'.pending-synthetic'),{mode:0o700});
   else{const file=path.join(f.directory,'catalog.json'),state=JSON.parse(await fs.readFile(file));state.threads[p.publicationId].latest=revision(9);await fs.writeFile(file,JSON.stringify(state));}
   await assert.rejects(f.reopen());
