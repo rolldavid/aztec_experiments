@@ -69,7 +69,8 @@ export async function rollingPredecessorsClear({index,request,isTerminal=async()
 /** Rolling request identity comes from the authenticated public projection.
  * Human ownership/private tags never enter this port. Current on-chain plugin,
  * moderation and policy reads are pinned to the same required-finality block. */
-export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,development,isTerminalWithoutReply}){
+export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,development,isTerminalWithoutReply,confirmationTier='checkpointed'}){
+ assert(['checkpointed','proposed'].includes(confirmationTier));
  const admission={};let cachedState=null;
  assert.equal(boardArtifact.name,'RollingBoard');const board=AztecAddress.fromStringUnsafe(scope.boardAddress);
  const expectedClass=(await getContractClassFromArtifact(boardArtifact)).id.toString();
@@ -88,7 +89,7 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
    const results=await Promise.allSettled(reads),failed=results.find(r=>r.status==='rejected');
    if(failed)throw failed.reason;return results.map(r=>r.value);
   };
-  const [,head]=await together([checkScope(),node.getBlock('checkpointed')]);
+  const [,head]=await together([checkScope(),node.getBlock(confirmationTier)]);
   assert(head&&Number.isSafeInteger(head.number));const anchor={number:head.number,hash:String(head.hash)};
   // Only immutable, hash-anchored storage is reused. Predecessor admission and
   // the canonical anchor are still observed for every guard. One entry bounds
@@ -130,7 +131,7 @@ export async function rollingBoardPort({node,index,scope,boardArtifact,pluginId,
   assert(!admission.closed,'Canonical predecessor admission closed');
   const current=index.status();
   if(current.state==='ready'&&current.complete===true&&current.checkpoint){
-   const head=await node.getBlock('checkpointed'),after=index.status();
+   const head=await node.getBlock(confirmationTier),after=index.status();
    const number=Number(current.checkpoint.number);
    if(Number.isSafeInteger(number)&&number>=0&&head&&head.number===number&&String(head.hash)===current.checkpoint.hash&&after.state==='ready'&&after.complete===true&&after.revision===current.revision)return true;
   }

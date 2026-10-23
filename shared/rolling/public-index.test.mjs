@@ -679,3 +679,20 @@ test('persistent native rejection inside the canonical decoder resumes without w
  await assert.rejects(a.index.step());assert(failed);assert.throws(()=>a.index.publication());await f.drain(a.index);
  assert.equal(a.index.publication().checkpoint.number,'3');assert.equal(f.projection(a.storage,'posts','10').text,'Hello');
 });
+
+test('explicit proposed index admits executed post before checkpoint and rolls it back on fork',async t=>{
+ const f=await persistentFixture(t),blockData=f.node.getBlockData,receipt=f.node.getTxReceipt;let proposed=3;
+ f.node.getBlockData=n=>blockData(n==='proposed'?proposed:n==='checkpointed'?2:n);
+ f.node.getTxReceipt=async tx=>{const r=await receipt(tx);return {...r,status:r.blockNumber>2?'proposed':'checkpointed'};};
+ const {index}=await f.open(undefined,{confirmationTier:'proposed'});await f.drain(index);
+ assert.equal(index.status().checkpoint.number,'3');assert.equal(index.query('post',{id:'10'}).post.text,'Hello');
+ proposed=2;await index.step();await f.drain(index);assert.equal(index.status().checkpoint.number,'2');assert.equal(index.query('post',{id:'10'}).post,null);
+ f.put(3,[await f.post(30,3,'Replacement')],50);proposed=3;await index.step();await f.drain(index);
+ assert.equal(index.query('post',{id:'10'}).post,null);assert.equal(index.query('post',{id:'30'}).post.text,'Replacement');
+});
+test('default persistent index excludes proposed posts until checkpoint',async t=>{
+ const f=await persistentFixture(t),blockData=f.node.getBlockData,receipt=f.node.getTxReceipt;
+ f.node.getBlockData=n=>blockData(n==='checkpointed'?2:n);
+ f.node.getTxReceipt=async tx=>{const r=await receipt(tx);return {...r,status:r.blockNumber>2?'proposed':'checkpointed'};};
+ const {index}=await f.open();await f.drain(index);assert.equal(index.status().checkpoint.number,'2');assert.equal(index.query('post',{id:'10'}).post,null);
+});

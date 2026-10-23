@@ -190,14 +190,15 @@ export async function createRollingPublicIndex({node,artifact,scope,deployment,s
  * SQL queries use one guarded snapshot only after complete canonical publication.
  * publication() is a revision binding, not standalone authority for cached rows.
  */
-export async function createRollingPersistentPublicIndex({node,artifact,bokArtifact,scope,deployment,storage,homeSubboards}){
+export async function createRollingPersistentPublicIndex({node,artifact,bokArtifact,scope,deployment,storage,homeSubboards,confirmationTier='checkpointed'}){
   scope=validateRollingScope(scope);
   const curated=normalizeHomeSubboards(homeSubboards),cursorSecret=randomBytes(32);
   const own=(v,keys)=>{exact(v,keys);for(const k of keys)check(Object.hasOwn(Object.getOwnPropertyDescriptor(v,k),'value'));return copy(v);};
   deployment=own(deployment,['blockNumber','blockHash','txHash']);
   check(natural(deployment.blockNumber)&&deployment.blockNumber>0&&hash(deployment.blockHash)&&hash(deployment.txHash));
   if(scope.bok)check(scope.bok.deployment.blockNumber>=deployment.blockNumber);
-  const decoder=await createRollingEventDecoder({artifact,scope,bokArtifact}),epoch=randomUUID();
+  check(['checkpointed','proposed'].includes(confirmationTier));
+  const decoder=await createRollingEventDecoder({artifact,scope,bokArtifact,confirmationTier}),epoch=randomUUID();
   const maxTransactions=Math.floor((BLOBS_PER_CHECKPOINT*FIELDS_PER_BLOB-NUM_BLOCK_END_BLOB_FIELDS-NUM_CHECKPOINT_END_MARKER_FIELDS)/MIN_TX_BLOB_FIELDS);
   const address=AztecAddress.fromBigIntUnsafe(BigInt(scope.boardAddress)),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
   const cache=v=>check(v,'ROLLING_PUBLIC_CACHE_MISMATCH');
@@ -304,10 +305,10 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     const anchors=new Map();
     async function anchor(n){const key=String(n);if(anchors.has(key))return anchors.get(key);
       const b=await read(()=>node.getBlockData(n));check(b,'ROLLING_PUBLIC_UNAVAILABLE');
-      const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(n!=='checkpointed')check(number===String(n));
+      const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(n!==confirmationTier)check(number===String(n));
       const value={number,hash:h};anchors.set(key,value);anchors.set(number,value);return value;}
     try{
-      await identity();const target=await anchor('checkpointed');check(BigInt(target.number)>=BigInt(scope.bok?.deployment.blockNumber??deployment.blockNumber));
+      await identity();const target=await anchor(confirmationTier);check(BigInt(target.number)>=BigInt(scope.bok?.deployment.blockNumber??deployment.blockNumber));
       const deployed=await anchor(deployment.blockNumber);check(deployed.hash===deployment.blockHash);
       const base=await anchor(deployment.blockNumber-1);
       if(origin)check(same(origin,base));else origin=base;

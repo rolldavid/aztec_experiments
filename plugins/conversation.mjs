@@ -6,7 +6,8 @@ const field=value=>'0x'+BigInt(value).toString(16).padStart(64,'0');
  * posts through this request, including authenticated bot replies/tombstones.
  * A changing publication, missing page or capacity limit fails before billing.
  */
-export function rollingConversation({index,node,scope,development=false,maxMessages=4096}){
+export function rollingConversation({index,node,scope,development=false,maxMessages=4096,confirmationTier='checkpointed'}){
+ assert(['checkpointed','proposed'].includes(confirmationTier));
  assert.equal(typeof development,'boolean');assert(!development||scope.chainId==='31337');
  assert(Number.isSafeInteger(maxMessages)&&maxMessages>=1&&maxMessages<=4096);
  scope=Object.freeze({...scope});const expected=JSON.stringify(scope),sync=index.sync.bind(index),query=index.query.bind(index),status=index.status.bind(index);
@@ -17,10 +18,10 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
   assert(request&&field(request.id)===id&&!request.bot&&!request.removal);
   const revision=selected.revision,checkpoint=selected.checkpoint,threadId=field(request.record.root);
   assert.equal(revision,initial.revision);
-  const [info,confirmed]=await together([node.getNodeInfo(),node.getBlock('checkpointed')]);assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);
+  const [info,confirmed]=await together([node.getNodeInfo(),node.getBlock(confirmationTier)]);assert.equal(String(info.l1ChainId),scope.chainId);assert.equal(String(info.rollupVersion),scope.rollupVersion);
   assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),scope.rollupAddress);assert.equal(info.realProofs,!development);
   assert(confirmed&&Number.isSafeInteger(confirmed.number)&&/^0x[0-9a-f]{64}$/.test(String(confirmed.hash)));
-  assert(Number.isSafeInteger(checkpoint.number)&&checkpoint.number<=confirmed.number,'Conversation publication is not checkpointed');
+  assert(Number.isSafeInteger(checkpoint.number)&&checkpoint.number<=confirmed.number,'Conversation publication exceeds selected chain head');
   const check=async()=>{
    const current=status();assert(current.state==='ready'&&current.complete&&current.revision===revision);
    const [block,confirmedBlock]=await together([node.getBlockData(checkpoint.number),...(checkpoint.number===confirmed.number?[]:[node.getBlock(confirmed.number)])]);
@@ -57,7 +58,7 @@ export function rollingConversation({index,node,scope,development=false,maxMessa
    // canonical. Newer posts do not silently enter the already-paid summary.
    const current=status();assert(current.state==='ready'&&current.complete===true&&JSON.stringify(current.scope)===expected);
    assert(Number.isSafeInteger(current.checkpoint.number)&&current.checkpoint.number>=checkpoint.number);
-   const head=await node.getBlock('checkpointed');assert(head&&current.checkpoint.number<=head.number);
+   const head=await node.getBlock(confirmationTier);assert(head&&current.checkpoint.number<=head.number);
    for(const saved of captured){
     const result=query('post',{id:BigInt(saved.id).toString()}),post=result.post;
     assert(result.revision===current.revision&&post);

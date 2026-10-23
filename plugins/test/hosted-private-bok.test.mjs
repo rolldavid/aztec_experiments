@@ -250,7 +250,7 @@ test('hosted filesystem lease rejects second owner and preserves a replaced lock
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
 
-for(const development of [true,false])test('actual SDK board projection gates canonical plugin, moderation, checkpoint and native proof mode (development='+development+')',async()=>{
+for(const confirmationTier of ['checkpointed','proposed'])for(const development of [true,false])test('actual SDK board projection gates canonical plugin, moderation, '+confirmationTier+' and native proof mode (development='+development+')',async()=>{
  const fs=await import('node:fs/promises');
  const {rollingBoardPort}=await import('../aztec.mjs');
  const {BarretenbergSync,BackendType}=await import('@aztec-foundation/bb.js');
@@ -270,11 +270,11 @@ for(const development of [true,false])test('actual SDK board projection gates ca
   const state={realProofs:!development,anchor:f(99),currentClass:classId};
   const post={id:'1',text:'@bok hello',record:{subboard:'0',root:'1'},order:'1',position:{blockNumber:3},removal:null,invocation:{adapter:'9',pluginId:'4',requestId:'2',target:'3',reply:null}};
   const node={getNodeInfo:async()=>({l1ChainId:Number(scope.chainId),rollupVersion:3409706519,realProofs:state.realProofs,l1ContractAddresses:{rollupAddress:scope.rollupAddress}}),
-   getBlock:async tag=>{assert.notEqual(tag,'finalized','Finalized lag is not a request prerequisite');return {number:5,hash:BlockHash.fromString(tag==='checkpointed'?f(99):state.anchor)};},getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
+   getBlock:async tag=>{assert.notEqual(tag,'finalized','Finalized lag is not a request prerequisite');return {number:5,hash:BlockHash.fromString(tag===confirmationTier?f(99):state.anchor)};},getContract:async()=>({originalContractClassId:classId,currentContractClassId:state.currentClass}),
    getPublicStorageAt:async(anchor,address,slot)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});assert.equal(String(address),scope.boardAddress);return new Fr(storage.get(slot.toBigInt()));}};
   const index={scanPendingPredecessors:()=>({rows:[],nextAfter:null,revision:'one'}),sync:async()=>{},status:()=>({state:'ready'}),query:()=>({post}),scanPosts:()=>({complete:true,posts:[post],nextAfter:null,checkpoint:{number:5,hash:f(99)}})};
   let terminal=false;
-  const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development,isTerminalWithoutReply:async(_request,anchor)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});const captured=await hostedTerminalNode(node,anchor,development).getBlock('checkpointed');assert(captured.hash instanceof BlockHash);return terminal;}});
+  const port=await rollingBoardPort({node,index,scope,boardArtifact:artifact,pluginId,development,confirmationTier,isTerminalWithoutReply:async(_request,anchor)=>{assert.deepEqual(anchor,{number:5,hash:f(99)});const captured=await hostedTerminalNode(node,anchor,development).getBlock('checkpointed');assert(captured.hash instanceof BlockHash);return terminal;}});
   assert.equal((await port.pending(null)).requests[0].target,f(3));assert.equal((await port.readRequest(f(1))).usable,true);
   const originalNode={...node},counts={};let activeReads=0,peakReads=0;
   for(const [name,fn]of Object.entries(originalNode))node[name]=async(...args)=>{

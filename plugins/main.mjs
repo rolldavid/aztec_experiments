@@ -297,7 +297,9 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const [boardRaw,bokRaw]=loadRollingArtifacts(),boardArtifact=loadContractArtifact(boardRaw),artifact=loadContractArtifact(bokRaw);
   const indexScope={chainId:scope.chainId,rollupVersion:scope.rollupVersion,rollupAddress:scope.rollupAddress,boardAddress:scope.boardAddress,classId:String((await getContractClassFromArtifact(boardArtifact)).id)};
   const storage=createRollingPublicSqliteStore(path.join(config.stateDirectory,'public-index'),{scope:indexScope,serviceOwned:true});
-  try{index=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node:hostedIndexNode(node,config.development),artifact:boardArtifact,scope:indexScope,deployment:config.deployment,storage}),storage);}catch(error){storage.close();throw error;}
+  // Native executed proposals let paid work overlap L1 checkpointing. Each paid
+  // call rechecks exact proposed state; final mutation receipts stay checkpointed.
+  try{index=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node:hostedIndexNode(node,config.development),artifact:boardArtifact,scope:indexScope,deployment:config.deployment,storage,confirmationTier:'proposed'}),storage);}catch(error){storage.close();throw error;}
   // A request owns its own billing journal. Only shared wallet operations and
   // canonical index snapshots serialize; unrelated model calls may overlap.
   const lane=()=>{let tail=Promise.resolve();return fn=>{const result=tail.then(fn);tail=result.catch(()=>{});return result;};};
@@ -316,9 +318,9 @@ export async function runRollingHostedService({config,env=process.env,onError=()
    const result=await isHostedTerminalWithoutReply({request,escrow:serializeHostedEscrow(rawEscrow,walletOperation),store,anchor});
    await lease.assertHeld();assert.deepEqual(JSON.parse((await readHostedPrivateFile(file)).toString('utf8')),original,'Terminal journal changed during admission');return result;
   };
-  rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development,isTerminalWithoutReply});
+  rawBoard=await rollingBoardPort({node,index,scope,boardArtifact,pluginId:config.pluginId,development:config.development,isTerminalWithoutReply,confirmationTier:'proposed'});
   const board={close:()=>rawBoard.close(),pending:(...args)=>indexed(()=>rawBoard.pending(...args)),readRequest:(...args)=>indexed(()=>rawBoard.readRequest(...args))};
-  const rawConversation=rollingConversation({index,node,scope:indexScope,development:config.development});
+  const rawConversation=rollingConversation({index,node,scope:indexScope,development:config.development,confirmationTier:'proposed'});
   const conversation=measureBokObjectStages({load:input=>indexed(async()=>{const history=await rawConversation.load(input);return {...history,assertCurrent:()=>measureBokStage('conversation.assertCurrent',()=>indexed(()=>history.assertCurrent()))};})},'conversation');
   const summaryModelId=env.VENICE_SUMMARY_MODEL||config.summaryModelId;
   assert(typeof summaryModelId==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/.test(summaryModelId),'Cheaper summary model required');
@@ -354,7 +356,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
     await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
     const store=await fileState(path.join(config.stateDirectory,id+'.json'));
     const rawEscrow=await measureBokStage('escrow.open',()=>walletOperation(()=>createPrivateBokEscrow({node,wallet,artifact,address:scope.receiver,operator:account.address.toString(),board:scope.boardAddress,network:scope,
-     requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real'})));
+     requestId:request.requestId,target:request.target,store,lease,development:config.development,proofMode:config.development?'disabled':'real',admissionTier:'proposed'})));
     const escrow=measureBokObjectStages(serializeHostedEscrow(rawEscrow,walletOperation),'escrow');
     const limits=store.read().privateBok?.limits??{maxCalls:16,maxTokens:8192,maxInputBytes:262144,...config.limits};
     const admitted=admittedRepositorySession(repositories,{threadId:request.threadId,invocationId:request.requestId,repository});

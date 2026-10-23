@@ -124,7 +124,8 @@ function flattenTypes(type,eventType,path='') {
  if(type.kind==='struct'){check(type.fields.length<=20);return type.fields.flatMap(f=>flattenTypes(f.type,eventType,path?path+'.'+f.name:f.name));}throw rollingError();
 }
 const normalize = value => typeof value==='bigint'?String(value):typeof value==='boolean'?value:Array.isArray(value)?value.map(normalize):value?.toField?String(value.toField().toBigInt()):Object.fromEntries(Object.entries(value).map(([k,v])=>[k,normalize(v)]));
-export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
+export async function createRollingEventDecoder({artifact,scope,bokArtifact,confirmationTier='checkpointed'}) {
+ check(['checkpointed','proposed'].includes(confirmationTier));
  scope=validateRollingScope(scope);check(artifact.name==='RollingBoard'&&(await getContractClassFromArtifact(artifact)).id.toString()===scope.classId);
  let bokInstance=null,bokSlots=null;
  if(scope.bok){
@@ -189,7 +190,7 @@ export async function createRollingEventDecoder({artifact,scope,bokArtifact}) {
    const txHash=TxHash.fromString(hashValue),address=AztecAddress.fromBigIntUnsafe(BigInt(scope.boardAddress)),info=await read(()=>node.getNodeInfo()),instance=await read(()=>node.getContract(address));
    check(String(info.l1ChainId)===scope.chainId&&String(info.rollupVersion)===scope.rollupVersion&&info.l1ContractAddresses.rollupAddress.toString()===scope.rollupAddress);
    check(instance?.currentContractClassId.toString()===scope.classId&&instance?.originalContractClassId.toString()===scope.classId);
-   const receipt=await read(()=>node.getTxReceipt(txHash));check([TxStatus.CHECKPOINTED,TxStatus.PROVEN,TxStatus.FINALIZED].includes(receipt.status)&&receipt.executionResult===TxExecutionResult.SUCCESS&&receipt.txHash.equals(txHash));
+   const receipt=await read(()=>node.getTxReceipt(txHash));check([...(confirmationTier==='proposed'?[TxStatus.PROPOSED]:[]),TxStatus.CHECKPOINTED,TxStatus.PROVEN,TxStatus.FINALIZED].includes(receipt.status)&&receipt.executionResult===TxExecutionResult.SUCCESS&&receipt.txHash.equals(txHash));
    // An ingestion caller may already own this full block. Receipt, effect and
    // block identity checks below are identical for supplied and fetched bodies.
    const block=suppliedBlock??await read(()=>node.getBlock(receipt.blockNumber,{includeTransactions:true})),found=await read(()=>node.getTxEffect(txHash));check(block&&found&&Number(block.header.globalVariables.blockNumber)===Number(receipt.blockNumber)&&block.hash.equals(receipt.blockHash)&&found.l2BlockHash.equals(receipt.blockHash)&&Number(found.l2BlockNumber)===Number(receipt.blockNumber)&&found.data.txHash.equals(txHash));

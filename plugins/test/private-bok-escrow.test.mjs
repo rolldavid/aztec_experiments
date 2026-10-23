@@ -517,3 +517,15 @@ test('final reply replacement consumed before simulation/proof failure cannot be
  await assert.rejects(f.port.replaceDroppedOperation(f.authority),/unresolved/);assert.deepEqual(f.counts(),{proofs:1,sends:0});
  await (await f.create()).replaceDroppedOperation(f.authority);assert.deepEqual(f.counts(),{proofs:1,sends:0});assert.equal(f.feeCounts().simulations,1);
 });
+
+test('proposed reservation permits paid admission but a reorg fences it and final observation still waits checkpoint',async()=>{
+ const f=await fixture({admissionTier:'proposed'}),node=f.options.node,original=node.getBlock;const selectors=[];
+ node.getBlock=async tag=>{selectors.push(tag);assert.notEqual(tag,'checkpointed','Admission must not wait for checkpoint');return original(tag);};
+ f.row.available=0n;f.row.reserved=f.row.budget;
+ const guard=await f.port.assertUsable(f.id,0,1000n);assert.equal(guard.finality,'proposed');assert(selectors.includes('proposed'));
+ f.set('blockMismatch',true);await assert.rejects(f.port.assertUsable(f.id,0,1000n),/changed/);f.set('blockMismatch',false);
+ node.getBlock=original;f.receipt.status='proposed';let waited=false;
+ f.sdk.waitForTx=async(_node,_hash,options)=>{assert.equal(options.waitForStatus,'checkpointed');assert.equal(options.timeout,0);waited=true;f.receipt.status='checkpointed';return f.receipt;};
+ const args=[f.id,0,1n,H(91)],op=f.op('settle',args);
+ const result=await f.port.settle(...args,op);assert.equal(waited,true);assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
+});

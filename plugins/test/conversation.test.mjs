@@ -50,3 +50,11 @@ test('same-anchor conversation uses one canonical data read per guard and one lo
  assert.deepEqual(counts,{getBlock:1,getBlockData:1});
  h.state.reorg=true;await assert.rejects(history.assertCurrent(),'fresh canonical anchor still detects reorg');
 });
+
+test('explicit proposed conversation starts before checkpoint and fences a removed proposal',async()=>{
+ const h=fixture(),getBlock=h.node.getBlock;h.node.getBlock=n=>getBlock(n).then(block=>n==='checkpointed'?{...block,number:12}:block);
+ const options={scope:h.scope,index:h.index,node:h.node,development:true};
+ await assert.rejects(rollingConversation(options).load({postId:f(3)}));
+ const history=await rollingConversation({...options,confirmationTier:'proposed'}).load({postId:f(3)});await history.assertCurrent();
+ assert.equal(history.messages.at(-1).text,'latest');h.state.reorg=true;await assert.rejects(history.assertCurrent());
+});

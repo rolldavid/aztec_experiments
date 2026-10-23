@@ -39,7 +39,7 @@ export async function createPrivateBokEscrow(options) {
  */
 export function createPrivateBokEscrowFactory(sdk) {
  return async function({node,wallet,artifact,address,operator,board,network,requestId,target,store,lease,
-  development=false,proofMode='real'}) {
+  development=false,proofMode='real',admissionTier='checkpointed'}) {
   const {Contract,Fr,AztecAddress,TxHash,getContractClassFromArtifact,deriveStorageSlotInMap,getFunctionReturnType,isTrustedProver} = sdk;
   assert.equal(typeof lease?.assertHeld, 'function'); assert.equal(typeof store?.read, 'function'); assert.equal(typeof store?.write, 'function');
   assert.equal(typeof development, 'boolean'); assert(['real','disabled'].includes(proofMode));
@@ -53,9 +53,10 @@ export function createPrivateBokEscrowFactory(sdk) {
   const idField = Fr.fromString(id); Fr.fromString(invocation);
   assert.equal(artifact.name,'PrivateBok');
   const classId = (await getContractClassFromArtifact(artifact)).id.toString();
-  // Ordinary Rolling progression uses native checkpoint inclusion in both modes.
-  // Proof verification remains real on testnet; checkpointed is not finalized.
+  // Paid execution may use native proposed inclusion when explicitly selected.
+  // Mutation completion still requires checkpoint inclusion in both proof modes.
   const finality = 'checkpointed';
+  assert(['checkpointed','proposed'].includes(admissionTier));
   const identity = Object.freeze({network:`eip155-${chainId}:aztec-${version}:${rollup}`,escrow:addr.toString()});
   const binding = {...identity,requestId:id,target:invocation,operator:op.toString(),board:boardAddress,classId,finality,proofMode};
   for (const name of ['operator','board','l1_chain','version','requests']) assert(artifact.storageLayout[name]?.slot, 'Missing pinned storage layout');
@@ -108,7 +109,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    if(!read.blocks.has(tag))read.blocks.set(tag,node.getBlock(tag));
    return read.blocks.get(tag);
   };
-  const anchored=async(tag=finality,read=observation())=>{
+  const anchored=async(tag=admissionTier,read=observation())=>{
    const b=await selectedBlock(tag,read);assert(b?.header && Number.isSafeInteger(Number(b.number)),'Canonical block unavailable');
    const anchor={number:b.number,hash:b.hash};hex(b.hash);
    const key=String(b.number)+':'+String(b.hash);
@@ -127,7 +128,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     assert([1,2,3,4].includes(r.state),'Request unavailable');assert.equal(r.invocation_hash,invocation,'Invocation target mismatch');
     assert(r.budget>0n&&r.available+r.reserved+r.charged+r.refunded===r.budget,'Request conservation failure');
     assert.equal(String((await node.getBlock(b.number))?.hash),String(b.hash),'Canonical block changed');
-    return {canonical:true,request:r,anchor:{number:Number(b.number),hash:String(b.hash),timestamp:String(integer(b.header.globalVariables.timestamp,64)),finality},instance};
+    return {canonical:true,request:r,anchor:{number:Number(b.number),hash:String(b.hash),timestamp:String(integer(b.header.globalVariables.timestamp,64)),finality:tag},instance};
    })());
    return read.snapshots.get(key);
   };
@@ -221,7 +222,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    // The artifact-bound board callback reserves the owner's full budget in the
    // posting transaction. Canonical state is authority, not a synthetic local tx.
    const read=observation();
-   const [r,latest]=await Promise.all([anchored(finality,read),anchored('latest',read)]);
+   const [r,latest]=await Promise.all([anchored(admissionTier,read),anchored('latest',read)]);
    for(const row of [r,latest])assert(row.request.state===2&&callId===0&&row.request.sequence===0&&row.request.reserved===maximum&&maximum===row.request.budget&&row.request.available===0n&&row.request.charged===0n&&row.request.refunded===0n&&BigInt(row.request.receipt)===0n&&maximum>0n,'Reservation not canonical');
    await held();const now=BigInt(Math.floor(Date.now()/1000)),chainTime=BigInt(latest.anchor.timestamp);
    assert((now>chainTime?now:chainTime)+180n<latest.request.deadline,'Reservation too close to expiry');
@@ -229,7 +230,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    // shared one snapshot. A reorg during the latest read cannot release paid work.
    const anchors=new Map([r,latest].map(row=>[row.anchor.number,row.anchor.hash]));
    for(const [number,hash]of anchors)assert.equal(String((await node.getBlock(number))?.hash),hash,'Canonical block changed during reservation guard');
-   return {canonical:true,request:r.request,anchor:r.anchor,deadline:String(latest.request.deadline),finality,controlledSettlement:development};
+   return {canonical:true,request:r.request,anchor:r.anchor,deadline:String(latest.request.deadline),finality:admissionTier,controlledSettlement:development};
   };
   const send=async(method,args,operation)=>{
    scope(args[0]);const operationId=operation?.operationId,argsDigest=digest(args.map(v=>typeof v==='bigint'?String(v):v));
@@ -321,7 +322,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     const observed=await inspectOne(operationId);
     if(observed.canonical&&observed.status==='succeeded')return false;
     assert.equal(journal().operations[operationId].observation?.status,'dropped','Explicit dropped receipt required');
-    const checkpoint=await anchored(),latest=await anchored('latest');
+    const checkpoint=await anchored(finality),latest=await anchored('latest');
     assert.deepEqual(latest.request,checkpoint.request,'Reservation changed after checkpoint');
     const request=checkpoint.request;
     assert(request.state===2&&request.sequence===original.args[1]&&request.reserved>=charge,'Original reservation required');
