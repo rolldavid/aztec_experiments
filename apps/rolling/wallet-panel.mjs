@@ -192,7 +192,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let initializationAttempt=0,setupMode=null;
  let runtimePending=null,initializationPending=null,initializing=false,connectPending=null;
  let postingInProgress=false,operationSettled=Promise.resolve();
- let bokHost=null,updateBokForm=()=>{};
+ let bokHost=null,updateBokForm=()=>{},bokRefreshNeeded=false;
+ const ownBokPosts=new Map();
  let identityHost=null,inlineCreation=false,accountSettingsOpen=false,selectedName='0',selectedLabel='Anonymous';
  const identityControls=el('div',{class:'posting-name-controls'}),inlineName=el('section',{class:'inline-name',hidden:''});
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
@@ -212,11 +213,35 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  dialog.append(el('div',{class:'dialog-top'},title,closeButton),description,live,content);
  document.body.append(dialog);
  const bokBalance=createBokBalanceQuery({identity:()=>unlocked()?session:null,read:()=>session.application.readBokStatus(),onChange:()=>{
-  bokStatus=bokBalance.snapshot().value;renderBokControls();updateBokForm();updateTopupQuote();
+  bokStatus=bokBalance.snapshot().value;renderBokControls();updateBokForm();updateTopupQuote();if(bokRefreshNeeded&&!bokBalance.pending)requestBokBalance();
  }});
  function invalidateBokBalance(){bokStatus=null;bokBalance.invalidate();}
  function bokBalanceText(){const {phase,value}=bokBalance.snapshot();return value?.available===true?`${decimal(value.availableCredit,6)} USDC available${phase==='loading'?' · updating':''}`:phase==='loading'?'Checking balance…':phase==='error'?'Balance unavailable':phase==='unavailable'?'Bok is unavailable':'Balance not loaded';}
- function requestBokBalance(refresh=false){if(accountRefreshPending||accountRefreshNeeded)return;if(!initializing&&!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length))void bokBalance.load({refresh});}
+ function requestBokBalance(refresh=false){
+  if(accountRefreshPending||accountRefreshNeeded||bokBalance.pending)return;
+  if(!initializing&&!busy&&!blocked&&!setupMode&&!intent&&session?.bokConfigured===true&&unlocked()&&(status?.status==='fee-ready'||status?.status==='fee-needed'&&status.depositIds?.length)){
+   refresh=refresh||bokRefreshNeeded;bokRefreshNeeded=false;void bokBalance.load({refresh});
+  }
+ }
+ // Follow only this session's confirmed Bok posts. An unrelated public update
+ // must not start private account work. The parent remains useful on home feeds
+ // where its reply is represented by invocation.reply rather than a reply row.
+ function observePublicPosts(posts){
+  if(!ownBokPosts.size||!Array.isArray(posts)||!unlocked())return;
+  let changed=false;
+  for(const post of posts){
+   const own=ownBokPosts.get(post?.position?.txHash),invocation=post?.invocation;
+   if(own&&field(invocation?.requestId)&&field(invocation?.pluginId)){
+    own.requestId=invocation.requestId;own.pluginId=invocation.pluginId;
+    const reply=field(invocation.reply)?invocation.reply:null;
+    if(own.reply!==reply){own.reply=reply;changed=true;}
+   }
+   if(post?.bot&&field(post.id))for(const request of ownBokPosts.values()){
+    if(request.requestId===post.bot.requestId&&request.pluginId===post.bot.pluginId&&request.reply!==post.id){request.reply=post.id;changed=true;}
+   }
+  }
+  if(changed){bokRefreshNeeded=true;requestBokBalance();}
+ }
  function addBokCredit(){
   if(initializing||busy||!session||!unlocked())return;
   topupKind='bok';topupInputs={amount:''};resetTopupQuote();topupSaved=null;view='topup';clearOperationFeedback();
@@ -237,7 +262,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){updateBokForm=()=>{};renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){ownBokPosts.clear();bokRefreshNeeded=false;preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){const updated=preferenceUpdates.get(kind+':'+target);if(updated!==undefined&&unlocked())return updated;if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -777,6 +802,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(result.status==='authorized'){note('');notice='Bok request authorized. Review the saved post when ready; it has not been published.';return;}
   if(['bok-post-reverted','bok-release-reverted'].includes(result.status)){note('');notice=(result.status==='bok-post-reverted'?'The Bok post reverted.':'The Bok release or expiry reverted.')+' A network fee may have been charged. The funded request remains saved; no action is retried automatically.';return;}
   if(result.status==='confirmed'){
+   if(result.action?.type==='bok'&&typeof result.txHash==='string'&&/^0x[0-9a-f]{64}$/i.test(result.txHash)&&!ownBokPosts.has(result.txHash)){
+    ownBokPosts.set(result.txHash,{requestId:null,pluginId:null,reply:null});
+    if(ownBokPosts.size>128)ownBokPosts.delete(ownBokPosts.keys().next().value);
+   }
    if(immediateTypes.has(result.action?.type)){if(postingTypes.has(result.action?.type)||['bio','avatar'].includes(result.action?.type)){draft={...draft,content:''};releasePreviews();}note('');if(dialog.open)dialog.close();}
    if(result.action?.type==='preference')preferenceUpdates.set(result.action.kind+':'+result.action.target,result.action.enabled);
    notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':actionLabel(result.action)+': done.';
@@ -1279,5 +1308,5 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(blocked||status===null)void work(refresh);
    else if(!intent&&!viewReady())void work(loadView);
   }
- },close,attachIdentityControls,attachBokControls,async loadSavedItems(){if(initializationPending)await initializationPending;while(busy)await operationSettled;if(!session||!unlocked())return false;if(preferences)return true;await work(recoverPreferences);return !!preferences;},moderatorAuthorized(){return unlocked()&&!!session&&moderatorStatus?.authorized===true;},privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences,page})[view];}});
+ },close,attachIdentityControls,attachBokControls,observePublicPosts,async loadSavedItems(){if(initializationPending)await initializationPending;while(busy)await operationSettled;if(!session||!unlocked())return false;if(preferences)return true;await work(recoverPreferences);return !!preferences;},moderatorAuthorized(){return unlocked()&&!!session&&moderatorStatus?.authorized===true;},privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences,page})[view];}});
 }

@@ -38,7 +38,7 @@ async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,to
   readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
-  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed'};},
+  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{})};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
  session.application.executeAction=(action,options)=>executeRollingAction(session.application,structuredClone(action),options);
@@ -377,4 +377,50 @@ test('confirmed post releases UI while balance refresh runs; typing survives its
  f.panel.open({type:'post'});const next=f.document.querySelector('textarea');next.value='Next draft while balance updates';next.fire('input');assert(f.document.body.textContent.includes('Balance (updating)'));
  pending.resolve();await f.document.until(()=>!f.document.body.textContent.includes('Balance (updating)'));
  assert.equal(f.document.querySelector('textarea'),next);assert.equal(next.value,'Next draft while balance updates');assert.equal(f.submissions.length,1);
+});
+
+const ownBokHash='0x'+'a'.repeat(64);
+const publicBokParent=(reply=null)=>({id:'20',position:{txHash:ownBokHash},invocation:{pluginId:'7',requestId:'91',reply}});
+async function postedBokFixture(t,{balanceRead,posting={}}={}){
+ const f=await fixture(t,{balanceRead:balanceRead??(()=>Promise.resolve({available:true,availableCredit:'582972'})),posting:{txHash:ownBokHash,...posting}});
+ await f.document.until(()=>f.host.textContent.includes('0.582972 USDC available'));
+ const editor=f.document.querySelector('textarea');editor.value='@bok make the change';editor.fire('input');
+ const budget=f.document.querySelector('.bok-invitation').querySelector('input');budget.value='0.25';budget.fire('input');
+ f.document.querySelector('[data-action-review]').fire('click');
+ await f.document.until(()=>!f.document.querySelector('dialog').open&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ return f;
+}
+test('live own Bok reply refreshes refunded credit without private reads for unrelated posts or draft replacement',{timeout:3000},async t=>{
+ const refund=Promise.withResolvers();
+ const f=await postedBokFixture(t,{balanceRead:count=>count<=2?Promise.resolve({available:true,availableCredit:'582972'}):refund.promise});
+ await f.document.until(()=>f.reads()===2&&f.host.textContent.includes('0.582972 USDC available')&&!f.host.textContent.includes('updating'));
+ const before=f.core();f.panel.observePublicPosts([publicBokParent()]);
+ f.panel.observePublicPosts([{id:'30',bot:{pluginId:'7',requestId:'999'},position:{txHash:'0x'+'b'.repeat(64)}}]);
+ await Promise.resolve();assert.equal(f.reads(),2);
+ f.panel.observePublicPosts([publicBokParent('21')]);
+ await Promise.resolve();assert.equal(f.reads(),3);assert(f.host.textContent.includes('0.582972 USDC available · updating'));
+ f.panel.open({type:'reply',parent:'20',root:'20'});const editor=f.document.querySelector('textarea');editor.value='Draft stays editable';editor.fire('input');
+ f.panel.observePublicPosts([publicBokParent('21'),{id:'21',bot:{pluginId:'7',requestId:'91'}}]);
+ refund.resolve({available:true,availableCredit:'790268'});
+ await f.document.until(()=>f.host.textContent.includes('0.790268 USDC available'));
+ assert.equal(f.document.querySelector('textarea'),editor);assert.equal(editor.value,'Draft stays editable');assert.equal(editor.disabled,false);assert.deepEqual(f.core(),before);
+});
+test('own reply arriving during post balance refresh is queued once and consumed after existing work finishes',{timeout:3000},async t=>{
+ const account=Promise.withResolvers(),refund=Promise.withResolvers(),reading=Promise.withResolvers();
+ const f=await postedBokFixture(t,{posting:{balanceRefresh:()=>account.promise},balanceRead:count=>{if(count===1)return Promise.resolve({available:true,availableCredit:'582972'});reading.resolve();return refund.promise;}});
+ f.panel.observePublicPosts([publicBokParent()]);
+ f.panel.observePublicPosts([{id:'21',bot:{pluginId:'7',requestId:'91'}}]);
+ f.panel.observePublicPosts([{id:'21',bot:{pluginId:'7',requestId:'91'}}]);
+ await Promise.resolve();assert.equal(f.reads(),1);
+ account.resolve();await reading.promise;assert.equal(f.reads(),2);
+ refund.resolve({available:true,availableCredit:'790268'});
+ await f.document.until(()=>f.host.textContent.includes('0.790268 USDC available'));await Promise.resolve();assert.equal(f.reads(),2);
+});
+test('own settlement during an older balance read gets one fresh read after it settles',{timeout:3000},async t=>{
+ const old=Promise.withResolvers(),reading=Promise.withResolvers();
+ const f=await postedBokFixture(t,{balanceRead:count=>{if(count===1)return Promise.resolve({available:true,availableCredit:'582972'});if(count===2){reading.resolve();return old.promise;}return Promise.resolve({available:true,availableCredit:'790268'});}});
+ await reading.promise;f.panel.observePublicPosts([publicBokParent()]);f.panel.observePublicPosts([publicBokParent('21')]);f.panel.observePublicPosts([publicBokParent('21')]);
+ assert.equal(f.reads(),2);old.resolve({available:true,availableCredit:'582972'});
+ await f.document.until(()=>f.host.textContent.includes('0.790268 USDC available'));await Promise.resolve();assert.equal(f.reads(),3);
+ f.panel.observePublicPosts([publicBokParent('21')]);await Promise.resolve();assert.equal(f.reads(),3);
 });
