@@ -45,6 +45,7 @@ test('real filtered checkout excludes unreadable blobs and preserves edits and P
   assert.deepEqual(await session.call('read_file',{path:'small [*?] file.txt'}),{text:'small'});
   await assert.rejects(session.call('read_file',{path:large.path}),/too large/i);
   await assert.rejects(session.call('write_file',{path:large.path,content:'replacement'}),/too large/i);
+  await assert.rejects(session.call('edit_file',{path:large.path,old_text:'x',new_text:'y'}),/too large/i);
   for(const alias of ['./'+large.path,'unused/../'+large.path,large.path.toUpperCase()]){
    await assert.rejects(session.call('read_file',{path:alias}),/too large/i);
    await assert.rejects(session.call('write_file',{path:alias,content:'replacement'}),/too large/i);
@@ -54,7 +55,8 @@ test('real filtered checkout excludes unreadable blobs and preserves edits and P
   await assert.rejects(session.call('read_file',{path:'.git/config'}),/Invalid/);
   await assert.rejects(session.call('read_file',{path:'.GIT/config'}),/Invalid/);
   await assert.rejects(session.call('write_file',{path:'.GIT/config',content:'bad'}),/Invalid/);
-  await session.call('write_file',{path:'script.sh',content:'#!/bin/sh\necho after\n'});
+  for(const target of ['link','../escape','.GIT/config'])await assert.rejects(session.call('edit_file',{path:target,old_text:'before',new_text:'after'}),/Symlink|outside|Invalid/);
+  await session.call('edit_file',{path:'script.sh',old_text:'echo before',new_text:'echo after'});
   await session.call('write_file',{path:'new.txt',content:'new'});
   await session.call('create_pr',{title:'Change',body:'Test'});
   const tree=calls.find(x=>x.method==='POST'&&x.route.endsWith('/git/trees')).body;

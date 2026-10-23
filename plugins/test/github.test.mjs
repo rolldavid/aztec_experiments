@@ -40,6 +40,25 @@ test('filesystem tools share one checkout and a failed clone is never retried',a
  }
 });
 
+test('exact edits preserve all other bytes and reject ambiguous, stale or oversized edits before mutation',async()=>{
+ let work;const initial='\ufeffFirst café\r\nrepeat repeat\r\nunique 🌍\r\n';
+ const session=await githubToolbox({repository:'owner/project',api:checkoutApi,runCommand:async(_,args)=>{
+  if(args[0]==='clone'){work=args.at(-1);await fs.mkdir(work);await fs.writeFile(path.join(work,'file.txt'),initial);return {stdout:''};}
+  if(args[0]==='rev-parse')return {stdout:'sha\n'};
+  if(['sparse-checkout','checkout'].includes(args[0]))return {stdout:''};throw Error('Unexpected command');
+ }}).open({postId:'0x1'});
+ try{
+  assert(session.definitions.some(d=>d.function.name==='edit_file'));
+  for(const edit of [{old_text:'repeat',new_text:'once'},{old_text:'absent',new_text:'x'},{old_text:'',new_text:'x'},{old_text:'First',new_text:'x'.repeat(100000)},{old_text:'First',new_text:'\ud800'},{old_text:'First',new_text:'x',extra:true}]){
+   await assert.rejects(session.call('edit_file',{path:'file.txt',...edit}));assert.equal(await fs.readFile(path.join(work,'file.txt'),'utf8'),initial);
+  }
+  await assert.rejects(session.call('edit_file',{path:'missing.txt',old_text:'x',new_text:'y'}),{code:'ENOENT'});
+  assert.deepEqual(await session.call('edit_file',{path:'file.txt',old_text:'unique 🌍',new_text:'updated 日本語'}),{edited:'file.txt'});
+  assert.equal(await fs.readFile(path.join(work,'file.txt'),'utf8'),initial.replace('unique 🌍','updated 日本語'));
+  await session.call('edit_file',{path:'file.txt',old_text:'repeat repeat\r\n',new_text:''});assert(!(await session.call('read_file',{path:'file.txt'})).text.includes('repeat'));
+ }finally{await session.close();}
+});
+
 for(const postId of ['0x123','291','1291'])test('PR publication preserves commit, files and complete invocation identity: '+postId,async()=>{
  let work;const calls=[];
  const runCommand=async(command,args)=>{

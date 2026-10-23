@@ -82,6 +82,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       definition('list_files','List current workspace files, including uncommitted edits',{prefix:string}),
       definition('read_file','Read a UTF-8 repository file',{path:string}),
       definition('write_file','Write a UTF-8 file in the isolated checkout',{path:string,content:string}),
+      definition('edit_file','Replace one exact occurrence in an existing UTF-8 file. old_text must be nonempty and unique; use enough unchanged context. Prefer this for small changes instead of rewriting whole files.',{path:string,old_text:string,new_text:string}),
       definition('read_pr','Read a PR in this repository',{number:{type:'integer',minimum:1}}),
       definition('create_pr','Publish current edits as a new pull request; never merge',{title:string,body:string}),
     ];
@@ -117,6 +118,20 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
         }
         if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');return {text:await fs.readFile(file,'utf8')};}
         if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);if(workspace)await workspace.retain();return {written:args.path};}
+        if(name==='edit_file'){
+          if(!args||Object.keys(args).sort().join()!=='new_text,old_text,path'||typeof args.old_text!=='string'||!args.old_text||typeof args.new_text!=='string'||
+            !args.old_text.isWellFormed()||!args.new_text.isWellFormed()||Buffer.byteLength(args.old_text)>100000||Buffer.byteLength(args.new_text)>100000)throw Error('Invalid exact edit');
+          const oversized=await ensureFiles(),file=await safe(args.path);
+          if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');
+          const stat=await fs.stat(file);if(!stat.isFile()||stat.size>100000)throw Error('File too large');
+          const bytes=await fs.readFile(file),text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes),start=text.indexOf(args.old_text);
+          if(start<0||text.indexOf(args.old_text,start+1)!==-1)throw Error('Exact edit must match once; read current file and include unique context');
+          const next=text.slice(0,start)+args.new_text+text.slice(start+args.old_text.length);
+          if(Buffer.byteLength(next)>100000)throw Error('File too large');
+          // All matching and size checks precede the single mutation. The owned
+          // session executes tools serially; retain the exact resulting revision.
+          await fs.writeFile(file,next);if(workspace)await workspace.retain();return {edited:args.path};
+        }
         if(name==='read_pr'){
           if(workspace?.connection)throw Error('Connected repository PR reads are not exposed');
           if(!Number.isSafeInteger(args.number)||args.number<1)throw Error('Invalid PR');

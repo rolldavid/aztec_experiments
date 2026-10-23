@@ -39,10 +39,13 @@ test('existing toolbox edits and accepts actual thread source across independent
  const {githubToolbox}=await import('../github-tools.mjs');const h=await fixture(t),seed=path.join(h.root,'seed');
  await repositoryGit(['init',seed]);await fs.writeFile(path.join(seed,'hello.txt'),'start');await repositoryGit(['add','.'],{cwd:seed});await repositoryGit(['commit','-m','seed'],{cwd:seed});await fs.writeFile(path.join(seed,'hello.txt'),'later');await repositoryGit(['commit','-am','second seed'],{cwd:seed});
  let apiCalls=0;const api=async(method,route)=>{apiCalls++;if(route.includes('/git/commits/'))return {tree:{sha:'fixture-tree'}};if(route.includes('/git/trees/'))return {sha:'fixture-tree',truncated:false,tree:[{path:'hello.txt',type:'blob',size:5}]};return {default_branch:'main'};};
- const toolbox=githubToolbox({repository:'owner/project',api,repositories:h.manager,runCommand:async(command,args,options)=>{assert.equal(command,'git');return repositoryGit(args.map(arg=>arg==='https://github.com/owner/project.git'?pathToFileURL(seed).href:arg),options);}});
+ let retains=0;const repositories={open:async input=>{const workspace=await h.manager.open(input);return {...workspace,retain:async()=>{retains++;return workspace.retain();}};}};
+ const toolbox=githubToolbox({repository:'owner/project',api,repositories,runCommand:async(command,args,options)=>{assert.equal(command,'git');return repositoryGit(args.map(arg=>arg==='https://github.com/owner/project.git'?pathToFileURL(seed).href:arg),options);}});
  const first=await toolbox.open({threadId:id(1),id:id(1),postId:id(9)});
  assert(!first.definitions.some(d=>d.function.name==='create_pr'));
- await first.call('write_file',{path:'hello.txt',content:'accepted from first participant'});const revision=await first.accept();await first.close();
+ await first.call('edit_file',{path:'hello.txt',old_text:'later',new_text:'accepted from first participant'});
+ assert.equal(retains,1);
+ const revision=await first.accept();await first.close();
  const check=await h.open(99);assert.equal((await repositoryGit(['rev-parse','--is-shallow-repository'],{cwd:check.repositoryPath})).stdout.trim(),'true');await repositoryGit(['fsck','--connectivity-only','--no-dangling'],{cwd:check.repositoryPath});await check.close();
  const before=apiCalls,second=await toolbox.open({threadId:id(1),id:id(2),postId:id(10)});
  assert.equal((await second.call('read_file',{path:'hello.txt'})).text,'accepted from first participant');assert.equal(apiCalls,before,'accepted local revision does not require invented remote commit');

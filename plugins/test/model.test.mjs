@@ -174,6 +174,7 @@ for(const [label,result,code] of [
  ['truncated complete-looking tools',{finishReason:'length',message:{role:'assistant',tool_calls:[{id:'a',type:'function',function:{name:'write_file',arguments:'{}'}}]}},'MODEL_OUTPUT_LIMIT'],
  ['filtered final text',{finishReason:'content_filter',message:{role:'assistant',content:'Partial'}},'MODEL_CONTENT_FILTER'],
  ['malformed second tool',{finishReason:'tool_calls',message:{role:'assistant',tool_calls:[{id:'a',type:'function',function:{name:'write_file',arguments:'{}'}},{id:'b',type:'function',function:{name:'write_file',arguments:'{"path":'}}]}},'MODEL_TOOL_RESPONSE_INVALID'],
+ ['malformed second exact edit',{finishReason:'tool_calls',message:{role:'assistant',tool_calls:[{id:'a',type:'function',function:{name:'edit_file',arguments:'{"path":"index.html","old_text":"old","new_text":"new"}'}},{id:'b',type:'function',function:{name:'edit_file',arguments:'{"path":"test.js","old_text":"unterminated'}}]}},'MODEL_TOOL_RESPONSE_INVALID'],
  ['duplicate tool ID',{finishReason:'tool_calls',message:{role:'assistant',tool_calls:[{id:'a',function:{name:'read_file',arguments:'{}'}},{id:'a',function:{name:'read_file',arguments:'{}'}}]}},'MODEL_TOOL_RESPONSE_INVALID'],
 ])test(label+' stops before tools, acceptance and another model call',async()=>{
  let calls=0,closed=0,tools=0,accepts=0;
