@@ -149,3 +149,36 @@ test('higher selected tip must itself have a valid canonical header',async t=>{
  f.state.onRead=async q=>q===12?{handled:true,value:undefined}:undefined;
  await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_/);
 });
+
+test('source-plan public read overlaps native canonical checks and is returned only after both finish',async t=>{
+ const f=await fixture(t);await f.advance(10);
+ const readGate=Promise.withResolvers(),canonicalGate=Promise.withResolvers(),started=Promise.withResolvers();let sawRead=false,sawCanonical=false,settled=false;
+ f.state.onRead=async q=>{if(typeof q==='number'){sawCanonical=true;if(sawRead)started.resolve();await canonicalGate.promise;}};
+ const pending=f.sync.syncWithAnchorRead(async anchor=>{assert.deepEqual(anchor,f.id(10));assert(Object.isFrozen(anchor));sawRead=true;if(sawCanonical)started.resolve();await readGate.promise;return 7;});
+ pending.finally(()=>settled=true);await started.promise;canonicalGate.resolve();await new Promise(r=>setImmediate(r));assert.equal(settled,false);
+ readGate.resolve();assert.deepEqual(await pending,{anchor:f.id(10),value:7});assert.equal(f.sync.anchorRead,undefined);
+});
+for(const failure of ['read','native'])test(`source-plan public read drains on ${failure} failure`,async t=>{
+ const f=await fixture(t);await f.advance(10);const gate=Promise.withResolvers(),started=Promise.withResolvers();let settled=false;
+ f.state.onRead=async q=>{if(typeof q==='number'){started.resolve();if(failure==='native')return {handled:true,value:undefined};await gate.promise;}};
+ const pending=f.sync.syncWithAnchorRead(async()=>{if(failure==='read')throw Error('read failed');await gate.promise;return 9;});
+ const rejected=assert.rejects(pending,failure==='read'?/read failed/:/PXE_REORG_ANCHOR_/).finally(()=>settled=true);
+ await started.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);
+});
+test('source-plan public read is rebound to the native rollback destination',async t=>{
+ const f=await fixture(t);await f.seed(true);f.state.tip=12;const seen=[];
+ const result=await f.sync.syncWithAnchorRead(async anchor=>{seen.push(anchor);return anchor.number;});
+ assert.deepEqual(result,{anchor:f.id(12),value:12});assert(seen.every(x=>x.hash===f.id(12).hash));assert.deepEqual(f.state.prunes,[12]);assert.equal(await f.balance(),100n);
+});
+
+test('replaced source-plan read failure is still reported after all reads drain',async t=>{
+ const f=await fixture(t);await f.seed(true);f.state.tip=12;
+ const second=Promise.withResolvers(),entered=Promise.withResolvers();let settled=false;const anchors=[];
+ const pending=f.sync.syncWithAnchorRead(async anchor=>{
+  anchors.push(anchor.number);
+  if(anchor.number===12){f.state.tip=13;throw Error('discarded plan read failed');}
+  entered.resolve();await second.promise;return anchor.number;
+ });
+ const rejected=assert.rejects(pending,/discarded plan read failed/).finally(()=>settled=true);
+ await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);assert.deepEqual(anchors,[12,13]);second.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);
+});

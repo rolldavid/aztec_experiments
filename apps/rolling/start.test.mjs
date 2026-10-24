@@ -114,6 +114,12 @@ test('immutable wallet URLs bind exact decoded bytes and keep metadata and inval
  for(const encoding of ['identity','gzip']){const r=await wire(sdk,{encoding});assert.equal(r.status,200);assert.equal(r.headers['cache-control'],'public, max-age=31536000, immutable');assert.deepEqual(encoding==='gzip'?gunzipSync(r.body):r.body,body);}
  assert.equal((await wire(server.url+'/wallet/aztec_bundle.js')).headers['cache-control'],'no-store');
  for(const query of ['?sha256='+hash+'&x=1','?sha256='+'0'.repeat(64)]){const r=await wire(server.url+'/wallet/aztec_bundle.js'+query);assert.equal(r.status,404);assert.equal(r.headers['cache-control'],'no-store');}
+ for(const name of ['g1_verifier.dat','g2.dat','grumpkin_g1.dat']){
+  const crs=server.url+'/crs/'+name;
+  const pinned=await wire(crs+'?sha256='+hash);assert.equal(pinned.status,200);assert.equal(pinned.headers['cache-control'],'public, max-age=31536000, immutable');
+  assert.equal((await wire(crs)).headers['cache-control'],'no-store');
+  const wrong=await wire(crs+'?sha256='+'0'.repeat(64));assert.equal(wrong.status,404);assert.equal(wrong.headers['cache-control'],'no-store');
+ }
  const metadata=await wire(server.url+'/wallet/runtime.json?sha256='+hash);assert.equal(metadata.status,404);assert.equal(metadata.headers['cache-control'],'no-store');
  assert.equal((await wire(server.url+'/wallet/runtime.json')).headers['cache-control'],'no-store');
  body=Buffer.from('changed asset');const changed=await wire(url);assert.equal(changed.status,404);assert.equal(changed.headers['cache-control'],'no-store');

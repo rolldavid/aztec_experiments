@@ -113,6 +113,12 @@ export function validatedPxeProve(source){
     }
     // Public API\n`);
  source=replace(source,'return this.#proveTx(ctx, txRequest, privateExecutionResult);','return this.#proveTx(ctx, txRequest, privateExecutionResult, validatePublic);');
+ source=replace(source,'        return this.operationQueue.run(()=>this.blockStateSynchronizer.sync());',`        return this.operationQueue.run(()=>this.blockStateSynchronizer.sync());
+    }
+    // A public read at the captured source-plan anchor overlaps native checks.
+    // It cannot become visible until the complete native sync succeeds.
+    syncWithAnchorRead(read) {
+        return this.operationQueue.run(()=>this.blockStateSynchronizer.syncWithAnchorRead(read));`);
  source=instrumentPxePhases(source);
  return source;
 }

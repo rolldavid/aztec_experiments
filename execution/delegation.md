@@ -151,3 +151,7 @@ Root owns service activation and the single existing IAB test tab. pending_reply
 ## Measured15.329s optimization —25October
 
 Root integrates and owns the one retained build, publication and actual browser test. pending_reply_ui prepares bounded native kernel lazy-module preloading; proposed_feed_design reviews it and removes duplicated posting-policy checks; pending_feed_release removes completed-proof worker-exit waiting while retaining capacity/cleanup and instruments numeric upload timing. Journal metadata reuse independently approved,90tests passed. Agents use source-only scratch; no dependency copies or new browser profiles.
+
+## Measured13-second posting follow-up —25October
+
+Root owns live testing, integration and cleanup. pending_reply_ui fixes proven repeated CRS downloads with manifest-pinned URLs; pending_feed_release diagnoses159KB upload arrival time; proposed_feed_design reduces operation preparation reads with fresh-anchor validation. Current2aac posts13.507s and13.836s. Source-only drafts, no dependency copies or new browser profiles.

@@ -1,0 +1,33 @@
+{
+  "changes": [
+    "Manifest-pinned CRS cache URLs",
+    "One additional measured repeat-post kernel preload",
+    "Fixed-buffer journal hexadecimal conversion",
+    "Canonical captured-plan policy read concurrent with native synchronization"
+  ],
+  "sourceHashes": {
+    "shared/private-pxe.mjs": "f531718435a7fe31b0d051b5f56ba9e1438a986fa4086efb50b3d80c41be46a4",
+    "shared/posting-kernel-preload.mjs": "5e4c33c8617180db6bf92465100a94028c1a8feea03ea7cd46bb9b93a4947d93",
+    "shared/journal-record.mjs": "beed00007bdb0a84e7a54f57620fbd9d113f62e06c77051fc82d2547638760a8",
+    "scripts/pxe-sync-snapshot.mjs": "8d0c049c6effc439de87feaff265c361c7d22c21a4956d88ee6151f58e136884",
+    "scripts/pxe-validated-prove.mjs": "10b62f33890adfff447921a873357966b328e140b2f962088a014ca8b2999751",
+    "shared/rolling/application.mjs": "43cffb627903a3b4645b23273633c6b1470bff5a64e1fc2f6b0fb7cf26383c45",
+    "shared/rolling/synchronized-application.mjs": "f24576412250e378ea528c7fc3da0da4999aa9075a78a5139f9abf2e61d9b0ce",
+    "apps/rolling/wallet-session.mjs": "a6e9c41019b266fd6331abd3c4636102007c85ae879d9f9404b7d73dd4b2dd81"
+  },
+  "checks": {
+    "nativeSynchronizationAndJournal": 69,
+    "applicationSessionJournal": 625,
+    "browserAssetsAndProver": 30,
+    "serviceSupervision": 12
+  },
+  "allChecksPassed": true,
+  "sdkBuild": true,
+  "walletBuild": true,
+  "independentReviewers": [
+    "pending_reply_ui",
+    "pending_feed_release",
+    "proposed_feed_design"
+  ],
+  "liveMeasurement": "Pending publication; preceding2aac source achieved13.507s/13.836s, not measurements of these new changes."
+}

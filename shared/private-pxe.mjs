@@ -66,7 +66,7 @@ export async function initializeBrowserProver(supplied, {verifierOnly=false}={})
         manifest:globalThis.BILLBOARD_CRS_MANIFEST,
         verifierOnly,
         bn254NumPoints:requestedPoints,
-        loadLocal:async file=>crs.readResponse(await fetch('crs/'+file.name,{credentials:'omit',redirect:'error'}),file),
+        loadLocal:async file=>crs.readResponse(await fetch('crs/'+file.name+'?sha256='+file.sha256,{credentials:'omit',redirect:'error',cache:'default'}),file),
         fetch:async()=>{throw browserFailure();},
         sha256:async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),b=>b.toString(16).padStart(2,'0')).join(''),
         log:discard,

@@ -195,3 +195,14 @@ test('queued prove request detaches known call fields before yielding and suppli
  assert.deepEqual(seen.map(entry=>entry[0]),['sync','private','proof']);
  assert.throws(()=>instance.proveTx(f.request,{scopes,preSyncCalls:f.calls}),/Invalid ordinary sync payload/);
 });
+
+test('captured-anchor read enters through the existing native operation queue',async()=>{
+ const {OperationQueue}=await import('../node_modules/@aztec-labs/pxe/dest/operation_queue.js');
+ const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},anchorBlockStore:{getBlockHeader:async()=>({})},contributors:[],stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort(){}},log:{debug(){},verbose(){},warn(){}}});queue.start();
+ const text=method(pxe,'syncWithAnchorRead(read) {','\n    /**');
+ const Class=vm.runInNewContext(`(class {${text}})`);const instance=new Class();instance.operationQueue=queue;
+ const gate=Promise.withResolvers();let calls=0;const reader=()=>{};
+ instance.blockStateSynchronizer={syncWithAnchorRead:async fn=>{calls++;assert.equal(fn,reader);return {anchor:'native',value:7};}};
+ try{const prior=queue.run(()=>gate.promise),pending=instance.syncWithAnchorRead(reader);await new Promise(r=>setImmediate(r));assert.equal(calls,0);gate.resolve();await prior;assert.deepEqual(await pending,{anchor:'native',value:7});assert.equal(calls,1);}
+ finally{await queue.stop();}
+});

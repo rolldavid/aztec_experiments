@@ -8,7 +8,7 @@ export function parallelPxeAnchorSnapshot(source){
  if(createHash('sha256').update(source).digest('hex')!==pin.after)throw Error('PXE sync snapshot source mismatch');
  const begin=source.indexOf('  async checkedSelectedAnchor() {'),end=source.indexOf('  async checkAcknowledgedSnapshot()',begin);
  if(begin<0||end<0)throw Error('PXE sync snapshot layout mismatch');
- return source.slice(0,begin)+`  async checkedSelectedAnchor() {
+ source=source.slice(0,begin)+`  async checkedSelectedAnchor() {
     const block = await this.selectedAnchor();
     const results = await Promise.allSettled([
       Promise.resolve().then(async () => {
@@ -35,4 +35,44 @@ export function parallelPxeAnchorSnapshot(source){
   }
 
 `+source.slice(end);
+ return withAnchorRead(source);
+}
+
+function withAnchorRead(source){
+ const replace=(before,after)=>{if(source.split(before).length!==2)throw Error('PXE anchor read layout mismatch');source=source.replace(before,after);};
+ replace('  syncPass = undefined;',`  syncPass = undefined;
+
+  anchorRead = undefined;
+  async syncWithAnchorRead(read) {
+    if (typeof read !== 'function' || this.anchorRead || this.isSyncing) throw new Error('PXE_ANCHOR_READ_BUSY');
+    const state = { read, reads: new Map(), selected: undefined };
+    this.anchorRead = state;
+    try {
+      await this.sync();
+      const results = await Promise.allSettled([...state.reads.values()]);
+      const failed = results.find(result => result.status === 'rejected');
+      if (failed) throw failed.reason;
+      if (!state.selected || !state.reads.has(state.selected.hash)) throw new Error('PXE_ANCHOR_READ_INCOMPLETE');
+      return { anchor: state.selected, value: await state.reads.get(state.selected.hash) };
+    } finally {
+      await Promise.allSettled([...state.reads.values()]);
+      this.anchorRead = undefined;
+    }
+  }`);
+ replace('      this.syncTips = structuredClone(await tips());',`      this.syncTips = structuredClone(await tips());
+      const read = this.anchorRead;
+      if (read) {
+        const tier = this.config.syncChainTip ?? 'proposed';
+        const selected = tier === 'proposed' ? this.syncTips.proposed : this.syncTips[tier].block;
+        if (!read.reads.has(selected.hash)) {
+          const anchor = Object.freeze({ number: selected.number, hash: selected.hash });
+          const pending = Promise.resolve().then(() => read.read(anchor));
+          read.reads.set(anchor.hash, pending);
+          // Drain and report every read at completion, including a replaced plan.
+          pending.catch(() => {});
+        }
+      }`);
+ replace('      await this.checkAcknowledgedSnapshot();',`      await this.checkAcknowledgedSnapshot();
+      if (this.anchorRead) this.anchorRead.selected = Object.freeze({ number: selected.block.number, hash: selected.block.hash });`);
+ return source;
 }

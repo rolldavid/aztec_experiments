@@ -2452,3 +2452,24 @@ for(const replace of ['scope','pxe'])test(`same-operation policy overlap rejects
  if(replace==='scope')scope={synchronized:true};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};
  held.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });
+
+test('native synchronized policy is consumed once at its exact scope and anchor without another policy RPC',async()=>{
+ const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ await f.app.prefetchPostingPolicy(async read=>({anchor:{number:1,hash:hex(42)},value:await read({number:1,hash:hex(42)})}));scope.synchronized=true;
+ const result=await f.app.prepare({type:'post',deposit:'9',content:'Captured source policy'},{immediate:true});assert.equal(result.status,'prepared');assert.equal(f.state.policyReads.length,1);assert.equal(f.values.size,1);
+});
+for(const replace of ['scope','pxe','anchor'])test(`native synchronized policy rejects ${replace} replacement before storing an intent`,async()=>{
+ const f=fixture();let scope={};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ await f.app.prefetchPostingPolicy(async read=>({anchor:{number:1,hash:hex(42)},value:await read({number:1,hash:hex(42)})}));
+ if(replace==='scope'){
+  const before=scope;scope={synchronized:true};await f.app.prepare({type:'post',deposit:'9',content:'Fresh operation'},{immediate:true});assert.equal(f.state.policyReads.length,2);assert.notEqual(scope,before);return;
+ }
+ scope.synchronized=true;if(replace==='pxe')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};
+ else f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:100n},hash:async()=>hex(43)});
+ await assert.rejects(f.app.prepare({type:'post',deposit:'9',content:'Changed captured context'},{immediate:true}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('failed native synchronization never publishes its provisional policy into preparation',async()=>{
+ const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ await assert.rejects(f.app.prefetchPostingPolicy(async read=>{await read({number:1,hash:hex(42)});throw Error('native reorg');}),/native reorg/);
+ scope.synchronized=true;await f.app.prepare({type:'post',deposit:'9',content:'Fresh successful synchronization'},{immediate:true});assert.equal(f.state.policyReads.length,2);
+});

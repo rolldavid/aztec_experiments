@@ -119,3 +119,16 @@ test('only one-click ordinary posting starts payment metadata during synchroniza
  await app.prepare({type:'post'},{immediate:true});scope={preparationReads:[]};await app.prepare({type:'bok'},{immediate:true});scope={};await app.prepare({type:'post'},{immediate:true});
  assert.deepEqual(seen,[{predecessor:true,ordinaryPayment:true},{predecessor:true},{predecessor:true}]);
 });
+
+test('captured policy read is requested only for synchronized ordinary main-board preparation',async()=>{
+ for(const [input,options,wanted] of [
+  [{type:'post'},{immediate:true},true],[{type:'reply',subboard:'0'},{immediate:true},true],
+  [{type:'quote',subboard:'0x'+'0'.repeat(64)},{immediate:true},true],
+  [{type:'repost',subboard:'2'},{immediate:true},false],[{type:'bok'},{immediate:true},false],
+  [{type:'post'},undefined,false],[{type:'like'},{immediate:true},false],
+ ]){
+  const scope={},seen=[],raw=Object.fromEntries(names.map(name=>[name,()=>{}]));
+  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:options=>seen.push(options)});
+  await app.prepare(input,options);assert.deepEqual(seen,[{ordinaryPolicy:wanted}]);
+ }
+});

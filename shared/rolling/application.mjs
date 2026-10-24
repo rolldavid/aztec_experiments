@@ -154,7 +154,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   void publicReader; // Never route personalized requests through public readers.
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
   let busy=false,callScope=null,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
-  const networkChecks=new WeakMap(),preparedPayments=new WeakMap();
+  const networkChecks=new WeakMap(),preparedPayments=new WeakMap(),preparedPolicies=new WeakMap();
   const session=accountSession;
   const getOperationScope=typeof session?.operationScope==='function'?session.operationScope.bind(session):()=>callScope;
   const chainInfoMethod=session?.wallet?.getChainInfo,accountsMethod=session?.wallet?.getAccounts;
@@ -801,6 +801,19 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     // Readiness and the previous terminal transaction are independent of native
     // synchronization. The journal permit belongs only to this held operation
     // and its exact authenticated bytes; prepare still reauthenticates both.
+    async prefetchPostingPolicy(synchronize){
+      await localGuard();const scope=getOperationScope();check(scope&&typeof synchronize==='function','ROLLING_CONTEXT_CHANGED');
+      const context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
+      const fence=async()=>{await localGuard();check(getOperationScope()===scope&&session.wallet===context.wallet&&session.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');};
+      const slot=deployment.board.artifact.storageLayout?.main_version?.slot;check(slot!==undefined,'ROLLING_ABI_MISMATCH');
+      const result=await synchronize(async anchor=>{
+        await fence();check(Number.isSafeInteger(anchor?.number)&&anchor.number>0,'ROLLING_INVALID_RESPONSE');const hash=hashText(anchor.hash);
+        const value=await measure('action.policy',()=>session.node.getPublicStorageAt({hash},deployment.board.address,new sdk.Fr(BigInt(slot))));
+        await fence();const version=chainValue(value);check(version<=0xffffffffn,'ROLLING_INVALID_RESPONSE');return Number(version);
+      });
+      await fence();check(Number.isSafeInteger(result?.anchor?.number)&&result.anchor.number>0&&Number.isSafeInteger(result.value)&&result.value>=0&&result.value<=0xffffffff,'ROLLING_INVALID_RESPONSE');
+      preparedPolicies.set(scope,{...context,number:result.anchor.number,hash:hashText(result.anchor.hash),mainVersion:result.value});
+    },
     async prefetchContext({predecessor=false,ordinaryPayment=false}={}){
       await localGuard();const owner=getOperationScope();
       const results=await Promise.allSettled([
@@ -988,7 +1001,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const reads=await Promise.allSettled([
           measure('action.predecessor',readPredecessor),
           (async()=>{const board=await contract(),anchor=await balanceAnchor();checkPolicyOwner();
-            const policy=await measure('action.policy',()=>postingPolicy(board,zero,anchor));checkPolicyOwner();return {board,anchor,policy};})(),
+            const prepared=preparedPolicies.get(policyOwner.scope);preparedPolicies.delete(policyOwner.scope);
+            let policy;
+            if(prepared){check(prepared.wallet===policyOwner.wallet&&prepared.pxe===policyOwner.pxe&&prepared.node===policyOwner.node&&prepared.number===anchor.blockNumber&&prepared.hash===anchor.blockHash,'ROLLING_CONTEXT_CHANGED');policy={mainVersion:prepared.mainVersion,localVersion:0};}
+            else policy=await measure('action.policy',()=>postingPolicy(board,zero,anchor));
+            checkPolicyOwner();return {board,anchor,policy};})(),
         ]);
         const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         checkPolicyOwner();[history,earlyPolicy]=reads.map(value=>value.value);

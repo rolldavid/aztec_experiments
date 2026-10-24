@@ -1,0 +1,85 @@
+{
+  "cause": "Rollout helper inherited the previous template plugin ID instead of lifecycle.pluginId; canonical registration had succeeded.",
+  "registeredPluginId": "0x0000000000000000000000000000000000000000000000000000000000626f6b",
+  "incorrectTemplatePluginId": "0x00000000000000000000000000000000000000000000000000000000626f6b02",
+  "registration": {
+    "txHash": "0x2626c7a18fcb8d7f2056d6dbc85b6f640bace1ecd9723ead71e1c04bd02d4347",
+    "status": "proven",
+    "executionResult": "success",
+    "blockNumber": 2908,
+    "blockHash": "0x1e4f55c9e0ec9503be3e2e8d327811e67a01c74693d0a5a0f004adfee0981df2"
+  },
+  "canonicalStorage": {
+    "anchor": 2945,
+    "slot": "0x007c436182dc320556e76d423fee6f90208824fefe1f73f03019dce4ad9a390e",
+    "address": "0x18fc6cbfced589411864ae3b2551f0c1c37e80da11445cb839588db2d68f358a",
+    "enabled": "0x0000000000000000000000000000000000000000000000000000000000000001"
+  },
+  "liveCorrection": {
+    "reportedBy": "root",
+    "configLeaves": [
+      "core:/etc/rolling-app/wallet.json:config.bok.pluginId",
+      "bok:/etc/rolling-bok-testnet/config.json:pluginId"
+    ],
+    "bothConfigsApplied": true,
+    "coreAppReadyPid": 791316,
+    "coreProxyUnchangedPid": 787665,
+    "bokRestartStatus": "ready",
+    "bokPid": 45774,
+    "bokProxyPid": 45776,
+    "browserBalance": "0 USDC available"
+  },
+  "helperIntegration": [
+    {
+      "path": "/private/tmp/rolling-stable6-20261023/app-cutover-core/cutover.py",
+      "sha256": "b788980b40e3bbf7a78d23d7a1cdeaaebeee2457070f7fd25fe8808b566a55ed"
+    },
+    {
+      "path": "/private/tmp/rolling-stable6-20261023/app-cutover-core/validate.mjs",
+      "sha256": "7b3b31b48a386aad8e06b4c60db09132c356288cc2fddbe05db81421424a00f7"
+    },
+    {
+      "path": "/private/tmp/rolling-stable6-20261023/app-cutover-bok/cutover.py",
+      "sha256": "b788980b40e3bbf7a78d23d7a1cdeaaebeee2457070f7fd25fe8808b566a55ed"
+    },
+    {
+      "path": "/private/tmp/rolling-stable6-20261023/app-cutover-bok/validate.mjs",
+      "sha256": "7b3b31b48a386aad8e06b4c60db09132c356288cc2fddbe05db81421424a00f7"
+    },
+    {
+      "path": "/private/tmp/owner-performance-scope.mjs",
+      "sha256": "d438b339969885c38bb5ab7de1167da07c5d6652a1c3bb32e61db5a3736b734e"
+    },
+    {
+      "path": "/private/tmp/owner-performance-packets.py",
+      "sha256": "74123e3b351be14ebab58c7777bfedf3dda0fb705a9742f6656b652bc09bede9"
+    }
+  ],
+  "review": "pending_feed_release approved canonical propagation and fixed schemas; root sole remote executor",
+  "localRepairFixture": [
+    "stale hash rejected",
+    "only pluginId semantic change",
+    "file mode preserved",
+    "duplicate apply rejected",
+    "rollback restores exact original bytes"
+  ],
+  "runtimeIntegrationCommit": "2aac56a180423d89fada24cf575ac41072df2cff",
+  "removedByteIdenticalIntegratedDrafts": [
+    "/private/tmp/ordinary-kernel-preload-draft",
+    "/private/tmp/ordinary-config-witness-draft"
+  ],
+  "retainedEvidence": [
+    "/private/tmp/posting-kernel-preload.patch",
+    "/private/tmp/ordinary-config-witness.patch",
+    "/private/tmp/posting-kernel-preload-tests.log",
+    "/private/tmp/posting-kernel-native-check.log",
+    "/private/tmp/ordinary-config-witness-tests.log"
+  ],
+  "proxyIndependence": {
+    "baseUnitSha256": "b075a5b72097e781fbfa4c9181c38c70ed67dc0196c048c8e727571b44dc759b",
+    "restarted": false,
+    "workerDependency": "Wants and After; absent from Requires and BindsTo",
+    "egressRequired": true,
+    "focusedTestsPassed": 12
+  }
+}
