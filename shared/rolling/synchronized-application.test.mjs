@@ -106,3 +106,10 @@ test('prefetched readiness is scoped to the held operation and replacement owner
  await app.prepare({type:'post'});await app.prepare({type:'post'});assert.equal(contexts,1);assert.equal(syncs,1);
  scope={};const pending=app.prepare({type:'post'});await entered.promise;scope={};gate.resolve();await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(calls,2);assert.equal(scope.synchronized,undefined);
 });
+
+test('only new preparation requests an overlapping predecessor observation',async()=>{
+ const seen=[];let scope={};const raw=Object.fromEntries(names.map(name=>[name,()=>({})]));
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},operationScope:()=>scope,synchronize:()=>{},prepareContext:options=>seen.push(options)});
+ await app.prepare({type:'post'});scope={};await app.submitPrepared('id');scope={};await app.readAccountStatus();
+ assert.deepEqual(seen,[{predecessor:true},{predecessor:false},{predecessor:false}]);
+});

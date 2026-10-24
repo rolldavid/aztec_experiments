@@ -329,7 +329,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function outcome(saved,{history=false}={}){
     const historical=history&&terminalHistory(saved.value);
     if(!historical)await checkBokRecord(saved.value);
-    const found=await session.journal.inspectOutcome();
+    const found=await session.journal.inspectOutcome({reuse:historical});
     if(!found||found.operation!==operation(saved.value.id))return {...summary(saved.value),status:'unknown'};
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
     acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
@@ -561,7 +561,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const slot=deployment.board.artifact.storageLayout?.main_version?.slot;check(slot!==undefined,'ROLLING_ABI_MISMATCH');
       const anchor=preparedAnchor??await balanceAnchor();
       const value=chainValue(await session.node.getPublicStorageAt({hash:anchor.blockHash},deployment.board.address,new sdk.Fr(BigInt(slot))));
-      check(value<=0xffffffffn,'ROLLING_INVALID_RESPONSE');await checkBalanceAnchor(anchor);
+      check(value<=0xffffffffn,'ROLLING_INVALID_RESPONSE');
+      // Immediate posting already owns the native synchronizer's authenticated
+      // anchor. This storage read uses that exact hash; retain the local owner
+      // and anchor fence, then let the native proof validate its real witnesses.
+      if(preparedAnchor&&getOperationScope()?.synchronized===true){check(same(await balanceAnchor(),anchor),'ROLLING_CONTEXT_CHANGED');await guard();}
+      else await checkBalanceAnchor(anchor);
       return {mainVersion:Number(value),localVersion:0};
     }
     const policy=await utility(board,'effective_policy',[subboard]);
@@ -782,9 +787,22 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function refundComplete(record){return !!verifyWithdrawal&&await verifyWithdrawal(clone(summary(record)))===true;}
   return Object.freeze({
-    // Only public readiness reads run here. The session can overlap them with
-    // native PXE synchronization under the same held account-operation scope.
-    prefetchContext:guard,
+    // Readiness and the previous terminal transaction are independent of native
+    // synchronization. The journal permit belongs only to this held operation
+    // and its exact authenticated bytes; prepare still reauthenticates both.
+    async prefetchContext({predecessor=false}={}){
+      await localGuard();const owner=getOperationScope();
+      const results=await Promise.allSettled([
+        guard,
+        async()=>{
+          if(!predecessor||!owner)return;
+          const saved=await (await slot()).read();
+          if(saved.value&&(terminalHistory(saved.value)||saved.value.status==='cancelled'&&saved.value.predecessor))await session.journal.inspectOutcome();
+        },
+      ].map(read=>Promise.resolve().then(read)));
+      const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+      await localGuard();check(getOperationScope()===owner,'ROLLING_CONTEXT_CHANGED');
+    },
     async readWithdrawal(){return exclusive(async()=>{await guard();const saved=await (await slot()).read();
       if(!['withdraw','withdraw-bok','cancel-deposit'].includes(saved.value?.action?.type)||!saved.value.withdrawal)return null;
       if(['prepared','cancelled'].includes(saved.value.status))return summary(saved.value);
@@ -900,7 +918,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const final=await outcome(prior,{history:true});check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
       // Cancelling an unsent draft leaves its previous confirmed transaction in
       // the journal. Re-establish that exact acknowledgement after a reload.
-      if(prior.value?.status==='cancelled'&&prior.value.predecessor)acknowledge(await session.journal.inspectOutcome(),prior.value.predecessor);
+      if(prior.value?.status==='cancelled'&&prior.value.predecessor)acknowledge(await session.journal.inspectOutcome({reuse:true}),prior.value.predecessor);
       const previousTx=await session.journal.assertCanStart();
       const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();

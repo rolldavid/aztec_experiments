@@ -2234,3 +2234,41 @@ test('ordinary preparation binds witness prefetch to the selected board, route a
  assert.equal(input.wallet,f.options.accountSession.wallet);assert.equal(input.node,f.options.accountSession.node);
  assert.equal(input.hints.length,2);
 });
+
+for(const replaceScope of [false,true])test(`predecessor read overlaps owned readiness; ${replaceScope?'new owner rechecks':'same owner reuses exact journal'}`,async()=>{
+ let owner={};const base=fixture();base.options.accountSession.operationScope=()=>owner;
+ const f=await preproofFixture(base),first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);
+ const journal=f.options.accountSession.journal,node=f.options.accountSession.node,previous=(await journal.inspect()).txHash;
+ const read=node.getTxReceipt.bind(node),inspect=f.options.sdk.inspectTrustedNode;
+ let receiptReads=0,started=0;const gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ owner={};
+ const arrive=async()=>{if(++started===2)entered.resolve();await gate.promise;};
+ node.getTxReceipt=async hash=>{if(String(hash)===previous){receiptReads++;if(receiptReads===1)await arrive();}return read(hash);};
+ f.options.sdk.inspectTrustedNode=async(...args)=>{await arrive();return inspect(...args);};
+ f.app=f.restart();const pending=f.app.prefetchContext({predecessor:true});await entered.promise;
+ assert.equal(receiptReads,1);gate.resolve();await pending;
+ f.options.sdk.inspectTrustedNode=inspect;if(replaceScope)owner={};
+ await f.app.prepare({type:'unlike',post:'5'},{immediate:true});
+ assert.equal(receiptReads,replaceScope?2:1);
+});
+test('owned prefetch drains a pending predecessor when readiness fails',async()=>{
+ let owner={};const base=fixture();base.options.accountSession.operationScope=()=>owner;
+ const f=await preproofFixture(base),first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);owner={};
+ const node=f.options.accountSession.node,read=node.getTxReceipt.bind(node),gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ node.getTxReceipt=async hash=>{entered.resolve();await gate.promise;return read(hash);};
+ f.options.sdk.inspectTrustedNode=async()=>{throw Error('readiness failed');};f.app=f.restart();
+ let settled=false;const pending=f.app.prefetchContext({predecessor:true}).finally(()=>settled=true);const observed=assert.rejects(pending,/readiness failed/);
+ await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await observed;
+});
+test('synchronized ordinary policy uses exact hash and local anchor without another canonical RPC',async()=>{
+ const f=fixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;let canonical=0;
+ f.options.accountSession.node.getBlockData=async()=>{canonical++;throw Error('duplicate canonical read');};f.app=f.restart();
+ const result=await f.app.prepare({type:'post',deposit:'9',subboard:'0',name:'0',content:'Exact owned anchor'},{immediate:true});
+ assert.equal(result.status,'prepared');assert.equal(canonical,0);assert.deepEqual(f.state.policyReads.map(r=>r.reference),[{hash:hex(42)}]);
+});
+test('synchronized ordinary policy rejects changed local anchor before storing intent',async()=>{
+ const f=fixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ let changed=false;f.state.beforePolicyRead=()=>{changed=true;};
+ f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(changed?43:42)});f.app=f.restart();
+ await assert.rejects(f.app.prepare({type:'post',deposit:'9',subboard:'0',name:'0',content:'Reject changed anchor'},{immediate:true}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);
+});

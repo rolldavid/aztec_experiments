@@ -1,3 +1,4 @@
+import {parallelPxeAnchorSnapshot} from './pxe-sync-snapshot.mjs';
 import {zeroWindowRpcMicrotasks} from './rpc-zero-window.mjs';
 import {preservePxeSimulationLogs} from './pxe-simulation-logs.mjs';
 import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs';
@@ -47,6 +48,7 @@ const relocationPlugin = {
     builder.onLoad({ filter: /\.js$/ }, async ({ path: filename }) => {
       const relative = path.relative(root, filename).split(path.sep).join('/');
       if(relative==='node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js')return {contents:zeroWindowRpcMicrotasks(await fs.readFile(filename,'utf8')),loader:'js'};
+      if(relative==='node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js')return {contents:parallelPxeAnchorSnapshot(await fs.readFile(filename,'utf8')),loader:'js'};
       if(relative==='node_modules/@aztec-labs/pxe/dest/pxe.js')return {contents:validatedPxeProve(await fs.readFile(filename,'utf8')),loader:'js'};
       if(relative==='node_modules/@aztec-labs/pxe/dest/contract_function_simulator/contract_function_simulator.js')return {contents:preservePxeSimulationLogs(await fs.readFile(filename,'utf8')),loader:'js'};
       if(relative==='node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js')return {contents:validatedKernelProve(await fs.readFile(filename,'utf8')),loader:'js'};
@@ -133,7 +135,7 @@ const assets = [
 ];
 for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
 const inputs = [...new Set([...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
-  ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-validated-prove.mjs', 'shared/ordinary-post-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
+  ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-sync-snapshot.mjs', 'scripts/pxe-validated-prove.mjs', 'shared/ordinary-post-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
   ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),

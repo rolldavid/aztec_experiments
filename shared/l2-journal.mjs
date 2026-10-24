@@ -79,7 +79,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
     await checkedScope(owner);
     if((await read()).encoded!==saved.encoded)throw fail();
     await checkedScope(owner);
-    canonicalPermit={owner,encoded:saved.encoded,hash:saved.tx.getTxHash().toString()};
+    canonicalPermit={owner,encoded:saved.encoded,hash:saved.tx.getTxHash().toString(),receipt};
   }
   async function assertCanStart(options){try{return await checkedCanStart(options);}catch(error){canonicalPermit=null;throw error;}}
   async function checkedCanStart(options={}) {
@@ -260,10 +260,14 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   return {
     assertCanStart,prepare,confirmed,
     async inspect(){const saved=await read();return saved.value?{operation:saved.value.operation??null,txHash:saved.value.txHash,predecessorTxHashes:(saved.value.replacements??[]).map(item=>item.txHash),...(saved.value.applicationNullifier?{applicationNullifier:saved.value.applicationNullifier}:{})}:null;},
-    async inspectOutcome(){
-      const owner=ownedScope();await checkedScope(owner);canonicalPermit=null;
-      const saved=await read();if(!saved.tx)return null;
-      const receipt=await readCanonicalReceipt(node,saved.tx.getTxHash(),waitOptions);
+    async inspectOutcome({reuse=false}={}){
+      if(typeof reuse!=='boolean')throw invalid();
+      const owner=ownedScope();await checkedScope(owner);
+      const saved=await read();await checkedScope(owner);if(!saved.tx)return null;
+      const permitted=reuse&&owner&&canonicalPermit?.owner===owner&&canonicalPermit.encoded===saved.encoded&&canonicalPermit.hash===saved.tx.getTxHash().toString();
+      const cached=permitted?canonicalPermit.receipt:null;
+      if(!permitted)canonicalPermit=null;
+      const receipt=cached??await readCanonicalReceipt(node,saved.tx.getTxHash(),waitOptions);
       if((await read()).encoded!==saved.encoded)throw fail();
       await rememberCanonical(saved,receipt,owner);
       return {operation:saved.value.operation??null,txHash:saved.value.txHash,applicationNullifier:saved.value.applicationNullifier??null,outcome:receipt?.executionResult??'pending',receipt};
