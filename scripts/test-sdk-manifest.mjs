@@ -28,6 +28,8 @@ function fixture(t) {
   const inputs = {
     'toolchain.json': '{"aztec":"5.0.0"}',
     'scripts/toolchain.mjs': '// synthetic toolchain',
+    'scripts/rpc-zero-window.mjs': '// synthetic RPC transform',
+    'node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js': '// synthetic native RPC source',
     'shared/sdk-entry.mjs': '// synthetic SDK entry',
     'shared/sdk-store.mjs': '// synthetic storage adapter',
     'node_modules/@aztec-labs/pxe/dest/storage/metadata.js': '// synthetic PXE schema',
@@ -121,7 +123,7 @@ test('protocol version mismatch is rejected', t => {
   assert.throws(() => checkSdk(f.root), /protocol version differs/);
 });
 
-for (const [section, name] of [['inputs', 'shared/sdk-entry.mjs'], ['inputs', 'shared/sdk-store.mjs'], ['inputs', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js'], ['inputs', 'node_modules/@aztec-foundation/noir-acvm_js/web/acvm_js_bg.wasm'], ['outputs', 'sqlite.worker.js'], ['outputs', 'sqlite3.wasm']]) {
+for (const [section, name] of [['inputs', 'scripts/rpc-zero-window.mjs'], ['inputs', 'node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js'], ['inputs', 'shared/sdk-entry.mjs'], ['inputs', 'shared/sdk-store.mjs'], ['inputs', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js'], ['inputs', 'node_modules/@aztec-foundation/noir-acvm_js/web/acvm_js_bg.wasm'], ['outputs', 'sqlite.worker.js'], ['outputs', 'sqlite3.wasm']]) {
   test(`omitting required ${section} entry ${name} is rejected`, t => {
     const f = fixture(t);
     delete f.manifest[section][name]; f.save();
