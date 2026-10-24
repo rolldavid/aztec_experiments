@@ -182,3 +182,44 @@ test('replaced source-plan read failure is still reported after all reads drain'
  const rejected=assert.rejects(pending,/discarded plan read failed/).finally(()=>settled=true);
  await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);assert.deepEqual(anchors,[12,13]);second.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);
 });
+
+
+for (const failure of ['none','current','selected','both']) test(`advancing anchor checks overlap and drain before writes: ${failure}`, {timeout: 10000}, async t=>{
+ const f=await fixture(t);await f.advance(10);f.state.tip=12;
+ const currentGate=Promise.withResolvers(),selectedGate=Promise.withResolvers(),bothStarted=Promise.withResolvers();
+ const header=f.sync.checkedHeader.bind(f.sync),selected=f.sync.checkedSelectedAnchor.bind(f.sync);
+ let currentStarted=false,selectedStarted=false,selectedCalls=0,settled=false,writes=0;
+ const maybeStarted=()=>{if(currentStarted&&selectedStarted)bothStarted.resolve();};
+ f.sync.checkedHeader=async id=>{
+  if(id.number===10){currentStarted=true;maybeStarted();await currentGate.promise;if(failure==='current'||failure==='both')throw Error('current header failed');}
+  return header(id);
+ };
+ f.sync.checkedSelectedAnchor=async()=>{
+  if(++selectedCalls===2){selectedStarted=true;maybeStarted();await selectedGate.promise;if(failure==='selected'||failure==='both')throw Error('selected anchor failed');}
+  return selected();
+ };
+ const event=f.sync.doHandleBlockStreamEvent.bind(f.sync);let eventError;
+ f.sync.doHandleBlockStreamEvent=async e=>{try{return await event(e);}catch(error){eventError=error;throw error;}};
+ const update=f.sync.updateAnchorBlockHeader.bind(f.sync);
+ f.sync.updateAnchorBlockHeader=async h=>{writes++;return update(h);};
+ const before=await f.snapshot(),beforeWipes=f.state.wipes,beforeNodeWipes=f.state.nodeWipes;
+ const run=f.sync.sync();run.then(()=>settled=true,()=>settled=true);
+ await bothStarted.promise;
+ assert.equal(writes,0);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),10);
+ // Release the failing side first. A rejection must not leave the sibling read
+ // running after this operation gives up ownership of the native stores.
+ if(failure==='selected'){selectedGate.resolve();}else{currentGate.resolve();}
+ await new Promise(r=>setImmediate(r));
+ assert.equal(settled,false);assert.equal(writes,0);assert.equal(f.state.wipes,beforeWipes);assert.equal(f.state.nodeWipes,beforeNodeWipes);
+ assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),10);
+ currentGate.resolve();selectedGate.resolve();
+ if(failure==='none'){
+  await run;assert.equal(writes,1);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);
+ }else{
+  await assert.rejects(run,/PXE_REORG_ANCHOR_EVENT_FAILED/);
+  assert.match(eventError.message,failure==='selected'?/selected anchor failed/:/current header failed/);
+  assert.equal(writes,0);assert.equal((await f.anchor.getBlockHeader()).toBuffer().toString('hex'),before.header);
+  assert.equal(await f.balance(),before.balance);assert.equal(await f.other.getAsync('value'),before.other);
+  assert.deepEqual((await f.tips.getL2Tips()).checkpointed,before.tips.checkpointed);
+ }
+});

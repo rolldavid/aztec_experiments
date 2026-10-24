@@ -40,6 +40,18 @@ export function parallelPxeAnchorSnapshot(source){
 
 function withAnchorRead(source){
  const replace=(before,after)=>{if(source.split(before).length!==2)throw Error('PXE anchor read layout mismatch');source=source.replace(before,after);};
+ // Both validations read immutable identities captured by the native stream.
+ // Drain both before any anchor/store update, preserving the old-header error
+ // priority when both fail. This removes one serial RPC phase on advances.
+ replace(`          await this.checkedHeader(currentId);
+          if (!this.sameAnchor(target.block, (await this.checkedSelectedAnchor()).block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`,
+ `          const checks = await Promise.allSettled([
+            Promise.resolve().then(() => this.checkedHeader(currentId)),
+            Promise.resolve().then(() => this.checkedSelectedAnchor()),
+          ]);
+          const failed = checks.find(result => result.status === 'rejected');
+          if (failed) throw failed.reason;
+          if (!this.sameAnchor(target.block, checks[1].value.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`);
  replace('  syncPass = undefined;',`  syncPass = undefined;
 
   anchorRead = undefined;
