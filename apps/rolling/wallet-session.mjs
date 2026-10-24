@@ -18,6 +18,20 @@ export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node'
 const refreshMethods=Object.freeze({readAccountStatus:'account-status',ownedIdentities:'owned-names',readModeratorStatus:'moderator-status',readBokStatus:'bok-status'});
 const refreshCodes=new Set(['ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_RESPONSE','ROLLING_ABI_MISMATCH','ROLLING_RECOVERY_REQUIRED','PRIVATE_FEE_PREPARATION_FAILED','PRIVATE_FEE_PROVIDER_REQUIRED','PRIVATE_FEE_CONFIGURATION_REQUIRED','PRIVATE_FEE_OWNER_IS_PAYER','PRIVATE_FEE_CHAIN_MISMATCH','PRIVATE_FEE_CAP_TOO_LOW','PRIVATE_FEE_NONCANONICAL_ADDRESS','PRIVATE_FEE_NOT_PUBLISHED','PRIVATE_FEE_CLASS_MISMATCH','PRIVATE_FEE_ARTIFACT_INVALID','PRIVATE_FEE_INVALID_VALUE','PRIVATE_FEE_INVALID_ADDRESS','PRIVATE_FEE_INVALID_GAS','PRIVATE_FEE_BALANCE_INSUFFICIENT']);
 function refreshErrorCode(error){try{const d=error!=null?Object.getOwnPropertyDescriptor(error,'code'):null;return d&&Object.hasOwn(d,'value')&&refreshCodes.has(d.value)?d.value:rollingSetupErrorCode(error);}catch{return 'unknown';}}
+// Only public transaction identity crosses the account/display boundary.
+export function projectRollingTransactionProgress(stage,details){
+ if(['preparing','proving','submitting','confirming'].includes(stage))return {stage};
+ if(stage!=='included')return null;
+ try{
+  if(!details||Object.getPrototypeOf(details)!==Object.prototype)return null;
+  const value={};for(const key of ['txHash','blockNumber','blockHash','journalOperation']){
+   const d=Object.getOwnPropertyDescriptor(details,key);if(!d||!Object.hasOwn(d,'value'))return null;value[key]=d.value;
+  }
+  const match=typeof value.journalOperation==='string'&&/^ROLLING_WORKFLOW_V1:(0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.exec(value.journalOperation);
+  if(!match||!/^0x[0-9a-f]{64}$/.test(value.txHash)||!/^0x[0-9a-f]{64}$/.test(value.blockHash)||!Number.isSafeInteger(value.blockNumber)||value.blockNumber<1)return null;
+  return {stage,intentId:match[1],txHash:value.txHash,blockNumber:value.blockNumber,blockHash:value.blockHash};
+ }catch{return null;}
+}
 const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
@@ -362,7 +376,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    await guard();const journal=await sdk.createL2Journal({storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
     scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard,operationScope:()=>operationScope});
    begin('wallet-bind');
-   await guard();const wallet=routing.createAztecWallet(sdk,pxe,node,node,silent,secret,{contextGuard:guard,transactionJournal:journal,progress:stage=>{try{onProgress?.({stage});}catch{/* Display failures cannot change submission. */}}});
+   await guard();const wallet=routing.createAztecWallet(sdk,pxe,node,node,silent,secret,{contextGuard:guard,transactionJournal:journal,progress:(stage,details)=>{const value=projectRollingTransactionProgress(stage,details);if(value)void Promise.resolve().then(()=>onProgress?.(value)).catch(()=>{});}});
    if(wallet.aztecNode!==node||wallet.pxe!==pxe||!routing.isPrivateWalletForNode(wallet,node))throw fail('ROLLING_PRIVATE_ROUTE');
    begin('account-manager');
    await guard();wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});

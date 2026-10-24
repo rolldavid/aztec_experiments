@@ -53,9 +53,9 @@ export async function classifyDroppedTransaction(node,tx,receipt,{readTimeoutMs=
   }
   throw transactionError('BB_SUBMISSION_UNKNOWN','Drop reason is unconfirmed. Reconcile before retrying.');
 }
-export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,onPoll=()=>{},readTimeoutMs=20000}={}) {
+export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,onPoll=()=>{},onIncluded,readTimeoutMs=20000}={}) {
   if(!Number.isFinite(timeoutMs)||timeoutMs<0||(intervalMs!==undefined&&(!Number.isFinite(intervalMs)||intervalMs<=0)))throw transactionError('BB_SUBMISSION_UNKNOWN','Transaction wait configuration is invalid.');
-  const txHash=tx.getTxHash(),readLimit=timeoutMs===0?readTimeoutMs:Math.min(readTimeoutMs,timeoutMs);let stateConflict;
+  const txHash=tx.getTxHash(),readLimit=timeoutMs===0?readTimeoutMs:Math.min(readTimeoutMs,timeoutMs);let stateConflict,lastInclusion;
   try {
     // The SDK owns waiting. This boundary only validates each actual receipt and
     // reconciles drops; no elapsed time can authorize a replacement or resend.
@@ -69,6 +69,19 @@ export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,on
         catch(error){if(error?.code==='BB_STATE_CONFLICT')stateConflict=error;throw error;}
       }
       if(!pending.has(observed.status)&&!accepted.has(observed.status))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt status is unrecognized.');
+      // Inclusion is a display event, not settlement. Reuse this receipt rather
+      // than starting another waiter or changing the canonical journal boundary.
+      const blockHash=hash(observed.blockHash),includedHash=hash(observed.txHash);
+      if(typeof onIncluded==='function'&&(observed.status==='proposed'||accepted.has(observed.status))&&
+        observed.executionResult==='success'&&Number.isSafeInteger(observed.blockNumber)&&observed.blockNumber>0&&
+        /^0x[0-9a-f]{64}$/.test(blockHash)&&/^0x[0-9a-f]{64}$/.test(includedHash)){
+        const identity=observed.blockNumber+':'+blockHash;
+        if(identity!==lastInclusion){
+          lastInclusion=identity;
+          const inclusion=Object.freeze({txHash:includedHash,blockNumber:observed.blockNumber,blockHash});
+          void Promise.resolve().then(()=>onIncluded(inclusion)).catch(()=>{});
+        }
+      }
       if(pending.has(observed.status))onPoll();
       return observed;
     }},txHash,{timeout:timeoutMs/1000,...(intervalMs===undefined?{}:{interval:(timeoutMs===0?intervalMs:Math.min(intervalMs,timeoutMs))/1000}),ignoreDroppedReceiptsFor:0,dontThrowOnRevert:true});

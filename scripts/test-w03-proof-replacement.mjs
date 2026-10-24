@@ -347,3 +347,29 @@ test('SDK receipt waiter preserves dropped ambiguity and canonical re-inclusion'
   assert.equal(reads,2);assert.equal(sends,0);
  }
 });
+
+test('inclusion notification reuses receipt reads, deduplicates blocks and leaves canonical completion pending',async()=>{
+ const tx=Tx.random(),a=BlockHash.random(),b=BlockHash.random(),events=[];let reads=0,blocks=0,release,seen;
+ const included=new Promise(resolve=>seen=resolve),checkpoint=new Promise(resolve=>release=resolve);
+ const receipt=(status,blockHash,blockNumber)=>new MinedTxReceipt(tx.getTxHash(),status,'success',0n,blockHash,blockNumber,1,0,1);
+ const sequence=[new PendingTxReceipt(tx.getTxHash()),receipt('proposed',a,1),receipt('proposed',a,1),receipt('proposed',b,2),receipt('proposed',b,2)];
+ let complete=false;
+ const waiting=waitForCanonicalReceipt({getTxReceipt:async()=>{reads++;return sequence.length?sequence.shift():checkpoint;},getBlock:async n=>{blocks++;assert.equal(n,2);return {hash:b};}},tx,{intervalMs:1,onIncluded:value=>{events.push(value);if(events.length===2)seen();}}).then(value=>{complete=true;return value;});
+ await included;assert.equal(complete,false);assert.equal(blocks,0);
+ assert.deepEqual(events,[{txHash:String(tx.getTxHash()),blockNumber:1,blockHash:String(a)},{txHash:String(tx.getTxHash()),blockNumber:2,blockHash:String(b)}]);
+ assert(events.every(Object.isFrozen));release(receipt('checkpointed',b,2));await waiting;
+ assert.equal(reads,6);assert.equal(blocks,1);assert.equal(events.length,2);
+});
+for(const defect of ['pending','reverted','wrong-hash','missing-block','invalid-block','invalid-block-hash'])test('inclusion notification excludes '+defect,async()=>{
+ const tx=Tx.random(),blockHash=BlockHash.random(),good=new MinedTxReceipt(tx.getTxHash(),'checkpointed','success',0n,blockHash,1,1,0,1);
+ const bad=new MinedTxReceipt(defect==='wrong-hash'?Tx.random().getTxHash():tx.getTxHash(),defect==='pending'?'pending':defect==='reverted'?'checkpointed':'proposed',defect==='reverted'?'reverted':'success',0n,blockHash,1,1,0,1);
+ if(defect==='missing-block')bad.blockNumber=undefined;if(defect==='invalid-block')bad.blockNumber=0;if(defect==='invalid-block-hash')bad.blockHash='invalid';
+ const events=[];let reads=0;const waiting=waitForCanonicalReceipt({getTxReceipt:async()=>{if(++reads===1)return bad;assert.equal(events.length,0);return good;},getBlock:async()=>({hash:blockHash})},tx,{intervalMs:1,onIncluded:value=>events.push(value)});
+ if(defect==='wrong-hash')await assert.rejects(waiting,{code:'BB_SUBMISSION_UNKNOWN'});else await waiting;
+ assert.equal(events.length,['wrong-hash','reverted'].includes(defect)?0:1);
+});
+for(const failure of ['throw','reject','never-settle'])test('included display callback '+failure+' cannot change canonical completion',async()=>{
+ const tx=Tx.random(),blockHash=BlockHash.random(),receipt=new MinedTxReceipt(tx.getTxHash(),'checkpointed','success',0n,blockHash,1,1,0,1);let calls=0;
+ const result=await waitForCanonicalReceipt({getTxReceipt:async()=>receipt,getBlock:async()=>({hash:blockHash})},tx,{onIncluded:()=>{calls++;if(failure==='throw')throw Error('display');return failure==='reject'?Promise.reject(Error('display')):new Promise(()=>{});}});
+ assert.equal(result,receipt);assert.equal(calls,1);
+});

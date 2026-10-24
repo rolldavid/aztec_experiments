@@ -1169,3 +1169,25 @@ for(const inconsistent of ['instance','manager'])test('inconsistent '+inconsiste
  assert.equal(f.state.registrations,0);assert.equal(f.state.events.filter(event=>event==='register-class'||event==='register-contract').length,0);
  assert.equal(f.state.syncs,0);assert.equal(f.state.sends,0);assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);assert.equal(f.state.active,false);
 });
+
+import {projectRollingTransactionProgress} from './wallet-session.mjs';
+test('included transaction progress exposes only exact public identity and workflow intent',()=>{
+ const details={txHash:hex(91),blockNumber:12,blockHash:hex(92),journalOperation:'ROLLING_WORKFLOW_V1:'+hex(93),secret:'PRIVATE_SENTINEL'};
+ assert.deepEqual(projectRollingTransactionProgress('included',details),{stage:'included',intentId:hex(93),txHash:hex(91),blockNumber:12,blockHash:hex(92)});
+ for(const patch of [{journalOperation:'other:'+hex(93)},{journalOperation:'ROLLING_WORKFLOW_V1:'},{txHash:'invalid'},{blockNumber:0},{blockNumber:1.5},{blockHash:'invalid'}])assert.equal(projectRollingTransactionProgress('included',{...details,...patch}),null);
+ assert.equal(projectRollingTransactionProgress('included',{...details,get txHash(){assert.fail('Must not invoke an accessor');}}),null);
+ assert.equal(projectRollingTransactionProgress('other',details),null);
+ assert.deepEqual(projectRollingTransactionProgress('confirming',details),{stage:'confirming'});
+});
+test('wallet progress binding forwards included intent without extra private work and ignores rejected display callbacks',async()=>{
+ const f=await sessionFixture(),create=f.input.routing.createAztecWallet,observed=[];let emit;
+ f.input.routing.createAztecWallet=(...args)=>{emit=args[6].progress;return create(...args);};
+ f.input.onProgress=value=>{if(value.stage==='included'){observed.push(value);return Promise.reject(Error('display'));}};
+ const session=await createRollingWalletSession(f.input);try{
+  const before=[f.state.sends,f.state.syncs,f.state.registrations];
+  emit('included',{txHash:hex(91),blockNumber:12,blockHash:hex(92),journalOperation:'ROLLING_WORKFLOW_V1:'+hex(93)});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(observed,[{stage:'included',intentId:hex(93),txHash:hex(91),blockNumber:12,blockHash:hex(92)}]);
+  assert.deepEqual([f.state.sends,f.state.syncs,f.state.registrations],before);
+ }finally{await session.close();}
+});

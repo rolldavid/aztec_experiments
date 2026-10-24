@@ -295,6 +295,7 @@
         const waitOpts=typeof opts.wait==='object'?opts.wait:{};
         const receipt=await a.waitForSuccessfulReceipt(rawNode,tx,{
           timeoutMs:(waitOpts.timeout ?? 0)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
+          onIncluded:inclusion=>this._progress('included',{...inclusion,journalOperation:opts.journalOperation}),
         });
         if (journal) journal.confirmed(receipt);
         this._actualFees=(this._actualFees||0n)+BigInt(receipt.transactionFee??0);
