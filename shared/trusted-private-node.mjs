@@ -227,7 +227,9 @@ async function privateFetch(host, body, extraHeaders={}) {
  */
 export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsEnabled=true,allowLocalDev=false,maxLagSeconds=120,readinessTier='proposed'}) {
   const p=policy({expectedNetworkScope,proofsEnabled,maxLagSeconds,readinessTier}),host=endpoint(url,allowLocalDev);
-  const rpc=createSafeJsonRpcClient(host,AztecNodeApiSchema,{namespaceMethods:'aztec',maxBatchSize:3,fetch:privateFetch,log:silent,
+  // This owned gateway accepts eight calls per admission. Keep one zero-window
+  // native batch instead of repeating its readiness checks for groups of three.
+  const rpc=createSafeJsonRpcClient(host,AztecNodeApiSchema,{namespaceMethods:'aztec',maxBatchSize:8,fetch:privateFetch,log:silent,
     onResponse:getVersioningResponseHandler({l1ChainId:Number(p.chainId),rollupVersion:Number(p.version),l1RollupAddress:p.rollup})});
   // The installed PXE wraps this facade with recording and caching Proxies.
   // A frozen data property forbids their get traps from returning a bound or

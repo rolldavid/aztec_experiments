@@ -364,3 +364,17 @@ test('native local clock policy cannot excuse a different network or canonical f
  f.info.l1ChainId=31337;f.state.latestBlockHash=h(99);
  await rejects(()=>inspectTrustedNode(f.node,{...options,proofsEnabled:false}),'UNSYNCED');
 });
+
+for(const count of [8,9])test('actual safeRPC coalesces '+count+' simultaneous owned-node reads into bounded batches',async()=>withFetch(async set=>{
+  const f=fixture(),batches=[];f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));
+  set(async(url,init)=>new Response(jsonStringify(await responseFor(f,JSON.parse(init.body)))));
+  const node=await create();
+  set(async(url,init)=>{
+    const batch=JSON.parse(init.body);batches.push(batch);
+    return new Response(jsonStringify(await responseFor(f,batch)));
+  });
+  const results=await Promise.all(Array.from({length:count},(_,i)=>node.getBlockData(i)));
+  assert.deepEqual(batches.map(batch=>batch.length),count===8?[8]:[8,1]);
+  assert.deepEqual(results.map(result=>result.header.globalVariables.blockNumber),Array.from({length:count},(_,i)=>i));
+  assert.equal(new Set(batches.flat().map(call=>call.id)).size,count);
+}));
