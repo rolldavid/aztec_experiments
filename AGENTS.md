@@ -150,3 +150,11 @@ Do not routinely run backup/restore, outage/restart, clean independent deploymen
 ## Owner delivery deadline — 18 October 2026
 
 The owner explicitly removes the fixed14-day/336-hour soak. Complete implementation and acceptance within72hours of2026-10-18T15:25:57Z (deadline2026-10-21T15:25:57Z). T06 now requires bounded representative reliability and failure/recovery exercises on the final candidate, with real observed outcomes and incident accounting, without a minimum elapsed waiting period. Acceptance is assigned implementation work and must continue autonomously; its outstanding status is not a stopping condition. Preserve source-bound evidence, real-proof testnet acceptance, independent specialist review and network clearance; record any specific external prerequisite honestly. This amendment supersedes older duration instructions, including in the attached PDF, while retaining historical evidence. It does not change contract penalty/cooldown durations.
+
+## Owner-only delivery constraint — 24 October 2026
+
+Replacing constrained self-delivery must not introduce additional private notes.
+Do not add discovery counters or journal-head UTXOs. Encryption must remain
+unconstrained, owner-only records must restore from another browser using the same
+wallet, and native note authorization/nullification must remain intact. The
+counter-note prototype was rejected and is not an approved production design.
