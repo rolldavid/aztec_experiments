@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "scope": "Infrastructure recovery evidence only; does not establish publication of the next UI candidate or achievement of posting latency targets.",
+  "failure": {
+    "cause": "ENOSPC on the core server root filesystem",
+    "consoleObservedAt": "2026-10-24T20:44:58Z",
+    "component": "systemd-journald",
+    "observedMessage": "Failed to create new system journal: No space left on device",
+    "rootVolumeGiB": 40,
+    "separateChainDataVolumeGiB": 1024,
+    "rootAvailableBytesBeforeCleanup": 126976,
+    "contributingCondition": "Completed deployment upload payloads and archives had accumulated without automatic cleanup."
+  },
+  "recovery": {
+    "method": "Offline root-volume attachment and cleanup using the existing Bok host, then restoration to the core server root attachment.",
+    "additionalInstancesOrVolumesProvisioned": 0,
+    "restoredRootDevice": "/dev/sda1",
+    "removedScope": "Verified obsolete deployment packet payload directories and upload archives; running releases, configuration, credentials and service metadata were retained.",
+    "cleanupPasses": [
+      {
+        "freedBytes": 696008704,
+        "removedEntries": 20,
+        "packets": 17
+      },
+      {
+        "freedBytes": 1025855488,
+        "removedEntries": 58,
+        "packets": 35
+      }
+    ],
+    "totalFreedBytes": 1721864192,
+    "rootAvailableBytesAfterCleanup": 1721991168,
+    "reportedRootFilesystemUsePercentAfterCleanup": 96
+  },
+  "postRecoveryObservation": {
+    "activeServiceCount": 7,
+    "services": {
+      "rolling-application": "active",
+      "rolling-application-proxy": "active",
+      "rolling-node": "active",
+      "rolling-query": "active",
+      "rolling-moderator": "active",
+      "board-prover": "active",
+      "board-prover-proxy": "active"
+    },
+    "configuredSourceMatchesRunningSource": true,
+    "observedUiCommit": "7a3ad91ffc14b965d150595191a12aa14c9637a6",
+    "priorPendingPublicationStaged": false
+  },
+  "prevention": {
+    "commit": "524303f8b7ce8bffad7b4ead88775c8fd4cdb40c",
+    "publisher": "deploy/restoration-20261021/ui/publish.py",
+    "stagePreflight": "Before copying or exporting: account for replacement files, missing immutable assets and public files per destination filesystem, with a 1GiB metadata/operating reserve.",
+    "postActivationCleanup": "After successful activation, verify installed hashes and exact owned packet contents, delete packet/files and stage-authenticated payload.tgz, retain plan, stage, activation and rollback metadata.",
+    "tests": {
+      "passed": 12,
+      "failed": 0,
+      "logSha256": "14c64cc0619e786f1dea262bfa91676e3b0ef347f8f2c6982f28ff3463d24bd8"
+    },
+    "limits": "Upload capacity checking precedes this publisher and is separate. A cleanup error after the activation receipt does not imply activation failed."
+  },
+  "sourceEvidence": [
+    {
+      "file": "owner-core-cleanup-result.txt",
+      "sha256": "58ca878630b4bcbc0606b1bc40be100ea0a2a98ca146b472320061f5898b1123"
+    },
+    {
+      "file": "owner-core-extra-clean-result.txt",
+      "sha256": "59c0e7b6d170df575f6881135712d8d22157084930920455c9bea34ba9570610"
+    },
+    {
+      "file": "owner-after-rescue-final-baseline.txt",
+      "sha256": "3bd8ad31c304ae334338174e3e314971371ba2bbb60b93c7d7df55325892a3d7"
+    },
+    {
+      "file": "owner-management-failure-evidence.json",
+      "sha256": "2f123ea12dabdc6851808b776dda7fe8c575cba281c0f27af28ee62279e6c66a"
+    }
+  ]
+}
