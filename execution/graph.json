@@ -9844,8 +9844,8 @@
   "current_operating_request": {
     "request": "Substantial measured Post-to-Bok latency reduction; 20\u201350 percent improvement across all measured stages",
     "status": "active",
-    "execution_lane": "Root owns the next comparable browser benchmark; numeric-header source independently reviewed and published; packaging records verified release evidence.",
-    "checkpoint": "Published 0021c30ae2aaf5c7eee4166db4c82a9e405427e9: public SDK 267fcf917c91fd4507b642ebe059268530919cb8c5445786980632ad5dc55902; runtime f35becd8 and account/reader/panel assets unchanged. All seven core PIDs unchanged; CloudFront invalidation completed. Integrated 73 checks passed with zero failures or skips. Actual SDK read counts: advancing anchor 7 to 6 cached and 9 to 6 uncached; unchanged anchor 1 to 1. No new wall-time claim. Fixture c19514f82558d2b81a0544b130db8ce0b4ef2ef3 is the original a25 tree and ready for the next benchmark.",
-    "next_action": "Measure the exact published 0021 SDK and concurrent fee-preparation runtime with the prepared fixture; record canonical accounting and actual application behavior before updating latency claims."
+    "execution_lane": "Parallel: root integrates measured simulation/preparation work; account-instance reuse reviewed and committed; reader preserves conversation extent; model tool adds typed browser-plan selectors. Public0021 measured, next source publication pending reviews.",
+    "checkpoint": "Exact0021/runtime371 request completed in188.077s rendered (188.150s worker),59.5 percent below464.264s but slower than prior156.085s. Preparation6.562s, remaining fee0.439s, browserproof18.922s, model47.452s/5calls, validation+publication15.569s including malformed selector repair, workerproof3.522s, finalcheckpoint82.220s. Canonical591c78f8 app passed176browserchecks plus real manual Clear completed/reload test; balance0.641309 to0.606593. Post-confirmation render reset pagination despite previously loaded tail; one additional Load more click before final reply is recorded. Goal not complete.",
+    "next_action": "Review/publish account-instance and reader fixes; validate typed selector tool to prevent recurring escape errors without weakening browser checks. Keep exact comparable measurements and public72s-slot constraint explicit; do not claim every category or30s goal achieved."
   }
 }
