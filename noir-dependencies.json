@@ -4,17 +4,17 @@
   "description": "Candidate inventory from actual supplied compiler artifacts and complete declared local graphs. Not origin authentication. Independently verify every external tree against official commit archives before promotion.",
   "localManifests": {
     "billboard/Nargo.toml": "c2ebd5861978eb15cf7f0f7501c1a849d1db8907ad17f9c8e2082128046b3973",
-    "billboard/billboard_contract/Nargo.toml": "4c86fba1a8ea4ff3e9688af574136d38f7509f1b16b2a54032fa4dce08bc7785",
-    "billboard/billboard_test/Nargo.toml": "feec1f72235f4650bab60a1f7dafca4066b9c66a83b3cdd99b5616ce957493fa",
-    "billboard/plugin_adapter/Nargo.toml": "a3a58f7461f704bcd41046a52a14e3c702d875b9fc7bea901e8f4cd41524f5fc",
-    "billboard/private_fee_contract/Nargo.toml": "3e9bf95710dfa5a0a2cbf97e703de1b8f081cebe9a17b02dce9cde1265ee7391",
-    "billboard/private_fee_test/Nargo.toml": "66025dcc3613d53abea969ab4e677e6de634ccacbf28509cdb33ed65b711c623",
-    "billboard/rolling_contract/Nargo.toml": "ee0cd500ffa7b4d3fcc3caf703a57d1b7e806edfcbdf134285b7077bb489c172",
-    "experiments/avatar/Nargo.toml": "c5cac93523751d5c835895c092d73b90c3f7d2fa92fc2b4f1459b43bb58a194a",
+    "billboard/billboard_contract/Nargo.toml": "a1c3d46e43461b7d23b102417fb63e34177948d53a1947b1041d77cf93f942d6",
+    "billboard/billboard_test/Nargo.toml": "e44f7d74c601fce9b5e69a279fd50faaab995106c1704695f411f7541c7f4fb6",
+    "billboard/plugin_adapter/Nargo.toml": "5d3bc601f6e1d03143a1fa0d403e9c49e27435ac9c587b990bc75427cd9d6267",
+    "billboard/private_fee_contract/Nargo.toml": "85934b299ba56f755d59ba319b6f1503cc0e040e0016a9dcc8e6256d03fb2db6",
+    "billboard/private_fee_test/Nargo.toml": "e27c50fdfae83c08ca0681bc484d856e190b0e0ea1f067d00a67a18d41e9961d",
+    "billboard/rolling_contract/Nargo.toml": "e8c6b116ec2822535ac1b9f305a39843e7e71379ead4830b1258104ce4fb4dad",
+    "experiments/avatar/Nargo.toml": "33c572d97a8ce6a894079e9031b75a587658cef171ee8d44222a0fed2f9a7cb6",
     "experiments/private-bok/Nargo.toml": "fdfdce9b51ea0d14e2b84bb4b9be0f173a1bef1a01713889ec103b291b9d7f59",
-    "experiments/private-bok/escrow/Nargo.toml": "607bff6f3626e5d5f12ea8ca5496616db884e2f74be8df4e81e010898ef7b51f",
-    "experiments/private-bok/probe-board/Nargo.toml": "261a2099e590c7213e5765fd4866456938624bb2595810c26b16e1e185b51150",
-    "experiments/private-bok/tests/Nargo.toml": "845baf0b5e2fbfe2a53f541eea3c528a152682df50389fc400ce0b820a95dab8"
+    "experiments/private-bok/escrow/Nargo.toml": "90df3375eabf0c4ecd0f80c8d2ad726939fa1b2231b63483463c0f44f9d54274",
+    "experiments/private-bok/probe-board/Nargo.toml": "48c66502405d3a48c6677bcb1804a9c19e1bc2ca3f8c2fffc9398ed2299f4684",
+    "experiments/private-bok/tests/Nargo.toml": "879e43b37afe66a0411fa257934c670cd4e88c7cc11ba8d95aa37347e0fd52b8"
   },
   "packages": {
     "dependencies/github.com/AztecProtocol/aztec-packages/v6.0.0/noir-projects/fnd/noir-protocol-circuits/crates/serde": {
@@ -1248,5 +1248,6 @@
       "path": "billboard/target/rolling_contract-RollingBoard.json",
       "sha256": "2456de9f62c94544c45502ffa1bf638e4da533c14dfecdf423df744520aa1b9c"
     }
-  }
+  },
+  "ownerDelivery": ".build/owner-delivery/aztec-nr"
 }

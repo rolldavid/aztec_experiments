@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { ROOT, assertNodeVersion } from './toolchain.mjs';
+import { checkOwnerNoir, OWNER_NOIR_DIRECTORY } from './prepare-owner-noir.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const prefix = 'dependencies/github.com/';
@@ -37,6 +38,10 @@ function compare(actual, expected, label) {
 // absent from the emitted artifact; it does not authenticate the original lock.
 export function checkNoirDependencyTrees({ root = ROOT, cacheRoot = path.join(os.homedir(), 'nargo'), lock = readLock(root) } = {}) {
   inventory(lock);
+  if (lock.ownerDelivery !== undefined) {
+    if (lock.ownerDelivery !== OWNER_NOIR_DIRECTORY) throw new Error('Unknown generated Noir dependency');
+    checkOwnerNoir({root,cacheRoot});
+  }
   for (const [name, hash] of Object.entries(lock.localManifests)) {
     if (sha(fs.readFileSync(confined(root, name))) !== hash) throw new Error(`Local Noir dependency manifest changed: ${name}`);
   }
@@ -69,6 +74,14 @@ export function checkNoirEmbeddedSources(artifact, { root = ROOT, lock = readLoc
   for (const entry of Object.values(artifact.file_map)) {
     if (typeof entry.path !== 'string' || typeof entry.source !== 'string') throw new Error('Invalid Noir source entry');
     if (path.isAbsolute(entry.path) || entry.path.includes('\\')) throw new Error('Normalize Noir diagnostic paths before dependency verification');
+    if (entry.path.startsWith(OWNER_NOIR_DIRECTORY + '/')) {
+      if (lock.ownerDelivery !== OWNER_NOIR_DIRECTORY || entry.path.split('/').includes('..')) throw new Error('Unregistered generated Noir source');
+      const digest = sha(entry.source);
+      if (actual[entry.path] && actual[entry.path] !== digest) throw new Error('Conflicting generated Noir source');
+      actual[entry.path] = digest;
+      if (actual[entry.path] !== sha(fs.readFileSync(confined(root,entry.path)))) throw new Error('Generated embedded Noir source differs from prepared tree');
+      continue;
+    }
     if (!entry.path.startsWith('dependencies/')) continue;
     if (!entry.path.startsWith(prefix) || entry.path.split('/').includes('..')) throw new Error(`Unknown dependency source: ${entry.path}`);
     const digest = sha(entry.source);

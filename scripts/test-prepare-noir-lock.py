@@ -147,6 +147,21 @@ class PreparationTests(unittest.TestCase):
         manifest.write_text(original);self.write(self.artifact, '[]')
         with self.assertRaisesRegex(ValueError,'Malformed compiler artifact'):self.run_prepare()
 
+    def test_generated_owner_dependency_sources_are_in_exact_contract_inventory(self):
+        relative = '.build/owner-delivery/aztec-nr/aztec'
+        generated = self.root / relative
+        self.write(generated / 'Nargo.toml', '[package]\nname="owner_native"\ntype="lib"\n')
+        self.write(generated / 'src/lib.nr', 'generated native fixture')
+        manifest = self.root / 'billboard/contract/Nargo.toml'
+        manifest.write_text(manifest.read_text() + 'owner_native={path="../../' + relative + '"}\n')
+        self.record['file_map']['3'] = {'path':str(generated / 'src/lib.nr'),'source':'generated native fixture'}
+        self.save()
+        result = self.run_prepare()
+        self.assertEqual(result['ownerDelivery'], '.build/owner-delivery/aztec-nr')
+        self.assertEqual(result['embeddedSourcesByContract']['Board'][relative + '/src/lib.nr'], generator.sha(b'generated native fixture'))
+        self.write(generated / 'src/lib.nr', 'unqualified changed source')
+        with self.assertRaisesRegex(ValueError, 'local source'): self.run_prepare()
+
     def test_default_scope_retains_all_existing_acceptance_contracts(self):
         self.assertEqual(len(generator.DEFAULT_CONTRACTS),7)
         self.assertIn('experiments/private-bok/Nargo.toml',generator.DEFAULT_MANIFESTS)

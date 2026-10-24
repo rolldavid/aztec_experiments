@@ -172,6 +172,8 @@ def prepare(root, cache, artifact_paths, manifests=DEFAULT_MANIFESTS, required_c
                 continue  # Compiler stdlib provenance is a separate pinned-compiler gate.
             elif local_sources.get(relative) != digest:
                 raise ValueError('Compiler local source differs from declared graph')
+            elif relative.startswith('.build/owner-delivery/aztec-nr/'):
+                inventory[relative] = digest
         if not inventory:
             raise ValueError('Empty contract dependency inventory')
         embedded[name] = dict(sorted(inventory.items()))
@@ -180,6 +182,7 @@ def prepare(root, cache, artifact_paths, manifests=DEFAULT_MANIFESTS, required_c
         raise ValueError('Missing required contract artifacts or dependency packages')
     return {'schema': 2, 'algorithm': 'sha256',
             'description': 'Candidate inventory from actual supplied compiler artifacts and complete declared local graphs. Not origin authentication. Independently verify every external tree against official commit archives before promotion.',
+            **({'ownerDelivery': '.build/owner-delivery/aztec-nr'} if any(name.startswith('.build/owner-delivery/aztec-nr/') for name in local) else {}),
             'localManifests': dict(sorted(local.items())), 'packages': dict(sorted(packages.items())),
             'embeddedSourcesByContract': dict(sorted(embedded.items())), 'artifactSources': dict(sorted(origins.items()))}
 

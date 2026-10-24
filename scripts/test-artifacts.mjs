@@ -50,6 +50,8 @@ function fixture(t) {
     'scripts/artifact-provenance.mjs': '// synthetic provenance input\n',
     'scripts/normalize-noir.mjs': '// synthetic debug-path normalization input\n',
     'scripts/check-noir-dependencies.mjs': '// synthetic dependency verification input\n',
+    'scripts/prepare-owner-noir.mjs': '// synthetic generated dependency builder\n',
+    'scripts/owner-delivery-noir-sources.json': '{"fixture":"native owner dependency pins"}\n',
     'noir-dependencies.json': '{"fixture":"Noir dependency pins"}\n',
     'billboard/Nargo.toml': '[workspace]\nmembers = ["contract"]\n',
     'billboard/contract/Nargo.toml': '[package]\nname = "fixture"\n',
@@ -165,6 +167,8 @@ for (const [label, name] of [
   ['router builder', 'scripts/build-funding-router.mjs'],
   ['Noir debug-path normalizer', 'scripts/normalize-noir.mjs'],
   ['Noir dependency verifier', 'scripts/check-noir-dependencies.mjs'],
+  ['Native owner dependency builder', 'scripts/prepare-owner-noir.mjs'],
+  ['Native owner dependency pins', 'scripts/owner-delivery-noir-sources.json'],
   ['Noir dependency pins', 'noir-dependencies.json'],
 ]) {
   test(`${label} drift requires a rebuild`, t => {

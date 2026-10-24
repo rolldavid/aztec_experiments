@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { ROOT, pins, assertNodeVersion, assertAztecPackages, bbBinary, nargoBinary } from './toolchain.mjs';
 
 import { checkNoirDependencyTrees, checkNoirEmbeddedSources } from './check-noir-dependencies.mjs';
+import { prepareOwnerNoir } from './prepare-owner-noir.mjs';
 import { normalizeNoir } from './normalize-noir.mjs';
 import { contractInputs, sha } from './artifact-provenance.mjs';
 
@@ -55,6 +56,7 @@ export function assertPortalL1Artifacts({ root = ROOT, toolchain = pins } = {}) 
 
 export function buildContracts() {
   assertNodeVersion(); assertAztecPackages(); assertPortalL1Artifacts();
+  prepareOwnerNoir();
   const billboard = path.join(ROOT, 'billboard');
   execFileSync(nargoBinary(), ['compile', '--force', '--silence-warnings'], { cwd: billboard, stdio: 'inherit' });
   const raw = path.join(billboard, 'target/billboard_contract-Billboard.json');
