@@ -30,7 +30,7 @@ function privateChanged(){
 }
 async function accountPanel(){
  return walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
-   loadRuntime:prepareAccountTools,onPublicEffect:()=>render({live:!!main?.querySelector('.public-content')}),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void panel.initialize();return panel;});
+   loadRuntime:prepareAccountTools,onPublicEffect:()=>!main?.querySelector('.public-content')||privateViews.has(route.split('/')[1])||route.split('/')[1]==='directory'?render({live:!!main?.querySelector('.public-content')}):updates.request(),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void panel.initialize();return panel;});
 }
 async function openWallet(defaults={}){
  try{
@@ -179,7 +179,7 @@ function boardOverview(data){
  return section;
 }
 function capturePosition(){return renderedRoute===route?{...captureRoutePosition(loadedPages),threadEnd:loadedThreadEnd}:positions.get(route);}
-async function render({live=false}={}){
+async function render({live=false,publicationRevision}={}){
  const finishTiming=beginRollingMeasure(live?'reader.update':'reader.load');
  if(live)positions.set(route,capturePosition());
  controller?.abort();controller=new AbortController();const signal=controller.signal,current=++sequence;renderActive=current;
@@ -253,13 +253,13 @@ async function render({live=false}={}){
  }
 
  try{
-  data=await read(api,parameters,restoreSignal);if(current!==sequence)return;
+  data=await read(api,parameters,restoreSignal,{revision:publicationRevision});if(current!==sequence)return;
   if(expectedRoot&&(!data.post||data.post.record?.root!==expectedRoot))throw Error('Linked post does not belong to this conversation');
   const finishDOM=beginRollingMeasure('reader.dom');
   append(data);
   let cursor=data.nextCursor;
   while(api!=='directory'&&cursor&&(pages<(saved?.pages??1)||api==='thread'&&saved?.threadEnd||saved?.anchor&&!seenIds.has(saved.anchor.id.slice(5)))){
-   const page=await read(api,{...parameters,cursor},restoreSignal);if(current!==sequence)return;append(page);cursor=page.nextCursor;pages++;
+   const page=await read(api,{...parameters,cursor},restoreSignal,{revision:data.revision});if(current!==sequence)return;append(page);cursor=page.nextCursor;pages++;
   }
   loading.remove();
   if(api==='board'){
@@ -287,7 +287,7 @@ async function render({live=false}={}){
    const focusResult=node=>{if(ownedFocus&&(document.activeElement===document.body||document.activeElement===more)){node.tabIndex=-1;node.focus({preventScroll:true});}};
    inFlight=true;more.disabled=true;more.setAttribute('aria-busy','true');observer?.unobserve(more);
    try{
-    const page=await read(api,{...parameters,cursor},signal);
+    const page=await read(api,{...parameters,cursor},signal,{revision:data.revision});
     if(signal.aborted||current!==sequence||stopped)return;
     const added=append(page);cursor=page.nextCursor;pages++;loadedPages=pages;loadedThreadEnd=api==='thread'&&!cursor;
     if(api==='directory'&&container.querySelector('.empty'))container.querySelector('.empty p').textContent=cursor?'No matches in this page. Continue searching.':'No subboards match this search.';
@@ -322,7 +322,7 @@ async function render({live=false}={}){
  }catch(error){if(signal.aborted)return;if(live){announce('Conversations could not refresh.');return false;}loading.remove();contentHost.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':error.code==='READER_NOT_FOUND'?({board:'Board',profile:'Profile',post:'Post',thread:'Conversation'}[api]??'Page')+' not found':'Conversations could not load'),el('p',{},error.code==='READER_SYNCING'?'The feed is catching up with new posts. Try again shortly.':error.code==='READER_NOT_FOUND'?'This link does not point to an available '+({board:'board',profile:'profile',post:'post',thread:'conversation'}[api]??'page')+'.':'Check your connection, then try loading the conversations again.'),button('Try again',()=>render())));focusRoute(route,positions.get(route),current===1);}
  }finally{finishTiming();if(renderActive===current)renderActive=0;void updates.flush();}
 }
-const updates=createReaderUpdates({refresh:()=>render({live:true}),canRefresh:()=>!renderActive&&!document.hidden&&!privateViews.has(route.split('/')[1])&&route.split('/')[1]!=='directory'&&!!main?.querySelector('.public-content')});
+const updates=createReaderUpdates({refresh:publicationRevision=>render({live:!!main?.querySelector('.public-content'),publicationRevision}),canRefresh:()=>!renderActive&&!document.hidden&&!privateViews.has(route.split('/')[1])&&route.split('/')[1]!=='directory'&&!!main?.querySelector('.public-content')});
 addEventListener('pagehide',()=>{sequence++;controller?.abort();updates.stop();});
 addEventListener('pageshow',event=>{updates.start();if(event.persisted)render();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void updates.flush();});

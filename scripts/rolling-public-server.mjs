@@ -17,12 +17,12 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     if(failures.length>1)throw new AggregateError(failures,'Public reader configuration and cleanup failed');throw error;
   }
   let closed=false,timer,turn,active,queued,closing;const requests=new Set();let fundingWindow=0,fundingRequests=0;
-  const subscribers=new Set();let published=null,lastContentRevision=null;
+  const subscribers=new Set();let published=null,publishedScope=null,lastContentRevision=null;
   const eventText=value=>`event: revision\ndata: ${JSON.stringify(value)}\n\n`;
   const publish=after=>{
     if(after?.state!=='ready'||typeof after.revision!=='string'||!after.checkpoint)return;
     const key=after.contentRevision??after.revision;
-    published={schemaVersion:1,revision:after.revision,checkpoint:after.checkpoint};
+    published={schemaVersion:1,revision:after.revision,checkpoint:structuredClone(after.checkpoint)};publishedScope=JSON.stringify(after.scope);
     if(key===lastContentRevision)return;
     lastContentRevision=key;
     for(const res of subscribers)if(!res.write(eventText(published)))res.destroy();
@@ -98,16 +98,33 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
       }
       const view=url.pathname.slice(5),allowed=Object.hasOwn(routes,view)?routes[view]:null;
       if(!allowed)return reply(404,{schemaVersion:1,error:'not-found'});
-      const params={};for(const [key,value] of url.searchParams){if(!allowed.includes(key)||Object.hasOwn(params,key))return reply(400,{schemaVersion:1,error:'invalid-request'});params[key]=value;}
+      let publicationRevision;
+      const params={};for(const [key,value] of url.searchParams){
+        if(key==='revision'&&['home','feed','board','directory','thread','profile','post'].includes(view)){
+          if(publicationRevision!==undefined||!value.length||value.length>200||!/^[!-~]+$/.test(value))return reply(400,{schemaVersion:1,error:'invalid-request'});
+          publicationRevision=value;continue;
+        }
+        if(!allowed.includes(key)||Object.hasOwn(params,key))return reply(400,{schemaVersion:1,error:'invalid-request'});params[key]=value;
+      }
       if(params.limit!==undefined){if(!/^[1-9][0-9]{0,2}$/.test(params.limit)||Number(params.limit)>100)return reply(400,{schemaVersion:1,error:'invalid-request'});params.limit=Number(params.limit);}
       if(params.cursor!==undefined&&(params.cursor.length>(view==='board'?200:120)||!/^[-0-9a-f:]+$/.test(params.cursor)))return reply(400,{schemaVersion:1,error:'invalid-request'});
       if(params.query!==undefined&&(params.query.length>120||params.query.includes('\0')))return reply(400,{schemaVersion:1,error:'invalid-request'});
       const idKey={board:'id',thread:'root',profile:'nameId',post:'id'}[view];if(idKey&&!field(params[idKey]))return reply(400,{schemaVersion:1,error:'invalid-request'});
       if(view==='status')return reply(200,index.status());
-      // No request owns index mutation; concurrent reads join the shared next
-      // cycle and its bounded state-driven catch-up before publication.
-      const refreshed=await freshRead();
-      if(refreshed.failed||refreshed.closed||closed||index.status().state!=='ready')return reply(503,{schemaVersion:1,error:'not-ready'});
+      // SSE already authenticated this exact publication. A synchronous query
+      // keeps its revision, scope, checkpoint and storage CAS ownership intact.
+      // In-flight verification must finish before the publication can be reused.
+      const matchesPublication=()=>{
+        const current=index.status();return publicationRevision!==undefined&&current.state==='ready'&&
+          publicationRevision===published?.revision&&current.revision===published.revision&&
+          JSON.stringify(current.scope)===publishedScope&&JSON.stringify(current.checkpoint)===JSON.stringify(published.checkpoint);
+      };
+      if(publicationRevision!==undefined&&active){const prior=await active.promise;if(prior.failed||prior.closed||closed)return reply(503,{schemaVersion:1,error:'not-ready'});}
+      if(!matchesPublication()){
+        // Policy and account reads without a publication binding remain fresh.
+        const refreshed=await freshRead();
+        if(refreshed.failed||refreshed.closed||closed||index.status().state!=='ready')return reply(503,{schemaVersion:1,error:'not-ready'});
+      }
       try{return reply(200,index.query(view,params));}
       catch(error){const unsupported=error?.code==='ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED',stale=error?.code==='ROLLING_PUBLIC_CURSOR_STALE',missing=error?.code==='ROLLING_PUBLIC_NOT_FOUND';return reply(unsupported?501:stale?409:missing?404:400,{schemaVersion:1,error:unsupported?'accounting-unsupported':stale?'cursor-stale':missing?'not-found':'invalid-request'});}
     }catch(error){

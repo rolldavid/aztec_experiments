@@ -725,3 +725,20 @@ test('confirmation metadata cannot change inside a paginated snapshot or omit a 
  state.postMetadata['32']={confirmation:'unexpected'};await page.evaluate(()=>refreshThread());assert.equal(await page.locator('[data-confirmation]').count(),0);
  state.postMetadata['32']={confirmation:'confirmed'};await page.evaluate(()=>refreshThread());await page.locator('#post-32[data-confirmation="confirmed"]').waitFor();assert.equal(await page.getByRole('article').count(),32);
 });
+
+test('inclusion joins the SSE render and sends its announced revision without another feed request',async t=>{
+ const {page,state,notify}=await threadRefreshFixture(t,{total:16});
+ const requests=[],aborted=[];page.on('request',request=>{if(new URL(request.url()).pathname==='/api/thread')requests.push(new URL(request.url()));});page.on('requestfailed',request=>aborted.push(request.url()));
+ state.holdRoot='1';state.revision='2';notify();await until(()=>state.pending.length===1);
+ assert.equal(requests[0].searchParams.get('revision'),'2');
+ await page.evaluate(()=>{window.inclusionRefresh=refreshThread();});
+ state.holdRoot=null;state.pending.splice(0).forEach(resolve=>resolve());await page.evaluate(()=>inclusionRefresh);
+ assert.deepEqual(state.calls,[0,0]);assert.equal(requests.length,1);assert.deepEqual(aborted,[]);
+ assert.equal(await page.getByRole('article').count(),16);
+});
+
+test('public effect rebuilds a missing feed instead of waiting for an unavailable refresh target',async t=>{
+ const {page,state}=await threadRefreshFixture(t,{total:16});
+ await page.evaluate(async()=>{document.querySelector('.public-content').remove();await refreshThread();});
+ await page.locator('#post-16').waitFor();assert.deepEqual(state.calls,[0,0]);assert.equal(await page.getByRole('article').count(),16);
+});

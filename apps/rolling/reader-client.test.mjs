@@ -30,3 +30,12 @@ test('board reader uses public id and cursor without private parameters',async()
  let call;const read=createPublicReader({fetch:async(url,options)=>{call={url,options};return Response.json(body);}});await read('board',{id:'0',limit:2,cursor:'abc:0:1:2'});assert.equal(call.url,'/api/board?id=0&limit=2&cursor=abc%3A0%3A1%3A2');assert.equal(call.options.credentials,'omit');
  await assert.rejects(read('board',{id:'1',owner:'private'}));await assert.rejects(read('board',{id:'1',likedBy:'private'}));
 });
+
+test('announced publication revision is a bounded public query hint; ordinary reads remain fresh',async()=>{
+ const calls=[],read=createPublicReader({fetch:async(url,options)=>{calls.push({url,options});return Response.json(body);}});
+ await read('home',{limit:30},undefined,{revision:'epoch:1:2'});
+ assert.equal(calls[0].url,'/api/home?limit=30&revision=epoch%3A1%3A2');assert.equal(calls[0].options.credentials,'omit');
+ await read('board',{id:'0'});assert.equal(calls[1].url,'/api/board?id=0');
+ for(const revision of ['',null,12,'\n','a'.repeat(201)])await assert.rejects(read('home',{},undefined,{revision}));
+ await assert.rejects(read('status',{},undefined,{revision:'epoch:1:2'}));assert.equal(calls.length,2);
+});

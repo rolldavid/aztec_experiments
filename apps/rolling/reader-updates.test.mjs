@@ -31,3 +31,22 @@ test('measurements use monotonic start/end, finish only once, and never throw',(
 test('reported render failure retains notification for visibility resume without automatic retry',async()=>{
  let calls=0;const f=fixture(async()=>{calls++;if(calls===1)return false;f.updates.rendered('2');return true;});f.stream.emit('2');await f.updates.flush();await Promise.resolve();assert.equal(calls,1);await f.updates.flush();assert.equal(calls,2);await f.updates.flush();assert.equal(calls,2);f.updates.stop();
 });
+
+test('inclusion joins an active revision refresh without aborting or repeating its request',async()=>{
+ const gate=Promise.withResolvers(),revisions=[];const f=fixture(async revision=>{revisions.push(revision);await gate.promise;f.updates.rendered(revision);});
+ f.updates.rendered('1');f.stream.emit('2');await Promise.resolve();
+ const included=f.updates.request();f.stream.emit('2');assert.deepEqual(revisions,['2']);
+ gate.resolve();await included;await f.updates.flush();assert.deepEqual(revisions,['2']);f.updates.stop();
+});
+test('inclusion request waits for navigation owner and shares subsequent matching SSE notification',async()=>{
+ const revisions=[],f=fixture(async revision=>{revisions.push(revision);f.updates.rendered(revision??'2');});
+ f.allowed=false;await f.updates.request();assert.deepEqual(revisions,[]);
+ f.stream.emit('2');f.allowed=true;await f.updates.flush();assert.deepEqual(revisions,['2']);
+ await f.updates.request();assert.deepEqual(revisions,['2',undefined]);f.updates.stop();
+});
+
+test('newer revision arriving during an older inclusion-joined read gets its own bound refresh',async()=>{
+ const gate=Promise.withResolvers(),revisions=[],f=fixture(async revision=>{revisions.push(revision);if(revision==='1')await gate.promise;f.updates.rendered(revision);});
+ f.updates.rendered('0');f.stream.emit('1');await Promise.resolve();const inclusion=f.updates.request();f.stream.emit('2');
+ gate.resolve();await inclusion;await f.updates.flush();assert.deepEqual(revisions,['1','2']);f.updates.stop();
+});

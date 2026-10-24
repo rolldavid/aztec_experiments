@@ -413,3 +413,36 @@ test('app-first shutdown ends a proxied live feed, drains funding, and restarts 
  while(!text.includes('after')){const next=await freshReader.read();assert.equal(next.done,false);text+=new TextDecoder().decode(next.value);}
  const closingRestart=restarted.close();while(!(await freshReader.read()).done){}await closingRestart;await stopProxy(replacementProxy);
 });
+
+async function publicationFixture(t){
+ const state={state:'ready',revision:'epoch:1',scope:{boardAddress:'board-one'},checkpoint:{number:1,hash:'0x'+'a'.repeat(64)}},counts={sync:0,query:0};let beforeSync=async()=>{};
+ const index={status:()=>structuredClone(state),async sync(){counts.sync++;await beforeSync();},query(view,params){counts.query++;return {schemaVersion:1,scope:state.scope,revision:state.revision,checkpoint:state.checkpoint,complete:true,posts:[],view,params};}};
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());
+ const stream=await fetch(server.url+'/api/events'),reader=stream.body.getReader();let text='';while(!text.includes('epoch:1'))text+=new TextDecoder().decode((await reader.read()).value);
+ return {state,counts,index,server,set beforeSync(fn){beforeSync=fn;},read:(revision='epoch:1')=>fetch(server.url+'/api/feed?revision='+encodeURIComponent(revision))};
+}
+test('exact announced publication reads reuse checked snapshot without another verification cycle',async t=>{
+ const f=await publicationFixture(t),before={...f.counts};
+ for(let i=0;i<3;i++){const response=await f.read();assert.equal(response.status,200);const body=await response.json();assert.equal(body.revision,'epoch:1');assert.deepEqual(body.params,{});}
+ assert.equal(f.counts.sync,before.sync);assert.equal(f.counts.query,3);
+ await fetch(f.server.url+'/api/board?id=0');assert.equal(f.counts.sync,before.sync+1);
+ for(const suffix of ['revision=','revision=epoch:1&revision=epoch:1','revision='+('x'.repeat(201))])assert.equal((await fetch(f.server.url+'/api/feed?'+suffix)).status,400);
+});
+for(const failure of [false,true])test(`announced read joins active verification and ${failure?'rejects its failure':'reuses its result without another cycle'}`,async t=>{
+ const f=await publicationFixture(t),gate=Promise.withResolvers(),started=Promise.withResolvers();
+ f.beforeSync=async()=>{started.resolve();await gate.promise;if(failure)throw Error('unavailable');};
+ const fresh=fetch(f.server.url+'/api/feed');await started.promise;
+ let complete=false;const reused=f.read().then(response=>{complete=true;return response;});
+ await fetch(f.server.url+'/api/status');await new Promise(setImmediate);assert.equal(complete,false);assert.equal(f.counts.query,0);
+ gate.resolve();assert.equal((await fresh).status,failure?503:200);assert.equal((await reused).status,failure?503:200);
+ assert.equal(f.counts.sync,2);assert.equal(f.counts.query,failure?0:2);
+});
+for(const mismatch of ['revision','scope','checkpoint','state'])test('changed '+mismatch+' cannot reuse an older announced publication',async t=>{
+ const f=await publicationFixture(t);if(mismatch==='revision')f.state.revision='new-epoch:1';else if(mismatch==='scope')f.state.scope={boardAddress:'board-two'};else if(mismatch==='checkpoint')f.state.checkpoint={number:1,hash:'0x'+'b'.repeat(64)};else f.state.state='unavailable';
+ f.beforeSync=async()=>{throw Error('invalidated');};
+ const response=await f.read();assert.equal(response.status,503);assert.equal(f.counts.sync,2);assert.equal(f.counts.query,0);
+});
+test('published reuse retains index ownership checks and refuses a stale storage generation',async t=>{
+ const f=await publicationFixture(t);f.index.query=()=>{throw Object.assign(Error('changed'),{code:'PUBLIC_FEED_CONFLICT'});};
+ assert.equal((await f.read()).status,400);assert.equal(f.counts.sync,1);
+});
