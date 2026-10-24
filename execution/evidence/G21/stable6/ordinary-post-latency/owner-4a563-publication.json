@@ -1,0 +1,28 @@
+{
+  "/var/lib/rolling-bootstrap-private/ui-4a563c79347a/activation-result.json": {
+    "commit": "4a563c79347a4330e7510fc27a8bf6f1ce1f7044",
+    "appPid": 791316,
+    "runningSource": "/opt/rolling-app/releases/6cb76060aba07b2eae31284d0e949517dd240d48",
+    "nextSource": "/opt/rolling-app/releases/ui-4a563c79347a",
+    "ui": "/opt/rolling-ui/releases/4a563c79347a4330e7510fc27a8bf6f1ce1f7044",
+    "previousUi": "/opt/rolling-ui/releases/2aac56a180423d89fada24cf575ac41072df2cff",
+    "protectedPids": {
+      "rolling-application.service": 791316,
+      "rolling-application-proxy.service": 787665,
+      "rolling-node.service": 561964,
+      "rolling-query.service": 565186,
+      "rolling-moderator.service": 786909
+    },
+    "caddySha256": "d1bf263bf2245f9350c78a3dd738eaedd375f859e062c5d2e879e28f877e016e",
+    "notifySha256": "aa8f21c2b5ff13c58983a4b1cbf6482cfb303db74566198102f8b051d46a53ae"
+  },
+  "services": {
+    "rolling-application": "MainPID=791316\nActiveState=active",
+    "rolling-application-proxy": "MainPID=787665\nActiveState=active",
+    "board-prover": "MainPID=791632\nActiveState=active",
+    "rolling-node": "MainPID=561964\nActiveState=active",
+    "rolling-query": "MainPID=565186\nActiveState=active",
+    "rolling-moderator": "MainPID=786909\nActiveState=active",
+    "board-prover-proxy": "MainPID=630307\nActiveState=active"
+  }
+}

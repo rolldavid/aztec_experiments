@@ -1,0 +1,37 @@
+{
+  "source": "4a563c79347a4330e7510fc27a8bf6f1ce1f7044",
+  "resources": [
+    {
+      "path": "/crs/crs-manifest.json",
+      "pinned": true,
+      "durationMs": 4.700000047683716,
+      "transferBytes": 0,
+      "decodedBytes": 3320,
+      "protocol": ""
+    },
+    {
+      "path": "/crs/g1_verifier.dat",
+      "pinned": true,
+      "durationMs": 1.2149999141693115,
+      "transferBytes": 0,
+      "decodedBytes": 128,
+      "protocol": "h3"
+    },
+    {
+      "path": "/crs/g2.dat",
+      "pinned": true,
+      "durationMs": 0.8949999809265137,
+      "transferBytes": 0,
+      "decodedBytes": 128,
+      "protocol": "h3"
+    },
+    {
+      "path": "/crs/grumpkin_g1.dat",
+      "pinned": true,
+      "durationMs": 11.659999966621399,
+      "transferBytes": 0,
+      "decodedBytes": 8388608,
+      "protocol": "h3"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "removed": "/private/tmp/owner-log-progress-draft",
+  "bytes": 38868,
+  "additionalScratchRemovedBytes": 6896,
+  "matchedRootFiles": [
+    "scripts/patch-pxe-owner-discovery.mjs",
+    "scripts/patch-pxe-owner-discovery.test.mjs"
+  ],
+  "retainedPatch": "/private/tmp/owner-log-progress.patch",
+  "retainedFinalLog": "/private/tmp/owner-log-progress-final-tests.log"
+}

@@ -1,0 +1,14 @@
+{
+  "source": "7a3ad91ffc14b965d150595191a12aa14c9637a6",
+  "proofs": "real",
+  "protocol": "h2",
+  "characters": 248,
+  "clickToUnobstructedMs": 15540.884999990463,
+  "prePrivateExecutionMs": 3668.25,
+  "privateExecutionMs": 913.1050000190735,
+  "uploadAcceptanceMs": 834.6399999856949,
+  "screeningMs": 1290.5499999523163,
+  "contractSyncMs": 901.1499999761581,
+  "goalMet": false,
+  "finding": "Advancing anchor causes owner-only recipient discovery to replay active-window logs during Board screening and later fee-contract synchronization. Investigating incremental canonical progress and single-flow contract synchronization. No fee or proof correctness bypass."
+}

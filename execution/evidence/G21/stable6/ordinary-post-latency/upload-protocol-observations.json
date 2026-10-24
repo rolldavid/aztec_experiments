@@ -1,0 +1,127 @@
+{
+  "purpose": "Public numeric upload measurements; no witness contents, account identifiers, configuration, or signed URLs.",
+  "change": {
+    "field": "HttpVersion",
+    "before": "http2",
+    "after": "http2and3",
+    "otherFieldsChanged": 0
+  },
+  "observations": [
+    {
+      "phase": "before",
+      "protocol": "h2",
+      "kind": "real proof",
+      "bytes": 159116,
+      "browserAcceptanceMs": 1273.62,
+      "originBodyMs": 952.003,
+      "originValidateMs": 0.384,
+      "originQueueMs": 1.189
+    },
+    {
+      "phase": "before",
+      "protocol": "h2",
+      "kind": "real proof repeat",
+      "bytes": 153947,
+      "browserAcceptanceMs": 1176.55,
+      "originBodyMs": 857.336,
+      "originValidateMs": 0.2,
+      "originQueueMs": 0.534
+    },
+    {
+      "phase": "before",
+      "protocol": "h2",
+      "kind": "invalid zero-header body",
+      "bytes": 32768,
+      "durationMs": 1045.05,
+      "status": 400,
+      "orderInGroup": 1
+    },
+    {
+      "phase": "before",
+      "protocol": "h2",
+      "kind": "invalid zero-header body",
+      "bytes": 65536,
+      "durationMs": 523.78,
+      "status": 400,
+      "orderInGroup": 2
+    },
+    {
+      "phase": "before",
+      "protocol": "h2",
+      "kind": "invalid zero-header body",
+      "bytes": 163840,
+      "durationMs": 629.38,
+      "status": 400,
+      "orderInGroup": 3
+    },
+    {
+      "phase": "before",
+      "protocol": "h2",
+      "kind": "invalid incompressible zero-header body",
+      "bytes": 163840,
+      "durationMs": 901.59,
+      "status": 400,
+      "orderInGroup": 1
+    },
+    {
+      "phase": "before",
+      "protocol": "h2",
+      "kind": "invalid incompressible zero-header body",
+      "bytes": 163840,
+      "durationMs": 608.175,
+      "status": 400,
+      "orderInGroup": 2
+    },
+    {
+      "phase": "after",
+      "protocol": "h3",
+      "kind": "invalid incompressible zero-header body",
+      "bytes": 163840,
+      "durationMs": 767.225,
+      "status": 400,
+      "orderInGroup": 1,
+      "protocolEvidence": "Actual browser Network.responseReceived; health response also h3"
+    },
+    {
+      "protocol": "h3",
+      "kind": "bounded invalid160KiB, numeric server timing",
+      "bytes": 163840,
+      "browserAcceptanceMs": 1410.375,
+      "originBodyMs": 1051.633,
+      "originLoopActiveMs": 5.804,
+      "originLoopIdleMs": 1045.507
+    },
+    {
+      "protocol": "h3",
+      "kind": "bounded invalid160KiB after disabling artificial browser network throttling",
+      "bytes": 163840,
+      "browserAcceptanceMs": 2123.355,
+      "originBodyMs": 1697.498,
+      "originLoopActiveMs": 6.035,
+      "originLoopIdleMs": 1691.417
+    }
+  ],
+  "interpretation": [
+    "HTTP/3 is actually negotiated; browser user-agent inference is unnecessary.",
+    "The first HTTP/3 bounded upload completed below one second. No proof job or blockchain transaction was created by invalid probes.",
+    "The HTTP/2 invalid-body measurements vary substantially by request order. These probes do not establish a controlled causal speedup or isolate the responsible network hop.",
+    "CloudFront HTTP/3 changes viewer transport; it does not change the origin transport.",
+    "A real proof acceptance measurement after publication remains necessary; no claim that its sub-one-second target has been met."
+  ],
+  "sources": {
+    "beforeReal": "/private/tmp/owner-post-2aac-trace.json",
+    "beforeRepeat": "/private/tmp/owner-post-2aac-repeat-trace.json",
+    "probeResults": "Parent agent actual-browser measurements supplied in task messages",
+    "configDiff": "Verified exact one-field plan; full private config intentionally excluded"
+  },
+  "unusedDiagnostic": {
+    "deployed": false,
+    "patch": "/private/tmp/proof-upload-arrival.patch",
+    "patchSha256": "8ff24b3bf9ed9608bde6cae775543e89c0eb45c2836f49e4d4713a3644916e34",
+    "testsPassed": 26,
+    "testLog": "/private/tmp/proof-upload-diagnostic-tests.log",
+    "sourceDraftRestored": true
+  },
+  "finalProtocol": "http2",
+  "disposition": "Returned to original HTTP2 after HTTP3 did not improve real upload acceptance and bounded probes slowed. No security/origin/cache changes."
+}

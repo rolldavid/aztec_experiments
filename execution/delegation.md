@@ -1,31 +1,13 @@
-# Current delivery checkpoint — owner-only discovery
+# Current posting performance work — 25 October 2026
 
-Measured performance baseline14e43947: short post33.171s and maximum992-byte
-Unicode post18.075s from click to Aztec-included visible DOM. Latest goal15s is
-not met. Upload/acceptance609/656ms meets its target; preparation2125/1984ms and
-private witness2589/2588ms still exceed theirs. No checkpoint gate before display.
+Target: click to unobstructed actual Aztec-included post under15seconds, complete pre-proof preparation and upload acceptance each under1second, private execution at most1.25seconds. Published ef77925c: real13.717s and28.189s. First preparation1178ms misses; repeat preparation829ms passes but network/inclusion wait19.442s misses total. Preserve both observations.
 
-Root integrated independently reviewed host encryption/oracle commits as
-f807827e and f57b1922. Actual compiled Noir/WASM plus affected wallet/operator
-checks pass134/134; CLI wrapper checks pass4/4. Browser host changes and journal read optimization are now deployed as a8ae686d;
-these checks are not evidence of complete owner-only contract integration or a speedup.
+- proposed_feed_design: background exact-deposit native screening hints to remove first-run233ms nullifier read; Post retains fresh native utility checks.
+- pending_reply_ui: prefetch native kernel class hints using existing exact-anchor cache, independently reviewed native tests.
+- pending_feed_release: investigate repeat transaction inclusion delay from node/public block evidence; completed2.967GB server cleanup and health verification.
+- Root: integration, sole retained build, static publication, actual browser posting and numeric non-overlapping evidence, transfer cleanup.
 
-- pending_reply_ui: zero-additional-note owner discovery and board/FPC integration;
-  fresh-browser restoration and native partial-refund validation.
-- pending_feed_release: independent discovery/integration review, including native
-  validation and unchanged application note count.
-- proposed_feed_design: repeated transaction decode/hash/serialization within
-  ordinary preparation; preserve fresh storage/context checks.
-- Root: integration, builds, publication and real end-to-end acceptance.
-
-Owner-only discovery uses unconstrained AES and durable same-wallet restoration.
-No shared sender-index discovery or ECDH self-delivery is intended for these owned
-records. Current Ethereum-signature root quantum exposure remains separately
-reported; AES alone does not repair that root. No old-state migration. The counter-note journal is rejected by the owner;
-no additional notes may be introduced for discovery.
-
-Only root publishes/restarts services. Shared expensive checks are serialized.
-Use the existing in-app browser; do not launch unrestricted Chrome test sessions.
+One retained dependency/build tree. Existing IAB tab only; no new Chrome profiles. No migrations or extra private notes. All services running. Do not claim all targets complete based on the fastest run.
 
 ## Historical delegation records
 

@@ -1,0 +1,15 @@
+{
+  "productionArtifactsUnchanged": true,
+  "before": {
+    "rolling_contract-RollingBoard.json": "d29a4ae05dae83222a5f3d37af0917c834b5068945f8e1ec2e87345de4fafe8b",
+    "private_fee_contract-PrivateFPC.json": "bc1e0ced6cc8c49f2cde538265ada54e46c270a280f6d14703ee5e0d951577b1",
+    "owner_delivery_test-OwnerPostingAccount.json": "d003123642eb5fb240a372870dfb2024e4fb7c5db290e7d2087b0887087d978a"
+  },
+  "after": {
+    "rolling_contract-RollingBoard.json": "d29a4ae05dae83222a5f3d37af0917c834b5068945f8e1ec2e87345de4fafe8b",
+    "private_fee_contract-PrivateFPC.json": "bc1e0ced6cc8c49f2cde538265ada54e46c270a280f6d14703ee5e0d951577b1",
+    "owner_delivery_test-OwnerPostingAccount.json": "0d45a7c8a6a5ff16eb85babc344257d7174b5d6f21066f4984e530eadddaa1ba"
+  },
+  "onlyProcessedArtifact": "owner_delivery_test-OwnerPostingAccount.json",
+  "testLog": "/private/tmp/owner-progress-production-final-test.log"
+}

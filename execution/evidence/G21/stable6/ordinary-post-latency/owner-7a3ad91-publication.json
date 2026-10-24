@@ -1,0 +1,54 @@
+{
+  "uiActivation": {
+    "commit": "7a3ad91ffc14b965d150595191a12aa14c9637a6",
+    "appPid": 791316,
+    "runningSource": "/opt/rolling-app/releases/6cb76060aba07b2eae31284d0e949517dd240d48",
+    "nextSource": "/opt/rolling-app/releases/ui-7a3ad91ffc14",
+    "ui": "/opt/rolling-ui/releases/7a3ad91ffc14b965d150595191a12aa14c9637a6",
+    "previousUi": "/opt/rolling-ui/releases/4a563c79347a4330e7510fc27a8bf6f1ce1f7044",
+    "protectedPids": {
+      "rolling-application.service": 791316,
+      "rolling-application-proxy.service": 787665,
+      "rolling-node.service": 561964,
+      "rolling-query.service": 565186,
+      "rolling-moderator.service": 786909
+    },
+    "caddySha256": "d1bf263bf2245f9350c78a3dd738eaedd375f859e062c5d2e879e28f877e016e",
+    "notifySha256": "aa8f21c2b5ff13c58983a4b1cbf6482cfb303db74566198102f8b051d46a53ae"
+  },
+  "proverActivation": {
+    "activated": true,
+    "configSha256": "65928f53b3dcf8c06316592785f6c721bfec1f241b0f2a52633c2ce27a6b6cd2",
+    "files": {
+      "prover/server.mjs": "48f36670c09726866af8b8a6408dbcad61d555106b37ca27e2fc95c045f49dfd"
+    },
+    "health": {
+      "proofs": "real",
+      "query": {
+        "enabled": true,
+        "ready": true
+      },
+      "queue": {
+        "bytes": 0,
+        "completed": 0,
+        "failed": 0,
+        "jobs": 0,
+        "running": false,
+        "submitted": 0
+      },
+      "ready": true
+    },
+    "pid": "795464",
+    "source": "/opt/board-prover/releases/upload-f4cd0f662e3e5253af47a5ff67eb907e72626dda",
+    "sourceCommit": "f4cd0f662e3e5253af47a5ff67eb907e72626dda"
+  },
+  "services": {
+    "rolling-application": "MainPID=791316\nActiveState=active",
+    "rolling-application-proxy": "MainPID=787665\nActiveState=active",
+    "rolling-node": "MainPID=561964\nActiveState=active",
+    "rolling-query": "MainPID=565186\nActiveState=active",
+    "rolling-moderator": "MainPID=786909\nActiveState=active",
+    "board-prover": "MainPID=795464\nActiveState=active",
+    "board-prover-proxy": "MainPID=630307\nActiveState=active"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "removedRemoteObjects": [
+    {
+      "key": "owner-performance/ui-d30e3d6a9a3a7c858c209289bba3a99bae781ce7.tgz",
+      "bytes": 32442878
+    },
+    {
+      "key": "owner-performance/ui-28236bd036edebf413b01d6aaa68bc6968398820.tgz",
+      "bytes": 32489820
+    },
+    {
+      "key": "owner-performance/ui-524303f8b7ce8bffad7b4ead88775c8fd4cdb40c.tgz",
+      "bytes": 32491915
+    },
+    {
+      "key": "owner-performance/ui-ef77925c197de7f6946a75ccc9dbb30e3832c71a-delta.tgz",
+      "bytes": 114855
+    }
+  ],
+  "localPayloadBytesRemoved": 455053569,
+  "metadataAndRetainedBuildPreserved": true
+}

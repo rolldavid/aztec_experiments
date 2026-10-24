@@ -1,0 +1,29 @@
+{
+  "source": "7a3ad91ffc14b965d150595191a12aa14c9637a6",
+  "changes": [
+    "Close composer for exact signed transaction only after its included row is rendered in current attached feed",
+    "Overlap independent current-header and selected-anchor canonical validations; drain both before writes"
+  ],
+  "independentReview": "proposed_feed_design and pending_reply_ui reciprocal reviews",
+  "tests": {
+    "composerAndSession": {
+      "passed": 294,
+      "failed": 0
+    },
+    "nativeAnchor": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "integratedAffectedBoundaries": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "builds": {
+    "sdk": "passed",
+    "wallet": "passed"
+  },
+  "liveAcceptance": "pending"
+}

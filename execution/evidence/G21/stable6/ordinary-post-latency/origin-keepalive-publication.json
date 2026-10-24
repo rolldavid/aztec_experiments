@@ -1,0 +1,9 @@
+{
+  "field": "Origins[board-prover].VpcOriginConfig.OriginKeepaliveTimeout",
+  "before": 5,
+  "after": 60,
+  "etag": "ENXOG3V8VSYAM",
+  "status": "InProgress",
+  "otherFieldsChanged": 0,
+  "hypothesis": "Retain the existing origin connection across ordinary composer typing to avoid repeated connection setup; not a transaction completion timeout."
+}

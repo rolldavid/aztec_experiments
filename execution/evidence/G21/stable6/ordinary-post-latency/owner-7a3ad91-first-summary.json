@@ -1,0 +1,21 @@
+{
+  "source": "7a3ad91ffc14b965d150595191a12aa14c9637a6",
+  "proofs": "real",
+  "protocol": "h2",
+  "characters": 116,
+  "clickToUnobstructedMs": 12189.044999957085,
+  "prePrivateExecutionMs": 1104.8500000238419,
+  "privateExecutionMs": 709.875,
+  "uploadAcceptanceMs": 821.0149999856949,
+  "partitionMs": {
+    "Click to private execution": 1104.8500000238419,
+    "Private execution": 709.875,
+    "Kernel, validation and request construction": 1519.4049999713898,
+    "Upload and server acceptance": 821.0149999856949,
+    "Remote proof, result handling and signed journal": 3689.9199999570847,
+    "Submit to Aztec": 500.5400000810623,
+    "Aztec inclusion and unobstructed display": 3843.439999938011
+  },
+  "scope": "First real post onpublished7a3; clicktoactualAztecincludedpostatvisibleunobstructedanimationframe. No checkpoint wait before display. Completepreparation stillabove1second.",
+  "automaticCheckpointPromotionObserved": true
+}

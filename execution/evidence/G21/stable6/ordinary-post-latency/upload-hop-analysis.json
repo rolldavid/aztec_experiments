@@ -1,0 +1,45 @@
+{
+  "expectedBodyBytes": 163840,
+  "originIn": {
+    "bytes": 164701,
+    "packets": 122,
+    "duplicateSequencePackets": 0,
+    "firstOffsetMs": 14016.898,
+    "lastOffsetMs": 15748.114
+  },
+  "nodeIn": {
+    "bytes": 164789,
+    "packets": 115,
+    "duplicateSequencePackets": 0,
+    "firstOffsetMs": 14017.42,
+    "lastOffsetMs": 15748.156
+  },
+  "thresholdAlignmentAssumption": "Each isolated selected flow contains one POST: subtract exact observed total minus known163840 body bytes as leading HTTP overhead. No header contents captured or inspected.",
+  "thresholds": [
+    {
+      "bytes": 32768,
+      "originOffsetMs": 15021.78,
+      "nodeOffsetMs": 15021.847,
+      "nodeMinusOriginMs": 0.067
+    },
+    {
+      "bytes": 65536,
+      "originOffsetMs": 15370.664,
+      "nodeOffsetMs": 15370.704,
+      "nodeMinusOriginMs": 0.04
+    },
+    {
+      "bytes": 131072,
+      "originOffsetMs": 15654.29,
+      "nodeOffsetMs": 15654.332,
+      "nodeMinusOriginMs": 0.042
+    },
+    {
+      "bytes": 163840,
+      "originOffsetMs": 15748.114,
+      "nodeOffsetMs": 15748.156,
+      "nodeMinusOriginMs": 0.042
+    }
+  ],
+  "interpretation": "The1.731s body arrival span is already present at external origin ingress. Caddy forwards corresponding milestones within0.040\u20130.067ms. No duplicate sequence packets in these two flows. The limiting hop is upstream of host ingress, not Node/Caddy buffering or CPU."
+}

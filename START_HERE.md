@@ -6,13 +6,15 @@ Current handover: 25 October 2026. Current owner scope takes precedence over his
 
 Ordinary post click → visible after actual Aztec inclusion must be ≤15 seconds. Fee preparation, complete pre-proof application preparation and browser-to-prover acceptance must each be <1 second; private witness construction ≤1.25 seconds.
 
-**Published source `2aac56a1` measured 13.507 seconds and 13.836 seconds** in two consecutive real-proof browser posts (92 and252 characters). The composer closed at inclusion, posts showed “Confirmation pending”, and checkpoint confirmation updated automatically. One private execution took650ms and601ms. Fee arithmetic took under1ms. No simulated proof, artificial inclusion or favorable-slot selection was used.
+**UI source `ef77925c` is published. The goal remains active.** Real posts appeared unobstructed after actual Aztec inclusion in **13.717s** (139 characters) and **28.189s** (258 characters). Private execution790/835ms and upload acceptance890/826ms pass. Complete click-to-private-execution preparation was1178/829ms. The first misses preparation; the repeat misses end-to-end because inclusion/display after node acknowledgement took19.442s. Do not claim completion or discard the slow run.
 
-The complete goal remains active: first-run pre-proof preparation1.684s and upload acceptance1.274s still exceed their subsecond targets. The repeated run had1.199s preparation and1.177s upload. Exact numeric traces and deployment receipts are in [ordinary-post evidence](execution/evidence/G21/stable6/ordinary-post-latency/). SDK child/aggregate spans overlap; never sum them as separate sequential work.
+Deployed: bounded exact processed-log identities in native reorg-aware storage, one shared native preparation pass, removal of redundant fee-contract registration and selected-anchor read, composer background native state preparation. Production native test preserves note counts, refund validation and empty-store restoration. Current follow-ups: warm native screening hints at the same anchor and prefetch native kernel registry witnesses; investigate actual node/network inclusion delay. No migrations, new private notes, skipped validation or fabricated confirmation.
 
-The published fixes preload two native kernel artifacts, reuse exact-operation authenticated journal metadata, remove duplicate UI policy reads, overlap predecessor/policy reads, prefetch the immutable Board configuration witness and return a completed proof before worker teardown. Worker capacity remains reserved until cleanup; native proof verification and canonical transaction checks remain.
+Instrumentation requires actual included feed text visible at an animation frame with the composer closed and no obstruction. Previous2aac timings13.507s/13.836s and4a14.780s were DOM-insertion lower bounds, not complete click-to-visible results. The current exact-transaction feed callback closes the matching composer immediately while canonical confirmation and account locking continue independently. Both7a posts promoted to checkpointed automatically.
 
-Next: finish measured preparation/upload reductions and the discovered uncached8MiBCRS download. Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build` and the existing IAB test tab. No new dependency copies or Chrome profiles. Use source-only agent drafts; clean owned scratch and transfer archives after integration.
+CRS cache now verified:8MiBasset returned from cache in11.66ms with zero network bytes. HTTP3 experiment was slower and reverted to HTTP2. Real HTTP2 uploads now satisfy the1s target. CloudFront prover origin keepalive is60s; this is connection reuse, not a transaction/read timeout, and has no isolated measured speedup claim.
+
+Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build` and the existing IAB test tab. No new dependency copies or Chrome profiles. Source-only agent drafts; clean owned scratch and transfer archives after integration. Completed transfer payloads and exact S3 versions are deleted; retain small hash plans for incremental publication.
 
 ## Current deployment
 
@@ -23,11 +25,11 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/2aac56a180423d89fada24cf575ac41072df2cff` |
-| Browser SDK SHA256 | `6ee6787e6c1c1f00dc77573bfadeadd08752e4e8f26946f77b5d19460f942854` |
-| Running app | `/opt/rolling-app/releases/6cb76060aba07b2eae31284d0e949517dd240d48` |
-| Next-start app | `/opt/rolling-app/releases/ui-2aac56a18042` |
-| Prover | `/opt/board-prover/releases/result-2aac56a180423d89fada24cf575ac41072df2cff` |
+| Browser UI | `/opt/rolling-ui/releases/ef77925c197de7f6946a75ccc9dbb30e3832c71a` |
+| Browser SDK SHA256 | `0b7c99a42b5be9a54508ad77ba2665bc20600ecf8827d80c6415011e78099e40` |
+| Running app | `/opt/rolling-app/releases/ui-7a3ad91ffc14` |
+| Next-start app | `/opt/rolling-app/releases/ui-ef77925c197d` |
+| Prover | `/opt/board-prover/releases/upload-f4cd0f662e3e5253af47a5ff67eb907e72626dda` |
 | Bok | `/opt/rolling-bok/releases/6cb76060aba07b2eae31284d0e949517dd240d48` |
 
 | Contract | Current address |
@@ -52,7 +54,7 @@ Accounts derive from the Ethereum wallet signature, with no password/backup impo
 
 Read workspace `INFRASTRUCTURE_ACCESS.md` before credentials or service work. Existing AWS profile `message-board-deploy`; management through SSM. Core `i-0a9b5b9ba55815cda`, m7a.4xlarge; Bok `i-0a7d9957f2b3d7f19`, m8a.xlarge. Main CloudFront `E3BMCK3MOVYK1K`; artifact CloudFront `E1M12FHGQ0S5ST` (`dy2q03rao3se7.cloudfront.net`).
 
-All nine services were verified active after publication. Both application and Bok artifact proxies retain egress/security dependencies but no longer stop when their upstream worker stops. The Bok fix required daemon reload only; worker/proxy PIDs45774/45776 stayed unchanged. Core app/proxy PIDs791316/787665, prover791632. Query actual current state before intervention.
+All nine services are verified active. The40GiB core root filled with accumulated release/upload copies; the separate1TiB chain volume was unaffected. Root was cleaned offline using the existing Bok host, restored to core /dev/sda1, and all seven core services restarted. A further2.967GB of authenticated obsolete public artifacts was removed, leaving over4GB free. No new infrastructure/security changes. Publisher now checks operating reserve and removes successful upload payloads automatically. Active runtimes/configs/credentials remain. Pruned historical releases are explicitly unusable; never choose one as a rollback source. See server-root-recovery.json and server-public-artifact-prune.json. Query actual current PIDs before intervention.
 
 Health endpoints: app `/api/status` on4318; prover `/healthz` on8081; Bok `/health` on8807 returns `status: ready`. Public `/wallet/runtime.json` and `/prover/healthz` are suitable read-only checks. Do not assume every service uses a boolean `ready` or `/health`.
 

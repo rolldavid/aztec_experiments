@@ -1,0 +1,25 @@
+{
+  "changes": [
+    "Prepare known account, Board and fee contracts once in one native operation",
+    "Skip only exact previously processed owner ciphertext using native staged/reorg-aware bounded facts",
+    "Remove duplicate pre-commit selected-anchor RPC phase",
+    "Recognize actual native immutable contract preimages instead of re-registering each post"
+  ],
+  "tests": {
+    "integratedNativeAndSynchronization": 68,
+    "integratedOwnerAndFeeRegistration": 58,
+    "fullWalletSession": 226,
+    "actualNativeOwnerProduction": 1
+  },
+  "independentReview": "All four changes reviewed by pending_feed_release",
+  "productionFixture": "actual_named_post_preserves_note_count_and_restores_every_self_record",
+  "constraints": [
+    "no extra notes",
+    "late same-index arrivals retained",
+    "older records newly exposed by finality retained",
+    "native partial-refund processing retained",
+    "empty-store restore retained",
+    "native rollback and current contract class checks retained"
+  ],
+  "liveAcceptance": "pending"
+}

@@ -1,0 +1,90 @@
+{
+  "removed": [
+    {
+      "path": "/private/tmp/rolling-proof-early-result",
+      "regularBytes": 208916,
+      "symlinksUnlinkedWithoutFollowing": 471,
+      "integratedSourceVerifiedAgainst": "f4cd0f662e3e5253af47a5ff67eb907e72626dda"
+    },
+    {
+      "path": "/private/tmp/proof-hop-observer-state.sh",
+      "regularBytes": 473
+    },
+    {
+      "path": "/private/tmp/proof-hop-observer-stop.sh",
+      "regularBytes": 404
+    },
+    {
+      "path": "/private/tmp/proof-hop-ports.sh",
+      "regularBytes": 229
+    },
+    {
+      "path": "/private/tmp/proof-hop-tools.sh",
+      "regularBytes": 273
+    },
+    {
+      "path": "/private/tmp/proof-hop-capture.sh",
+      "regularBytes": 1695
+    },
+    {
+      "path": "/private/tmp/proof-hop-observer-stop-systemd.sh",
+      "regularBytes": 411
+    },
+    {
+      "path": "/private/tmp/proof-hop-observer-state.sh.ssm.json",
+      "regularBytes": 544
+    },
+    {
+      "path": "/private/tmp/proof-hop-ports.sh.ssm.json",
+      "regularBytes": 294
+    },
+    {
+      "path": "/private/tmp/proof-hop-tools.sh.ssm.json",
+      "regularBytes": 339
+    },
+    {
+      "path": "/private/tmp/proof-hop-observer-stop-systemd.sh.ssm.json",
+      "regularBytes": 499
+    },
+    {
+      "path": "/private/tmp/proof-hop-observer-stop.sh.ssm.json",
+      "regularBytes": 473
+    },
+    {
+      "path": "/private/tmp/proof-hop-capture.sh.ssm.json",
+      "regularBytes": 1790
+    },
+    {
+      "path": "/private/tmp/proof-observer-gone-check.sh",
+      "regularBytes": 199
+    },
+    {
+      "path": "/private/tmp/proof-observer-gone-check.sh.ssm.json",
+      "regularBytes": 264
+    },
+    {
+      "path": "/private/tmp/owner-public-seed-probe.mjs",
+      "regularBytes": 3053
+    },
+    {
+      "path": "/private/tmp/owner-upload-codec-probe.mjs",
+      "regularBytes": 2298
+    },
+    {
+      "path": "/private/tmp/owner-upload-record-probe.mjs",
+      "regularBytes": 3819
+    }
+  ],
+  "totalRegularBytes": 225973,
+  "retained": [
+    "/private/tmp/proof-upload-arrival-final.patch",
+    "/private/tmp/proof-upload-diagnostic-final-tests.log",
+    "/private/tmp/proof-early-result.patch",
+    "/private/tmp/proof-hop-analysis.json",
+    "/private/tmp/proof-hop-capture-result.out",
+    "/private/tmp/proof-observer-cleanup-verification.out",
+    "/private/tmp/owner-upload-record-probe.json",
+    "/private/tmp/owner-public-seed-probe.json"
+  ],
+  "dependenciesDeleted": false
+}

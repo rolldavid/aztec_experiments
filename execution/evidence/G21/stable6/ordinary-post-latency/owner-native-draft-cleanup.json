@@ -1,0 +1,19 @@
+{
+  "removed": "/private/tmp/parallel-anchor-advance-draft",
+  "bytes": 41920,
+  "matchedRootFiles": [
+    "scripts/pxe-sync-snapshot.mjs",
+    "scripts/pxe-sync-snapshot.test.mjs"
+  ],
+  "retained": [
+    "/private/tmp/parallel-anchor-advance.patch",
+    "/private/tmp/parallel-anchor-advance-tests.log"
+  ],
+  "tests": {
+    "pass": 23,
+    "fail": 0,
+    "skip": 0
+  },
+  "independentReview": "approved by proposed_feed_design",
+  "acceptanceBound": "Independent canonical validations overlap only on advancing anchors; no live latency claim. Both validations drain before native anchor/cache/selected-tip writes; existing final canonical and acknowledgement checks remain."
+}

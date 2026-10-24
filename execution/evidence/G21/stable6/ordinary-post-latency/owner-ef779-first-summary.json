@@ -1,0 +1,35 @@
+{
+  "source": "ef77925c197de7f6946a75ccc9dbb30e3832c71a",
+  "proofs": "real",
+  "characters": 139,
+  "clickToUnobstructedMs": 13716.695000052452,
+  "prePrivateExecutionMs": 1178.2050000429153,
+  "privateExecutionMs": 790.2350000143051,
+  "uploadAcceptanceMs": 890.3000000715256,
+  "partitionMs": {
+    "Click to private execution": 1178.2050000429153,
+    "Private execution": 790.2350000143051,
+    "Kernel, public validation and request construction": 1717.9899998903275,
+    "Upload and acceptance": 890.3000000715256,
+    "Proof completion, verification and journal": 4120.2300000190735,
+    "Submission to Aztec": 537.6849999427795,
+    "Inclusion wait and visible display": 4482.050000071526
+  },
+  "serverStagesMs": {
+    "persist": 0.3573420000029728,
+    "queue-wait": 0.013350000022910535,
+    "result-ready": 2948.1981679999735,
+    "read": 0.5198830000008456,
+    "decompress": 95.01308800000697,
+    "binding": 121.89155499998014,
+    "backend": 54.31511899997713,
+    "native-prove": 2674.490350999986,
+    "result-encode": 0.18858099996577948,
+    "child-total": 2946.473816999991,
+    "ready-wait": 0.04329100000904873,
+    "dispatch-to-result": 2947.9359259999474,
+    "result-ready-to-snapshot": 0.08672000002115965
+  },
+  "allTargetsMet": false,
+  "automaticCheckpointPromotionObserved": true
+}
