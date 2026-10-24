@@ -1,0 +1,15 @@
+{
+  "url": "https://d30njln0kead8n.cloudfront.net/#/home",
+  "postText": "Regular post inclusion test: visible on Aztec before Ethereum confirmation.",
+  "postClickedAt": "2026-10-24T04:16:18.989Z",
+  "pendingObservedAt": "2026-10-24T04:17:07.759Z",
+  "pendingLabel": "Confirmation pending",
+  "composerClosed": true,
+  "reloadOrNavigationDuringTransaction": false,
+  "postSubmissions": 1,
+  "pendingScreenshot": "pending.png",
+  "confirmedObservedAt": "2026-10-24T04:18:26.586Z",
+  "pendingLabelRemovedAutomatically": true,
+  "confirmedScreenshot": "confirmed.png",
+  "duplicatePost": false
+}

@@ -1,0 +1,22 @@
+✔ actual wallet consumes the strict estimation once without extra simulation, then proves and submits (81.231708ms)
+✔ SDK receipt waiter accepts existing canonical checkpointed/success immediately (97.326708ms)
+✔ SDK receipt waiter accepts existing canonical checkpointed/reverted immediately (7.848375ms)
+✔ SDK receipt waiter accepts existing canonical proven/success immediately (7.169167ms)
+✔ SDK receipt waiter accepts existing canonical proven/reverted immediately (7.694917ms)
+✔ SDK receipt waiter accepts existing canonical finalized/success immediately (6.93725ms)
+✔ SDK receipt waiter accepts existing canonical finalized/reverted immediately (7.077292ms)
+✔ SDK receipt waiter returns only after actual receipt state resolves (7.400458ms)
+✔ SDK receipt waiter retains unknown foreign-receipt without sending (15.113167ms)
+✔ SDK receipt waiter retains unknown noncanonical without sending (7.113708ms)
+✔ SDK receipt waiter retains unknown rpc without sending (6.84775ms)
+✔ SDK receipt waiter retains unknown malformed-status without sending (28.023125ms)
+✔ SDK receipt waiter retains unknown malformed-execution without sending (7.544667ms)
+✔ SDK receipt waiter preserves dropped ambiguity and canonical re-inclusion (7.221542ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1112.608042

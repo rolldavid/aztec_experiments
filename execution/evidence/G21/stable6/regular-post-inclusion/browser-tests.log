@@ -1,0 +1,12 @@
+✔ Bok balance automatically updates only after conversation reply confirmation (630.969167ms)
+✔ Bok balance automatically updates only after home reply snapshot confirmation (320.056166ms)
+✔ regular post becomes visible at inclusion while checkpoint is pending (433.843125ms)
+✔ regular post becomes visible at inclusion while checkpoint later fails (326.039083ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1968.866375

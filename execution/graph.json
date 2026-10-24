@@ -9842,10 +9842,10 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "request": "Render Aztec-included posts and Bok replies immediately with Confirmation pending; automatically update at checkpoint and remove orphaned replies. Keep money accounting checkpointed.",
-    "status": "active",
-    "execution_lane": "Completed proposed reply display and coupled balance refresh; reviewed source deployed.",
-    "checkpoint": "Core9f34170a, worker52ef5da0, UI8f16fcd3 deployed. Actual reply20747629 appeared pending at03:47:39.910 and confirmed automatically03:48:15.130 (35.220s earlier feed availability), browser observed both without refresh/duplicate. Same accepted request finished with exactly2modelcalls, generated app verified, charge10962/refund239038. Publication20/mirror64capacity defect and early-balance-refresh defect fixed with focused independent-reviewed tests.",
-    "next_action": "This display request is complete: included replies show pending and promote automatically, balance follows confirmation, source is deployed and final public hashes match. Await new owner feedback; do not repeat a paid benchmark for better slot timing. Prior30secondcanonicalcheckpoint performance target remains separately network-limited."
+    "request": "Show ordinary non-Bok posts at Aztec inclusion rather than waiting for Ethereum checkpoint.",
+    "status": "completed",
+    "execution_lane": "Receipt inclusion callback and wallet routing; sender composer UI; root integration, real non-Bok post acceptance and static publication.",
+    "checkpoint": "UI/SDK f12bdc3e published without service/config changes. Real ordinary post appeared pending with composer closed, 73.743s before checkpoint, and confirmed automatically without reload or duplicate. Focused checks and independent reviews passed.",
+    "next_action": "No unfinished work in this display request. Await owner feedback; do not restart historical campaigns."
   }
 }

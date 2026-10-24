@@ -1,0 +1,21 @@
+✔ included transaction progress exposes only exact public identity and workflow intent (1.927291ms)
+✔ wallet progress binding forwards included intent without extra private work and ignores rejected display callbacks (611.639459ms)
+✔ wallet inclusion progress preserves exact workflow and waits before confirming journal or resolving (103.752541ms)
+✔ inclusion notification reuses receipt reads, deduplicates blocks and leaves canonical completion pending (103.241125ms)
+✔ inclusion notification excludes pending (16.976709ms)
+✔ inclusion notification excludes reverted (7.071416ms)
+✔ inclusion notification excludes wrong-hash (14.152583ms)
+✔ inclusion notification excludes missing-block (7.704791ms)
+✔ inclusion notification excludes invalid-block (7.360459ms)
+✔ inclusion notification excludes invalid-block-hash (8.133959ms)
+✔ included display callback throw cannot change canonical completion (7.178958ms)
+✔ included display callback reject cannot change canonical completion (6.366583ms)
+✔ included display callback never-settle cannot change canonical completion (6.728875ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2027.811834

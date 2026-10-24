@@ -5,6 +5,36 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
+## Ordinary post display — 24 October
+
+The same proposed feed already includes ordinary posts. The remaining sender-side
+checkpoint wait was in the composer: it obscured that feed until the wallet's
+canonical completion. UI/SDK release `f12bdc3e` closes the composer on successful
+Aztec inclusion using a notification from the existing receipt waiter. No second
+polling loop, additional network request, simulation, proof or transaction is added.
+The notification is matched to the current account and prepared intent; wallet
+completion, accounting and the account operation lock still wait for checkpoint.
+Later failures remain visible. Reopening the composer is not undone by the earlier
+post's completion.
+
+Focused checks: 62 composer, 4 real Chromium, 13 receipt/progress and 14 existing
+receipt/engine regression tests passed, with no failures or skips. Independent
+reviews approved the callback and UI changes. The static-only publication preserved
+all service processes and configurations; contracts and worker were unchanged.
+
+A real ordinary post was submitted once at04:16:18.989UTC. It entered the public
+feed pending at04:17:00.971, **41.982s after the click**. The browser showed it
+with the composer closed at04:17:07.759. Checkpoint promotion arrived at04:18:14.713,
+**73.743s after its first availability**. The same open browser removed the badge
+and enabled Reply/Like automatically, observed at04:18:26.586. No refresh,
+navigation or second submission occurred. Transaction
+`0x08d71a4106ae58a797466e9f84a4936c9f02c0641993baa543cebf668d037c46`, Aztec block2104.
+This measures ordinary-post display, not a new comparable Bok latency benchmark.
+
+[Live transition evidence](../execution/evidence/G21/stable6/regular-post-inclusion/live-transitions.json),
+[browser observations](../execution/evidence/G21/stable6/regular-post-inclusion/browser-observation.json),
+[publication and unchanged services](../execution/evidence/G21/stable6/regular-post-inclusion/publication.json).
+
 ## Proposed reply display — 24 October
 
 The public feed previously waited for Ethereum checkpointing before displaying

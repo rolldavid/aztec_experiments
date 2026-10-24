@@ -1,3 +1,23 @@
+# Current ordinary post inclusion — 24 October 2026
+
+Completed and published: static UI/SDK f12bdc3e. Real ordinary post appeared
+pending with composer closed, 73.743s before checkpoint. The same browser
+automatically removed its pending badge without refresh or duplicate. All assigned
+agent work is complete; the read-only observer exited after confirmation.
+
+- proposed_feed_design: existing receipt waiter emits observational inclusion;
+  engine and wallet session forward exact intent/hash correlation. No second wait.
+- pending_reply_ui: composer closes on matching successful inclusion; retains
+  canonical completion/account lock and visible later failure. Independent callback review.
+- pending_feed_release: pinned SDK/browser rebuild and static-only deployment packet.
+- Root: integration, real non-Bok post/browser acceptance, publication and push.
+
+Existing proposed feed already applies to regular posts. This fixes the sender's
+modal obscuring the feed until checkpoint. No contract or server changes required.
+Old test data is disposable. Keep all services running.
+
+## Previous request (completed)
+
 # Current proposed reply display — 24 October 2026
 
 Completed source: core9f34170a, worker52ef5da0 and UI8f16fcd3 deployed.

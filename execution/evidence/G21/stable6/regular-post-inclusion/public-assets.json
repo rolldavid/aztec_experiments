@@ -1,0 +1,22 @@
+{
+  "wallet-panel.mjs": {
+    "sha256": "77c381565ae82104ecf4e3766a2b8fee58437967bf15457ce9e5f9a1e5a07fe3",
+    "matches": true
+  },
+  "wallet/runtime.json": {
+    "sha256": "d0436e10bc07a543abbb0b70166a17eaeb298ead770932705690d97960d29e80",
+    "matches": true
+  },
+  "wallet/runtime.mjs": {
+    "sha256": "2e6b5e8497d7ccdcfbf9188dfa3103b331ea7d3d3e4e85d23b5f71562d56fad2",
+    "matches": true
+  },
+  "wallet/engine.js": {
+    "sha256": "4eb233cd78600f49ff92d2cb247216b3d704a6bfbf794a0f6d264d4c9712be41",
+    "matches": true
+  },
+  "wallet/aztec_bundle.js": {
+    "sha256": "8d1b6b4c4107de4effc381abda7d38138c40c2f24466ac7a2d0924544f51cd7f",
+    "matches": true
+  }
+}
