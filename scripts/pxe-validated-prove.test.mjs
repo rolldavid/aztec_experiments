@@ -124,19 +124,23 @@ const {allToCompletion}=await import('@aztec-labs/foundation/promise');
 const {ContractSyncService}=await import('../node_modules/@aztec-labs/pxe/dest/contract/contract_sync_service.js');
 const {ContractClassService}=await import('../node_modules/@aztec-labs/pxe/dest/contract/contract_class_service.js');
 const {withCache}=await import('../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js');
+const {PrivateKernelOracle}=await import('../node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_oracle.js');
+const {PublicDataWitness}=await import('@aztec-labs/stdlib/trees');
 const {BlockHash}=await import('@aztec-labs/stdlib/block');
 const {ORDINARY_POST_GAS_PROFILE:syncProfile}=await import('../shared/ordinary-post-fees.mjs');
 const {OperationQueue:PreparationOperationQueue}=await import('../node_modules/@aztec-labs/pxe/dest/operation_queue.js');
 const preparationQueues=[];test.after(async()=>{await Promise.all(preparationQueues.map(queue=>queue.stop()));});
-async function ordinarySyncFixture(){
+async function ordinarySyncFixture({written=false}={}){
  const owner=AztecAddress.fromFieldUnsafe(new Fr(100)),fee=AztecAddress.fromFieldUnsafe(new Fr(200)),board=AztecAddress.fromFieldUnsafe(new Fr(300));
  const calls=[FunctionCall.from({name:'pay_fee',to:fee,selector:FunctionSelector.fromString('0xc8772dde'),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(5)]}),FunctionCall.from({name:'post',to:board,selector:FunctionSelector.fromString(syncProfile.postSelector),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(6)]})];
  const entrypoint=new DefaultAccountEntrypoint(owner,{createAuthWit:async hash=>new AuthWitness(hash,[])});
  const request=await entrypoint.createTxExecutionRequest(new ExecutionPayload(calls,[],[],[],fee),GasSettings.empty(),{chainId:new Fr(31337),version:new Fr(1)},{txNonce:new Fr(7),cancellable:false,feePaymentMethodOptions:0});
  const classes=new Map([[owner.toString(),syncProfile.accountClassId],[fee.toString(),syncProfile.privateFeeClassId],[board.toString(),syncProfile.boardClassId]]),events=[],pending=[];
- let hold=false,failAddress=null;
- const anchorBlockHeader={toBlockParameter:async()=>({number:3,hash:BlockHash.fromString('0x'+'3'.padStart(64,'0'))})};
- const node=withCache({getContract:async(address,anchor)=>{events.push(['class',address.toString(),anchor]);return {currentContractClassId:Fr.fromString(classes.get(address.toString()))};}});
+ let hold=false,failAddress=null,holdWitness=false,failWitness=false,holdClass=false,anchorNumber=3;const witnesses=[],classGates=[];
+ const anchorBlockHeader={toBlockParameter:async()=>({number:anchorNumber,hash:BlockHash.fromString('0x'+String(anchorNumber).padStart(64,'0'))})};
+ const node=withCache({getContract:async(address,anchor)=>{events.push(['class',address.toString(),anchor]);if(holdClass)await new Promise(resolve=>classGates.push(resolve));return {currentContractClassId:Fr.fromString(classes.get(address.toString()))};},
+ getPublicDataWitness:async(anchor,slot)=>{events.push(['witness',slot.toString(),anchor]);if(holdWitness)await new Promise((resolve,reject)=>witnesses.push({resolve,reject}));if(failWitness)throw Error('witness unavailable');const value=PublicDataWitness.random();value.leafPreimage.leaf.slot=written?slot:Fr.ZERO;return value;},
+ getPublicStorageAt:async(anchor,address,slot)=>{events.push(['storage',slot.toString(),anchor]);return Fr.ZERO;}});
  const store={getContractInstance:async()=>assert.fail('All classes served by canonical fixture'),getFunctionCall:async(name,args,address)=>({name,args,to:address,selector:FunctionSelector.fromString('0x418ef5da')})};
  const classService=new ContractClassService(node,store);
  const noteStore={getNotes:async(_filter,id)=>{assert.equal(id,42);return [];}};
@@ -149,11 +153,11 @@ async function ordinarySyncFixture(){
  };
  const queue=new PreparationOperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{sync:()=>assert.fail('Preparation must use already selected native anchor')},anchorBlockStore:{getBlockHeader:async()=>anchorBlockHeader},contributors:[service],stagedWriteCoordinator:{begin:()=>{events.push(['prepare-start']);return 42;},commit:async()=>events.push(['prepare-committed']),abort:()=>events.push(['prepare-discarded'])},log:{debug(){},verbose(){},warn(){},error(){}}});queue.start();preparationQueues.push(queue);
  const text=method(pxe,'async #syncOrdinaryPostCalls(', '\n    // Public API');
- const Class=vm.runInNewContext(`(class {contractClassService=classService;contractSyncService=service;#executeUtility=utility;#getSimulatorForTx=()=>simulator;
+ const Class=vm.runInNewContext(`(class {node=node;contractStore=store;keyStore={};contractClassService=classService;contractSyncService=service;#executeUtility=utility;#getSimulatorForTx=()=>simulator;
  operationQueue=queue;${text}
  async run(){try{await this.#syncOrdinaryPostCalls(request,calls,simulator,ctx,scopes);await service.settle(ctx.changeSetId);events.push(['private-ready']);service.onOperationEnd(ctx.changeSetId,'committed');}catch(error){await service.settle(ctx.changeSetId);service.onOperationEnd(ctx.changeSetId,'discarded');events.push(['discard']);throw error;}}
- })`,{...nativeTimingBindings,...syncBindings,classService,service,utility,request,calls,simulator,ctx,scopes,events,allToCompletion,queue});
- return {prepare:(targets={owner,board,privateFee:fee})=>new Class().prepareOrdinaryPostState(targets),run:()=>new Class().run(),request,calls,events,pending,classes,hold:()=>{hold=true;},fail:address=>{failAddress=address;},owner,fee,board,service};
+ })`,{...nativeTimingBindings,...syncBindings,classService,service,utility,request,calls,simulator,ctx,scopes,events,allToCompletion,queue,node,store,PrivateKernelOracle});
+ return {prepare:(targets={owner,board,privateFee:fee})=>new Class().prepareOrdinaryPostState(targets),run:()=>new Class().run(),request,calls,events,pending,classes,hold:()=>{hold=true;},fail:address=>{failAddress=address;},owner,fee,board,service,witnesses,classGates,node,anchorBlockHeader,oracle:()=>new PrivateKernelOracle(store,classService,{},node,anchorBlockHeader),holdWitness:()=>{holdWitness=true;},holdClass:()=>{holdClass=true;},failWitness:()=>{failWitness=true;},advance:()=>{anchorNumber++;}};
 }
 test('exact native account payload pre-syncs three known contracts concurrently in one change set without learned predictions',async()=>{
  const f=await ordinarySyncFixture();f.hold();const work=f.run();
@@ -225,4 +229,34 @@ test('ordinary preparation rejects unknown classes and duplicate targets before 
  const f=await ordinarySyncFixture();assert.throws(()=>f.prepare({owner:f.owner,board:f.owner,privateFee:f.fee}),/Invalid ordinary sync targets/);
  f.classes.set(f.fee.toString(),new Fr(99).toString());await assert.rejects(f.prepare(),/Invalid ordinary sync class/);
  assert.equal(f.events.filter(e=>e[0]==='sync-start').length,0);
+});
+
+for(const written of [false,true])test(`native kernel hint preparation shares exact cached witnesses including scheduled class data, written=${written}`,async()=>{
+ const f=await ordinarySyncFixture({written});await f.prepare();
+ const before=f.events.filter(e=>['witness','storage'].includes(e[0])).length;
+ assert.equal(f.events.filter(e=>e[0]==='witness').length,3);
+ assert.equal(f.events.filter(e=>e[0]==='storage').length,written?9:0);
+ const oracle=f.oracle();const first=await Promise.all([f.owner,f.fee,f.board].map(address=>oracle.getUpdatedClassIdHints(address)));
+ assert.equal(f.events.filter(e=>['witness','storage'].includes(e[0])).length,before,'actual kernel reads add no RPCs');
+ const next=await Promise.all([f.owner,f.fee,f.board].map(address=>oracle.getUpdatedClassIdHints(address)));
+ first.forEach((value,index)=>assert.deepEqual(value.toBuffer(),next[index].toBuffer()));
+ f.advance();await Promise.all([f.owner,f.fee,f.board].map(address=>oracle.getUpdatedClassIdHints(address)));
+ assert.equal(f.events.filter(e=>['witness','storage'].includes(e[0])).length,before*2,'different native anchor never uses old witnesses');
+});
+test('native kernel witnesses start while canonical class reads remain held',async()=>{
+ const f=await ordinarySyncFixture();f.holdClass();const work=f.prepare();
+ for(let i=0;i<100&&f.events.filter(e=>e[0]==='witness').length<3;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.classGates.length,3);assert.equal(f.events.filter(e=>e[0]==='witness').length,3);
+ assert(!f.events.some(e=>e[0]==='sync-start'||e[0]==='prepare-committed'));
+ f.classGates.forEach(resolve=>resolve());await work;
+});
+for(const failure of ['witness','class'])test(`native hint prefetch ${failure} failure drains sibling work before staged discard`,async()=>{
+ const f=await ordinarySyncFixture();let finished=false;
+ if(failure==='witness'){f.failWitness();f.hold();}else{f.classes.set(f.fee.toString(),new Fr(99).toString());f.holdWitness();}
+ const work=f.prepare();void work.catch(()=>{finished=true;});
+ const waiting=failure==='witness'?f.pending:f.witnesses;
+ for(let i=0;i<100&&waiting.length<3;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(waiting.length,3);assert.equal(finished,false);assert(!f.events.some(e=>e[0]==='prepare-discarded'||e[0]==='prepare-committed'));
+ waiting.forEach(gate=>gate.resolve());await assert.rejects(work,failure==='witness'?/witness unavailable/:/Invalid ordinary sync class/);
+ assert.equal(f.events.at(-1)[0],'prepare-discarded');assert(!f.events.some(e=>e[0]==='prepare-committed'));
 });

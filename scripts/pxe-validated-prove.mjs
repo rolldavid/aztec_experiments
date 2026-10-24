@@ -125,7 +125,14 @@ export function validatedPxeProve(source){
         if(new Set(targets.map(target=>target.address.toString())).size!==3)throw new Error('Invalid ordinary sync targets');
         const scopes=[targets[0].address];
         return this.operationQueue.runSynced(async ctx=>{
-            await this.#syncOrdinaryPostTargets(targets,this.#getSimulatorForTx(),ctx,scopes);
+            // The kernel needs these same immutable registry witnesses. Start
+            // their native reads alongside class checks/discovery, then retain
+            // only the existing node cache; the real kernel checks them normally.
+            const oracle=new PrivateKernelOracle(this.contractStore,this.contractClassService,this.keyStore,this.node,ctx.anchorBlockHeader);
+            await allToCompletion([
+                this.#syncOrdinaryPostTargets(targets,this.#getSimulatorForTx(),ctx,scopes),
+                allToCompletion(targets.map(target=>oracle.getUpdatedClassIdHints(target.address))),
+            ]);
         });
     }
     // Public API\n`);
