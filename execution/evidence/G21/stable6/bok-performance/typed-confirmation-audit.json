@@ -1,0 +1,76 @@
+{
+  "transactionHash": "0x01219319bc4cc2549b8f456ec2a59c3f1452735279b818eef50b9c8fc3c1dfa8",
+  "network": {
+    "chainId": 11155111,
+    "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+    "version": 679261766,
+    "slotDurationSeconds": 72,
+    "epochDurationSlots": 32,
+    "genesisTime": 1792668252
+  },
+  "pinnedProtocolSourceHashesMatch": true,
+  "sourceHashes": {
+    "node_modules/@aztec-labs/epoch-cache/dest/epoch_cache.js": "6f3dd20b0cdac06bf7bdcda3921e479f11a72562be659ca7101eee9b0273a590",
+    "node_modules/@aztec-labs/sequencer-client/dest/sequencer/sequencer.js": "b596a4fc4fdbbefa08054a43c5318b5f66346e90675429c9d7f2ed84aab6fb10",
+    "node_modules/@aztec-labs/sequencer-client/dest/sequencer/checkpoint_proposal_job.js": "cc4d07db6c24c002a3dc2d8727746b2602adb5316f58f55cadfdc90cf6071722",
+    "node_modules/@aztec-labs/sequencer-client/dest/publisher/sequencer-publisher.js": "03400b956e2f357cd508a8d918608a27b7c2a2e1e72d88ea2da5a5a4869cd629",
+    "node_modules/@aztec-labs/aztec.js/dest/utils/node.js": "9b46834c47f13de74f3e99fd86d5b01025330d3252e8c1a3d8b471ac41246610"
+  },
+  "currentRead": {
+    "observedAt": "2026-10-24T01:30:37.061561+00:00",
+    "blockNumber": 1932,
+    "blockHash": "0x193a76ba4c792a0a0a1d446d454002578574ece22f7d130dc308f490ef13aa4f",
+    "blockMetadata": {
+      "checkpointNumber": 1794,
+      "indexWithinCheckpoint": 0
+    },
+    "globalVariables": {
+      "blockNumber": 1932,
+      "slotNumber": "0x000000000000000000000000000000000000000000000000000000000000076e",
+      "timestamp": "1792805196",
+      "chainId": "0x0000000000000000000000000000000000000000000000000000000000aa36a7",
+      "version": "0x00000000000000000000000000000000000000000000000000000000287cb646"
+    },
+    "network": {
+      "l1ChainId": 11155111,
+      "rollupVersion": 679261766,
+      "nodeVersion": "6.0.0"
+    },
+    "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba"
+  },
+  "checkpoint": {
+    "checkpointNumber": 1794,
+    "startBlock": 1932,
+    "blockCount": 1,
+    "l1": {
+      "blockNumber": "11980547",
+      "timestamp": "1792805196",
+      "blockHash": "0x2ccc29be360c3439bf41b7714371bb495867f9f922a6cbe59dde1703ccb150d2"
+    }
+  },
+  "slot": 1902,
+  "earliestCheckpointTimestamp": "2026-10-24T01:26:36+00:00",
+  "actualEthereumCheckpointTimestamp": "2026-10-24T01:26:36+00:00",
+  "sendStartedAt": "2026-10-24T01:25:27.262147+00:00",
+  "sendCompletedAt": "2026-10-24T01:25:27.597160+00:00",
+  "nativeWaitStartedAt": "2026-10-24T01:25:27.662804+00:00",
+  "nativeWaitEndedAt": "2026-10-24T01:26:38.501571+00:00",
+  "sendStartToEarliestSlotSeconds": 68.737853,
+  "sendCompleteToEarliestSlotSeconds": 68.40284,
+  "waitStartToEarliestSlotSeconds": 68.337196,
+  "L1InclusionToNativeWaitReturnSeconds": 2.501571,
+  "nativeWaitMeasuredSeconds": 70.838758,
+  "initialDelaySeconds": 0,
+  "pollSeconds": 1,
+  "timeoutSeconds": 0,
+  "waitForStatus": "checkpointed",
+  "proposedIsSettled": false,
+  "finding": "The assigned checkpoint was included in Ethereum at the first eligible slot timestamp. The application native waiter returned 2.502s later. This rules out an avoidable tens-of-seconds application delay for this operation; remaining observation overhead is bounded here by 2.502s including L1 availability, node observation, polling and response transport. No wait for proven/finalized state.",
+  "limitations": "L1 header timestamp is the consensus timestamp, not a measured wall-clock receipt time; cannot separate the 2.502s further from retained evidence. First proposed sample is late and is not actual first proposal time.",
+  "evidence": [
+    "/tmp/bok-typed-confirmation-read-result.json",
+    "/tmp/bok-typed-confirmation-checkpoint-result.json",
+    "/tmp/bok-typed-native-result.json",
+    "/tmp/bok-typed-observe03.json"
+  ]
+}

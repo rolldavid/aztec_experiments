@@ -5,6 +5,65 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
+## Verified current release — 2m35.2s, automatic reply rendering
+
+Browser23e6cde5 and worker cdab01f7 completed the identical267-character request
+from original tree a25ff3c2 in **155.233s**, **66.6% below464.264s**. Worker
+completion was155.019s. All eight application-controlled categories exceeded20%
+improvement in this sample. These are measured samples, not guaranteed timings
+for every request or isolated causal estimates for each individual patch.
+
+| Stage | Original seconds | Current seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| Browser preparation |13.944|9.556|31.5%|
+| Remaining fee estimation |15.486|0.416|97.3%|
+| Browser proof including local work and transport |37.196|24.152|35.1%|
+| Model calls |192.671 (14)|24.569 (4)|87.2%|
+| Board reads |3.482|0.493|85.9%|
+| Validation, static publication and GitHub mirror |13.068|6.744|48.4%|
+| Worker proof |6.619|3.472|47.5%|
+| Other worker processing |15.960|6.159|61.4%|
+| Final canonical checkpoint wait |56.215|70.839|26.0% slower|
+
+Combined preparation and remaining estimation is9.972s versus29.430s originally;
+the fee improvement is not merely moving work between labels. Payment prefetch
+is nested in preparation, native proof details are nested in browser proving,
+and browser/worker operations overlap. Do not add those intervals together.
+Worker partitions sum exactly112.275973s without overlap. Native proof sync is0.
+The normally funded post and final reply each execute the private transaction
+once, validate public effects and prove once. There is no extra full fee-estimation
+simulation on this path. Low-credit fee-reservation search remains a distinct
+path and is not represented by this normally funded benchmark.
+
+Bok used literal selector descriptors successfully. There were no errors or
+repairs. It called check_workspace once (2.845s), then finish_workspace reused
+the exact same-session tree/parent validation in27ms. The actual isolated gate
+ran once;176 browser checks passed. A separate manual test of the exact accepted
+app verified completed habits disappear, unchecked habits remain, state persists
+after reload, and Clear completed is disabled when nothing is checked.
+
+The full conversation was loaded before composing. After Post, neither Load more,
+page reload nor navigation was needed: the new post, settled reply and refund
+appeared automatically. Charge0.023465USDC/refund0.226535USDC;
+balance0.606593→0.583128. Accepted app source is
+`2c0dfe060bdecfe69027e382949009dedc23ee12`. Final transaction
+`0x01219319bc4cc2549b8f456ec2a59c3f1452735279b818eef50b9c8fc3c1dfa8`
+succeeded canonically in block1932.
+
+**The30-second checkpoint target remains unmet.** For this exact transaction,
+slot1902/checkpoint1794 first became eligible at01:26:36UTC and entered Ethereum
+block11980547 with that timestamp. Of the70.838758s native wait,68.337196s preceded
+that boundary; the waiter returned2.501571s afterward. The L1 header timestamp is
+consensus time, not measured arrival time: the last2.502s includes node visibility,
+one-second polling and transport. There was no initial delay or stronger finality
+wait. Removing the preceding68.337s requires a network/protocol or confirmation
+policy change, not removal of redundant application computation. Proposed
+transactions are not labelled settled.
+
+[Browser measurements](../execution/evidence/G21/stable6/bok-performance/typed-browser.json),
+[worker partitions and receipt](../execution/evidence/G21/stable6/bok-performance/typed-profile.json),
+[exact confirmation audit](../execution/evidence/G21/stable6/bok-performance/typed-confirmation-audit.json).
+
 ## Concurrent preparation and numeric anchor — verified 3m08.1s
 
 Browser0021c30a/runtime371eee5d completed the same267-character request from
@@ -51,7 +110,7 @@ validation/publication did not. The public checkpoint goal remains unmet.
 [Browser measurements](../execution/evidence/G21/stable6/bok-performance/overlap-browser.json),
 [worker partitions and receipt](../execution/evidence/G21/stable6/bok-performance/overlap-profile.json).
 
-## Subsequent preparation fix — published, no new wall-time claim
+## Preparation implementation and validation record
 
 Source371eee5d starts ordinary immediate post arguments and fee preparation
 together. Previously all screening/policy reads completed before fee metadata,

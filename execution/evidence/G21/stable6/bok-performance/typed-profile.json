@@ -1,0 +1,154 @@
+{
+  "requestId": "0x0c0873e072b333636965538daeaaf85ceb208f7fd6c57027522e495791c90631",
+  "sourceBinding": {
+    "browser": "23e6cde5432dfd5110762bd63fd2a3009bdb6775",
+    "sdk": "267fcf91 (0021c30a)",
+    "worker": "cdab01f79a34a0c2d1cfde107e76d46380a646da",
+    "hardware": "m8a,4physicalcores,4nativeproverthreads",
+    "baseline": "ec75ef10969ed58148c3a9975cbb30b7cdabf931",
+    "baselineTree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92"
+  },
+  "clickAt": "2026-10-24T01:24:04.375000+00:00",
+  "admissionAt": "2026-10-24T01:24:47.117874+00:00",
+  "finishedAt": "2026-10-24T01:26:39.393745+00:00",
+  "clickToAdmissionSeconds": 42.742874,
+  "clickToFinishedSeconds": 155.018745,
+  "workerSeconds": 112.275973,
+  "partitions": {
+    "provider.completion": 24.569466,
+    "tool.check_workspace": 2.845019,
+    "tool.finish_workspace": 0.026998,
+    "publication.static": 0.033691,
+    "publication.mirror": 3.838455,
+    "escrow.prove": 3.472077,
+    "escrow.wait": 70.838758,
+    "board.readRequest": 0.492608,
+    "otherWorkerSeconds": 6.158901
+  },
+  "partitionNote": "Exclusive selected worker durations; nested spans not summed. finish_workspace reused exact same-session tree/parent validation; only one isolated gate executed.",
+  "modelCalls": 4,
+  "summaryCalls": 0,
+  "toolMetadata": [
+    {
+      "id": 0,
+      "tools": [
+        {
+          "name": "edit_file",
+          "path": "index.html",
+          "editCount": 6,
+          "oldTextBytes": 555,
+          "newTextBytes": 1028
+        },
+        {
+          "name": "edit_browser_plan",
+          "selectorCounts": {
+            "structured": 2,
+            "rawString": 13,
+            "rawCssObject": 3
+          },
+          "appendCount": 1
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "tools": [
+        {
+          "name": "edit_file",
+          "path": "test.js",
+          "editCount": 1,
+          "oldTextBytes": 121,
+          "newTextBytes": 830
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "tools": [
+        {
+          "name": "check_workspace"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "tools": [
+        {
+          "name": "finish_workspace"
+        }
+      ]
+    }
+  ],
+  "toolErrors": [],
+  "firstPassValidation": true,
+  "validationAttempts": 1,
+  "validationToolCalls": 2,
+  "boardReads": 8,
+  "proofProfile": {
+    "totalMs": 3471.26,
+    "syncMs": 0,
+    "provingMs": 2481.902,
+    "validationMs": 355.732,
+    "unaccountedMs": 46.886,
+    "witnessMs": 586.741,
+    "functionCount": 4,
+    "wallTimeUs": "1792805127009030"
+  },
+  "canonicalFinal": {
+    "status": "succeeded",
+    "canonical": true,
+    "txHash": "0x01219319bc4cc2549b8f456ec2a59c3f1452735279b818eef50b9c8fc3c1dfa8",
+    "transactionFee": "4177053168328400000",
+    "blockNumber": 1932,
+    "blockHash": "0x193a76ba4c792a0a0a1d446d454002578574ece22f7d130dc308f490ef13aa4f"
+  },
+  "aggregateChargeMicroUSDC": "23465",
+  "reservedMicroUSDC": "250000",
+  "unusedBudgetMicroUSDC": "226535",
+  "expectedBalanceUSDC": 0.583128,
+  "acceptedRevision": "2c0dfe060bdecfe69027e382949009dedc23ee12",
+  "publicationReceipt": {
+    "producedRevision": "2c0dfe060bdecfe69027e382949009dedc23ee12",
+    "readRevision": "ec75ef10969ed58148c3a9975cbb30b7cdabf931",
+    "validation": {
+      "passed": true,
+      "testsPassed": true,
+      "buildPassed": true,
+      "testCount": 1,
+      "sourceDigest": "c098879a66cb905ef7049f50c6e68055aa4222ca9f593caf6aaf0cf69fb317b7",
+      "artifactSha256": "e1029b74fece879a886fee2205b631d8c8fc2b32198cb169eaef3271fdfffc94"
+    },
+    "browser": {
+      "passed": true,
+      "checks": 176,
+      "browserVersion": "153.0.8010.12",
+      "planSha256": "5b56ce7249751c964da79b933b67e3d1432cf9744d760b62376685698988a3e0",
+      "policyHash": "bf234b237bb7f3c9b80d4b2ff9fe5658722faa5f8b458646d79e2270b84d6b47",
+      "artifactSha256": "e1029b74fece879a886fee2205b631d8c8fc2b32198cb169eaef3271fdfffc94"
+    },
+    "publication": {
+      "status": "complete"
+    }
+  },
+  "appUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/2c0dfe060bdecfe69027e382949009dedc23ee12/files/index.html",
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "hasFailure": false
+  },
+  "sourceEvidence": [
+    "/tmp/bok-typed-observe03.json",
+    "/tmp/bok-typed-receipt01-result.json",
+    "/tmp/bok-typed-native-result.json",
+    "/tmp/bok-typed-proof-observe01-result.json"
+  ],
+  "browserInteractionCaveat": "Entire conversation loaded before composer; no Load more, route navigation or page reload during request. New post and canonical final reply automatically visible in retained conversation.",
+  "nativeObservationCaveat": "First observer sample30s after final send already proposed; checkpoint transition observed. First sample does not establish actual initial inclusion time.",
+  "clickToVisibleReplySeconds": 155.23286987304687,
+  "observedUIBalance": {
+    "before": "0.606593",
+    "reserved": "0.356593",
+    "after": "0.583128",
+    "automaticRefresh": true
+  }
+}
