@@ -1,0 +1,11 @@
+{
+  "commit": "74c2142c08b6a9cdeabefe6e46ebfa5ec4578836",
+  "localArchiveBytesRemoved": 32471628,
+  "packetFilesBytesRemoved": 81210377,
+  "exactS3VersionDeleted": true,
+  "remotePayloadCleanup": {
+    "commit": "74c2142c08b6a9cdeabefe6e46ebfa5ec4578836",
+    "filesRemoved": 8,
+    "archiveRemoved": true
+  }
+}

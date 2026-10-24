@@ -1,0 +1,26 @@
+✔ independent history witnesses start together; native anchored cache serves later reads (61.248959ms)
+✔ new anchor is fetched afresh; immature history does not fetch flags (3.047209ms)
+✔ dummy and absent hints fetch only the immutable config witness; foreign PXE route is rejected (1.500834ms)
+✔ a failed witness drains other in-flight reads before rejecting (1.340958ms)
+✔ changing the node while the anchor is pending starts no foreign reads (1.000042ms)
+✔ an immature child prevents speculative grandchild flag reads (1.558208ms)
+✔ actual native cache joins a still-running prefetch instead of issuing another witness read (1.460875ms)
+✔ actual native cache evicts failed prefetch; required private execution read can succeed (1.257834ms)
+✔ unqualified config layout is rejected before any witness RPC (0.771958ms)
+✔ exact selected-note memberships run concurrently with public witnesses and join the native in-flight cache (1.581375ms)
+✔ optional note metadata mismatch is ignored: owner (1.306833ms)
+✔ optional note metadata mismatch is ignored: board (1.286709ms)
+✔ optional note metadata mismatch is ignored: anchorHash (1.002959ms)
+✔ optional note metadata mismatch is ignored: hashes (1.00725ms)
+✔ optional note metadata mismatch is ignored: too-many (1.127667ms)
+✔ optional note metadata mismatch is ignored: count (0.928792ms)
+✔ new anchor cannot use old selected-note metadata; no new note query or stale cache reuse (1.3635ms)
+✔ public failure drains held note prefetch before releasing the operation (1.072167ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 762.129958

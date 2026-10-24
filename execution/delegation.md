@@ -1,13 +1,11 @@
-# Current posting performance work —25 October2026
+# Posting performance acceptance —25 October2026
 
-Goal remains active: actual included unobstructed post under15s. Latest63c realpost27.190s; witness1299ms combined, upload791ms; actualsubmissionack todisplay19.232s. All observations retained.
+Completed current measured request on published74c2142c: two realproof posts11.095/11.894seconds, every subtarget passed including fullprivate→kernel1243/1218ms. Both automaticallycheckpointed. Earlier slowerobservations retained; no universalnetworklatency guarantee.
 
-- pending_reply_ui: source-only draft priming exact maturity-gated witnesses during existing composer preparation; no new cache, notes or duplicate screening.
-- proposed_feed_design: investigate public transaction propagation/inclusion; bounded read-only observer recommendation.
-- pending_feed_release: verify702 prover activation, numeric timing availability and cleanup packet.
-- Root: integrate/review, one SDK build, publish, observe realpost and keep exact phase evidence.
-
-One retained build tree and existing IAB only. No Chrome or extra dependency copies. Allservices stayrunning.
+- pending_reply_ui: composer history witness preparation implemented/reviewed; owned source drafts removed.
+- pending_feed_release: server native timing instrumentation, static publication review and owned payload cleanup complete.
+- proposed_feed_design: native witness changes, network source audit and independent final timing review complete.
+- Root: integrated239sessiontests, built/publishedonce, real228/600character acceptance, pushed and cleaned transfers. One reusable build tree retained, existing IAB only; no active observer/new Chrome profile.
 
 ## Historical delegation records
 

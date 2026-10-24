@@ -1,0 +1,64 @@
+{
+  "source": "74c2142c08b6a9cdeabefe6e46ebfa5ec4578836",
+  "characters": 600,
+  "realProofs": true,
+  "totalMs": 11893.625,
+  "exclusivePartitionsMs": {
+    "preparation": 814.38,
+    "privateExecution": 520.645,
+    "kernelValidationRequestEncoding": 1188.115,
+    "uploadAcceptance": 772.725,
+    "proofCompletionVerificationJournal": 3793.64,
+    "submitToAztec": 519.73,
+    "inclusionAndDisplay": 4284.39
+  },
+  "combinedNativeWitnessMs": 1144.62,
+  "feeEstimateMs": 32.27,
+  "serverNativeCallsMs": {
+    "bb-start": 0.3603819999989355,
+    "bb-load": 408.4510040000023,
+    "bb-accumulate": 1340.6797869999864,
+    "bb-prove": 909.5850280000013,
+    "bb-verify": 40.3153869999951,
+    "bb-compress": 1.93841099999554
+  },
+  "submissionAcknowledgedUtcMs": 1792879153562.805,
+  "capture": {
+    "timeOrigin": 1792878961625.575,
+    "events": [
+      {
+        "type": "click",
+        "at": 184327.99500000477,
+        "visibility": "visible"
+      },
+      {
+        "type": "included-dom",
+        "at": 196210.49000000954,
+        "status": "pending",
+        "id": "post-7919961724052798494857559877063292089652298568089797854698374682972252968743",
+        "composerOpen": false
+      },
+      {
+        "type": "unobstructed-frame",
+        "at": 196221.62000000477,
+        "status": "pending",
+        "id": "post-7919961724052798494857559877063292089652298568089797854698374682972252968743",
+        "visibility": "visible"
+      },
+      {
+        "type": "checkpointed-dom",
+        "at": 252259.685000062
+      }
+    ]
+  },
+  "limitations": [
+    "Observed current-release case, not an upper bound on external network inclusion.",
+    "Native BB call aggregates are nested and may overlap; never add them to exclusive browser partitions.",
+    "Earlier slower results remain in evidence."
+  ],
+  "fullPrivateThroughKernelWallMs": 1218.395,
+  "feeReadyFromClickMs": 754.655,
+  "encodeThroughUploadAcceptanceMs": 810.475,
+  "checkpointAutomatic": true,
+  "targetsPassed": true
+}

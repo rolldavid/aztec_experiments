@@ -2,15 +2,13 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
-## Active performance work
+## Posting performance acceptance — 25 October
 
-Ordinary post click → visible after actual Aztec inclusion must be ≤15 seconds. Fee preparation, complete pre-proof application preparation and browser-to-prover acceptance must each be <1 second; private witness construction ≤1.25 seconds.
+**UI source `74c2142c` is published and pushed. Two current-release real-proof posts,228 and600characters, appeared after actual Aztec inclusion in11.095s and11.894s.** Both automatically checkpointed without refresh. Complete preparation836/814ms; fee ready from click769/755ms; full private execution through kernel completion1243/1218ms; encoding through upload acceptance848/810ms. Independent review confirms both observed cases meet every target. This is measured acceptance, not a guaranteed ceiling on external network inclusion. Earlier13.859s/24.654s/27.190s/28.189s results remain in evidence.
 
-**UI source `63c5339e` is published. Latest real233-character post:27.190s.** Preparation818ms, private application654ms, kernel702ms, upload791ms, fee estimate37ms. Combined native application/kernel witness1299ms. Submission acknowledgement to included unobstructed display took19.232s; automatic checkpoint promotion observed. The15-second total and1.25-second combined witness targets remain unmet. Earlier729a13.859s, fdf24.654s and ef13.717s/28.189s are retained; no consistent-latency claim.
+Removed disabled debug/test serialization, overlapped native note/nullifier reads with kernel initialization, and prefetched exact selected-history witnesses through the existing composer preparation. Post still selects and validates current state; changed anchors fetch fresh data. No extra notes, migrations, custom authorization or skipped checks. Full account-session tests239/239; native cache/maturity tests18/18; prior integrated witness/application checks555/555. Detailed timings and limitations: [posting performance](docs/POSTING_PERFORMANCE.md).
 
-Native note/nullifier membership reads now overlap kernel initialization, and selected historical-post membership reads are prefetched using exact native metadata and cache. No new notes, scans, globals or skipped validation. Combined focused/native/application checks passed555tests. Next: prime maturity-gated history witnesses through the existing composer preparation and collect the prover's newly instrumented native subcall timings.
-
-Independent prior one-second observation found the included block at our node273ms before the public reference node,13.579–14.586s after submission acknowledgement. This establishes delay beyond the browser send operation, not a checkpoint wait or a lagging local node; gossip arrival vs proposer scheduling remains unseparated. The latest observer started after inclusion, so it adds no propagation timing claim.
+The public reference node saw the600-character transaction pending within470ms of submission acknowledgement and included within2807ms. Older slow-run observation found our node ahead of the reference; there was no checkpoint gating. Sparse network blocks and variable external producer timing remain relevant; do not claim a network-wide15s guarantee. Native prover instrumentation now separates load, accumulation, proving, verification and compression, with no secret input logging.
 
 Instrumentation requires actual included feed text visible at an animation frame with the composer closed and no obstruction. Previous2aac timings13.507s/13.836s and4a14.780s were DOM-insertion lower bounds, not complete click-to-visible results. The current exact-transaction feed callback closes the matching composer immediately while canonical confirmation and account locking continue independently. Both7a posts promoted to checkpointed automatically.
 
@@ -27,10 +25,10 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/63c5339e9eda68e029a42998c81ee8aa39b445a7` |
-| Browser SDK SHA256 | `1a534ee97729368744da00b2a8958d25f02ed24d802dfed5b9c28d83159db39a` |
+| Browser UI | `/opt/rolling-ui/releases/74c2142c08b6a9cdeabefe6e46ebfa5ec4578836` |
+| Browser SDK SHA256 | `8708160ab86a388acab7252113e22bb8da8f1910ea78282fed45fa20d881b265` |
 | Running app | `/opt/rolling-app/releases/ui-7a3ad91ffc14` |
-| Next-start app | `/opt/rolling-app/releases/ui-63c5339e9eda` |
+| Next-start app | `/opt/rolling-app/releases/ui-74c2142c08b6` |
 | Prover | `/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad` |
 | Bok | `/opt/rolling-bok/releases/6cb76060aba07b2eae31284d0e949517dd240d48` |
 
@@ -58,7 +56,7 @@ Read workspace `INFRASTRUCTURE_ACCESS.md` before credentials or service work. Ex
 
 All nine services are verified active. The40GiB core root filled with accumulated release/upload copies; the separate1TiB chain volume was unaffected. Root was cleaned offline using the existing Bok host, restored to core /dev/sda1, and all seven core services restarted. A further2.967GB of authenticated obsolete public artifacts was removed, leaving over4GB free. No new infrastructure/security changes. Publisher now checks operating reserve and removes successful upload payloads automatically. Active runtimes/configs/credentials remain. Pruned historical releases are explicitly unusable; never choose one as a rollback source. See server-root-recovery.json and server-public-artifact-prune.json. Query actual current PIDs before intervention.
 
-Health endpoints: app `/api/status` on4318; prover `/healthz` on8081; Bok `/health` on8807 returns `status: ready`. Public `/wallet/runtime.json` and `/prover/healthz` are suitable read-only checks. Do not assume every service uses a boolean `ready` or `/health`.
+Health endpoints: app `/api/status` on4318; prover `/healthz` on8081; Bok service `rolling-bok-testnet.service` and `/health` on8807 returns `status: ready`. Public `/wallet/runtime.json` and `/prover/healthz` are suitable read-only checks. Do not assume every service uses a boolean `ready` or `/health`.
 
 Bok uses private repository `zac-williamson/rolling-chat-bok-pool-20261015-03`, existing GitHub App5317701/installation171412624. No new repository/access grant is needed. Generated code receives no actor keys or AWS access. Its publication requires the isolated browser validation described below.
 

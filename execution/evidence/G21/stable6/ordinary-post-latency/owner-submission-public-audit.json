@@ -1,0 +1,256 @@
+{
+  "fees": {
+    "commandId": "849b3733-d83d-4391-b86e-9432db781a11",
+    "evidence": [
+      {
+        "configPath": ".config.privateFee.gasSettings",
+        "gasSettings": {
+          "gasLimits": {
+            "daGas": "117624",
+            "l2Gas": "6540000"
+          },
+          "teardownGasLimits": {
+            "daGas": "58812",
+            "l2Gas": "817500"
+          },
+          "maxFeesPerGas": {
+            "feePerDaGas": "0",
+            "feePerL2Gas": "2129014393943"
+          },
+          "maxPriorityFeesPerGas": {
+            "feePerDaGas": "0",
+            "feePerL2Gas": "0"
+          }
+        }
+      },
+      {
+        "observedAt": "2026-10-24T21:52:16.336030+00:00",
+        "nodes": [
+          {
+            "source": "local",
+            "getCurrentMinFees": {
+              "feePerDaGas": "0",
+              "feePerL2Gas": "1250000200000"
+            },
+            "getPendingTxCount": 0
+          },
+          {
+            "source": "public",
+            "getCurrentMinFees": "HTTPError",
+            "getPendingTxCount": "HTTPError"
+          }
+        ]
+      }
+    ]
+  },
+  "blocks": {
+    "commandId": "4e081f14-5f22-4910-a736-61e7b43c44ce",
+    "evidence": [
+      {
+        "observedAt": "2026-10-24T21:53:35.421730+00:00",
+        "blocks": [
+          {
+            "requestedNumber": 3055,
+            "number": 3055,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b5a",
+            "timestamp": "1792877484",
+            "checkpointNumber": 2796,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x0a0881182b69c801dcd744d205613c8344a52719eb08c52fc7dbcbb1deaad38c"
+          },
+          {
+            "requestedNumber": 3056,
+            "number": 3056,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b5b",
+            "timestamp": "1792877556",
+            "checkpointNumber": 2797,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x0dea810a088046f8d39fccbe4f71c97146d488e29e9e41927b9484c22d6f1b0e"
+          },
+          {
+            "requestedNumber": 3057,
+            "number": 3057,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b5c",
+            "timestamp": "1792877628",
+            "checkpointNumber": 2798,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x00b03477b57ceb6780ba3c88c7fcbab1fbc9702492014380af4b014716259bb6"
+          },
+          {
+            "requestedNumber": 3058,
+            "number": 3058,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b5d",
+            "timestamp": "1792877700",
+            "checkpointNumber": 2799,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x24be640d5b580c26c2b5e341c85bc31236344de0f91b519857193e5979c19f2f"
+          },
+          {
+            "requestedNumber": 3059,
+            "number": 3059,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b5e",
+            "timestamp": "1792877772",
+            "checkpointNumber": 2800,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x290dfe2778f46f37e7ec3bee41dab89ed480d62b4b409a2ee9ec387fcc461602"
+          },
+          {
+            "requestedNumber": 3060,
+            "number": 3060,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b5f",
+            "timestamp": "1792877844",
+            "checkpointNumber": 2801,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x000000000000000000000000000000000000000000000000000000000007e838",
+            "blockHash": "0x1b488b608841e971d7e5a832417cbacf1f3140aea22d43cda4372b234a565172"
+          },
+          {
+            "requestedNumber": 3061,
+            "number": 3061,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b5f",
+            "timestamp": "1792877844",
+            "checkpointNumber": 2801,
+            "indexWithinCheckpoint": 1,
+            "totalManaUsed": "0x000000000000000000000000000000000000000000000000000000000012de99",
+            "blockHash": "0x1633bfc5cc94156fff866e244bc82104636257d2f7d08ed1be92585cc7e22e0d"
+          },
+          {
+            "requestedNumber": 3062,
+            "number": 3062,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b60",
+            "timestamp": "1792877916",
+            "checkpointNumber": 2802,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x00000000000000000000000000000000000000000000000000000000000a3a51",
+            "blockHash": "0x1c1cfc7b23f94001d57efec24b500f8ec4dcc8416a1e630525656d01573aa15d"
+          },
+          {
+            "requestedNumber": 3063,
+            "number": 3063,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b61",
+            "timestamp": "1792877988",
+            "checkpointNumber": 2803,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x2eb5d0c32b191364d314dda5f44659bfacb9d55b6a11681611ea8098c2e4801d"
+          },
+          {
+            "requestedNumber": 3064,
+            "number": 3064,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b62",
+            "timestamp": "1792878060",
+            "checkpointNumber": 2804,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x11e21090aa060ad78cf66183ab6c6b39dbb7c570b3fd5d998ba0c91bf7d72e9f"
+          },
+          {
+            "requestedNumber": 3065,
+            "number": 3065,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b63",
+            "timestamp": "1792878132",
+            "checkpointNumber": 2805,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x1b247a1deddb2a0efe1152a921a31bcf31e05983e1fc23f55f32d84a7f91ec91"
+          },
+          {
+            "requestedNumber": 3066,
+            "number": 3066,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b64",
+            "timestamp": "1792878204",
+            "checkpointNumber": 2806,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x2d0ac7284673754eab15223e1a75f09a7d8a753b80774387e9076d69a658e6bf"
+          },
+          {
+            "requestedNumber": 3067,
+            "number": 3067,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b65",
+            "timestamp": "1792878276",
+            "checkpointNumber": 2807,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x00000000000000000000000000000000000000000000000000000000001f85be",
+            "blockHash": "0x2ec2a15077b4ffce10236790917e4dbc50a6007b1fcfb8357c3ca52e6616245c"
+          },
+          {
+            "requestedNumber": 3068,
+            "number": 3068,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b66",
+            "timestamp": "1792878348",
+            "checkpointNumber": 2808,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x03d7c1b31c8cdd8a78b1945011d564a9dd210501bb47236337e8d2978ef471a7"
+          },
+          {
+            "requestedNumber": 3069,
+            "number": 3069,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b67",
+            "timestamp": "1792878420",
+            "checkpointNumber": 2809,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x11e7fa3b4c46609fa683f91a604a24c3c140597984fcbc6744acebbc0ef35db9"
+          },
+          {
+            "requestedNumber": 3070,
+            "number": 3070,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b68",
+            "timestamp": "1792878492",
+            "checkpointNumber": 2810,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x0b760d96a73e0403b77fec63674fd27d768a9e3d6e9b9b43dd2cf011dbf5c875"
+          },
+          {
+            "requestedNumber": 3071,
+            "number": 3071,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b69",
+            "timestamp": "1792878564",
+            "checkpointNumber": 2811,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x20ed2549649897b5350c4b5e3a2b72b47d7c4fd5eb88081a8856868a1825c80a"
+          },
+          {
+            "requestedNumber": 3072,
+            "number": 3072,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b6a",
+            "timestamp": "1792878636",
+            "checkpointNumber": 2812,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x1d7d5fcc2bc0035410c1841b419dcac92ff7b22b3dcdb37aff289a951b793d09"
+          },
+          {
+            "requestedNumber": 3073,
+            "number": 3073,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b6b",
+            "timestamp": "1792878708",
+            "checkpointNumber": 2813,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x2ce4f0a0b884229b728297730ae52ab5707a644927221d8101e1205333845231"
+          },
+          {
+            "requestedNumber": 3074,
+            "number": 3074,
+            "slot": "0x0000000000000000000000000000000000000000000000000000000000000b6c",
+            "timestamp": "1792878780",
+            "checkpointNumber": 2814,
+            "indexWithinCheckpoint": 0,
+            "totalManaUsed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "blockHash": "0x2359b1ec3e238e2f6d90b48985784a1beb8d154fac4ff22d0053c6c3d6cc39aa"
+          }
+        ]
+      }
+    ]
+  }
+}

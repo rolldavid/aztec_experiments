@@ -1,0 +1,25 @@
+{
+  "core": {
+    "rolling-application": "MainPID=1534\nActiveState=active",
+    "rolling-application-proxy": "MainPID=803\nActiveState=active",
+    "rolling-node": "MainPID=1522\nActiveState=active",
+    "rolling-query": "MainPID=1524\nActiveState=active",
+    "rolling-moderator": "MainPID=2088\nActiveState=active",
+    "board-prover": "MainPID=9142\nActiveState=active",
+    "board-prover-proxy": "MainPID=739\nActiveState=active"
+  },
+  "bok": {
+    "rolling-bok-testnet": {
+      "pid": 45774,
+      "state": "active"
+    },
+    "rolling-bok-artifact-proxy": {
+      "pid": 45776,
+      "state": "active"
+    },
+    "status": "ready",
+    "activeJobs": 0
+  },
+  "diagnosticCorrection": "Initial completion script queried nonexistent rolling-bok; existing healthy rolling-bok-testnet was verified without restarting anything.",
+  "noNewInfrastructure": true
+}

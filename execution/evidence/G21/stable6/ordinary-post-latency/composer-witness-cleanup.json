@@ -1,0 +1,28 @@
+{
+  "removedDraft": "/private/tmp/composer-witness-draft",
+  "regularFileBytes": 634194,
+  "removedHelperBytes": 3738,
+  "integratedCommit": "74c2142c",
+  "verified": [
+    {
+      "path": "shared/rolling/application.mjs",
+      "comparison": "exact except root moved existing policy comment to correct method",
+      "sha256": "6f92885c65a916f5a6673707a732158361c2f0bbaeaace2d02cd5f969cd5076d"
+    },
+    {
+      "path": "apps/rolling/wallet-session.mjs",
+      "comparison": "exact",
+      "sha256": "51eeb0a821096e1b4b6960aa6184890320bda7b22e804054969c5286d0f032e1"
+    },
+    {
+      "path": "apps/rolling/wallet-session.test.mjs",
+      "comparison": "exact",
+      "sha256": "5cb053ba58e320f91720af9d8e90551879143e30ac2e9c0f8dacdfb21a1e6559"
+    }
+  ],
+  "retained": [
+    "/private/tmp/composer-witness-warm.patch",
+    "/private/tmp/composer-witness-session-tests.log",
+    "/private/tmp/composer-witness-native-cache-tests.log"
+  ]
+}
