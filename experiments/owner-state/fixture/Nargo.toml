@@ -1,0 +1,12 @@
+[package]
+name = "owner_fixture"
+type = "contract"
+authors = [""]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+aztec = { path = "../.build/aztec-nr/aztec" }
+owner_delivery = { path = "../owner_delivery" }
+
+uint_note = { path = "../.build/aztec-nr/uint-note" }
+balance_set = { path = "../.build/aztec-nr/balance-set" }

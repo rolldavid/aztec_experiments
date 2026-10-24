@@ -1,0 +1,2 @@
+[workspace]
+members = ["owner_delivery", "fixture"]
