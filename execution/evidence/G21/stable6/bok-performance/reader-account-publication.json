@@ -1,0 +1,93 @@
+{
+  "commit": "23e6cde5432dfd5110762bd63fd2a3009bdb6775",
+  "observedAt": "2026-10-24T01:20:24.465383+00:00",
+  "publication": {
+    "ui": "/opt/rolling-ui/releases/23e6cde5432dfd5110762bd63fd2a3009bdb6775",
+    "runningSource": "/opt/rolling-app/releases/ae9d60b807316d5ce0e2df38e47c4129fb8178e8",
+    "sourcePinsSha256": "adb1d43aa2898d504b3405b0c086a440e4b2448d0c3bced0ad0ad235a6b34406",
+    "pidsUnchanged": {
+      "rolling-application.service": 642411,
+      "rolling-application-proxy.service": 642414,
+      "rolling-node.service": 561964,
+      "rolling-query.service": 565186,
+      "board-prover.service": 651105,
+      "board-prover-proxy.service": 630307,
+      "rolling-moderator.service": 567551
+    },
+    "publicFiles": [
+      {
+        "path": "/wallet/aztec_bundle.js",
+        "sha256": "267fcf917c91fd4507b642ebe059268530919cb8c5445786980632ad5dc55902",
+        "bytes": 16541834,
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/wallet/runtime.mjs",
+        "sha256": "008edbe312a284a3f7cec2c4a3bebd7712882b72aa527fc0c1453ad1d5b34fae",
+        "bytes": 368473,
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/reader.mjs",
+        "sha256": "7a7f30f418e21690621632832ca6af91d502604db28addb5de41e1a24af5de8b",
+        "bytes": 32550,
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/wallet-panel.mjs",
+        "sha256": "715b6e447c75d5392a2f1f8576ae1497a977042da1999415454f3b80d1d97e48",
+        "bytes": 139474,
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/wallet/account.js",
+        "sha256": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2",
+        "bytes": 17338,
+        "cacheControl": "no-store"
+      }
+    ],
+    "root": {
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    "invalidationId": "I3X9PKHJF6OU0SLYHZUOOBZZ4D",
+    "invalidationStatus": "Completed"
+  },
+  "build": {
+    "walletAssets": 82,
+    "walletInputs": 104,
+    "sdkInputs": 2093,
+    "sdkUnchanged": true,
+    "files": {
+      ".build/rolling-wallet/manifest.json": "9af83f6e133c2828b1539c08fe8330c4f43851828c36f309eda532bbb38b929c",
+      ".build/rolling-wallet/runtime.mjs": "008edbe312a284a3f7cec2c4a3bebd7712882b72aa527fc0c1453ad1d5b34fae",
+      "apps/rolling/reader.mjs": "7a7f30f418e21690621632832ca6af91d502604db28addb5de41e1a24af5de8b",
+      "apps/rolling/wallet-session.mjs": "fa9d3dedee777083fae765f80fb7bdccedf94aa1057ee69e458641768662e7e2"
+    },
+    "sourceDelta": [
+      "apps/rolling/wallet-session.mjs",
+      "apps/rolling/reader.mjs"
+    ]
+  },
+  "verification": {
+    "readerBrowserChecks": 14,
+    "readerFailed": 0,
+    "readerSkipped": 0,
+    "accountDeploymentSynchronizationChecks": 251,
+    "independentSourceReview": "approved",
+    "behaviors": [
+      "confirmed-action refresh retains loaded conversation extent",
+      "a fully read conversation follows new reply pages",
+      "partial conversations retain their viewed extent",
+      "mixed snapshots fail without replacing visible content",
+      "cancelled and uncommitted routes cannot inherit or append another thread extent"
+    ],
+    "runtimeChanges": "no service restarts, SDK changes, configuration changes or account changes"
+  },
+  "measurement": {
+    "newWallTimeClaim": false,
+    "previousBenchmarkRelease": "0021c30ae2aaf5c7eee4166db4c82a9e405427e9",
+    "previousBenchmarkSeconds": 188.077,
+    "previousBenchmarkCaveat": "One additional Load more click was required after posting; this publication addresses that reader defect."
+  }
+}

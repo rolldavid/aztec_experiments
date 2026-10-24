@@ -1,3 +1,14 @@
+# Current static publication — 24 October 2026
+
+Packaging published23e6cde5: reviewed account-manager instance reuse and reader
+conversation extent retention. Public runtime008edbe3 and reader7a7f30f4 match;
+SDK267fcf91, account and wallet panel remain unchanged. Fourteen reader browser
+checks and251 affected account/deployment/synchronization checks passed. All
+seven core PIDs and configuration hashes are unchanged; invalidation completed.
+Root owns subsequent measured acceptance and typed-selector integration; network
+agent prepares the separately reviewed worker packet. No new wall-time claim.
+See execution/evidence/G21/stable6/bok-performance/reader-account-publication.json.
+
 # Current preparation continuation — 24 October 2026
 
 Runtime371eee5d published;567 checks passed, independent review approved.
