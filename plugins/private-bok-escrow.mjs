@@ -1,4 +1,4 @@
-import {measureBokStage,recordBokProofProfile} from './bok-timing.mjs';
+import {measureBokStage,recordBokProofProfile,recordBokOperationFailure} from './bok-timing.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -135,6 +135,11 @@ export function createPrivateBokEscrowFactory(sdk) {
   const initial=await anchored();await wallet.registerContract(initial.instance,artifact);
   const contract=await Contract.at(addr,artifact,wallet); if(!store.read().privateBokEscrow)await save(journal());else journal();
   const unsubmittedReserve=record=>record.method==='reserve'&&record.args?.[1]===0&&record.proofMode===proofMode&&record.phase==='preparing'&&!['recoveryAttempted','txHash','transactionSha256','submissionError'].some(key=>Object.hasOwn(record,key));
+  // This exact intent has never crossed the durable pre-send boundary. Native
+  // proof failures may be retried by the existing request scheduler, but an
+  // unknown submission or replacement lineage is always inspection-only.
+  const unsubmittedFinalization=record=>record.method==='finalize_reply'&&record.proofMode===proofMode&&record.phase==='preparing'&&!['recoveryAttempted','txHash','transactionSha256','submissionError','replacement'].some(key=>Object.hasOwn(record,key));
+  const unsubmitted=record=>unsubmittedReserve(record)||unsubmittedFinalization(record);
   const inspectOne=async (operationId,replacement=false,read=observation())=>{
    const readRecord=()=>replacement?journal().operations[operationId]?.replacement:journal().operations[operationId];
    const recordUpdate=changes=>replacement?update(operationId,{replacement:{...readRecord(),...changes}}):update(operationId,changes);
@@ -146,7 +151,7 @@ export function createPrivateBokEscrowFactory(sdk) {
    // never a substitute for receipt availability, canonicality or finality now.
    await recordUpdate({result:{status:'pending',canonical:false},observation:{status:'inspecting'}});
    await checkedNetwork(read);
-   if(!record.txHash)return {status:unsubmittedReserve(record)?'not-submitted':'pending',method:record.method,argsDigest:record.argsDigest,canonical:false};
+   if(!record.txHash)return {status:unsubmitted(record)?'not-submitted':'pending',method:record.method,argsDigest:record.argsDigest,canonical:false};
    let receipt;
    try{receipt=await node.getTxReceipt(TxHash.fromString(record.txHash));}
    catch{await recordUpdate({observation:{status:'unavailable'}});return {status:'pending',canonical:false};}
@@ -236,15 +241,16 @@ export function createPrivateBokEscrowFactory(sdk) {
    scope(args[0]);const operationId=operation?.operationId,argsDigest=digest(args.map(v=>typeof v==='bigint'?String(v):v));
    assert(/^[0-9a-f]{64}$/.test(operationId));assert.equal(operation.argsDigest,argsDigest,'Operation arguments mismatch');
    const old=journal().operations[operationId];
-   if(old){assert.equal(old.method,method);assert.equal(old.argsDigest,argsDigest);if(!unsubmittedReserve(old))return old.txHash?waitForOperation(operationId):inspect(operationId);assert.deepEqual(old.args,args.map(v=>typeof v==='bigint'?String(v):v),'Original reserve arguments changed');}
+   if(old){assert.equal(old.method,method);assert.equal(old.argsDigest,argsDigest);if(!unsubmitted(old))return old.txHash?waitForOperation(operationId):inspect(operationId);assert.deepEqual(old.args,args.map(v=>typeof v==='bigint'?String(v):v),'Original unsubmitted arguments changed');}
    assert(Object.keys(journal().operations).length<256,'Escrow operation limit');
    await anchored();
-   await update(operationId,{method,argsDigest,args:args.map(v=>typeof v==='bigint'?String(v):v),phase:'preparing',proofMode,...(old?{recoveryAttempted:true}:{})});
+   await update(operationId,{method,argsDigest,args:args.map(v=>typeof v==='bigint'?String(v):v),phase:'preparing',proofMode,...(old&&method==='reserve'?{recoveryAttempted:true}:{})});
    return perform(method,args,operationId);
   };
 
   const perform=async(method,args,operationId,replacement=false,beforeSend=null)=>{
    const recordUpdate=changes=>replacement?update(operationId,{replacement:{...journal().operations[operationId].replacement,...changes}}):update(operationId,changes);
+   let phase='request';
    try{
     const steps=method==='finalize_reply'?[['settle',args.slice(0,4)],['publish_reply',[args[0],...args.slice(4)]],['finish',[args[0]]]]:[[method,args]];
     const interactions=steps.map(([name,values])=>contract.methods[name](...values.map((v,i)=>Array.isArray(v)?v.map(value=>Fr.fromString(value)):i===0||(name==='publish_reply'&&i===1)||((name==='settle'||name==='reconcile')&&i===3)?Fr.fromString(v):v)));
@@ -259,6 +265,7 @@ export function createPrivateBokEscrowFactory(sdk) {
     // Use the SDK's node-advertised transaction ceiling, not estimation limits.
     // The operator must afford the full commitment before doing private work;
     // actual kernel output is validated with fee enforcement before the proof.
+    phase='fee';
     const [fee,balance]=await Promise.all([
      wallet.completeFeeOptions({from:op,feePayer:payload.feePayer}),sdk.getFeeJuiceBalance(op,node),
     ]);
@@ -267,7 +274,9 @@ export function createPrivateBokEscrowFactory(sdk) {
     await recordUpdate({maximumFee:String(maximumFee),gas:{gasLimits:{daGas:fee.gasSettings.gasLimits.daGas,l2Gas:fee.gasSettings.gasLimits.l2Gas},teardownGasLimits:{daGas:fee.gasSettings.teardownGasLimits.daGas,l2Gas:fee.gasSettings.teardownGasLimits.l2Gas}}});
     const txRequest=await wallet.createTxExecutionRequestFromPayloadAndFee(payload,op,fee);
     const proveOpts={scopes:wallet.scopesFrom(op,[]),senderForTags:wallet.senderForTagsFrom(op)};
+    phase='prove';
     const proven=await measureBokStage('escrow.prove',()=>wallet.pxe.proveTxWithPublicValidation(txRequest,proveOpts));
+    phase='validate';
     recordBokProofProfile(proven.stats);
     assert(!proven.chonkProof.isEmpty(),'Missing proof');const tx=await proven.toTx();
     assert.deepEqual(tx.data.constants.txContext.gasSettings.toBuffer(),fee.gasSettings.toBuffer(),'Proven fee settings changed');
@@ -287,15 +296,17 @@ export function createPrivateBokEscrowFactory(sdk) {
      assert.equal(tx.data.getRevertiblePublicCallRequests().length,3,'Final batch must contain exactly three revertible calls');
      assert.equal(tx.data.getTeardownPublicCallRequest(),undefined,'Unexpected final batch teardown');
     }
+    phase='before-submit';
     const hash=hex(tx.getTxHash());
     await anchored();await lease.assertHeld();
     if(beforeSend&&!await beforeSend()){await recordUpdate({phase:'superseded-before-send'});return inspect(operationId);}
     await recordUpdate({phase:'submission-unknown',txHash:hash,transactionSha256:bytesHash(tx.toBuffer())});
+    phase='submitted';
     await held();
     // An exception may mean accepted-but-response-lost. Never send this action again.
     try{await measureBokStage('escrow.send',()=>node.sendTx(tx));}catch{await recordUpdate({submissionError:true});}
     return await waitForOperation(operationId);
-   }catch(error){if(!poisoned)await recordUpdate({failure:error?.code==='BB_OPERATOR_FEE_BALANCE_INSUFFICIENT'?'operator-fee-balance-insufficient':'operation-unresolved'});if(error?.code==='BB_OPERATOR_FEE_BALANCE_INSUFFICIENT')throw error;throw Error('Escrow operation unresolved; inspect original intent');}
+   }catch(error){recordBokOperationFailure(error,{phase,method});if(!poisoned)await recordUpdate({failure:error?.code==='BB_OPERATOR_FEE_BALANCE_INSUFFICIENT'?'operator-fee-balance-insufficient':'operation-unresolved'});if(error?.code==='BB_OPERATOR_FEE_BALANCE_INSUFFICIENT')throw error;throw Error('Escrow operation unresolved; inspect original intent');}
   };
   const replaceDroppedOperation=async authority=>{
    const {operationId,argsDigest,originalTxHash}=authority??{};

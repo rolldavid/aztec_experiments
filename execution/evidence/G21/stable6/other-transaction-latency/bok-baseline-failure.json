@@ -1,0 +1,20 @@
+{
+  "requestId": "0x0242f9c1cb1115134fcf7f93bfa4593ddd4e892f7a64799467f033a85f3eef41",
+  "postId": "6957032047980352861732935881842358937412173450022108286036178300555039308911",
+  "source": "6cb76060aba07b2eae31284d0e949517dd240d48",
+  "failedProofMs": 73.382,
+  "requestRuntimeBeforeFailureMs": 87088.487,
+  "transactionSubmitted": false,
+  "generatedAppPublished": true,
+  "originalProofFailureCause": "discarded by existing catch; not established",
+  "defect": "Every no-hash finalization remained pending forever; exact demonstrably unsubmitted work could not re-enter.",
+  "readOnlyReproduction": {
+    "commandId": "a0bc3648-e338-493a-9446-84d0a9c35440",
+    "sameFinalizationArguments": true,
+    "freshNativeWallet": true,
+    "realProofSucceeded": true,
+    "proofMs": 5212.191879,
+    "sendTxExplicitlyForbidden": true
+  },
+  "nativeChildrenAfterDiagnostic": "only existing service children; diagnostic exited"
+}

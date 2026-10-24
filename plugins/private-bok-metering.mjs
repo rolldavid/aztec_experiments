@@ -335,6 +335,14 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
    j.operations[operationId]={method,argsDigest};await save(j);
    try{returned=await escrow[method](...args,{operationId,argsDigest});}catch{/* Only the exact original receipt can establish success. */}
   }
+  else if(method==='finalize_reply'){
+   const before=await escrow.inspectOperation(operationId);
+   if(before?.status==='not-submitted'&&before.canonical===false&&before.method===method&&before.argsDigest===argsDigest){
+    // Exactly one attempt per existing request cycle. The native adapter
+    // rechecks its durable no-submission boundary, lease and chain authority.
+    try{returned=await escrow[method](...args,{operationId,argsDigest});}catch{/* Fresh inspection below remains authoritative. */}
+   }
+  }
   // The native atomic mutator already waits for and authenticates this exact
   // operation's canonical receipt. Reuse only that immediate terminal result;
   // restored operations and uncertain returns still inspect the original tx.

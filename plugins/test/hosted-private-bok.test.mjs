@@ -1111,3 +1111,24 @@ test('canonical reverted atomic mutator result retains the separate accounting r
  x.args.escrow.inspectOperation=async id=>{if(x.ops.get(id)?.method==='finalize_reply')finalInspections++;return inspect(id);};
  assert.equal((await x.run()).status,'accounted-without-reply');assert.equal(finalInspections,1);assert.equal(x.current.replied,false);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
 });
+
+test('hosted accepted finalization resumes exact unsent proof without another model call',async()=>{
+ const x=invocationFixture(),finalize=x.args.escrow.finalize_reply;let attempts=0,fail=true;
+ x.args.escrow.finalize_reply=async(...args)=>{attempts++;const op=args.at(-1);
+  if(fail){x.ops.set(op.operationId,{status:'not-submitted',canonical:false,method:'finalize_reply',argsDigest:op.argsDigest});throw Error('PRIVATE_PROOF_ERROR');}
+  x.ops.delete(op.operationId);await finalize(...args);return x.ops.get(op.operationId);
+ };
+ await assert.rejects(x.run(),/unresolved/);assert.equal(attempts,1);assert.equal(x.store.read().hostedPrivateBok.phase,'final-intent');
+ await assert.rejects(x.run(),/unresolved/);assert.equal(attempts,2);
+ assert.equal(x.events.filter(v=>v==='paid').length,1);assert.equal(x.row.reserved,1000n);
+ fail=false;assert.equal((await x.run()).status,'finished');assert.equal(attempts,3);assert.deepEqual(x.events,['paid','finalize_reply']);
+ await x.run();assert.equal(attempts,3);assert.equal(x.row.refunded,994n);
+});
+
+test('hosted unsent status cannot authorize another operation or submitted outcome',async()=>{
+ for(const mutation of [v=>({...v,status:'pending'}),v=>({...v,canonical:true}),v=>({...v,method:'settle'}),v=>({...v,argsDigest:'a'.repeat(64)})]){
+  const x=invocationFixture();let attempts=0;
+  x.args.escrow.finalize_reply=async(...args)=>{attempts++;const op=args.at(-1);x.ops.set(op.operationId,mutation({status:'not-submitted',canonical:false,method:'finalize_reply',argsDigest:op.argsDigest}));throw Error('proof');};
+  await assert.rejects(x.run());await assert.rejects(x.run());assert.equal(attempts,1);assert.equal(x.events.filter(v=>v==='paid').length,1);
+ }
+});

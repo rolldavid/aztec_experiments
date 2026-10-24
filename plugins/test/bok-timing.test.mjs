@@ -63,3 +63,15 @@ test('native proof profile ignores malformed values and cannot interrupt transac
  await withBokTiming(id(1),async()=>recordBokProofProfile({timings:{total:1}}),{emit:()=>{throw Error('logging failure');}});
  await withBokTiming(id(1),async()=>recordBokProofProfile({timings:{total:1}}),{emit:async()=>{throw Error('async logging failure');}});
 });
+
+test('operation diagnostic retains only fixed classifications and never raw error content',async()=>{
+ const {recordBokOperationFailure}=await import('../bok-timing.mjs');const records=[];
+ const error=Object.assign(Error('PRIVATE_MESSAGE'),{code:'ERR_ASSERTION',name:'AssertionError',stack:'Error: PRIVATE_MESSAGE\n    at BlockSynchronizer.checkedSelectedAnchor (/PRIVATE_PATH:1:2)\n    at async OperationQueue.runSynced (/PRIVATE_PATH:1:2)\n    at PRIVATE_METHOD (/PRIVATE_PATH:1:2)'});
+ await withBokTiming(id(1),async()=>{recordBokOperationFailure(error,{phase:'prove',method:'finalize_reply'});recordBokOperationFailure(Object.assign(Error('PRIVATE_MESSAGE'),{code:'PRIVATE_CODE',name:'PRIVATE_NAME'}),{phase:'prove',method:'finalize_reply'});recordBokOperationFailure(error,{phase:'PRIVATE_PHASE',method:'finalize_reply'});},{emit:r=>records.push(r)});
+ assert.equal(records.length,2);assert.deepEqual(records[0],{requestId:id(1),event:'escrow.operation_failure',phase:'prove',method:'finalize_reply',errorCode:'ERR_ASSERTION',errorName:'AssertionError',frames:['checkedSelectedAnchor','runSynced']});assert.equal(records[1].errorCode,'unclassified');assert.equal(records[1].errorName,'unclassified');assert(!JSON.stringify(records).includes('PRIVATE'));
+});
+test('operation diagnostics are bounded and isolate malformed errors and rejecting loggers',async()=>{
+ const {recordBokOperationFailure}=await import('../bok-timing.mjs');const records=[];
+ await withBokTiming(id(1),async()=>{for(let i=0;i<20;i++)recordBokOperationFailure(Error('private'),{phase:'prove',method:'finalize_reply'});},{emit:r=>records.push(r)});assert.equal(records.length,16);
+ for(const emit of [()=>{throw Error('private');},async()=>{throw Error('private');}])await withBokTiming(id(1),async()=>{recordBokOperationFailure(null,{phase:'prove',method:'finalize_reply'});recordBokOperationFailure(new Proxy({},{getOwnPropertyDescriptor(){throw Error('private');}}),{phase:'prove',method:'finalize_reply'});recordBokOperationFailure(Error('private'),{phase:'prove',method:'finalize_reply'});},{emit});
+});

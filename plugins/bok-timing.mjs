@@ -58,3 +58,24 @@ export function recordBokProofProfile(stats){
   const pending=context.emit({requestId:context.requestId,event:'escrow.proof_profile',...values});pending?.catch?.(()=>{});
  }catch{/* Profiling never changes proof, submission, or accounting behavior. */}
 }
+
+// Fixed classifications only: never forward exception messages, dynamic names,
+// stack locations, arguments or witness data. This does not decide retry policy.
+export function recordBokOperationFailure(error,{phase,method}={}){
+ try{
+  const context=contexts.getStore();if(!context||(context.operationFailures??0)>=16)return;
+  if(!['request','fee','prove','validate','before-submit','submitted'].includes(phase)||!['reserve','settle','close_uncertain','reconcile','finish','publish_reply','finalize_reply'].includes(method))return;
+  const own=key=>Object.getOwnPropertyDescriptor(error,key)?.value;
+  const code=own('code'),name=own('name'),stack=error instanceof Error?error.stack:own('stack');
+  const errorCode=['ERR_ASSERTION','ECONNRESET','ECONNREFUSED','ETIMEDOUT','ABORT_ERR','BB_OPERATOR_FEE_BALANCE_INSUFFICIENT'].includes(code)?code:'unclassified';
+  const errorName=['AssertionError','SimulationError','AbortError','TypeError','Error'].includes(name)?name:'unclassified';
+  const frames=[];
+  if(typeof stack==='string')for(const line of stack.slice(0,16384).split('\n').slice(1,17)){
+   for(const label of ['proveTxWithPublicValidation','runSynced','sync','checkedSelectedAnchor','checkedHeader','executePrivate','generateCircuitOutput','validateKernelPublicInputs','createChonkProof']){
+    if(new RegExp('^\\s*at (?:async )?(?:[A-Za-z_$][A-Za-z0-9_$]*\\.)?#?'+label+' \\(').test(line)&&!frames.includes(label))frames.push(label);
+   }
+  }
+  context.operationFailures=(context.operationFailures??0)+1;
+  const pending=context.emit({requestId:context.requestId,event:'escrow.operation_failure',phase,method,errorCode,errorName,frames});pending?.catch?.(()=>{});
+ }catch{/* Diagnostics cannot alter an escrow outcome. */}
+}

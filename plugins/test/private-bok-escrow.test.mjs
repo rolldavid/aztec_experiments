@@ -525,3 +525,35 @@ test('proposed reservation permits paid admission but a reorg fences it and fina
  const args=[f.id,0,1n,H(91)],op=f.op('settle',args);
  const result=await f.port.settle(...args,op);assert.equal(waited,true);assert.equal(result.status,'succeeded');assert.equal(result.canonical,true);
 });
+
+test('exact unsent final batch retries on a later invocation without replaying any submission',async()=>{
+ const f=await fixture(),args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],op=f.op('finalize_reply',args);
+ f.set('proofFailed',true);await assert.rejects(f.port.finalize_reply(...args,op),/unresolved/);
+ assert.deepEqual(f.counts(),{proofs:1,sends:0});
+ assert.deepEqual(await f.port.inspectOperation(op.operationId),{status:'not-submitted',canonical:false,method:'finalize_reply',argsDigest:op.argsDigest});
+ const reopened=await f.create();await assert.rejects(reopened.finalize_reply(...args,op),/unresolved/);
+ assert.deepEqual(f.counts(),{proofs:2,sends:0},'one attempt per explicit call, no inner retry');
+ f.set('proofFailed',false);assert.equal((await reopened.finalize_reply(...args,op)).status,'succeeded');
+ assert.deepEqual(f.counts(),{proofs:3,sends:1});
+ await (await f.create()).finalize_reply(...args,op);assert.deepEqual(f.counts(),{proofs:3,sends:1});
+ assert(!JSON.stringify(f.journal()).includes('private witness'));
+});
+
+test('unsent final batch retry rechecks lease class and exact arguments before proof',async()=>{
+ for(const change of ['lease','class','args']){
+  const f=await fixture(),args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],op=f.op('finalize_reply',args);
+  f.set('proofFailed',true);await assert.rejects(f.port.finalize_reply(...args,op));f.set('proofFailed',false);
+  if(change==='lease')f.set('held',false);if(change==='class')f.set('class',H(999));if(change==='args')args[2]=121n;
+  await assert.rejects(f.port.finalize_reply(...args,op));assert.deepEqual(f.counts(),{proofs:1,sends:0},change);
+ }
+});
+
+test('any submission or replacement evidence prevents unsent finalization re-entry',async()=>{
+ for(const key of ['txHash','transactionSha256','submissionError','replacement','recoveryAttempted']){
+  const f=await fixture(),args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],op=f.op('finalize_reply',args);
+  f.set('proofFailed',true);await assert.rejects(f.port.finalize_reply(...args,op));f.set('proofFailed',false);
+  const value=structuredClone(f.store.read());value.privateBokEscrow.operations[op.operationId][key]=key==='txHash'?H(56):key==='transactionSha256'?'a'.repeat(64):key==='replacement'?{}:true;await f.store.write(value);
+  try{const result=await f.port.finalize_reply(...args,op);assert.notEqual(result.status,'not-submitted');}catch{}
+  assert.deepEqual(f.counts(),{proofs:1,sends:0},key);
+ }
+});
