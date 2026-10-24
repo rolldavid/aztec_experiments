@@ -191,7 +191,7 @@ test('proof admission reports numeric body, validation and persistence phases on
  try{
   const request=fetch('http://127.0.0.1:'+server.address().port+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:await encodeJob(metadata,[new Map()])}).then(response=>{done=true;return response;});
   await entered;await new Promise(r=>setImmediate(r));assert.equal(done,false);release();const response=await request;
-  assert.equal(response.status,202);assert.match(response.headers.get('server-timing'),/^body;dur=\d+\.\d{3},validate;dur=\d+\.\d{3},queue;dur=\d+\.\d{3},body-first;dur=\d+\.\d{3},body-gap;dur=\d+\.\d{3},body-chunks;desc="\d+",body-bytes;desc="\d+"$/);assert(response.headers.get('server-timing').endsWith(`body-bytes;desc="${receivedBytes}"`));
+  assert.equal(response.status,202);assert.match(response.headers.get('server-timing'),/^body;dur=\d+\.\d{3},body-first;dur=\d+\.\d{3},body-gap;dur=\d+\.\d{3},body-chunks;desc="\d+",body-bytes;desc="\d+",body-loop-active;dur=\d+\.\d{3},body-loop-idle;dur=\d+\.\d{3},validate;dur=\d+\.\d{3},queue;dur=\d+\.\d{3}$/);assert(response.headers.get('server-timing').includes(`body-bytes;desc="${receivedBytes}"`));
  }finally{release();server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
 
@@ -321,4 +321,41 @@ test('worker exit alone does not release a delivered result reservation while sp
   assert.deepEqual(await fs.readdir(directory),[id]);await assert.rejects(queue.submit(Buffer.of(1),'a'),{status:429});await assert.rejects(queue.submit(Buffer.of(1),'b'),{status:429});
   cleanupRelease();while(queue.stats().running)await new Promise(setImmediate);assert.equal(queue.stats().jobs,0);assert.equal(queue.stats().bytes,0);
  }finally{fs.rm=originalRm;exit();cleanupRelease();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+
+
+test('invalid bounded upload exposes only numeric arrival landmarks without queue admission',async()=>{
+ let admitted=0;const server=createProverServer({queue:{submit:async()=>{admitted++;throw Error('Invalid probe admitted');}},board,chainId:31337,rollupVersion:1,proofsEnabled:false});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{
+  for(const bytes of [32768,65536,163840]){
+   // A zero metadata length is invalid regardless of the remaining zero bytes.
+   const response=await fetch('http://127.0.0.1:'+server.address().port+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:new Uint8Array(bytes)});
+   assert.equal(response.status,400);const header=response.headers.get('server-timing');assert(header);const metrics=new Map(header.split(',').map(item=>item.split(';')));
+   assert.equal(metrics.get('body-bytes'),'desc="'+bytes+'"');assert(!metrics.has('validate'));assert(!metrics.has('queue'));
+   for(const key of ['body-loop-active','body-loop-idle'])assert.match(metrics.get(key),/^dur=[0-9]+\.[0-9]{3}$/);
+   let previous=0;for(const kb of [32,64,128]){
+    const value=metrics.get('body-'+kb+'k');if(bytes<kb*1024){assert.equal(value,undefined);continue;}
+    assert.match(value,/^dur=[0-9]+\.[0-9]{3}$/);const at=Number(value.slice(4));assert(at>=previous);assert(at<=Number(metrics.get('body').slice(4)));previous=at;
+   }
+   assert.equal(admitted,0);assert(!header.includes('private'));await response.arrayBuffer();
+  }
+ }finally{await server.closeAndDrain();}
+});
+
+
+test('upload loop timing distinguishes process activity from idle waiting without admitting an invalid body',async()=>{
+ const server=createProverServer({queue:{submit:async()=>{throw Error('Invalid body admitted');}},board,chainId:31337,rollupVersion:1,proofsEnabled:false});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{
+  const response=new Promise((resolve,reject)=>{
+   const req=http.request({hostname:'127.0.0.1',port:server.address().port,path:'/v1/jobs',method:'POST',headers:{'content-type':'application/octet-stream','content-length':65536}},res=>{res.resume();res.on('end',()=>resolve(res));});req.on('error',reject);
+   req.write(Buffer.alloc(32768));
+   setTimeout(()=>{const until=performance.now()+12;while(performance.now()<until){}req.end(Buffer.alloc(32768));},40);
+  });
+  const res=await response;assert.equal(res.statusCode,400);const metrics=new Map(res.headers['server-timing'].split(',').map(item=>item.split(';')));
+  const duration=name=>Number(metrics.get(name).slice(4));
+  assert(duration('body-loop-idle')>=10);assert(duration('body-loop-active')>=10);
+  assert(Math.abs(duration('body-loop-idle')+duration('body-loop-active')-duration('body'))<5);
+ }finally{await server.closeAndDrain();}
 });

@@ -1,6 +1,7 @@
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {isIP} from 'node:net';
 import http from 'node:http';
+import {performance} from 'node:perf_hooks';
 import {decodeJob,MAX_REQUEST_BYTES} from '../shared/remote-prover-wire.mjs';
 import {COMPACT_GATEWAY_ROUTE} from '../shared/rolling/compact-client.mjs';
 /** HTTP adapter depends only on queue and board policy APIs. */
@@ -70,14 +71,21 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
     const receivedAt=performance.now();
     const client=admit();if(client===undefined)return;
     if(req.headers['content-type']!=='application/octet-stream'){reply(415,{error:'Binary job required'});return;}
-    uploads++;let body,firstChunkAt,lastChunkAt=receivedAt,maxChunkGap=0,chunkCount=0;
-    try{const chunks=[];let size=0;for await(const chunk of req){const now=performance.now();firstChunkAt??=now;maxChunkGap=Math.max(maxChunkGap,now-lastChunkAt);lastChunkAt=now;chunkCount++;size+=chunk.length;if(size>MAX_REQUEST_BYTES)throw Object.assign(Error(),{status:413});chunks.push(chunk);}body=Buffer.concat(chunks);}finally{uploads--;}
-    const bodyAt=performance.now(),{metadata}=decodeJob(body);
+    uploads++;const bodyLoopStart=performance.eventLoopUtilization();let body,firstChunkAt,lastChunkAt=receivedAt,maxChunkGap=0,chunkCount=0;const arrivals=[],landmarks=[32768,65536,131072];
+    try{const chunks=[];let size=0;for await(const chunk of req){const now=performance.now();firstChunkAt??=now;maxChunkGap=Math.max(maxChunkGap,now-lastChunkAt);lastChunkAt=now;chunkCount++;size+=chunk.length;if(size>MAX_REQUEST_BYTES)throw Object.assign(Error(),{status:413});while(arrivals.length<landmarks.length&&size>=landmarks[arrivals.length])arrivals.push(now-receivedAt);chunks.push(chunk);}body=Buffer.concat(chunks);}finally{uploads--;}
+    const bodyAt=performance.now(),bodyLoop=performance.eventLoopUtilization(bodyLoopStart);
+    // Loop active/idle measure this server process during the body read, not
+    // CPU attributed to this request. No clock comparison across machines.
+    // Preserve arrival measurements even when a complete bounded test body is
+    // rejected by decoding. Values describe bytes/times only, never contents.
+    const bodyTiming=`body;dur=${(bodyAt-receivedAt).toFixed(3)},body-first;dur=${((firstChunkAt??bodyAt)-receivedAt).toFixed(3)},body-gap;dur=${maxChunkGap.toFixed(3)},body-chunks;desc="${chunkCount}",body-bytes;desc="${body.length}",body-loop-active;dur=${bodyLoop.active.toFixed(3)},body-loop-idle;dur=${bodyLoop.idle.toFixed(3)}`+arrivals.map((ms,i)=>`,body-${landmarks[i]/1024}k;dur=${ms.toFixed(3)}`).join('');
+    res.setHeader('Server-Timing',bodyTiming);
+    const {metadata}=decodeJob(body);
     if(metadata.board!==board||String(metadata.chainId)!==String(chainId)||String(metadata.rollupVersion)!==String(rollupVersion)||metadata.mode!==(proofsEnabled?'real':'disabled')){reply(403,{error:'Board or proof mode mismatch'});return;}
     const validatedAt=performance.now(),id=await queue.submit(body,client),queuedAt=performance.now();
     // Numeric stage durations and body counts only: never circuit IDs, job IDs or
     // account/witness contents. Queue time includes persistence and worker scheduling.
-    res.setHeader('Server-Timing',`body;dur=${(bodyAt-receivedAt).toFixed(3)},validate;dur=${(validatedAt-bodyAt).toFixed(3)},queue;dur=${(queuedAt-validatedAt).toFixed(3)},body-first;dur=${((firstChunkAt??bodyAt)-receivedAt).toFixed(3)},body-gap;dur=${maxChunkGap.toFixed(3)},body-chunks;desc="${chunkCount}",body-bytes;desc="${body.length}"`);
+    res.setHeader('Server-Timing',bodyTiming+`,validate;dur=${(validatedAt-bodyAt).toFixed(3)},queue;dur=${(queuedAt-validatedAt).toFixed(3)}`);
     reply(202,{id});return;
    }
    const resultMatch=/^\/v1\/jobs\/([a-f0-9]{64})\/result$/.exec(req.url);
