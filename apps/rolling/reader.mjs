@@ -7,7 +7,7 @@ import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 const currentRoute=()=>location.hash==='#/new-account'?'/home':location.hash.slice(1)||'/home';
-let controller,sequence=0,route=currentRoute(),main,loadedPages=1,renderActive=0;
+let controller,sequence=0,route=currentRoute(),main,renderedRoute,loadedPages=1,loadedThreadEnd=false,renderActive=0;
 let walletPanel,privatePanel,savedItemsLoad,accountPreparation;
 async function preparePublicAssetCache(){
  if(!navigator.serviceWorker)return;
@@ -30,7 +30,7 @@ function privateChanged(){
 }
 async function accountPanel(){
  return walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
-   loadRuntime:prepareAccountTools,onPublicEffect:()=>render(),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void panel.initialize();return panel;});
+   loadRuntime:prepareAccountTools,onPublicEffect:()=>render({live:!!main?.querySelector('.public-content')}),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void panel.initialize();return panel;});
 }
 async function openWallet(defaults={}){
  try{
@@ -175,14 +175,16 @@ function boardOverview(data){
  }
  return section;
 }
+function capturePosition(){return renderedRoute===route?{...captureRoutePosition(loadedPages),threadEnd:loadedThreadEnd}:positions.get(route);}
 async function render({live=false}={}){
  const finishTiming=beginRollingMeasure(live?'reader.update':'reader.load');
- if(live)positions.set(route,captureRoutePosition(loadedPages));
+ if(live)positions.set(route,capturePosition());
  controller?.abort();controller=new AbortController();const signal=controller.signal,current=++sequence;renderActive=current;
  try{
- // Back navigation reloads the same number of pages against the current index.
+ // Reload the viewed extent against one fresh public snapshot. A conversation
+ // already read through its end also includes replies added on another page.
  // Navigation cancellation owns this sequence; each request handles transport errors.
- const restoreSignal=signal,saved=positions.get(route);loadedPages=1;
+ const restoreSignal=signal,saved=positions.get(route);let pages=1;
  const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot,privateView=null;
  if(privateViews.has(parts[0])&&parts.length===1){privateView=parts[0];api='feed';title=privateView[0].toUpperCase()+privateView.slice(1);}
  else if(parts[0]==='directory'){api='directory';title='Explore boards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
@@ -250,8 +252,8 @@ async function render({live=false}={}){
   const finishDOM=beginRollingMeasure('reader.dom');
   append(data);
   let cursor=data.nextCursor;
-  while(api!=='directory'&&cursor&&(loadedPages<(saved?.pages??1)||saved?.anchor&&!seenIds.has(saved.anchor.id.slice(5)))){
-   const page=await read(api,{...parameters,cursor},restoreSignal);if(current!==sequence)return;append(page);cursor=page.nextCursor;loadedPages++;
+  while(api!=='directory'&&cursor&&(pages<(saved?.pages??1)||api==='thread'&&saved?.threadEnd||saved?.anchor&&!seenIds.has(saved.anchor.id.slice(5)))){
+   const page=await read(api,{...parameters,cursor},restoreSignal);if(current!==sequence)return;append(page);cursor=page.nextCursor;pages++;
   }
   loading.remove();
   if(api==='board'){
@@ -281,7 +283,7 @@ async function render({live=false}={}){
    try{
     const page=await read(api,{...parameters,cursor},signal);
     if(signal.aborted||current!==sequence||stopped)return;
-    const added=append(page);cursor=page.nextCursor;loadedPages++;
+    const added=append(page);cursor=page.nextCursor;pages++;loadedPages=pages;loadedThreadEnd=api==='thread'&&!cursor;
     if(api==='directory'&&container.querySelector('.empty'))container.querySelector('.empty p').textContent=cursor?'No matches in this page. Continue searching.':'No subboards match this search.';
     if(!cursor){stop();more.remove();}else more.disabled=false;
     if(added.length)focusResult(added[0]);
@@ -299,6 +301,7 @@ async function render({live=false}={}){
   if(cursor)contentHost.append(more);
   contentHost.append(el('details',{class:'feed-details'},el('summary',{},'About this feed'),el('p',{class:'quiet'},'Checked against chain block '+String(data.checkpoint?.number??''))));
   if(live){main.querySelector('.public-content')?.replaceWith(contentHost);announce('Conversations updated.');}
+  renderedRoute=route;loadedPages=pages;loadedThreadEnd=api==='thread'&&!cursor;
   finishDOM();
   updates.rendered(data.revision);
   finishTiming();
@@ -318,7 +321,7 @@ addEventListener('pagehide',()=>{sequence++;controller?.abort();updates.stop();}
 addEventListener('pageshow',event=>{updates.start();if(event.persisted)render();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void updates.flush();});
 document.querySelector('.skip').addEventListener('click',skipToContent);
-addEventListener('hashchange',()=>{positions.set(route,captureRoutePosition(loadedPages));if(positions.size>40)positions.delete(positions.keys().next().value);route=currentRoute();render();});
+addEventListener('hashchange',()=>{positions.set(route,capturePosition());if(positions.size>40)positions.delete(positions.keys().next().value);route=currentRoute();render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});
 updates.start();
 render();

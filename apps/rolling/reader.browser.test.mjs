@@ -593,3 +593,88 @@ test('public revision notification renders a Bok response without navigation or 
  release.resolve();await page.locator('#post-11').waitFor();assert.equal(await page.locator('#post-11 .author').textContent(),'Bok');assert.equal(reads,2);assert.deepEqual(errors,[]);
  assert.equal(await page.evaluate(()=>performance.getEntriesByName('rolling.reader.update').length),1);
 });
+
+async function threadRefreshFixture(t,{total=32}={}){
+ const state={total,revision:'1',calls:[],invalidPage:false,hold:false,pending:[]};
+ const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
+ const checkpoint={number:12,hash:'0x'+'a'.repeat(64)},scope={boardAddress:'public'};
+ let stream;const connected=Promise.withResolvers();
+ const server=http.createServer(async(req,res)=>{
+  const url=new URL(req.url,'http://localhost');
+  if(url.pathname==='/api/events'){res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-store'});res.flushHeaders();stream=res;connected.resolve();return;}
+  if(url.pathname==='/wallet-panel.mjs'){
+   res.writeHead(200,{'content-type':'text/javascript'});res.end('export function mountRollingWalletPanel(options){window.refreshThread=options.onPublicEffect;return {initialize(){},attachIdentityControls(){},attachBokControls(){},open(){},close(){}}}');return;
+  }
+  if(url.pathname==='/api/thread'||url.pathname==='/api/home'){
+   const offset=Number(url.searchParams.get('cursor')??0);state.calls.push(offset);
+   const body={schemaVersion:1,scope,complete:true,checkpoint,revision:state.invalidPage&&offset?'changed':state.revision,
+    posts:Array.from({length:Math.min(16,state.total-offset)},(_,i)=>{const id=String(offset+i+1);return {id,record:{root:'1',parent:id==='1'?'0':'1',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Reply '+id,timestamp:'1',likes:'0'};}),
+    nextCursor:offset+16<state.total?String(offset+16):null,names:{},boards:{}};
+   if(state.hold&&offset||state.holdRoot&&url.searchParams.get('root')===state.holdRoot)await new Promise(resolve=>state.pending.push(resolve));
+   res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(body));return;
+  }
+  const name=url.pathname==='/'?'live.html':url.pathname.slice(1);if(!files.has(name)){res.writeHead(404);res.end();return;}
+  res.writeHead(200,{'content-type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});res.end(await fs.readFile(path.join(root,name)));
+ });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const browser=await launchBrowser(),page=await browser.newPage();t.after(async()=>{for(const release of state.pending.splice(0))release();await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));});
+ const errors=[];page.setDefaultTimeout(5000);page.on('pageerror',error=>errors.push(error.message));t.after(()=>assert.deepEqual(errors,[]));
+ await page.addInitScript(()=>{window.IntersectionObserver=undefined;});
+ await page.goto(`http://127.0.0.1:${server.address().port}/#/thread/1`);await page.locator('#post-16').waitFor();await page.waitForFunction(()=>typeof refreshThread==='function');await connected.promise;
+ return {page,state,notify(){stream.write('event: revision\ndata: '+JSON.stringify({schemaVersion:1,revision:state.revision,checkpoint})+'\n\n');}};
+}
+
+test('confirmed post refresh preserves a fully loaded thread and follows its new tail through subsequent live replies',async t=>{
+ const {page,state,notify}=await threadRefreshFixture(t);
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-32').waitFor();assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
+ state.total=33;state.revision='2';state.hold=true;
+ await page.evaluate(()=>{window.refreshing=refreshThread();});await until(()=>state.pending.length===1);
+ assert.equal(await page.getByRole('article').count(),32,'old complete snapshot stays visible during refresh');
+ state.hold=false;state.pending.splice(0).forEach(resolve=>resolve());await page.evaluate(()=>refreshing);await page.locator('#post-33').waitFor();
+ assert.equal(await page.getByRole('article').count(),33);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
+ state.total=49;state.revision='3';notify();await page.locator('#post-49').waitFor();
+ assert.equal(await page.getByRole('article').count(),49);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
+ assert.deepEqual(state.calls,[0,16,0,16,32,0,16,32,48]);
+});
+
+test('confirmed post refresh retains a partially loaded thread without fetching unseen history',async t=>{
+ const {page,state}=await threadRefreshFixture(t,{total:48});
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-32').waitFor();
+ state.total=49;state.revision='2';await page.evaluate(()=>refreshThread());
+ assert.equal(await page.getByRole('article').count(),32);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),1);
+ assert.deepEqual(state.calls,[0,16,0,16]);
+});
+
+test('thread refresh rejects mixed snapshots and retains its loaded extent for retry',async t=>{
+ const {page,state}=await threadRefreshFixture(t);
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-32').waitFor();
+ state.total=33;state.revision='2';state.invalidPage=true;await page.evaluate(()=>refreshThread());
+ assert.equal(await page.getByRole('article').count(),32);assert.equal(await page.locator('#post-33').count(),0);
+ assert.equal(await page.locator('#announcement').textContent(),'Conversations could not refresh.');
+ state.invalidPage=false;await page.evaluate(()=>refreshThread());await page.locator('#post-33').waitFor();
+ assert.equal(await page.getByRole('article').count(),33);assert.deepEqual(state.calls,[0,16,0,16,0,16,32]);
+});
+
+
+test('navigation cancels a thread extent refresh without adding its delayed replies to the new route',async t=>{
+ const {page,state}=await threadRefreshFixture(t);
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-32').waitFor();
+ state.total=33;state.revision='2';state.hold=true;
+ await page.evaluate(()=>{window.refreshing=refreshThread();});await until(()=>state.pending.length===1);
+ await page.evaluate(()=>{location.hash='/home';});await page.getByRole('heading',{name:'Home',exact:true}).waitFor();await page.locator('#post-16').waitFor();
+ state.hold=false;state.pending.splice(0).forEach(resolve=>resolve());await page.evaluate(()=>refreshing);
+ assert.equal(await page.getByRole('article').count(),16);assert.equal(await page.locator('#post-32').count(),0);assert.equal(await page.locator('#post-33').count(),0);
+ assert.equal(await page.getByRole('alert').count(),0);
+});
+
+
+test('an unrendered conversation never inherits another conversation’s loaded end on rapid navigation',async t=>{
+ const {page,state}=await threadRefreshFixture(t);
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-32').waitFor();
+ state.total=48;state.holdRoot='2';
+ await page.evaluate(()=>{location.hash='/thread/2';});await until(()=>state.pending.length===1);
+ await page.evaluate(()=>{location.hash='/home';});await page.getByRole('heading',{name:'Home',exact:true}).waitFor();await page.locator('#post-16').waitFor();
+ state.holdRoot=null;state.pending.splice(0).forEach(resolve=>resolve());
+ await page.goBack();await page.getByRole('heading',{name:'Conversation',exact:true}).waitFor();await page.locator('#post-16').waitFor();
+ assert.equal(await page.getByRole('article').count(),16);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),1);
+ assert.deepEqual(state.calls,[0,16,0,0,0]);
+});
