@@ -191,6 +191,56 @@ test('proof admission reports numeric body, validation and persistence phases on
  try{
   const request=fetch('http://127.0.0.1:'+server.address().port+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:await encodeJob(metadata,[new Map()])}).then(response=>{done=true;return response;});
   await entered;await new Promise(r=>setImmediate(r));assert.equal(done,false);release();const response=await request;
-  assert.equal(response.status,202);assert.match(response.headers.get('server-timing'),/^body;dur=\d+\.\d{3},validate;dur=\d+\.\d{3},queue;dur=\d+\.\d{3}$/);
+  assert.equal(response.status,202);assert.match(response.headers.get('server-timing'),/^body;dur=\d+\.\d{3},validate;dur=\d+\.\d{3},queue;dur=\d+\.\d{3},body-first;dur=\d+\.\d{3},body-gap;dur=\d+\.\d{3},body-chunks;dur=\d+$/);
  }finally{release();server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
+
+test('queue completion listeners are bounded, abortable and notified without polling',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-events-'));let complete;
+ const queue=await createProofQueue({directory,worker:{prove:()=>new Promise(r=>complete=r),close:async()=>{}}});
+ try{
+  const id=await queue.submit(Buffer.of(1),'client'),controllers=Array.from({length:4},()=>new AbortController());
+  const waiting=controllers.map(c=>queue.waitForResult(id,c.signal));waiting.forEach(p=>p.catch(()=>{}));
+  assert.throws(()=>queue.waitForResult(id,new AbortController().signal),{status:429});
+  controllers[0].abort();await assert.rejects(waiting[0]);
+  const replacement=queue.waitForResult(id,new AbortController().signal);complete({mode:'real',compressedProof:'ok'});
+  for(const result of await Promise.all([...waiting.slice(1),replacement]))assert.equal(result.result.compressedProof,'ok');
+  assert.equal((await queue.waitForResult(id)).state,'complete');assert.equal(await queue.acknowledge(id),true);assert.equal(await queue.waitForResult(id),null);
+ }finally{await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+test('real HTTP completion stream wakes immediately and disconnect only releases observer',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-stream-'));let complete,closed=0;
+ const queue=await createProofQueue({directory,worker:{prove:()=>new Promise(r=>complete=r),close:async()=>{closed++;}}});
+ const server=createProverServer({queue,origins:['https://board.example']});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{
+  const id=await queue.submit(Buffer.of(1),'client'),url='http://127.0.0.1:'+server.address().port+'/v1/jobs/'+id+'/result';
+  assert.equal((await fetch(url,{headers:{origin:'https://other.example'}})).status,403);
+  const aborted=new AbortController(),first=await fetch(url,{signal:aborted.signal}),reader=first.body.getReader();
+  assert.match(new TextDecoder().decode((await reader.read()).value),/running/);aborted.abort();await reader.cancel().catch(()=>{});
+  assert.equal(queue.get(id).state,'running');assert.equal(closed,0);
+  const response=await fetch(url);assert.equal(response.headers.get('content-type'),'text/event-stream');let done=false;const text=response.text().then(x=>{done=true;return x;});
+  await new Promise(setImmediate);assert.equal(done,false);complete({mode:'real',compressedProof:'finished'});assert.match(await text,/finished/);
+  assert.equal(queue.get(id).state,'complete');assert.equal(closed,0);
+ }finally{await server.closeAndDrain();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+test('server drain cancels event observation without waiting for or cancelling a running proof',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-stream-close-'));let complete;
+ const queue=await createProofQueue({directory,worker:{prove:()=>new Promise(r=>complete=r),close:async()=>{}}});
+ const server=createProverServer({queue});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{
+  const id=await queue.submit(Buffer.of(1),'client');const response=await fetch('http://127.0.0.1:'+server.address().port+'/v1/jobs/'+id+'/result');
+  const body=response.text().catch(()=>{});await server.closeAndDrain();await body;assert.equal(queue.get(id).state,'running');
+  complete({mode:'real'});assert.equal((await queue.waitForResult(id)).state,'complete');
+ }finally{await server.closeAndDrain();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('backpressured heartbeat disconnects only the bounded result observer',async t=>{
+ const {EventEmitter}=await import('node:events');t.mock.timers.enable({apis:['setInterval']});
+ let detached=0,writes=0;const queue={get:()=>({state:'running'}),waitForResult:(_id,signal)=>new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>{detached++;reject(signal.reason);},{once:true}))};
+ const server=createProverServer({queue}),res=new EventEmitter();
+ Object.assign(res,{headersSent:false,destroyed:false,setHeader(){},writeHead(){this.headersSent=true;},write(){return ++writes===1;},destroy(){if(!this.destroyed){this.destroyed=true;this.emit('close');}},end(){}});
+ server.emit('request',{method:'GET',url:'/v1/jobs/'+'a'.repeat(64)+'/result',headers:{},socket:{remoteAddress:'127.0.0.1'}},res);
+ assert.equal(writes,1);t.mock.timers.tick(10000);await new Promise(setImmediate);
+ assert.equal(writes,2);assert.equal(detached,1);assert.equal(res.destroyed,true);assert.equal(queue.get().state,'running');
+ t.mock.timers.tick(100000);assert.equal(writes,2);await server.closeAndDrain();
 });

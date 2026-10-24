@@ -70,15 +70,32 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
     const receivedAt=performance.now();
     const client=admit();if(client===undefined)return;
     if(req.headers['content-type']!=='application/octet-stream'){reply(415,{error:'Binary job required'});return;}
-    uploads++;let body;
-    try{const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_REQUEST_BYTES)throw Object.assign(Error(),{status:413});chunks.push(chunk);}body=Buffer.concat(chunks);}finally{uploads--;}
+    uploads++;let body,firstChunkAt,lastChunkAt=receivedAt,maxChunkGap=0,chunkCount=0;
+    try{const chunks=[];let size=0;for await(const chunk of req){const now=performance.now();firstChunkAt??=now;maxChunkGap=Math.max(maxChunkGap,now-lastChunkAt);lastChunkAt=now;chunkCount++;size+=chunk.length;if(size>MAX_REQUEST_BYTES)throw Object.assign(Error(),{status:413});chunks.push(chunk);}body=Buffer.concat(chunks);}finally{uploads--;}
     const bodyAt=performance.now(),{metadata}=decodeJob(body);
     if(metadata.board!==board||String(metadata.chainId)!==String(chainId)||String(metadata.rollupVersion)!==String(rollupVersion)||metadata.mode!==(proofsEnabled?'real':'disabled')){reply(403,{error:'Board or proof mode mismatch'});return;}
     const validatedAt=performance.now(),id=await queue.submit(body,client),queuedAt=performance.now();
     // Numeric stage durations only: never circuit IDs, job IDs, account data or
     // witness contents. Queue time includes persistence and worker scheduling.
-    res.setHeader('Server-Timing',`body;dur=${(bodyAt-receivedAt).toFixed(3)},validate;dur=${(validatedAt-bodyAt).toFixed(3)},queue;dur=${(queuedAt-validatedAt).toFixed(3)}`);
+    res.setHeader('Server-Timing',`body;dur=${(bodyAt-receivedAt).toFixed(3)},validate;dur=${(validatedAt-bodyAt).toFixed(3)},queue;dur=${(queuedAt-validatedAt).toFixed(3)},body-first;dur=${((firstChunkAt??bodyAt)-receivedAt).toFixed(3)},body-gap;dur=${maxChunkGap.toFixed(3)},body-chunks;dur=${chunkCount}`);
     reply(202,{id});return;
+   }
+   const resultMatch=/^\/v1\/jobs\/([a-f0-9]{64})\/result$/.exec(req.url);
+   if(req.method==='GET'&&resultMatch){
+    const controller=new AbortController(),abort=()=>controller.abort();
+    res.once('close',abort);let heartbeat;
+    try{
+     const state=queue.get(resultMatch[1]);if(!state){reply(404,{error:'Job not found'});return;}
+     // Subscribe before writing headers: capacity failures remain normal HTTP errors.
+     const completed=queue.waitForResult(resultMatch[1],controller.signal);void completed.catch(()=>{});
+     res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-store'});
+     const send=value=>res.write('data: '+JSON.stringify(value)+'\n\n');
+     if(!['complete','failed'].includes(state.state))send(state);
+     // Keep intermediaries alive. This does not bound or cancel proof execution.
+     heartbeat=setInterval(()=>{if(!res.write(': keepalive\n\n'))res.destroy();},10000);heartbeat.unref();
+     const result=await completed;if(!res.destroyed){if(result)send(result);res.end();}
+    }finally{clearInterval(heartbeat);res.off('close',abort);controller.abort();}
+    return;
    }
    const match=/^\/v1\/jobs\/([a-f0-9]{64})$/.exec(req.url);
    if(req.method==='GET'&&match){const job=queue.get(match[1]);reply(job?200:404,job??{error:'Job not found'});return;}
@@ -86,7 +103,7 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
    // Acknowledgement cannot cancel queued or running computation.
    if(req.method==='DELETE'&&match){const acknowledged=await queue.acknowledge(match[1]);reply(acknowledged?200:409,acknowledged?{acknowledged:true}:{error:'Job is still running'});return;}
    reply(404,{error:'Not found'});
-  }catch(error){reply(error.status??400,{error:'Request rejected'});}
+  }catch(error){if(res.headersSent)res.destroy();else reply(error.status??400,{error:'Request rejected'});}
  };
  const server=http.createServer((req,res)=>{
   if(closing){req.destroy();return;}
