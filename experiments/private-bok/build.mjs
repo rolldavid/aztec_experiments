@@ -5,6 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {ROOT, nargoBinary, assertNodeVersion, assertAztecPackages} from '../../scripts/toolchain.mjs';
 import {processArtifact} from '../../scripts/build-contracts.mjs';
+import {prepareOwnerNoir} from '../../scripts/prepare-owner-noir.mjs';
 
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ARTIFACT = path.join(HERE, 'target/private_bok-PrivateBok.json');
@@ -17,10 +18,13 @@ export function buildInputs() {
     'experiments/private-bok/probe-board/Nargo.toml', 'experiments/private-bok/probe-board/src/main.nr', 'experiments/private-bok/build.mjs',
     'noir-dependencies.json', 'toolchain.json', 'package-lock.json',
     'scripts/build-contracts.mjs', 'scripts/check-noir-dependencies.mjs', 'scripts/normalize-noir.mjs',
+    'scripts/prepare-owner-noir.mjs', 'scripts/owner-delivery-noir-sources.json',
+    'scripts/fixtures/owner-noir-bootstrap/Nargo.toml', 'scripts/fixtures/owner-noir-bootstrap/src/lib.nr',
   ].map(relative => [relative, sha(fs.readFileSync(path.join(ROOT, relative)))]));
 }
 export function build() {
   assertNodeVersion(); assertAztecPackages();
+  prepareOwnerNoir();
   const inputs = buildInputs();
   execFileSync(nargoBinary(), ['compile', '--force', '--silence-warnings'], {cwd: HERE, stdio: 'inherit', timeout: 300000});
   // This contract has private functions: the existing checker must require their VKs.
