@@ -1,0 +1,161 @@
+{
+  "results": [
+    {
+      "threads": 8,
+      "wallMs": 5579.3745610000005,
+      "phases": [
+        {
+          "stage": "native-init",
+          "atMs": 532.3100919999999
+        },
+        {
+          "stage": "catalog",
+          "atMs": 608.721923
+        },
+        {
+          "stage": "decompress",
+          "atMs": 739.9234220000001
+        },
+        {
+          "stage": "board-binding",
+          "atMs": 751.495314
+        },
+        {
+          "stage": "prove",
+          "atMs": 1144.512414
+        },
+        {
+          "stage": "native-prove",
+          "atMs": 1220.01589
+        }
+      ],
+      "proofBytes": 111552,
+      "verifiedByNativeSdk": true,
+      "wholeProcessWallMs": 5885.966208996251,
+      "nativeProofVerifyCleanupMs": 4359.358671000001
+    },
+    {
+      "threads": 16,
+      "wallMs": 4578.294197,
+      "phases": [
+        {
+          "stage": "native-init",
+          "atMs": 524.623077
+        },
+        {
+          "stage": "catalog",
+          "atMs": 601.4171759999999
+        },
+        {
+          "stage": "decompress",
+          "atMs": 731.7099800000001
+        },
+        {
+          "stage": "board-binding",
+          "atMs": 743.2886719999999
+        },
+        {
+          "stage": "prove",
+          "atMs": 1131.955408
+        },
+        {
+          "stage": "native-prove",
+          "atMs": 1199.66534
+        }
+      ],
+      "proofBytes": 111552,
+      "verifiedByNativeSdk": true,
+      "wholeProcessWallMs": 4889.812185021583,
+      "nativeProofVerifyCleanupMs": 3378.628857
+    },
+    {
+      "threads": 16,
+      "wallMs": 4585.824088,
+      "phases": [
+        {
+          "stage": "native-init",
+          "atMs": 528.974765
+        },
+        {
+          "stage": "catalog",
+          "atMs": 606.408077
+        },
+        {
+          "stage": "decompress",
+          "atMs": 736.385769
+        },
+        {
+          "stage": "board-binding",
+          "atMs": 748.344989
+        },
+        {
+          "stage": "prove",
+          "atMs": 1144.5903280000002
+        },
+        {
+          "stage": "native-prove",
+          "atMs": 1213.393791
+        }
+      ],
+      "proofBytes": 111552,
+      "verifiedByNativeSdk": true,
+      "wholeProcessWallMs": 4892.070628993679,
+      "nativeProofVerifyCleanupMs": 3372.4302970000003
+    },
+    {
+      "threads": 8,
+      "wallMs": 5589.597288,
+      "phases": [
+        {
+          "stage": "native-init",
+          "atMs": 532.6102229999999
+        },
+        {
+          "stage": "catalog",
+          "atMs": 609.4093399999999
+        },
+        {
+          "stage": "decompress",
+          "atMs": 741.9345170000001
+        },
+        {
+          "stage": "board-binding",
+          "atMs": 753.1734100000001
+        },
+        {
+          "stage": "prove",
+          "atMs": 1146.357177
+        },
+        {
+          "stage": "native-prove",
+          "atMs": 1222.750966
+        }
+      ],
+      "proofBytes": 111552,
+      "verifiedByNativeSdk": true,
+      "wholeProcessWallMs": 5899.902714998461,
+      "nativeProofVerifyCleanupMs": 4366.846321999999
+    }
+  ],
+  "queueAfter": {
+    "jobs": 0,
+    "bytes": 0,
+    "running": false,
+    "submitted": 22,
+    "completed": 21,
+    "failed": 1
+  },
+  "pidPreserved": true,
+  "configPreserved": true,
+  "instanceId": "i-0a9b5b9ba55815cda",
+  "instanceType": "m7a.4xlarge",
+  "physicalCores": 16,
+  "threadsPerCore": 1,
+  "scope": "Same captured ordinary maximum-content job, actual pinned worker and native verification, no transaction broadcast; sequential8/16/16/8; no service configuration change during benchmark",
+  "inputBytes": 1108005,
+  "inputSha256": "037e6150679ed838d12542cac8e16285847fe6650cdd10553cbfebb79914f485",
+  "temporaryPrivateS3VersionDeleted": true,
+  "remotePrivateFixtureRemoved": true,
+  "cpuTimingNote": "Python child resource usage excluded native grandchildren and is intentionally not reported as whole-job CPU. IPC phases are monotonic wall times.",
+  "monthlyCostChangeUsd": 0
+}

@@ -1,0 +1,38 @@
+{
+  "publishedAt": "2026-10-24T09:16:29.483969+00:00",
+  "threadsBefore": 8,
+  "threadsAfter": 16,
+  "configSha256Before": "429e7f737ccf59b62ff1ca83f3f010c3339332ca5d88264f3e830ea5e83d5e3e",
+  "configSha256After": "54ce190420f9d756786aa13b98a33c3b740e0bd1389d4d18373b988bbb3d7ae6",
+  "activationResultSha256Before": "7edd2fb8b60f7b5537aeb1ffb80ea92ce915a92f915a3d4b2737a8dbb741bb6f",
+  "activationResultSha256After": "4e59ac10bdbe4d07f2632e5b6a15fd0f7c68463f556ff7a4d56846310d2b7242",
+  "pidBefore": 651105,
+  "pidAfter": 728356,
+  "source": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc",
+  "protectedPids": {
+    "board-prover-proxy": "630307",
+    "rolling-node": "561964",
+    "rolling-query": "565186",
+    "rolling-application": "709116",
+    "rolling-application-proxy": "709119",
+    "rolling-moderator": "567551"
+  },
+  "health": {
+    "ready": true,
+    "proofs": "real",
+    "queue": {
+      "jobs": 0,
+      "bytes": 0,
+      "running": false,
+      "submitted": 0,
+      "completed": 0,
+      "failed": 0
+    },
+    "query": {
+      "enabled": true,
+      "ready": true
+    }
+  },
+  "memoryLimitBytes": 25769803776,
+  "queueMode": "existing single serial worker, unchanged"
+}
