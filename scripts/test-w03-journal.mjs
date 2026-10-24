@@ -34,6 +34,34 @@ for(const backend of ['file','indexeddb']) {
   assert.equal(result.status,'available');assert.equal(result.attempts[0].txHash,String(f.tx.getTxHash()));assert.equal(await storage.read(key),before);
   await assert.rejects(reopened.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(writes,0);assert.equal(reopened.lastTxHash,null);assert.equal(f.sent.length,0);
  }));
+ test(`${backend}: outcome authenticates and decodes once while both freshness reads remain live`,()=>withStorage(async (f,{storage})=>{
+  let reads=0,decodes=0,decrypts=0;const read=storage.read.bind(storage),subtle=globalThis.crypto.subtle;
+  storage.read=async(...args)=>{reads++;return read(...args);};
+  const crypto={getRandomValues:globalThis.crypto.getRandomValues.bind(globalThis.crypto),subtle:new Proxy(subtle,{get(target,key){
+    if(key==='decrypt')return (...args)=>{decrypts++;return target.decrypt(...args);};
+    const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;
+  }})};
+  const countedTx={fromBuffer:(...args)=>{decodes++;return Tx.fromBuffer(...args);}};
+  const j=await f.newSession({crypto,Tx:countedTx,operationScope:()=>owner}),owner={};
+  await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  reads=decodes=decrypts=0;const first=await j.inspectOutcome();
+  assert.deepEqual({reads,decodes,decrypts},{reads:3,decodes:1,decrypts:2});
+  reads=decodes=decrypts=0;assert.equal((await j.inspectOutcome({reuse:true})).txHash,first.txHash);
+  assert.deepEqual({reads,decodes,decrypts},{reads:3,decodes:1,decrypts:2},'reuse still freshly authenticates the record');
+  assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: each exact-ciphertext freshness boundary rejects concurrent journal mutation`,()=>withStorage(async (f,{storage})=>{
+  const owner={},j=await f.newSession({operationScope:()=>owner});
+  await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  const read=storage.read.bind(storage);
+  for(const changedRead of [2,3]){
+    let reads=0;storage.read=async(...args)=>{const value=await read(...args);return ++reads===changedRead?value+' ':value;};
+    await assert.rejects(j.inspectOutcome(),{code:'BB_RECOVERY_REQUIRED'});
+    assert.equal(reads,changedRead);assert.equal(f.sent.length,0);
+  }
+  storage.read=read;
+  assert.equal((await j.inspectOutcome()).outcome,'success');
+ }));
  test(`${backend}: owned predecessor checks reuse only within the exact operation and refresh both proof boundaries`,()=>withStorage(async f=>{
   let owner={},receipts=0,blocks=0;const receipt=f.node.getTxReceipt,block=f.node.getBlock;
   f.node.getTxReceipt=async(...args)=>{receipts++;return receipt(...args);};f.node.getBlock=async(...args)=>{blocks++;return block(...args);};

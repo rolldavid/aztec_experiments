@@ -77,7 +77,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   async function rememberCanonical(saved,receipt,owner){
     if(!owner||!receipt)return;
     await checkedScope(owner);
-    if((await read()).encoded!==saved.encoded)throw fail();
+    if(!await slot.isCurrent(saved.encoded))throw fail();
     await checkedScope(owner);
     canonicalPermit={owner,encoded:saved.encoded,hash:saved.tx.getTxHash().toString(),receipt};
   }
@@ -268,7 +268,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       const cached=permitted?canonicalPermit.receipt:null;
       if(!permitted)canonicalPermit=null;
       const receipt=cached??await readCanonicalReceipt(node,saved.tx.getTxHash(),waitOptions);
-      if((await read()).encoded!==saved.encoded)throw fail();
+      if(!await slot.isCurrent(saved.encoded))throw fail();
       await rememberCanonical(saved,receipt,owner);
       return {operation:saved.value.operation??null,txHash:saved.value.txHash,applicationNullifier:saved.value.applicationNullifier??null,outcome:receipt?.executionResult??'pending',receipt};
     },

@@ -48,6 +48,13 @@ export async function createEncryptedJournalSlot({storage,walletSecret,walletSal
       return {encoded,value:JSON.parse(decoder.decode(plain))};
     }catch{throw invalid();}finally{plain?.fill(0);}
   }
+  // This is only a freshness comparison against bytes already authenticated by
+  // read(). It returns no plaintext or authority and retains no decoded record.
+  // Callers must still validate their original record and operation ownership.
+  async function isCurrent(encoded) {
+    if(encoded!==null&&typeof encoded!=='string')throw invalid();
+    try{return await storage.read(storageKey)===encoded;}catch{throw invalid();}
+  }
   async function write(previous,value) {
     const plain=encoder.encode(JSON.stringify(value));if(plain.length>MAX_BYTES-16)throw invalid();
     const iv=crypto.getRandomValues(new Uint8Array(12));let encoded;
@@ -59,5 +66,5 @@ export async function createEncryptedJournalSlot({storage,walletSecret,walletSal
     try{await storage.compareAndSwap(storageKey,previous.encoded,encoded);}catch{throw invalid();}
     const saved=await read();if(saved.encoded!==encoded)throw invalid();return saved;
   }
-  return {read,write,storageKey};
+  return {read,write,isCurrent,storageKey};
 }
