@@ -14,6 +14,7 @@ import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs'
 const pxeSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url),'utf8');
 const kernelSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js',import.meta.url),'utf8');
 const pxe=validatedPxeProve(pxeSource),kernel=validatedKernelProve(kernelSource);
+const nativeTimingBindings=vm.runInNewContext(pxe.slice(0,pxe.indexOf("import "))+';({beginRollingProofSpan,measureRollingProofPhase})',{performance});
 // Resolve the enum through the transformed module's real import declaration.
 // Supplying it independently to the extracted-method harness would hide a
 // missing production binding after an otherwise successful expensive proof.
@@ -32,7 +33,7 @@ function kernelHarness(){
   prefetchUpdatedClassIdHints=async()=>new Map();consumeNextApp=async stack=>stack.pop();
   runBatchedKernel=async()=>{calls.push('kernel');return output;};getVkData=async()=>({});ensurePublicInputsMatch=()=>calls.push('verify-proof');
   ${text}
- })`,{calls,tail,output,Timer,NULL_SIMULATE_OUTPUT:output,CircuitKind:{Kernel:1,HidingKernel:2},PrivateKernelTailCircuitPublicInputs,
+ })`,{...nativeTimingBindings,calls,tail,output,Timer,NULL_SIMULATE_OUTPUT:output,CircuitKind:{Kernel:1,HidingKernel:2},PrivateKernelTailCircuitPublicInputs,
  collectNoteHashNullifierCounterMap:()=>new Map(),getFinalMinRevertibleSideEffectCounter:()=>0,
  BatchPlanner:class{decideBatchSize(){return 1;}},PrivateKernelResetPrivateInputsBuilder:class{needsReset(){return true;}async build(){return {}; }},
  PaddedSideEffectAmounts:{empty:()=>({})},computeTxExpirationTimestamp:()=>0n,PrivateKernelResetTailCircuitPrivateInputs:class{isForPublic(){return true;}},HidingKernelToPublicPrivateInputs:class{}});
@@ -63,7 +64,7 @@ function pxeHarness(failure,executionSteps=[],gates={}){
   ${prove}
   ${privateProve}
   ${validate}
- })`,{calls,ctx,assert,request,publicInputs,execution,executionSteps,CircuitKind,failure,gates,Gas,Timer,PrivateSimulationResult,TxProvingResult,inspect:()=>'',persistSenderTaggingIndexRangesForTx:async()=>calls.push('tags')});
+ })`,{...nativeTimingBindings,calls,ctx,assert,request,publicInputs,execution,executionSteps,CircuitKind,failure,gates,Gas,Timer,PrivateSimulationResult,TxProvingResult,inspect:()=>'',persistSenderTaggingIndexRangesForTx:async()=>calls.push('tags')});
  return {instance:new Class(),request,calls};
 }
 test('native PXE validates actual kernel output inside one queue operation, then proves and persists tags',async()=>{
@@ -147,7 +148,7 @@ async function ordinarySyncFixture(){
  const text=method(pxe,'async #syncOrdinaryPostCalls(', '\n    // Public API');
  const Class=vm.runInNewContext(`(class {contractClassService=classService;contractSyncService=service;#executeUtility=utility;${text}
  async run(){try{await this.#syncOrdinaryPostCalls(request,calls,simulator,ctx,scopes);await service.settle(ctx.changeSetId);events.push(['private-ready']);service.onOperationEnd(ctx.changeSetId,'committed');}catch(error){await service.settle(ctx.changeSetId);service.onOperationEnd(ctx.changeSetId,'discarded');events.push(['discard']);throw error;}}
- })`,{...syncBindings,classService,service,utility,request,calls,simulator,ctx,scopes,events,allToCompletion});
+ })`,{...nativeTimingBindings,...syncBindings,classService,service,utility,request,calls,simulator,ctx,scopes,events,allToCompletion});
  return {run:()=>new Class().run(),request,calls,events,pending,classes,hold:()=>{hold=true;},fail:address=>{failAddress=address;},owner,fee,board,service};
 }
 test('exact native account payload pre-syncs three known contracts concurrently in one change set without learned predictions',async()=>{
@@ -187,7 +188,7 @@ test('queued prove request detaches known call fields before yielding and suppli
  #syncOrdinaryPostCalls=async(...values)=>{seen.push(['sync',...values]);};
  #proveTx=async()=>{seen.push(['proof']);return 'done';};
  ${text}
- })`,{...syncBindings,seen,wait,context,inspect:()=>''});
+ })`,{...nativeTimingBindings,...syncBindings,seen,wait,context,inspect:()=>''});
  const instance=new Class(),scopes=[f.owner],work=instance.proveTx(f.request,{scopes,validatePublic:true,preSyncCalls:f.calls});
  f.calls[1].args[0]=new Fr(999);f.calls[1].to=AztecAddress.ZERO;release();assert.equal(await work,'done');
  assert.equal(seen[0][0],'sync');assert.equal(seen[0][2][1].args[0].toString(),original);assert(seen[0][2][1].to.equals(f.board));assert.equal(seen[0][4],context);assert.equal(seen[0][5],scopes);

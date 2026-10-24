@@ -1,3 +1,4 @@
+import {measureProofPhase,timedCircuitCallbacks} from './proof-timings.mjs';
 // Owner-only delivery is unconstrained host work. Native note inclusion and
 // nullification checks still authenticate the recovered state before spending.
 const FIELD=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
@@ -75,7 +76,12 @@ export function wrapOwnerEnvelopeCallbacks(native,oracles=createOwnerEnvelopeOra
 export function withOwnerEnvelopeOracles(simulator,options){
  const oracles=createOwnerEnvelopeOracles(options);
  return new Proxy(simulator,{get(target,name){
-  if(name==='executeUserCircuit')return (input,artifact,callback)=>target.executeUserCircuit(input,artifact,wrapOwnerEnvelopeCallbacks(callback,oracles));
+  if(name==='executeUserCircuit')return (input,artifact,callback)=>{
+   const native=wrapOwnerEnvelopeCallbacks(callback,oracles);
+   // Detailed per-oracle observation is opt-in; ordinary visits pay no proxy/timer cost.
+   if(globalThis[Symbol.for('rolling.proof.profile')]===true)return measureProofPhase('native.phase.circuit',()=>target.executeUserCircuit(input,artifact,timedCircuitCallbacks(native)));
+   return target.executeUserCircuit(input,artifact,native);
+  };
   const value=Reflect.get(target,name,target);return typeof value==='function'?value.bind(target):value;
  }});
 }

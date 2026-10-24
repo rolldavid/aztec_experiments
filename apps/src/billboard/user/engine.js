@@ -24,11 +24,17 @@
   // Fixed names only; retain at most one completed interval and one pending mark
   // per boundary. No transaction or wallet data enters browser timing records.
   async function measured(name, operation) {
-    const key='billboard.'+name;
-    performance.clearMarks(key);performance.clearMeasures(key);performance.mark(key);
-    const result=await operation();
-    performance.measure(key,key);performance.clearMarks(key);return result;
+    const key='billboard.'+name;let start;
+    try{start=performance.now();performance.clearMarks(key);performance.clearMeasures(key);performance.mark(key);}catch{}
+    try{return await operation();}finally{try{
+      if(Number.isFinite(start)){
+        const end=performance.now();performance.measure(key,{start,end});performance.clearMarks(key);
+        const rolling='rolling.proof.wallet.phase.'+name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());
+        performance.clearMeasures(rolling);performance.measure(rolling,{start,end});
+      }
+    }catch{/* Diagnostics must not change a transaction outcome. */}}
   }
+
   const g = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
 
   // ============================================================
@@ -271,7 +277,7 @@
         // Return only broadcast data from this scope so completed native results
         // are collectible while the transaction is still awaiting its receipt.
         const {tx,applicationNullifier}=await (async()=>{
-          const txRequest = await this.createTxExecutionRequestFromPayloadAndFee(executionPayload, opts.from, feeOpts2);
+          const txRequest = await measured('accountRequest',()=>this.createTxExecutionRequestFromPayloadAndFee(executionPayload, opts.from, feeOpts2));
           const proveOpts={scopes:this.scopesFrom(opts.from,opts.additionalScopes??[],opts.sendMessagesAs),senderForTags:this.senderForTagsFrom(opts.from,opts.sendMessagesAs)};
           if(atomicSimulation&&executionPayload.calls?.length===2&&executionPayload.calls[0].name==='pay_fee'&&executionPayload.calls[1].name==='post')proveOpts.preSyncCalls=executionPayload.calls;
           let provenTx;
@@ -284,23 +290,23 @@
           }
           try{a.recordProofTimings?.(provenTx.stats);}catch{/* Diagnostics cannot interrupt a completed proof. */}
           const tx = await measured('toTx',()=>provenTx.toTx());
-          if (this._contextGuard) await this._contextGuard();
+          if (this._contextGuard) await measured('contextGuard',()=>this._contextGuard());
           const applicationNullifier = !opts.journalOperation && this._applicationNullifierBoard
-            ? (await a.extractApplicationNullifier(provenTx, tx, this._applicationNullifierBoard, this._applicationNoteNullifier)).toString() : undefined;
+            ? (await measured('applicationNullifier',()=>a.extractApplicationNullifier(provenTx, tx, this._applicationNullifierBoard, this._applicationNoteNullifier))).toString() : undefined;
           return {tx,applicationNullifier};
         })();
         const txHash = tx.getTxHash();
         log('  Proving complete. Submitting to node...', 'success');
         log('  Transaction hash: ' + txHash.toString(), 'info');
         // A suspended proof cannot cross a revoked attempt's durable boundary.
-        if(lifecycle){lifecycle.check();await lifecycle.guard('pre-proof');}
-        if (journal) await journal.prepare(tx, previousJournal, {applicationNullifier});
-        if(lifecycle){lifecycle.check();await lifecycle.signed(txHash.toString());}
-        if (this._contextGuard) await this._contextGuard();
-        if (opts.beforeSubmit) await opts.beforeSubmit(txHash.toString());
-        if (this._contextGuard) await this._contextGuard();
+        if(lifecycle){lifecycle.check();await measured('guardBeforeJournal',()=>lifecycle.guard('pre-proof'));}
+        if (journal) await measured('journalPrepare',()=>journal.prepare(tx, previousJournal, {applicationNullifier}));
+        if(lifecycle){lifecycle.check();await measured('journalSigned',()=>lifecycle.signed(txHash.toString()));}
+        if (this._contextGuard) await measured('contextGuard',()=>this._contextGuard());
+        if (opts.beforeSubmit) await measured('beforeSubmit',()=>opts.beforeSubmit(txHash.toString()));
+        if (this._contextGuard) await measured('contextGuard',()=>this._contextGuard());
         this._progress('submitting');
-        if(lifecycle){lifecycle.check();await lifecycle.guard('signed');}
+        if(lifecycle){lifecycle.check();await measured('signedGuard',()=>lifecycle.guard('signed'));}
         await measured('submitToAztec',()=>a.submitOnceWithReconciliation(rawNode,tx));
         let acknowledgedAt=null,inclusionObserved=false;try{acknowledgedAt=performance.now();}catch{/* Optional timing. */}
         this._progress('confirming');

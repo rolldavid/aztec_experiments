@@ -33,9 +33,9 @@ test('non-finite metrics and unrecognized protocol strings cannot enter diagnost
 test('trace bounds each entry type, keeps phase records ordered and excludes long-task attribution',()=>{
  let latest;const h=observers({onEntries:entries=>latest=entries});
  h.emit('resource',Array.from({length:200},(_,i)=>resource('/api/home',{startTime:i})));
- h.emit('measure',Array.from({length:300},(_,i)=>({name:'rolling.action.prepare',startTime:i,duration:1})));
+ h.emit('measure',Array.from({length:2300},(_,i)=>({name:'rolling.action.prepare',startTime:i,duration:1})));
  h.emit('longtask',Array.from({length:100},(_,i)=>({name:'secret',startTime:i,duration:50,attribution:[{containerSrc:'https://private.example/account'}]})));
- assert.equal(latest.filter(v=>v.kind==='resource').length,128);assert.equal(latest.filter(v=>v.kind==='longtask').length,64);assert.equal(latest.filter(v=>v.name).length,256);
+ assert.equal(latest.filter(v=>v.kind==='resource').length,128);assert.equal(latest.filter(v=>v.kind==='longtask').length,64);assert.equal(latest.filter(v=>v.name).length,512);
  assert.equal(latest.filter(v=>v.kind==='resource')[0].start,72);
  assert(latest.every((v,i)=>!i||latest[i-1].start<=v.start));assert(!JSON.stringify(latest).includes('secret'));assert(!JSON.stringify(latest).includes('private'));
  h.stop();assert([...h.instances.values()].every(v=>v.disconnected));
@@ -82,7 +82,7 @@ test('native utility timing is opt-in, duration-only and never changes action ou
   const active=await import('./performance.mjs?utility-active');
   const result={stats:{timings:{total:30,sync:10,unaccounted:5,perFunction:[{get functionName(){throw Error('Identity must not be read');},time:15}]}}};
   assert.equal(await active.measureRollingStage('action.screening',async()=>result,{nativeUtility:true}),result);
-  assert.deepEqual(measures.filter(x=>x.name.includes('.native-')).map(x=>[x.name,x.end-x.start]),[['rolling.action.screening.native-total',30],['rolling.action.screening.native-sync',10],['rolling.action.screening.native-unaccounted',5],['rolling.action.screening.native-function',15]]);
+  assert.deepEqual(measures.filter(x=>x.name.includes('.native-')).map(x=>[x.name,x.detail.durationMs]),[['rolling.action.screening.native-total',30],['rolling.action.screening.native-sync',10],['rolling.action.screening.native-unaccounted',5],['rolling.action.screening.native-function',15]]);
   const bad={get stats(){throw Error('Optional stats unavailable');}};assert.equal(await active.measureRollingStage('action.screening',async()=>bad,{nativeUtility:true}),bad);
   const failure=Error('Actual action failed');await assert.rejects(active.measureRollingStage('action.screening',async()=>{throw failure;},{nativeUtility:true}),error=>error===failure);
   globalThis.location.hash='#/home';const inactive=await import('./performance.mjs?utility-inactive');
@@ -117,4 +117,27 @@ test('proof admission records only fixed numeric server phase durations',()=>{
  const result=rollingResourceTiming(resource('/prover/v1/jobs',{serverTiming:timings}),origin);
  assert.equal(result.serverBody,12);assert.equal(result.serverValidate,.2);assert.equal(result.serverQueue,3);assert(!JSON.stringify(result).includes('private'));
  const node=rollingResourceTiming(resource('/prover/v1/node',{serverTiming:timings}),origin);assert.equal(node.serverBody,undefined);
+});
+
+test('aggregate timings retain duration without inventing a browser interval or exposing other detail',()=>{
+ let latest;const h=observers({onEntries:v=>{latest=v;}});
+ h.emit('measure',[{name:'rolling.proof.aggregate.native.total',startTime:20,duration:0,detail:{kind:'aggregate',durationMs:99,secret:'never include'}}]);
+ assert.deepEqual(latest,[{name:'rolling.proof.aggregate.native.total',start:20,duration:0,aggregateMs:99}]);h.stop();
+});
+
+test('oracle detail cannot evict coarse phases and overflow retains numeric totals',()=>{
+ let latest;const h=observers({onEntries:value=>{latest=value;}});
+ h.emit('measure',[{name:'rolling.action.prepare',startTime:1,duration:3},...Array.from({length:4100},(_,i)=>({name:'rolling.proof.native.phase.oracle-get-notes',startTime:10+i,duration:2}))]);
+ assert(latest.some(e=>e.name==='rolling.action.prepare'));
+ assert.equal(latest.filter(e=>e.name==='rolling.proof.native.phase.oracle-get-notes'&&!e.kind).length,4096);
+ const total=latest.find(e=>e.kind==='oracle-total');assert.equal(total.count,4100);assert.equal(total.inclusiveMs,8200);
+ const overflow=latest.find(e=>e.kind==='trace-overflow');assert.equal(overflow.category,'oracle');assert.equal(overflow.count,4);h.stop();
+});
+
+test('lazy diagnostics append without sorting or reading the clock until a snapshot is requested',()=>{
+ let callback,read,samples=0,clockReads=0;
+ class Observer{constructor(fn){callback=fn;}observe({type}){if(type!=='measure')throw Error('unused');}disconnect(){}}
+ const stop=observeRollingPerformance({PerformanceObserver:Observer,timing:{now(){clockReads++;return 20;}},onChange:fn=>{read=fn;samples++;}});
+ callback({getEntries:()=>[{name:'rolling.action.prepare',startTime:1,duration:2}]});
+ assert.equal(samples,1);assert.equal(clockReads,0);assert.equal(read().length,1);assert.equal(clockReads,1);stop();
 });

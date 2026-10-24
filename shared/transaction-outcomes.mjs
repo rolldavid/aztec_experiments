@@ -1,3 +1,4 @@
+import {measureProofPhase,beginProofSpan} from './proof-timings.mjs';
 // Explicit submission/receipt outcomes. Diagnostic bodies never escape this boundary.
 export const transactionError=(code,message)=>Object.assign(new Error(message),{code});
 const accepted=new Set(['checkpointed','proven','finalized']);
@@ -62,12 +63,13 @@ export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,on
     // Read-only clients use this module too; only private SDK consumers need the waiter.
     const {waitForTx}=await import('@aztec-labs/aztec.js/node');
     const receipt=await waitForTx({getTxReceipt:async()=>{
-      let observed=await boundedTransactionRead(()=>node.getTxReceipt(txHash),readLimit);
+      let observed=await measureProofPhase('receipt.phase.read',()=>boundedTransactionRead(()=>node.getTxReceipt(txHash),readLimit));
       if(hash(observed?.txHash)!==hash(txHash))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt identity does not match.');
       if(observed.status==='dropped'){
         try{observed=await classifyDroppedTransaction(node,tx,observed,{readTimeoutMs:readLimit});}
         catch(error){if(error?.code==='BB_STATE_CONFLICT')stateConflict=error;throw error;}
       }
+      if(['pending','proposed','checkpointed','proven','finalized'].includes(observed.status))beginProofSpan('receipt.phase.'+observed.status)();
       if(!pending.has(observed.status)&&!accepted.has(observed.status))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt status is unrecognized.');
       // Inclusion is a display event, not settlement. Reuse this receipt rather
       // than starting another waiter or changing the canonical journal boundary.
@@ -79,7 +81,7 @@ export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,on
         if(identity!==lastInclusion){
           lastInclusion=identity;
           const inclusion=Object.freeze({txHash:includedHash,blockNumber:observed.blockNumber,blockHash});
-          void Promise.resolve().then(()=>onIncluded(inclusion)).catch(()=>{});
+          void Promise.resolve().then(()=>measureProofPhase('receipt.phase.display-callback',()=>onIncluded(inclusion))).catch(()=>{});
         }
       }
       if(pending.has(observed.status))onPoll();

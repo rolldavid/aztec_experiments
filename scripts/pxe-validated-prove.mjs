@@ -1,3 +1,4 @@
+import {beginProofSpan} from '../shared/proof-timings.mjs';
 import {createHash} from 'node:crypto';
 import {ORDINARY_POST_GAS_PROFILE} from '../shared/ordinary-post-fees.mjs';
 import {PREFERENCE_PAGE_PINS} from './patch-pxe-preference-page.mjs';
@@ -112,6 +113,7 @@ export function validatedPxeProve(source){
     }
     // Public API\n`);
  source=replace(source,'return this.#proveTx(ctx, txRequest, privateExecutionResult);','return this.#proveTx(ctx, txRequest, privateExecutionResult, validatePublic);');
+ source=instrumentPxePhases(source);
  return source;
 }
 export function validatedKernelProve(source){
@@ -124,5 +126,57 @@ export function validatedKernelProve(source){
         // authoritative kernel output or witnesses subsequently proved.
         if (beforeProof) await beforeProof(PrivateKernelTailCircuitPublicInputs.fromBuffer(tailOutput.publicInputs.toBuffer()));
         let chonkProof;`);
+ source=instrumentKernelPhases(source);
+ return source;
+}
+
+function timingHelpers(){return `const beginRollingProofSpan=${beginProofSpan.toString()};
+async function measureRollingProofPhase(stage,operation){const finish=beginRollingProofSpan('native.phase.'+stage);try{return await operation();}finally{finish();}}
+`;}
+function instrumentPxePhases(source){
+ source=timingHelpers()+source;
+ const proveStart=source.indexOf('*/ proveTx(txRequest, { scopes'),proveEnd=source.indexOf('\n    /**',proveStart);
+ if(proveStart<0||proveEnd<0)throw Error('Missing native proof phase boundary');
+ let prove=source.slice(proveStart,proveEnd);
+ prove=replace(prove,'        let privateExecutionResult;',"        let privateExecutionResult;\n        const finishQueue=beginRollingProofSpan('native.phase.queue-and-anchor');");
+ prove=replace(prove,'            const contractFunctionSimulator = this.#getSimulatorForTx();','            finishQueue();\n            const contractFunctionSimulator = this.#getSimulatorForTx();');
+ source=source.slice(0,proveStart)+prove+source.slice(proveEnd);
+ source=replace(source,'if (preSyncCalls) await this.#syncOrdinaryPostCalls(txRequest, preSyncCalls, contractFunctionSimulator, ctx, scopes);',
+  "if (preSyncCalls) await measureRollingProofPhase('contract-sync',()=>this.#syncOrdinaryPostCalls(txRequest, preSyncCalls, contractFunctionSimulator, ctx, scopes));");
+ source=replace(source,`            privateExecutionResult = await this.#executePrivate({
+                contractFunctionSimulator,
+                txRequest,
+                anchorBlockHeader: ctx.anchorBlockHeader,
+                scopes,
+                changeSetId: ctx.changeSetId,
+                senderForTags
+            });`, `            privateExecutionResult = await measureRollingProofPhase('private-execution',()=>this.#executePrivate({
+                contractFunctionSimulator,
+                txRequest,
+                anchorBlockHeader: ctx.anchorBlockHeader,
+                scopes,
+                changeSetId: ctx.changeSetId,
+                senderForTags
+            }));`);
+ source=replace(source,'        const txProvingResult = new TxProvingResult(',"        const finishResult=beginRollingProofSpan('native.phase.result-and-tag-persistence');\n        const txProvingResult = new TxProvingResult(");
+ source=replace(source,'        return txProvingResult;','        finishResult();\n        return txProvingResult;');
+ source=replace(source,'        const simulatedTx = await new PrivateSimulationResult(privateExecutionResult, publicInputs).toSimulatedTx();\n        // Both checks',"        const simulatedTx = await measureRollingProofPhase('validation-transaction',()=>new PrivateSimulationResult(privateExecutionResult, publicInputs).toSimulatedTx());\n        // Both checks");
+ source=replace(source,'() => publicInputs.forPublic ? this.#simulatePublicCalls(simulatedTx, false) : undefined,',"() => publicInputs.forPublic ? measureRollingProofPhase('public-execution',()=>this.#simulatePublicCalls(simulatedTx, false)) : undefined,");
+ source=replace(source,'() => this.node.isValidTx(simulatedTx, {isSimulation: true, skipFeeEnforcement: false}),',"() => measureRollingProofPhase('admission-check',()=>this.node.isValidTx(simulatedTx, {isSimulation: true, skipFeeEnforcement: false})),");
+ source=replace(source,"        const abi=new SyncAccountEntrypoint","        const finishBinding=beginRollingProofSpan('native.phase.sync-binding');\n        const abi=new SyncAccountEntrypoint");
+ // Binding is small; class resolution and discovery are independently awaited groups.
+ source=replace(source,'        await allToCompletion(targets.map(async target=>check((await this.contractClassService.getCurrentClassId(target.address,ctx.anchorBlockHeader))?.toString()===target.classId)));',"        finishBinding();\n        await measureRollingProofPhase('sync-classes',()=>allToCompletion(targets.map(async target=>check((await this.contractClassService.getCurrentClassId(target.address,ctx.anchorBlockHeader))?.toString()===target.classId))));");
+ source=replace(source,'        await allToCompletion(targets.map(target=>this.contractSyncService.ensureContractSynced({',"        await measureRollingProofPhase('sync-records',()=>allToCompletion(targets.map(target=>this.contractSyncService.ensureContractSynced({");
+ source=replace(source,'        })));\n    }\n    // Public API','        }))));\n    }\n    // Public API');
+ return source;
+}
+function instrumentKernelPhases(source){
+ source=timingHelpers()+source;
+ source=replace(source,'        const updatedClassIdHintsMap = await this.prefetchUpdatedClassIdHints(executionResult);',"        const updatedClassIdHintsMap = await measureRollingProofPhase('kernel-class-hints',()=>this.prefetchUpdatedClassIdHints(executionResult));\n        const finishKernelBody=beginRollingProofSpan('native.phase.kernel-body');");
+ source=replace(source,'        // Validation receives a detached SDK value.',"        finishKernelBody();\n        // Validation receives a detached SDK value.");
+ source=replace(source,'if (beforeProof) await beforeProof(PrivateKernelTailCircuitPublicInputs.fromBuffer(tailOutput.publicInputs.toBuffer()));',"if (beforeProof) await measureRollingProofPhase('validation',()=>beforeProof(PrivateKernelTailCircuitPublicInputs.fromBuffer(tailOutput.publicInputs.toBuffer())));");
+ source=replace(source,'const proofWithPublicInputs = await this.proofCreator.createChonkProof(executionSteps);',"const proofWithPublicInputs = await measureRollingProofPhase('remote-proof',()=>this.proofCreator.createChonkProof(executionSteps));");
+ source=replace(source,'            this.ensurePublicInputsMatch(proofWithPublicInputs, tailOutput.publicInputs);',"            const finishPublicInputs=beginRollingProofSpan('native.phase.proof-public-inputs');\n            this.ensurePublicInputsMatch(proofWithPublicInputs, tailOutput.publicInputs);");
+ source=replace(source,'            chonkProof = proofWithPublicInputs.removePublicInputs();','            chonkProof = proofWithPublicInputs.removePublicInputs();\n            finishPublicInputs();');
  return source;
 }

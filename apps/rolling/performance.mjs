@@ -20,7 +20,7 @@ export async function measureRollingStage(stage,operation,{nativeUtility=false}=
    const end=performance.now();
    for(const [part,duration]of Object.entries(values))if(Number.isFinite(duration)&&duration>=0&&duration<=3600000){
     const name='rolling.'+stage+'.native-'+part;performance.clearMeasures(name);
-    performance.measure(name,{start:Math.max(0,end-duration),end});
+    performance.measure(name,{start:end,end,detail:{kind:'aggregate',durationMs:duration}});
    }
   }catch{/* Native statistics are optional observations, never action results. */}
   return result;
@@ -58,9 +58,16 @@ export function rollingResourceTiming(entry,origin){
 }
 // Each observer is optional and independently bounded. Failure or unsupported
 // browser diagnostics cannot interrupt normal application work.
-export function observeRollingPerformance({PerformanceObserver:Observer=globalThis.PerformanceObserver,origin=globalThis.location?.origin,document:doc=globalThis.document,timing=globalThis.performance,onEntries=()=>{}}={}){
- const records={measure:[],resource:[],longtask:[],visibility:[]},limits={measure:256,resource:128,longtask:64,visibility:64},observers=[];
- const notify=()=>onEntries(Object.values(records).flat().sort((a,b)=>a.start-b.start));
+export function observeRollingPerformance({PerformanceObserver:Observer=globalThis.PerformanceObserver,origin=globalThis.location?.origin,document:doc=globalThis.document,timing=globalThis.performance,onEntries=()=>{},onChange}={}){
+ const records={measure:[],oracle:[],resource:[],longtask:[],visibility:[]},limits={measure:512,oracle:4096,resource:128,longtask:64,visibility:64},observers=[],dropped={};
+ const oracleTotals=new Map();
+ const snapshot=()=>{
+  const values=Object.values(records).flat(),now=timing?.now?.()??0;
+  for(const [category,count]of Object.entries(dropped))if(count)values.push({kind:'trace-overflow',category,count,start:now,duration:0});
+  for(const [name,total]of oracleTotals)values.push({kind:'oracle-total',name,start:now,duration:0,count:total.count,inclusiveMs:total.duration});
+  return values.sort((a,b)=>a.start-b.start);
+ };
+ const notify=()=>{if(onChange)onChange(snapshot);else onEntries(snapshot());};
  let lastVisibility;try{lastVisibility=doc?.visibilityState;}catch{}
  const visibilityChanged=()=>{try{
   const state=doc.visibilityState,start=timing.now();
@@ -76,12 +83,23 @@ export function observeRollingPerformance({PerformanceObserver:Observer=globalTh
     let value=null;
     if(type==='resource')value=rollingResourceTiming(entry,origin);
     else if(Number.isFinite(entry.startTime)&&entry.startTime>=0&&Number.isFinite(entry.duration)&&entry.duration>=0){
-     if(type==='measure'&&/^rolling\.[a-z.-]{1,64}$/.test(entry.name))value={name:entry.name,start:entry.startTime,duration:entry.duration};
+     if(type==='measure'&&/^rolling\.[a-z.-]{1,96}$/.test(entry.name)){
+      value={name:entry.name,start:entry.startTime,duration:entry.duration};
+      if(entry.detail?.kind==='aggregate'&&Number.isFinite(entry.detail.durationMs)&&entry.detail.durationMs>=0)value.aggregateMs=entry.detail.durationMs;
+     }
      if(type==='longtask')value={kind:'longtask',start:entry.startTime,duration:entry.duration};
     }
-    if(value){records[type].push(value);changed=true;}
+    if(value){
+     const category=type==='measure'&&entry.name.startsWith('rolling.proof.native.phase.oracle-')?'oracle':type;
+     records[category].push(value);
+     if(category==='oracle'){
+      const key=oracleTotals.has(value.name)||oracleTotals.size<127?value.name:'rolling.proof.native.phase.oracle-other-categories';
+      const total=oracleTotals.get(key)??{count:0,duration:0};total.count++;total.duration+=value.duration;oracleTotals.set(key,total);
+     }
+     if(records[category].length>limits[category]){const count=records[category].length-limits[category];records[category].splice(0,count);dropped[category]=(dropped[category]??0)+count;}
+     changed=true;
+    }
    }
-   if(records[type].length>limits[type])records[type].splice(0,records[type].length-limits[type]);
    if(changed)notify();
   }catch{/* Diagnostics never control progress. */}});
   observer.observe({type,buffered:true});observers.push(observer);
@@ -92,17 +110,17 @@ export function observeRollingPerformance({PerformanceObserver:Observer=globalTh
 // Opt-in developer trace for an actual browser run. Recording has no authority
 // over application state or transaction progression. Normal visits create none.
 try{if(typeof document!=='undefined'&&globalThis.location.hash.endsWith('?profile=1')){
- profilingEnabled=true;
+ profilingEnabled=true;globalThis[Symbol.for('rolling.proof.profile')]=true;
  // Consume the diagnostic flag before the reader initializes its route.
  const route=new URL(globalThis.location.href);route.hash=route.hash.slice(0,-10);history.replaceState(history.state,'',route);
  const initialVisibility=['visible','hidden'].includes(document.visibilityState)?document.visibilityState:'unknown';
- let trace=[];const panel=document.createElement('details'),title=document.createElement('summary'),output=document.createElement('div');
+ let snapshot=()=>[];const panel=document.createElement('details'),title=document.createElement('summary'),output=document.createElement('div');
  title.textContent='Performance timings';panel.append(title,output);panel.dataset.rollingPerformance='';
  const render=()=>{
   const origin=document.createElement('pre');origin.textContent=JSON.stringify({timeOrigin:performance.timeOrigin,visibilityState:initialVisibility});
-  output.replaceChildren(origin,...trace.map(entry=>{const line=document.createElement('pre');line.textContent=JSON.stringify(entry);return line;}));
+  output.replaceChildren(origin,...snapshot().map(entry=>{const line=document.createElement('pre');line.textContent=JSON.stringify(entry);return line;}));
  };
- observeRollingPerformance({onEntries:entries=>{trace=entries;if(panel.open)render();}});
+ observeRollingPerformance({onChange:read=>{snapshot=read;if(panel.open)render();}});
  panel.addEventListener('toggle',()=>{try{if(panel.open)render();}catch{}});
  if(document.body)document.body.append(panel);else document.addEventListener('DOMContentLoaded',()=>{try{document.body.append(panel);}catch{}},{once:true});
  render();

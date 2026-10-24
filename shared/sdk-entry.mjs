@@ -13,7 +13,7 @@ globalThis.Buffer ??= Buffer;
 // Build this source; do not recover exports by editing a generated bundle.
 export { createTrustedPrivateNode, inspectTrustedNode, isTrustedPrivateNode } from './trusted-private-node.mjs';
 export { createPXE, isPrivatePXEForNode, initializeBrowserProver, initializeCliProver } from './private-pxe.mjs';
-export { recordProofTimings } from './proof-timings.mjs';
+export { recordProofTimings, beginProofSpan, measureProofPhase } from './proof-timings.mjs';
 export {prefetchOrdinaryPostWitnesses} from './ordinary-post-witnesses.mjs';
 export { boundedTransactionRead, requireSuccessfulReceipt, submitOnceWithReconciliation, classifyDroppedTransaction, waitForSuccessfulReceipt } from './transaction-outcomes.mjs';
 export { openPXEStore, getPXEStoreIdentity, PXE_DATA_SCHEMA_VERSION } from './sdk-store.mjs';
