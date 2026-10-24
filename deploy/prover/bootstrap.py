@@ -1301,6 +1301,32 @@ def query_host_config(record):
 QUERY_ORIGIN_FACING_CIDRS = ('13.124.199.0/24', '130.176.0.0/18', '130.176.128.0/21', '130.176.136.0/23', '130.176.140.0/22', '130.176.144.0/20', '130.176.160.0/19', '130.176.192.0/19', '130.176.64.0/21', '130.176.72.0/22', '130.176.76.0/24', '130.176.78.0/23', '130.176.80.0/22', '130.176.86.0/23', '130.176.88.0/21', '130.176.96.0/19', '15.158.0.0/16', '18.68.0.0/16', '204.246.166.0/24', '205.251.218.0/24', '24.110.128.0/17', '3.172.0.0/18', '3.172.64.0/18', '3.29.57.0/26', '51.74.20.0/24', '51.74.21.0/24', '51.74.22.0/24', '52.46.0.0/18', '52.82.128.0/23', '52.82.134.0/23', '54.182.128.0/20', '54.182.144.0/21', '54.182.154.0/23', '54.182.156.0/22', '54.182.160.0/21', '54.182.172.0/22', '54.182.176.0/21', '54.182.184.0/22', '54.182.188.0/23', '54.182.224.0/21', '54.182.240.0/21', '54.182.248.0/22', '54.239.134.0/23', '54.239.170.0/23', '54.239.204.0/22', '54.239.208.0/21', '64.252.128.0/18', '64.252.64.0/18', '70.132.0.0/18')
 
 SUPERVISION_UNITS = ('rolling-node','rolling-query','board-prover','board-prover-proxy','rolling-application','rolling-application-proxy','rolling-moderator','rolling-bok-testnet','rolling-bok-artifact-proxy')
+def application_proxy_independent_unit(text):
+    # Dependency lists are additive in systemd drop-ins. Remove this lifecycle
+    # coupling from the base unit itself; keep egress admission and all hardening.
+    section=None;out=[];unit_count=0;required=set();wanted=set()
+    for line in text.splitlines(keepends=True):
+        stripped=line.strip()
+        if stripped.startswith('[') and stripped.endswith(']'):
+            section=stripped
+            if section=='[Unit]':unit_count+=1
+        if section=='[Unit]' and '=' in stripped and not stripped.startswith(('#',';')):
+            key,value=stripped.split('=',1);key=key.strip()
+            if key in ('Requires','BindsTo','Wants'):
+                if value.rstrip().endswith('\\'):raise Invalid('Multiline proxy dependency')
+                values=value.split()
+                if key in ('Requires','BindsTo'):
+                    values=[v for v in values if v!='rolling-application.service']
+                    line=key+'='+' '.join(values)+'\n' if values else ''
+                if key=='Requires':required.update(values)
+                if key=='Wants':wanted.update(values)
+        out.append(line)
+    if unit_count!=1 or 'rolling-egress.service' not in required:raise Invalid('Proxy egress dependency')
+    result=''.join(out)
+    if 'rolling-application.service' not in wanted:
+        result=re.sub(r'(?m)^\s*\[Unit\]\s*$', '[Unit]\nWants=rolling-application.service', result, count=1)
+    return result
+
 def supervision_dropin(service):
     if service not in SUPERVISION_UNITS:raise Invalid('Unknown supervised service')
     dependencies={'rolling-node':('rolling-egress.service','docker.service'),'rolling-query':('rolling-egress.service','rolling-node.service'),
@@ -1312,7 +1338,9 @@ def supervision_dropin(service):
     unit='[Unit]\nStartLimitIntervalSec=0\nOnFailure=\n'
     if service in dependencies:
         required,wanted=dependencies[service]
-        unit+='Requires=\nRequires='+required+'\nBindsTo=\nWants='+wanted+'\n'
+        # This proxy's base unit is rewritten by application_proxy_independent_unit.
+        if service=='rolling-application-proxy':unit+='Requires='+required+'\nWants='+wanted+'\n'
+        else:unit+='Requires=\nRequires='+required+'\nBindsTo=\nWants='+wanted+'\n'
     unit+='[Service]\nRestart=always\nRestartSec=5s\nKillMode=control-group\n'
     if service=='rolling-node':unit+='ExecStartPre=\nExecStartPre=/usr/bin/python3 /usr/local/lib/rolling-supervision/supervision.py --check\n'
     return unit

@@ -3,11 +3,13 @@
 @@ -1,8 +1,9 @@
  [Unit]
  Description=Private CloudFront entry point for Rolling application
- Requires=rolling-application.service rolling-egress.service
+-Requires=rolling-application.service rolling-egress.service
 -After=rolling-application.service rolling-egress.service
+-BindsTo=rolling-application.service
++Requires=rolling-egress.service
++Wants=rolling-application.service
 +After=rolling-egress.service
 +Before=rolling-application.service
- BindsTo=rolling-application.service
  
  [Service]
  DynamicUser=yes

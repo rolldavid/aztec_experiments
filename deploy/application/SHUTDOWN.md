@@ -2,13 +2,18 @@
 
 Apply `proxy-before-app.patch` to the **full installed base unit**, preserving
 its binary path, credentials, network restrictions and all other directives.
-This changes ordering only. Keep the existing `BindsTo`/`Requires` dependencies,
-Caddy `Type=notify` readiness, and the application's `TimeoutStopSec=infinity`.
+Keep `Requires=rolling-egress.service`, Caddy `Type=notify` readiness, and the
+application's `TimeoutStopSec=infinity`. Replace the application dependency with
+`Wants=rolling-application.service`; remove the application from `Requires` and
+`BindsTo` in the base unit. Otherwise stopping the application also stops its
+proxy, and starting the application does not bring the proxy back.
 
 The proxy starts first and reports its own listener readiness. The application
 then starts. Shutdown runs in reverse: the application receives SIGTERM first,
 ends its live-feed streams, stops admitting requests, and waits for its existing
-requests and funding relay to finish. Only then does the proxy shut down. No
+requests and funding relay to finish. During a coordinated shutdown, only then does the proxy shut down. During an
+application-only deployment, the proxy remains running and reconnects to the
+new upstream. No
 transaction or bridge completion deadline is added.
 
 Do not implement this with an empty `After=` in a drop-in. Systemd dependency
@@ -25,7 +30,9 @@ uses `Type=notify`/`NotifyAccess=main` and has no `ExecStartPost`.
 
 After `daemon-reload`, verify the **effective** proxy `Before` contains
 `rolling-application.service`, its `After` does not, and the app's stop timeout
-remains infinite. Validate the exact installed unit graph with
+remains infinite. Also verify effective `Requires` includes egress but not the
+application, effective `BindsTo` excludes the application, and `Wants` includes
+the application. Validate the exact installed unit graph with
 `systemd-analyze verify`. A controlled restart should queue both units together;
 do not manually stop the proxy first while an application event stream is open.
 

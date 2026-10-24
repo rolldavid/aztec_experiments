@@ -39,6 +39,9 @@ with (B/'lock').open('a') as writer,(P/'receipt-lock').open('a') as receipt:
   rows=text.splitlines(keepends=True)
   rows=[line.replace(str(old_root),str(new_root)) if line.startswith(('WorkingDirectory=','ExecStart=')) else line for line in rows]
   next_units[unit]=''.join(rows).encode();staged[service]={'current':str(old_root),'nextStart':str(new_root)}
+ if role=='core':
+  proxy_unit=units['rolling-application-proxy']
+  next_units[proxy_unit]=source_module['application_proxy_independent_unit'](saved[proxy_unit].decode()).encode()
  # Preserve all admitted runtime declarations; amend only control policy readers.
  derived=old_control;updated=original
  if role=='core':
@@ -91,6 +94,12 @@ with (B/'lock').open('a') as writer,(P/'receipt-lock').open('a') as receipt:
   for service in services:
    fields=dict(line.split('=',1) for line in run(['systemctl','show',service,'--property=Restart,RestartUSec,StartLimitIntervalUSec,KillMode,OnFailure']).splitlines())
    assert fields=={'Restart':'always','RestartUSec':'5s','StartLimitIntervalUSec':'0','KillMode':'control-group','OnFailure':''}
+  if role=='core':
+   deps=dict(line.split('=',1) for line in run(['systemctl','show','rolling-application-proxy','--property=Requires,BindsTo,Wants']).splitlines())
+   assert 'rolling-application.service' not in deps['Requires'].split()
+   assert 'rolling-application.service' not in deps['BindsTo'].split()
+   assert 'rolling-egress.service' in deps['Requires'].split()
+   assert 'rolling-application.service' in deps['Wants'].split()
   assert before=={s:process(s) for s in services}
   run(['systemctl','enable','--now','rolling-monitor.timer'])
   run(['systemctl','start','rolling-monitor.service'])

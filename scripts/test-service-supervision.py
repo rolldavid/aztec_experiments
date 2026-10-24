@@ -43,6 +43,46 @@ class Supervision(unittest.TestCase):
   for service in b.SUPERVISION_UNITS:
    drop=b.supervision_dropin(service)
    self.assertIn('Restart=always\n',drop);self.assertIn('KillMode=control-group\n',drop);self.assertIn('StartLimitIntervalSec=0\n',drop)
-  for service in ['rolling-application-proxy','rolling-moderator']:
-   self.assertIn('BindsTo=\n',b.supervision_dropin(service));self.assertIn('Wants=',b.supervision_dropin(service))
+  drop=b.supervision_dropin('rolling-application-proxy')
+  self.assertNotIn('BindsTo=',drop);self.assertNotIn('Requires=\n',drop)
+  self.assertIn('Requires=rolling-egress.service\n',drop);self.assertIn('Wants=rolling-application.service\n',drop)
+ def proxy_unit(self):
+  return ('[Unit]\nDescription=Proxy\nRequires=rolling-application.service rolling-egress.service\n'
+   'Requires=extra-security.service\nBindsTo=rolling-application.service egress-watch.service\n'
+   'After=rolling-egress.service\nBefore=rolling-application.service\n\n'
+   '[Service]\nType=notify\nExecStart=/opt/pinned/caddy run\nIPAddressDeny=any\n'
+   'IPAddressAllow=localhost\nNoNewPrivileges=yes\n[Install]\nWantedBy=multi-user.target\n')
+ def dependencies(self,*texts):
+  # systemd dependency assignments add units; an empty assignment cannot reset them.
+  result={key:set() for key in ('Requires','BindsTo','Wants')}
+  for text in texts:
+   section=None
+   for line in text.splitlines():
+    if line.startswith('['):section=line
+    if section=='[Unit]' and '=' in line:
+     key,value=line.split('=',1)
+     if key in result:result[key].update(value.split())
+  return result
+ def test_base_rewrite_removes_app_stop_dependency_and_retains_security(self):
+  original=self.proxy_unit();updated=b.application_proxy_independent_unit(original)
+  effective=self.dependencies(updated,b.supervision_dropin('rolling-application-proxy'))
+  self.assertEqual(effective['Requires'],{'rolling-egress.service','extra-security.service'})
+  self.assertEqual(effective['BindsTo'],{'egress-watch.service'})
+  self.assertEqual(effective['Wants'],{'rolling-application.service'})
+  self.assertEqual(original.split('[Service]',1)[1],updated.split('[Service]',1)[1])
+  self.assertIn('After=rolling-egress.service\nBefore=rolling-application.service\n',updated)
+  self.assertEqual(b.application_proxy_independent_unit(updated),updated)
+ def test_empty_dropin_cannot_fix_existing_base_lifecycle(self):
+  effective=self.dependencies(self.proxy_unit(),'[Unit]\nRequires=\nBindsTo=\nWants=rolling-application.service\n')
+  self.assertIn('rolling-application.service',effective['Requires'])
+  self.assertIn('rolling-application.service',effective['BindsTo'])
+ def test_missing_egress_or_unsupported_multiline_dependency_rejected(self):
+  for text in (self.proxy_unit().replace('rolling-egress.service','other.service'),
+               self.proxy_unit().replace('Requires=extra-security.service','Requires=extra-security.service \\\n more.service')):
+   with self.assertRaises(b.Invalid):b.application_proxy_independent_unit(text)
+ def test_installer_rewrites_base_and_checks_effective_dependency_graph(self):
+  source=(ROOT/'deploy/restoration-20261021/supervision/publish.py').read_text()
+  self.assertIn("next_units[proxy_unit]=source_module['application_proxy_independent_unit']",source)
+  self.assertIn("'--property=Requires,BindsTo,Wants'",source)
+  self.assertIn("assert 'rolling-application.service' not in deps['BindsTo'].split()",source)
 if __name__=='__main__':unittest.main(verbosity=2)

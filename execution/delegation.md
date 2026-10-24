@@ -143,3 +143,7 @@ The rejected counter-note prototype must not ship. Discovery adds no private not
 ## Performance resume after disk cleanup — 24 October 2026
 
 Root integrates reviewed source, owns the one retained build checkout and live publication/measurement. Pending reply UI agent measures remaining native private-execution oracle and RPC costs in the retained owner-state checkout. Pending feed release agent examines worker/transport overhead in the retained timing checkout. Proposed feed design independently reviews attribution and release coherence read-only. No new dependency copies or browser profiles; remove scratch and completed agent checkouts after integration, retaining commits and uncommitted source.
+
+## Current release and measured optimization —25October
+
+Root owns service activation and the single existing IAB test tab. pending_reply_ui diagnoses the Bok startup boundary and then private-execution timings. pending_feed_release reviewed exact browser/server timing extraction and awaits the actual capture. proposed_feed_design fixes the narrow deployment monitor guard. No new dependency trees or browser profiles; retained build reused.
