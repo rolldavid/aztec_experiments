@@ -185,13 +185,13 @@ test('proof acknowledgement cannot cancel active work or bypass origin policy',a
 
 test('proof admission reports numeric body, validation and persistence phases only after queue acceptance',async()=>{
  let enter,release;const entered=new Promise(r=>enter=r),held=new Promise(r=>release=r);
- const queue={submit:async body=>{assert.equal(decodeJob(body).metadata.version,2);enter();await held;return 'b'.repeat(64);}};
+ let receivedBytes;const queue={submit:async body=>{receivedBytes=body.length;assert.equal(decodeJob(body).metadata.version,2);enter();await held;return 'b'.repeat(64);}};
  const server=createProverServer({queue,board,chainId:31337,rollupVersion:1,proofsEnabled:false});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let done=false;
  try{
   const request=fetch('http://127.0.0.1:'+server.address().port+'/v1/jobs',{method:'POST',headers:{'content-type':'application/octet-stream'},body:await encodeJob(metadata,[new Map()])}).then(response=>{done=true;return response;});
   await entered;await new Promise(r=>setImmediate(r));assert.equal(done,false);release();const response=await request;
-  assert.equal(response.status,202);assert.match(response.headers.get('server-timing'),/^body;dur=\d+\.\d{3},validate;dur=\d+\.\d{3},queue;dur=\d+\.\d{3},body-first;dur=\d+\.\d{3},body-gap;dur=\d+\.\d{3},body-chunks;dur=\d+$/);
+  assert.equal(response.status,202);assert.match(response.headers.get('server-timing'),/^body;dur=\d+\.\d{3},validate;dur=\d+\.\d{3},queue;dur=\d+\.\d{3},body-first;dur=\d+\.\d{3},body-gap;dur=\d+\.\d{3},body-chunks;desc="\d+",body-bytes;desc="\d+"$/);assert(response.headers.get('server-timing').endsWith(`body-bytes;desc="${receivedBytes}"`));
  }finally{release();server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
 
@@ -258,4 +258,67 @@ test('terminal queue snapshots separate numeric persistence wait worker and clea
   assert(queue.get(id).timings.resultReadyToSnapshotMs>=result.timings.resultReadyToSnapshotMs);
   assert(!JSON.stringify(result).includes('private-client'));
  }finally{release?.();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('early proof delivery retains per-client, byte, file and job capacity until worker exit and cleanup',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-early-capacity-'));
+ let deliver,exit,entered;const ready=new Promise(r=>entered=r),held=new Promise(r=>exit=r);
+ const queue=await createProofQueue({directory,maxJobs:1,maxBytes:3,maxPerClient:1,worker:{prove:async(file,{onResult,onTimings})=>{
+  deliver=()=>{onTimings({nativeProveMs:5});onResult({mode:'real',compressedProof:'proof'});};entered();await held;
+  assert.deepEqual(await fs.readFile(file),Buffer.from('abc'));return {mode:'real',compressedProof:'proof'};
+ },close:async()=>exit()}});
+ try{
+  const id=await queue.submit(Buffer.from('abc'),'client');await ready;
+  const waiting=queue.waitForResult(id);deliver();const result=await waiting;
+  assert.equal(result.state,'complete');assert.equal(result.result.compressedProof,'proof');assert.equal(result.timings.nativeProveMs,5);assert(result.timings.resultReadyMs>=0);
+  for(const key of ['workerMs','cleanupMs','resultToExitMs','warmReplacementMs'])assert.equal(result.timings[key],undefined,key);
+  assert.equal(queue.stats().running,true);assert.equal(queue.stats().bytes,3);assert.deepEqual(await fs.readdir(directory),[id]);
+  assert.equal(await queue.acknowledge(id),true);assert.equal(await queue.acknowledge(id),true);
+  assert.equal(queue.get(id).state,'complete');assert.equal(queue.stats().jobs,1);
+  await assert.rejects(queue.submit(Buffer.of(1),'client'),{status:429});await assert.rejects(queue.submit(Buffer.of(1),'other'),{status:429});
+  exit();while(queue.stats().running)await new Promise(setImmediate);
+  assert.equal(queue.get(id),null);assert.equal(queue.stats().bytes,0);assert.equal(queue.stats().completed,1);assert.equal(queue.stats().failed,0);assert.deepEqual(await fs.readdir(directory),[]);
+ }finally{exit();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('a delivered native proof survives teardown failure without replay and releases FIFO only after cleanup',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-early-fifo-'));
+ let deliver,exit,entered,calls=0;const ready=new Promise(r=>entered=r),held=new Promise(r=>exit=r);
+ const queue=await createProofQueue({directory,maxJobs:3,maxPerClient:1,worker:{prove:async(file,{onResult})=>{
+  if(++calls===1){deliver=()=>onResult({mode:'real',compressedProof:'first'});entered();await held;throw Error('exit teardown failed');}
+  assert.equal((await fs.readdir(directory)).length,1);return {mode:'real',compressedProof:'second'};
+ },close:async()=>exit()}});
+ try{
+  const first=await queue.submit(Buffer.of(1),'a');await ready;deliver();
+  await assert.rejects(queue.submit(Buffer.of(1),'a'),{status:429});
+  const second=await queue.submit(Buffer.of(2),'b');assert.equal(calls,1);assert.equal(queue.get(second).state,'queued');
+  exit();const result=await queue.waitForResult(second);assert.equal(result.result.compressedProof,'second');assert.equal(calls,2);
+  assert.equal(queue.get(first).result.compressedProof,'first');assert.equal(queue.stats().completed,2);assert.equal(queue.stats().failed,0);
+ }finally{exit();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('a draining delivered result cannot be evicted even when its byte and client limits allow admission',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-early-eviction-'));
+ let deliver,exit,entered;const ready=new Promise(r=>entered=r),held=new Promise(r=>exit=r);
+ const queue=await createProofQueue({directory,maxJobs:1,maxBytes:100,maxPerClient:4,worker:{prove:async(_file,{onResult})=>{deliver=()=>onResult({mode:'disabled'});entered();await held;return {mode:'disabled'};},close:async()=>exit()}});
+ try{
+  const id=await queue.submit(Buffer.of(1),'a');await ready;deliver();
+  await assert.rejects(queue.submit(Buffer.of(2),'b'),{status:429});assert.equal(queue.stats().submitted,1);assert.equal(queue.get(id).state,'complete');
+  exit();while(queue.stats().running)await new Promise(setImmediate);assert.equal(await queue.acknowledge(id),true);assert.equal(queue.get(id),null);
+ }finally{exit();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('worker exit alone does not release a delivered result reservation while spool cleanup is held',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-early-cleanup-'));
+ let deliver,exit,entered,cleanupEntered,cleanupRelease;const ready=new Promise(r=>entered=r),held=new Promise(r=>exit=r),cleaning=new Promise(r=>cleanupEntered=r),cleanupHeld=new Promise(r=>cleanupRelease=r);
+ const originalRm=fs.rm;
+ const queue=await createProofQueue({directory,maxJobs:1,maxBytes:100,maxPerClient:1,worker:{prove:async(_file,{onResult})=>{deliver=()=>onResult({mode:'disabled'});entered();await held;return {mode:'disabled'};},close:async()=>exit()}});
+ try{
+  const id=await queue.submit(Buffer.of(1),'a');await ready;
+  fs.rm=async(file,options)=>{if(file===path.join(directory,id)){cleanupEntered();await cleanupHeld;}return originalRm(file,options);};
+  deliver();exit();await cleaning;
+  assert.equal(queue.stats().running,true);assert.equal(queue.stats().bytes,1);assert.equal(await queue.acknowledge(id),true);
+  assert.deepEqual(await fs.readdir(directory),[id]);await assert.rejects(queue.submit(Buffer.of(1),'a'),{status:429});await assert.rejects(queue.submit(Buffer.of(1),'b'),{status:429});
+  cleanupRelease();while(queue.stats().running)await new Promise(setImmediate);assert.equal(queue.stats().jobs,0);assert.equal(queue.stats().bytes,0);
+ }finally{fs.rm=originalRm;exit();cleanupRelease();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
 });

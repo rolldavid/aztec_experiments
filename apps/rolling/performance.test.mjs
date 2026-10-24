@@ -141,3 +141,12 @@ test('lazy diagnostics append without sorting or reading the clock until a snaps
  callback({getEntries:()=>[{name:'rolling.action.prepare',startTime:1,duration:2}]});
  assert.equal(samples,1);assert.equal(clockReads,0);assert.equal(read().length,1);assert.equal(clockReads,1);stop();
 });
+
+
+test('proof upload reports exact body bytes and bounded numeric server arrival observations',()=>{
+ const serverTiming=[{name:'body-first',duration:4},{name:'body-gap',duration:19},{name:'body-chunks',description:'8'},{name:'body-bytes',description:'195894'},
+ {name:'__proto__',duration:1,description:'12'},{name:'constructor',duration:1,description:'12'},{name:'body-bytes',description:'195894 private'},{name:'body-bytes',description:'8388609'},{name:'body-chunks',description:'1.5'},{name:'body-first',duration:Infinity},{name:'body-gap',duration:-1}];
+ const result=rollingResourceTiming(resource('/prover/v1/jobs',{serverTiming}),origin);
+ assert(!Object.hasOwn(result,'[object Object]'));assert(!Object.keys(result).some(k=>k.includes('function')));assert.equal(result.serverBodyFirst,4);assert.equal(result.serverBodyGap,19);assert.equal(result.serverBodyChunks,8);assert.equal(result.serverBodyBytes,195894);
+ assert(!JSON.stringify(result).includes('private'));assert.equal(rollingResourceTiming(resource('/api/home',{serverTiming}),origin).serverBodyBytes,undefined);
+});

@@ -46,11 +46,11 @@ test('remote durations are zero-length numeric aggregates with no invented brows
  const client=createRemoteProverClient({...options,fetchImpl:async(_url,request)=>{
   if(request.method==='POST')return Response.json({id:'e'.repeat(64)});
   if(request.method==='DELETE')return Response.json({acknowledged:true});
-  return eventResponse({state:'complete',result:{mode:'real',compressedProof:'unchanged'},timings:{nativeProveMs:1234,queueWaitMs:4,resultReadyToSnapshotMs:0.5,readMs:-1,bindingMs:'private',secret:999}});
+  return eventResponse({state:'complete',result:{mode:'real',compressedProof:'unchanged'},timings:{nativeProveMs:1234,queueWaitMs:4,resultReadyMs:1500,resultReadyToSnapshotMs:0.5,readMs:-1,bindingMs:'private',secret:999}});
  }});
  assert.deepEqual(await client.prove(proofSteps()),{mode:'real',compressedProof:'unchanged'});
  const entries=performance.getEntriesByType('measure').filter(e=>e.name.startsWith(prefix));
- assert.equal(entries.length,3);for(const entry of entries){assert.equal(entry.duration,0);assert.equal(entry.detail.kind,'aggregate');assert(Number.isFinite(entry.detail.durationMs));}
+ assert.equal(entries.length,4);assert.equal(entries.find(e=>e.name===prefix+'result-ready').detail.durationMs,1500);for(const entry of entries){assert.equal(entry.duration,0);assert.equal(entry.detail.kind,'aggregate');assert(Number.isFinite(entry.detail.durationMs));}
  assert.equal(entries.find(e=>e.name===prefix+'native-prove').detail.durationMs,1234);
  assert.equal(entries.find(e=>e.name===prefix+'result-ready-to-snapshot').detail.durationMs,0.5);
  for(const entry of entries)performance.clearMeasures(entry.name);

@@ -15,7 +15,18 @@ export function createProcessWorker({applicationProfile='legacy',privateBokAddre
    child.on('message',value=>{
     if(value?.ready===true){if(state.ready){kill(child);return;}state.ready=true;state.dispatch();}
     else if(value?.progress)stage=value.progress;
-    else {result=value;state.resultAt=performance.now();}
+    else {
+     if(state.delivered)return;
+     result=value;state.resultAt=performance.now();
+     // The native worker has completed and encoded its proof. Deliver it while
+     // process teardown runs; prove() remains occupied until the child exits.
+     const successful=value?.mode===(proofsEnabled?'real':'disabled')&&
+      Object.keys(value).every(key=>['mode','compressedProof','timings'].includes(key))&&
+      (proofsEnabled?typeof value.compressedProof==='string'&&value.compressedProof.length>0:true);
+     if(successful&&state.sent&&!state.error&&!state.delivered){
+      state.delivered=true;state.publish?.(value);
+     }
+    }
    });
    child.on('error',()=>{state.error=true;kill(child);});
    child.on('close',code=>{kill(child);state.ended=true;state.endedAt=performance.now();resolve({code,result,stage});});
@@ -23,13 +34,13 @@ export function createProcessWorker({applicationProfile='legacy',privateBokAddre
   return state;
  }
  let standby=warm();
- return {async prove(file,{onTimings=()=>{}}={}){
+ return {async prove(file,{onTimings=()=>{},onResult}={}){
   if(closed||active)throw Error(closed?'Worker closed':'Worker busy');
   if(typeof file!=='string'||!file.length)throw Error('Job file required');
-  const state=standby;standby=undefined;active=state;state.claimedAt=performance.now();state.file=file;state.dispatch();
-  let timings={};
-  try{
-   const {code,result,stage}=await state.finished;
+  const state=standby;standby=undefined;active=state;state.claimedAt=performance.now();state.file=file;
+  const timings={};
+  const reportTimings=()=>{try{void Promise.resolve(onTimings({...timings})).catch(()=>{});}catch{/* Diagnostics cannot change proof completion. */}};
+  const collectTimings=result=>{
    // Each duration is calculated within one process clock. These aggregates
    // overlap the queue's workerMs and must not be added to that enclosing total.
    try{
@@ -38,6 +49,16 @@ export function createProcessWorker({applicationProfile='legacy',privateBokAddre
     }
     for(const [key,start,end] of [['readyWaitMs',state.claimedAt,state.dispatchedAt],['dispatchToResultMs',state.dispatchedAt,state.resultAt],['resultToExitMs',state.resultAt,state.endedAt]])if(Number.isFinite(start)&&Number.isFinite(end)&&end>=start)timings[key]=end-start;
    }catch{/* Numeric diagnostics cannot change proof success or failure. */}
+  };
+  state.publish=result=>{
+   collectTimings(result);reportTimings();
+   const {timings:ignored,...payload}=result;
+   try{void Promise.resolve(onResult?.(payload)).catch(()=>{});}catch{/* The normal completion path still returns the result. */}
+  };
+  state.dispatch();
+  try{
+   const {code,result,stage}=await state.finished;
+   collectTimings(result);
    if(code===0&&result&&state.sent&&!state.error){const {timings,...payload}=result;return payload;}
    throw Object.assign(Error('Proof worker failed'),{code:result?.errorStage??stage??'worker'});
   }finally{
@@ -47,7 +68,7 @@ export function createProcessWorker({applicationProfile='legacy',privateBokAddre
    const warmAt=performance.now();
    if(!closed){try{standby=warm();}catch{standby={ended:true,sent:false,finished:Promise.resolve({code:1,stage:'worker'}),dispatch(){}};}}
    timings.warmReplacementMs=performance.now()-warmAt;
-   try{void Promise.resolve(onTimings(timings)).catch(()=>{});}catch{/* Diagnostics cannot change proof completion. */}
+   reportTimings();
   }
  },close(){return closing??=(async()=>{
   closed=true;const state=active??standby;standby=undefined;

@@ -71,7 +71,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   // Only the owning account lock supplies this identity. A canonical permit is
   // local to that operation and exact authenticated journal bytes; it is never
   // carried across actions; every use reauthenticates the journal and owner.
-  let canonicalPermit=null;
+  let canonicalPermit=null,inspectionPermit=null;
   const ownedScope=()=>{try{const value=operationScope?.();if(value!=null&&typeof value!=='object')throw invalid();return value??null;}catch(error){canonicalPermit=null;throw error;}};
   async function checkedScope(expected){try{if(expected&&contextGuard)await contextGuard();if(ownedScope()!==expected)throw fail();}catch(error){canonicalPermit=null;throw error;}}
   async function rememberCanonical(saved,receipt,owner){
@@ -259,7 +259,22 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   }
   return {
     assertCanStart,prepare,confirmed,
-    async inspect(){const saved=await read();return saved.value?{operation:saved.value.operation??null,txHash:saved.value.txHash,predecessorTxHashes:(saved.value.replacements??[]).map(item=>item.txHash),...(saved.value.applicationNullifier?{applicationNullifier:saved.value.applicationNullifier}:{})}:null;},
+    async inspect(){
+      // Metadata only: no mutable Tx or plaintext record escapes into this permit.
+      // Fresh storage and account checks remain mandatory on every reuse.
+      const owner=ownedScope();
+      try {
+        await checkedScope(owner);
+        const prior=inspectionPermit;inspectionPermit=null;
+        if(owner&&prior?.owner===owner&&await slot.isCurrent(prior.encoded)){
+          await checkedScope(owner);inspectionPermit=prior;return structuredClone(prior.metadata);
+        }
+        const saved=await read();await checkedScope(owner);
+        const metadata=saved.value?{operation:saved.value.operation??null,txHash:saved.value.txHash,predecessorTxHashes:(saved.value.replacements??[]).map(item=>item.txHash),...(saved.value.applicationNullifier?{applicationNullifier:saved.value.applicationNullifier}:{})}:null;
+        if(owner)inspectionPermit={owner,encoded:saved.encoded,metadata:structuredClone(metadata)};
+        return metadata;
+      }catch(error){inspectionPermit=null;throw error;}
+    },
     async inspectOutcome({reuse=false}={}){
       if(typeof reuse!=='boolean')throw invalid();
       const owner=ownedScope();await checkedScope(owner);

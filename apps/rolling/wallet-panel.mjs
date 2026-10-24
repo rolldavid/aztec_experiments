@@ -736,6 +736,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   };
   updateRules();void loadRules(rulesId(action)).catch(()=>{});
  }
+ function displayedPostingRules(action){
+  if(!postingTypes.has(action?.type))return undefined;
+  if(!rulesReady(action)||rulesScope===null)throw rulesFailure;
+  const [chainId,rollupVersion,boardAddress]=JSON.parse(rulesScope);
+  return {chainId,rollupVersion,boardAddress,subboard:rulesId(action),parentVersion:postingRules.value.parentVersion,localVersion:postingRules.value.localVersion};
+ }
  async function checkPostingRules(action,{confirm=false}={}){
   if(!postingTypes.has(action?.type))return;
   const epoch=accountEpoch,id=rulesId(action),previous=postingRules?.id===id?postingRules.value:null;
@@ -894,11 +900,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   note('Confirmation pending');closeButton.disabled=false;if(dialog.open)dialog.close();
   void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{});
  }
- async function executeAction(action,{immediate=immediateTypes.has(action.type),onResult=()=>{}}={}){
+ async function executeAction(action,{immediate=immediateTypes.has(action.type),postingRules:expectedRules,onResult=()=>{}}={}){
   const epoch=accountEpoch;checkAccount(epoch);blocked=true;
   if(immediate){
    let result;
-   try{result=await session.application.executeAction(action,{onPrepared:prepared=>{checkAccount(epoch);intent=prepared;if(postingInProgress&&postingTypes.has(prepared.action?.type))postingOperation={epoch,intentId:prepared.intentId,included:false};}});checkAccount(epoch);}catch(failure){
+   try{result=await session.application.executeAction(action,{...(expectedRules===undefined?{}:{postingRules:expectedRules}),onPrepared:prepared=>{checkAccount(epoch);intent=prepared;if(postingInProgress&&postingTypes.has(prepared.action?.type))postingOperation={epoch,intentId:prepared.intentId,included:false};}});checkAccount(epoch);}catch(failure){
+    if(['ROLLING_POSTING_RULES_CHANGED','ROLLING_SUBBOARD_REJECTED'].includes(failure?.code)){checkAccount(epoch);intent=null;postingOperation=null;await loadRules(rulesId(action),true).catch(()=>{});checkAccount(epoch);throw rulesFailure;}
     if(failure?.code==='BB_POST_FEE_CREDIT_REQUIRED'){checkAccount(epoch);intent=null;postingOperation=null;accountRefreshNeeded=true;}
     throw failure;
    }finally{blocked=false;}
@@ -1046,9 +1053,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    const selectedAvatar=avatarDraft;
    const direct=immediateTypes.has(action.type);
    void work(async()=>{
-    await checkPostingRules(action,{confirm:direct});
+    const expectedRules=direct?displayedPostingRules(action):undefined;
+    if(!direct)await checkPostingRules(action);
     if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
-    try{await executeAction(action,{immediate:direct});}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}
+    try{await executeAction(action,{immediate:direct,postingRules:expectedRules});}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}
    },actionFailure,{posting:postingTypes.has(action.type)});
   };
   const cost=el('strong'),balance=el('strong');

@@ -147,3 +147,7 @@ Root integrates reviewed source, owns the one retained build checkout and live p
 ## Current release and measured optimization —25October
 
 Root owns service activation and the single existing IAB test tab. pending_reply_ui diagnoses the Bok startup boundary and then private-execution timings. pending_feed_release reviewed exact browser/server timing extraction and awaits the actual capture. proposed_feed_design fixes the narrow deployment monitor guard. No new dependency trees or browser profiles; retained build reused.
+
+## Measured15.329s optimization —25October
+
+Root integrates and owns the one retained build, publication and actual browser test. pending_reply_ui prepares bounded native kernel lazy-module preloading; proposed_feed_design reviews it and removes duplicated posting-policy checks; pending_feed_release removes completed-proof worker-exit waiting while retaining capacity/cleanup and instruments numeric upload timing. Journal metadata reuse independently approved,90tests passed. Agents use source-only scratch; no dependency copies or new browser profiles.

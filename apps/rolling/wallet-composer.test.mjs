@@ -29,7 +29,7 @@ function dom(t){
  document={createElement:t=>new Element(t),createTextNode:t=>new Element('#text',t),body:new Element('body')};document.activeElement=document.body;
  document.querySelector=s=>document.body.querySelector(s);document.querySelectorAll=s=>document.body.querySelectorAll(s);
  document.until=predicate=>new Promise(resolve=>{const observe=()=>{const value=predicate();if(value){observers.delete(observe);resolve(value);}};observers.add(observe);observe();});
- const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}})});
+ const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>{document.ruleReads=(document.ruleReads??0)+1;return new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}});}});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
 async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000'}={}){
@@ -37,7 +37,7 @@ async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,to
  const session={ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
   readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
-  readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
+  readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{})};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
@@ -208,7 +208,7 @@ for(const type of ['post','reply','quote','repost'])test(`one ${type} click subm
  hold.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  await f.document.until(()=>f.core().status===2&&f.host.textContent.includes('0 USDC available'));assert.equal(f.reads(),1);
  assert.equal(f.document.querySelector('dialog').open,false);
- assert.deepEqual(f.submissions,['post-1']);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.prepared().content,'My exact message');assert.equal(f.prepared().type,type);
+ assert.deepEqual(f.submissions,['post-1']);assert.deepEqual(f.prepareOptions,[{immediate:true,postingRules:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64),subboard:'0',parentVersion:'1',localVersion:'0'}}]);assert.equal(f.document.ruleReads,1,'no second public read at Post click');assert.equal(f.prepared().content,'My exact message');assert.equal(f.prepared().type,type);
  if(type==='reply'){assert.equal(f.prepared().parent,'10');assert.equal(f.prepared().root,'1');}
  if(['quote','repost'].includes(type))assert.equal(f.prepared().reference,'12');
 });
@@ -229,7 +229,7 @@ test('changed displayed rules stop one-click posting before preparation or sendi
  const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});
  f.document.rules={version:'2',text:'Changed rules'};
  button.fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
- assert.equal(f.prepared(),null);assert.deepEqual(f.submissions,[]);assert(f.document.body.textContent.includes('Current board rules are unavailable, changed'));
+ assert.equal(f.prepared(),null);assert.deepEqual(f.submissions,[]);assert(f.document.body.textContent.includes('Current board rules are unavailable, changed'));assert.equal(f.document.ruleReads,2,'mismatch refreshes displayed rules after failed preparation');
 });
 test('submission rejection retains the exact draft and unresolved action without a second Post send',{timeout:3000},async t=>{
  const f=await fixture(t,{posting:{submit:()=>{throw Error('ambiguous response');}}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});
@@ -491,55 +491,26 @@ test('nonposting inclusion never dismisses the account dialog or refreshes the p
 
 
 const warmHead=(number,hash='1')=>({checkpoint:{number:number+3,hash:'0x'+'f'.repeat(64)},confirmationCheckpoint:{number,hash:'0x'+hash.repeat(64)}});
-test('confirmed feed heads warm board and fee reads once while editing and coalesce newer heads',{timeout:3000},async t=>{
- const first=Promise.withResolvers(),second=Promise.withResolvers(),started=[Promise.withResolvers(),Promise.withResolvers()];let refreshes=0;
- const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{balanceRefresh:()=>{const index=refreshes++;started[index]?.resolve();return index===0?first.promise:second.promise;}}});
+test('checkpoint observations never scan private balances while editing or reopening the composer',{timeout:3000},async t=>{
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{}});
  await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
  const editor=f.document.querySelector('textarea');editor.value='Keep typing';editor.fire('input');
- f.panel.observePublicPosts([],warmHead(10));await started[0].promise;
- assert.equal(editor.disabled,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
- f.panel.observePublicPosts([],warmHead(10));f.panel.observePublicPosts([],warmHead(11));f.panel.observePublicPosts([],warmHead(12));
- assert.equal(refreshes,1);editor.value+=' while syncing';editor.fire('input');
- first.resolve();await started[1].promise;assert.equal(refreshes,2);
- assert.equal(f.panel.close(),true);f.panel.observePublicPosts([],warmHead(13));second.resolve();
- await f.document.until(()=>f.document.querySelector('.composer-cost').textContent.includes('Balance 1'));
- await Promise.resolve();assert.equal(refreshes,2);assert.equal(f.document.querySelector('textarea'),editor);assert.equal(editor.value,'Keep typing while syncing');
- assert.equal(f.core().names,0);assert.equal(f.core().moderator,0);assert.deepEqual(f.submissions,[]);
+ const before=f.core();for(const number of [10,10,11,12])f.panel.observePublicPosts([],warmHead(number));
+ await new Promise(setImmediate);assert.deepEqual(f.core(),before);assert.equal(editor.disabled,false);assert.equal(editor.value,'Keep typing');
+ assert.equal(f.panel.close(),true);f.panel.observePublicPosts([],warmHead(13));f.panel.open({type:'post',content:'Kept'});
+ await new Promise(setImmediate);assert.deepEqual(f.core(),before);assert.deepEqual(f.submissions,[]);
 });
-
-test('prewarming ignores proposed-only progress and noncomposer views, then warms latest head on opening',{timeout:3000},async t=>{
- const entered=Promise.withResolvers(),f=await fixture(t,{defaults:{},balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{balanceRefresh:()=>entered.resolve()}});
+test('checkpoint updates during Post do not queue a competing account refresh',{timeout:3000},async t=>{
+ const held=Promise.withResolvers(),started=Promise.withResolvers(),f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{submit:()=>{started.resolve();return held.promise;}}});
  await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
- f.panel.observePublicPosts([],warmHead(20));f.panel.observePublicPosts([],{checkpoint:{number:30,hash:'0x'+'2'.repeat(64)}});
- await Promise.resolve();assert.equal(f.core().status,1);assert.equal(f.panel.close(),true);f.panel.open({type:'reply',parent:'10',root:'1',subboard:'0'});
- await entered.promise;assert.equal(f.core().status,2);
- await f.document.until(()=>f.document.querySelector('.composer-cost').textContent.includes('Balance 1'));
- f.panel.observePublicPosts([],warmHead(20));await Promise.resolve();assert.equal(f.core().status,2);
+ const editor=f.document.querySelector('textarea');editor.value='Post without balance scan';editor.fire('input');
+ f.panel.observePublicPosts([],warmHead(30));f.document.querySelector('[data-action-review]').fire('click');await started.promise;
+ assert.equal(f.core().status,1);for(const number of [31,32,33])f.panel.observePublicPosts([],warmHead(number));
+ await new Promise(setImmediate);assert.equal(f.core().status,1);assert.deepEqual(f.submissions,['post-1']);
+ held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.prepared().content,'Post without balance scan');
 });
 
-test('Post joins an active warm read without submitting early or refreshing the same head again',{timeout:3000},async t=>{
- const held=Promise.withResolvers(),started=Promise.withResolvers(),f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{balanceRefresh:()=>{started.resolve();return held.promise;}}});
- await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
- const editor=f.document.querySelector('textarea');editor.value='Post after sync';editor.fire('input');
- f.panel.observePublicPosts([],warmHead(30));await started.promise;
- f.document.querySelector('[data-action-review]').fire('click');await Promise.resolve();assert.equal(f.prepared(),null);assert.deepEqual(f.submissions,[]);
- held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false'&&!f.document.querySelector('dialog').open);
- assert.deepEqual(f.submissions,['post-1']);assert.equal(f.prepared().content,'Post after sync');
-});
-
-test('failed warming waits for another checkpoint instead of retrying or disabling the editor',{timeout:3000},async t=>{
- const failed=Promise.withResolvers(),next=Promise.withResolvers();let refreshes=0;
- const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{balanceRefresh:()=>{if(++refreshes===1)return failed.promise;next.resolve();}}});
- await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
- f.panel.observePublicPosts([],warmHead(40));await Promise.resolve();failed.reject(Error('private detail'));
- await f.document.until(()=>f.document.querySelector('.composer-cost').textContent.includes('Balance (updating)'));
- for(let i=0;i<4;i++){f.panel.observePublicPosts([],warmHead(40));await Promise.resolve();}
- assert.equal(refreshes,1);assert.equal(f.document.querySelector('textarea').disabled,false);assert(!f.document.body.textContent.includes('private detail'));
- f.panel.observePublicPosts([],warmHead(40,'2'));await next.promise;assert.equal(refreshes,2);
-});
-
-
-test('initial account refresh already warms the observed checkpoint without a duplicate read',{timeout:3000},async t=>{
+test('initial account refresh is not repeated by checkpoint observations',{timeout:3000},async t=>{
  const f=signInFixture(t,{restored:true});
  f.panel.observePublicPosts([],warmHead(50));f.panel.open({type:'post',content:'Keep initial draft'});
  await f.panel.initialize();assert.equal(f.calls.status,1);

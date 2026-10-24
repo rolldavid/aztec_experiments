@@ -3,8 +3,8 @@ import {computePublicDataTreeLeafSlot,deriveStorageSlotInMap} from '@aztec-labs/
 import {isPrivatePXEForNode} from './private-pxe.mjs';
 import {ORDINARY_POST_GAS_PROFILE} from './ordinary-post-fees.mjs';
 
-// Screening already identifies the exact history notes the private circuit will
-// authenticate. Fetch their independent public witnesses together, through the
+// The private circuit authenticates immutable configuration and screened history.
+// Fetch their independent public witnesses together, through the
 // PXE's own hash-pinned cache. The circuit still checks every witness normally.
 // No witness or state is reused across anchors and no private execution is run.
 export async function prefetchOrdinaryPostWitnesses({wallet,node,board,artifact,hints}) {
@@ -14,15 +14,20 @@ export async function prefetchOrdinaryPostWitnesses({wallet,node,board,artifact,
   const cachedNode=pxe.node;
   const guard=()=>{if(wallet.pxe!==pxe||pxe.node!==cachedNode||!isPrivatePXEForNode(pxe,node))throw Object.assign(Error('Ordinary post witness context changed'),{code:'ROLLING_CONTEXT_CHANGED'});};
   const posts=hints.map((hint,index)=>hint&&!hint.note.is_dummy?{post:new Fr(BigInt(hint.note.post_id)),index}:null).filter(Boolean);
-  if(!posts.length)return;
   const header=await pxe.getSyncedBlockHeader(),anchor=await header.toBlockParameter();
   guard();
-  const entries=await Promise.all(posts.flatMap(({post,index})=>['post_exists','post_time','post_flag_deadline'].map(async name=>{
+  // PublicImmutable<Config> stores ten packed fields followed by their hash.
+  // The private circuit verifies this same leaf even when history is empty.
+  const configSlot=BigInt(artifact.storageLayout?.config?.slot??-1),depositsSlot=BigInt(artifact.storageLayout?.deposits?.slot??-1);
+  if(configSlot<1n||depositsSlot!==configSlot+11n)throw Error('Invalid ordinary post config layout');
+  const configLeaf=await computePublicDataTreeLeafSlot(board.address,new Fr(configSlot+10n));
+  const historyEntries=await Promise.all(posts.flatMap(({post,index})=>['post_exists','post_time','post_flag_deadline'].map(async name=>{
     const slot=artifact.storageLayout?.[name]?.slot;
     if(slot===undefined)throw Error('Missing ordinary post storage layout');
     const storageSlot=await deriveStorageSlotInMap(new Fr(BigInt(slot)),post);
     return {name,post,index,leaf:await computePublicDataTreeLeafSlot(board.address,storageSlot)};
   })));
+  const entries=[{name:'config-hash',leaf:configLeaf},...historyEntries];
   guard();
   const reads=await Promise.allSettled(entries.map(async entry=>({...entry,witness:await cachedNode.getPublicDataWitness(anchor,entry.leaf)})));
   const failed=reads.find(result=>result.status==='rejected');if(failed)throw failed.reason;

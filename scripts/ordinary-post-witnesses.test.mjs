@@ -13,7 +13,7 @@ after(()=>BarretenbergSync.destroySingleton());
 const source=fs.readFileSync(new URL('../shared/ordinary-post-witnesses.mjs',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export async function','async function');
 async function fixture({mature=true}={}){
  const board={address:AztecAddress.fromFieldUnsafe(new Fr(2)),currentContractClassId:Fr.fromString(ORDINARY_POST_GAS_PROFILE.boardClassId)};
- const artifact={storageLayout:Object.fromEntries(['post_exists','post_time','post_flag_deadline','post_flagged'].map((name,i)=>[name,{slot:i+1}]))};
+ const artifact={storageLayout:{config:{slot:20},deposits:{slot:31},...Object.fromEntries(['post_exists','post_time','post_flag_deadline','post_flagged'].map((name,i)=>[name,{slot:i+1}]))}};
  const calls=[],pending=[];let rejectFirst=false,hold=false,anchor={number:1,hash:BlockHash.fromString('0x'+'1'.padStart(64,'0'))};
  const deadline=await computePublicDataTreeLeafSlot(board.address,await deriveStorageSlotInMap(new Fr(3),new Fr(9)));
  const node={getPublicDataWitness:async(at,leaf)=>{calls.push({at,leaf});if(rejectFirst&&calls.length===1)throw Error("witness unavailable");if(hold)await new Promise(resolve=>pending.push(resolve));return {leafPreimage:{leaf:{slot:leaf,value:leaf.equals(deadline)?new Fr(mature?50:150):Fr.ONE}}};}};
@@ -24,27 +24,29 @@ async function fixture({mature=true}={}){
 }
 test('independent history witnesses start together; native anchored cache serves later reads',async()=>{
  const f=await fixture();f.hold();const work=f.run();
- for(let i=0;i<10&&f.pending.length<3;i++)await new Promise(resolve=>setImmediate(resolve));
- assert.equal(f.pending.length,3);f.pending.splice(0).forEach(resolve=>resolve());
+ for(let i=0;i<10&&f.pending.length<4;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.pending.length,4);f.pending.splice(0).forEach(resolve=>resolve());
  for(let i=0;i<10&&f.pending.length<1;i++)await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.pending.length,1);f.pending.splice(0).forEach(resolve=>resolve());await work;
- assert.equal(f.calls.length,4);await f.run();assert.equal(f.calls.length,4);
+ assert.equal(f.calls.length,5);await f.run();assert.equal(f.calls.length,5);
 });
 test('new anchor is fetched afresh; immature history does not fetch flags',async()=>{
- const f=await fixture({mature:false});await f.run();assert.equal(f.calls.length,3);await f.run();assert.equal(f.calls.length,3);
- f.advance();await f.run();assert.equal(f.calls.length,6);assert.notDeepEqual(f.calls[0].at,f.calls[3].at);
+ const f=await fixture({mature:false});await f.run();assert.equal(f.calls.length,4);await f.run();assert.equal(f.calls.length,4);
+ f.advance();await f.run();assert.equal(f.calls.length,8);assert.notDeepEqual(f.calls[0].at,f.calls[4].at);
 });
-test('dummy and absent hints do no network work; foreign PXE route is rejected',async()=>{
- const f=await fixture();f.args.hints=[{note:{is_dummy:true}},null];await f.run();assert.equal(f.calls.length,0);
+test('dummy and absent hints fetch only the immutable config witness; foreign PXE route is rejected',async()=>{
+ const f=await fixture();f.args.hints=[{note:{is_dummy:true}},null];await f.run();assert.equal(f.calls.length,1);
+ const expected=await computePublicDataTreeLeafSlot(f.args.board.address,new Fr(30));assert(f.calls[0].leaf.equals(expected));
+ await f.args.wallet.pxe.node.getPublicDataWitness(f.calls[0].at,expected);assert.equal(f.calls.length,1,'private circuit reuses exact native cached hash witness');
  f.args.node={};await assert.rejects(f.run(),{code:'BB_POST_FEE_PROFILE_MISMATCH'});
 });
 
 test('a failed witness drains other in-flight reads before rejecting',async()=>{
  const f=await fixture();f.hold();f.rejectFirst();let settled=false;
  const work=f.run().finally(()=>{settled=true;});const rejection=assert.rejects(work,/witness unavailable/);
- for(let i=0;i<20&&f.pending.length<2;i++)await new Promise(resolve=>setImmediate(resolve));
- assert.equal(f.pending.length,2);assert.equal(settled,false);
- f.pending.splice(0).forEach(resolve=>resolve());await rejection;assert.equal(f.calls.length,3);
+ for(let i=0;i<20&&f.pending.length<3;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.pending.length,3);assert.equal(settled,false);
+ f.pending.splice(0).forEach(resolve=>resolve());await rejection;assert.equal(f.calls.length,4);
 });
 test('changing the node while the anchor is pending starts no foreign reads',async()=>{
  const f=await fixture();let release;
@@ -56,20 +58,24 @@ test('changing the node while the anchor is pending starts no foreign reads',asy
 });
 test('an immature child prevents speculative grandchild flag reads',async()=>{
  const f=await fixture({mature:false});f.args.hints[1]={note:{post_id:'10',is_dummy:false}};
- await f.run();assert.equal(f.calls.length,6);
+ await f.run();assert.equal(f.calls.length,7);
 });
 
 test('actual native cache joins a still-running prefetch instead of issuing another witness read',async()=>{
  const f=await fixture({mature:false});f.hold();const work=f.run();
- for(let i=0;i<20&&f.pending.length<3;i++)await new Promise(r=>setImmediate(r));
- assert.equal(f.calls.length,3);const first=f.calls[0];
+ for(let i=0;i<20&&f.pending.length<4;i++)await new Promise(r=>setImmediate(r));
+ assert.equal(f.calls.length,4);const first=f.calls[0];
  const required=f.args.wallet.pxe.node.getPublicDataWitness(first.at,first.leaf);
- assert.equal(f.calls.length,3);f.pending.splice(0).forEach(resolve=>resolve());
- await work;const witness=await required;assert(witness.leafPreimage.leaf.slot.equals(first.leaf));assert.equal(f.calls.length,3);
+ assert.equal(f.calls.length,4);f.pending.splice(0).forEach(resolve=>resolve());
+ await work;const witness=await required;assert(witness.leafPreimage.leaf.slot.equals(first.leaf));assert.equal(f.calls.length,4);
 });
 test('actual native cache evicts failed prefetch; required private execution read can succeed',async()=>{
  const f=await fixture({mature:false});f.rejectFirst();await assert.rejects(f.run(),/witness unavailable/);
  const first=f.calls[0],before=f.calls.length;
  const witness=await f.args.wallet.pxe.node.getPublicDataWitness(first.at,first.leaf);
  assert(witness.leafPreimage.leaf.slot.equals(first.leaf));assert.equal(f.calls.length,before+1);
+});
+
+test('unqualified config layout is rejected before any witness RPC',async()=>{
+ const f=await fixture();f.args.artifact.storageLayout.deposits.slot=32;await assert.rejects(f.run(),/config layout/);assert.equal(f.calls.length,0);
 });

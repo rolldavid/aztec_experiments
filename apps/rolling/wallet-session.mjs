@@ -490,11 +490,11 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  }
 
  const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>refreshMethods[name]?observedRead(name,call,args):locked(async()=>{const result=name==='submitPrepared'&&(topups||aggregate)?await submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId:args[0]}):await call(...args);if(name==='reconcile'&&result?.status==='confirmed'){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordConfirmedClaim(result);else if(result.action?.type==='claim-deposit'&&aggregate)await aggregate.recordConfirmedClaim(result);}return result;})])),
-  executeAction(input,options={}){const action=structuredClone(input),onPrepared=options.onPrepared;return locked(()=>{
+  executeAction(input,options={}){const action=structuredClone(input),onPrepared=options.onPrepared,postingRules=options.postingRules===undefined?undefined:structuredClone(options.postingRules);return locked(()=>{
    // Only one-click prepare+send owns the lock for the entire lifetime of these
    // independent hash-pinned reads. Standalone preparation still awaits them.
    operationScope.preparationReads=[];
-   return executeRollingAction(synchronized,action,{onPrepared,submit:intentId=>['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)&&(topups||aggregate)?submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId}):synchronized.submitPrepared(intentId)});
+   return executeRollingAction(synchronized,action,{onPrepared,postingRules,submit:intentId=>['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)&&(topups||aggregate)?submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId}):synchronized.submitPrepared(intentId)});
   });},
   executeWithdrawal(deposit,{onPrepared,onProgress,signal}={}){
    const withdrawalGuard=async()=>{signal?.throwIfAborted();await guardRoute();signal?.throwIfAborted();};

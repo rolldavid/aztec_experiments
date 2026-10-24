@@ -1,0 +1,32 @@
+{
+  "source": "6cb76060aba07b2eae31284d0e949517dd240d48",
+  "sourceFollowup": "dd5108bf",
+  "board": "0x19ee03e617512ca48271634629d9b48e815ab1ba46c3eef3b7edaafc345d7be6",
+  "privateFee": "0x2fff4f1bed0f240982804499d6693530343bd3f9236fe82851fb7d46be990b3c",
+  "bok": "0x18fc6cbfced589411864ae3b2551f0c1c37e80da11445cb839588db2d68f358a",
+  "observations": {
+    "coreSdkInputsVerified": 2101,
+    "proverReady": true,
+    "appApiReady": true,
+    "staticScopeMatched": true,
+    "bokReady": true,
+    "bokActiveJobs": 0,
+    "proxyPidUnchangedByPolicyRepair": 787665,
+    "proxyBindsTo": []
+  },
+  "fixes": [
+    "Native reorg-anchor JS/TS pinned sources installed atomically in new releases",
+    "Deployment guard observes timer-driven oneshot definitions rather than transient lifecycle",
+    "Proxy base unit retains egress requirement and Wants application without application stop coupling",
+    "Disposable dedicated Bok pool branch reset to configured genesis; temporary diagnostics restored"
+  ],
+  "ssmCommands": {
+    "coreActivation": "5fa9c3e2-9e04-486f-94ac-340f9909fa91",
+    "uiActivation": "8383a999-32f0-4014-a5a3-846bc512e485",
+    "proxyPolicy": "5a48a4c6-3d16-4a0c-9d1a-c625a8919752",
+    "bokReset": "c25bf79c-6a9f-41e4-8e52-543e81d32d5d",
+    "bokHealth": "7a0262ef-8159-4ceb-bf0e-c7853fc5225b"
+  },
+  "performanceAcceptance": "Pending actual fresh browser post; no new result claimed",
+  "temporaryCloudTransferVersionsDeleted": true
+}

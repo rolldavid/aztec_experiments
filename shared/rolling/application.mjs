@@ -585,7 +585,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(policy[4]!==true,'ROLLING_SUBBOARD_REJECTED');
     return {mainVersion:Number(BigInt(policy[0])),localVersion:Number(BigInt(policy[2]))};
   }
-  async function argumentsFor(action,board,nonce,{atomicBok=false,postingAnchor}={}){
+  async function argumentsFor(action,board,nonce,{atomicBok=false,postingAnchor,preparedPolicy}={}){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
       case 'cancel-deposit':return cancellationArguments(action);
@@ -621,7 +621,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const subboard=field(action.subboard??'0'),kind=action.type==='quote'?2:action.type==='repost'?3:1;
         let policy,screening;
         if(subboard===zero){
-          const observations=await Promise.allSettled([measure('action.policy',()=>postingPolicy(board,subboard,postingAnchor)),screeningArguments(board,field(action.deposit,true),action.type!=='bok')]);
+          const observations=await Promise.allSettled([preparedPolicy??measure('action.policy',()=>postingPolicy(board,subboard,postingAnchor)),screeningArguments(board,field(action.deposit,true),action.type!=='bok')]);
           const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
           [policy,screening]=observations.map(value=>value.value);
         }else{policy=await postingPolicy(board,subboard);screening=await screeningArguments(board,field(action.deposit,true),action.type!=='bok');}
@@ -955,16 +955,46 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }}catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {identities:records.map(record=>record.id),records,nextCursor:empty?null:cursor+8};});},
     async prepare(input,options){return exclusive(async()=>{
-      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok','like','unlike','preference','read-marker','name','bio','avatar','claim-deposit','claim-private-fee','claim-bok','screen','withdraw'].includes(input?.type));
-      await guard();const action=clone(input),store=await slot();let prior=await store.read();
-      if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
-        const final=await outcome(prior,{history:true});check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
-      // Cancelling an unsent draft leaves its previous confirmed transaction in
-      // the journal. Re-establish that exact acknowledgement after a reload.
-      if(prior.value?.status==='cancelled'&&prior.value.predecessor)acknowledge(await session.journal.inspectOutcome({reuse:true}),prior.value.predecessor);
-      const previousTx=await session.journal.assertCanStart();
-      const predecessor=previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null;
-      const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=await contract();
+      const immediate=options!==undefined;let postingRules;
+      if(immediate){
+        const values=exactData(options,Object.hasOwn(options??{},'postingRules')?['immediate','postingRules']:['immediate']);
+        check(values.immediate===true&&['post','reply','quote','repost','bok','like','unlike','preference','read-marker','name','bio','avatar','claim-deposit','claim-private-fee','claim-bok','screen','withdraw'].includes(input?.type));
+        if(Object.hasOwn(values,'postingRules')){
+          check(['post','reply','quote','repost','bok'].includes(input?.type));
+          postingRules=exactData(values.postingRules,['chainId','rollupVersion','boardAddress','subboard','parentVersion','localVersion']);
+          for(const key of ['parentVersion','localVersion'])check(typeof postingRules[key]==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(postingRules[key])&&BigInt(postingRules[key])<=0xffffffffn);
+          check(postingRules.chainId===scope.chainId&&postingRules.rollupVersion===scope.version&&postingRules.boardAddress===fixed.board&&field(postingRules.subboard)===field(input.subboard??'0'),'ROLLING_POSTING_RULES_CHANGED');
+        }
+      }
+      await guard();const action=clone(input);
+      const earlyScope=immediate&&['post','reply','quote','repost'].includes(action.type)&&field(action.subboard??'0')===zero
+        ?getOperationScope():null;
+      const policyOwner=earlyScope?.synchronized===true?{scope:earlyScope,wallet:session.wallet,pxe:session.wallet.pxe,node:session.node}:null;
+      const checkPolicyOwner=()=>check(getOperationScope()===policyOwner.scope&&session.wallet===policyOwner.wallet&&
+        session.wallet.pxe===policyOwner.pxe&&session.node===policyOwner.node,'ROLLING_CONTEXT_CHANGED');
+      const readPredecessor=async()=>{
+        const store=await slot();let prior=await store.read();
+        if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
+          const final=await outcome(prior,{history:true});check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
+        // A cancelled unsent draft still acknowledges its prior confirmed transaction.
+        if(prior.value?.status==='cancelled'&&prior.value.predecessor)acknowledge(await session.journal.inspectOutcome({reuse:true}),prior.value.predecessor);
+        const previousTx=await session.journal.assertCanStart();
+        return {store,prior,predecessor:previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null};
+      };
+      let history,earlyPolicy;
+      if(policyOwner){
+        // These independent reads share this synchronized operation. Drain both
+        // before any failure can release its lease or before writing an intent.
+        const reads=await Promise.allSettled([
+          measure('action.predecessor',readPredecessor),
+          (async()=>{const board=await contract(),anchor=await balanceAnchor();checkPolicyOwner();
+            const policy=await measure('action.policy',()=>postingPolicy(board,zero,anchor));checkPolicyOwner();return {board,anchor,policy};})(),
+        ]);
+        const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+        checkPolicyOwner();[history,earlyPolicy]=reads.map(value=>value.value);
+      }else history=await measure('action.predecessor',readPredecessor);
+      const {store,prior,predecessor}=history;
+      const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=earlyPolicy?.board??await contract();
       const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(key=>key==='type'||allowed.includes(key)));
       if(['bok','claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type)||action.type==='claim-deposit'&&action.bokReceipt!==undefined){await ensureBok({bind:immediate&&action.type==='bok'});check(bok,'ROLLING_BOK_UNAVAILABLE');}
       const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
@@ -980,18 +1010,21 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         // Capture this operation's local anchor before either private utility
         // enters the native PXE queue. The public policy read can then overlap
         // screening and fee-note work; its final canonical/local fences remain.
-        const postingAnchor=field(action.subboard??'0')===zero?await balanceAnchor():undefined;
+        const postingAnchor=earlyPolicy?.anchor??(field(action.subboard??'0')===zero?await balanceAnchor():undefined);
         checkPaymentOwner();
         const earlier=preparedPayments.get(paymentScope);preparedPayments.delete(paymentScope);
         const earlyPayment=action.type!=='bok'&&earlier?.phase==='metadata'&&earlier.wallet===session.wallet&&earlier.pxe===session.wallet.pxe&&earlier.node===session.node?earlier.payment:null;
         const values=await Promise.allSettled([
-          ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor})),
+          ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor,preparedPolicy:earlyPolicy?.policy})),
           ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:action.type!=='bok'})),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkPaymentOwner();
         args=plain(values[0].value);preparedPayment=values[1].value;
       }else args=moderation?moderation.args:plain(await measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:immediate&&action.type==='bok'})));
+      // Match the rules actually displayed to this exact canonical preparation.
+      // A mismatch must fail before creating an unsigned intent or estimating.
+      if(postingRules)check(String(args[2].expected_main_policy_version)===postingRules.parentVersion&&String(args[2].expected_local_policy_version)===postingRules.localVersion,'ROLLING_POSTING_RULES_CHANGED');
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
       if(action.type==='name')record.nameAvailability=await nameAvailability(action);
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}

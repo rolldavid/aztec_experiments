@@ -142,6 +142,9 @@ async function load(signal){
   const selected=globalThis.walletState.aztec;
   if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
+  // Public immutable circuit assets load alongside account initialization.
+  // This never blocks sign-in or starts a private execution/proof.
+  try{void Promise.resolve(sdk.preloadPostingKernels()).catch(()=>{});}catch{}
   creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,getBokArtifact,account:selected,
    trustedQuery:query,remoteProver:remote,contextGuard:guard,onProgress,
    fundingRelay:createRollingFundingRelay({contextGuard:guard}),

@@ -1,3 +1,7 @@
+import {LazyArtifactProvider} from '@aztec-labs/noir-protocol-circuits-types/client/lazy';
+import {createPostingKernelPreload} from './posting-kernel-preload.mjs';
+// Reuse native dynamic-import caching; never build a second circuit cache.
+export const preloadPostingKernels=createPostingKernelPreload(new LazyArtifactProvider());
 export {prepareBokCreditPurchase} from './rolling/bok-credit-purchase.mjs';
 export {createEncryptedJournalSlot} from './journal-record.mjs';
 export {prepareAggregateFunding, validateAggregateFundingQuote, aggregateFundingTransaction, prepareAggregateUsdcFunding, aggregateUsdcFundingTransaction} from './rolling/aggregate-funding.mjs';

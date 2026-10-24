@@ -57,3 +57,30 @@ test('rejected async timing callback cannot escape successful proof completion',
  assert.deepEqual(await worker.prove('/numeric-async',{onTimings:async()=>{throw Error('diagnostic rejected');}}),{mode:'disabled'});
  await new Promise(resolve=>setImmediate(resolve));
 `));
+
+test('proof IPC delivers once before teardown while the process slot stays reserved',()=>run(`
+ await fs.writeFile(entry,'process.send({ready:true});process.on("message",value=>{if(value.exit){process.disconnect();return;}process.send({mode:"real",compressedProof:"proof",timings:{"native-prove":5,totalMs:7}});process.send({mode:"real",compressedProof:"ignored duplicate",timings:{"native-prove":99,totalMs:999}});});');
+ worker=createProcessWorker({proofsEnabled:true});await until(()=>children[0].ready);
+ let deliveries=0,done=false,earlyTiming,finalTiming;
+ const proving=worker.prove('/early',{onTimings:t=>{finalTiming=t;},onResult:r=>{deliveries++;earlyTiming=finalTiming;assert.deepEqual(r,{mode:'real',compressedProof:'proof'});}}).then(r=>{done=true;return r;});
+ await until(()=>deliveries>0);await new Promise(setImmediate);
+ assert.equal(done,false);assert.equal(deliveries,1);assert.equal(children.length,1);assert.equal(earlyTiming.nativeProveMs,5);assert.equal(earlyTiming.resultToExitMs,undefined);assert.equal(earlyTiming.warmReplacementMs,undefined);
+ process.kill(children[0].pid,0);await assert.rejects(worker.prove('/second'),/Worker busy/);
+ children[0].send({exit:true});assert.deepEqual(await proving,{mode:'real',compressedProof:'proof'});assert.equal(deliveries,1);
+ assert(finalTiming.resultToExitMs>=0);assert(finalTiming.warmReplacementMs>=0);assert.equal(children.length,2);
+`));
+
+test('failed or mismatched worker IPC cannot publish an early proof',()=>run(`
+ await fs.writeFile(entry,'process.send({ready:true});process.once("message",()=>{process.send({mode:"disabled"});process.send({mode:"real",compressedProof:""});process.send({errorStage:"native-verification"},()=>{process.exitCode=1;process.disconnect();});});');
+ worker=createProcessWorker({proofsEnabled:true});let deliveries=0;
+ await assert.rejects(worker.prove('/bad',{onResult:()=>deliveries++}),{code:'native-verification'});assert.equal(deliveries,0);
+`));
+
+test('early result callback failure never interrupts worker cleanup or its returned proof',()=>run(`
+ await fs.writeFile(entry,'process.send({ready:true});process.once("message",()=>process.send({mode:"real",compressedProof:"proof"},()=>process.disconnect()));');
+ worker=createProcessWorker({proofsEnabled:true});
+ for(const onResult of [()=>{throw Error('observer failure');},async()=>{throw Error('observer rejected');}]){
+  assert.deepEqual(await worker.prove('/observer',{onResult}),{mode:'real',compressedProof:'proof'});
+ }
+ await new Promise(setImmediate);
+`));

@@ -254,6 +254,26 @@ test('durable fence failure prevents send; successfully saved pre-send fence can
   await assert.rejects(f.restart().submitPrepared(p.intentId));assert.equal(f.state.sends,0);
   assert.equal((await f.app.reconcile(p.intentId)).status,'unknown');
 });
+const displayedRules=(subboard='0',overrides={})=>({chainId:'31337',rollupVersion:'1',boardAddress:hex(1),subboard,parentVersion:'1',localVersion:subboard==='0'?'0':'1',...overrides});
+for(const subboard of ['0','7'])test('displayed posting rules bind canonical preparation before durable write: '+subboard,async()=>{
+ const f=fixture(),rules=displayedRules(subboard),action={type:'post',subboard,deposit:'9',content:'Displayed rules'};
+ const prepared=await f.app.prepare(action,{immediate:true,postingRules:rules});assert.equal(prepared.status,'prepared');assert.equal(f.state.estimates,0);assert.equal(f.values.size,1);
+ const call=f.state.privateReads.find(row=>row.name==='effective_policy');if(subboard==='0')assert.equal(f.state.policyReads.length,1);else assert(call);
+});
+for(const changed of ['parentVersion','localVersion','boardAddress','chainId','rollupVersion','subboard'])test('changed displayed '+changed+' fails before intent, estimate or send',async()=>{
+ const f=fixture(),rules=displayedRules('0',{[changed]:changed==='boardAddress'?hex(99):'2'});
+ await assert.rejects(f.app.prepare({type:'post',subboard:'0',deposit:'9',content:'Unsent'}, {immediate:true,postingRules:rules}),{code:'ROLLING_POSTING_RULES_CHANGED'});
+ assert.equal(f.values.size,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
+});
+test('displayed rules are captured before asynchronous preparation and reject non-post use',async()=>{
+ const f=fixture(),rules=displayedRules();f.state.beforePolicyRead=()=>{rules.parentVersion='99';};
+ assert.equal((await f.app.prepare({type:'post',deposit:'9',content:'Captured'}, {immediate:true,postingRules:rules})).status,'prepared');
+ const other=fixture();await assert.rejects(other.app.prepare({type:'like',post:'5'},{immediate:true,postingRules:displayedRules()}),{code:'ROLLING_INVALID_ACTION'});assert.equal(other.values.size,0);
+});
+test('rejected subboard with displayed rules leaves no unsigned intent',async()=>{
+ const f=fixture();f.state.effectivePolicy=[1n,1n,1n,2n,true];
+ await assert.rejects(f.app.prepare({type:'post',subboard:'7',deposit:'9',content:'Unsent'},{immediate:true,postingRules:displayedRules('7')}),{code:'ROLLING_SUBBOARD_REJECTED'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
 test('saved fee ceiling and saved policy cannot be silently changed on submission',async()=>{
   const f=fixture(),p=await f.app.prepare({type:'post',deposit:'9',content:'Hi'});
   f.state.fee=11n;await assert.rejects(f.app.submitPrepared(p.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);
@@ -2399,4 +2419,36 @@ test('automatic withdrawal readiness drains a failed public read and held siblin
  const rejection=assert.rejects(work,e=>e===failure);await entered.promise;await new Promise(resolve=>setImmediate(resolve));
  assert.equal(settled,false);await assert.rejects(f.app.readBalances(),{code:'ROLLING_BUSY'});
  held.resolve();await rejection;assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+
+test('same-operation canonical policy overlaps predecessor reads exactly once before intent writes',{timeout:3000},async()=>{
+ const f=fixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ const journal=Promise.withResolvers(),policy=Promise.withResolvers(),both=Promise.withResolvers();let starts=0;
+ const arrive=()=>{if(++starts===2)both.resolve();};
+ f.options.accountSession.journal.assertCanStart=async()=>{arrive();await journal.promise;};
+ f.state.beforePolicyRead=async()=>{arrive();await policy.promise;};f.app=f.restart();
+ const preparing=f.app.prepare({type:'post',deposit:'9',content:'Parallel policy'},{immediate:true});
+ await both.promise;assert.equal(f.values.size,0);assert.equal(f.state.privateReads.length,0);
+ policy.resolve();await new Promise(r=>setImmediate(r));assert.equal(f.values.size,0);
+ journal.resolve();const intent=await preparing;assert.equal(intent.status,'prepared');assert.equal(f.state.policyReads.length,1);
+ assert.deepEqual(f.state.policyReads[0].reference,{hash:hex(42)});assert.equal(f.state.sends,0);
+});
+for(const failAt of ['policy','journal'])test(`same-operation policy overlap drains sibling after ${failAt} failure`,{timeout:3000},async()=>{
+ const f=fixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ const held=Promise.withResolvers(),both=Promise.withResolvers();let starts=0,settled=false;const failure=Error(failAt);
+ const run=async kind=>{if(++starts===2)both.resolve();if(kind===failAt)throw failure;await held.promise;};
+ f.options.accountSession.journal.assertCanStart=()=>run('journal');f.state.beforePolicyRead=()=>run('policy');f.app=f.restart();
+ const preparing=f.app.prepare({type:'post',deposit:'9',content:'Drained failure'},{immediate:true});
+ const rejected=assert.rejects(preparing,error=>error===failure).finally(()=>{settled=true;});
+ await both.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);assert.equal(f.values.size,0);
+ held.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+for(const replace of ['scope','pxe'])test(`same-operation policy overlap rejects ${replace} replacement during predecessor wait`,{timeout:3000},async()=>{
+ const f=fixture();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ const held=Promise.withResolvers(),policyDone=Promise.withResolvers();
+ f.options.accountSession.journal.assertCanStart=async()=>{await held.promise;};f.state.beforePolicyRead=async()=>{policyDone.resolve();};f.app=f.restart();
+ const preparing=f.app.prepare({type:'post',deposit:'9',content:'Owned policy'},{immediate:true});
+ const rejected=assert.rejects(preparing,{code:'ROLLING_CONTEXT_CHANGED'});await policyDone.promise;await new Promise(r=>setImmediate(r));
+ if(replace==='scope')scope={synchronized:true};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};
+ held.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });

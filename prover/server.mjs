@@ -75,9 +75,9 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
     const bodyAt=performance.now(),{metadata}=decodeJob(body);
     if(metadata.board!==board||String(metadata.chainId)!==String(chainId)||String(metadata.rollupVersion)!==String(rollupVersion)||metadata.mode!==(proofsEnabled?'real':'disabled')){reply(403,{error:'Board or proof mode mismatch'});return;}
     const validatedAt=performance.now(),id=await queue.submit(body,client),queuedAt=performance.now();
-    // Numeric stage durations only: never circuit IDs, job IDs, account data or
-    // witness contents. Queue time includes persistence and worker scheduling.
-    res.setHeader('Server-Timing',`body;dur=${(bodyAt-receivedAt).toFixed(3)},validate;dur=${(validatedAt-bodyAt).toFixed(3)},queue;dur=${(queuedAt-validatedAt).toFixed(3)},body-first;dur=${((firstChunkAt??bodyAt)-receivedAt).toFixed(3)},body-gap;dur=${maxChunkGap.toFixed(3)},body-chunks;dur=${chunkCount}`);
+    // Numeric stage durations and body counts only: never circuit IDs, job IDs or
+    // account/witness contents. Queue time includes persistence and worker scheduling.
+    res.setHeader('Server-Timing',`body;dur=${(bodyAt-receivedAt).toFixed(3)},validate;dur=${(validatedAt-bodyAt).toFixed(3)},queue;dur=${(queuedAt-validatedAt).toFixed(3)},body-first;dur=${((firstChunkAt??bodyAt)-receivedAt).toFixed(3)},body-gap;dur=${maxChunkGap.toFixed(3)},body-chunks;desc="${chunkCount}",body-bytes;desc="${body.length}"`);
     reply(202,{id});return;
    }
    const resultMatch=/^\/v1\/jobs\/([a-f0-9]{64})\/result$/.exec(req.url);

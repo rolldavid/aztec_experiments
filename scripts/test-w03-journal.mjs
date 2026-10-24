@@ -34,6 +34,34 @@ for(const backend of ['file','indexeddb']) {
   assert.equal(result.status,'available');assert.equal(result.attempts[0].txHash,String(f.tx.getTxHash()));assert.equal(await storage.read(key),before);
   await assert.rejects(reopened.assertCanStart(),{code:'BB_RECOVERY_REQUIRED'});assert.equal(writes,0);assert.equal(reopened.lastTxHash,null);assert.equal(f.sent.length,0);
  }));
+ test(`${backend}: same-operation metadata inspection reuses exact bytes without retaining mutable Tx`,()=>withStorage(async (f,{storage})=>{
+  let reads=0,decodes=0,owner={};const originalRead=storage.read.bind(storage);
+  storage.read=async(...args)=>{reads++;return originalRead(...args);};
+  const j=await f.newSession({operationScope:()=>owner,Tx:{fromBuffer:(...args)=>{decodes++;return Tx.fromBuffer(...args);}}});
+  j.setOperation('ordinary-post');await j.prepare(f.tx,await j.assertCanStart());reads=decodes=0;
+  const first=await j.inspect();assert.deepEqual({reads,decodes},{reads:1,decodes:1});
+  first.txHash=field();first.predecessorTxHashes.push(field());
+  const second=await j.inspect();assert.equal(second.txHash,String(f.tx.getTxHash()));assert.deepEqual(second.predecessorTxHashes,[]);
+  assert.deepEqual({reads,decodes},{reads:2,decodes:1},'fresh storage read, no second native transaction decode');
+  owner={};await j.inspect();assert.deepEqual({reads,decodes},{reads:3,decodes:2},'new operation cannot reuse prior inspection');
+  owner=null;await j.inspect();await j.inspect();assert.equal(decodes,4,'unowned callers do not reuse metadata');assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: metadata inspection rejects changed ciphertext and can observe a newly authenticated record`,()=>withStorage(async (f,{storage})=>{
+  const owner={},j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());await j.inspect();
+  const key=createHash('sha256').update(l2JournalScopeText(f.opts.scope)).digest('hex'),prior=await storage.read(key);
+  await storage.compareAndSwap(key,prior,'invalid');await assert.rejects(j.inspect(),{code:'BB_JOURNAL_INVALID'});
+  await storage.compareAndSwap(key,'invalid',prior);const restored=await j.inspect();assert.equal(restored.txHash,String(f.tx.getTxHash()));
+  f.setStatus('checkpointed');const replacement=Tx.random({randomProof:true}),other=await f.newSession({acknowledgeTx:String(f.tx.getTxHash())});
+  await other.prepare(replacement,await other.assertCanStart());assert.equal((await j.inspect()).txHash,String(replacement.getTxHash()));assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: metadata reuse checks operation and account again after its storage read`,()=>withStorage(async (f,{storage})=>{
+  let owner={},valid=true,change=false;const originalRead=storage.read.bind(storage);
+  const j=await f.newSession({operationScope:()=>owner,contextGuard:()=>{if(!valid)throw Error('account changed');}});
+  await j.prepare(f.tx,await j.assertCanStart());await j.inspect();
+  storage.read=async(...args)=>{const value=await originalRead(...args);if(change)owner={};return value;};
+  change=true;await assert.rejects(j.inspect(),{code:'BB_RECOVERY_REQUIRED'});change=false;await j.inspect();
+  valid=false;await assert.rejects(j.inspect(),/account changed/);valid=true;assert.equal((await j.inspect()).txHash,String(f.tx.getTxHash()));assert.equal(f.sent.length,0);
+ }));
  test(`${backend}: outcome authenticates and decodes once while both freshness reads remain live`,()=>withStorage(async (f,{storage})=>{
   let reads=0,decodes=0,decrypts=0;const read=storage.read.bind(storage),subtle=globalThis.crypto.subtle;
   storage.read=async(...args)=>{reads++;return read(...args);};

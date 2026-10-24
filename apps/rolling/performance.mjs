@@ -50,7 +50,13 @@ export function rollingResourceTiming(entry,origin){
   }
   if(!Number.isFinite(result.start)||!Number.isFinite(result.duration))return null;
   if(endpoint==='prover-submit'&&Array.isArray(entry.serverTiming))for(const phase of entry.serverTiming.slice(0,16)){
-   if(['body','validate','queue'].includes(phase.name)&&Number.isFinite(phase.duration)&&phase.duration>=0)result['server'+phase.name[0].toUpperCase()+phase.name.slice(1)]=phase.duration;
+   const durationKeys={body:'serverBody',validate:'serverValidate',queue:'serverQueue','body-first':'serverBodyFirst','body-gap':'serverBodyGap'},durationKey=Object.hasOwn(durationKeys,phase.name)?durationKeys[phase.name]:undefined;
+   if(durationKey&&Number.isFinite(phase.duration)&&phase.duration>=0)result[durationKey]=phase.duration;
+   // Counts are numeric descriptions, not durations or raw header text.
+   const countKeys={'body-chunks':'serverBodyChunks','body-bytes':'serverBodyBytes'},countKey=Object.hasOwn(countKeys,phase.name)?countKeys[phase.name]:undefined;
+   if(countKey&&typeof phase.description==='string'&&/^[0-9]{1,8}$/.test(phase.description)){
+    const count=Number(phase.description);if(count<=8*1024*1024)result[countKey]=count;
+   }
   }
   result.protocol=['h2','h3','http/1.1','http/1.0'].includes(entry.nextHopProtocol)?entry.nextHopProtocol:'unknown';
   return result;
