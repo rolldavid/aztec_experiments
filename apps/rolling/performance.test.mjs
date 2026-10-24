@@ -61,7 +61,7 @@ test('opt-in panel shows sanitized resource and long-task records alongside meas
  const element=()=>({dataset:{},children:[],listeners:{},addEventListener(type,callback){this.listeners[type]=callback;},append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;}});
  const body=element();let route;
  try{
-  globalThis.document={body,createElement:element};globalThis.location={hash:'#/home?profile=1',href:origin+'/#/home?profile=1',origin};
+  globalThis.document={body,visibilityState:'visible',createElement:element};globalThis.location={hash:'#/home?profile=1',href:origin+'/#/home?profile=1',origin};
   globalThis.history={state:null,replaceState(_state,_title,url){route=url.hash;}};
   globalThis.PerformanceObserver=class{constructor(callback){this.callback=callback;}observe({type}){observers.set(type,this);}};
   await import('./performance.mjs?opt-in-panel');assert.equal(route,'#/home');assert.equal(body.children.length,1);
@@ -69,7 +69,7 @@ test('opt-in panel shows sanitized resource and long-task records alongside meas
   send('measure',[{name:'rolling.reader.update',startTime:9,duration:1}]);send('resource',[resource('/prover/v1/jobs/'+'b'.repeat(64)+'?private=secret')]);send('longtask',[{startTime:11,duration:50,attribution:[{name:'private'}]}]);
   const panel=body.children[0],output=panel.children[1];assert.equal(output.children.length,1,'Closed panel does not rebuild DOM per request');panel.open=true;panel.listeners.toggle();
   const records=output.children.map(node=>JSON.parse(node.textContent));
-  assert.equal(records.length,4);assert.equal(records[1].name,'rolling.reader.update');assert.equal(records[2].endpoint,'prover-job');assert.equal(records[3].kind,'longtask');
+  assert.equal(records.length,4);assert.equal(records[0].visibilityState,'visible');assert.equal(records[1].name,'rolling.reader.update');assert.equal(records[2].endpoint,'prover-job');assert.equal(records[3].kind,'longtask');
   assert(!JSON.stringify(records).includes('secret'));assert(!JSON.stringify(records).includes('b'.repeat(64)));
  }finally{for(const [key,descriptor]of originals)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}
 });
@@ -98,4 +98,16 @@ test('wallet and proof asset contention is observable without filenames or hash 
  }
  assert.equal(rollingResourceTiming(resource('/wallet/sdk.js',{initiatorType:'img'}),origin),null);
  assert.equal(rollingResourceTiming(resource('/crs/crs.bin',{name:'https://external.example/crs/crs.bin'}),origin),null);
+});
+
+test('visibility diagnostics use fixed states and monotonic timestamps with a bounded buffer',()=>{
+ const listeners=new Map();let latest=[],now=10;
+ const doc={visibilityState:'visible',addEventListener(type,listener){listeners.set(type,listener);},removeEventListener(type,listener){assert.equal(listeners.get(type),listener);listeners.delete(type);}};
+ const stop=observeRollingPerformance({PerformanceObserver:undefined,origin,document:doc,timing:{now:()=>now},onEntries:entries=>latest=entries});
+ const change=state=>{doc.visibilityState=state;now++;listeners.get('visibilitychange')();};
+ change('hidden');change('hidden');change('private-data');change('visible');
+ assert.deepEqual(latest,[{kind:'visibility',state:'hidden',start:11,duration:0},{kind:'visibility',state:'visible',start:14,duration:0}]);
+ for(let i=0;i<100;i++)change(i%2?'visible':'hidden');
+ assert.equal(latest.length,64);assert(latest.every(entry=>['visible','hidden'].includes(entry.state)));assert(!JSON.stringify(latest).includes('private-data'));
+ stop();assert.equal(listeners.size,0);
 });

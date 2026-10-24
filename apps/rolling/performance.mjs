@@ -55,9 +55,18 @@ export function rollingResourceTiming(entry,origin){
 }
 // Each observer is optional and independently bounded. Failure or unsupported
 // browser diagnostics cannot interrupt normal application work.
-export function observeRollingPerformance({PerformanceObserver:Observer=globalThis.PerformanceObserver,origin=globalThis.location?.origin,onEntries=()=>{}}={}){
- const records={measure:[],resource:[],longtask:[]},limits={measure:256,resource:128,longtask:64},observers=[];
- for(const type of Object.keys(records))try{
+export function observeRollingPerformance({PerformanceObserver:Observer=globalThis.PerformanceObserver,origin=globalThis.location?.origin,document:doc=globalThis.document,timing=globalThis.performance,onEntries=()=>{}}={}){
+ const records={measure:[],resource:[],longtask:[],visibility:[]},limits={measure:256,resource:128,longtask:64,visibility:64},observers=[];
+ const notify=()=>onEntries(Object.values(records).flat().sort((a,b)=>a.start-b.start));
+ let lastVisibility;try{lastVisibility=doc?.visibilityState;}catch{}
+ const visibilityChanged=()=>{try{
+  const state=doc.visibilityState,start=timing.now();
+  if(!['visible','hidden'].includes(state)||state===lastVisibility||!Number.isFinite(start)||start<0)return;
+  lastVisibility=state;records.visibility.push({kind:'visibility',state,start,duration:0});
+  if(records.visibility.length>limits.visibility)records.visibility.shift();notify();
+ }catch{/* Visibility diagnostics never change application state. */}};
+ try{doc?.addEventListener?.('visibilitychange',visibilityChanged);}catch{}
+ for(const type of ['measure','resource','longtask'])try{
   const observer=new Observer(list=>{try{
    let changed=false;
    for(const entry of list.getEntries()){
@@ -70,11 +79,11 @@ export function observeRollingPerformance({PerformanceObserver:Observer=globalTh
     if(value){records[type].push(value);changed=true;}
    }
    if(records[type].length>limits[type])records[type].splice(0,records[type].length-limits[type]);
-   if(changed)onEntries([...records.measure,...records.resource,...records.longtask].sort((a,b)=>a.start-b.start));
+   if(changed)notify();
   }catch{/* Diagnostics never control progress. */}});
   observer.observe({type,buffered:true});observers.push(observer);
  }catch{/* Unsupported entry types are simply absent. */}
- return ()=>{for(const observer of observers)try{observer.disconnect();}catch{}};
+ return ()=>{for(const observer of observers)try{observer.disconnect();}catch{}try{doc?.removeEventListener?.('visibilitychange',visibilityChanged);}catch{}};
 }
 
 // Opt-in developer trace for an actual browser run. Recording has no authority
@@ -83,10 +92,11 @@ try{if(typeof document!=='undefined'&&globalThis.location.hash.endsWith('?profil
  profilingEnabled=true;
  // Consume the diagnostic flag before the reader initializes its route.
  const route=new URL(globalThis.location.href);route.hash=route.hash.slice(0,-10);history.replaceState(history.state,'',route);
+ const initialVisibility=['visible','hidden'].includes(document.visibilityState)?document.visibilityState:'unknown';
  let trace=[];const panel=document.createElement('details'),title=document.createElement('summary'),output=document.createElement('div');
  title.textContent='Performance timings';panel.append(title,output);panel.dataset.rollingPerformance='';
  const render=()=>{
-  const origin=document.createElement('pre');origin.textContent=JSON.stringify({timeOrigin:performance.timeOrigin});
+  const origin=document.createElement('pre');origin.textContent=JSON.stringify({timeOrigin:performance.timeOrigin,visibilityState:initialVisibility});
   output.replaceChildren(origin,...trace.map(entry=>{const line=document.createElement('pre');line.textContent=JSON.stringify(entry);return line;}));
  };
  observeRollingPerformance({onEntries:entries=>{trace=entries;if(panel.open)render();}});
