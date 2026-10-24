@@ -1,0 +1,196 @@
+{
+  "clickAt": "2026-10-24T01:04:18.238Z",
+  "source": "0021c30a",
+  "workerSource": "392bee960c08086f234f631e8cf5c157cfe3e63b",
+  "workerType": "m8a.xlarge",
+  "timeOrigin": 1792803420290.52,
+  "entries": [
+    {
+      "name": "rolling.action.sync",
+      "start": 438498.38499999046,
+      "duration": 1147.8550000190735
+    },
+    {
+      "name": "rolling.action.payment-prefetch",
+      "start": 441689.16499996185,
+      "duration": 3357.2200000286102
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 441688.9699999094,
+      "duration": 3358.195000052452
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 438498.2849999666,
+      "duration": 6562.064999938011
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 445118.5949999094,
+      "duration": 0.009999990463256836
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 445118.6099998951,
+      "duration": 366.60000002384186
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 445118.49500000477,
+      "duration": 439.40499997138977
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 445557.91499996185,
+      "duration": 0.10500001907348633
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 445558.02499997616,
+      "duration": 751.5349999666214
+    },
+    {
+      "name": "rolling.proof.transport.serialize",
+      "start": 453781.25499999523,
+      "duration": 468.2099999189377
+    },
+    {
+      "name": "rolling.proof.transport.submit",
+      "start": 454249.564999938,
+      "duration": 2727.2949999570847
+    },
+    {
+      "name": "rolling.proof.transport.wait",
+      "start": 456977.00499999523,
+      "duration": 7085.049999952316
+    },
+    {
+      "name": "rolling.proof.local.decompress",
+      "start": 464063.1849999428,
+      "duration": 32.330000042915344
+    },
+    {
+      "name": "rolling.proof.local.verify",
+      "start": 464095.6599999666,
+      "duration": 147.12999999523163
+    },
+    {
+      "name": "rolling.proof.native.total",
+      "start": 446335.3099999428,
+      "duration": 17939.75
+    },
+    {
+      "name": "rolling.proof.native.proof-transport",
+      "start": 453806.0149998665,
+      "duration": 10469.060000061989
+    },
+    {
+      "name": "rolling.proof.native.private-witness",
+      "start": 460062.6549999714,
+      "duration": 4212.409999966621
+    },
+    {
+      "name": "rolling.proof.native.public-validation",
+      "start": 462554.70999991894,
+      "duration": 1720.3650000095367
+    },
+    {
+      "name": "rolling.proof.native.unaccounted",
+      "start": 463308.69499993324,
+      "duration": 966.3799999952316
+    },
+    {
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 463703.53999996185,
+      "duration": 571.5349999666214
+    },
+    {
+      "name": "rolling.proof.native.sync",
+      "start": 464275.064999938,
+      "duration": 0
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 446309.56999993324,
+      "duration": 18922.06500005722
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 465231.6449999809,
+      "duration": 882.2599999904633
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 553400.6799999475,
+      "duration": 566.0049999952316
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 553957.9599999189,
+      "duration": 8.670000076293945
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 438140.22999989986,
+      "duration": 117120.1400001049
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 445061.25,
+      "duration": 110196.2199999094
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 466113.9199999571,
+      "duration": 89146.44500005245
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 555258.125,
+      "duration": 512.8099999427795
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 555768.3399999142,
+      "duration": 2.5850000381469727
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 555260.7450000048,
+      "duration": 3171.2249999046326
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 565685.8549998999,
+      "duration": 1226.6100000143051
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 625193.2599999905,
+      "duration": 831.6499999761581
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 625736.0599999428,
+      "duration": 288.83000004291534
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 626064.0249999762,
+      "duration": 3105.4800000190735
+    }
+  ],
+  "postToReplyDomSeconds": 188.07741015625,
+  "automaticBalanceBefore": "0.641309",
+  "automaticBalanceAfter": "0.606593",
+  "paginationCaveat": "Loaded tail before composing, but submit rerender reset extent; clicked Load more again before final reply. Reply and refund then rendered automatically without refresh.",
+  "manualAppCheck": {
+    "revision": "591c78f8976f1c14a52dddd6166d75743499eac5",
+    "initialClearCompletedDisabled": true,
+    "completedRemoved": true,
+    "uncheckedKept": true,
+    "persistsAfterReload": true,
+    "clearCompletedDisabledAfterReload": true
+  }
+}

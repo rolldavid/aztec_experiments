@@ -5,6 +5,52 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
+## Concurrent preparation and numeric anchor — verified 3m08.1s
+
+Browser0021c30a/runtime371eee5d completed the same267-character request from
+original app tree a25ff3c2 in **188.077s** to the rendered canonical reply;
+worker completion was188.150s. This is59.5% below464.264s but20.5% slower than
+the preceding156.085s run. Preparation and proving improved; extra model reads,
+a malformed selector requiring a repair, and a longer checkpoint wait increased
+total time. These are complete measured results, not a new best-time claim.
+
+| Stage | Original seconds | This run seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| Browser preparation |13.944|6.562|52.9%|
+| Remaining fee estimation |15.486|0.439|97.2%|
+| Browser proof including local work and transport |37.196|18.922|49.1%|
+| Model calls |192.671 (14)|47.452 (5)|75.4%|
+| Board reads |3.482|0.471|86.5%|
+| Validation, static publication and GitHub mirror |13.068|15.569|19.1% slower|
+| Worker proof |6.619|3.522|46.8%|
+| Other worker processing |15.960|6.430|59.7%|
+| Final canonical checkpoint wait |56.215|82.220|46.3% slower|
+
+Fee metadata preparation now overlaps message arguments within preparation.
+The3.357s prefetch is nested and must not be added again. Combined preparation
+and remaining estimation is7.001s, versus15.169s in9e66 and29.430s originally.
+The main private execution runs once; native proof synchronization is zero.
+The browser's first transaction confirmation was89.146s; Bok began work before
+that checkpoint completed, so the two confirmation intervals must not be summed
+into total elapsed time. Admission was32.486s, previously52.542s.
+
+Bok read existing files then made grouped edits. Its first browser-plan validation
+failed on overescaped checkbox selectors. It corrected only that plan and passed
+176 checks. A separate real-browser check confirmed correct Clear completed
+behavior and reload persistence. Charge0.034716USDC/refund0.215284USDC;
+balance updated automatically from0.641309 to0.606593. Accepted source is
+`591c78f8976f1c14a52dddd6166d75743499eac5`.
+
+The conversation tail was loaded before posting, but the confirmed-action render
+reset pagination. One further Load more click exposed the tail before the final
+reply; the reply then appeared automatically. This is not an entirely
+hands-free render acceptance. A separate pagination correction is being tested.
+Seven of eight application-controlled categories met20% in this sample;
+validation/publication did not. The public checkpoint goal remains unmet.
+
+[Browser measurements](../execution/evidence/G21/stable6/bok-performance/overlap-browser.json),
+[worker partitions and receipt](../execution/evidence/G21/stable6/bok-performance/overlap-profile.json).
+
 ## Subsequent preparation fix — published, no new wall-time claim
 
 Source371eee5d starts ordinary immediate post arguments and fee preparation

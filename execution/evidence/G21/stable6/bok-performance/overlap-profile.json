@@ -1,0 +1,170 @@
+{
+  "requestId": "0x08dcf59d5bf6ecd1bcf9b5f6c0c93f84562959b6fe3f9cd010d54ae68594d5ee",
+  "sourceBinding": {
+    "browser": "0021c30a",
+    "runtime": "371eee5d",
+    "worker": "392bee960c08086f234f631e8cf5c157cfe3e63b",
+    "hardware": "m8a,4physicalcores,4nativeproverthreads",
+    "baseline": "c19514f82558d2b81a0544b130db8ce0b4ef2ef3",
+    "baselineTree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92"
+  },
+  "clickAt": "2026-10-24T01:04:18.238000+00:00",
+  "admissionAt": "2026-10-24T01:04:50.723955+00:00",
+  "finishedAt": "2026-10-24T01:07:26.387807+00:00",
+  "clickToAdmissionSeconds": 32.485955,
+  "clickToFinishedSeconds": 188.149807,
+  "workerSeconds": 155.66402100000002,
+  "partitions": {
+    "provider.completion": 47.452437,
+    "tool.finish_workspace": 10.710888,
+    "publication.static": 0.046007,
+    "publication.mirror": 4.811742,
+    "escrow.prove": 3.521579,
+    "escrow.wait": 82.22013,
+    "board.readRequest": 0.471491,
+    "otherWorkerSeconds": 6.429747
+  },
+  "partitionNote": "Exclusive selected worker durations; failed+successful finish validation both included. Nested spans not summed.",
+  "modelCalls": 5,
+  "summaryCalls": 0,
+  "toolMetadata": [
+    {
+      "id": 0,
+      "tools": [
+        {
+          "name": "read_file",
+          "path": "index.html"
+        },
+        {
+          "name": "read_file",
+          "path": "test.js"
+        },
+        {
+          "name": "read_file",
+          "path": "browser-tests.json"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "tools": [
+        {
+          "name": "edit_file",
+          "path": "index.html",
+          "editCount": 6,
+          "oldTextBytes": 939,
+          "newTextBytes": 1413
+        },
+        {
+          "name": "edit_file",
+          "path": "test.js",
+          "editCount": 1,
+          "oldTextBytes": 121,
+          "newTextBytes": 540
+        },
+        {
+          "name": "edit_browser_plan",
+          "appendCount": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "tools": [
+        {
+          "name": "finish_workspace"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "tools": [
+        {
+          "name": "edit_browser_plan",
+          "removeCount": 1,
+          "appendCount": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "tools": [
+        {
+          "name": "finish_workspace"
+        }
+      ]
+    }
+  ],
+  "toolErrors": [],
+  "firstPassValidation": false,
+  "validationAttempts": 2,
+  "failureCause": "Initial appended browser scenario contained overescaped checkbox attribute selectors; model replaced the three affected selectors with input[type=checkbox], then validation passed. No app-source repair.",
+  "boardReads": 9,
+  "proofProfile": {
+    "totalMs": 3520.743,
+    "syncMs": 0,
+    "provingMs": 2545.887,
+    "validationMs": 366.039,
+    "unaccountedMs": 50.786,
+    "witnessMs": 558.031,
+    "functionCount": 4,
+    "wallTimeUs": "1792803962750120"
+  },
+  "canonicalFinal": {
+    "status": "succeeded",
+    "canonical": true,
+    "txHash": "0x21d8faea1ab860135d820a9c8b761e6b866c3e87d7ebc74ae428a8b65ca6d81e",
+    "transactionFee": "4177053168328400000",
+    "blockNumber": 1916,
+    "blockHash": "0x2586aa4f052deac1d3e354eba3e1ab60c88f05162a813be965170c17d84a96a4"
+  },
+  "aggregateChargeMicroUSDC": "34716",
+  "reservedMicroUSDC": "250000",
+  "unusedBudgetMicroUSDC": "215284",
+  "acceptedRevision": "591c78f8976f1c14a52dddd6166d75743499eac5",
+  "publicationReceipt": {
+    "producedRevision": "591c78f8976f1c14a52dddd6166d75743499eac5",
+    "readRevision": "c19514f82558d2b81a0544b130db8ce0b4ef2ef3",
+    "validation": {
+      "passed": true,
+      "testsPassed": true,
+      "buildPassed": true,
+      "testCount": 1,
+      "sourceDigest": "bec7524ed1fb54cccc211260041335c9edf94eb9c4a6397ffd0dcd8c944c84db",
+      "artifactSha256": "203849a0c7e112ff9ab11c4e73aae072ec0929f4b383689eff1952b7ce151be3"
+    },
+    "browser": {
+      "passed": true,
+      "checks": 176,
+      "browserVersion": "153.0.8010.12",
+      "planSha256": "f0667970b8dffb448d2dd1c806cb28ee0e2342ea447bc08ed440a6c94b6810e4",
+      "policyHash": "bf234b237bb7f3c9b80d4b2ff9fe5658722faa5f8b458646d79e2270b84d6b47",
+      "artifactSha256": "203849a0c7e112ff9ab11c4e73aae072ec0929f4b383689eff1952b7ce151be3"
+    },
+    "publication": {
+      "status": "complete"
+    }
+  },
+  "appUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/591c78f8976f1c14a52dddd6166d75743499eac5/files/index.html",
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "hasFailure": false
+  },
+  "sourceEvidence": [
+    "/tmp/bok-overlap-observe05.json",
+    "/tmp/bok-overlap-receipt01-result.json",
+    "/tmp/bok-overlap-native-result.json",
+    "/tmp/bok-overlap-proof-observe01-result.json",
+    "/tmp/bok-overlap-repair-compare-result.json"
+  ],
+  "browserInteractionCaveat": "Loaded tail before composing, but submit rerender reset extent; clicked Load more again before final reply. Reply and refund then rendered automatically without refresh.",
+  "nativeObservationCaveat": "First sample35s after final send already proposed; checkpoint transition observed. Do not treat first proposed observation as actual initial inclusion time.",
+  "clickToVisibleReplySeconds": 188.07741015625,
+  "observedUIBalance": {
+    "before": "0.641309",
+    "reserved": "0.391309",
+    "after": "0.606593",
+    "automaticRefresh": true
+  }
+}
