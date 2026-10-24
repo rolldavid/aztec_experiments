@@ -308,13 +308,22 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     // Share identical canonical reads only within one verification phase.
     // Every pre/post-commit boundary starts fresh, including unchanged heads.
     const anchors=new Map();
-    async function anchor(n){const key=String(n);if(anchors.has(key))return anchors.get(key);
-      const b=await read(()=>node.getBlockData(n));check(b,'ROLLING_PUBLIC_UNAVAILABLE');
+    const chainCheck=value=>check(value,confirmationTier==='proposed'?'ROLLING_PUBLIC_CHAIN_CHANGED':'ROLLING_PUBLIC_INVALID');
+    async function anchor(n,mutable=false){const key=String(n);if(anchors.has(key))return anchors.get(key);
+      const b=await read(()=>node.getBlockData(n));
+      if(!b&&mutable&&confirmationTier==='proposed'){
+        // Missing data alone does not prove a fork. Only a newly observed lower
+        // proposed tip establishes that the captured height was withdrawn.
+        const latest=await read(()=>node.getBlockData('proposed')),number=String(latest?.header?.globalVariables?.blockNumber),h=textHash(latest?.blockHash);
+        check(uint(number,53)&&hash(h),'ROLLING_PUBLIC_UNAVAILABLE');
+        if(BigInt(number)<BigInt(n))throw fail('ROLLING_PUBLIC_CHAIN_CHANGED');
+      }
+      check(b,'ROLLING_PUBLIC_UNAVAILABLE');
       const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(!['checkpointed','proposed'].includes(n))check(number===String(n));
       const value={number,hash:h};anchors.set(key,value);anchors.set(number,value);return value;}
     try{
       await identity();const target=await anchor(confirmationTier);check(BigInt(target.number)>=BigInt(scope.bok?.deployment.blockNumber??deployment.blockNumber));
-      const confirmed=confirmationTier==='checkpointed'?target:await anchor('checkpointed');check(BigInt(confirmed.number)<=BigInt(target.number));
+      const confirmed=confirmationTier==='checkpointed'?target:await anchor('checkpointed');chainCheck(BigInt(confirmed.number)<=BigInt(target.number));
       const deployed=await anchor(deployment.blockNumber);check(deployed.hash===deployment.blockHash);
       const base=await anchor(deployment.blockNumber-1);
       if(origin)check(same(origin,base));else origin=base;
@@ -332,14 +341,14 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       }
       assertOwned();
       const recheck=async extra=>{anchors.clear();await identity();check(same(await anchor(deployment.blockNumber),deployed));check(same(await anchor(Number(base.number)),base));
-        check(same(await anchor(Number(target.number)),target));
-        check(same(await anchor(Number(confirmed.number)),confirmed));
-        if(extra)check((await anchor(Number(extra.number))).hash===extra.hash);
+        chainCheck(same(await anchor(Number(target.number),true),target));
+        chainCheck(same(await anchor(Number(confirmed.number),true),confirmed));
+        if(extra)chainCheck((await anchor(Number(extra.number),true)).hash===extra.hash);
         assertOwned();};
       // A checked canonical mismatch permits inverse work; missing data is never
       // treated as an orphan. Each call removes only one durable segment.
       const retained=control.cursor.block??control.checkpoint;
-      const current=BigInt(retained.number)>BigInt(target.number)?null:await anchor(Number(retained.number));
+      const current=BigInt(retained.number)>BigInt(target.number)?null:await anchor(Number(retained.number),true);
       if(!current||current.hash!==retained.hash){
         currentBlock=null;
         check(control.segmentCount!=='0');await recheck();control=storage.rollbackOne({expectedControl:control});contentRevision++;
@@ -358,12 +367,13 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
         if(!same(confirmationCheckpoint,confirmed)){confirmationCheckpoint=copy(confirmed);confirmationRevision++;contentRevision++;}
         ready=true;return state();
       }
-      const number=Number(control.cursor.blockNumber),canonical=await anchor(number);
+      const number=Number(control.cursor.blockNumber),canonical=await anchor(number,true);
       // The current block body is immutable under its canonical hash. Reuse it
       // across bounded transaction steps only after a fresh anchor observation.
       const raw=currentBlock?.number===number&&currentBlock.hash===canonical.hash?currentBlock.raw:await read(()=>node.getBlock(number,{includeTransactions:true}));
+      if(!raw&&confirmationTier==='proposed'){anchors.clear();chainCheck((await anchor(number,true)).hash===canonical.hash);}
       check(raw&&Number(raw.header?.globalVariables?.blockNumber)===number&&hash(textHash(raw.hash))&&Array.isArray(raw.body?.txEffects));
-      check(canonical.hash===textHash(raw.hash));currentBlock={number,hash:canonical.hash,raw};
+      chainCheck(canonical.hash===textHash(raw.hash));currentBlock={number,hash:canonical.hash,raw};
       check(raw.body.txEffects.length<=maxTransactions);const seen=new Set();
       const effects=raw.body.txEffects.map(tx=>{const h=textHash(tx.txHash);check(hash(h)&&!seen.has(h));seen.add(h);
         check(Array.isArray(tx.publicLogs)&&tx.publicLogs.length<=FLAT_PUBLIC_LOGS_PAYLOAD_LENGTH);
@@ -373,7 +383,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       if(number===scope.bok?.deployment.blockNumber)check(effects.some(tx=>tx.hash===scope.bok.deployment.txHash));
       const block={number:String(number),hash:textHash(raw.hash),parentHash:control.checkpoint.hash,transactionCount:String(effects.length)};
       const checkCompletion=()=>{if(number===deployment.blockNumber)check(effects.some(tx=>tx.hash===deployment.txHash)&&control.scalars.version!=='0');};
-      check((await anchor(number)).hash===block.hash);
+      chainCheck((await anchor(number,true)).hash===block.hash);
       if(control.cursor.block)check(same(control.cursor.block,block));
       // Bind the retained prefix to canonical block identity before comparing
       // old rows. The entire orphan suffix is ignored, never made authoritative.
@@ -394,7 +404,13 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       let events=[],txHash=null;
       if(index<effects.length){const tx=effects[index];txHash=tx.hash;
         if(tx.hasBoard){
-          events=await read(()=>decoder.decodeTransaction(node,txHash,{block:raw}));
+          try{events=await read(()=>decoder.decodeTransaction(node,txHash,{block:raw}));}
+          catch(error){
+            // A rejected decoder is recoverable only when a fresh canonical
+            // observation establishes that its exact proposed block changed.
+            if(confirmationTier==='proposed'){anchors.clear();chainCheck((await anchor(number,true)).hash===block.hash);}
+            throw error;
+          }
           check(events.every(e=>e.position.blockNumber===block.number&&e.position.blockHash===block.hash&&e.position.txHash===txHash&&e.position.txIndexWithinBlock===String(index)));
         }
         if(number===deployment.blockNumber&&txHash===deployment.txHash)check(events.some(e=>e.type==='MainPolicyPublished'&&e.payload.version==='1'));
@@ -425,8 +441,8 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       // Next sync rechecks network, deployment, anchors and exact storage CAS
       // before continuing. A completed commit remains authoritative only after
       // those checks; no stale publication or automatic reopen is permitted.
-      failed=!upstreamFailed;
-      throw fail(['ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_CACHE_MISMATCH','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_UNAVAILABLE');}
+      failed=!upstreamFailed&&code!=='ROLLING_PUBLIC_CHAIN_CHANGED';
+      throw fail(['ROLLING_PUBLIC_CHAIN_CHANGED','ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_CACHE_MISMATCH','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY'].includes(code)?code:'ROLLING_PUBLIC_UNAVAILABLE');}
     finally{busy=false;}
   }
   // Trusted operator scan only. Public query cursors remain bound to their

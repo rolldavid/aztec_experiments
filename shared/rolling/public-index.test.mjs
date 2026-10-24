@@ -735,3 +735,42 @@ test('proposed accounting returns last checkpointed state and bounded empty page
  checkpoint=3;f.put(4,[f.accounting(7,{state:2,available:60,reserved:40})],50);await index.step();await f.drain(index);
  assert.equal(index.query('bok-accounting').requests[0].charged,'0');checkpoint=4;await index.step();const fork=index.query('bok-accounting');assert.equal(fork.requests.length,1);assert.equal(fork.requests[0].reserved,'40');assert.equal(fork.requests[0].charged,'0');
 });
+
+test('proposed head/checkpoint crossing is unavailable until the next fresh canonical step',async t=>{
+ const f=await persistentFixture(t);f.put(4,[]);let proposed=3,checkpoint=2,cross=false;
+ const read=f.node.getBlockData;f.node.getBlockData=n=>{if(n==='proposed')return read(proposed);if(n==='checkpointed'){if(cross){cross=false;proposed=4;checkpoint=4;}return read(checkpoint);}return read(n);};
+ const {index}=await f.open(undefined,{confirmationTier:'proposed'});await f.drain(index);cross=true;
+ await assert.rejects(index.step(),{code:'ROLLING_PUBLIC_CHAIN_CHANGED'});assert.equal(index.status().state,'unavailable');assert.throws(()=>index.query('feed'));
+ await f.drain(index);assert.equal(index.status().state,'ready');assert.equal(index.query('feed').confirmationCheckpoint.number,4);
+});
+
+test('a proposed fork during full-block verification resumes with the replacement only',async t=>{
+ const f=await persistentFixture(t);let proposed=3,checkpoint=2;
+ const read=f.node.getBlockData;f.node.getBlockData=n=>read(n==='proposed'?proposed:n==='checkpointed'?checkpoint:n);
+ const {index}=await f.open(undefined,{confirmationTier:'proposed'});await f.drain(index);
+ const post=await f.post(20,4,'Earlier proposal'),replacement=await f.post(30,4,'Replacement proposal');f.put(4,[post]);proposed=4;
+ const prior=f.node.getBlockData;let numericReads=0;f.node.getBlockData=n=>{if(n===4&&++numericReads===2)f.put(4,[replacement],50);return prior(n);};
+ await assert.rejects(index.step(),{code:'ROLLING_PUBLIC_CHAIN_CHANGED'});assert.equal(index.status().state,'unavailable');assert.throws(()=>index.query('feed'));
+ await f.drain(index);assert.equal(index.query('post',{id:'20'}).post,null);assert.equal(index.query('post',{id:'30'}).post.text,'Replacement proposal');
+});
+
+
+for(const boundary of [0,1,2,3])test('withdrawn proposed height at boundary '+boundary+' recovers only after a verified lower tip',async t=>{
+ const f=await persistentFixture(t);let proposed=3,checkpoint=2;
+ const read=f.node.getBlockData;f.node.getBlockData=n=>read(n==='proposed'?proposed:n==='checkpointed'?checkpoint:n);
+ const {index}=await f.open(undefined,{confirmationTier:'proposed'});await f.drain(index);f.put(4,[await f.post(20,4,'Withdrawn')]);proposed=4;
+ const prior=f.node.getBlockData;let numericReads=0;f.node.getBlockData=n=>{if(n===4&&++numericReads===boundary){f.blocks.delete(4);proposed=3;}return prior(n);};
+ if(boundary===0){const full=f.node.getBlock;f.node.getBlock=(n,...rest)=>{if(n===4){f.blocks.delete(4);proposed=3;return null;}return full(n,...rest);};}
+ await assert.rejects(index.step(),{code:'ROLLING_PUBLIC_CHAIN_CHANGED'});assert.equal(index.status().state,'unavailable');assert.throws(()=>index.query('feed'));
+ await f.drain(index);assert.equal(index.status().state,'ready');assert.equal(index.query('post',{id:'20'}).post,null);assert.equal(index.query('post',{id:'10'}).post.text,'Hello');
+});
+
+for(const defect of ['missing-block','invalid-log'])test('proposed '+defect+' without a verified chain change still fails closed',async t=>{
+ const f=await persistentFixture(t);let proposed=3;
+ const read=f.node.getBlockData;f.node.getBlockData=n=>read(n==='proposed'?proposed:n==='checkpointed'?2:n);
+ const {index}=await f.open(undefined,{confirmationTier:'proposed'});await f.drain(index);f.put(4,[await f.post(20,4,'Invalid')]);proposed=4;
+ if(defect==='missing-block'){const prior=f.node.getBlockData;f.node.getBlockData=n=>n===4?null:prior(n);}
+ else f.blocks.get(4).body.txEffects[0].publicLogs[0].fields[0]=Fr.ZERO;
+ await assert.rejects(index.step());assert.equal(index.status().state,'unavailable');assert.throws(()=>index.query('feed'));
+ await assert.rejects(index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
+});
