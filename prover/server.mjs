@@ -93,7 +93,11 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
      if(!['complete','failed'].includes(state.state))send(state);
      // Keep intermediaries alive. This does not bound or cancel proof execution.
      heartbeat=setInterval(()=>{if(!res.write(': keepalive\n\n'))res.destroy();},10000);heartbeat.unref();
-     const result=await completed;if(!res.destroyed){if(result)send(result);res.end();}
+     const result=await completed;if(!res.destroyed){if(result){
+      // Refresh only the local terminal snapshot's monotonic readiness age; no
+      // polling, upstream request or browser/server clock comparison.
+      const latest=queue.get(resultMatch[1]);send(latest?.state===result.state?latest:result);
+     }res.end();}
     }finally{clearInterval(heartbeat);res.off('close',abort);controller.abort();}
     return;
    }

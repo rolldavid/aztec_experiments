@@ -244,3 +244,18 @@ test('backpressured heartbeat disconnects only the bounded result observer',asyn
  assert.equal(writes,2);assert.equal(detached,1);assert.equal(res.destroyed,true);assert.equal(queue.get().state,'running');
  t.mock.timers.tick(100000);assert.equal(writes,2);await server.closeAndDrain();
 });
+
+test('terminal queue snapshots separate numeric persistence wait worker and cleanup without private metadata',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-numeric-'));let release,entered;
+ const started=new Promise(r=>entered=r);
+ const queue=await createProofQueue({directory,worker:{prove:async(_file,{onTimings})=>{entered();await new Promise(r=>release=r);onTimings({nativeProveMs:7,childTotalMs:9,secret:'private',bindingMs:-1});return {mode:'real',compressedProof:'retained'};},close:async()=>{}}});
+ try{
+  const id=await queue.submit(Buffer.of(1),'private-client');await started;const terminal=queue.waitForResult(id);release();
+  const result=await terminal;assert.deepEqual(result.result,{mode:'real',compressedProof:'retained'});
+  assert.equal(result.timings.nativeProveMs,7);assert.equal(result.timings.childTotalMs,9);
+  for(const key of ['persistMs','queueWaitMs','workerMs','cleanupMs','resultReadyToSnapshotMs'])assert(Number.isFinite(result.timings[key])&&result.timings[key]>=0,key);
+  assert(!Object.hasOwn(result.timings,'secret'));assert(!Object.hasOwn(result.timings,'bindingMs'));
+  assert(queue.get(id).timings.resultReadyToSnapshotMs>=result.timings.resultReadyToSnapshotMs);
+  assert(!JSON.stringify(result).includes('private-client'));
+ }finally{release?.();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});

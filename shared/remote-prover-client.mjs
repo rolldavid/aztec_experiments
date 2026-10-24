@@ -1,5 +1,5 @@
 import {encodeJob,circuitId} from './remote-prover-wire.mjs';
-import {measureProofStage} from './proof-timings.mjs';
+import {measureProofStage,recordProofAggregate} from './proof-timings.mjs';
 const failure=code=>Object.assign(Error('Remote proof did not complete.'),{code});
 /** Proving transport: prove(executionSteps, publicInputs) -> encoded proof result. */
 export function createRemoteProverClient({url,board,chainId,rollupVersion,proofsEnabled=true,fetchImpl=globalThis.fetch,onStatus=()=>{}}){
@@ -41,6 +41,10 @@ export function createRemoteProverClient({url,board,chainId,rollupVersion,proofs
      if(['queued','running'].includes(job?.state)){try{onStatus(job.state);}catch{}continue;}
      if(!['complete','failed'].includes(job?.state))throw failure('BB_REMOTE_PROVER_RESPONSE');
      if(job.state==='complete'&&job.result?.mode!==metadata.mode)throw failure('BB_REMOTE_PROVER_RESPONSE');
+     // Server phases are remote aggregates, never chronological browser spans.
+     for(const key of ['persistMs','queueWaitMs','workerMs','cleanupMs','readMs','decompressMs','bindingMs','backendMs','nativeProveMs','resultEncodeMs','childTotalMs','readyWaitMs','dispatchToResultMs','resultToExitMs','warmReplacementMs','resultReadyToSnapshotMs']){
+      const value=job.timings?.[key];if(typeof value==='number'&&Number.isFinite(value)&&value>=0)recordProofAggregate('server.'+key.replace(/Ms$/,'').replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value);
+     }
      // Terminal acknowledgement cannot delay or cancel a completed proof.
      void request('/v1/jobs/'+accepted.id,{method:'DELETE',signal:AbortSignal.timeout(10000)}).catch(()=>{});
      if(job.state==='failed')throw failure('BB_REMOTE_PROVER_FAILED');return job.result;

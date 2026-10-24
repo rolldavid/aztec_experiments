@@ -16,10 +16,15 @@ import {nativeWitnessBytes,assertNativeWitnessFormat} from './native-witness-byt
 // alive until its result has been sent and the backend has been destroyed.
 process.channel?.ref();
 const send=value=>new Promise((resolve,reject)=>process.send(value,error=>error?reject(error):resolve()));
-let stage="read";
-const setStage=value=>{stage=value;process.send?.({progress:stage});};
+let stage="read",stageStarted=performance.now(),jobStarted,recording=false;
+const timings={};
+const finishStage=()=>{if(recording){const now=performance.now();timings[stage]=(timings[stage]??0)+now-stageStarted;stageStarted=now;}};
+const setStage=value=>{finishStage();stage=value;stageStarted=performance.now();process.send?.({progress:stage});};
+const beginJob=()=>{recording=true;jobStarted=stageStarted=performance.now();stage='read';};
+const resultTimings=()=>{finishStage();return {...timings,totalMs:performance.now()-jobStarted};};
 try{
  const standby=process.argv[2]==='--standby';
+ if(!standby)beginJob();
  let job=standby?undefined:decodeJob(await fs.readFile(process.argv[2]));
  if(job&&job.metadata.mode!==process.env.PROVER_PROOFS)throw Error('Mode mismatch');
  setStage('native-init');
@@ -36,7 +41,7 @@ try{
    else resolve(value.file);
   }));
   await send({ready:true});
-  stage='read';job=decodeJob(await fs.readFile(await assigned));
+  const file=await assigned;beginJob();job=decodeJob(await fs.readFile(file));
  }
  const {metadata,payload}=job;
  if(metadata.mode!==process.env.PROVER_PROOFS)throw Error('Mode mismatch');
@@ -80,7 +85,7 @@ try{
  setStage('prove');
  if(metadata.mode==='disabled'){
   if(process.env.PROVER_PROOFS!=='disabled')throw Error('Mode mismatch');
-  await send({mode:'disabled'});
+  await send({mode:'disabled',timings:resultTimings()});
  }else{
   if(process.env.PROVER_PROOFS!=='real')throw Error('Mode mismatch');
   const api=assertWorkerNativeProfile(nativeProfile);
@@ -91,10 +96,13 @@ try{
   const backend=new AztecClientBackend(circuits.map(c=>gunzipSync(c.bytecode)),api,circuits.map(c=>c.functionName),circuits.map(c=>c.kind));
   setStage("native-prove");
   let result;try{result=await backend.prove(raw,circuits.map(c=>c.vk),{compress:true});}catch(error){throw firstFailure??error;}
-  await send({mode:'real',compressedProof:Buffer.from(result.compressedProof).toString('base64')});
+  setStage('result-encode');
+  const compressedProof=Buffer.from(result.compressedProof).toString('base64');
+  await send({mode:'real',compressedProof,timings:resultTimings()});
   await Barretenberg.destroySingleton();
  }
 }catch(error){
+ finishStage();
  const message=String(error?.message??'');
  if(stage==='native-prove'){if(/srs|crs|grumpkin g1/i.test(message))stage='native-srs';else if(/assertion|constraint/i.test(message))stage='native-constraint';else if(/verification|verify/i.test(message))stage='native-verification';else if(/socket|process exited|signal/i.test(message))stage='native-process';}
- await send({errorStage:stage});process.exitCode=1;}finally{await Barretenberg.destroySingleton();process.disconnect?.();}
+ await send({errorStage:stage,...(recording?{timings:resultTimings()}:{})});process.exitCode=1;}finally{await Barretenberg.destroySingleton();process.disconnect?.();}

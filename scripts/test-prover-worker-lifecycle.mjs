@@ -41,3 +41,19 @@ test('active worker rejects another assignment and close kills only its owned ch
  worker=createProcessWorker({proofsEnabled:false});await until(()=>children[0].ready);const job=worker.prove('/held');job.catch(()=>{});
  await assert.rejects(worker.prove('/second'),/Worker busy/);assert.equal(assignments.length,1);await worker.close();await assert.rejects(job,/Proof worker failed/);assert.equal(children.length,1);
 `));
+
+test('numeric worker timing cannot alter result or throw through proof completion',()=>run(`
+ await fs.writeFile(entry,'process.send({ready:true});process.once("message",()=>{process.send({mode:"real",compressedProof:"proof",timings:{read:1,decompress:2,"board-binding":3,prove:4,"native-prove":5,"result-encode":6,totalMs:21,secret:"hidden"}},()=>setTimeout(()=>process.disconnect(),15));});');
+ worker=createProcessWorker({proofsEnabled:false});await until(()=>children[0].ready);let timing;
+ assert.deepEqual(await worker.prove('/numeric',{onTimings:value=>{timing=value;throw Error('diagnostic failed');}}),{mode:'real',compressedProof:'proof'});
+ assert.equal(timing.nativeProveMs,5);assert.equal(timing.childTotalMs,21);assert.equal(timing.resultEncodeMs,6);
+ assert(timing.readyWaitMs>=0);assert(timing.resultToExitMs>=0);assert(!Object.hasOwn(timing,'secret'));
+`));
+
+
+test('rejected async timing callback cannot escape successful proof completion',()=>run(`
+ await fs.writeFile(entry,'process.send({ready:true});process.once("message",()=>process.send({mode:"disabled"},()=>process.disconnect()));');
+ worker=createProcessWorker({proofsEnabled:false});await until(()=>children[0].ready);
+ assert.deepEqual(await worker.prove('/numeric-async',{onTimings:async()=>{throw Error('diagnostic rejected');}}),{mode:'disabled'});
+ await new Promise(resolve=>setImmediate(resolve));
+`));
