@@ -2278,3 +2278,20 @@ test('predecessor reuse rejects a replacement authenticated journal in the same 
  await f.app.prefetchContext({predecessor:true});await f.install('OTHER_OPERATION','pending');
  const sends=f.state.sends;await assert.rejects(f.app.prepare({type:'unlike',post:'5'},{immediate:true}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,sends);
 });
+
+for(const grouped of [false,true])test(`history prefetch ${grouped?'overlaps owned execution':'is awaited by standalone preparation'}`,async()=>{
+ const f=fixture(),scope=grouped?{preparationReads:[]}:{};f.options.accountSession.operationScope=()=>scope;
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers();let settled=false;
+ f.options.sdk.prefetchOrdinaryPostWitnesses=async()=>{entered.resolve();await gate.promise;};f.app=f.restart();
+ const preparing=f.app.prepare({type:'post',deposit:'9',content:'Parallel history'},{immediate:true}).then(result=>{settled=true;return result;});
+ await entered.promise;if(grouped){await preparing;assert.equal(scope.preparationReads.length,1);assert.equal(settled,true);}
+ else{await new Promise(r=>setImmediate(r));assert.equal(settled,false);}
+ gate.resolve();await preparing;if(grouped)await Promise.all(scope.preparationReads);assert.equal(f.state.sends,0);
+});
+test('failed speculative history read does not override actual native execution authority',async()=>{
+ const f=fixture(),scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.prefetchOrdinaryPostWitnesses=async()=>{throw Error('transient prefetch failure');};f.app=f.restart();
+ const prepared=await f.app.prepare({type:'post',deposit:'9',content:'Native execution retries the required read'},{immediate:true});
+ assert.equal((await Promise.allSettled(scope.preparationReads))[0].status,'rejected');
+ assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});

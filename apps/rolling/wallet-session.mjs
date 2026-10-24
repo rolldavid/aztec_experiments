@@ -306,7 +306,11 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const guard=async()=>{assertCaptured();await contextGuard();assertCaptured();};
  const locked=async work=>{
   if(busy)throw fail('ROLLING_BUSY');busy=true;operationScope={synchronized:false};
-  try{return await locks.request(lockName,{ifAvailable:true},async lock=>{if(!lock)throw fail('ROLLING_OTHER_TAB');await guard();return work();});}
+  try{return await locks.request(lockName,{ifAvailable:true},async lock=>{
+   if(!lock)throw fail('ROLLING_OTHER_TAB');await guard();const owner=operationScope;
+   try{return await work();}
+   finally{await Promise.allSettled(owner.preparationReads??[]);}
+  });}
   finally{busy=false;operationScope=null;}
  };
  async function fundingRead(name,args){
@@ -500,7 +504,12 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  }
 
  const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>refreshMethods[name]?observedRead(name,call,args):locked(async()=>{const result=name==='submitPrepared'&&(topups||aggregate)?await submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId:args[0]}):await call(...args);if(name==='reconcile'&&result?.status==='confirmed'){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordConfirmedClaim(result);else if(result.action?.type==='claim-deposit'&&aggregate)await aggregate.recordConfirmedClaim(result);}return result;})])),
-  executeAction(input,options={}){const action=structuredClone(input),onPrepared=options.onPrepared;return locked(()=>executeRollingAction(synchronized,action,{onPrepared,submit:intentId=>['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)&&(topups||aggregate)?submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId}):synchronized.submitPrepared(intentId)}));},
+  executeAction(input,options={}){const action=structuredClone(input),onPrepared=options.onPrepared;return locked(()=>{
+   // Only one-click prepare+send owns the lock for the entire lifetime of these
+   // independent hash-pinned reads. Standalone preparation still awaits them.
+   operationScope.preparationReads=[];
+   return executeRollingAction(synchronized,action,{onPrepared,submit:intentId=>['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)&&(topups||aggregate)?submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId}):synchronized.submitPrepared(intentId)});
+  });},
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();

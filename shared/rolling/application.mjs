@@ -516,7 +516,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function screeningArguments(board,deposit,prefetch=false){
     const hints=await utility(board,'get_screen_hints',[session.owner,deposit]);
     check(Array.isArray(hints)&&hints.length===2&&!(!hints[0]&&hints[1]),'ROLLING_HISTORY_UNAVAILABLE');
-    if(prefetch){await measure('action.history-witnesses',()=>sdk.prefetchOrdinaryPostWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact,hints}));await localGuard();}
+    if(prefetch){
+      const owner=getOperationScope();
+      const reading=measure('action.history-witnesses',()=>sdk.prefetchOrdinaryPostWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact,hints}));
+      if(Array.isArray(owner?.preparationReads)){
+        // The native cache shares in-flight reads with the actual private
+        // execution. Prefetch is only a latency hint: a rejected read is evicted
+        // and native execution retries/validates what the circuit really needs.
+        // The session drains every read before releasing this operation's lock.
+        owner.preparationReads.push(reading);reading.catch(()=>{});
+      }else await reading;
+      await localGuard();check(getOperationScope()===owner,'ROLLING_CONTEXT_CHANGED');
+    }
     return [deposit,...hints];
   }
   async function checkBokThread(action,board){

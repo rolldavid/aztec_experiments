@@ -58,3 +58,18 @@ test('an immature child prevents speculative grandchild flag reads',async()=>{
  const f=await fixture({mature:false});f.args.hints[1]={note:{post_id:'10',is_dummy:false}};
  await f.run();assert.equal(f.calls.length,6);
 });
+
+test('actual native cache joins a still-running prefetch instead of issuing another witness read',async()=>{
+ const f=await fixture({mature:false});f.hold();const work=f.run();
+ for(let i=0;i<20&&f.pending.length<3;i++)await new Promise(r=>setImmediate(r));
+ assert.equal(f.calls.length,3);const first=f.calls[0];
+ const required=f.args.wallet.pxe.node.getPublicDataWitness(first.at,first.leaf);
+ assert.equal(f.calls.length,3);f.pending.splice(0).forEach(resolve=>resolve());
+ await work;const witness=await required;assert(witness.leafPreimage.leaf.slot.equals(first.leaf));assert.equal(f.calls.length,3);
+});
+test('actual native cache evicts failed prefetch; required private execution read can succeed',async()=>{
+ const f=await fixture({mature:false});f.rejectFirst();await assert.rejects(f.run(),/witness unavailable/);
+ const first=f.calls[0],before=f.calls.length;
+ const witness=await f.args.wallet.pxe.node.getPublicDataWitness(first.at,first.leaf);
+ assert(witness.leafPreimage.leaf.slot.equals(first.leaf));assert.equal(f.calls.length,before+1);
+});

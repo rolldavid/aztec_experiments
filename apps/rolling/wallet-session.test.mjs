@@ -1203,3 +1203,24 @@ test('ordinary action starts public readiness while private synchronization rema
   gate.resolve();const prepared=await preparing;assert.equal(prepared.status,'prepared');assert.equal(reads,1);
  }finally{gate.resolve();await session.close();}
 });
+
+for(const failure of ['prepare','proof'])test(`one-click history work cannot escape account lock on ${failure} failure`,async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ const originalAt=f.input.sdk.Contract.at;f.input.sdk.Contract.at=(...args)=>{
+  const board=originalAt(...args);return {...board,methods:{...board.methods,
+   post:(...args)=>({args}),get_screen_hints:()=>({simulate:async()=>({result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))})})}};
+ };
+ const publicRead=f.node.getPublicStorageAt;f.node.getPublicStorageAt=async(reference,address,slot)=>slot.equals(artifact.storageLayout.main_version.slot)?Fr.ONE:publicRead(reference,address,slot);
+ f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10,timestamp:100n},hash:async()=>BlockHash.fromString(hex(55))});
+ f.input.sdk.ordinaryPostFeeBudget=()=>({maximumFee:100n});
+ f.input.sdk.prefetchOrdinaryPostWitnesses=async()=>{assert(f.state.active);entered.resolve();await gate.promise;assert(f.state.active);throw Error('prefetch failed');};
+ const session=await createRollingWalletSession(f.input);let settled=false;
+ try{
+  const error=Error('stop before proof');
+  const run=session.application.executeAction({type:'post',deposit:'9',content:'Owned history read'},{onPrepared:()=>{if(failure==='prepare')throw error;}}).finally(()=>settled=true);
+  const rejected=assert.rejects(run,failure==='prepare'?e=>e===error:/unknown send/);
+  await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);assert.equal(f.state.active,true);
+  await assert.rejects(session.application.readAccountStatus(),{code:'ROLLING_BUSY'});
+  gate.resolve();await rejected;assert.equal(f.state.active,false);assert.equal(f.state.sends,failure==='prepare'?0:1);
+ }finally{gate.resolve();await session.close();}
+});
