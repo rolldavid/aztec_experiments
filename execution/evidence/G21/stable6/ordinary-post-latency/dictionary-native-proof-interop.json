@@ -1,0 +1,53 @@
+{
+  "result": {
+    "threads": 16,
+    "wallMs": 5582.665464,
+    "phases": [
+      {
+        "stage": "native-init",
+        "atMs": 528.4837180000001
+      },
+      {
+        "stage": "catalog",
+        "atMs": 597.2017500000001
+      },
+      {
+        "stage": "decompress",
+        "atMs": 730.029073
+      },
+      {
+        "stage": "board-binding",
+        "atMs": 1335.830051
+      },
+      {
+        "stage": "prove",
+        "atMs": 1536.028155
+      },
+      {
+        "stage": "native-prove",
+        "atMs": 1588.9835309999999
+      }
+    ],
+    "proofBytes": 111552,
+    "verifiedByNativeSdk": true
+  },
+  "queueAfter": {
+    "jobs": 0,
+    "bytes": 0,
+    "running": false,
+    "submitted": 0,
+    "completed": 0,
+    "failed": 0
+  },
+  "pidPreserved": true,
+  "configPreserved": true,
+  "sourceHashes": {
+    "prover/worker.mjs": "b3c79ede9cd8d929bd9a3fbc17315f28525b550f5004c6d3f3282ff636622fa7",
+    "shared/remote-prover-wire.mjs": "c50b2d57c93a5a2ce9b89a0faf05f935fff101963e7130a249488bcface7b8f8",
+    "shared/remote-witness-dictionary.mjs": "899e851148204d365dd22bf8fcf61b984c4154136ba4d597e6d0b1f364646a58"
+  },
+  "sourceCommit": "09d392b5a440c03c3ef01e6f3af7ab8ae1803d5b",
+  "transactionSent": false,
+  "privateObjectDeleted": true,
+  "limitation": "One staged native worker proof; not browser latency or publication. Dictionary-to-native reencoding adds about 606ms and is being removed."
+}

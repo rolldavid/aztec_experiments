@@ -1,0 +1,65 @@
+{
+  "commit": "a9eff03e8521ed7b68f98f9a237da228b38c5cc0",
+  "outcome": "failed-before-proof-and-send",
+  "goalMet": false,
+  "browser": "existing IAB, disposable test signer; not MetaMask acceptance",
+  "creditDisplayed": "4.7169",
+  "clickMonotonicMs": 59140.07000005245,
+  "timeOrigin": 1792830425270.31,
+  "stagesMs": {
+    "interaction": 31984.400000095367,
+    "preparation": 2134.969999909401,
+    "sync": 1398.085000038147,
+    "arguments": 722.1500000953674,
+    "paymentPrefetch": 730.5999999046326,
+    "screening": 33.72500002384186,
+    "feeBalance": 8.305000066757202,
+    "feeEstimation": 26338.990000009537
+  },
+  "simulationCandidates": 8,
+  "privateGasCandidates": [
+    {
+      "da": 2816,
+      "l2": 921735
+    },
+    {
+      "da": 2880,
+      "l2": 983335
+    },
+    {
+      "da": 2912,
+      "l2": 1014135
+    },
+    {
+      "da": 2336,
+      "l2": 992360
+    },
+    {
+      "da": 2912,
+      "l2": 1014135
+    },
+    {
+      "da": 2336,
+      "l2": 992360
+    },
+    {
+      "da": 2912,
+      "l2": 1014135
+    },
+    {
+      "da": 2336,
+      "l2": 992360
+    }
+  ],
+  "replayedReadOnlyPublicGas": {
+    "da": 2560,
+    "l2": 1247093
+  },
+  "refundGas": {
+    "da": 192,
+    "l2": 27510
+  },
+  "maxPricePerL2Gas": "2129014393943",
+  "finding": "Balance-clamped candidate has no change-note overhead; gas-derived affordable candidate has extra change-note work and exceeds remaining credit. Candidate cycle repeats instead of stopping. No proof upload or send occurred.",
+  "next": "Stop repeated reservation cycle; fund disposable test account for ordinary full-credit performance acceptance."
+}

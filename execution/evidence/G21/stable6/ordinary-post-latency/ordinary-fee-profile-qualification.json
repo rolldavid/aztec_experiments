@@ -1,0 +1,48 @@
+{
+  "sourceCommit": "2dece9d932cfe67146b491e987e548107fe80caf",
+  "tests": {
+    "focusedFinal": 198,
+    "integration": 679,
+    "targetedApplication": 41,
+    "nativePublicCases": 95,
+    "integratedProfileAndNativeHarnessTests": 25,
+    "integratedHarnessMs": 4782.87,
+    "failures": 0,
+    "skips": 0
+  },
+  "publicGasMaxObserved": {
+    "da": 2368,
+    "l2": 1868156
+  },
+  "publicGasBound": {
+    "da": 2368,
+    "l2": 2000000
+  },
+  "totalGasBound": {
+    "da": 39648,
+    "l2": 4815810
+  },
+  "privateBound": "Pinned native gas rules: four note hashes, protocol maxima64 nullifiers and64 private logs, two public-call startups, transaction overhead and qualified refund gas. Actual native max-effects fixture equals calculated bound.",
+  "coverage": [
+    "Exact board/account/FPC class and artifact pins",
+    "Anonymous/named; mainboard/subboard; root/reply/quote/repost; combinations",
+    "Maximum992-byte ASCII and2/3/4-byte UTF8; edge lengths and padding; extreme fields",
+    "No node/simulation/proof calls during ordinary quotation; below former global maximum credit",
+    "Balance-independent reservation; low credit before journal write",
+    "Negative account/board/call shape/caps/authority cases",
+    "Ordinary and @bok maximum display"
+  ],
+  "independentReview": true,
+  "extendedQualification": {
+    "sourceCommit": "4d63f80a",
+    "nativePublicCases": 507,
+    "publicGasMaxObserved": {
+      "da": 2368,
+      "l2": 1868273
+    },
+    "coverage": "Finite-state bound across packed-field offsets, 1\u20134-byte UTF8 classes and adversarial mixtures, plus native AVM cases. Maximum uses328three-byte plus2four-byte codepoints.",
+    "testsLog": "/private/tmp/rolling-publish-profile-mixed-final.log",
+    "failures": 0,
+    "skips": 0
+  }
+}

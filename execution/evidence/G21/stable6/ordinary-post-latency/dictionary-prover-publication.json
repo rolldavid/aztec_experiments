@@ -1,0 +1,61 @@
+{
+  "published": true,
+  "baseManifestSha256": "8fed2c764e5b62fc626e985e6b022ef3908605c7401200d4f8f09e9e07157097",
+  "candidateSha256": "05e6561121b83142202d7f479ef5ad9769c9f2105ccd840e28502bc14dc328da",
+  "closure": {
+    "prover/application-policy.mjs": "d42cc60e5feb18d9afb7c5395bf36bbe438685bf2e2de9272057fe0e1074e0e0",
+    "prover/catalog.mjs": "6a996ec75fcbf667c2f4b487a394d3dc640c8b6f142822a4949136bdccc1bef0",
+    "prover/native-binary.mjs": "96fc78644d47575afa097e6c8c03377db1ff4e9deddefe5930309a54d1e64869",
+    "prover/native-witness-bytes.mjs": "f404ff0b8d1e19e33f0ed487aa47d1780f51b448add4e4fdca9731b6756495f6",
+    "prover/plugin-policy.mjs": "1390270c01ac52446aa3408a2cd487f0854fde8f07615c19c9257a9ac40898d9",
+    "prover/process-worker.mjs": "f2413c3ab400a64963de8dd394a44a4794ad6bb1760769ad4dc51c7422e05b88",
+    "prover/queue.mjs": "60d646be21b33283c05d667e0896775d69dfa8d0515eb347358612f325edc5a5",
+    "prover/server.mjs": "85f2d43ed0f127bc9b050a4a3173e1460ad3ce1917ec12d28cf0b2a5f1dff2a9",
+    "prover/service.mjs": "e90884a090e1fa270a9492d1eda681478315e3bce0139992a696bbbf0c4c3700",
+    "prover/start.mjs": "617e124089d74c01ac760719702acb712afd10844afbb90a566ac90ea7547bc5",
+    "prover/worker-native-profile.mjs": "5d9ad6a16e1f4cef94312126529c5fb98d005bcb5cc9794dd16e768aaf2f01f3",
+    "prover/worker.mjs": "73a5244ac9975d15265a1635a86c28c0e10234feec1671de64589482315cb990",
+    "shared/remote-prover-wire.mjs": "c50b2d57c93a5a2ce9b89a0faf05f935fff101963e7130a249488bcface7b8f8",
+    "shared/remote-witness-dictionary.mjs": "899e851148204d365dd22bf8fcf61b984c4154136ba4d597e6d0b1f364646a58"
+  },
+  "commit": "4680571760781c2a9dc1dadf55beb2dbbd609bef",
+  "configSha256": "54ce190420f9d756786aa13b98a33c3b740e0bd1389d4d18373b988bbb3d7ae6",
+  "files": {
+    "prover/native-witness-bytes.mjs": "f404ff0b8d1e19e33f0ed487aa47d1780f51b448add4e4fdca9731b6756495f6",
+    "prover/server.mjs": "85f2d43ed0f127bc9b050a4a3173e1460ad3ce1917ec12d28cf0b2a5f1dff2a9",
+    "prover/worker.mjs": "73a5244ac9975d15265a1635a86c28c0e10234feec1671de64589482315cb990",
+    "shared/remote-prover-wire.mjs": "c50b2d57c93a5a2ce9b89a0faf05f935fff101963e7130a249488bcface7b8f8",
+    "shared/remote-witness-dictionary.mjs": "899e851148204d365dd22bf8fcf61b984c4154136ba4d597e6d0b1f364646a58"
+  },
+  "previousSource": "/opt/board-prover/releases/rolling-8fed2c764e5b62fc",
+  "source": "/opt/board-prover/releases/source-4680571760781c2a9dc1dadf55beb2dbbd609bef",
+  "publishedAt": "2026-10-24T10:11:07.799507+00:00",
+  "pidBefore": 728356,
+  "pidAfter": 734410,
+  "threads": 16,
+  "health": {
+    "ready": true,
+    "proofs": "real",
+    "queue": {
+      "jobs": 0,
+      "bytes": 0,
+      "running": false,
+      "submitted": 0,
+      "completed": 0,
+      "failed": 0
+    },
+    "query": {
+      "enabled": true,
+      "ready": true
+    }
+  },
+  "protectedPids": {
+    "board-prover-proxy": 630307,
+    "rolling-node": 561964,
+    "rolling-query": 565186,
+    "rolling-application": 709116,
+    "rolling-application-proxy": 709119,
+    "rolling-moderator": 567551
+  },
+  "activationBaseSha256": "4e59ac10bdbe4d07f2632e5b6a15fd0f7c68463f556ff7a4d56846310d2b7242"
+}

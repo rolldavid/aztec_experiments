@@ -1,0 +1,13 @@
+{
+  "purpose": "Fund disposable same-owner test account for ordinary-post latency acceptance",
+  "ethereumTx": "0xc0c95d3a074f233ecc700551182dd2c031353cf98e8bcaff118efe538e1b0fc2",
+  "aztecTx": "0x289b85e053260a81fb38a55fa0654cc8ecb8f8070b6420e0e1257cc493d40c2d",
+  "status": "checkpointed-success",
+  "aztecBlock": 2362,
+  "creditAfter": "52.73887707257048",
+  "claimFee": "1.9781228164996",
+  "bridgeCredit": "50",
+  "browserFundingAcceptance": false,
+  "flow": "Canonical bridge + claim/mint with deterministic same Ethereum owner, native CLI and real remote proof",
+  "servicesContractsChanged": false
+}

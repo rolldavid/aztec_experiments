@@ -1,3 +1,26 @@
+# Active ordinary-post performance lanes — 24 October 2026
+
+Owner explicitly requested parallel subagents. All four available slots are active.
+Current goal is15 seconds click-to-Aztec-included DOM, with complete fee and
+application preparation under1 second, private witness at most1.25 seconds,
+and upload/acceptance under1 second. Latest deployed46805717 measured41.051seconds;
+only fee preparation458.63ms and encoding37.38ms currently meet their targets.
+
+- `pending_feed_release`: account synchronization, predecessor/journal reads,
+  rules/history reads and actual preparation overlap; isolated preparation checkout.
+- `pending_reply_ui`: sender-tag scans, private witness construction, exact-anchor
+  contract/state prefetch, kernel/public-validation bottlenecks; isolated checkout.
+- `proposed_feed_design`: upload request path, proof worker and immediate result
+  delivery; isolated checkout. No infrastructure protocol change without evidence.
+- Root: independent integration review, source-bound build/publication, actual
+  inclusion/feed measurements and memory-bounded browser acceptance.
+
+Only root publishes/restarts services. Agent tests are focused; shared real proofs
+are serialized. Existing IAB only; do not launch headless Chrome test suites.
+Evidence counts, phase relabeling and smaller payloads do not establish the goal.
+
+## Historical delegation records
+
 # Current ordinary post 36-second target — 24 October 2026
 
 Implementation, independent review, build and publication are complete for

@@ -1,0 +1,53 @@
+{
+  "result": {
+    "threads": 16,
+    "wallMs": 5587.146629,
+    "phases": [
+      {
+        "stage": "native-init",
+        "atMs": 529.117838
+      },
+      {
+        "stage": "catalog",
+        "atMs": 597.587262
+      },
+      {
+        "stage": "decompress",
+        "atMs": 734.31065
+      },
+      {
+        "stage": "board-binding",
+        "atMs": 835.0835619999999
+      },
+      {
+        "stage": "prove",
+        "atMs": 1071.1941299999999
+      },
+      {
+        "stage": "native-prove",
+        "atMs": 1144.6107040000002
+      }
+    ],
+    "proofBytes": 111552,
+    "verifiedByNativeSdk": true
+  },
+  "queueAfter": {
+    "jobs": 0,
+    "bytes": 0,
+    "running": false,
+    "submitted": 0,
+    "completed": 0,
+    "failed": 0
+  },
+  "pidPreserved": true,
+  "configPreserved": true,
+  "sourceHashes": {
+    "prover/worker.mjs": "73a5244ac9975d15265a1635a86c28c0e10234feec1671de64589482315cb990",
+    "prover/native-witness-bytes.mjs": "f404ff0b8d1e19e33f0ed487aa47d1780f51b448add4e4fdca9731b6756495f6",
+    "shared/remote-prover-wire.mjs": "c50b2d57c93a5a2ce9b89a0faf05f935fff101963e7130a249488bcface7b8f8",
+    "shared/remote-witness-dictionary.mjs": "899e851148204d365dd22bf8fcf61b984c4154136ba4d597e6d0b1f364646a58"
+  },
+  "sourceCommit": "4680571760781c2a9dc1dadf55beb2dbbd609bef",
+  "transactionSent": false,
+  "privateObjectDeleted": true
+}

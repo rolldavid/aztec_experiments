@@ -1,0 +1,43 @@
+{
+  "source": "5c1ce1f07275a985d43990cc6ef2dc89c52c5375",
+  "result": "failed before proof upload or transaction submission",
+  "durationMs": 24585.285,
+  "startingCredits": "4.7169",
+  "stagesMs": {
+    "prepare": 11450.955,
+    "sync": 4358.695,
+    "screening": 3051.925,
+    "feeBalance": 3055.18,
+    "feeEstimate": 6787.67,
+    "feePrivateInitial": 4440.12,
+    "feePrivateCandidate": 832.225,
+    "feePublic": 1127.98,
+    "finalNativeValidationAndWitness": 5094.87
+  },
+  "diagnosis": {
+    "probePrivateGas": {
+      "daGas": 2816,
+      "l2Gas": 921735
+    },
+    "finalPrivateGas": {
+      "daGas": 2880,
+      "l2Gas": 983335
+    },
+    "quotedGasLimits": {
+      "daGas": 5184,
+      "l2Gas": 2142848
+    },
+    "probeReservation": "3545341219513580751",
+    "finalReservation": "4562154236031969664",
+    "probePublicReplay": "success",
+    "finalPublicReplay": "board out of gas",
+    "nativeAdmission": "valid",
+    "cause": "The estimator changed reservation after measurement. The final reservation selected an additional private note (+64DA/+61600L2). Available credit could not cover10%padding, leaving zero headroom for the changed payload."
+  },
+  "rollback": {
+    "command": "8995991a-26c8-4e2b-852d-263ec62f9899",
+    "ui": "26be933b4a19daf871599c307f9621bc1e1e5bdd-closurefix",
+    "cloudfrontInvalidation": "I6TLHGJ8CYYUD62ULG3RMWYIY3",
+    "servicesChanged": false
+  }
+}

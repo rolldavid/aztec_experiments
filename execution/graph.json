@@ -9842,10 +9842,10 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "request": "Ordinary post click-to-visible after Aztec inclusion at most36seconds.",
+    "request": "Ordinary post click-to-visible after Aztec inclusion at most15seconds; complete fee preparation strictly less than1second; private witness construction at most1.25seconds. Inspect prover CPU/server timing and affordable spot capacity within existing1500USD/month hosting budget. Browser-to-prover request submission and acceptance strictly less than1second (owner added24October). Entire pre-proof application preparation (account sync, rules, arguments, paymentmetadata) strictly less than1second.",
     "status": "active",
-    "execution_lane": "Root real timing/prover profiling; browser execution efficiency audit; inclusion/feed delay audit.",
-    "checkpoint": "Published reviewed UI26be933b-closurefix; core6c2c64f0 unchanged. Latest measured08734c06 remains41.711s. Current latency/memory acceptance unverified: browser service denies current-turn access despite owner reporting browser use enabled; tool reset did not resolve it. Native proof retention regression fixed; overall reported30GB cause unproven.",
-    "next_action": "Push source/evidence, restore supported browser access, then perform bounded current-release ordinary-post latency and memory acceptance. Do not mark goal complete without measured results."
+    "execution_lane": "Parallel: preparation/readiness/predecessor/rules; native private execution/logs/witness/kernel/publicvalidation; upload/proverstartup/resultdelivery. Root integrates, publishes, verifies and investigates Aztec inclusion/feed latency.",
+    "checkpoint": "Live static+prover46805717, sixteen prover threads. Real short post41.051s to Aztec-included DOM (target15s unmet); complete fee458.63ms passes, encoding37.38ms. Preparation3760ms including sync1772ms and historyprefetch734ms; privatewitness3535ms; publicvalidation1533ms;185KBupload3827ms, serverbody3345ms/validate0.4ms/queue10.5ms. Proofwait6365ms. Actual submitack1356ms; ack toobservedinclusion16507ms; feedrender582ms. No checkpoint waitedfor display. Older measurements retained; no overallsuccessclaim.",
+    "next_action": "Execute three parallel bottleneck fixes; root inspect native inclusion/gossip timings and feed path. Review and integrate each coherent change; test actual short and maximum-length posts against all targets, publish and push. No repeated unmodified benchmark."
   }
 }

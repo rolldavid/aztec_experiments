@@ -1,0 +1,80 @@
+{
+  "source": "Actual IAB CDP requestWillBeSent/responseReceived timestamps, a9eff03e real Post attempt",
+  "privateExecutionMs": 4581.879999995232,
+  "requests": [
+    {
+      "methods": [
+        "getContract"
+      ],
+      "elapsedMs": 339.688
+    },
+    {
+      "methods": [
+        "findLeavesIndexes"
+      ],
+      "elapsedMs": 346.054
+    },
+    {
+      "methods": [
+        "getPrivateLogsByTags"
+      ],
+      "elapsedMs": 372.115
+    },
+    {
+      "methods": [
+        "getPublicDataWitness"
+      ],
+      "elapsedMs": 341.566
+    },
+    {
+      "methods": [
+        "getNoteHashMembershipWitness"
+      ],
+      "elapsedMs": 372.662
+    },
+    {
+      "methods": [
+        "getPublicDataWitness"
+      ],
+      "elapsedMs": 347.405
+    },
+    {
+      "methods": [
+        "getPublicDataWitness"
+      ],
+      "elapsedMs": 342.698
+    },
+    {
+      "methods": [
+        "getPublicDataWitness"
+      ],
+      "elapsedMs": 348.581
+    },
+    {
+      "methods": [
+        "getPublicDataWitness"
+      ],
+      "elapsedMs": 369.82
+    },
+    {
+      "methods": [
+        "getPrivateLogsByTags"
+      ],
+      "elapsedMs": 370.908
+    },
+    {
+      "methods": [
+        "findLeavesIndexes",
+        "findLeavesIndexes"
+      ],
+      "elapsedMs": 348.49
+    }
+  ],
+  "notes": [
+    "Requests were sequential. Response-header receipt timings measured; connection/DNS reused.",
+    "Difference includes local work and scheduling; not established as pure CPU.",
+    "Page visibility was visible; no evidence of background throttling."
+  ],
+  "networkElapsedMs": 3899.987,
+  "remainingElapsedMs": 681.8929999952315
+}

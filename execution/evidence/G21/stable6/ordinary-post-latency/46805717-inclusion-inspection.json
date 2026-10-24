@@ -1,0 +1,15 @@
+{
+  "source": "4680571760781c2a9dc1dadf55beb2dbbd609bef",
+  "txHash": "0x2876759200e92881cb5f6319373072b21bd5ac16ff52b99198104dc899f69997",
+  "eventualReceipt": {
+    "status": "checkpointed",
+    "executionResult": "success",
+    "blockNumber": 2439,
+    "slotNumber": 2344
+  },
+  "sameHostReceiptReadMs": {
+    "nativeNode": 17.099907039664686,
+    "proverQueryGateway": 27.604024042375386
+  },
+  "observation": "Read-only later receipt check, not a timing of original inclusion. Node journal has no retained proposal logs. Cannot attribute original 16.507s observed inclusion interval further from these reads. Header timestamp is not a wall-clock inclusion timestamp. Next changed release must retain receipt-response status and request timings."
+}

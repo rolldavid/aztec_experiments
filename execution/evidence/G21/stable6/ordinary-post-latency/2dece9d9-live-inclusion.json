@@ -1,0 +1,188 @@
+{
+  "sourceCommit": "2dece9d932cfe67146b491e987e548107fe80caf",
+  "browser": "Existing IAB; disposable test wallet provider; real native proof, actual Aztec inclusion and DOM. Not MetaMask acceptance.",
+  "txHash": "0x0f4779f61feb1473916eb1eef02db245db53d175b0335c1023b30e7ff64630c1",
+  "receipt": [
+    {
+      "blockNumber": 2378,
+      "executionResult": "success",
+      "status": "proposed"
+    }
+  ],
+  "acceptance": {
+    "click": 206851.79499995708,
+    "confirmationPending": true,
+    "duration": 30038.110000014305,
+    "marker": "Posting latency verification: arithmetic fee quote, one execution and real Aztec inclusion.",
+    "postId": "post-9219339620404045906958523223313608347394085271479532716722664525750991754874",
+    "render": 236889.9049999714,
+    "timeOrigin": 1792832195253.55,
+    "visibility": "visible"
+  },
+  "composerClosed": true,
+  "feeEstimationMs": 39.82000005245209,
+  "feePreparationTotalMs": 835.0800000429153,
+  "feeEstimatorPrivateExecutions": 0,
+  "feeEstimatorPublicSimulations": 0,
+  "timings": [
+    {
+      "duration": 3111.0099999904633,
+      "name": "rolling.action.prepare",
+      "start": 207249.49500000477
+    },
+    {
+      "duration": 1455.5449999570849,
+      "name": "rolling.action.sync",
+      "start": 207249.53499996665
+    },
+    {
+      "duration": 787.1900000572205,
+      "name": "rolling.action.arguments",
+      "start": 209560.42499995232
+    },
+    {
+      "duration": 795.2599999904633,
+      "name": "rolling.action.payment-prefetch",
+      "start": 209560.625
+    },
+    {
+      "duration": 543.710000038147,
+      "name": "rolling.action.fee-metadata",
+      "start": 209560.67499995232
+    },
+    {
+      "duration": 786.7800000905991,
+      "name": "rolling.action.policy",
+      "start": 209560.70999991897
+    },
+    {
+      "duration": 38.269999980926514,
+      "name": "rolling.action.screening",
+      "start": 209560.8099999428
+    },
+    {
+      "duration": 228.49500000476837,
+      "name": "rolling.action.fee-binding",
+      "start": 210104.39999997616
+    },
+    {
+      "duration": 7.945000052452087,
+      "name": "rolling.action.fee-balance",
+      "start": 210347.83499991897
+    },
+    {
+      "duration": 39.82000005245209,
+      "name": "rolling.transaction.estimating",
+      "start": 210395.439999938
+    },
+    {
+      "duration": 0.11500000953674316,
+      "name": "rolling.action.fee-prepare",
+      "start": 210395.52499997616
+    },
+    {
+      "duration": 0.6050000190734863,
+      "name": "rolling.action.fee-simulate",
+      "start": 210395.64999997616
+    },
+    {
+      "duration": 795.8899999856949,
+      "name": "rolling.transaction.preparing",
+      "start": 210435.77499997616
+    },
+    {
+      "duration": 20358.700000047684,
+      "name": "rolling.transaction.proving",
+      "start": 211231.67999994755
+    },
+    {
+      "duration": 19629.66000008583,
+      "name": "billboard.proveTxWithPublicValidation",
+      "start": 211236.31999993324
+    },
+    {
+      "duration": 19614.704999923702,
+      "name": "rolling.proof.native.total",
+      "start": 211251.32500004768
+    },
+    {
+      "duration": 394.2450000047684,
+      "name": "rolling.proof.transport.serialize",
+      "start": 217211.8099999428
+    },
+    {
+      "duration": 13639.09000003338,
+      "name": "rolling.proof.native.proof-transport",
+      "start": 217226.9549999237
+    },
+    {
+      "duration": 6149.395000100136,
+      "name": "rolling.proof.transport.submit",
+      "start": 217606.08999991417
+    },
+    {
+      "duration": 6889.554999947548,
+      "name": "rolling.proof.transport.wait",
+      "start": 223755.54499995708
+    },
+    {
+      "duration": 3741.7949998378754,
+      "name": "rolling.proof.native.private-witness",
+      "start": 227124.245000124
+    },
+    {
+      "duration": 895.3050000667572,
+      "name": "rolling.proof.native.unaccounted",
+      "start": 229970.74499988556
+    },
+    {
+      "duration": 864.2300000190735,
+      "name": "rolling.proof.native.public-validation",
+      "start": 230001.8099999428
+    },
+    {
+      "duration": 474.2849999666214,
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 230391.75499999523
+    },
+    {
+      "duration": 16.27500009536743,
+      "name": "rolling.proof.local.decompress",
+      "start": 230645.83999991417
+    },
+    {
+      "duration": 183.91999995708463,
+      "name": "rolling.proof.local.verify",
+      "start": 230662.15999996665
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.sync",
+      "start": 230866.03999996185
+    },
+    {
+      "duration": 12.514999985694883,
+      "name": "billboard.toTx",
+      "start": 230866.05499994755
+    },
+    {
+      "duration": 809.5349999666214,
+      "name": "rolling.transaction.submitting",
+      "start": 231590.3899999857
+    },
+    {
+      "duration": 538.079999923706,
+      "name": "rolling.reader.update",
+      "start": 236346.98000001907
+    },
+    {
+      "duration": 6.9700000286102295,
+      "name": "rolling.reader.dom",
+      "start": 236878.0799999237
+    }
+  ],
+  "screenshot": "/tmp/rolling-post-final-included.png",
+  "limits": "Actual successful short ordinary post on final deployed release; not a guarantee of public network latency. Maximum-length mixed Unicode acceptance and fee-bound source audit follow.",
+  "binaryUploadBytes": 1039575,
+  "payloadMeasurement": "Exact base64-decoded CDP postDataEntries bytes, not UTF-8 decoded postData text."
+}

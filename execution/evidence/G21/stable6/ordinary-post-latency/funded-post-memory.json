@@ -1,0 +1,9 @@
+{
+  "scope": "All ChatGPT/Codex renderer and service processes, not isolated app tab",
+  "method": "read-only ps RSS sampled every0.5s for300s; no process control",
+  "baselineBytes": 4392009728,
+  "peakBytes": 4400005120,
+  "finalBytes": 3591569408,
+  "largestProcessObservedGiB": 0.888,
+  "rawLocalPath": "/tmp/post-acceptance-memory.jsonl"
+}

@@ -1,0 +1,37 @@
+{
+  "source": "26be933b4a19daf871599c307f9621bc1e1e5bdd",
+  "uiRelease": "26be933b4a19daf871599c307f9621bc1e1e5bdd-closurefix",
+  "test": "ordinary low-credit post, real proof and Aztec inclusion",
+  "browser": "existing in-app browser tab; disposable EIP-1193 test provider for account sign-in, production posting path",
+  "metamaskAcceptance": false,
+  "durationMs": 53679.475,
+  "targetMs": 36000,
+  "passed": false,
+  "startCredits": "7.4005",
+  "transaction": "0x0dd6e975b376911a4dfd7361a045e8be017dd714f853c17f934b30950b9b68f8",
+  "block": 2309,
+  "postId": "20917792971624752823981632137564066529120940655315408094080153735151100964355",
+  "confirmationPendingAtRender": true,
+  "stagesMs": {
+    "prepare": 8579.83,
+    "sync": 4000.64,
+    "arguments": 2661.02,
+    "paymentPrefetch": 4572.17,
+    "feeEstimation": 12918.655,
+    "prove": 26510.23,
+    "proofUpload": 12812.88,
+    "proofJobWait": 7231.21,
+    "submit": 1715.99,
+    "readerUpdate": 462.88,
+    "readerDom": 5.295
+  },
+  "timing": "Same browser monotonic clock from capture-phase Post click to MutationObserver finding included post; stage durations overlap and must not be summed. Server and browser wall clocks differ; no cross-clock subtraction used.",
+  "memory": {
+    "observationSeconds": 599.821,
+    "codexRendererAndServiceBaselineGiB": 2.849,
+    "codexRendererAndServicePeakGiB": 3.668,
+    "codexRendererAndServiceFinalGiB": 2.761,
+    "maxIndividualRendererGiB": 1.155,
+    "scope": "process aggregate, not tab-exclusive; observer did not terminate processes"
+  }
+}

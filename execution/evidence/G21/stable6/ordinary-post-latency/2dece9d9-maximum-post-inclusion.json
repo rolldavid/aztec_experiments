@@ -1,0 +1,179 @@
+{
+  "acceptance": {
+    "click": 441421.16499996185,
+    "confirmationPending": true,
+    "duration": 35957.75999999046,
+    "marker": "Maximum-length post verification: mixed Unicode at 992 bytes. A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42",
+    "postId": "post-15500429229174447637785182775798883026440864295379995458568593357366638184560",
+    "render": 477378.9249999523,
+    "timeOrigin": 1792832195253.55,
+    "visibility": "visible"
+  },
+  "timings": [
+    {
+      "duration": 6500.284999966621,
+      "name": "rolling.action.prepare",
+      "start": 442610.8099999428
+    },
+    {
+      "duration": 1180.4900000095367,
+      "name": "rolling.action.sync",
+      "start": 442610.8249999285
+    },
+    {
+      "duration": 1902.265000104904,
+      "name": "rolling.action.arguments",
+      "start": 444764.34999990463
+    },
+    {
+      "duration": 4342.229999899864,
+      "name": "rolling.action.payment-prefetch",
+      "start": 444764.3700000048
+    },
+    {
+      "duration": 227.6799999475479,
+      "name": "rolling.action.fee-metadata",
+      "start": 444764.41499996185
+    },
+    {
+      "duration": 1902.0199999809265,
+      "name": "rolling.action.policy",
+      "start": 444764.41499996185
+    },
+    {
+      "duration": 1901.1100000143051,
+      "name": "rolling.action.screening",
+      "start": 444764.45999991894
+    },
+    {
+      "duration": 399.5499999523163,
+      "name": "rolling.action.fee-binding",
+      "start": 444992.1100000143
+    },
+    {
+      "duration": 2439.439999938011,
+      "name": "rolling.action.fee-balance",
+      "start": 446667.0199999809
+    },
+    {
+      "duration": 42.15499997138977,
+      "name": "rolling.transaction.estimating",
+      "start": 449146.8700000048
+    },
+    {
+      "duration": 0.18500006198883057,
+      "name": "rolling.action.fee-prepare",
+      "start": 449146.96499991417
+    },
+    {
+      "duration": 0.5299999713897705,
+      "name": "rolling.action.fee-simulate",
+      "start": 449147.1599999666
+    },
+    {
+      "duration": 1128.8199999332428,
+      "name": "rolling.transaction.preparing",
+      "start": 449189.24000000954
+    },
+    {
+      "duration": 21234.06500005722,
+      "name": "rolling.transaction.proving",
+      "start": 450318.0749999285
+    },
+    {
+      "duration": 20063.30999994278,
+      "name": "billboard.proveTxWithPublicValidation",
+      "start": 450320.1599999666
+    },
+    {
+      "duration": 20048.57499992847,
+      "name": "rolling.proof.native.total",
+      "start": 450334.96000003815
+    },
+    {
+      "duration": 390.8600000143051,
+      "name": "rolling.proof.transport.serialize",
+      "start": 457401.5149999857
+    },
+    {
+      "duration": 12967.004999995232,
+      "name": "rolling.proof.native.proof-transport",
+      "start": 457416.5499999523
+    },
+    {
+      "duration": 6716.110000014305,
+      "name": "rolling.proof.transport.submit",
+      "start": 457792.39999997616
+    },
+    {
+      "duration": 5706.825000047684,
+      "name": "rolling.proof.transport.wait",
+      "start": 464508.5699999333
+    },
+    {
+      "duration": 4068.120000004768,
+      "name": "rolling.proof.native.private-witness",
+      "start": 466315.4199999571
+    },
+    {
+      "duration": 1588.789999961853,
+      "name": "rolling.proof.native.unaccounted",
+      "start": 468794.7649999857
+    },
+    {
+      "duration": 975.2799999713898,
+      "name": "rolling.proof.native.public-validation",
+      "start": 469408.2699999809
+    },
+    {
+      "duration": 449.3799999952316,
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 469934.1699999571
+    },
+    {
+      "duration": 18,
+      "name": "rolling.proof.local.decompress",
+      "start": 470217.0949999094
+    },
+    {
+      "duration": 126.62000000476836,
+      "name": "rolling.proof.local.verify",
+      "start": 470235.13499999046
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.sync",
+      "start": 470383.53999996185
+    },
+    {
+      "duration": 11.985000014305117,
+      "name": "billboard.toTx",
+      "start": 470383.5599999428
+    },
+    {
+      "duration": 1292.4099999666214,
+      "name": "rolling.transaction.submitting",
+      "start": 471552.1449999809
+    },
+    {
+      "duration": 612.75,
+      "name": "rolling.reader.update",
+      "start": 476761.14999997616
+    },
+    {
+      "duration": 3.754999995231629,
+      "name": "rolling.reader.dom",
+      "start": 477370.13499999046
+    }
+  ],
+  "sourceCommit": "2dece9d932cfe67146b491e987e548107fe80caf",
+  "browser": "Existing IAB, disposable test identity, real proof and actual included feed rendering; not MetaMask acceptance.",
+  "txHash": "0x17490d4fcaad644bf8604255196370af09d3948e9e32ec8daf7be7ec2601884c",
+  "utf8Bytes": 992,
+  "composerClosed": true,
+  "feeEstimationMs": 42.155,
+  "feePreparationTotalMs": 4384.385,
+  "binaryUploadBytes": 1108005,
+  "goalMet": false,
+  "remaining": "Above 15 second end-to-end and one second complete fee preparation targets."
+}

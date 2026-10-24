@@ -1,0 +1,61 @@
+{
+  "published": true,
+  "commit": "4680571760781c2a9dc1dadf55beb2dbbd609bef",
+  "ui": "/opt/rolling-ui/releases/4680571760781c2a9dc1dadf55beb2dbbd609bef-closurefix",
+  "assetSource": "/opt/rolling-app/releases/ui-4680571760781c2a9dc1dadf55beb2dbbd609bef-closurefix",
+  "previousUi": "/opt/rolling-ui/releases/2dece9d932cfe67146b491e987e548107fe80caf-closurefix",
+  "sourcePinsSha256": "29c576295eec344583b69e9c40cfe660300df48f1846af45ebd37b54f4af887e",
+  "candidateSha256": "df7553e38c730a2849907ec1ff4d153021ba7baa0f91380e369db6c52a82b0bf",
+  "unitsUnchanged": {
+    "rolling-application.service": {
+      "MainPID": "709116",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-application-proxy.service": {
+      "MainPID": "709119",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-node.service": {
+      "MainPID": "561964",
+      "NRestarts": "69",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-query.service": {
+      "MainPID": "565186",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board-prover.service": {
+      "MainPID": "734410",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board-prover-proxy.service": {
+      "MainPID": "630307",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-moderator.service": {
+      "MainPID": "567551",
+      "NRestarts": "31",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "observedAt": "2026-10-24T10:12:17.428664+00:00",
+  "assetHashes": {
+    "wallet/runtime.json": "da6489993e5ae4dd7211e47797bf92cef3b64704020276512c7c3b2f934aa133",
+    "wallet/runtime.mjs": "f005496fb93ef4e4da12a82412664c0afc017f9312a92d2d0c8c0420198b9167",
+    "wallet/aztec_browser.js": "e0b0a3e1fe52450fb288217d7009d013c3be2d30d1e86d5c3fef4b66412ef834",
+    "wallet-panel.mjs": "089beecbdf8473b8acdb6107777e7c9b32cba95e56907d2a6cd1b276972e5fa2",
+    "performance.mjs": "0e611f78f345f04e3161c6fb8a580d6cdcd09728bb23726d085a4d26629b0f85"
+  }
+}
