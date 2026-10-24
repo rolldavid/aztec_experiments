@@ -2272,3 +2272,9 @@ test('synchronized ordinary policy rejects changed local anchor before storing i
  f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(changed?43:42)});f.app=f.restart();
  await assert.rejects(f.app.prepare({type:'post',deposit:'9',subboard:'0',name:'0',content:'Reject changed anchor'},{immediate:true}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);
 });
+test('predecessor reuse rejects a replacement authenticated journal in the same owner',async()=>{
+ const owner={},base=fixture();base.options.accountSession.operationScope=()=>owner;const f=await realJournalFixture(base);
+ const first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);
+ await f.app.prefetchContext({predecessor:true});await f.install('OTHER_OPERATION','pending');
+ const sends=f.state.sends;await assert.rejects(f.app.prepare({type:'unlike',post:'5'},{immediate:true}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,sends);
+});
