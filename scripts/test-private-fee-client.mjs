@@ -148,7 +148,7 @@ test('small top-up cannot turn a balance lookup failure into bootstrap fallback'
 
 test('independent fee metadata reads start together and drain before a failure releases the caller',async()=>{
  const {input,state}=fixture(),gate=Promise.withResolvers(),started=Promise.withResolvers();let reads=0,finished=false;
- for(const name of ['getNodeInfo','getCurrentMinFees']){const original=input.node[name];input.node[name]=async()=>{if(++reads===2)started.resolve();await gate.promise;return original();};}
+ for(const name of ['getNodeInfo','getCurrentMinFees','getContract']){const original=input.node[name];input.node[name]=async(...args)=>{if(++reads===3)started.resolve();await gate.promise;return original(...args);};}
  input.wallet.getChainInfo=async()=>{throw Error('controlled metadata failure');};
  const pending=preparePrivateFeePayment(input).finally(()=>{finished=true;});
  await started.promise;assert.equal(finished,false);assert.equal(state.registered,0);assert.equal(state.reads,0);
@@ -172,7 +172,7 @@ for(const missing of ['instance','artifact','class','preimage'])test('native loc
  input.wallet.pxe={getContractInstance:async()=>missing==='instance'?undefined:local,getContractArtifact:async()=>missing==='artifact'?undefined:artifact};
  await preparePrivateFeePayment(input);assert.equal(state.registered,1);assert.equal(state.reads,1);
 });
-test('local registration lookup failure drains concurrent publication before releasing operation',async()=>{
+test('publication completes before a failing local registration lookup can release operation',async()=>{
  const {input,state}=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let finished=false;
  input.wallet.pxe={getContractInstance:async()=>{throw Error('PRIVATE_SENTINEL');},getContractArtifact:async()=>artifact};
  input.node.getContract=async()=>{entered.resolve();await gate.promise;return state.instance;};
@@ -213,4 +213,22 @@ test('ordinary fixed-payment preparation performs canonical binding without read
 test('a bridge claim cannot select ordinary native credit validation',async()=>{
  const {input,state}=fixture();input.creditCheck='ordinary-post-proof';input.claim={amount:'5000',salt:new Fr(1),leafIndex:new Fr(2)};
  await assert.rejects(preparePrivateFeePayment(input),{code:'PRIVATE_FEE_CONFIGURATION_REQUIRED'});assert.equal(state.reads,0);assert.equal(state.registered,0);
+});
+
+
+test('publication joins fresh fee metadata instead of a second sequential node phase',async()=>{
+ const {input,state}=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let prices=0,publication=0;
+ input.node.getCurrentMinFees=async()=>{prices++;await gate.promise;return new GasFees(3n,5n);};
+ input.node.getContract=async(address,reference)=>{publication++;assert(address.equals(instance.address));assert.equal(reference,'latest');entered.resolve();return state.instance;};
+ const pending=preparePrivateFeePayment({...input,creditCheck:'ordinary-post-proof'});await entered.promise;
+ assert.equal(prices,1);assert.equal(state.registered,0);assert.equal(state.reads,0);gate.resolve();await pending;
+ assert.equal(publication,1);assert.equal(state.reads,0);
+});
+test('publication failure drains held metadata before failing without registration or spending',async()=>{
+ const {input,state}=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let finished=false;
+ input.node.getContract=async()=>{throw Error('controlled publication read failure');};
+ input.node.getCurrentMinFees=async()=>{entered.resolve();await gate.promise;return new GasFees(3n,5n);};
+ const pending=preparePrivateFeePayment(input).finally(()=>finished=true);await entered.promise;
+ await new Promise(r=>setImmediate(r));assert.equal(finished,false);gate.resolve();
+ await assert.rejects(pending,{code:'PRIVATE_FEE_PREPARATION_FAILED'});assert.equal(state.registered,0);assert.equal(state.reads,0);
 });
