@@ -1,0 +1,995 @@
+{
+  "start": {
+    "wall": 1792882084594,
+    "performance": 3123005.6399999857,
+    "timeOrigin": 1792878961625.575
+  },
+  "transactions": [
+    {
+      "method": "eth_sendTransaction",
+      "hash": "0x2fe53e45b0e58c45b348db82d2147f664becc946384ed59ce998aba7b351e7cd",
+      "at": 1792882101750
+    }
+  ],
+  "now": 3322182.6100000143,
+  "wall": 1792882283783,
+  "trace": {
+    "start": {
+      "wall": 1792882084594,
+      "performance": 3123005.6399999857,
+      "timeOrigin": 1792878961625.575
+    },
+    "states": [
+      {
+        "time": 3204135.2649999857,
+        "wall": 1792882165724,
+        "text": "Add Bok credit\nClose account panel\n\nPayment confirmed. Adding your Bok credit on Aztec…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3214689.3650000095,
+        "wall": 1792882176278,
+        "text": "Add Bok credit\nClose account panel\n\nPreparing your Bok credit…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3220116.7150000334,
+        "wall": 1792882181705,
+        "text": "Add Bok credit\nClose account panel\n\nAdding your Bok credit…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3224842.190000057,
+        "wall": 1792882186431,
+        "text": "Add Bok credit\nClose account panel\n\nChecking the cost of adding your Bok credit…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3226172.9700000286,
+        "wall": 1792882187762,
+        "text": "Add Bok credit\nClose account panel\n\nAdding your Bok credit…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3226173.225000024,
+        "wall": 1792882187762,
+        "text": "Add Bok credit\nClose account panel\n\nPreparing your Bok credit…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3237222.3050000668,
+        "wall": 1792882198811,
+        "text": "Add Bok credit\nClose account panel\n\nAdding your Bok credit…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3237621.9700000286,
+        "wall": 1792882199211,
+        "text": "Add Bok credit\nClose account panel\n\nWaiting for your Bok credit to confirm…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3276467.870000005,
+        "wall": 1792882238067,
+        "text": "Add Bok credit\nClose account panel\n\nAdding your Bok credit…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3276468.164999962,
+        "wall": 1792882238067,
+        "text": "Add Bok credit\nClose account panel\n\nPreparing your Bok credit…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3281036.350000024,
+        "wall": 1792882242636,
+        "text": "Add Bok credit\nClose account panel\n\nLoading your account…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance —\nPayment —\n\nEnter an amount to see the price.\n\nContinue paymentPause checksBack to accountSign out"
+      },
+      {
+        "time": 3284888.289999962,
+        "wall": 1792882246488,
+        "text": "Add Bok credit\nClose account panel\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance —\nPayment —\n\nEnter an amount to see the price.\n\nContinue paymentPause checksBack to accountSign out"
+      },
+      {
+        "time": 3284888.9850000143,
+        "wall": 1792882246488,
+        "text": "Add Bok credit\nClose account panel\n\nLoading your account…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance —\nPayment —\n\nEnter an amount to see the price.\n\nContinue paymentPause checksBack to accountSign out"
+      },
+      {
+        "time": 3288097.0900000334,
+        "wall": 1792882249697,
+        "text": "Add Bok credit\nClose account panel\n\nLoading your account…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 1 USDC\nPayment —\n\nEnter an amount to see the price.\n\nContinue paymentPause checksBack to accountSign out"
+      },
+      {
+        "time": 3288097.6800000668,
+        "wall": 1792882249697,
+        "text": "Add Bok credit\nClose account panel\n\nLoading your account…\n\n✓\nDisposable test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 1 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPay\nPause checksBack to accountSign out"
+      },
+      {
+        "time": 3288099.644999981,
+        "wall": 1792882249699,
+        "text": "Your account\nClose account panel\n\nLoading your account…\n\nBok credit added.\n\nReady for a conversation?\n\nPost anonymously, or choose a name when you write.\n\nWrite a post\nAccount settings\nStart new test accountSign out"
+      }
+    ]
+  },
+  "measures": [
+    {
+      "name": "rolling.action.sync",
+      "start": 3204271.315000057,
+      "duration": 872.8700000047684,
+      "detail": null
+    },
+    {
+      "name": "rolling.action.predecessor",
+      "start": 3205144.355000019,
+      "duration": 48.62000000476837,
+      "detail": null
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 3205193.105000019,
+      "duration": 9483.804999947548,
+      "detail": null
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 3224840.4900000095,
+      "duration": 1331.960000038147,
+      "detail": null
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 3224840.585000038,
+      "duration": 1064.5149999856949,
+      "detail": null
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 3225905.1100000143,
+      "duration": 238.5549999475479,
+      "detail": null
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 3226172.9850000143,
+      "duration": 51.4650000333786,
+      "detail": null
+    },
+    {
+      "name": "billboard.accountRequest",
+      "start": 3226224.394999981,
+      "duration": 2.625,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.account-request",
+      "start": 3226224.394999981,
+      "duration": 2.625,
+      "detail": null
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 3226224.4650000334,
+      "duration": 10997.269999980927,
+      "detail": null
+    },
+    {
+      "name": "billboard.proveTxWithPublicValidation",
+      "start": 3226227.0900000334,
+      "duration": 10888.340000033379,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.prove-tx-with-public-validation",
+      "start": 3226227.0900000334,
+      "duration": 10888.340000033379,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.queue-and-anchor",
+      "start": 3226227.190000057,
+      "duration": 1.21999990940094,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.private-execution",
+      "start": 3226228.4650000334,
+      "duration": 5291.600000023842,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-capsule",
+      "start": 3226481.600000024,
+      "duration": 0.5099999904632568,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-auth-witness",
+      "start": 3226483.5149999857,
+      "duration": 0.08000004291534424,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "start": 3226533.399999976,
+      "duration": 0.12999999523162842,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "start": 3226535.310000062,
+      "duration": 0.04499995708465576,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-notify-revertible-phase-start",
+      "start": 3226536.1349999905,
+      "duration": 2.350000023841858,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "start": 3226545.1150000095,
+      "duration": 4968.955000042915,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-from-public-storage",
+      "start": 3229815.205000043,
+      "duration": 231.75,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-is-nullifier-pending",
+      "start": 3230302.5,
+      "duration": 0.10500001907348633,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-public-data-witness",
+      "start": 3230304.5750000477,
+      "duration": 0.16999995708465576,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-l-to-l-membership-witness-v",
+      "start": 3230313.1800000668,
+      "duration": 332.5199999809265,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "start": 3231236.254999995,
+      "duration": 0.06500005722045898,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "start": 3231247.8200000525,
+      "duration": 0.08999991416931152,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "start": 3231248.2000000477,
+      "duration": 0.0849999189376831,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-sender-for-tags",
+      "start": 3231248.414999962,
+      "duration": 0.015000104904174805,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-app-tagging-secret",
+      "start": 3231251.435000062,
+      "duration": 3.0199999809265137,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "start": 3231254.524999976,
+      "duration": 243.40500009059906,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-notify-created-nullifier",
+      "start": 3231502.3899999857,
+      "duration": 0.11000001430511475,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "start": 3231502.7400000095,
+      "duration": 0.014999985694885254,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.kernel-class-hints",
+      "start": 3231520.394999981,
+      "duration": 334.7850000858307,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.kernel-body",
+      "start": 3231855.2000000477,
+      "duration": 771.4900000095367,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "start": 3232595.3650000095,
+      "duration": 0.13999998569488525,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "start": 3232595.504999995,
+      "duration": 7.830000042915344,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "start": 3232603.3450000286,
+      "duration": 11.754999995231628,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "start": 3232615.105000019,
+      "duration": 10.284999966621399,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "start": 3232625.399999976,
+      "duration": 0.5850000381469727,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "start": 3232625.9900000095,
+      "duration": 0.35500001907348633,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.validation",
+      "start": 3232626.6950000525,
+      "duration": 353.45499992370605,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.validation-transaction",
+      "start": 3232630.164999962,
+      "duration": 18.705000042915344,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.public-execution",
+      "start": 3232648.940000057,
+      "duration": 331.164999961853,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.admission-check",
+      "start": 3232653.794999957,
+      "duration": 326.29500007629395,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.remote-proof",
+      "start": 3232980.1599999666,
+      "duration": 4104.5,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.transport.circuit-ids",
+      "start": 3232980.1800000668,
+      "duration": 1.434999942779541,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.transport.serialize",
+      "start": 3232980.1800000668,
+      "duration": 27.80999994277954,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.transport.dictionary",
+      "start": 3232981.629999995,
+      "duration": 19.894999980926514,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.transport.compress",
+      "start": 3233001.5500000715,
+      "duration": 6.379999995231628,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.transport.submit",
+      "start": 3233008,
+      "duration": 804.2000000476837,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.transport.wait",
+      "start": 3233812.230000019,
+      "duration": 3065.6549999713898,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.aggregate.server.persist",
+      "start": 3236877.4700000286,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 0.34304199973121285
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.queue-wait",
+      "start": 3236877.504999995,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 0.01611000020056963
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.result-ready",
+      "start": 3236877.5149999857,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 2627.8217939999886
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.read",
+      "start": 3236877.519999981,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 0.6478140000253916
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.decompress",
+      "start": 3236877.519999981,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 61.04470699990634
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.binding",
+      "start": 3236877.524999976,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 35.9337199999718
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.backend",
+      "start": 3236877.5299999714,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 32.67706499993801
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.native-prove",
+      "start": 3236877.5349999666,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 2495.4874379999237
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.bb-start",
+      "start": 3236877.539999962,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 0.5343019999563694
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.bb-load",
+      "start": 3236877.539999962,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 258.97918299981393
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.bb-accumulate",
+      "start": 3236877.544999957,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 1250.9590010000393
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.bb-prove",
+      "start": 3236877.5500000715,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 938.8229900000151
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.bb-verify",
+      "start": 3236877.5500000715,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 42.0779020000482
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.bb-compress",
+      "start": 3236877.5500000715,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 1.9137299999129027
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.result-encode",
+      "start": 3236877.5550000668,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 0.21697100007440895
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.child-total",
+      "start": 3236877.5700000525,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 2626.05237499997
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.ready-wait",
+      "start": 3236877.5700000525,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 0.04263999965041876
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.dispatch-to-result",
+      "start": 3236877.580000043,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 2627.577622999903
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.server.result-ready-to-snapshot",
+      "start": 3236877.580000043,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 0.10435999976471066
+      }
+    },
+    {
+      "name": "rolling.proof.local.decompress",
+      "start": 3236879.024999976,
+      "duration": 18.860000014305115,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.local.verify",
+      "start": 3236897.9099999666,
+      "duration": 180.36000001430511,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.proof-public-inputs",
+      "start": 3237084.685000062,
+      "duration": 0.6699999570846558,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.result-and-tag-persistence",
+      "start": 3237085.4300000668,
+      "duration": 21.009999990463257,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.aggregate.native.total",
+      "start": 3237115.4900000095,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 10858.169999957085
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.native.sync",
+      "start": 3237115.495000005,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 0
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.native.private-witness",
+      "start": 3237115.495000005,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 5050.680000066757
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.native.kernel-witness",
+      "start": 3237115.504999995,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 737.335000038147
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.native.public-validation",
+      "start": 3237115.504999995,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 349.99000000953674
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.native.proof-transport",
+      "start": 3237115.504999995,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 4104.525000095367
+      }
+    },
+    {
+      "name": "rolling.proof.aggregate.native.unaccounted",
+      "start": 3237115.5099999905,
+      "duration": 0,
+      "detail": {
+        "kind": "aggregate",
+        "durationMs": 615.6399997472763
+      }
+    },
+    {
+      "name": "billboard.toTx",
+      "start": 3237115.5099999905,
+      "duration": 18.205000042915344,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.to-tx",
+      "start": 3237115.5099999905,
+      "duration": 18.205000042915344,
+      "detail": null
+    },
+    {
+      "name": "billboard.guardBeforeJournal",
+      "start": 3237133.815000057,
+      "duration": 25.144999980926514,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.guard-before-journal",
+      "start": 3237133.815000057,
+      "duration": 25.144999980926514,
+      "detail": null
+    },
+    {
+      "name": "billboard.journalPrepare",
+      "start": 3237158.9850000143,
+      "duration": 40.50999999046326,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.journal-prepare",
+      "start": 3237158.9850000143,
+      "duration": 40.50999999046326,
+      "detail": null
+    },
+    {
+      "name": "billboard.journalSigned",
+      "start": 3237199.524999976,
+      "duration": 22.080000042915344,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.journal-signed",
+      "start": 3237199.524999976,
+      "duration": 22.080000042915344,
+      "detail": null
+    },
+    {
+      "name": "billboard.contextGuard",
+      "start": 3237221.685000062,
+      "duration": 0.004999995231628418,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "start": 3237221.685000062,
+      "duration": 0.004999995231628418,
+      "detail": null
+    },
+    {
+      "name": "billboard.signedGuard",
+      "start": 3237221.710000038,
+      "duration": 7.069999933242798,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.signed-guard",
+      "start": 3237221.710000038,
+      "duration": 7.069999933242798,
+      "detail": null
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 3237221.7350000143,
+      "duration": 399.7000000476837,
+      "detail": null
+    },
+    {
+      "name": "billboard.submitToAztec",
+      "start": 3237228.8050000668,
+      "duration": 392.5549999475479,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.wallet.phase.submit-to-aztec",
+      "start": 3237228.8050000668,
+      "duration": 392.5549999475479,
+      "detail": null
+    },
+    {
+      "name": "rolling.transaction.aztec-inclusion",
+      "start": 3237621.3899999857,
+      "duration": 2816.3300000429153,
+      "detail": null
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 3237621.435000062,
+      "duration": 50477.889999985695,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.receipt.phase.pending",
+      "start": 3239084.9250000715,
+      "duration": 0,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.receipt.phase.display-callback",
+      "start": 3240437.6349999905,
+      "duration": 0.3500000238418579,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.receipt.phase.proposed",
+      "start": 3274399.5900000334,
+      "duration": 0,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.receipt.phase.read",
+      "start": 3275400.4850000143,
+      "duration": 233.91499996185303,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.receipt.phase.checkpointed",
+      "start": 3275634.419999957,
+      "duration": 0,
+      "detail": null
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 3276219.899999976,
+      "duration": 441.3050000667572,
+      "detail": null
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 3276658.4250000715,
+      "duration": 2.7649999856948853,
+      "detail": null
+    },
+    {
+      "name": "rolling.action.fee-metadata",
+      "start": 3283082.1950000525,
+      "duration": 229.70999991893768,
+      "detail": null
+    },
+    {
+      "name": "rolling.action.fee-binding",
+      "start": 3283311.935000062,
+      "duration": 2.0799999237060547,
+      "detail": null
+    },
+    {
+      "name": "rolling.action.fee-balance",
+      "start": 3283314.0299999714,
+      "duration": 1572.920000076294,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 3283684.754999995,
+      "duration": 504.8550000190735,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-openv",
+      "start": 3284200.3450000286,
+      "duration": 0.16999995708465576,
+      "detail": null
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 3284890.399999976,
+      "duration": 477.75,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-call-utility-function",
+      "start": 3286182.524999976,
+      "duration": 1017.8799999952316,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-record-fact",
+      "start": 3286655.9250000715,
+      "duration": 0.07999992370605469,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-fact-collection",
+      "start": 3287195.835000038,
+      "duration": 3.240000009536743,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-pending-tagged-logs-v",
+      "start": 3287207.245000005,
+      "duration": 282.1100000143051,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-shared-secrets",
+      "start": 3287490.8200000525,
+      "duration": 5.370000004768372,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-decrypt-aes",
+      "start": 3287498.2350000143,
+      "duration": 1.9199999570846558,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 3287501.605000019,
+      "duration": 2.340000033378601,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 3287504.0349999666,
+      "duration": 1.8450000286102295,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-resolved-txs",
+      "start": 3287512.125,
+      "duration": 0.02499997615814209,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 3287512.310000062,
+      "duration": 2.0049999952316284,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 3287514.539999962,
+      "duration": 0.1350001096725464,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 3287514.705000043,
+      "duration": 0.059999942779541016,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 3287514.8400000334,
+      "duration": 0.009999990463256836,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 3287514.8650000095,
+      "duration": 330.60000002384186,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 3287845.560000062,
+      "duration": 0.014999985694885254,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 3287846.649999976,
+      "duration": 240.5350000858307,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 3287847.2400000095,
+      "duration": 0.039999961853027344,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 3287847.3000000715,
+      "duration": 0.08999991416931152,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 3287847.4250000715,
+      "duration": 0.9799998998641968,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 3287849.225000024,
+      "duration": 0.019999980926513672,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 3287849.2649999857,
+      "duration": 0.02499997615814209,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "start": 3287849.3000000715,
+      "duration": 234.2699999809265,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 3288083.8200000525,
+      "duration": 0.1499999761581421,
+      "detail": null
+    },
+    {
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 3288084.125,
+      "duration": 2.740000009536743,
+      "detail": null
+    }
+  ]
+}

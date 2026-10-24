@@ -1813,7 +1813,7 @@ for(const change of ['local-owner','network-chain'])test('funding verification r
  f.app=f.restart();await assert.rejects(f.app.prepare({type:'claim-deposit',receipt:f.receipt}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
 
-test('stuck deposit cancellation uses the new account, revalidates the public request and retains the refund identity', async () => {
+for(const immediate of [false,true])test('stuck deposit cancellation retains refund identity, immediate='+immediate, async () => {
  const f = fundingFixture();
  const receipt = {...f.receipt, depositId:hex(56)};
  let checks = 0;
@@ -1827,12 +1827,13 @@ test('stuck deposit cancellation uses the new account, revalidates the public re
   return {status:'claim-ready', claim:{contract:hex(1), method:'cancel_deposit', args:[receipt.sender,receipt.amount,receipt.depositId,receipt.leafIndex]}};
  };
  const app = f.restart();
- const prepared = await app.prepare({type:'cancel-deposit',receipt});
+ const prepared = await app.prepare({type:'cancel-deposit',receipt},immediate?{immediate:true}:undefined);
+ assert.equal(f.state.estimates,immediate?0:1);assert.equal(prepared.maximumFee,immediate?'100':'10');
  assert.deepEqual(prepared.withdrawal,{kind:'cancelled-collateral',depositor:receipt.sender,amount:receipt.amount,depositId:receipt.depositId,eligible:true});
  const result = await app.submitPrepared(prepared.intentId);
  assert.equal(result.status,'confirmed');
  assert.equal(f.state.sends,1);
- assert.equal(f.state.sent.payload.name,'cancel_deposit');
+ assert.equal(f.state.sent.payload.name,'cancel_deposit');assert.equal(f.state.estimates,immediate?1:2);
  assert.equal(checks,2);
  assert.equal((await app.readWithdrawal()).withdrawal.depositId,receipt.depositId);
 });
@@ -1855,7 +1856,7 @@ test('immediate post skips review estimation but submission estimates and enforc
  f.state.fee=101n;await assert.rejects(f.app.submitPrepared(prepared.intentId),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.estimates,1);assert.equal(f.state.sends,0);
  f.state.fee=10n;await f.app.submitPrepared(prepared.intentId);assert.equal(f.state.estimates,2);assert.equal(f.state.sends,1);
 });
-test('immediate preparation rejects unrelated financial actions and caller fee overrides',async()=>{
+test('immediate preparation rejects malformed or unconfigured financial actions and caller fee overrides',async()=>{
  for(const options of [{immediate:false},{immediate:true,maximumFee:'999'}])await assert.rejects(fixture().app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'One click'},options));
  for(const action of [{type:'withdraw-bok',amount:'1',recipient:'0x'+'33'.repeat(20)},{type:'cancel-deposit',receipt:{}},{type:'transfer-moderator',moderator:hex(4)}])await assert.rejects(fixture().app.prepare(action,{immediate:true}));
 });
@@ -2521,4 +2522,70 @@ test('immediate read marker still vetoes a changed canonical block before broadc
  await assert.rejects(executeRollingAction(f.app,{type:'read-marker',thread:'42',throughBlock:'10'}),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});
  assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.filter(row=>row.name==='preference_head').length,1);
  assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);
+});
+
+for(const action of [{type:'subboard',slug:'new-board',name:'New',description:'Exact description',rules:'Exact rules'},...moderatorActions])test('manual '+action.type+' immediately submits exact input under generic ceiling',async()=>{
+ const f=moderatorActions.includes(action)?moderatorFixture():fixture();
+ const prepared=await f.app.prepare(action,{immediate:true});
+ assert.equal(prepared.maximumFee,'100');assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.deepEqual(prepared.action,action);
+ const encoded=structuredClone(prepared.encoded);
+ const result=await f.app.submitPrepared(prepared.intentId);assert.equal(result.status,'confirmed');assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+ assert.deepEqual(result.encoded,encoded);assert.equal((await f.app.reconcile(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});
+for(const mode of ['authority','fee'])test('immediate moderator action rejects changed '+mode+' before send',async()=>{
+ const f=moderatorFixture(),prepared=await f.app.prepare(moderatorActions[4],{immediate:true});
+ if(mode==='authority')f.state.moderator=99n;else f.state.fee=101n;
+ await assert.rejects(f.app.submitPrepared(prepared.intentId),{code:mode==='authority'?'ROLLING_MODERATOR_REQUIRED':'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);
+});
+test('immediate Bok withdrawal keeps exact recipient and pending Ethereum refund after one estimate',async()=>{
+ const f=bokAccountingFixture(),action={type:'withdraw-bok',amount:'500',recipient:'0x'+'33'.repeat(20)};
+ const intent=await f.app.prepare(action,{immediate:true});assert.equal(f.state.estimates,0);assert.equal(intent.maximumFee,'100');assert.deepEqual(intent.action,action);
+ await f.app.submitPrepared(intent.intentId);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+ const saved=await f.app.readWithdrawal();assert.equal(saved.withdrawal.depositor,action.recipient);assert.equal(saved.withdrawal.amount,action.amount);assert.equal(saved.withdrawal.nonce,intent.withdrawal.nonce);
+ await assert.rejects(f.app.prepare({type:'post',deposit:'9',content:'Cannot discard refund'},{immediate:true}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+
+
+for(const kind of ['aggregate','private-fee','bok'])test(`immediate ${kind} claim reuses fee preparation only under the same held operation and encrypted intent`,async()=>{
+ const f=kind==='aggregate'?aggregateClaimFixture():topUpFixture(kind);if(kind==='bok')f.action.feeReceipt={...f.receipt,leafIndex:'3'};
+ const held={synchronized:true};f.options.accountSession.operationScope=()=>held;
+ const app=f.restart(),prepared=await app.prepare(f.action,{immediate:true});assert.equal(f.state.payments.length,1);assert.equal(f.state.estimates,0);
+ assert.equal((await app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.payments.length,1);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+ assert(f.state.claimReads.every(input=>input.operationScope===held));
+ const feeReads=f.state.claimReads.filter(input=>input.kind==='private-fee');assert.equal(feeReads.length,2,'Submission still revalidates the fee receipt and canonical anchor');
+});
+for(const boundary of ['new-operation','no-synchronized-owner','new-application'])test(`claim fee preparation is fresh across ${boundary}`,async()=>{
+ const f=topUpFixture();let held=boundary==='no-synchronized-owner'?{}:{synchronized:true};f.options.accountSession.operationScope=()=>held;
+ const app=f.restart(),prepared=await app.prepare(f.action,{immediate:true});if(boundary==='new-operation')held={synchronized:true};
+ assert.equal((await (boundary==='new-application'?f.restart():app).submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.payments.length,2);
+ if(boundary==='no-synchronized-owner')assert(f.state.claimReads.every(input=>input.operationScope===undefined));
+});
+for(const change of ['receipt','owner'])test(`same-operation claim payment reuse stops before proving when ${change} changes`,async()=>{
+ const f=topUpFixture();let held={synchronized:true};f.options.accountSession.operationScope=()=>held;const app=f.restart(),prepared=await app.prepare(f.action,{immediate:true});
+ if(change==='receipt')f.state.claimError=true;
+ else{const verify=f.options.sdk.prepareFundingClaim;f.options.sdk.prepareFundingClaim=async input=>{held={synchronized:true};return verify(input);};}
+ await assert.rejects(app.submitPrepared(prepared.intentId));assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);
+});
+
+for(const action of [{type:'like',post:'8'},{type:'unlike',post:'8'},{type:'subboard',slug:'new-board',name:'New',description:'Exact',rules:''},{type:'screen',deposit:'9'},{type:'withdraw',deposit:'9'},...moderatorActions])test('generic action '+action.type+' reuses exactly owned generic payment once',async()=>{
+ const f=moderatorActions.includes(action)?moderatorFixture():fixture(),scope={synchronized:true};let payments=0;
+ f.options.accountSession.operationScope=()=>scope;f.options.sdk.preparePrivateFeePayment=async input=>{payments++;assert.equal(input.creditCheck,undefined,'No ordinary post gas/credit authority');return {availableCredit:100n};};f.app=f.restart();
+ const prepared=await f.app.prepare(action,{immediate:true});assert.equal(payments,1);assert.equal(f.state.estimates,0);assert.equal(prepared.maximumFee,'100');
+ assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(payments,1);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+});
+for(const failed of [null,'authority','payment'])test('generic moderation authority and payment overlap and drain, failure='+failed,async()=>{
+ const f=moderatorFixture(),scope={synchronized:true},entered=Promise.withResolvers(),release=Promise.withResolvers();let calls=0,settled=false;
+ f.options.accountSession.operationScope=()=>scope;const arrive=()=>{if(++calls===2)entered.resolve();};
+ const read=f.options.accountSession.node.getPublicStorageAt;
+ f.options.accountSession.node.getPublicStorageAt=async(...args)=>{arrive();if(failed==='authority')throw Error('authority');await release.promise;return read(...args);};
+ f.options.sdk.preparePrivateFeePayment=async()=>{arrive();if(failed==='payment')throw Error('payment');await release.promise;return {availableCredit:100n};};f.app=f.restart();
+ const work=f.app.prepare(moderatorActions[0],{immediate:true}).finally(()=>settled=true),observed=failed?assert.rejects(work,new RegExp(failed)):work;
+ await entered.promise;assert.equal(calls,2);assert.equal(settled,false);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+ release.resolve();await observed;if(failed)assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+for(const change of ['scope','pxe'])test('generic payment preparation rejects changed '+change+' before intent',async()=>{
+ const f=moderatorFixture();let scope={synchronized:true};const entered=Promise.withResolvers(),release=Promise.withResolvers();
+ f.options.accountSession.operationScope=()=>scope;f.options.sdk.preparePrivateFeePayment=async()=>{entered.resolve();await release.promise;return {availableCredit:100n};};f.app=f.restart();
+ const work=f.app.prepare(moderatorActions[0],{immediate:true}),observed=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ if(change==='scope')scope={synchronized:true};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};release.resolve();await observed;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });

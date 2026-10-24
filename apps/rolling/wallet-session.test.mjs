@@ -1344,3 +1344,17 @@ test('withdrawal final parallel authority check drains a held receipt when netwo
  await started.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false);
  held.resolve();await rejected;assert.equal(f.state.sends,0);
 });
+
+test('deposit refund waits under its account lease then prepares immediate generic-fee cancellation without estimating',async()=>{
+ const f=await sessionFixture(),entered=Promise.withResolvers(),release=Promise.withResolvers();let estimates=0;
+ const receipt={txHash:hex(40),blockHash:hex(41),blockNumber:2,sender:'0x'+'33'.repeat(20),nonce:'1',amount:'100',leafIndex:'2',messageKey:hex(43),secretHash:hex(44),depositId:hex(45)};
+ f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10},hash:async()=>hex(55),state:{l1ToL2MessageTree:{root:new Fr(1)}}});
+ f.input.sdk.waitForL1ToL2MessageReady=async(node,key,options)=>{assert.equal(node,f.node);assert.equal(String(key),receipt.messageKey);assert.deepEqual(options,{timeoutSeconds:0,chainTip:'checkpointed'});assert.equal(f.state.active,true);entered.resolve();await release.promise;};
+ f.input.sdk.prepareFundingClaim=async input=>{assert.equal(f.state.active,true);assert.equal(input.kind,'collateral-cancel');assert.deepEqual(input.receipt,receipt);return {status:'claim-ready',claim:{contract:String(f.board.address),method:'cancel_deposit',args:[receipt.sender,receipt.amount,receipt.depositId,receipt.leafIndex]}};};
+ f.input.sdk.estimatePrivateFeeTransaction=async()=>{estimates++;throw Error('No review estimate');};
+ const original=f.input.sdk.Contract.at;f.input.sdk.Contract.at=(...args)=>{const c=original(...args);c.methods.cancel_deposit=(...values)=>({args:values});return c;};
+ const session=await createRollingWalletSession(f.input),pending=session.depositRefunds.prepare(receipt);await entered.promise;
+ assert.equal(f.state.active,true);assert.equal(estimates,0);assert.equal(f.state.sends,0);release.resolve();
+ const prepared=await pending;assert.equal(prepared.status,'prepared');assert.equal(prepared.maximumFee,normalizePrivateFeeGasSettings(f.options.config.privateFee.gasSettings).maximumFee.toString());
+ assert.equal(prepared.withdrawal.depositor,receipt.sender);assert.equal(prepared.withdrawal.depositId,receipt.depositId);assert.equal(estimates,0);assert.equal(f.state.active,false);await session.close();
+});

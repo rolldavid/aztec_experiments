@@ -1075,3 +1075,39 @@ test('hosted capacity checks journal byte limit before catalogue without a paid 
  };
  await x.run();assert.equal(x.events.filter(v=>v==='paid').length,1);
 });
+
+
+test('fresh atomic finalization reuses its exact canonical terminal result without a second receipt inspection',async()=>{
+ const x=invocationFixture(),finalize=x.args.escrow.finalize_reply,inspect=x.args.escrow.inspectOperation,request=x.args.escrow.request;let terminalInspections=0,finalAccountingReads=0;
+ x.args.escrow.finalize_reply=async(...args)=>{await finalize(...args);return {...x.ops.get(args.at(-1).operationId)};};
+ x.args.escrow.inspectOperation=async id=>{if(x.ops.has(id))terminalInspections++;return inspect(id);};
+ x.args.escrow.request=async(...args)=>{if(x.row.state===4)finalAccountingReads++;return request(...args);};
+ assert.equal((await x.run()).status,'finished');assert.equal(terminalInspections,0);assert(finalAccountingReads>0);
+ assert.deepEqual(x.events,['paid','finalize_reply']);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
+});
+
+test('atomic finalization uncertain or incorrectly bound mutator returns require fresh original inspection',async()=>{
+ for(const mode of ['undefined','pending','noncanonical','method','digest','throw']){
+  const x=invocationFixture(),finalize=x.args.escrow.finalize_reply,inspect=x.args.escrow.inspectOperation;let terminalInspections=0;
+  x.args.escrow.finalize_reply=async(...args)=>{await finalize(...args);const value={...x.ops.get(args.at(-1).operationId)};
+   if(mode==='undefined')return;if(mode==='throw')throw Error('lost acknowledgement');if(mode==='pending')value.status='pending';if(mode==='noncanonical')value.canonical=false;if(mode==='method')value.method='finish';if(mode==='digest')value.argsDigest='wrong';return value;};
+  x.args.escrow.inspectOperation=async id=>{if(x.ops.has(id)){terminalInspections++;return {status:'pending'};}return inspect(id);};
+  await assert.rejects(x.run(),/unresolved/);assert(terminalInspections>0,mode);assert.equal(x.store.read().privateBok.finished,false);
+  x.args.escrow.inspectOperation=inspect;assert.equal((await x.run()).status,'finished');assert.deepEqual(x.events,['paid','finalize_reply']);
+ }
+});
+
+test('reused atomic receipt does not replace fresh conservation and refund validation',async()=>{
+ for(const mutation of ['secondary','conservation','receipt']){
+  const x=invocationFixture(),finalize=x.args.escrow.finalize_reply;
+  x.args.escrow.finalize_reply=async(...args)=>{await finalize(...args);if(mutation==='secondary')x.row.secondary_done=false;if(mutation==='conservation')x.row.refunded--;if(mutation==='receipt')x.row.receipt=f(999);return {...x.ops.get(args.at(-1).operationId)};};
+  await assert.rejects(x.run(),/accounting mismatch|conservation/);assert.equal(x.store.read().privateBok.finished,false);assert.deepEqual(x.events,['paid','finalize_reply']);
+ }
+});
+
+test('canonical reverted atomic mutator result retains the separate accounting reconciliation inspection',async()=>{
+ const x=invocationFixture(),finalize=x.args.escrow.finalize_reply,inspect=x.args.escrow.inspectOperation;let finalInspections=0;x.control.finalReverted=true;
+ x.args.escrow.finalize_reply=async(...args)=>{await finalize(...args);return {...x.ops.get(args.at(-1).operationId)};};
+ x.args.escrow.inspectOperation=async id=>{if(x.ops.get(id)?.method==='finalize_reply')finalInspections++;return inspect(id);};
+ assert.equal((await x.run()).status,'accounted-without-reply');assert.equal(finalInspections,1);assert.equal(x.current.replied,false);assert.equal(x.row.charged,6n);assert.equal(x.row.refunded,994n);
+});

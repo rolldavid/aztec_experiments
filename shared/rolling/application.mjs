@@ -265,12 +265,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     }
     // Full network/account attestation brackets verification. Per-read fences
     // check local session identity without multiplying those network queries.
-    const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,...(kind==='bok'&&bokTopupScope?{bokTopupScope}:{}),
+    const operationScope=session.operationScope?.(),held=operationScope?.synchronized===true?operationScope:undefined;
+    const claimOwner={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,secret:session.walletSecret,salt:session.walletSalt};
+    const claimGuard=async()=>{await localGuard();if(held)check(session.operationScope()===held&&session.wallet===claimOwner.wallet&&session.wallet.pxe===claimOwner.pxe&&session.node===claimOwner.node&&session.walletSecret===claimOwner.secret&&session.walletSalt===claimOwner.salt,'ROLLING_CONTEXT_CHANGED');};
+    const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,...(held?{operationScope:held}:{}),...(kind==='bok'&&bokTopupScope?{bokTopupScope}:{}),
       secrets,...(aggregate?{aggregateIntent:aggregate.intent,...(aggregate.aggregateCustody?{aggregateCustody:aggregate.aggregateCustody}:{})}:{}),
-      privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:localGuard});
+      privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:claimGuard});
     await guard();if(verified.status!=='claim-ready')throw Object.assign(Error('Funding is not ready to claim.'),{code:'ROLLING_FUNDING_NOT_READY',reason:verified.reason});return verified.claim;
   }
-  async function payment(action,record,{ordinaryProof=false}={}){
+  async function verifiedFeeClaim(action,record){
     let claim;
     const receipt=action?.type==='claim-private-fee'?action.receipt:
       ['claim-deposit','claim-bok'].includes(action?.type)?action.feeReceipt:undefined;
@@ -283,6 +286,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         else record.fundingFee=plain(claim);
       }
     }
+    return claim;
+  }
+  async function payment(action,record,{ordinaryProof=false}={}){
+    const claim=await verifiedFeeClaim(action,record);
     return sdk.preparePrivateFeePayment({wallet:session.wallet,node:session.node,owner:session.owner,
       privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas,measure,
       ...(claim?{claim}:{}),...(ordinaryProof?{creditCheck:'ordinary-post-proof'}:{})});
@@ -1008,7 +1015,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const immediate=options!==undefined;let postingRules;
       if(immediate){
         const values=exactData(options,Object.hasOwn(options??{},'postingRules')?['immediate','postingRules']:['immediate']);
-        check(values.immediate===true&&['post','reply','quote','repost','bok','like','unlike','preference','read-marker','name','bio','avatar','claim-deposit','claim-private-fee','claim-bok','screen','withdraw'].includes(input?.type));
+        check(values.immediate===true&&['post','reply','quote','repost','bok','like','unlike','preference','read-marker','name','bio','avatar','claim-deposit','claim-private-fee','claim-bok','screen','withdraw','subboard','moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator','withdraw-bok','cancel-deposit'].includes(input?.type));
         if(Object.hasOwn(values,'postingRules')){
           check(['post','reply','quote','repost','bok'].includes(input?.type));
           postingRules=exactData(values.postingRules,['chainId','rollupVersion','boardAddress','subboard','parentVersion','localVersion']);
@@ -1051,10 +1058,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=earlyPolicy?.board??await contract();
       const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(key=>key==='type'||allowed.includes(key)));
       if(['bok','claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type)||action.type==='claim-deposit'&&action.bokReceipt!==undefined){await ensureBok({bind:immediate&&action.type==='bok'});check(bok,'ROLLING_BOK_UNAVAILABLE');}
-      const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
+      let moderation=null;
+      const ordinaryPreparation=['post','reply','quote','repost'].includes(action.type);
+      const genericPreparation=['like','unlike','preference','read-marker','name','bio','avatar','subboard','screen','withdraw',...moderationTypes].includes(action.type);
       // Start independent fee metadata alongside posting reads. Both private
       // utilities still run through the native PXE queue at this flow's anchor.
-      const paymentScope=immediate&&['post','reply','quote','repost','bok'].includes(action.type)
+      const paymentScope=immediate&&(ordinaryPreparation||genericPreparation||action.type==='bok')
         ?session.operationScope?.():null;
       const paymentOwner=paymentScope&&{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
       let args,preparedPayment;
@@ -1064,18 +1073,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         // Capture this operation's local anchor before either private utility
         // enters the native PXE queue. The public policy read can then overlap
         // screening and fee-note work; its final canonical/local fences remain.
-        const postingAnchor=earlyPolicy?.anchor??(field(action.subboard??'0')===zero?await balanceAnchor():undefined);
+        const postingAnchor=(ordinaryPreparation||action.type==='bok')?(earlyPolicy?.anchor??(field(action.subboard??'0')===zero?await balanceAnchor():undefined)):undefined;
         checkPaymentOwner();
         const earlier=preparedPayments.get(paymentScope);preparedPayments.delete(paymentScope);
-        const earlyPayment=action.type!=='bok'&&earlier?.phase==='metadata'&&earlier.wallet===session.wallet&&earlier.pxe===session.wallet.pxe&&earlier.node===session.node?earlier.payment:null;
+        const earlyPayment=ordinaryPreparation&&earlier?.phase==='metadata'&&earlier.wallet===session.wallet&&earlier.pxe===session.wallet.pxe&&earlier.node===session.node?earlier.payment:null;
         const values=await Promise.allSettled([
-          ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor,preparedPolicy:earlyPolicy?.policy})),
-          ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:action.type!=='bok'})),
+          ()=>measure('action.arguments',async()=>{if(moderationTypes.has(action.type)){moderation=await moderationArguments(action,board);return moderation.args;}return argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor,preparedPolicy:earlyPolicy?.policy});}),
+          ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:ordinaryPreparation})),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkPaymentOwner();
         args=plain(values[0].value);preparedPayment=values[1].value;
-      }else args=moderation?moderation.args:plain(await measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:immediate&&action.type==='bok'})));
+      }else {moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;args=moderation?moderation.args:plain(await measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:immediate&&action.type==='bok'})));}
       // Match the rules actually displayed to this exact canonical preparation.
       // A mismatch must fail before creating an unsigned intent or estimating.
       if(postingRules)check(String(args[2].expected_main_policy_version)===postingRules.parentVersion&&String(args[2].expected_local_policy_version)===postingRules.localVersion,'ROLLING_POSTING_RULES_CHANGED');
@@ -1112,7 +1121,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(immediate){
         // Claim validation retains its exact bridge fee payload even when the
         // separate review simulation is omitted. Submission rechecks it.
-        if(action.type==='claim-private-fee'||action.feeReceipt!==undefined)await payment(action,record);
+        if(action.type==='claim-private-fee'||action.feeReceipt!==undefined)preparedPayment=await payment(action,record);
         record.maximumFee=(ordinaryPost(record)?sdk.ordinaryPostFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{ordinaryProof:true}),board:ordinaryPost(record)}).maximumFee:sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee).toString();
       }
       else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
@@ -1120,6 +1129,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       // No persistent cache: only the unchanged journal record in the same held
       // operation may use this result. Separate submissions prepare afresh.
       if(paymentScope&&session.operationScope()===paymentScope)preparedPayments.set(paymentScope,{encoded:saved.encoded,payment:preparedPayment,...paymentOwner});
+      const claimPaymentScope=immediate&&['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)&&record.fundingFee?session.operationScope?.():null;
+      if(claimPaymentScope?.synchronized===true)preparedPayments.set(claimPaymentScope,{encoded:saved.encoded,payment:preparedPayment,wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,claim:true});
       return summary(record);
     });},
     async prepareBokRelease(id,input){return exclusive(async()=>{
@@ -1249,9 +1260,13 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
       const paymentScope=session.operationScope?.(),cachedPayment=paymentScope&&preparedPayments.get(paymentScope);
       if(paymentScope)preparedPayments.delete(paymentScope);
-      const preparedPayment=await measure('action.fee-prepare',()=>cachedPayment&&cachedPayment.encoded===saved.encoded&&
-        cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node
-        ?cachedPayment.payment:payment(saved.value.action,saved.value,{ordinaryProof:!!ordinaryPost(saved.value)}));
+      const preparedPayment=await measure('action.fee-prepare',async()=>{
+        if(cachedPayment&&cachedPayment.encoded===saved.encoded&&cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node){
+          if(cachedPayment.claim)await verifiedFeeClaim(saved.value.action,saved.value);
+          await guard();check(session.operationScope()===paymentScope,'ROLLING_CONTEXT_CHANGED');return cachedPayment.payment;
+        }
+        return payment(saved.value.action,saved.value,{ordinaryProof:!!ordinaryPost(saved.value)});
+      });
       const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true,ordinaryPost:ordinaryPost(saved.value),measure}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();

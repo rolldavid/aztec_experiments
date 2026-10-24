@@ -32,10 +32,10 @@ function dom(t){
  const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>{document.ruleReads=(document.ruleReads??0)+1;return new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}});}});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null,depositIds=['9']}={}){
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null,depositIds=['9'],moderator=false}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={...(warm?{preparePostingState:async deposit=>{session.busy=true;try{await warm(deposit);}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
-  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
+  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:moderator};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{})};},
@@ -45,7 +45,7 @@ async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,to
  const runtime={getAccount:()=>account,account:{configure(){}},createSession:async options=>{onProgress=options.onProgress;core.sessions++;return session;}};
  const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime,onPublicEffect:()=>posting?.effect?.()});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
  await document.until(()=>(defaults.type?document.querySelector('[data-action-review]'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
- return {document,panel,host,balance,started,progress:value=>onProgress(value),reads:()=>reads,prepared:()=>prepared,submissions,prepareOptions,core:()=>({...core})};
+ return {document,panel,host,balance,started,session,runtime,progress:value=>onProgress(value),reads:()=>reads,prepared:()=>prepared,submissions,prepareOptions,core:()=>({...core})};
 }
 test('typing @bok and editing/removing it stays immediate while a shared balance read is pending',{timeout:3000},async t=>{
  const f=await fixture(t);await f.started.promise;const editor=f.document.querySelector('textarea'),dialog=f.document.querySelector('dialog');
@@ -681,4 +681,70 @@ test('transaction confirmation timing stops before required name account refresh
  assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
  now=999;refresh.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.deepEqual(measures.get('rolling.action.required-account-refresh'),{start:150,end:999});assert.equal(measures.get('rolling.action.interaction').end,999);await new Promise(setImmediate);
+});
+
+for(const [type,values] of [
+ ['subboard',{slug:'new-board',name:'New board',description:'A new community',rules:'Be civil'}],
+ ['moderate-post',{post:'8',reason:'Spam'}],['moderate-avatar',{name:'7',reason:'Unsafe image'}],
+ ['reject-subboard',{subboard:'9',reason:'Spam'}],['set-main-policy',{rules:'Be civil'}],
+])test('manual '+type+' executes directly with generic maximum and no cost review',{timeout:3000},async t=>{
+ const f=await fixture(t,{defaults:{type},moderator:true,posting:{},balanceRead:async()=>({available:true,availableCredit:'0'}),ordinaryLimit:'9000000000000000'});
+ const controls=f.document.querySelectorAll('input,textarea').filter(n=>n.getAttribute('type')!=='hidden');
+ for(const [i,value]of Object.values(values).entries()){controls[i].value=value;controls[i].fire('input');}
+ const action=f.document.querySelector('[data-action-review]');assert.notEqual(action.textContent,'Review cost');assert.equal(action.disabled,false);assert(f.document.querySelector('.composer-cost').textContent.includes('0.001'));
+ action.fire('click');await f.document.until(()=>f.submissions.length===1&&!f.document.querySelector('dialog').open);
+ assert.deepEqual(f.prepared(),{type,...values});assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.submissions.length,1);
+});
+test('moderator transfer requires explicit consent to the current successor but no cost-review simulation',{timeout:3000},async t=>{
+ const f=await fixture(t,{defaults:{type:'transfer-moderator'},moderator:true,posting:{},balanceRead:async()=>({available:true,availableCredit:'0'})});
+ const recipient=f.document.querySelector('input[type=text]'),consent=f.document.querySelector('input[type=checkbox]'),send=f.document.querySelector('[data-action-review]');
+ recipient.value='0x'+'3'.repeat(64);recipient.fire('input');assert.equal(send.disabled,true);assert.equal(f.prepared(),null);
+ consent.checked=true;consent.fire('change');assert.equal(send.disabled,false);
+ recipient.value='0x'+'4'.repeat(64);recipient.fire('input');assert.equal(consent.checked,false);assert.equal(send.disabled,true);
+ consent.checked=true;consent.fire('change');send.fire('click');await f.document.until(()=>f.submissions.length===1&&!f.document.querySelector('dialog').open);
+ assert.deepEqual(f.prepared(),{type:'transfer-moderator',successor:recipient.value});assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.panel.moderatorAuthorized(),false);
+});
+
+async function exitFixture(t,type){
+ const f=await fixture(t,{defaults:{},posting:{},balanceRead:async()=>({available:true,availableCredit:'0'})});
+ const recipient='0x'+'3'.repeat(40);let selected=recipient,saved=null,refundPrepare=0,refundRequest=0;
+ f.runtime.fundingWalletStatus=()=>({connected:true,name:'Test wallet',address:selected});f.runtime.fundingWallets=()=>[];f.runtime.connectFundingWallet=async()=>{};
+ f.session.withdrawal={};f.session.application.readBalances=async()=>({fee:{available:'1000000000000000000'},bok:{available:'10000000'},collateral:{deposits:[],nextCursor:null}});
+ const prepare=f.session.application.prepare;
+ f.session.application.prepare=async(action,options)=>{const value=await prepare(action,options);return {...value,withdrawal:{kind:action.type==='withdraw-bok'?'bok':'cancelled-collateral',amount:action.amount??'100',depositor:action.recipient??recipient,eligible:true}};};
+ f.session.application.submitPrepared=async id=>{f.submissions.push(id);saved={intentId:id,status:'confirmed',action:f.prepared(),withdrawal:{kind:type==='withdraw-bok'?'bok':'cancelled-collateral',amount:type==='withdraw-bok'?'1500000':'100',depositor:recipient,eligible:true}};return saved;};
+ f.session.application.readAccountStatus=async()=>saved?{status:'recovering',intent:saved}:{status:'fee-ready',privateFeeCredit:'1000000000000000000',depositIds:['9']};
+ if(type==='cancel-deposit')f.session.depositRefunds={list:async()=>({deposits:[{status:'available',depositId:'17',amount:'100'}],nextOffset:null}),request:async id=>{refundRequest++;assert.equal(id,'17');return {depositId:id};},prepare:async receipt=>{refundPrepare++;return f.session.application.prepare({type:'cancel-deposit',receipt},{immediate:true});}};
+ f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Balance and withdrawals').fire('click');
+ await f.document.until(()=>f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]')&&!f.session.busy&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ return {...f,recipient,setRecipient:value=>selected=value,refundCounts:()=>({refundPrepare,refundRequest})};
+}
+test('Bok withdrawal goes directly to private submission and keeps the saved Ethereum refund',{timeout:3000},async t=>{
+ const f=await exitFixture(t,'withdraw-bok');assert(f.document.body.textContent.includes('Receive at '+f.recipient));
+ const amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1.5';amount.fire('input');
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(f.prepared(),{type:'withdraw-bok',amount:'1500000',recipient:f.recipient});assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('dialog').open,true);
+ assert(!f.document.body.textContent.includes('Review cost'));
+});
+test('Bok withdrawal rejects a connected recipient changed since its displayed action',{timeout:3000},async t=>{
+ const f=await exitFixture(t,'withdraw-bok'),amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1';amount.fire('input');f.setRecipient('0x'+'4'.repeat(40));
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');
+ await f.document.until(()=>f.document.querySelector('[role=alert]'));assert.equal(f.prepared(),null);assert.deepEqual(f.submissions,[]);
+});
+test('unfinished deposit refund runs its private step once and retains the Ethereum continuation',{timeout:3000},async t=>{
+ const f=await exitFixture(t,'cancel-deposit');f.document.querySelectorAll('button').find(b=>b.textContent==='Find refundable deposits').fire('click');
+ const button=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent.startsWith('Refund '))&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ f.document.querySelectorAll('button').find(b=>b.textContent.startsWith('Refund ')).fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(f.refundCounts(),{refundPrepare:1,refundRequest:1});assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('dialog').open,true);
+});
+
+test('unfinished refund send failure exposes saved unknown action without another submit button',{timeout:3000},async t=>{
+ const f=await exitFixture(t,'cancel-deposit');f.session.application.submitPrepared=async id=>{f.submissions.push(id);throw Error('unknown transport');};
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Find refundable deposits').fire('click');
+ await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent.startsWith('Refund '))&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ f.document.querySelectorAll('button').find(b=>b.textContent.startsWith('Refund ')).fire('click');
+ await f.document.until(()=>f.document.querySelector('[role=alert]')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('[data-action-confirm]'),null);assert(f.document.body.textContent.includes('Check your action'));
 });

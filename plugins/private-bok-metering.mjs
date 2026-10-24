@@ -330,12 +330,16 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
  const read=async()=>validated(await escrow.request(binding.requestId));
  const operate=async(method,args)=>{
   const argsDigest=hash(args.map(x=>typeof x==='bigint'?String(x):x)),operationId=hash({identity:binding,accountingMode:'invocation-v1',method,argsDigest});
-  const j=journal();if(!j.operations[operationId]){
+  let returned;const j=journal();if(!j.operations[operationId]){
    if((await escrow.inspectOperation(operationId))?.status!=='absent')throw Error('Operation already exists outside journal');
    j.operations[operationId]={method,argsDigest};await save(j);
-   try{await escrow[method](...args,{operationId,argsDigest});}catch{/* Only the exact original receipt can establish success. */}
+   try{returned=await escrow[method](...args,{operationId,argsDigest});}catch{/* Only the exact original receipt can establish success. */}
   }
-  let observed=await escrow.inspectOperation(operationId);
+  // The native atomic mutator already waits for and authenticates this exact
+  // operation's canonical receipt. Reuse only that immediate terminal result;
+  // restored operations and uncertain returns still inspect the original tx.
+  const terminal=method==='finalize_reply'&&['succeeded','failed'].includes(returned?.status)&&returned.canonical===true&&returned.method===method&&returned.argsDigest===argsDigest;
+  let observed=terminal?returned:await escrow.inspectOperation(operationId);
   if(observed?.status==='pending'&&typeof escrow.waitForOperation==='function')observed=await escrow.waitForOperation(operationId);
   if(method==='finalize_reply'&&observed?.status==='failed'&&observed.canonical===true&&observed.method===method&&observed.argsDigest===argsDigest)throw Object.assign(Error('Final reply transaction reverted; accounting only'),{code:'BOK_FINAL_BATCH_REVERTED'});
   if(observed?.status!=='succeeded'||observed.canonical!==true||observed.method!==method||observed.argsDigest!==argsDigest)throw Error('Chain operation unresolved; inspect original transaction');

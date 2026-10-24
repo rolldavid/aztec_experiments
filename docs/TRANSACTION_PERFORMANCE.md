@@ -54,4 +54,10 @@ These are single baseline observations, not medians. Evidence contains exact cli
 - Top-up journal reads reuse scope only within their held operation; fresh payment boundaries still requalify mutable portal/network state. Withdrawal confirmation reuses exact immutable effect/path bytes with a fresh final receipt/header/network fence, removing7RPCs.
 - Immediate actions display exact included receipts, keep private preferences canonical, and avoid unrelated Bok/account reads on the completion path. Confirmation timing now ends before UI refresh.
 
-No 50% end-to-end claim has been established for this batch. Publication and matched after measurements remain required.
+First batch041a624b is published and public asset hashes verified. No50% end-to-end claim has been established; matched after measurements remain required.
+
+Second reviewed source batch removes discarded review simulation for subboard/admin actions and Aztec exit preparation, retaining explicit moderator-transfer consent and exact withdrawal recipients. Current refund intent remains until actual Ethereum completion. Integrated891/891 tests passed. Same-operation bridge evidence and fee preparation reuse passed535/535 integrated tests; canonical L1/L2 receipts, anchors, current FPC identity and native admission remain fresh. Bok atomic finalization reuses its own exact authenticated terminal result, avoiding a second27-RPC inspection; uncertain/restored outcomes still inspect. These second-batch changes are not yet published.
+
+Bok ETH funding baseline: one$1 test purchase, one Ethereum transaction and one Aztec claim. Bridge-ready UI91.684s from Pay; claim arguments9.484s, private execution5.292s, proof transport/native proving4.105s, submission0.400s, inclusion2.816s after submission. Account-ready UI165.094s from Pay. Initial wallet-adapter handling includes unmeasured tool-scheduling dwell, so total is observational and not a clean matched speedup denominator. No second payment was sent. Funded balance1USDC was verified on the main page.
+
+Generic immediate actions now start unchanged fee preparation alongside their independent arguments/authority reads and bind reuse to the same held operation and encrypted intent. No ordinary-post gas assumption is applied to generic actions.

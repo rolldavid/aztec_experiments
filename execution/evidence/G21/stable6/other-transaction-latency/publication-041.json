@@ -1,0 +1,53 @@
+{
+  "commit": "041a624b21f5149ee367fd4a8c36641fc7fa5400",
+  "assets": {
+    "reader.mjs": true,
+    "model.mjs": true,
+    "wallet-panel.mjs": true,
+    "scriptKeys": [
+      {
+        "url": "/wallet/ethers.js",
+        "bytes": 526551,
+        "sha256": "532950515fd29ae9f7a21ceb2b68100815024d7944c3d5a92246d5b900bd703b"
+      },
+      {
+        "url": "/wallet/aztec_bundle.js",
+        "bytes": 16605039,
+        "sha256": "085dc03283bfb20a1541e6b4492a1daaec5fcf8fcc8d00a0566e5aae5d327ace"
+      },
+      {
+        "url": "/wallet/crs-client.js",
+        "bytes": 8944,
+        "sha256": "636ea244e87b31e1eae97d1c2e78e8fa3faf91287280c3253d3bddbf90fdd503"
+      },
+      {
+        "url": "/wallet/wallet-providers.js",
+        "bytes": 1648,
+        "sha256": "2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c"
+      },
+      {
+        "url": "/wallet/claim-secret-store.js",
+        "bytes": 7525,
+        "sha256": "34cf9515e93a3051a4694df3c0e18cef690f04d885dcc09cd79510b86a7adb2e"
+      },
+      {
+        "url": "/wallet/ethereum-account-session.js",
+        "bytes": 9979,
+        "sha256": "5fa0ad446a3073ff210a048250738b7e5cd0123d80c5166d8ed5b16c3414a14b"
+      },
+      {
+        "url": "/wallet/account.js",
+        "bytes": 17338,
+        "sha256": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2"
+      },
+      {
+        "url": "/wallet/engine.js",
+        "bytes": 135793,
+        "sha256": "b3817d447b8f74b9a3d4dbcb57e2e28c6f4ef617bacdb4daca4518481f156b89"
+      }
+    ]
+  },
+  "activation": "14b8e900-6f2a-4c13-a489-4a2ee1509da6",
+  "appRestarted": false,
+  "proxyRestarted": false
+}

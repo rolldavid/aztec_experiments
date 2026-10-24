@@ -16,6 +16,10 @@ CRS cache now verified:8MiBasset returned from cache in11.66ms with zero network
 
 Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build` and the existing IAB test tab. No new dependency copies or Chrome profiles. Source-only agent drafts; clean owned scratch and transfer archives after integration. Completed transfer payloads and exact S3 versions are deleted; retain small hash plans for incremental publication.
 
+## Other transaction performance — active
+
+Owner target: at least50% end-to-end reduction across all other flows. First shared preparation/UI batch041a624b is published without restarting services. Like, bookmark, name and Bok-funding baselines are captured; matched after measurements and broader coverage remain outstanding. Native proposed-state sequencing is under isolated development; it is not yet deployed. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
+
 ## Current deployment
 
 Website: https://d30njln0kead8n.cloudfront.net
@@ -25,10 +29,10 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/74c2142c08b6a9cdeabefe6e46ebfa5ec4578836` |
-| Browser SDK SHA256 | `8708160ab86a388acab7252113e22bb8da8f1910ea78282fed45fa20d881b265` |
+| Browser UI | `/opt/rolling-ui/releases/041a624b21f5149ee367fd4a8c36641fc7fa5400` |
+| Browser SDK SHA256 | `085dc03283bfb20a1541e6b4492a1daaec5fcf8fcc8d00a0566e5aae5d327ace` |
 | Running app | `/opt/rolling-app/releases/ui-7a3ad91ffc14` |
-| Next-start app | `/opt/rolling-app/releases/ui-74c2142c08b6` |
+| Next-start app | `/opt/rolling-app/releases/ui-041a624b21f5` |
 | Prover | `/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad` |
 | Bok | `/opt/rolling-bok/releases/6cb76060aba07b2eae31284d0e949517dd240d48` |
 

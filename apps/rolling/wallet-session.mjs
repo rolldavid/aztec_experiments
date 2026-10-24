@@ -542,7 +542,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     await guardRoute();
     await sdk.waitForL1ToL2MessageReady(privateNode,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:0,chainTip:'checkpointed'});
     await guardRoute();
-    return synchronized.prepare({type:'cancel-deposit',receipt});
+    return synchronized.prepare({type:'cancel-deposit',receipt},{immediate:true});
    });
   },
  });

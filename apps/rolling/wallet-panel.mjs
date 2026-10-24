@@ -620,7 +620,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function unfinishedDepositsView() {
   if (!session.depositRefunds) return;
   const section = el('section',{class:'account-details'},el('h3',{},'Unfinished signup'));
-  section.append(paragraph('Return a deposit from a signup you did not finish. You can keep using your current account.'));
+  section.append(paragraph('Return a deposit from a signup you did not finish. You can keep using your current account.'),paragraph('Max cost '+compactAmount(session.postingFeeLimit,18,4,true)+' posting credits. Ethereum gas is paid separately.'));
   const load = async offset => {
    const epoch = accountEpoch;
    const page = await session.depositRefunds.list({offset});
@@ -642,6 +642,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
      intent = await session.depositRefunds.prepare(receipt);
      checkAccount(epoch);
      refundQuote = null;
+     intent={...intent,status:'unknown'};
+     const result=await session.application.submitPrepared(intent.intentId);
+     checkAccount(epoch);await receive(result);
      note('');
     })));
    }
@@ -697,8 +700,16 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     if(bokAccounting&&!bokAccounting.complete)content.append(paragraph('Checking '+(bokAccounting.phase==='owned-requests'?'private ownership pages':'uniform public accounting pages')+'. No partial total is presented.'));
     if(accountingCheck){const stop=button('Stop checking requests',()=>{accountingCheck.stopped=true;bokAccounting=null;note('Accounting stop requested. Waiting for the current private operation to settle.');});stop.dataset.accountingStop='true';content.append(stop);}
    }
-   fundingWalletView();const amount=el('input',{type:'text',inputmode:'decimal','aria-label':'Bok credit to withdraw in USDC',value:bokExitAmount});amount.addEventListener('input',()=>bokExitAmount=amount.value);
-   content.append(label('Bok credit to withdraw (USDC)',amount),paragraph('Only unallocated private credit can exit. First confirm the private transaction fee; after settlement, separately review Ethereum gas. The receiving wallet must pay that gas.'),button('Withdraw Bok credit',()=>void work(async()=>{const selected=runtime.fundingWalletStatus?.();if(!selected?.connected||typeof selected.address!=='string')throw connectionFailure;intent=await session.application.prepare({type:'withdraw-bok',amount:units(bokExitAmount,6),recipient:selected.address.toLowerCase()});refundQuote=null;}),true));
+   fundingWalletView();const recipient=runtime.fundingWalletStatus?.()?.address?.toLowerCase();
+   const amount=el('input',{type:'text',inputmode:'decimal','aria-label':'Bok credit to withdraw in USDC',value:bokExitAmount});amount.addEventListener('input',()=>bokExitAmount=amount.value);
+   content.append(label('Bok credit to withdraw (USDC)',amount));
+   if(recipient)content.append(paragraph('Receive at '+recipient));
+   content.append(paragraph('Max cost '+compactAmount(session.postingFeeLimit,18,4,true)+' posting credits. Ethereum gas is paid separately.'),button('Withdraw Bok credit',()=>{
+    const amount=bokExitAmount;
+    void work(async()=>{const action={type:'withdraw-bok',amount:units(amount,6),recipient};const selected=runtime.fundingWalletStatus?.();if(!selected?.connected||!recipient||selected.address?.toLowerCase()!==recipient)throw connectionFailure;
+     refundQuote=null;await executeAction(action,{immediate:true});
+    });
+   },true));
   }
   for(const d of balances.collateral.deposits){
    const area=el('section',{'aria-label':'Posting collateral'});
@@ -719,7 +730,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   content.append(button('Review Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.withdrawal.prepare({});checkAccount(epoch);refundQuote=value;}),true),button('Review saved Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking the saved Ethereum refund; waiting for network confirmation.');const value=await session.withdrawal.prepareSaved({});note('');checkAccount(epoch);if(value.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else refundQuote=value;}),true),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking existing Ethereum refund; waiting for network confirmation.');const result=await session.withdrawal.recover();note('');checkAccount(epoch);if(result.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else notice='Refund '+result.status+'. A new refund is never sent automatically.';})));
  }
  const postingTypes=new Set(['post','reply','quote','repost','bok']);
- const immediateTypes=new Set([...postingTypes,'like','unlike','preference','read-marker','name','bio','avatar']),readerActionTypes=new Set(['like','unlike','preference','read-marker']);
+ const immediateTypes=new Set([...postingTypes,'like','unlike','preference','read-marker','name','bio','avatar','subboard',...MODERATOR_TYPES]),readerActionTypes=new Set(['like','unlike','preference','read-marker']);
  const rulesId=action=>postingTypes.has(action?.type)&&field(action.subboard)?BigInt(action.subboard).toString():null;
  function rulesReady(action){return !postingTypes.has(action?.type)||postingRules?.id===rulesId(action)&&postingRules.status==='ready'&&!postingRules.value.rejected;}
  function validateRules(data,id){
@@ -899,6 +910,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(result.action?.type==='preference')preferenceUpdates.set(result.action.kind+':'+result.action.target,result.action.enabled);
    notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':actionLabel(result.action)+': done.';
    if(actionOperation?.included&&!postingTypes.has(result.action?.type)){actionFeedback.textContent=actionLabel(result.action)+': confirmed.';actionFeedback.hidden=false;}
+   if(result.action?.type==='transfer-moderator')moderatorStatus=null;
    if(immediateTypes.has(result.action?.type)&&result.action.type!=='name'){
     // Confirmation finishes the interaction. Feed and affected balance reads
     // update independently, without holding the composer open or its busy state.
@@ -908,7 +920,6 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
    try{if(!actionOperation?.included)await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
    if(result.action?.type==='name'){namesLoaded=false;identities=[];identityRecords=[];cursor=0;}
-   if(result.action?.type==='transfer-moderator')moderatorStatus=null;
    await measureRollingStage('action.required-account-refresh',()=>refresh());
    if(result.action?.type==='name'&&identityHost){
     await loadView({loadIdentity:true});
@@ -994,7 +1005,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function preferenceDescription(action){return actionLabel(action)+'. Only you can see your saved choices.';}
  function form(){
   if(MODERATOR_TYPES.has(draft.type)&&moderatorStatus?.authorized!==true)draft={type:'post',subboard:'0',content:''};
-  const fields=new Map();let updateInvitation=()=>{};
+  const fields=new Map();let updateInvitation=()=>{},transferConsent;
   function input(name,text,{area=false,initial='',required=true}={}){
    const node=el(area?'textarea':'input',area?{rows:'5'}:{type:'text'});node.value=draft[name]??initial;if(required)node.required=true;
    node.addEventListener('input',()=>{draft[name]=node.value;if(name==='content')updateInvitation();if(name==='subboard')updateRules();validate();});fields.set(name,node);content.append(label(text,node));return node;
@@ -1005,7 +1016,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   function target(name){const node=el('input',{type:'hidden'});node.value=draft[name]??'';node.required=true;fields.set(name,node);return node;}
   if(MODERATOR_TYPES.has(kind)){
    content.append(paragraph('Moderator controls. Removal keeps the stable link and a visible reason. It cannot edit or delete the underlying chain history.'));
-   if(kind==='transfer-moderator'){input('successor','Successor Aztec address');content.append(el('p',{class:'quiet'},'The successor takes control immediately. Only the successor can transfer authority back. Policy and account funds stay unchanged.'));}
+   if(kind==='transfer-moderator'){const successor=input('successor','Successor Aztec address');content.append(el('p',{class:'quiet'},'The successor takes control immediately. Only the successor can transfer authority back.'));transferConsent=el('input',{type:'checkbox','aria-label':'Confirm transfer of moderator control'});transferConsent.addEventListener('change',validate);successor.addEventListener('input',()=>{transferConsent.checked=false;validate();});content.append(label('Transfer moderator control to this address',transferConsent));}
    else if(kind==='set-main-policy')input('rules','New parent rules',{area:true});
    else{input(kind==='moderate-post'?'post':kind==='moderate-avatar'?'name':'subboard',kind==='moderate-post'?'Post ID':kind==='moderate-avatar'?'Profile name ID':'Subboard ID');input('reason','Public moderation reason',{area:true});}
   }else if(kind==='preference'||kind==='read-marker'){
@@ -1112,7 +1123,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     counter.className=`counter${a.remaining<0?' invalid':''}`;
     valid=valid&&a.remaining>=0&&text.isWellFormed()&&!text.includes('\0')&&(kind==='bio'||!!draft.deposit);
    }
-   if(kind==='transfer-moderator'){const successor=fields.get('successor').value;valid=valid&&moderatorStatus?.authorized===true&&field(successor)&&BigInt(successor)>0n;}
+   if(kind==='transfer-moderator'){const successor=fields.get('successor').value;valid=valid&&moderatorStatus?.authorized===true&&field(successor)&&BigInt(successor)>0n&&transferConsent.checked===true;}
    else if(MODERATOR_TYPES.has(kind)){valid=valid&&moderatorStatus?.authorized===true;const key=kind==='set-main-policy'?'rules':'reason',value=fields.get(key).value;valid=valid&&value.isWellFormed()&&!value.includes('\0')&&new TextEncoder().encode(value).length<=(key==='rules'?992:217);if(kind!=='set-main-policy'){const id=fields.get(kind==='moderate-post'?'post':kind==='moderate-avatar'?'name':'subboard').value;valid=valid&&field(id)&&BigInt(id)>0n;}}
    if(kind==='reply')valid=valid&&replyContext(draft);
    if(kind==='bok'){const {parent,root,subboard}=draft;valid=valid&&field(subboard)&&field(parent)&&field(root)&&((BigInt(parent)===0n)===(BigInt(root)===0n));try{const v=BigInt(units(fields.get('budget').value,6));valid=valid&&v<(1n<<128n)&&v<=BigInt(bokStatus?.availableCredit??'0');}catch{valid=false;}}

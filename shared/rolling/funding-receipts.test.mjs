@@ -403,3 +403,56 @@ for(const mutation of ['runtime','recipient','secret','index','payer','value'])t
  if(mutation==='index'||mutation==='payer')f.state.receipt.logs[1]={address:f.topup.router,...f.purchaseAbi.encodeEventLog('CreditPurchased',[mutation==='payer'?addr(99):r.sender,p.commitment,r.amount,r.secretHash,r.messageKey,mutation==='index'?10:r.leafIndex,90,10])};
  await assert.rejects(prepareFundingClaim(f.input));assert(!f.state.reads.includes('witness'));
 });
+
+
+for(const kind of ['collateral','collateral-cancel','private-fee','bok'])test(`same held operation reuses exact ${kind} membership and effects while refreshing canonical fences`,async()=>{
+ const f=await fixture(kind);f.input.operationScope={};let transactions=0,receipts=0;
+ const tx=f.input.ethProvider.getTransaction,receipt=f.input.ethProvider.getTransactionReceipt;
+ f.input.ethProvider.getTransaction=(...args)=>{transactions++;return tx(...args);};f.input.ethProvider.getTransactionReceipt=(...args)=>{receipts++;return receipt(...args);};
+ const original=await prepareFundingClaim(f.input);f.state.reads=[];
+ assert.equal(await prepareFundingClaim(f.input),original);assert.equal(transactions,1);assert.equal(receipts,2);
+ assert.equal(f.state.reads.filter(x=>x==='witness').length,0);assert.equal(f.state.reads.filter(Array.isArray).length,0);
+ assert.equal(f.state.reads.filter(x=>x==='l1').length,2);assert.equal(f.state.reads.filter(x=>x==='l2').length,1);
+ f.input.operationScope={};f.state.reads=[];await prepareFundingClaim(f.input);assert.equal(transactions,2);assert.equal(f.state.reads.filter(x=>x==='witness').length,1);
+});
+for(const mode of ['l1-fork','l2-fork','root','receipt-block','receipt-revert','missing','guard'])test(`same operation cannot reuse a claim after ${mode}`,async()=>{
+ const f=await fixture();f.input.operationScope={};await prepareFundingClaim(f.input);
+ if(mode==='l1-fork')f.state.blockHash=h(902);if(mode==='l2-fork')f.state.l2Hash=h(903);if(mode==='root')f.state.root=h(904);if(mode==='receipt-block')f.state.receipt.blockHash=h(905);if(mode==='receipt-revert')f.state.receipt.status=0;if(mode==='missing')f.state.receipt=null;if(mode==='guard')f.state.guardError=true;
+ if(mode==='receipt-revert')assert.deepEqual(await prepareFundingClaim(f.input),{status:'reverted'});
+ else if(mode==='missing')assert.deepEqual(await prepareFundingClaim(f.input),{status:'absent'});
+ else await assert.rejects(prepareFundingClaim(f.input),{code:mode==='guard'?'ROLLING_FUNDING_UNKNOWN':'ROLLING_FUNDING_REORG'});
+});
+test('same operation changed secrets or anchor cannot reuse a previous successful claim',async()=>{
+ for(const change of ['secret','anchor','route']){
+  const f=await fixture();f.input.operationScope={};await prepareFundingClaim(f.input);f.state.reads=[];
+  if(change==='secret')f.input.secrets={...f.input.secrets,walletSecret:h(999)};
+  if(change==='anchor')f.input.anchor={...f.input.anchor,hash:h(998)};
+  if(change==='route'){const call=f.input.ethProvider.call;f.input.ethProvider.call=(...args)=>call(...args);}
+  if(change==='route'){await prepareFundingClaim(f.input);assert.equal(f.state.reads.filter(x=>x==='witness').length,1);}
+  else await assert.rejects(prepareFundingClaim(f.input));
+ }
+});
+test('claim reuse drains a held native anchor read when a concurrent canonical fence rejects',async()=>{
+ const f=await fixture();f.input.operationScope={};let armed=false,calls=0,release,entered;
+ const hold=new Promise(r=>release=r),started=new Promise(r=>entered=r),block=f.input.ethProvider.getBlock,read=f.backend.getBlockData;
+ f.input.ethProvider.getBlock=async(...args)=>{if(armed&&++calls===2){await started;throw Error('canonical read unavailable');}return block(...args);};
+ f.backend.getBlockData=async(...args)=>{if(armed){entered();await hold;}return read(...args);};
+ await prepareFundingClaim(f.input);armed=true;let done=false;
+ const next=prepareFundingClaim(f.input).finally(()=>{done=true;}),rejection=assert.rejects(next,{code:'ROLLING_FUNDING_UNKNOWN'});
+ await started;await new Promise(r=>setImmediate(r));assert.equal(done,false);release();await rejection;
+});
+
+test('reused private fee claim still rejects a changed live FPC class',async()=>{
+ const f=await fixture('private-fee');f.input.operationScope={};await prepareFundingClaim(f.input);
+ f.backend.getContract=async()=>({...canonical,currentContractClassId:Fr.fromString(h(998))});
+ await assert.rejects(prepareFundingClaim(f.input));
+});
+test('claim reuse still authenticates the current Ethereum and Aztec network',async()=>{
+ for(const side of ['ethereum','aztec']){
+  const f=await fixture();f.input.operationScope={};let changed=false;
+  const network=f.input.ethProvider.getNetwork,info=f.backend.getNodeInfo;
+  f.input.ethProvider.getNetwork=async()=>changed&&side==='ethereum'?{chainId:1n}:network();
+  f.backend.getNodeInfo=async()=>{const value=await info();return changed&&side==='aztec'?{...value,rollupVersion:999}:value;};
+  await prepareFundingClaim(f.input);changed=true;await assert.rejects(prepareFundingClaim(f.input));
+ }
+});

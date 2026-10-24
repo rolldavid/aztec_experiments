@@ -35,6 +35,7 @@ const rollupAbi = new Interface(['function getInbox() view returns(address)', 'f
 const feeClaimAbi = new Interface(['function claim(bytes32,uint256)']);
 const MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 const failures = new WeakSet();
+const operationClaims = new WeakMap();
 function fail(code) { const error=Object.assign(new Error('Funding receipt could not be verified.'),{code:'ROLLING_FUNDING_'+code});failures.add(error);return error; }
 function requireThat(value,code='MISMATCH') { if(!value)throw fail(code); }
 function uint(value,bits=128) {
@@ -124,6 +125,15 @@ export async function prepareFundingClaim(input) {
     const providerMethods=['getNetwork','getTransactionReceipt','getTransaction','getBlock','call',...(aggregateIntent||bokTopupScope?['getCode']:[])];
     const providerReads=capture(suppliedProvider,providerMethods);
     const loadClaim=suppliedStore===undefined ? null : capture(suppliedStore,['load']).load;
+    const operation=input.operationScope;
+    requireThat(operation===undefined||(operation!==null&&typeof operation==='object'),'INVALID');
+    // Only this exact held operation may reuse immutable, fully verified evidence.
+    // Route capabilities, custody inputs and the native anchor are part of the key.
+    const capabilities=[...Object.keys(nodeReads).map(name=>suppliedNode[name]),...providerMethods.map(name=>suppliedProvider[name]),suppliedStore?.load];
+    const key=JSON.stringify([{kind,scope:s,receipt:r,anchor:a,owner},secrets,aggregateIntent,aggregateCustody,bokTopupScope]);
+    const previous=operation&&operationClaims.get(operation)?.get(key);
+    const reusable=previous&&previous.node===suppliedNode&&previous.provider===suppliedProvider&&previous.artifact===privateFeeArtifact&&previous.store===suppliedStore&&
+      previous.capabilities.length===capabilities.length&&capabilities.every((value,index)=>value===previous.capabilities[index]);
     if(aggregateCustody && kind==='collateral')requireThat(loadClaim,'INVALID');
     // Each captured transport owns its request failure bound. A valid sequence
     // of reads and local verification does not expire on a whole-flow clock.
@@ -144,7 +154,7 @@ export async function prepareFundingClaim(input) {
       return immutable.get(key);
     })]));
     const node=Object.fromEntries(['getNodeInfo','getContract'].map(name=>[name,(...args)=>read(()=>nodeReads[name](...args))]));
-    const [info,network,receipt,tx]=await together([()=>node.getNodeInfo(),()=>provider.getNetwork(),()=>provider.getTransactionReceipt(r.txHash),()=>provider.getTransaction(r.txHash)]);
+    const [info,network,receipt,tx]=await together([()=>node.getNodeInfo(),()=>provider.getNetwork(),()=>provider.getTransactionReceipt(r.txHash),()=>reusable?previous.tx:provider.getTransaction(r.txHash)]);
     requireThat(String(info.l1ChainId)===s.chainId && String(info.rollupVersion)===s.version && equal(info.l1ContractAddresses?.rollupAddress,s.rollup) && String(network.chainId)===s.chainId);
     if(!receipt)return frozen({status:'absent'}); // Unknown submission is NEVER declared unsent.
     requireThat(equal(receipt.hash,r.txHash) && receipt.blockNumber===r.blockNumber && equal(receipt.blockHash,r.blockHash),'REORG');
@@ -154,6 +164,17 @@ export async function prepareFundingClaim(input) {
     requireThat(tx,'UNKNOWN');
     requireThat(equal(tx.hash,r.txHash) && equal(tx.from,r.sender) && String(tx.nonce)===r.nonce && String(tx.chainId)===s.chainId && equal(receipt.from,r.sender) && equal(receipt.to,tx.to));
     if(receipt.status===0){await checkL1();return frozen({status:'reverted'});}
+    const checkL2=async()=>{
+      const block=await read(()=>nodeReads.getBlockData(a.number));
+      requireThat(block && equal(block.blockHash,a.hash) && block.header?.globalVariables?.blockNumber===a.number && equal(block.header?.state?.l1ToL2MessageTree?.root,a.root),'REORG');
+    };
+    if(reusable){
+      if(kind==='private-fee')requireThat(equal(info.l1ContractAddresses?.feeJuicePortalAddress,s.portal)&&equal(info.l1ContractAddresses?.feeJuiceAddress,s.token));
+      // Membership and Ethereum effects cannot change at these exact block hashes.
+      // The receipt, canonical L1/L2 blocks and current FPC publication still can.
+      await together([checkL1,checkL2,...(previous.canonical?[()=>requirePublishedPrivateFee(node,previous.canonical)]:[])]);
+      await read(()=>Promise.resolve());return previous.result;
+    }
     requireThat(Array.isArray(receipt.logs) && receipt.logs.length<=4096 && typeof tx.data==='string' && tx.data.length<=(aggregateIntent?16384:8192),'UNKNOWN');
     for(const log of receipt.logs)if(equal(log.address,s.portal))requireThat(Array.isArray(log.topics) && log.topics.length<=4 && log.topics.every(t=>typeof t==='string' && /^0x[0-9a-fA-F]{64}$/.test(t)) && typeof log.data==='string' && log.data.length<=4096,'UNKNOWN');
     let aggregate;
@@ -173,7 +194,7 @@ export async function prepareFundingClaim(input) {
       requireThat(expected.every(([,value],index)=>equal(values[index],value)));
     };
     const boardScope={l1ChainId:s.chainId,rollupAddress:s.rollup,rollupVersion:s.version,boardAddress:s.recipient,portalAddress:s.portal};
-    let content,secret,claim,messageRecipient=s.recipient;
+    let content,secret,claim,canonicalFee,messageRecipient=s.recipient;
     if (cancellation) {
       await bindings(s.portal,boardAbi,[['ROLLUP',s.rollup],['L2_CONTRACT',s.recipient],['VERSION',s.version],['L1_CHAIN_ID',s.chainId]]);
       requireThat(equal(tx.to,s.portal) && String(tx.value) === '0');
@@ -211,7 +232,7 @@ export async function prepareFundingClaim(input) {
       // of invoking a second complete recovery flow against latest Ethereum state.
       if(aggregateIntent)requireThat(aggregateIntent.expected.privateFpc===s.recipient);
       requireThat(equal(info.l1ContractAddresses?.feeJuicePortalAddress,s.portal) && equal(info.l1ContractAddresses?.feeJuiceAddress,s.token));
-      const canonical=await derivePrivateFeeInstance(privateFeeArtifact);requireThat(equal(canonical.address,s.recipient));
+      const canonical=await derivePrivateFeeInstance(privateFeeArtifact);canonicalFee=canonical;requireThat(equal(canonical.address,s.recipient));
       await requirePublishedPrivateFee(node,canonical);
       const account=new AztecAddress(Fr.fromString(owner));
       const salt=aggregateCustody ? Fr.fromString(aggregateCustody.privateFeeSalt) : null;
@@ -257,10 +278,6 @@ export async function prepareFundingClaim(input) {
     const messageSender=kind==='private-fee'?EthAddress.fromField(ProtocolContractAddress.FeeJuice.toField()):EthAddress.fromString(s.portal);
     const message=new L1ToL2Message(new L1Actor(messageSender,Number(s.chainId)),new L2Actor(new AztecAddress(Fr.fromString(messageRecipient)),Number(s.version)),Fr.fromString(content),Fr.fromString(r.secretHash),new Fr(BigInt(r.leafIndex)));
     requireThat(message.hash().toString()===r.messageKey);
-    const checkL2=async()=>{
-      const block=await read(()=>nodeReads.getBlockData(a.number));
-      requireThat(block && equal(block.blockHash,a.hash) && block.header?.globalVariables?.blockNumber===a.number && equal(block.header?.state?.l1ToL2MessageTree?.root,a.root),'REORG');
-    };
     const [,witness]=await together([checkL2,()=>read(()=>nodeReads.getL1ToL2MessageMembershipWitness({number:a.number,hash:BlockHash.fromString(a.hash)},message.hash()))]);
     if(!witness){await together([checkL1,checkL2]);return frozen({status:'waiting',reason:'l2-delivery'});}
     requireThat(Array.isArray(witness) && witness.length===2 && witness[0]===BigInt(r.leafIndex) && witness[1].pathSize===L1_TO_L2_MSG_TREE_HEIGHT);
@@ -270,7 +287,9 @@ export async function prepareFundingClaim(input) {
     requireThat(index===0n && root.toString()===a.root);
     await together([checkL1,checkL2]);
     await read(()=>Promise.resolve());
-    return frozen({status:'claim-ready',claim,evidence:{kind,txHash:r.txHash,l1:{number:r.blockNumber,hash:r.blockHash},l2:{number:a.number,hash:a.hash},messageKey:r.messageKey,leafIndex:r.leafIndex,content}});
+    const result=frozen({status:'claim-ready',claim,evidence:{kind,txHash:r.txHash,l1:{number:r.blockNumber,hash:r.blockHash},l2:{number:a.number,hash:a.hash},messageKey:r.messageKey,leafIndex:r.leafIndex,content}});
+    if(operation){let entries=operationClaims.get(operation);if(!entries){entries=new Map();operationClaims.set(operation,entries);}if(entries.size<4)entries.set(key,{node:suppliedNode,provider:suppliedProvider,artifact:privateFeeArtifact,store:suppliedStore,capabilities,tx:frozen(Object.fromEntries(['hash','from','to','nonce','chainId','value','data'].map(name=>[name,tx[name]]))),canonical:canonicalFee,result});}
+    return result;
   } catch(error) {
     if(failures.has(error))throw error;
     // Existing private-fee verifier emits fixed codes only. Never propagate its
