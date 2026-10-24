@@ -143,6 +143,12 @@ export function validatedPxeProve(source){
     // It cannot become visible until the complete native sync succeeds.
     syncWithAnchorRead(read) {
         return this.operationQueue.run(()=>this.blockStateSynchronizer.syncWithAnchorRead(read));`);
+ // Explicit optional metadata only; no private note contents, promises or
+ // authoritative decisions cross this existing utility-result boundary.
+ source=replace(source,'const { result, offchainEffects } = await contractFunctionSimulator.runUtility(', 'const { result, offchainEffects, noteHashWitnessHints } = await contractFunctionSimulator.runUtility(');
+ source=replace(source,'                result,\n                offchainEffects\n', '                result,\n                offchainEffects,\n                ...(noteHashWitnessHints ? {noteHashWitnessHints} : {})\n');
+ source=replace(source,'const { result: executionResult, offchainEffects } = await this.#executeUtility(', 'const { result: executionResult, offchainEffects, noteHashWitnessHints } = await this.#executeUtility(');
+ source=replace(source,'                result: executionResult,\n                offchainEffects,', '                result: executionResult,\n                offchainEffects,\n                ...(noteHashWitnessHints ? {noteHashWitnessHints} : {}),');
  source=instrumentPxePhases(source);
  return source;
 }

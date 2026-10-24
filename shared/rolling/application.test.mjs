@@ -58,7 +58,7 @@ function fixture(){
     if(name==='get_screen_hints'&&state.hintsReadError)throw state.hintsReadError;
     const replies={balance_of:state.bokCredit??1000n,get_plugin:{adapter:AztecAddress.fromBigIntUnsafe(state.bokAdapter??5n),enabled:state.bokEnabled!==false},request:state.bokRequest,preference_head:('preferenceHead' in state)?state.preferenceHead:decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='preference_head')),[Fr.ZERO,new Fr(1n),Fr.ZERO,Fr.ZERO]),profile_state:state.profileState??decodeFromAbi(getFunctionReturnType([...artifact.functions,...artifact.nonDispatchPublicFunctions].find(f=>f.name==='profile_state')),Array.from({length:8},()=>Fr.ZERO)),owned_name_records:('records' in state)?state.records:await ownershipPage(),get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,0n,0n,0n,0n,50n,56n],get_deposit_ids:[9n,0n,0n,0n,0n,0n,0n,0n,0n,0n],
       main_policy:[BigInt(state.policy),1n],effective_policy:('effectivePolicy' in state)?state.effectivePolicy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
-    return {result:replies[name]};
+    return {result:replies[name],...(name==='get_screen_hints'&&state.noteHashWitnessHints?{noteHashWitnessHints:state.noteHashWitnessHints}:{})};
   }})})};
   const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome,confirmed:()=>{}};
   const owner=new AztecAddress(new Fr(3n));
@@ -2472,4 +2472,13 @@ test('failed native synchronization never publishes its provisional policy into 
  const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
  await assert.rejects(f.app.prefetchPostingPolicy(async read=>{await read({number:1,hash:hex(42)});throw Error('native reorg');}),/native reorg/);
  scope.synchronized=true;await f.app.prepare({type:'post',deposit:'9',content:'Fresh successful synchronization'},{immediate:true});assert.equal(f.state.policyReads.length,2);
+});
+
+for(const present of [false,true])test(`selected native screening metadata remains advisory and reaches owned preparation present=${present}`,async()=>{
+ const f=fixture(),scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ const metadata={board:hex(1),owner:hex(3),anchorHash:hex(42),hashes:[]};if(present)f.state.noteHashWitnessHints=metadata;f.app=f.restart();
+ const prepared=await f.app.prepare({type:'post',deposit:'9',content:'Exact native selection'},{immediate:true});
+ await Promise.all(scope.preparationReads);assert.equal(f.state.witnessPrefetches.length,1);
+ const input=f.state.witnessPrefetches[0];assert.equal(input.owner.toString(),hex(3));assert.equal(input.noteHashWitnessHints,present?metadata:undefined);
+ assert.equal(f.state.privateReads.filter(read=>read.name==='get_screen_hints').length,1);assert.equal(f.state.sends,0);assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
 });

@@ -14,13 +14,13 @@ const source=fs.readFileSync(new URL('../shared/ordinary-post-witnesses.mjs',imp
 async function fixture({mature=true}={}){
  const board={address:AztecAddress.fromFieldUnsafe(new Fr(2)),currentContractClassId:Fr.fromString(ORDINARY_POST_GAS_PROFILE.boardClassId)};
  const artifact={storageLayout:{config:{slot:20},deposits:{slot:31},...Object.fromEntries(['post_exists','post_time','post_flag_deadline','post_flagged'].map((name,i)=>[name,{slot:i+1}]))}};
- const calls=[],pending=[];let rejectFirst=false,hold=false,anchor={number:1,hash:BlockHash.fromString('0x'+'1'.padStart(64,'0'))};
+ const calls=[],pending=[],noteCalls=[],notePending=[];let rejectFirst=false,hold=false,holdNotes=false,anchor={number:1,hash:BlockHash.fromString('0x'+'1'.padStart(64,'0'))};
  const deadline=await computePublicDataTreeLeafSlot(board.address,await deriveStorageSlotInMap(new Fr(3),new Fr(9)));
- const node={getPublicDataWitness:async(at,leaf)=>{calls.push({at,leaf});if(rejectFirst&&calls.length===1)throw Error("witness unavailable");if(hold)await new Promise(resolve=>pending.push(resolve));return {leafPreimage:{leaf:{slot:leaf,value:leaf.equals(deadline)?new Fr(mature?50:150):Fr.ONE}}};}};
+ const node={getNoteHashMembershipWitness:async(at,hash)=>{noteCalls.push({at,hash});if(holdNotes)await new Promise(resolve=>notePending.push(resolve));return {index:1n,siblingPath:[]};},getPublicDataWitness:async(at,leaf)=>{calls.push({at,leaf});if(rejectFirst&&calls.length===1)throw Error("witness unavailable");if(hold)await new Promise(resolve=>pending.push(resolve));return {leafPreimage:{leaf:{slot:leaf,value:leaf.equals(deadline)?new Fr(mature?50:150):Fr.ONE}}};}};
  const pxe={node:withCache(node),getSyncedBlockHeader:async()=>({globalVariables:{timestamp:100n},toBlockParameter:async()=>anchor})},wallet={pxe};
  const context=vm.createContext({Fr,computePublicDataTreeLeafSlot,deriveStorageSlotInMap,ORDINARY_POST_GAS_PROFILE,isPrivatePXEForNode:(value,route)=>value===pxe&&route===node});vm.runInContext(source,context);
  const args={wallet,node,board,artifact,hints:[{note:{post_id:'9',is_dummy:false}},null]};
- return {run:()=>context.prefetchOrdinaryPostWitnesses(args),args,calls,pending,hold:()=>{hold=true;},rejectFirst:()=>{rejectFirst=true;},advance:()=>{anchor={number:2,hash:BlockHash.fromString('0x'+'2'.padStart(64,'0'))};}};
+ return {run:()=>context.prefetchOrdinaryPostWitnesses(args),args,calls,pending,noteCalls,notePending,holdNotes:()=>{holdNotes=true;},hold:()=>{hold=true;},rejectFirst:()=>{rejectFirst=true;},advance:()=>{anchor={number:2,hash:BlockHash.fromString('0x'+'2'.padStart(64,'0'))};}};
 }
 test('independent history witnesses start together; native anchored cache serves later reads',async()=>{
  const f=await fixture();f.hold();const work=f.run();
@@ -78,4 +78,32 @@ test('actual native cache evicts failed prefetch; required private execution rea
 
 test('unqualified config layout is rejected before any witness RPC',async()=>{
  const f=await fixture();f.args.artifact.storageLayout.deposits.slot=32;await assert.rejects(f.run(),/config layout/);assert.equal(f.calls.length,0);
+});
+
+function metadata(f,hashes=['0x'+new Fr(5).toString().slice(2)]){
+ f.args.owner=AztecAddress.fromFieldUnsafe(new Fr(7));
+ return {board:f.args.board.address.toString(),owner:f.args.owner.toString(),anchorHash:BlockHash.fromString('0x'+'1'.padStart(64,'0')).toString(),hashes};
+}
+test('exact selected-note memberships run concurrently with public witnesses and join the native in-flight cache',async()=>{
+ const f=await fixture({mature:false});f.args.noteHashWitnessHints=metadata(f);f.hold();f.holdNotes();const work=f.run();
+ for(let i=0;i<50&&(f.pending.length<4||f.notePending.length<1);i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.pending.length,4);assert.equal(f.notePending.length,1);
+ const note=f.noteCalls[0],actual=f.args.wallet.pxe.node.getNoteHashMembershipWitness(note.at,note.hash);
+ assert.equal(f.noteCalls.length,1);f.pending.splice(0).forEach(resolve=>resolve());f.notePending.splice(0).forEach(resolve=>resolve());await work;await actual;
+ assert.equal(f.noteCalls.length,1,'private execution uses the same native witness request');
+});
+for(const changed of ['owner','board','anchorHash','hashes','too-many','count'])test('optional note metadata mismatch is ignored: '+changed,async()=>{
+ const f=await fixture({mature:false});const meta=metadata(f);
+ if(changed==='hashes')meta.hashes=['not-a-field'];else if(changed==='too-many')meta.hashes=[Fr.ONE.toString(),new Fr(2).toString(),new Fr(3).toString()];else if(changed==='count')meta.hashes=[];else meta[changed]=Fr.ZERO.toString();
+ f.args.noteHashWitnessHints=meta;await f.run();assert.equal(f.noteCalls.length,0);assert.equal(f.calls.length,4,'native public preparation unaffected');
+});
+test('new anchor cannot use old selected-note metadata; no new note query or stale cache reuse',async()=>{
+ const f=await fixture({mature:false});f.args.noteHashWitnessHints=metadata(f);await f.run();assert.equal(f.noteCalls.length,1);
+ f.advance();await f.run();assert.equal(f.noteCalls.length,1);assert.equal(f.calls.length,8);
+});
+test('public failure drains held note prefetch before releasing the operation',async()=>{
+ const f=await fixture({mature:false});f.args.noteHashWitnessHints=metadata(f);f.rejectFirst();f.holdNotes();let settled=false;
+ const work=f.run().finally(()=>settled=true),rejected=assert.rejects(work,/witness unavailable/);
+ for(let i=0;i<50&&f.notePending.length<1;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.notePending.length,1);assert.equal(settled,false);f.notePending[0]();await rejected;assert.equal(settled,true);
 });

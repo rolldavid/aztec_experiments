@@ -1,3 +1,4 @@
+import {SELECTED_NOTE_PINS} from './selected-note-witnesses.mjs';
 import {KERNEL_WORK_PINS} from './kernel-witness-work.mjs';
 import {OWNER_DISCOVERY_PINS,transformOwnerDiscovery} from './patch-pxe-owner-discovery.mjs';
 import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN,preferenceRecoverySource,transformPreferencePage} from './patch-pxe-preference-page.mjs';
@@ -47,6 +48,8 @@ function fixture(t) {
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3.wasm': 'synthetic sqlite asset',
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js': 'synthetic sqlite proxy',
   };
+  inputs['scripts/selected-note-witnesses.mjs']='// fixture selected note transform';
+  for(const name of Object.keys(SELECTED_NOTE_PINS))inputs[name]=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
   inputs['scripts/kernel-witness-work.mjs']='// fixture kernel transform';
   for(const name of Object.keys(KERNEL_WORK_PINS))inputs[name]=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
   inputs['scripts/patch-pxe-owner-discovery.mjs']=fs.readFileSync(new URL('./patch-pxe-owner-discovery.mjs',import.meta.url),'utf8');
@@ -263,4 +266,11 @@ for(const name of ['scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_
 });
 for(const name of Object.keys(KERNEL_WORK_PINS))test('kernel witness literal native pin '+name,t=>{
  const f=fixture(t);f.write(name,'changed native implementation');f.manifest.inputs[name]=hash('changed native implementation');f.save();assert.throws(()=>checkSdk(f.root),/kernel witness source mismatch/);
+});
+
+for(const name of ['scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS)])test('selected note metadata source closure rejects missing input '+name,t=>{
+ const f=fixture(t);delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input|selected note source mismatch/);
+});
+for(const name of Object.keys(SELECTED_NOTE_PINS))test('selected note literal native pin '+name,t=>{
+ const f=fixture(t);f.write(name,'changed native implementation');f.manifest.inputs[name]=hash('changed native implementation');f.save();assert.throws(()=>checkSdk(f.root),/selected note source mismatch/);
 });

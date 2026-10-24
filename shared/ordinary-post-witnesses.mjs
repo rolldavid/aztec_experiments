@@ -7,7 +7,7 @@ import {ORDINARY_POST_GAS_PROFILE} from './ordinary-post-fees.mjs';
 // Fetch their independent public witnesses together, through the
 // PXE's own hash-pinned cache. The circuit still checks every witness normally.
 // No witness or state is reused across anchors and no private execution is run.
-export async function prefetchOrdinaryPostWitnesses({wallet,node,board,artifact,hints}) {
+export async function prefetchOrdinaryPostWitnesses({wallet,node,board,artifact,hints,owner,noteHashWitnessHints}) {
   const pxe=wallet?.pxe;
   if(!isPrivatePXEForNode(pxe,node)||board?.currentContractClassId?.toString()!==ORDINARY_POST_GAS_PROFILE.boardClassId||!Array.isArray(hints)||hints.length!==2)
     throw Object.assign(Error('Invalid ordinary post witness context'),{code:'BB_POST_FEE_PROFILE_MISMATCH'});
@@ -29,7 +29,18 @@ export async function prefetchOrdinaryPostWitnesses({wallet,node,board,artifact,
   })));
   const entries=[{name:'config-hash',leaf:configLeaf},...historyEntries];
   guard();
-  const reads=await Promise.allSettled(entries.map(async entry=>({...entry,witness:await cachedNode.getPublicDataWitness(anchor,entry.leaf)})));
+  // This metadata is optional and never authorizes a note. Only exact native
+  // selected-note identifiers at this owner/board/anchor may warm the cache.
+  // Native private execution still obtains and validates its own witnesses.
+  let noteHashes=[];
+  try{const meta=noteHashWitnessHints;
+    if(owner&&meta?.board===board.address.toString()&&meta.owner===owner?.toString()&&meta.anchorHash===anchor.hash.toString()&&Array.isArray(meta.hashes)&&meta.hashes.length<=2&&meta.hashes.length===hints.filter(Boolean).length)
+      noteHashes=meta.hashes.map(value=>Fr.fromString(value));
+  }catch{noteHashes=[];}
+  const reads=await Promise.allSettled([
+    ...entries.map(async entry=>({...entry,witness:await cachedNode.getPublicDataWitness(anchor,entry.leaf)})),
+    ...noteHashes.map(async hash=>({name:'screened-note',witness:await cachedNode.getNoteHashMembershipWitness(anchor,hash)})),
+  ]);
   const failed=reads.find(result=>result.status==='rejected');if(failed)throw failed.reason;
   guard();
   // Flags are read only after the censorship window closes. Use the fetched

@@ -233,13 +233,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   async function exclusive(fn){check(!busy,'ROLLING_BUSY');busy=true;callScope={};try{return await fn();}finally{busy=false;callScope=null;}}
   const progress=stage=>{try{onProgress({stage});}catch{/* display errors cannot alter transaction control */}};
   const contract=()=>sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.board))),deployment.board.artifact,session.wallet);
-  async function utility(board,name,args,artifact=deployment.board.artifact){
+  async function utility(board,name,args,artifact=deployment.board.artifact,includeWitnessHints=false){
     const matches=[...artifact.functions,...(artifact.nonDispatchPublicFunctions??[])].filter(f=>f.name===name);
     check(matches.length===1,'ROLLING_ABI_MISMATCH');const abi=matches[0];
     check(!abi.returnTypes||abi.returnTypes.length<=1,'ROLLING_ABI_MISMATCH');
     const run=()=>board.methods[name](...args).simulate({from:session.owner});
     const out=await (name==='get_screen_hints'?measure('action.screening',run,{nativeUtility:true}):run());
-    return utilityPlain(out.result??out,abi.returnType??abi.returnTypes?.[0]);
+    const value=utilityPlain(out.result??out,abi.returnType??abi.returnTypes?.[0]);
+    return includeWitnessHints?{value,noteHashWitnessHints:out.noteHashWitnessHints}:value;
   }
   async function fundingClaim(kind,metadata){
     check(fundingProvider&&typeof sdk.prepareFundingClaim==='function','ROLLING_FUNDING_UNAVAILABLE');
@@ -514,11 +515,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     await interaction(await selectedContract(record),record);await guard();
   }
   async function screeningArguments(board,deposit,prefetch=false){
-    const hints=await utility(board,'get_screen_hints',[session.owner,deposit]);
+    const {value:hints,noteHashWitnessHints}=await utility(board,'get_screen_hints',[session.owner,deposit],deployment.board.artifact,true);
     check(Array.isArray(hints)&&hints.length===2&&!(!hints[0]&&hints[1]),'ROLLING_HISTORY_UNAVAILABLE');
     if(prefetch){
       const owner=getOperationScope();
-      const reading=measure('action.history-witnesses',()=>sdk.prefetchOrdinaryPostWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact,hints}));
+      const reading=measure('action.history-witnesses',()=>sdk.prefetchOrdinaryPostWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact,hints,owner:session.owner,noteHashWitnessHints}));
       if(Array.isArray(owner?.preparationReads)){
         // The native cache shares in-flight reads with the actual private
         // execution. Prefetch is only a latency hint: a rejected read is evicted
