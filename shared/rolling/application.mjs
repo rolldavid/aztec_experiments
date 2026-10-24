@@ -1100,7 +1100,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const preparedPayment=await measure('action.fee-prepare',()=>cachedPayment&&cachedPayment.encoded===saved.encoded&&
         cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node
         ?cachedPayment.payment:payment(saved.value.action,saved.value));
-      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true}));
+      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true,measure}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
       let attempt=null,active;

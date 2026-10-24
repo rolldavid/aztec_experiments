@@ -11,9 +11,11 @@ const successful=r=>r.publicInputs&&(!r.publicInputs.forPublic||r.publicOutput?.
 // The SDK preserves the first failing public call. Never treat arbitrary reverts
 // as gas shortages or swallow an application failure during the teardown probe.
 const outOfGas=e=>/^(?:Out of gas(?: exception)?(?::|$)|Not enough (?:DAGAS|L2GAS)(?:, (?:DAGAS|L2GAS))? gas left$)/i.test(e?.getOriginalMessage?.()??'');
-function refundExhausted(error,prepared){
- const stack=error?.getCallStack?.(),frame=stack?.[0];
- return stack?.length===1&&outOfGas(error)&&frame?.contractAddress?.toString()===prepared.paymentMethod.address.toString()&&frame?.functionSelector?.toString()===prepared.refundSelector;
+function refundReservationShortage(error,prepared){
+ const stack=error?.getCallStack?.(),frame=stack?.[0],data=error?.revertData;
+ return stack?.length===1&&frame?.contractAddress?.toString()===prepared.paymentMethod.address.toString()&&
+  frame?.functionSelector?.toString()===prepared.refundSelector&&Array.isArray(data)&&data.length===1&&
+  data[0]?.toBigInt?.().toString()===prepared.refundReservationError;
 }
 function cost(gas,prices){return BigInt(gas.daGas)*prices.feePerDaGas+BigInt(gas.l2Gas)*prices.feePerL2Gas;}
 // Allocate a probe budget, not a quoted fee. Measured execution determines the quote.
@@ -28,7 +30,7 @@ function allocate(budget,lower,caps,prices){
  for(let i=0;i<2;i++)if(rates[i]){const extra=min(BigInt(caps[dimensions[i]]-values[i]),remaining/rates[i]);values[i]+=Number(extra);remaining-=extra*rates[i];}
  return new Gas(...values);
 }
-export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,simulator=createPrivateFeeSimulator(wallet,node)}){
+export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,measure=(_stage,operation)=>operation(),simulator=createPrivateFeeSimulator(wallet,node)}){
  const ceiling=GasSettings.from(prepared.gasSettings),available=BigInt(prepared.availableCredit),network=(await node.getNodeInfo()).txsLimits.gas;
  const caps=new Gas(Math.min(ceiling.gasLimits.daGas,network.daGas,MAX_TX_DA_GAS),Math.min(ceiling.gasLimits.l2Gas,network.l2Gas,MAX_PROCESSABLE_L2_GAS));
  const settings=(gasLimits,teardownGasLimits)=>GasSettings.from({gasLimits,teardownGasLimits,maxFeesPerGas:ceiling.maxFeesPerGas,maxPriorityFeesPerGas:ceiling.maxPriorityFeesPerGas});
@@ -37,7 +39,10 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  const payloadFor=async reservation=>mergeExecutionPayloads([await prepared.paymentMethod.withReservation(reservation).getExecutionPayload(),application]);
  // Adequate credit needs no reservation search. Validate the configured maximum
  // once with native fee enforcement; the FPC returns unused credit in teardown.
- const bounded=settings(caps,new Gas(...dimensions.map(k=>Math.min(ceiling.teardownGasLimits[k],caps[k]))));
+ if(!prepared.refundGasLimits)throw fail('PRIVATE_FEE_CONFIGURATION_REQUIRED');
+ const refundLimits=Gas.from(prepared.refundGasLimits);
+ if(dimensions.some(k=>refundLimits[k]>ceiling.teardownGasLimits[k]||refundLimits[k]>caps[k]))throw fail('BB_GAS_LIMIT_EXCEEDED');
+ const bounded=settings(caps,refundLimits);
  const boundedFee=bounded.getFeeLimit().toBigInt();
  if(boundedFee<=available){
   const reservation=boundedFee||1n;await guard();const payload=await payloadFor(reservation);
@@ -53,29 +58,31 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  }
  // Zero prices are legal ONLY in private-only simulation. They never reach the node.
  const privateSettings=GasSettings.forEstimation({maxFeesPerGas:GasFees.empty(),maxPriorityFeesPerGas:GasFees.empty()});privateSettings.teardownGasLimits=Gas.empty();
- await guard();const initial=await simulator.private(await payloadFor(1n),from,privateSettings);
+ await guard();const initialPayload=await payloadFor(1n);
+ const initial=await measure('action.fee-private-initial',()=>simulator.private(initialPayload,from,privateSettings));
  let reservation=min(maximum,cost(initial.gasUsed.totalGas,ceiling.maxFeesPerGas)*2n+1n);
  for(let pass=0;pass<8;pass++){
   await guard();const payload=await payloadFor(reservation);
-  const privateResult=await simulator.private(payload,from,privateSettings),lower=privateResult.gasUsed.totalGas;
-  const gasLimits=allocate(reservation-1n,lower,caps,ceiling.maxFeesPerGas);
-  if(gasLimits){
-   if(cost(gasLimits,ceiling.maxFeesPerGas)>reservation)throw fail('BB_GAS_LIMIT_EXCEEDED');
-   let probe;
-   try{probe=await simulator.public(payload,from,settings(gasLimits,Gas.empty()),false,privateResult);}catch(error){if(!outOfGas(error))throw error;}
-   if(probe){
-    const error=probe.publicOutput?.revertReason;
-    if(error&&!refundExhausted(error,prepared)){if(!outOfGas(error))throw error;}
-    else if(!probe.publicInputs||!probe.publicOutput)throw fail('BB_SIMULATION_FAILED');
-    else {
-     const main=probe.gasUsed.totalGas;
-     const teardown=new Gas(...dimensions.map(k=>Math.max(0,Math.min(ceiling.teardownGasLimits[k],gasLimits[k]-main[k]))));
-     const full=await simulator.public(payload,from,settings(gasLimits,teardown),false,privateResult);
+  const privateResult=await measure('action.fee-private-candidate',()=>simulator.private(payload,from,privateSettings)),lower=privateResult.gasUsed.totalGas;
+  // The patched SDK regenerates a detached synthetic kernel solely for measurement.
+  // Full caps avoid guessing how credit should be split across DA and L2. This
+  // synthetic context is never accepted as a proof or handed to sendTx.
+  // Direct, unpatched EmbeddedWallet callers must still satisfy their private
+  // reservation check during public simulation, so retain their bounded budget.
+  const gasLimits=simulator.detachedMeasurement?caps:allocate(reservation-1n,lower,caps,ceiling.maxFeesPerGas);
+  if(gasLimits&&dimensions.every(k=>gasLimits[k]>=refundLimits[k])){
+   let full;
+   try{full=await measure('action.fee-public',()=>simulator.public(payload,from,settings(gasLimits,refundLimits),false,privateResult));}
+   catch(error){if(simulator.detachedMeasurement||!outOfGas(error))throw error;}
+   if(full){
      if(successful(full)){
-      let limits=getGasLimits(full.gasUsed,caps,0.1);
-      if(dimensions.some(k=>full.gasUsed.teardownGas[k]>ceiling.teardownGasLimits[k]))throw fail('BB_GAS_LIMIT_EXCEEDED');
-      for(const k of dimensions)limits.teardownGasLimits[k]=Math.min(limits.teardownGasLimits[k],ceiling.teardownGasLimits[k]);
-      if(cost(limits.gasLimits,ceiling.maxFeesPerGas)>available)limits=getGasLimits(full.gasUsed,caps,0);
+      // A zero refund takes a shorter branch. The final reservation may
+      // produce a positive refund, so always budget the qualified full branch.
+      const measured={...full.gasUsed,totalGas:full.gasUsed.totalGas.sub(full.gasUsed.teardownGas).add(refundLimits),teardownGas:refundLimits};
+      let limits=getGasLimits(measured,caps,0.1);
+      if(dimensions.some(k=>full.gasUsed.teardownGas[k]>refundLimits[k]))throw fail('BB_GAS_LIMIT_EXCEEDED');
+      limits.teardownGasLimits=refundLimits;
+      if(cost(limits.gasLimits,ceiling.maxFeesPerGas)>available){limits=getGasLimits(measured,caps,0);limits.teardownGasLimits=refundLimits;}
       const gasSettings=settings(limits.gasLimits,limits.teardownGasLimits),required=gasSettings.getFeeLimit().toBigInt();
       if(required<=available){
        const finalReservation=required||1n,finalPayload=await payloadFor(finalReservation);await guard();
@@ -89,9 +96,11 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
        await guard();const simulationValidation=await createPrivateFeeSimulationValidation({wallet,simulationPXE,payload:finalPayload,from,gasSettings,result:final,inputSnapshot});
        return {payload:finalPayload,gasSettings,reservation:finalReservation,maximumFee:required,passes:pass+1,simulationValidation};
       }
-     }else if(!outOfGas(full.publicOutput?.revertReason))throw full.publicOutput?.revertReason??fail('BB_SIMULATION_FAILED');
-    }
-   }
+     }else {
+      const error=full.publicOutput?.revertReason;
+      if(!refundReservationShortage(error,prepared)&&!( !simulator.detachedMeasurement&&outOfGas(error)))throw error??fail('BB_SIMULATION_FAILED');
+     }
+  }
   }
   if(reservation===maximum)break;
   reservation=min(maximum,reservation*2n);

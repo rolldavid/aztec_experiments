@@ -29,6 +29,7 @@ function address(value) {
   check(typeof text==='string'&&/^0x[0-9a-f]{64}$/.test(text),'PRIVATE_FEE_INVALID_ADDRESS');
   const result=new AztecAddress(Fr.fromString(text));check(!result.isZero(),'PRIVATE_FEE_INVALID_ADDRESS');return result;
 }
+export const PRIVATE_FEE_REFUND_PROFILE=Object.freeze({classId:'0x271b2547d1ca3e762fdcc8cd08a6de55b7bb30d0f02ca8b4840b595f7d4aecbc',daGas:192,l2Gas:27510,reservationError:'13277422931216639996'});
 const equal=(a,b)=>a?.toString()===b?.toString();
 function artifactOf(value) {
   const artifact=loadContractArtifact(value);
@@ -145,5 +146,9 @@ async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,e
   }
   const refund=getAllFunctionAbis(artifact).find(f=>f.name==='_complete_refund');
   const refundSelector=(await FunctionSelector.fromNameAndParameters(refund.name,refund.parameters)).toString();
-  return {paymentMethod,availableCredit,refundSelector,gasSettings:fixed.gasSettings,metadata:{maximumFee:fixed.maximumFee.toString(),feePayer:payer.toString(),mode:claim===undefined?'private-balance':'bridge-claim',refundUnusedGas:true}};
+  // Qualified against this exact public bytecode using the pinned native AVM.
+  // Both refund branches and extreme field/u128 values are exercised by the profile test.
+  check(canonical.currentContractClassId.toString()===PRIVATE_FEE_REFUND_PROFILE.classId,'PRIVATE_FEE_ARTIFACT_INVALID');
+  const refundGasLimits=new Gas(PRIVATE_FEE_REFUND_PROFILE.daGas,PRIVATE_FEE_REFUND_PROFILE.l2Gas);
+  return {refundGasLimits,refundReservationError:PRIVATE_FEE_REFUND_PROFILE.reservationError,paymentMethod,availableCredit,refundSelector,gasSettings:fixed.gasSettings,metadata:{maximumFee:fixed.maximumFee.toString(),feePayer:payer.toString(),mode:claim===undefined?'private-balance':'bridge-claim',refundUnusedGas:true}};
 }

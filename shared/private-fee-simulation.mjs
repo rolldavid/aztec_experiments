@@ -53,6 +53,7 @@ export function createPrivateFeeSimulator(wallet, node) {
     return TxSimulationResult.fromPrivateSimulationResultAndPublicOutput(result,output);
   }
   return {
+    detachedMeasurement: reusableMeasurements,
     private: privateSimulation,
     async public(payload, from, gasSettings, enforce=false, measurement) {
       if(enforce)return wallet.simulateTx(payload, {from, fee:{gasSettings}, skipTxValidation:false, skipFeeEnforcement:false});
