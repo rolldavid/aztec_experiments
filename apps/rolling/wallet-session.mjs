@@ -19,17 +19,20 @@ const refreshCodes=new Set(['ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_RES
 function refreshErrorCode(error){try{const d=error!=null?Object.getOwnPropertyDescriptor(error,'code'):null;return d&&Object.hasOwn(d,'value')&&refreshCodes.has(d.value)?d.value:rollingSetupErrorCode(error);}catch{return 'unknown';}}
 // Only public transaction identity crosses the account/display boundary.
 export function projectRollingTransactionProgress(stage,details){
- if(['preparing','proving','submitting','confirming'].includes(stage))return {stage};
- if(stage!=='included')return null;
+ if(['preparing','proving','confirming'].includes(stage))return {stage};
+ if(!['included','submitting'].includes(stage))return null;
+ const invalid=()=>stage==='submitting'?{stage}:null;
  try{
-  if(!details||Object.getPrototypeOf(details)!==Object.prototype)return null;
-  const value={};for(const key of ['txHash','blockNumber','blockHash','journalOperation']){
-   const d=Object.getOwnPropertyDescriptor(details,key);if(!d||!Object.hasOwn(d,'value'))return null;value[key]=d.value;
+  if(!details||Object.getPrototypeOf(details)!==Object.prototype)return invalid();
+  const value={};for(const key of (stage==='included'?['txHash','blockNumber','blockHash','journalOperation']:['txHash','journalOperation'])){
+   const d=Object.getOwnPropertyDescriptor(details,key);if(!d||!Object.hasOwn(d,'value'))return invalid();value[key]=d.value;
   }
   const match=typeof value.journalOperation==='string'&&/^ROLLING_WORKFLOW_V1:(0x[0-9a-f]{64}|0|[1-9][0-9]{0,76})$/.exec(value.journalOperation);
-  if(!match||!/^0x[0-9a-f]{64}$/.test(value.txHash)||!/^0x[0-9a-f]{64}$/.test(value.blockHash)||!Number.isSafeInteger(value.blockNumber)||value.blockNumber<1)return null;
+  if(!match||!/^0x[0-9a-f]{64}$/.test(value.txHash))return invalid();
+  if(stage==='submitting')return {stage,intentId:match[1],txHash:value.txHash};
+  if(!/^0x[0-9a-f]{64}$/.test(value.blockHash)||!Number.isSafeInteger(value.blockNumber)||value.blockNumber<1)return invalid();
   return {stage,intentId:match[1],txHash:value.txHash,blockNumber:value.blockNumber,blockHash:value.blockHash};
- }catch{return null;}
+ }catch{return invalid();}
 }
 const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,

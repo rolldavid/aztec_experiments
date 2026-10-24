@@ -1146,7 +1146,8 @@ test('included transaction progress exposes only exact public identity and workf
  for(const patch of [{journalOperation:'other:'+hex(93)},{journalOperation:'ROLLING_WORKFLOW_V1:'},{txHash:'invalid'},{blockNumber:0},{blockNumber:1.5},{blockHash:'invalid'}])assert.equal(projectRollingTransactionProgress('included',{...details,...patch}),null);
  assert.equal(projectRollingTransactionProgress('included',{...details,get txHash(){assert.fail('Must not invoke an accessor');}}),null);
  assert.equal(projectRollingTransactionProgress('other',details),null);
- assert.deepEqual(projectRollingTransactionProgress('confirming',details),{stage:'confirming'});
+ assert.deepEqual(projectRollingTransactionProgress('submitting',details),{stage:'submitting',intentId:hex(93),txHash:hex(91)});
+ for(const bad of [undefined,{...details,txHash:'bad'},{...details,journalOperation:'other'},{...details,get txHash(){assert.fail('Accessor invoked');}}])assert.deepEqual(projectRollingTransactionProgress('submitting',bad),{stage:'submitting'});
 });
 test('wallet progress binding forwards included intent without extra private work and ignores rejected display callbacks',async()=>{
  const f=await sessionFixture(),create=f.input.routing.createAztecWallet,observed=[];let emit;

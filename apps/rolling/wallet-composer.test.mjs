@@ -544,3 +544,32 @@ test('native insufficient-credit failure keeps a usable composer and its draft',
  assert(f.document.body.textContent.includes('Keep my unsent post'));const retry=f.document.querySelector('[data-action-review]');assert(retry&&!retry.disabled);assert.equal(retry.textContent,'Post');
  retry.fire('click');await f.document.until(()=>f.submissions.length===2&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await new Promise(setImmediate);assert.equal(f.prepared().content,'Keep my unsent post');
 });
+
+for(const outcome of ['confirmed','unknown'])test(`rendered exact submitted post releases composer before receipt ${outcome}`,{timeout:3000},async t=>{
+ const canonical=Promise.withResolvers(),sending=Promise.withResolvers();let effects=0;
+ const f=await fixture(t,{posting:{status:outcome,submit:()=>{sending.resolve();return canonical.promise;},effect:()=>effects++}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'1000000'});
+ await f.document.until(()=>f.host.textContent.includes('1 USDC available'));
+ const editor=f.document.querySelector('textarea');editor.value='Actual feed inclusion';editor.fire('input');
+ f.document.querySelector('[data-action-review]').fire('click');await sending.promise;
+ const inclusion=includedPost(),post={id:'17',confirmation:'pending',position:{txHash:inclusion.txHash,blockHash:inclusion.blockHash,blockNumber:String(inclusion.blockNumber)}};
+ const snapshot={checkpoint:{number:108,hash:inclusion.blockHash},renderedPosts:[post]};
+ f.panel.observePublicPosts([post],snapshot);assert.equal(f.document.querySelector('dialog').open,true,'unbound feed rows cannot close the composer');
+ f.progress({stage:'submitting',intentId:'other',txHash:inclusion.txHash});f.panel.observePublicPosts([post],snapshot);assert.equal(f.document.querySelector('dialog').open,true);
+ f.progress({stage:'submitting',intentId:inclusion.intentId,txHash:inclusion.txHash});
+ for(const bad of [
+  {...snapshot,renderedPosts:undefined},
+  {...snapshot,renderedPosts:[]},
+  {...snapshot,renderedPosts:[{...post,confirmation:undefined}]},
+  {...snapshot,renderedPosts:[{...post,position:{...post.position,txHash:'0x'+'e'.repeat(64)}}]},
+  {...snapshot,checkpoint:{number:107,hash:inclusion.blockHash}},
+  {...snapshot,checkpoint:{number:108,hash:'0x'+'e'.repeat(64)}}
+ ]){f.panel.observePublicPosts([post],bad);assert.equal(f.document.querySelector('dialog').open,true);}
+ const before=f.core();f.panel.observePublicPosts([post],snapshot);await Promise.resolve();
+ assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ assert.equal(effects,0,'already rendered inclusion needs no second feed refresh');assert.deepEqual(f.core(),before);assert.equal(editor.value,'Actual feed inclusion');
+ assert.deepEqual(await f.panel.act({type:'like',post:'1'}),{status:'blocked',reason:'busy'});
+ f.progress(inclusion);await Promise.resolve();assert.equal(effects,0);
+ canonical.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.document.querySelector('dialog').open,outcome!=='confirmed');
+});

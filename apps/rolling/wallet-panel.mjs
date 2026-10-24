@@ -235,7 +235,17 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  // Public inclusion can precede spendable refunds. Remember the snapshot that
  // first contained a home-feed reply; its parent alone does not tell us the
  // reply's block. Conversation rows provide the exact confirmation directly.
- function observePublicPosts(posts,{checkpoint,confirmationCheckpoint}={}){
+ function observePublicPosts(posts,{checkpoint,confirmationCheckpoint,renderedPosts}={}){
+  const active=postingOperation;
+  if(active?.txHash&&!active.included&&Array.isArray(renderedPosts))for(const post of renderedPosts){
+   const position=post?.position,blockNumber=Number(position?.blockNumber);
+   if(position?.txHash===active.txHash&&['pending','confirmed'].includes(post.confirmation)&&
+    typeof position.blockNumber==='string'&&/^[1-9][0-9]*$/.test(position.blockNumber)&&
+    Number.isSafeInteger(checkpoint?.number)&&blockNumber<=checkpoint.number&&
+    (blockNumber!==checkpoint.number||position.blockHash===checkpoint.hash)){
+    showIncludedPost({intentId:active.intentId,txHash:active.txHash,blockNumber,blockHash:position.blockHash},{alreadyRendered:true});break;
+   }
+  }
   if(!ownBokPosts.size||!Array.isArray(posts)||!unlocked())return;
   for(const post of posts){
    const own=ownBokPosts.get(post?.position?.txHash),invocation=post?.invocation;
@@ -410,6 +420,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    const diagnostic=projectRollingInitialization(progress);
    if(epoch!==accountEpoch||invalidated||reloadRequired||!unlocked()||(['private-refresh','funding-claim'].includes(diagnostic?.stage)?!session:attempt!==initializationAttempt))return;
    if(progress?.stage==='included'){showIncludedPost(progress);return;}
+   if(progress?.stage==='submitting'&&postingOperation?.epoch===accountEpoch&&progress.intentId===postingOperation.intentId&&
+    /^0x[0-9a-f]{64}$/.test(progress.txHash)&&!postingOperation.txHash)postingOperation.txHash=progress.txHash;
    if(diagnostic)dialog.setAttribute('data-rolling-initialization',JSON.stringify(diagnostic));
    if(!busy&&(bokBalance.pending||accountRefreshPending)&&diagnostic?.stage==='private-refresh')return;
    const fundingKind=view==='topup'&&topupKind==='bok'||intent?.action?.type==='claim-bok'?'bok':'posting',credit=fundingKind==='bok'?'Bok credit':'posting balance';
@@ -890,15 +902,17 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  // Inclusion changes presentation only. The transaction promise and private
  // account lock continue until checkpoint confirmation has been verified.
- function showIncludedPost(progress){
+ function showIncludedPost(progress,{alreadyRendered=false}={}){
   const active=postingOperation;
   if(!busy||!postingInProgress||!active||active.included||active.epoch!==accountEpoch||!unlocked()||
    intent?.intentId!==active.intentId||progress.intentId!==active.intentId||!postingTypes.has(intent?.action?.type)||intent.bok?.phase==='authorize'||
+   active.txHash&&active.txHash!==progress.txHash||
    !/^0x[0-9a-f]{64}$/.test(progress.txHash)||!/^0x[0-9a-f]{64}$/.test(progress.blockHash)||
    !Number.isSafeInteger(progress.blockNumber)||progress.blockNumber<=0)return;
   active.included=true;active.txHash=progress.txHash;
-  note('Confirmation pending');closeButton.disabled=false;if(dialog.open)dialog.close();
-  void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{});
+  note('Confirmation pending');closeButton.disabled=false;
+  if(dialog.open){const finish=beginRollingMeasure('post.composer-close');dialog.close();finish();}
+  if(!alreadyRendered)void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{});
  }
  async function executeAction(action,{immediate=immediateTypes.has(action.type),postingRules:expectedRules,onResult=()=>{}}={}){
   const epoch=accountEpoch;checkAccount(epoch);blocked=true;

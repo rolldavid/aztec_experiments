@@ -238,8 +238,8 @@ test('low-credit deferral cannot bypass a probe application failure',async()=>{
 });
 
 test('wallet inclusion progress preserves exact workflow and waits before confirming journal or resolving',async()=>{
- const h=fixture(),tx={getTxHash:()=>new Fr(77)},progress=[];let release,notify,confirmed=0,resolved=false;
- const included=new Promise(resolve=>notify=resolve),checkpoint=new Promise(resolve=>release=resolve);
+ const h=fixture(),tx={getTxHash:()=>new Fr(77)},progress=[],submitted=[];let acknowledged=false,release,notify,confirmed=0,resolved=false;
+ const included=new Promise(resolve=>notify=resolve),checkpoint=new Promise(resolve=>release=resolve),sendEntered=Promise.withResolvers(),sendAck=Promise.withResolvers();
  class SDKWalletBoundary{
   constructor(pxe){this.pxe=pxe;}
   completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}
@@ -249,12 +249,13 @@ test('wallet inclusion progress preserves exact workflow and waits before confir
  }
  const ctx=vm.createContext({performance,console,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});vm.runInContext(await fs.readFile(new URL('../apps/src/billboard/user/engine.js',import.meta.url),'utf8'),ctx);
  const identity={txHash:String(tx.getTxHash()),blockNumber:12,blockHash:String(new Fr(78))},operation='ROLLING_WORKFLOW_V1:'+String(new Fr(79));
- const a={BaseWallet:SDKWalletBoundary,GasSettings,consumePrivateFeeSimulationValidation,submitOnceWithReconciliation:async()=>{},waitForSuccessfulReceipt:async(_node,_tx,options)=>{options.onIncluded(identity);notify();return checkpoint;}};
+ const a={BaseWallet:SDKWalletBoundary,GasSettings,consumePrivateFeeSimulationValidation,submitOnceWithReconciliation:async()=>{assert.equal(submitted.length,1);sendEntered.resolve();await sendAck.promise;acknowledged=true;},waitForSuccessfulReceipt:async(_node,_tx,options)=>{options.onIncluded(identity);notify();return checkpoint;}};
  const journal={setOperation:value=>assert.equal(value,operation),assertCanStart:async()=>null,prepare:async()=>{},confirmed(){confirmed++;}};
- const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,{getSyncedBlockHeader:async()=>anchorBlockHeader,proveTx:async()=>({toTx:async()=>tx})},{},{},()=>{},Fr.ONE,{transactionJournal:journal,progress:(stage,details)=>{if(stage==='included')progress.push({...details});}});
+ const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,{getSyncedBlockHeader:async()=>anchorBlockHeader,proveTx:async()=>({toTx:async()=>tx})},{},{},()=>{},Fr.ONE,{transactionJournal:journal,progress:(stage,details)=>{if(stage==='included')progress.push({...details});if(stage==='submitting'){assert.equal(acknowledged,false);submitted.push({...details});}}});
  const send=wallet.sendTx.bind(wallet);wallet.sendTx=(payload,options)=>send(payload,{...options,journalOperation:operation});h.input.wallet=wallet;
  const waiting=sendPrivateFeeTransaction(h.input).then(value=>{resolved=true;return value;});
- await included;assert.equal(resolved,false);assert.equal(confirmed,0);assert.deepEqual(progress,[{...identity,journalOperation:operation}]);
+ await sendEntered.promise;assert.deepEqual(submitted,[{txHash:identity.txHash,journalOperation:operation}]);assert.equal(progress.length,0);assert.equal(confirmed,0);assert.equal(resolved,false);sendAck.resolve();
+ await included;assert.deepEqual(submitted,[{txHash:identity.txHash,journalOperation:operation}]);assert.equal(resolved,false);assert.equal(confirmed,0);assert.deepEqual(progress,[{...identity,journalOperation:operation}]);
  release({status:'checkpointed',transactionFee:1n});await waiting;assert.equal(resolved,true);assert.equal(confirmed,1);
 });
 

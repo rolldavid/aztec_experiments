@@ -305,7 +305,7 @@
         if (this._contextGuard) await measured('contextGuard',()=>this._contextGuard());
         if (opts.beforeSubmit) await measured('beforeSubmit',()=>opts.beforeSubmit(txHash.toString()));
         if (this._contextGuard) await measured('contextGuard',()=>this._contextGuard());
-        this._progress('submitting');
+        this._progress('submitting',{txHash:txHash.toString(),journalOperation:opts.journalOperation});
         if(lifecycle){lifecycle.check();await measured('signedGuard',()=>lifecycle.guard('signed'));}
         await measured('submitToAztec',()=>a.submitOnceWithReconciliation(rawNode,tx));
         let acknowledgedAt=null,inclusionObserved=false;try{acknowledgedAt=performance.now();}catch{/* Optional timing. */}

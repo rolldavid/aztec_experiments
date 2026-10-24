@@ -221,6 +221,12 @@ async function render({live=false,publicationRevision}={}){
  }
  const container=el('section',{class:'feed','aria-label':title});let data;
  const seenIds=new Set(),seenCursors=new Set();let lastPosition=null,lastPositionHash=null;
+ const pendingPublicPages=[];
+ function notifyRenderedPosts(){
+  if(!container.isConnected||!pendingPublicPages.length)return;
+  const pages=pendingPublicPages.splice(0);
+  void walletPanel?.then(panel=>{if(current===sequence&&!signal.aborted&&container.isConnected)for(const page of pages)panel.observePublicPosts?.(page.items,page.snapshot);}).catch(()=>{});
+ }
  const position=p=>['blockNumber','txIndexWithinBlock','logIndexWithinTx'].map(key=>{const v=p?.position?.[key];if(typeof v!=='string'||!/^(0|[1-9][0-9]*)$/.test(v))throw Error('Invalid position');return BigInt(v);});
  const descending=(a,b)=>{for(let i=0;i<3;i++){if(a[i]!==b[i])return a[i]>b[i];}return false;};
  function append(response){
@@ -248,7 +254,7 @@ async function render({live=false,publicationRevision}={}){
   const nodes=visible.map(item=>api==='directory'?boardCard(item):postCard(item,response));
   if(nodes.length)container.querySelector('.empty')?.remove();lastPosition=nextPosition;lastPositionHash=nextPositionHash;
   container.append(...nodes);for(const id of ids)seenIds.add(id);if(next)seenCursors.add(next);
-  if(api!=='directory')void walletPanel?.then(panel=>{if(current===sequence&&!signal.aborted)panel.observePublicPosts?.(items,{checkpoint:response.checkpoint,confirmationCheckpoint:response.confirmationCheckpoint});}).catch(()=>{});
+  if(api!=='directory'){pendingPublicPages.push({items,snapshot:{checkpoint:response.checkpoint,confirmationCheckpoint:response.confirmationCheckpoint,renderedPosts:visible}});notifyRenderedPosts();}
   return nodes;
  }
 
@@ -307,6 +313,7 @@ async function render({live=false,publicationRevision}={}){
   if(cursor)contentHost.append(more);
   contentHost.append(el('details',{class:'feed-details'},el('summary',{},'About this feed'),el('p',{class:'quiet'},'Checked against chain block '+String(data.checkpoint?.number??''))));
   if(live){main.querySelector('.public-content')?.replaceWith(contentHost);announce('Conversations updated.');}
+  notifyRenderedPosts();
   renderedRoute=route;loadedPages=pages;loadedThreadEnd=api==='thread'&&!cursor;
   finishDOM();
   updates.rendered(data.revision);
