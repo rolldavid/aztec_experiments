@@ -1,0 +1,13 @@
+{
+  "source": "uncommitted next-release wallet-panel.mjs",
+  "browser": "existing in-app browser, lightweight labelled UI fixture",
+  "observed": {
+    "statusReadsBeforeCheckpoint": 1,
+    "statusReadsAfterCheckpoint": 1,
+    "postSends": 1,
+    "postPrepares": 1,
+    "composerClosed": true,
+    "statusReadsAfterConfirmedPost": 2
+  },
+  "meaning": "A held optional account-status read does not start on checkpoint while composing or block Post. The normal post-confirmed refresh still runs. No blockchain claim from this fixture."
+}

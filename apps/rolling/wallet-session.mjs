@@ -1,4 +1,5 @@
 import {executeRollingAction} from './wallet-action.mjs';
+import {executeAutomaticWithdrawal} from './automatic-withdrawal.mjs';
 import {measureRollingStage} from './performance.mjs';
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
@@ -510,6 +511,20 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    operationScope.preparationReads=[];
    return executeRollingAction(synchronized,action,{onPrepared,submit:intentId=>['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)&&(topups||aggregate)?submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId}):synchronized.submitPrepared(intentId)});
   });},
+  executeWithdrawal(deposit,{onPrepared,onProgress,signal}={}){
+   const withdrawalGuard=async()=>{signal?.throwIfAborted();await guardRoute();signal?.throwIfAborted();};
+   return locked(()=>executeAutomaticWithdrawal({
+   application:synchronized,deposit,guard:withdrawalGuard,onPrepared,onProgress,
+   waitUntil:async timestamp=>{
+    // SDK polling observes chain state, not the browser clock. No transaction
+    // is sent until a synchronized account confirms eligibility again.
+    await sdk.retryUntil(async()=>{
+     await withdrawalGuard();const block=await privateNode.getBlockData('checkpointed');await withdrawalGuard();
+     return block&&BigInt(block.header.globalVariables.timestamp.toString())>=BigInt(timestamp);
+    },'withdrawal availability',0);
+    operationScope.synchronized=false;
+   }
+  }));},
   readPreferences:options=>locked(()=>readPreferences(options)),
   readColdPreferences:options=>locked(()=>readColdPreferences(options))});
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();

@@ -24,6 +24,7 @@ import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
 import {createRollingApplication} from './application.mjs';
 import {executeRollingAction} from '../../apps/rolling/wallet-action.mjs';
+import {executeAutomaticWithdrawal} from '../../apps/rolling/automatic-withdrawal.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 // REQUIRED: run only after normal profile-protocol build/processing. Never invent
@@ -1836,7 +1837,7 @@ test('immediate post skips review estimation but submission estimates and enforc
 });
 test('immediate preparation rejects unrelated financial actions and caller fee overrides',async()=>{
  for(const options of [{immediate:false},{immediate:true,maximumFee:'999'}])await assert.rejects(fixture().app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'One click'},options));
- await assert.rejects(fixture().app.prepare({type:'withdraw',deposit:'9'},{immediate:true}));
+ for(const action of [{type:'withdraw-bok',amount:'1',recipient:'0x'+'33'.repeat(20)},{type:'cancel-deposit',receipt:{}},{type:'transfer-moderator',moderator:hex(4)}])await assert.rejects(fixture().app.prepare(action,{immediate:true}));
 });
 
 test('immediate Bok authorizes and publishes in one exact batch, estimate and send',async()=>{
@@ -2320,4 +2321,82 @@ for(const replacement of ['scope','pxe'])test(`early payment rejects ${replaceme
  const entered=Promise.withResolvers(),gate=Promise.withResolvers();f.options.sdk.preparePrivateFeePayment=async()=>{entered.resolve();await gate.promise;return {};};f.app=f.restart();
  const work=f.app.prefetchContext({ordinaryPayment:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
  if(replacement==='scope')scope={};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+
+test('automatic withdrawal readiness observes the oldest post deadline at the exact account anchor',async()=>{
+ const f=fixture();f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,150n,56n]};
+ f.state.hints=[{note:{schema_version:1,deposit_chain_id:9n,sequence:1n,post_id:8n,anchor_timestamp:80n,previous_link:3n,is_dummy:false},
+  contract_address:new AztecAddress(new Fr(1n)),owner:f.options.accountSession.owner,randomness:20n,storage_slot:21n,metadata:{stage:1,maybe_note_nonce:22n}},null];
+ const exists=await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.post_exists.slot)),new Fr(8n));
+ const deadline=await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.post_flag_deadline.slot)),new Fr(8n));
+ const reads=[];f.options.accountSession.node.getPublicStorageAt=async(reference,address,slot)=>{
+  reads.push({reference,address:String(address),slot:String(slot)});
+  assert.deepEqual(reference,{hash:hex(42)});
+  if(String(slot)===String(exists))return Fr.ONE;
+  assert.equal(String(slot),String(deadline));return new Fr(200n);
+ };
+ const result=await f.app.readWithdrawalReadiness('9');
+ assert.deepEqual(result,{anchor:{blockNumber:1,blockHash:hex(42),timestamp:'100'},screenedSequence:'0',needsScreening:true,readyAt:'200'});
+ assert.equal(reads.length,2);assert.equal(f.state.sends,0);
+});
+test('automatic withdrawal readiness skips history reads for an already checked deposit',async()=>{
+ const f=fixture(),result=await f.app.readWithdrawalReadiness('9');
+ assert.equal(result.needsScreening,false);assert.equal(result.readyAt,'50');
+ assert.deepEqual(f.state.privateReads.map(v=>v.name),['get_deposit_info']);assert.equal(f.state.sends,0);
+});
+test('automatic withdrawal readiness rejects missing consecutive history without submitting',async()=>{
+ const f=fixture();f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,50n,56n]};
+ await assert.rejects(f.app.readWithdrawalReadiness('9'),{code:'ROLLING_HISTORY_UNAVAILABLE'});assert.equal(f.state.sends,0);
+});
+
+function automaticWithdrawalFixture(needsScreening=false){
+ const f=collateralFixture(),checked=()=>[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,1n,1n,50n,56n];
+ f.state.responses={get_deposit_info:checked()};
+ if(needsScreening){
+  f.state.responses.get_deposit_info[7]=0n;
+  f.state.hints=[{note:{schema_version:1,deposit_chain_id:9n,sequence:1n,post_id:8n,anchor_timestamp:80n,previous_link:3n,is_dummy:false},
+   contract_address:new AztecAddress(new Fr(1n)),owner:f.options.accountSession.owner,randomness:20n,storage_slot:21n,metadata:{stage:1,maybe_note_nonce:22n}},null];
+  f.options.accountSession.node.getPublicStorageAt=async()=>Fr.ONE;
+ }
+ const send=f.options.accountSession.wallet.sendTx;
+ f.options.accountSession.wallet.sendTx=async(payload,options)=>{
+  const result=await send(payload,options);
+  if(payload.name==='screen'){
+   if(f.state.screenOutcome)f.state.outcome.outcome=f.state.screenOutcome;
+   else f.state.responses.get_deposit_info=checked();
+  }
+  return result;
+ };
+ f.run=()=>executeAutomaticWithdrawal({application:f.app,deposit:'9',guard:async()=>{},waitUntil:async()=>assert.fail('Unexpected timestamp wait')});
+ return f;
+}
+test('automatic withdrawal uses real application immediate preparation and submission for an eligible deposit',async()=>{
+ const f=automaticWithdrawalFixture(),result=await f.run();
+ assert.equal(result.status,'confirmed');assert.equal(result.action.type,'withdraw');
+ assert.deepEqual(f.state.calls.map(call=>call.name),['withdraw']);assert.equal(f.state.sends,1);assert.equal(f.state.estimates,1);
+});
+test('automatic withdrawal uses real application screen then withdraw after confirmed cursor advancement',async()=>{
+ const f=automaticWithdrawalFixture(true),result=await f.run();
+ assert.equal(result.status,'confirmed');assert.equal(result.action.type,'withdraw');
+ assert.deepEqual(f.state.calls.map(call=>call.name),['screen','withdraw']);assert.equal(f.state.sends,2);assert.equal(f.state.estimates,2);
+});
+for(const needsScreening of [false,true])test(`automatic withdrawal retains fee ceiling before ${needsScreening?'screen':'withdraw'} send`,async()=>{
+ const f=automaticWithdrawalFixture(needsScreening);f.state.fee=101n;
+ await assert.rejects(f.run(),{code:'ROLLING_FEE_CHANGED'});assert.equal(f.state.sends,0);assert.equal(f.state.estimates,1);
+});
+for(const outcome of ['reverted','pending','throw'])test(`automatic withdrawal real application stops after ${outcome} screening`,async()=>{
+ const f=automaticWithdrawalFixture(true);
+ if(outcome==='throw'){f.state.failSend=true;await assert.rejects(f.run(),/unknown after send/);}
+ else{f.state.screenOutcome=outcome;assert.equal((await f.run()).status,outcome==='pending'?'unknown':'reverted');}
+ assert.deepEqual(f.state.calls.map(call=>call.name),['screen']);assert.equal(f.state.sends,1);
+});
+test('automatic withdrawal readiness drains a failed public read and held sibling before releasing the application',async()=>{
+ const f=automaticWithdrawalFixture(true),held=Promise.withResolvers(),entered=Promise.withResolvers(),failure=Error('Read failed');let calls=0,settled=false;
+ f.options.accountSession.node.getPublicStorageAt=async()=>{
+  const order=++calls;if(calls===2)entered.resolve();if(order===1)throw failure;await held.promise;return Fr.ONE;
+ };
+ const work=f.app.readWithdrawalReadiness('9');work.then(()=>settled=true,()=>settled=true);
+ const rejection=assert.rejects(work,e=>e===failure);await entered.promise;await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(settled,false);await assert.rejects(f.app.readBalances(),{code:'ROLLING_BUSY'});
+ held.resolve();await rejection;assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });

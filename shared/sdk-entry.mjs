@@ -48,6 +48,7 @@ export { computeFeeJuiceMessageNullifier,
   getNonNullifiedL1ToL2MessageWitness } from '@aztec-labs/stdlib/messaging';
 export {createAztecNodeClient} from './aztec-node-client.mjs';
 export {waitForNode, waitForTx} from '@aztec-labs/aztec.js/node';
+export {retryUntil} from '@aztec-labs/foundation/retry';
 export { PrivateFeePaymentMethod, PrivateMintAndPayFeePaymentMethod } from './private-fee-payment.mjs';
 export { ProtocolContractAddress, ProtocolContractAddress as FeeJuiceAddressHolder } from '@aztec-labs/protocol-contracts';
 import { ProtocolContractAddress } from '@aztec-labs/protocol-contracts';

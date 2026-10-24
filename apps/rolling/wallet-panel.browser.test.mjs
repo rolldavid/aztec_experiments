@@ -7,6 +7,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import {chromium} from 'playwright';
 const fixture=`import {executeRollingAction} from '/wallet-action.mjs';
+import {executeAutomaticWithdrawal} from '/automatic-withdrawal.mjs';
 import {advanceAggregateClaim} from '/aggregate-wallet.mjs';
 import {mountRollingWalletPanel} from '/wallet-panel.mjs';
 import {selectPrivateViews} from '/private-views.mjs';
@@ -54,6 +55,9 @@ const topup=Object.fromEntries(['private-fee','bok'].map(kind=>{const local={};c
  async checkpointClaim(value){local.claim=value;},async recover(){return {receipt:{txHash:'0x'+'1'.repeat(64),amount:'300'}};},async reviewRevertedClaim(){local.claim=null;}
  };return [kind,cap];}));
 application.executeAction=(action,options)=>executeRollingAction(application,structuredClone(action),options);
+application.readWithdrawalReadiness=async()=>state.withdrawalStates.shift();
+application.executeWithdrawal=(deposit,options)=>executeAutomaticWithdrawal({application,deposit,...options,
+ guard:async()=>options.signal?.throwIfAborted(),waitUntil:async()=>{await boundary('withdrawal-wait');options.signal?.throwIfAborted();}});
 const runtime={selectPrivateViews,
  fundingWallets:()=>state.walletChoices??[{id:'metamask',name:'MetaMask'}],fundingWalletStatus:()=>state.fundingWallet??(state.walletChoices?{connected:false}:{connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)}),
  async connectFundingWallet(id){state.walletConnects=(state.walletConnects??0)+1;state.walletSelected=id;await boundary('funding-wallet');state.fundingWallet={connected:true,name:'MetaMask',address:'0x'+'1'.repeat(40)};},
@@ -89,7 +93,7 @@ async function browserFixture(t){
   if(Object.hasOwn(diagnosticModules,req.url)){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL(diagnosticModules[req.url],import.meta.url)));return;}
   if(req.url==='/invocation.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/invocation.mjs',import.meta.url)));return;}
   if(req.url==='/private-views.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(await fs.readFile(new URL('../../shared/rolling/private-views.mjs',import.meta.url)));return;}
-  if(!['/wallet-panel.mjs','/performance.mjs','/wallet-action.mjs','/reader-client.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
+  if(!['/wallet-panel.mjs','/automatic-withdrawal.mjs','/performance.mjs','/wallet-action.mjs','/reader-client.mjs','/avatar-upload.mjs','/model.mjs','/style.css'].includes(req.url)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'content-type':req.url.endsWith('.css')?'text/css':'text/javascript'});res.end(await fs.readFile(new URL('.'+req.url,import.meta.url)));
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();return new Promise(resolve=>server.close(resolve));});
  const browser=await chromium.launch({headless:true,...(process.env.T04_CHROMIUM_EXECUTABLE?{executablePath:process.env.T04_CHROMIUM_EXECUTABLE}:{})});t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
@@ -1455,7 +1459,7 @@ test('G17 composer rejects overlong content and presents readable desktop and mo
  for(const width of [390,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:`execution/evidence/G17/composer-${width}.png`});}
 });
 test('G17 balances load without a second check and show withdrawal time as a date',async t=>{
- const {page}=await browserFixture(t);await page.evaluate(()=>test.balances={fee:{available:'1000000000000000000'},bok:null,collateral:{deposits:[{id:'9',amount:'1000000000000000',reason:'time-locked',nextAllowedTime:'1792530000',eligible:false}],nextCursor:null}});await open(page);await navigateAccount(page,'Balance and withdrawals');await page.getByText('Posting balance: 1 credits (FEE).',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.balanceReads),1);assert(await page.getByText(/Available to withdraw after/).isVisible());assert.equal(await page.getByText(/chain time/).count(),0);assert(await page.getByRole('button',{name:'Withdraw deposit',exact:true}).isDisabled());
+ const {page}=await browserFixture(t);await page.evaluate(()=>test.balances={fee:{available:'1000000000000000000'},bok:null,collateral:{deposits:[{id:'9',amount:'1000000000000000',reason:'time-locked',nextAllowedTime:'1792530000',eligible:false}],nextCursor:null}});await open(page);await navigateAccount(page,'Balance and withdrawals');await page.getByText('Posting balance: 1 credits (FEE).',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>test.balanceReads),1);assert(await page.getByText(/Available to withdraw after/).isVisible());assert.equal(await page.getByText(/chain time/).count(),0);assert(await page.getByRole('button',{name:'Withdraw deposit',exact:true}).isEnabled());
 });
 test('G17 a failed contextual cost check does not automatically retry or send',async t=>{
  const {page}=await browserFixture(t);await page.evaluate(()=>test.failure='prepare');await open(page,{type:'like',post:'10'});await page.getByRole('alert').waitFor();assert.equal((await counts(page)).prepares,1);assert.equal((await counts(page)).sends,0);assert.equal(await page.getByLabel('Action',{exact:true}).count(),0);
@@ -1677,4 +1681,38 @@ for(const outcome of ['confirmed','error'])test(`regular post becomes visible at
  assert(await page.locator('dialog').isVisible());
  if(outcome==='error')assert(await page.getByRole('alert').isVisible());
  assert.equal(await page.evaluate(()=>test.effects),1);
+});
+
+test('automatic withdrawal hides history mechanics and completes required batches with one click',async t=>{
+ const {page}=await browserFixture(t);
+ await page.evaluate(()=>{
+  test.balances={fee:{available:'1000000000000000000'},bok:null,collateral:{deposits:[{id:'9',amount:'1000000000000000',reason:'screening-required',eligible:false}],nextCursor:null}};
+  test.withdrawalStates=[{screenedSequence:'0',needsScreening:true,readyAt:'200',anchor:{timestamp:'100'}},{screenedSequence:'0',needsScreening:true,readyAt:'200',anchor:{timestamp:'200'}},{screenedSequence:'2',needsScreening:true,readyAt:'200',anchor:{timestamp:'200'}},{screenedSequence:'4',needsScreening:false,readyAt:'200',anchor:{timestamp:'200'}}];
+  test.hold='withdrawal-wait';
+ });
+ await open(page);await navigateAccount(page,'Balance and withdrawals');
+ assert.equal(await page.getByRole('button',{name:'Check posts for withdrawal'}).count(),0);
+ await page.getByRole('button',{name:'Withdraw deposit',exact:true}).click();
+ await page.getByText(/Your withdrawal will continue automatically/).waitFor();
+ assert.equal(await page.evaluate(()=>test.sends),0);
+ assert(await page.getByRole('button',{name:'Withdraw deposit',exact:true}).isDisabled());
+ assert(!/screen|history|check posts/i.test(await page.locator('dialog').innerText()));
+ await page.evaluate(()=>{test.hold=null;test.release();});
+ await page.getByRole('button',{name:'Review Ethereum refund',exact:true}).waitFor();
+ assert.deepEqual(await page.evaluate(()=>({sends:test.sends,prepares:test.prepares})),{sends:3,prepares:3});
+ assert.equal(await page.getByRole('button',{name:'Confirm and send',exact:true}).count(),0);
+});
+
+test('public checkpoint while composing does not queue a balance scan ahead of Post',async t=>{
+ const {page}=await browserFixture(t);
+ await open(page,{type:'post'});await page.getByLabel('Message',{exact:true}).waitFor();
+ const before=await page.evaluate(()=>{test.hold='status';return test.statusReads;});
+ await page.evaluate(()=>panel.observePublicPosts([],{confirmationCheckpoint:{number:50,hash:'0x'+'1'.repeat(64)}}));
+ assert.equal(await page.evaluate(()=>test.statusReads),before);
+ await page.getByLabel('Message',{exact:true}).fill('No balance scan ahead of Post.');
+ await page.getByRole('button',{name:'Post',exact:true}).click();
+ await page.waitForFunction(()=>test.sends===1&&!document.querySelector('dialog').open);
+ assert.equal(await page.evaluate(()=>test.prepares),1);
+ // Confirmed-account refresh is still allowed after submission completes.
+ await page.evaluate(()=>{test.hold=null;test.release?.();});
 });

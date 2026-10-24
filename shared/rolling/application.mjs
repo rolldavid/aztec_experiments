@@ -870,6 +870,29 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         return {complete:true,phase:'complete',anchor,nextCursor:null,available,requests,totals,refundedMeaning:'already-returned-to-unallocated-balance'};
       }catch(error){accountingScan=null;completedAccounting=null;throw error;}
     });},
+    async readWithdrawalReadiness(deposit){return exclusive(async()=>{
+      const id=field(deposit,true),anchor=await balanceAnchor(),board=await contract();
+      const info=await collateralInfo(id,board,BigInt(anchor.timestamp));
+      const needsScreening=BigInt(info.screenedSequence)<BigInt(info.lastRealSequence);
+      let readyAt=BigInt(info.nextAllowedTime);
+      if(needsScreening){
+        const [,child]=await screeningArguments(board,id);
+        check(child?.note&&BigInt(child.note.sequence)===BigInt(info.screenedSequence)+1n,'ROLLING_HISTORY_UNAVAILABLE');
+        if(!child.note.is_dummy){
+          const observations=await Promise.allSettled(['post_exists','post_flag_deadline'].map(async name=>{
+            const base=deployment.board.artifact.storageLayout?.[name]?.slot;check(base!==undefined,'ROLLING_ABI_MISMATCH');
+            const slot=await sdk.deriveStorageSlotInMap(new sdk.Fr(BigInt(base)),new sdk.Fr(BigInt(child.note.post_id)));
+            return chainValue(await session.node.getPublicStorageAt({hash:anchor.blockHash},deployment.board.address,slot));
+          }));
+          const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+          const values=observations.map(value=>value.value);
+          check(values[0]===1n&&values[1]>0n&&values[1]<(1n<<64n),'ROLLING_INVALID_RESPONSE');
+          if(values[1]>readyAt)readyAt=values[1];
+        }
+      }
+      await checkBalanceAnchor(anchor);
+      return {anchor,screenedSequence:info.screenedSequence,needsScreening,readyAt:String(readyAt)};
+    });},
     async readBalances({cursor=0,includeBok=false}={}){return exclusive(async()=>{
       check(typeof includeBok==='boolean');if(includeBok)await ensureBok();
       const continuation=balanceContinuation;check(cursor===0||typeof cursor==='string'&&continuation?.token===cursor,'ROLLING_BALANCE_CURSOR_INVALID');
@@ -932,7 +955,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }}catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {identities:records.map(record=>record.id),records,nextCursor:empty?null:cursor+8};});},
     async prepare(input,options){return exclusive(async()=>{
-      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok','like','unlike','preference','read-marker','name','bio','avatar','claim-deposit','claim-private-fee','claim-bok'].includes(input?.type));
+      const immediate=options!==undefined;if(immediate)check(options&&Object.keys(options).length===1&&options.immediate===true&&['post','reply','quote','repost','bok','like','unlike','preference','read-marker','name','bio','avatar','claim-deposit','claim-private-fee','claim-bok','screen','withdraw'].includes(input?.type));
       await guard();const action=clone(input),store=await slot();let prior=await store.read();
       if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
         const final=await outcome(prior,{history:true});check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}

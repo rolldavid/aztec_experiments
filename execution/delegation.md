@@ -130,3 +130,12 @@ shared checkout and must be reviewed/integrated with the next normal release, no
 published separately. proposed_feed_design reviews wait/cancel, confirmed screening
 progress and no automatic resubmission. Root owns combined build and acceptance.
 Current static a8ae686d publication completed before this handoff arrived.
+
+## Active owner-only delivery and performance integration —24October
+
+- pending_reply_ui: zero-extra-note native owner-only implementation and Board/FPC wiring in isolated checkout;12 native cases pass, production integration underway.
+- proposed_feed_design: narrow JS owner-only oracle seam and full-field protocol-nullifier encryption binding. Reviewed automatic withdrawal boundaries; root integrated corrections.
+- pending_feed_release: isolated native dependency build/provenance integration and independent owner-only review; no fabricated artifact or gas pins. Reviewed removal of composer warmup.
+- Root: combined next-normal-release integration, publication and actual measurements.631 withdrawal/application/session tests pass. Live a8ae post36.728s; goal15s remains unmet.
+
+The rejected counter-note prototype must not ship. Discovery adds no private notes or logs.
