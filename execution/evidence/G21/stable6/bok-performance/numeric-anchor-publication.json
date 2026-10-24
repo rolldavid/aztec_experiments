@@ -1,0 +1,103 @@
+{
+  "commit": "0021c30ae2aaf5c7eee4166db4c82a9e405427e9",
+  "observedAt": "2026-10-24T00:56:09.740898+00:00",
+  "publication": {
+    "ui": "/opt/rolling-ui/releases/0021c30ae2aaf5c7eee4166db4c82a9e405427e9",
+    "sourcePinsSha256": "ed7f6d9483eace0ef819bca98727711710cfd04eebbfa1c4bf56675de4346762",
+    "pidsUnchanged": {
+      "rolling-application.service": 642411,
+      "rolling-application-proxy.service": 642414,
+      "rolling-node.service": 561964,
+      "rolling-query.service": 565186,
+      "board-prover.service": 651105,
+      "board-prover-proxy.service": 630307,
+      "rolling-moderator.service": 567551
+    },
+    "publicFiles": [
+      {
+        "path": "/wallet/aztec_bundle.js",
+        "sha256": "267fcf917c91fd4507b642ebe059268530919cb8c5445786980632ad5dc55902",
+        "bytes": 16541834,
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/wallet/runtime.mjs",
+        "sha256": "f35becd80446a1c02b2af344f2e8f85409bb8d0154d6c906f53e2fca9e11187d",
+        "bytes": 368738,
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/reader.mjs",
+        "sha256": "f57a6d99c54ee654872185c6d07fed30d53819893f39e3ea40456022c6c2b8b9",
+        "bytes": 32125,
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/wallet-panel.mjs",
+        "sha256": "715b6e447c75d5392a2f1f8576ae1497a977042da1999415454f3b80d1d97e48",
+        "bytes": 139474,
+        "cacheControl": "no-store"
+      },
+      {
+        "path": "/wallet/account.js",
+        "sha256": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2",
+        "bytes": 17338,
+        "cacheControl": "no-store"
+      }
+    ],
+    "root": {
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    "invalidationId": "IC24KA5K4SS4ZESFEZZNKSXE7T",
+    "invalidationStatus": "Completed"
+  },
+  "build": {
+    "sdkInputs": 2093,
+    "sdkOutputs": 65,
+    "files": {
+      ".build/sdk/sdk-manifest.json": "22c25cc661feffed21a202302fa961640d7277d29b635f782a0e837dd55b92cd",
+      ".build/sdk/aztec_browser.js": "267fcf917c91fd4507b642ebe059268530919cb8c5445786980632ad5dc55902",
+      ".build/rolling-wallet/manifest.json": "eff4fe5ad75cc669bbab5f2225cf236e108c561b1c461762b741b6f17da26a95",
+      ".build/rolling-wallet/runtime.mjs": "f35becd80446a1c02b2af344f2e8f85409bb8d0154d6c906f53e2fca9e11187d",
+      "scripts/patch-pxe-reorg-anchor.mjs": "16dbe0097a309358a7ce4aaba967cfa52086b5ef8d6db9559af7b0758106b8dd",
+      "node_modules/@aztec-labs/pxe/src/block_synchronizer/block_synchronizer.ts": "3f16252e53ee3b34080628b4d018682bae7945da61c3363671985c4ea5a69f70",
+      "node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js": "4da46110f2959f999a51a9997e4f49947e05535a3e14713495723ce7e9f19ca1"
+    },
+    "dependencyPatchLocation": "isolated build checkout; no running service libraries changed"
+  },
+  "verification": {
+    "integratedChecks": 73,
+    "failed": 0,
+    "skipped": 0,
+    "nativeSdkAndLmdbChecks": 60,
+    "checksPreserved": [
+      "numeric canonical height",
+      "returned block hash",
+      "computed header hash",
+      "fresh chain tips",
+      "reorg rollback and context fences"
+    ]
+  },
+  "readCounts": {
+    "scope": "actual SDK regression observations, not wall-time measurements",
+    "advancingAnchorCached": {
+      "before": 7,
+      "after": 6
+    },
+    "advancingAnchorUncached": {
+      "before": 9,
+      "after": 6
+    },
+    "unchangedAnchor": {
+      "before": 1,
+      "after": 1
+    }
+  },
+  "benchmark": {
+    "status": "pending on this published SDK; previous live latency results remain tied to their recorded releases",
+    "fixtureAcceptedRevision": "c19514f82558d2b81a0544b130db8ce0b4ef2ef3",
+    "fixtureTree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92",
+    "hasClearCompleted": false
+  }
+}
