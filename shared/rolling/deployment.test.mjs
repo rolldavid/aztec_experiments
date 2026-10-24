@@ -67,12 +67,23 @@ test('untrusted/stale node, missing guard and secret-bearing URL fail without fu
   const f=await fixture();mutate(f);await assert.rejects(verifyRollingDeployment(f.options),error=>error.code==='ROLLING_DEPLOYMENT_INVALID'&&!error.message.includes('PRIVATE_SENTINEL'));assert.equal(f.state.destroyed,0);
  }
 });
-test('context changed after canonical reads rejects; whole operation has a fixed20s deadline',async t=>{
+test('context changes dispose the provider; pending guard waits for explicit caller cancellation without a deadline',async t=>{
  const f=await fixture();f.options.contextGuard=async()=>{if(++f.state.guards===2)throw Error('account replaced');};
  await assert.rejects(verifyRollingDeployment(f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});assert.equal(f.state.destroyed,1);
- const stalled=await fixture();stalled.options.contextGuard=()=>new Promise(()=>{});
- t.mock.timers.enable({apis:['Date','setTimeout']});const pending=verifyRollingDeployment(stalled.options);
- const rejected=assert.rejects(pending,{code:'ROLLING_DEPLOYMENT_INVALID'});t.mock.timers.tick(20000);await rejected;
+ const stalled=await fixture(),controller=new AbortController();let entered,settled=false;
+ const guardEntered=new Promise(resolve=>{entered=resolve;});
+ stalled.options.contextGuard=()=>new Promise((_resolve,reject)=>{
+  controller.signal.addEventListener('abort',()=>reject(controller.signal.reason),{once:true});entered();
+ });
+ t.mock.timers.enable({apis:['Date','setTimeout']});
+ const pending=verifyRollingDeployment(stalled.options);
+ pending.then(()=>{settled=true;},()=>{settled=true;});
+ const rejected=assert.rejects(pending,{code:'ROLLING_DEPLOYMENT_INVALID'});
+ await guardEntered;t.mock.timers.tick(60*60*1000);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(settled,false);assert.equal(stalled.state.inspection,0);assert.equal(stalled.state.destroyed,0);
+ controller.abort(Error('Account opening cancelled'));await rejected;
+ assert.equal(settled,true);assert.equal(stalled.state.inspection,0);assert.equal(stalled.state.destroyed,0);
+ assert.deepEqual(stalled.state.reads,[]);assert.deepEqual(stalled.state.ethReads,[]);
 });
 
 test('unactivated canonical portal cannot authorize funding, and activation must remain canonically anchored',async()=>{
