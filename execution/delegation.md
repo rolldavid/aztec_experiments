@@ -139,3 +139,7 @@ Current static a8ae686d publication completed before this handoff arrived.
 - Root: combined next-normal-release integration, publication and actual measurements.631 withdrawal/application/session tests pass. Live a8ae post36.728s; goal15s remains unmet.
 
 The rejected counter-note prototype must not ship. Discovery adds no private notes or logs.
+
+## Performance resume after disk cleanup — 24 October 2026
+
+Root integrates reviewed source, owns the one retained build checkout and live publication/measurement. Pending reply UI agent measures remaining native private-execution oracle and RPC costs in the retained owner-state checkout. Pending feed release agent examines worker/transport overhead in the retained timing checkout. Proposed feed design independently reviews attribution and release coherence read-only. No new dependency copies or browser profiles; remove scratch and completed agent checkouts after integration, retaining commits and uncommitted source.
