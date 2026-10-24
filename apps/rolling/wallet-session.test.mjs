@@ -279,48 +279,16 @@ test('failed preference read preserves session and existing prepared financial i
  f.state.failEvents=false;assert.equal((await session.application.readPreferences()).status,'complete');await session.close();
 });
 
-// Actual cold reader, AEAD, local artifact hash and session lease; explicitly
-// synthetic PXE mailbox and chain anchor. Full-chain recovery is a separate gate.
-function installColdMailbox(f){
- const receipt={schemaVersion:1,database:'ab'.repeat(32),epoch:'cd'.repeat(32),sequence:0,
-  anchor:{blockNumber:10,blockHash:hex(55)},nextBlock:1,nextLog:0,records:[],head:null,complete:false};
- f.node.getBlockData=async height=>{assert(height===10||height==='checkpointed');return {blockHash:Fr.fromString(hex(55)),header:{globalVariables:{blockNumber:10},hash:async()=>Fr.fromString(hex(55))}};};
- f.pxe.processRollingPreferenceRecovery=async(config,{contextGuard})=>{
-  assert(f.state.active);f.state.events.push('cold-mailbox');await contextGuard();
-  assert.equal(config.expectedArtifactHash,(await computeArtifactHash(artifact)).toString());
-  assert.equal(config.tier,'checkpointed');assert.equal(config.scope,f.input.account.address);
-  assert.deepEqual(config.network,{chainId:31337,version:1,rollup:eth(11)});
-  if(f.state.waitCold)await f.state.waitCold;
-  return structuredClone(receipt);
- };
-}
-test('cold recovery starts under the account lease without signing capsule or ordinary event discovery',async()=>{
- const f=await sessionFixture();installColdMailbox(f);const session=await createRollingWalletSession(f.input);
- assert(!f.state.events.includes('signing-capsule'));
- f.pxe.getPrivateEvents=async()=>{throw Error('Unbounded event discovery forbidden');};
- const start=f.state.events.length,result=await session.application.readColdPreferences();
- assert.equal(result.status,'recovering');assert.equal(result.complete,false);assert.equal(result.progress.nextBlock,1);
- const events=f.state.events.slice(start);assert.equal(events.filter(x=>x==='lock').length,1);assert.equal(events.filter(x=>x==='unlock').length,1);
- assert(!events.includes('signing-capsule'));assert(!events.includes('preference-head'));assert.equal(f.state.sends,0);
- await session.application.ownedIdentities();assert.equal(f.state.events.filter(x=>x==='signing-capsule').length,1);
- await session.application.readAccountStatus();assert.equal(f.state.events.filter(x=>x==='signing-capsule').length,1);await session.close();
-});
-test('missing cold extension rejects without using the ordinary preference reader',async()=>{
+test('saved choices use native synchronized preference discovery without the obsolete cold extension',async()=>{
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input);
- await assert.rejects(session.application.readColdPreferences(),{code:'ROLLING_COLD_PREFERENCES_INVALID'});
- assert(!f.state.events.includes('signing-capsule'));assert(!f.state.events.includes('preference-events'));assert.equal(f.state.sends,0);await session.close();
-});
-test('cold cancellation or account change retains the lock until the original PXE operation settles',async()=>{
- for(const mode of ['abort','account']){
-  const f=await sessionFixture();installColdMailbox(f);const session=await createRollingWalletSession(f.input);let release;
-  f.state.waitCold=new Promise(resolve=>release=resolve);const controller=new AbortController();
-  const pending=session.application.readColdPreferences({signal:controller.signal}),observed=assert.rejects(pending,{code:'ROLLING_COLD_PREFERENCES_UNAVAILABLE'});
-  const deadline=Date.now()+2000;while(!f.state.events.includes('cold-mailbox')){assert(Date.now()<deadline);await new Promise(r=>setTimeout(r,1));}
-  if(mode==='abort')controller.abort();else f.input.account.secretKey=hex(99);
-  assert(session.busy&&f.state.active);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
-  await assert.rejects(session.application.readAccountStatus(),{code:'ROLLING_BUSY'});
-  release();await observed;assert(!session.busy&&!f.state.active);assert.equal(f.state.sends,0);await session.close();
- }
+ assert.equal(Object.hasOwn(session.application,'readColdPreferences'),false);
+ f.pxe.processRollingPreferenceRecovery=()=>{throw Error('Obsolete recovery extension must not be called');};
+ const start=f.state.events.length,result=await session.application.readPreferences();
+ assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,[]);
+ const events=f.state.events.slice(start);
+ assert(events.indexOf('preference-head')<events.indexOf('preference-events'));
+ assert.equal(events.filter(x=>x==='lock').length,1);assert.equal(events.filter(x=>x==='unlock').length,1);
+ assert.equal(f.state.sends,0);await session.close();
 });
 
 // Labelled SDK/node failures at every constructor boundary; no live chain.

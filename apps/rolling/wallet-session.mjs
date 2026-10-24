@@ -8,8 +8,6 @@ import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
 import {l2JournalScopeText} from '../../shared/l2-journal.mjs';
 import {encodeDepositExitCommitment,sha256Field} from '../../shared/protocol-commitments.mjs';
 import {createAggregateWallet,starterFundingAllocation,createStandaloneTopupWallet,advanceAggregateClaim,submitWithFundingCheckpoint} from '../../shared/rolling/aggregate-wallet.mjs';
-import {createRollingColdPreferenceReader} from '../../shared/rolling/cold-preference-reader.mjs';
-import {createRollingCompactClient} from '../../shared/rolling/compact-client.mjs';
 import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
 import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
@@ -300,7 +298,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
  let operationScope=null;
- let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,readColdPreferences,initializeAccount,aggregate,prepareStarter,topups,withdrawal,depositRefunds;
+ let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,initializeAccount,aggregate,prepareStarter,topups,withdrawal,depositRefunds;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -466,19 +464,6 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
       walletSecret:captured.secretKey,walletSalt:captured.salt});
     return preferenceReader.read(options);
    };
-   // This is a separate bounded capability, never a fallback to the ordinary
-   // event reader. Hash the verified local artifact, not remote configuration.
-   let coldReader;
-   readColdPreferences=async options=>{
-    await guardRoute();
-    if(!coldReader){
-     const expectedArtifactHash=(await sdk.computeArtifactHash(deployment.board.artifact)).toString();await guardRoute();
-     const compact=createRollingCompactClient({url:new URL(query.url).origin,tier:'checkpointed',contextGuard:guardRoute,...(query.allowLocalDev===true?{allowLocalDev:true}:{})});
-     coldReader=createRollingColdPreferenceReader({sdk,pxe,node,owner:instance.address,deployment,expectedArtifactHash,tier:'checkpointed',compact,
-      contextGuard:guardRoute,privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt});
-    }
-    return coldReader.read(options);
-   };
    withdrawal=createCollateralWithdrawal({sdk,ethers,provider:funding.provider,node,application:app,scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,captureWallet:captureFundingWallet??(async()=>{throw fail('ROLLING_FUNDING_UNAVAILABLE');}),contextGuard:guardRoute,resolveBokScope:funding.resolveBokWithdrawal});
    depositRefunds=createDepositRefunds({sdk,ethers,provider:funding.provider,node,
     scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},
@@ -525,8 +510,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     operationScope.synchronized=false;
    }
   }));},
-  readPreferences:options=>locked(()=>readPreferences(options)),
-  readColdPreferences:options=>locked(()=>readColdPreferences(options))});
+  readPreferences:options=>locked(()=>readPreferences(options))});
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
  const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress,invalidateSnapshot:()=>{operationScope={synchronized:false};}});
  const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({ethAvailable:kind==='bok'&&selected.bokTopup!==undefined,defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;

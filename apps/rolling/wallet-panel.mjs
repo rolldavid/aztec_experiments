@@ -291,7 +291,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);preferences=null;preferenceProgress=null;
   const abort=recoveryAbort=new AbortController();controlsBusy(true);
   try{for(;;){
-   const result=await session.application.readColdPreferences({signal:abort.signal});
+   const result=await session.application.readPreferences({signal:abort.signal});
    checkAccount(epoch);if(abort.signal.aborted)throw connectionFailure;
    if(result?.status==='complete'&&result.complete===true&&typeof runtime.selectPrivateViews==='function'){
     preferences=result.preferences;preferenceUpdates.clear();preferenceProgress=null;notice='Your saved items are ready.';note('');onPrivateChange();return;
