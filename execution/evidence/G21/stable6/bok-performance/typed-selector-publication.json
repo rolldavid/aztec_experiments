@@ -1,0 +1,67 @@
+{
+  "commit": "cdab01f79a34a0c2d1cfde107e76d46380a646da",
+  "startedAt": "2026-10-24T01:23:16.831426+00:00",
+  "publication": {
+    "source": "/opt/rolling-bok/releases/cdab01f79a34a0c2d1cfde107e76d46380a646da",
+    "previousSource": "/opt/rolling-bok/releases/392bee960c08086f234f631e8cf5c157cfe3e63b",
+    "sourcePinSha256": "90386fcec71439518f52b7a256b4af5f280fc16c5520f3a840b3edd9dd95b89b",
+    "files": {
+      "plugins/agent.mjs": "c4fcb15fe3c5d6110f383ece7b123d145b40541d1de496c5fc75a2ef2f91666b",
+      "plugins/github-tools.mjs": "0e87fa6effe9dc15f0a2b24ed5923570c951f0d6efef98114dcf27fc91710cbd"
+    },
+    "status": "ready",
+    "newPid": "8524",
+    "newProxyPid": "8525",
+    "unitSha256": "6d59f56244df4db7880c4e8f84310645333d7a49249d238bc4771f461bd5bdc5",
+    "configSha256": "fc3543d2f224104fe9c6b0a6fc0fdbe6a455030e8a4d0f2b997ba4ddd0a3e636",
+    "previousConfigSha256": "fc3543d2f224104fe9c6b0a6fc0fdbe6a455030e8a4d0f2b997ba4ddd0a3e636",
+    "nativeProverThreads": 4,
+    "indexGeneration": "12",
+    "normalOwnedResume": true,
+    "statePreserved": true
+  },
+  "fixture": {
+    "operation": "disposable-performance-baseline",
+    "previousAccepted": "591c78f8976f1c14a52dddd6166d75743499eac5",
+    "originalBaseline": "028da8d40cdd024b67e72956a411aa38a8886c83",
+    "acceptedRevision": "ec75ef10969ed58148c3a9975cbb30b7cdabf931",
+    "tree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92",
+    "sourceDigest": "a3706cc3889448a83a89e947d6e3fdfc10e5539f8423ff6fecccfef8f9397b05",
+    "files": [
+      "browser-tests.json",
+      "index.html",
+      "package.json",
+      "test.js"
+    ],
+    "hasClearCompleted": false,
+    "mirrorRemoteCommit": "aac738dc6bbe8bb782ca5604913bc206a6cf0856",
+    "mirrorRemoteTree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92"
+  },
+  "publicReadback": {
+    "url": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/ec75ef10969ed58148c3a9975cbb30b7cdabf931/files/index.html",
+    "status": 200,
+    "sha256": "31dd18b10de8ac81f3ae24f0fd1b58d9aa702c16f40908394fc2ddc1caa19eaa",
+    "originalTree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92",
+    "acceptedRevision": "ec75ef10969ed58148c3a9975cbb30b7cdabf931",
+    "verifiedAt": "2026-10-24T01:23:38.378587+00:00"
+  },
+  "verification": {
+    "modelAndToolChecks": 112,
+    "repositoryChecks": 38,
+    "existingOptInSkipped": 2,
+    "independentReview": "approved",
+    "behavior": [
+      "literal selector descriptors compile to exact ordinary CSS selectors",
+      "existing raw CSS strings are preserved without normalization",
+      "authoritative browser-plan validation and coverage checks remain mandatory",
+      "parsed plan data fits the existing context budget without displacing valid exact source"
+    ]
+  },
+  "benchmark": {
+    "status": "in progress at evidence recording",
+    "postClickedAt": "2026-10-24T01:24:04.375Z",
+    "previousMeasuredSeconds": 188.077,
+    "previousMeasuredBrowser": "0021c30a",
+    "newResultClaimed": false
+  }
+}
