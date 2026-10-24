@@ -5,6 +5,7 @@ import {constants} from 'node:fs';
 import path from 'node:path';
 import {createHash,createPrivateKey,sign,randomUUID} from 'node:crypto';
 import {fileState} from './operations.mjs';
+import {MAX_PUBLISHED_REVISIONS} from './publication-limits.mjs';
 const hash=(b,algorithm='sha256')=>createHash(algorithm).update(b).digest('hex');
 const hex=(v,n)=>typeof v==='string'&&new RegExp('^[0-9a-f]{'+n+'}$').test(v);
 const integer=v=>Number.isSafeInteger(v)&&v>0;
@@ -216,7 +217,7 @@ async function broker({installationPermissionProfile='restricted',creationTempla
   syncConnected:receipt=>owned(async()=>{
    const captured=await capture(receipt,artifactRoot),b=captured.binding,c=mapping(b.threadId);assert.deepEqual(receipt.connection,c);
    const s=await connectedSession(c),repo=await connectedEntry(c,s);let entry=repo.revisions[b.acceptedRevision];
-   if(entry)assert.deepEqual(entry.binding,b);else{assert(repo.latest===b.readRevision&&Object.keys(repo.revisions).length<64&&!Object.values(repo.revisions).some(r=>!r.complete||r.binding.invocationId===b.invocationId));entry={binding:b,date:new Date(Math.floor(now()/1000)*1000).toISOString().replace('.000Z','Z'),steps:{},complete:false};repo.revisions[b.acceptedRevision]=entry;await save();}
+   if(entry)assert.deepEqual(entry.binding,b);else{assert(repo.latest===b.readRevision&&Object.keys(repo.revisions).length<MAX_PUBLISHED_REVISIONS&&!Object.values(repo.revisions).some(r=>!r.complete||r.binding.invocationId===b.invocationId));entry={binding:b,date:new Date(Math.floor(now()/1000)*1000).toISOString().replace('.000Z','Z'),steps:{},complete:false};repo.revisions[b.acceptedRevision]=entry;await save();}
    const once=(label,method,route,body,project,reconcile)=>onceConnected(s,entry.steps,label,method,s.route+route,body,project,reconcile);
    const read=(route)=>s.request('GET',s.route+route,undefined,s.credential);
    const prResult=(r,expectedSha)=>{assert(integer(r?.number)&&r.state==='open'&&r.draft===true&&r.base?.repo?.id===c.repositoryId&&r.head?.repo?.id===c.repositoryId&&r.base.ref===c.baseBranch&&r.head.ref===c.workBranch&&r.head.sha===expectedSha&&r.html_url==='https://github.com/'+c.fullName+'/pull/'+r.number);return {number:r.number,url:r.html_url};};
@@ -264,7 +265,7 @@ async function broker({installationPermissionProfile='restricted',creationTempla
    if(!repo){assert(Object.keys(state.repositories).length<128&&b.readRevision===null);repo={repositoryId:b.repositoryId,threadId:b.threadId,marker:'Bok source mirror '+id+' '+randomUUID(),steps:{},revisions:{},latest:null};state.repositories[id]=repo;await save();}
    assert(repo.repositoryId===b.repositoryId&&repo.threadId===b.threadId);
    let entry=repo.revisions[b.acceptedRevision];
-   if(entry){assert.deepEqual(entry.binding,b);}else{assert(repo.latest===b.readRevision&&Object.keys(repo.revisions).length<64&&!Object.values(repo.revisions).some(r=>r.binding.invocationId===b.invocationId));assert(!Object.values(repo.revisions).some(r=>!r.complete));entry={binding:b,date:new Date(Math.floor(now()/1000)*1000).toISOString().replace('.000Z','Z'),steps:{},complete:false};repo.revisions[b.acceptedRevision]=entry;await save();}
+   if(entry){assert.deepEqual(entry.binding,b);}else{assert(repo.latest===b.readRevision&&Object.keys(repo.revisions).length<MAX_PUBLISHED_REVISIONS&&!Object.values(repo.revisions).some(r=>r.binding.invocationId===b.invocationId));assert(!Object.values(repo.revisions).some(r=>!r.complete));entry={binding:b,date:new Date(Math.floor(now()/1000)*1000).toISOString().replace('.000Z','Z'),steps:{},complete:false};repo.revisions[b.acceptedRevision]=entry;await save();}
    async function once(steps,label,method,url,body,credential,project,reconcile){const identity=hash(JSON.stringify([method,url,body]));let record=steps[label];if(record){assert(record.identity===identity);if(record.done)return record.result;const found=await reconcile();if(found===null)throw fail('GITHUB_BROKER_UNRESOLVED');record.result=project(found);record.done=true;await save();return record.result;}
     if(slot)assert.equal((await s.request('GET',route+'/actions/permissions',undefined,poolCredential))?.enabled,false,'Pool Actions must remain disabled');
     record={identity,done:false};steps[label]=record;await save();try{record.result=project(await s.request(method,url,body,credential));}catch(e){const d=getGitHubBrokerDiagnostic(e);if(d){record.diagnostic=d;await save();}throw e;}record.done=true;await save();return record.result;}

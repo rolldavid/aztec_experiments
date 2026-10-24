@@ -7,9 +7,10 @@ import http from 'node:http';
 import {createHash,randomUUID} from 'node:crypto';
 import {hostingPolicyHash} from '../hosting-policy.mjs';
 import {createStaticPublication} from '../static-publication.mjs';
+import {MAX_PUBLISHED_BYTES,MAX_PUBLISHED_FILES,MAX_PUBLISHED_REVISIONS} from '../publication-limits.mjs';
 import {createArtifactApi} from '../artifact-api.mjs';
 import {publishAcceptedRevision} from '../main.mjs';
-const sha=b=>createHash('sha256').update(b).digest('hex'),revision=n=>String(n).repeat(40),repositoryId='a'.repeat(64),threadId='0x'+'b'.repeat(64);
+const sha=b=>createHash('sha256').update(b).digest('hex'),revision=n=>(n<10?String(n).repeat(40):n.toString(16).padStart(40,'0')),repositoryId='a'.repeat(64),threadId='0x'+'b'.repeat(64);
 // Labelled validated-executor receipt fixture; these tests qualify publication,
 // not a second execution run or a real accepted Git reference.
 async function receipt(f,n=1,readRevision=null,{sourceExtra,artifactName='index.html',html}={}){
@@ -22,7 +23,7 @@ async function receipt(f,n=1,readRevision=null,{sourceExtra,artifactName='index.
  const body=html??'<!doctype html><title>revision '+n+'</title>',manifest=[{path:artifactName,bytes:Buffer.byteLength(body),sha256:sha(body)}];
  const artifacts=JSON.stringify({schema:1,files:[{path:artifactName,sha256:sha(body),data:Buffer.from(body).toString('base64')}]});
  for(const [name,data] of [['source-snapshot.json',source],['artifacts.json',artifacts],['cleanup.json','{"ownedContainerAbsent":true}']])await fs.writeFile(path.join(outputDirectory,name),data,{mode:0o600});
- return {repositoryId,threadId,invocationId:'0x'+String(n).repeat(64),readRevision,acceptedRevision:revision(n),validation:{passed:true,revision:revision(n),sourceDigest:sha(JSON.stringify(sourceManifest)),sourceManifest,sourceArchiveSha256:sha(source),artifactArchiveSha256:sha(artifacts),artifacts:manifest,artifactSha256:sha(JSON.stringify(manifest)),testsPassed:true,testCount:1,buildPassed:true,browser:{passed:true,browserVersion:'153.0.8010.12',checks:4,artifactSha256:sha(JSON.stringify(manifest)),policyHash:hostingPolicyHash(f.config.origin,f.config.boardOrigin),planSha256:sha(JSON.stringify(plan))},outputDirectory}};
+ return {repositoryId,threadId,invocationId:'0x'+(n<10?String(n).repeat(64):n.toString(16).padStart(64,'0')),readRevision,acceptedRevision:revision(n),validation:{passed:true,revision:revision(n),sourceDigest:sha(JSON.stringify(sourceManifest)),sourceManifest,sourceArchiveSha256:sha(source),artifactArchiveSha256:sha(artifacts),artifacts:manifest,artifactSha256:sha(JSON.stringify(manifest)),testsPassed:true,testCount:1,buildPassed:true,browser:{passed:true,browserVersion:'153.0.8010.12',checks:4,artifactSha256:sha(JSON.stringify(manifest)),policyHash:hostingPolicyHash(f.config.origin,f.config.boardOrigin),planSha256:sha(JSON.stringify(plan))},outputDirectory}};
 }
 async function fixture(options={}){
  const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bok-publication-'))),directory=path.join(root,'published'),artifactRoot=path.join(root,'artifacts');
@@ -211,5 +212,37 @@ for(const kind of ['unfinished directory','corrupt pointer'])test('reopen reject
   if(kind==='unfinished directory')await fs.mkdir(path.join(f.directory,p.publicationId,'.pending-synthetic'),{mode:0o700});
   else{const file=path.join(f.directory,'catalog.json'),state=JSON.parse(await fs.readFile(file));state.threads[p.publicationId].latest=revision(9);await fs.writeFile(file,JSON.stringify(state));}
   await assert.rejects(f.reopen());
+ }finally{await f.close();}
+});
+
+test('accepted revision resumes beyond the former 20-revision limit without rebuilding',async()=>{
+ const f=await fixture({maxRevisions:20});try{
+  let previous=null,published;
+  for(let n=1;n<=20;n++){
+   const accepted=await receipt(f,n,previous);published=await f.publisher.publish(accepted);previous=accepted.acceptedRevision;
+  }
+  const pending=await receipt(f,21,previous);
+  await assert.rejects(f.publisher.publish(pending),{code:'STATIC_PUBLICATION_REJECTED'});
+  assert.equal((await fetch(published.latestUrl)).headers.get('x-source-revision'),previous);
+  delete f.config.maxRevisions;
+  const reopened=await f.reopen();published=await reopened.publish(pending);
+  assert.deepEqual(await reopened.publish(pending),published);
+  previous=pending.acceptedRevision;
+  for(let n=22;n<=25;n++){
+   const accepted=await receipt(f,n,previous);published=await reopened.publish(accepted);previous=accepted.acceptedRevision;
+  }
+  const catalog=JSON.parse(await fs.readFile(path.join(f.directory,'catalog.json')));
+  assert.equal(Object.keys(catalog.threads[published.publicationId].revisions).length,25);
+  assert.equal(catalog.files,25*4);assert(catalog.bytes<256*1024*1024);
+  await f.reopen();
+  const page=await fetch(published.latestUrl);assert.equal(page.headers.get('x-source-revision'),previous);assert.match(await page.text(),/revision 25/);
+ }finally{await f.close();}
+});
+
+test('publication ceiling follows the file budget and cannot exceed bounded retention',async()=>{
+ const f=await fixture();try{
+  assert.equal(MAX_PUBLISHED_REVISIONS,Math.floor(MAX_PUBLISHED_FILES/4));
+  await createStaticPublication({...f.config,maxRevisions:MAX_PUBLISHED_REVISIONS});
+  for(const options of [{maxRevisions:MAX_PUBLISHED_REVISIONS+1},{maxBytes:MAX_PUBLISHED_BYTES+1}])await assert.rejects(createStaticPublication({...f.config,...options}));
  }finally{await f.close();}
 });

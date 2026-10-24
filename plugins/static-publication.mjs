@@ -6,6 +6,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {HOSTING_TYPES,hostingHeaders,hostingPolicyHash} from './hosting-policy.mjs';
 import {validateBrowserReceipt} from './browser-validation.mjs';
 import {fileState} from './operations.mjs';
+import {MAX_PUBLISHED_BYTES,MAX_PUBLISHED_FILES,MAX_PUBLISHED_REVISIONS} from './publication-limits.mjs';
 import {STATIC_LIMITS,STATIC_NODE_VERSION,validateStaticResult} from './isolated-execution.mjs';
 
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -63,15 +64,15 @@ async function retained(target,metadata){
 
 /** Trusted post-acceptance capability. One host owns the private directory.
  * No HTTP route can publish/moderate; only this explicit local capability can. */
-export async function createStaticPublication({directory:root,artifactRoot,origin,boardOrigin,development=false,maxBytes=256*1024*1024,maxThreads=128,maxRevisions=20,artifactApi=null}){
+export async function createStaticPublication({directory:root,artifactRoot,origin,boardOrigin,development=false,maxBytes=MAX_PUBLISHED_BYTES,maxThreads=128,maxRevisions=MAX_PUBLISHED_REVISIONS,artifactApi=null}){
  await directory(root);await directory(artifactRoot);
  const url=new URL(origin),board=new URL(boardOrigin);assert(url.origin===origin&&board.origin===boardOrigin&&origin!==boardOrigin&&!url.username&&!url.password&&!board.username&&!board.password);
  for(const u of [url,board])assert(u.protocol==='https:'||(development&&u.protocol==='http:'&&['127.0.0.1','[::1]'].includes(u.hostname)));
- for(const [n,cap] of [[maxBytes,256*1024*1024],[maxThreads,128],[maxRevisions,20]])assert(Number.isSafeInteger(n)&&n>0&&n<=cap);
+ for(const [n,cap] of [[maxBytes,MAX_PUBLISHED_BYTES],[maxThreads,128],[maxRevisions,MAX_PUBLISHED_REVISIONS]])assert(Number.isSafeInteger(n)&&n>0&&n<=cap);
  const catalogPath=path.join(root,'catalog.json');try{assert((await fs.lstat(catalogPath)).size<=8*1024*1024);}catch(e){if(e.code!=='ENOENT')throw e;}
  const store=await fileState(catalogPath);let state=store.read(),busy=false,poisoned=false,requests=0;
  if(state.schema===undefined){assert.deepEqual(state,{operations:{}});state={schema:1,threads:{},bytes:0,files:0};await store.write(state);}
- assert(state.schema===1&&state.threads&&Number.isSafeInteger(state.bytes)&&state.bytes>=0&&state.bytes<=maxBytes&&Number.isSafeInteger(state.files)&&state.files>=0&&state.files<=8192&&Object.keys(state.threads).length<=maxThreads);
+ assert(state.schema===1&&state.threads&&Number.isSafeInteger(state.bytes)&&state.bytes>=0&&state.bytes<=maxBytes&&Number.isSafeInteger(state.files)&&state.files>=0&&state.files<=MAX_PUBLISHED_FILES&&Object.keys(state.threads).length<=maxThreads);
  // Reject incomplete filesystem transactions before accepting more work.
  // Immutable directories left after rename are reconciled against their receipt.
  const orphans=new Set();let roots=0;for await(const entry of await fs.opendir(root)){
@@ -105,7 +106,7 @@ export async function createStaticPublication({directory:root,artifactRoot,origi
    if(old){assert(old.repositoryId===b.repositoryId&&old.threadId===b.threadId);const same=old.revisions[b.revision];if(same){assert.deepEqual(same.binding,b);await retained(path.join(root,b.id,b.revision),same);return urls(b);}assert.equal(old.latest,b.readRevision);assert(Object.keys(old.revisions).length<maxRevisions);assert(!Object.values(old.revisions).some(m=>m.binding.invocationId===b.invocationId));}
    else{assert.equal(b.readRevision,null);assert(Object.keys(state.threads).length<maxThreads);}
    validateBrowserReceipt(receipt.validation.browser,{artifactSha256:b.artifactSha256,policyHash:hostingPolicyHash(origin,boardOrigin)});
-   const data=await archives(receipt,artifactRoot,b),fileCount=data.files.length+3;assert(state.bytes+data.bytes<=maxBytes&&state.files+fileCount<=8192);
+   const data=await archives(receipt,artifactRoot,b),fileCount=data.files.length+3;assert(state.bytes+data.bytes<=maxBytes&&state.files+fileCount<=MAX_PUBLISHED_FILES);
    const parent=path.join(root,b.id);await fs.mkdir(parent,{mode:0o700,recursive:true});await directory(parent);
    const target=path.join(parent,b.revision),metadata={schema:1,binding:b,manifest:data.manifest,bytes:data.bytes};
    let exists=false;try{await fs.lstat(target);exists=true;}catch(e){if(e.code!=='ENOENT')throw e;}
