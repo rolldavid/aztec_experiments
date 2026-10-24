@@ -1,0 +1,22 @@
+✔ public HTTP reader sends no account credentials and encodes untrusted query values (14.728833ms)
+✔ reader rejects unready, oversized, nonJSON and malformed responses (0.923125ms)
+✔ streaming size gate cancels before reading an unbounded response (0.424334ms)
+✔ Home has its own public route and rejects caller-supplied curation (0.546875ms)
+✔ board reader uses public id and cursor without private parameters (0.295125ms)
+✔ announced publication revision is a bounded public query hint; ordinary reads remain fresh (0.390834ms)
+✔ revisions refresh once, coalesce in flight, ignore rendered revision and reconnect after page restore (1.051042ms)
+✔ hidden or navigating page defers notifications without reads; malformed event ignored (0.696458ms)
+✔ failure is not a polling/retry loop, new revision may trigger a new refresh (0.217667ms)
+✔ measurements use monotonic start/end, finish only once, and never throw (1.212791ms)
+✔ reported render failure retains notification for visibility resume without automatic retry (0.209208ms)
+✔ inclusion joins an active revision refresh without aborting or repeating its request (0.156666ms)
+✔ inclusion request waits for navigation owner and shares subsequent matching SSE notification (0.103625ms)
+✔ newer revision arriving during an older inclusion-joined read gets its own bound refresh (0.107917ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 66.195625

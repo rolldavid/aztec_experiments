@@ -1,0 +1,19 @@
+✔ native proof result and witness graph are collectible before the held receipt completes (362.956333ms)
+✔ zero window sends 8 same-stack calls with native batch bounds and no timers (23.662917ms)
+✔ zero window sends 9 same-stack calls with native batch bounds and no timers (0.194917ms)
+✔ explicit native flush invalidates old microtask without consuming a newer batch (0.169625ms)
+✔ positive batching windows retain native timers and explicit-flush cancellation (0.183083ms)
+✔ native byte limit splits batches independently of the count limit (0.154208ms)
+✔ overflow batches dispatch before a held first network response (0.212709ms)
+✔ native network errors reject every deferred without replay (0.190833ms)
+✔ native schema errors reject every deferred without replay (0.432333ms)
+✔ native version errors reject every deferred without replay (0.215458ms)
+✔ scheduling transform rejects an unpinned SDK source (0.226209ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 408.387583

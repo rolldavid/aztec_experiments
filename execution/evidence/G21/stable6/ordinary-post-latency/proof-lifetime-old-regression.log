@@ -1,0 +1,90 @@
+✖ native proof result and witness graph are collectible before the held receipt completes (344.12425ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 379.308625
+
+✖ failing tests:
+
+test at .build/proof-lifetime-before.test.mjs:7:1
+✖ native proof result and witness graph are collectible before the held receipt completes (344.12425ms)
+  Error: Command failed: /Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/outage-20261023/node-v24.21.0-darwin-arm64/bin/node --expose-gc --input-type=module -e 
+    import assert from 'node:assert/strict';
+    import vm from 'node:vm';
+    import {readFile} from 'node:fs/promises';
+    import {TxProvingResult,TxHash} from '@aztec-labs/stdlib/tx';
+    import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
+    import {Fr} from '@aztec-labs/foundation/curves/bn254';
+    const source=await readFile('/private/tmp/proof-lifetime-before.js','utf8');
+    const context=vm.createContext({URL,performance,Buffer,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});
+    vm.runInContext(source,context);
+    const owner={toString:()=> 'owner'},settings=new GasSettings(new Gas(100,200),new Gas(1,2),new GasFees(3n,4n),GasFees.empty());
+    class BaseWallet{
+     constructor(pxe){this.pxe=pxe;}
+     async completeFeeOptions(options){return {gasSettings:options.gasSettings};}
+     async simulateViaEntrypoint(){return {publicInputs:{forPublic:{}},publicOutput:{txEffect:{revertCode:{isOK:()=>true}}},gasUsed:{totalGas:new Gas(1,1),teardownGas:Gas.empty()}};}
+     async createTxExecutionRequestFromPayloadAndFee(){return {};}
+     scopesFrom(){return [];}senderForTagsFrom(){return owner;}
+    }
+    for(const atomicSimulation of [false,true]){
+     const entered=Promise.withResolvers(),release=Promise.withResolvers(),hash=TxHash.fromBigInt(10n),tx={getTxHash:()=>hash};
+     let proofRef,witnessRef,extracted=0,submitted=0,finished=false;
+     const prove=async()=>{
+      const result=new TxProvingResult({witness:new Uint8Array(1024*1024)},null,null,{timings:{total:1}});
+      result.toTx=async()=>tx;proofRef=new WeakRef(result);witnessRef=new WeakRef(result.privateExecutionResult);return result;
+     };
+     const pxe={proveTx:prove,proveTxWithPublicValidation:prove};
+     const sdk={BaseWallet,GasSettings,
+      extractApplicationNullifier:async(result)=>{assert.equal(result.privateExecutionResult.witness.byteLength,1024*1024);extracted++;return Fr.ONE;},
+      submitOnceWithReconciliation:async()=>{submitted++;},
+      waitForSuccessfulReceipt:async()=>{entered.resolve();await release.promise;return {blockNumber:1,status:'checkpointed',transactionFee:0n};},
+     };
+     const wallet=context.BillboardPrivateFeeRouting.createAztecWallet(sdk,pxe,{}, {},()=>{},Fr.ONE);
+     wallet._applicationNullifierBoard='board';
+     const sending=wallet.sendTx({}, {from:owner,fee:{gasSettings:settings},atomicSimulation}).finally(()=>{finished=true;});
+     await entered.promise;assert.equal(extracted,1);assert.equal(submitted,1);assert.equal(finished,false);
+     let collected=false;
+     for(let attempt=0;attempt<20;attempt++){
+      await new Promise(setImmediate);global.gc();
+      if(proofRef.deref()===undefined&&witnessRef.deref()===undefined){collected=true;break;}
+     }
+     assert.equal(collected,true,'native result/witness must not be owned by confirmation wait');
+     assert.equal(finished,false);release.resolve();await sending;assert.equal(finished,true);
+    }
+   
+  node:internal/modules/run_main:107
+      triggerUncaughtException(
+      ^
+  
+  AssertionError [ERR_ASSERTION]: native result/witness must not be owned by confirmation wait
+  
+  false !== true
+  
+      at file:///private/tmp/rolling-proposed-feed/[eval1]:41:11 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.21.0
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1141:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:306:5) {
+    code: 1,
+    killed: false,
+    signal: null,
+    cmd: "/Users/zac/Documents/ChatGPT/Anonymous Message Board/rolling-lead-bok/.build/outage-20261023/node-v24.21.0-darwin-arm64/bin/node --expose-gc --input-type=module -e \n  import assert from 'node:assert/strict';\n  import vm from 'node:vm';\n  import {readFile} from 'node:fs/promises';\n  import {TxProvingResult,TxHash} from '@aztec-labs/stdlib/tx';\n  import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';\n  import {Fr} from '@aztec-labs/foundation/curves/bn254';\n  const source=await readFile('/private/tmp/proof-lifetime-before.js','utf8');\n  const context=vm.createContext({URL,performance,Buffer,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});\n  vm.runInContext(source,context);\n  const owner={toString:()=> 'owner'},settings=new GasSettings(new Gas(100,200),new Gas(1,2),new GasFees(3n,4n),GasFees.empty());\n  class BaseWallet{\n   constructor(pxe){this.pxe=pxe;}\n   async completeFeeOptions(options){return {gasSettings:options.gasSettings};}\n   async simulateViaEntrypoint(){return {publicInputs:{forPublic:{}},publicOutput:{txEffect:{revertCode:{isOK:()=>true}}},gasUsed:{totalGas:new Gas(1,1),teardownGas:Gas.empty()}};}\n   async createTxExecutionRequestFromPayloadAndFee(){return {};}\n   scopesFrom(){return [];}senderForTagsFrom(){return owner;}\n  }\n  for(const atomicSimulation of [false,true]){\n   const entered=Promise.withResolvers(),release=Promise.withResolvers(),hash=TxHash.fromBigInt(10n),tx={getTxHash:()=>hash};\n   let proofRef,witnessRef,extracted=0,submitted=0,finished=false;\n   const prove=async()=>{\n    const result=new TxProvingResult({witness:new Uint8Array(1024*1024)},null,null,{timings:{total:1}});\n    result.toTx=async()=>tx;proofRef=new WeakRef(result);witnessRef=new WeakRef(result.privateExecutionResult);return result;\n   };\n   const pxe={proveTx:prove,proveTxWithPublicValidation:prove};\n   const sdk={BaseWallet,GasSettings,\n    extractApplicationNullifier:async(result)=>{assert.equal(result.privateExecutionResult.witness.byteLength,1024*1024);extracted++;return Fr.ONE;},\n    submitOnceWithReconciliation:async()=>{submitted++;},\n    waitForSuccessfulReceipt:async()=>{entered.resolve();await release.promise;return {blockNumber:1,status:'checkpointed',transactionFee:0n};},\n   };\n   const wallet=context.BillboardPrivateFeeRouting.createAztecWallet(sdk,pxe,{}, {},()=>{},Fr.ONE);\n   wallet._applicationNullifierBoard='board';\n   const sending=wallet.sendTx({}, {from:owner,fee:{gasSettings:settings},atomicSimulation}).finally(()=>{finished=true;});\n   await entered.promise;assert.equal(extracted,1);assert.equal(submitted,1);assert.equal(finished,false);\n   let collected=false;\n   for(let attempt=0;attempt<20;attempt++){\n    await new Promise(setImmediate);global.gc();\n    if(proofRef.deref()===undefined&&witnessRef.deref()===undefined){collected=true;break;}\n   }\n   assert.equal(collected,true,'native result/witness must not be owned by confirmation wait');\n   assert.equal(finished,false);release.resolve();await sending;assert.equal(finished,true);\n  }\n ",
+    stdout: '',
+    stderr: "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: native result/witness must not be owned by confirmation wait\n\nfalse !== true\n\n    at file:///private/tmp/rolling-proposed-feed/[eval1]:41:11 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v24.21.0\n"
+  }

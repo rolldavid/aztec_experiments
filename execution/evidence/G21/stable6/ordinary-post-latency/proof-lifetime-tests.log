@@ -1,0 +1,30 @@
+✔ native proof result and witness graph are collectible before the held receipt completes (224.273625ms)
+✔ actual wallet preserves a fixed fee budget and account scope/tag (23.26775ms)
+✔ actual wallet passes attributed application spend to the durable journal before submission (115.637167ms)
+✔ saved claim metadata timeout cannot prepare fees or proofs (25.818458ms)
+✔ real preparer failures stop every routed action before proof/send/funding and preserve bootstrap input (547.2325ms)
+✔ actual wallet rejects total-da before proving or submitting (0.752791ms)
+✔ actual wallet rejects total-l2 before proving or submitting (0.410292ms)
+✔ actual wallet rejects teardown-da before proving or submitting (0.287584ms)
+✔ actual wallet rejects teardown-l2 before proving or submitting (0.267375ms)
+✔ actual wallet rejects missing-public before proving or submitting (0.268792ms)
+✔ actual wallet rejects revert before proving or submitting (0.279292ms)
+✔ entirely private simulation needs no public output and still checks gas before proof (0.389708ms)
+✔ fixed fee reservation is validated once: revert stops before proof (0.346583ms)
+✔ fixed fee reservation is validated once: gas-change stops before proof (0.238625ms)
+✔ withdrawal preparation cannot start a proof beyond the reviewed step budget (1.670958ms)
+✔ withdrawal waits through the actual moderation deadline before any proof (2.695625ms)
+✔ plugin metadata persists after the proof journal and context changes stop broadcast (0.934708ms)
+✔ development doubles: cached node is re-inspected across proof toggle and rejected on outage (2.777125ms)
+✔ wallet rechecks pending reverted finality before simulation, proof or submission (0.368375ms)
+✔ atomic private simulation and proof: null (0.545458ms)
+✔ atomic private simulation and proof: revert (0.407791ms)
+✔ atomic private simulation and proof: gas (0.314625ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1670.189417

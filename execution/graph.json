@@ -9842,10 +9842,10 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "request": "Show ordinary non-Bok posts at Aztec inclusion rather than waiting for Ethereum checkpoint.",
-    "status": "completed",
-    "execution_lane": "Receipt inclusion callback and wallet routing; sender composer UI; root integration, real non-Bok post acceptance and static publication.",
-    "checkpoint": "UI/SDK f12bdc3e published without service/config changes. Real ordinary post appeared pending with composer closed, 73.743s before checkpoint, and confirmed automatically without reload or duplicate. Focused checks and independent reviews passed.",
-    "next_action": "No unfinished work in this display request. Await owner feedback; do not restart historical campaigns."
+    "request": "Ordinary post click-to-visible after Aztec inclusion at most36seconds.",
+    "status": "active",
+    "execution_lane": "Root real timing/prover profiling; browser execution efficiency audit; inclusion/feed delay audit.",
+    "checkpoint": "Published reviewed UI26be933b-closurefix; core6c2c64f0 unchanged. Latest measured08734c06 remains41.711s. Current latency/memory acceptance unverified: browser service denies current-turn access despite owner reporting browser use enabled; tool reset did not resolve it. Native proof retention regression fixed; overall reported30GB cause unproven.",
+    "next_action": "Push source/evidence, restore supported browser access, then perform bounded current-release ordinary-post latency and memory acceptance. Do not mark goal complete without measured results."
   }
 }

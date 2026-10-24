@@ -1,0 +1,38 @@
+{
+  "observedAt": "2026-10-24T06:49:08.065629+00:00",
+  "groups": {
+    "chrome-testing": {
+      "count": 0,
+      "rssMiB": 0,
+      "zombies": 0
+    },
+    "chrome": {
+      "count": 28,
+      "rssMiB": 1649.82,
+      "zombies": 0
+    },
+    "bb-acvm": {
+      "count": 0,
+      "rssMiB": 0,
+      "zombies": 0
+    },
+    "node-esbuild": {
+      "count": 182,
+      "rssMiB": 953.77,
+      "zombies": 0
+    },
+    "codex": {
+      "count": 51,
+      "rssMiB": 3765.27,
+      "zombies": 0
+    },
+    "other": {
+      "count": 890,
+      "rssMiB": 11950.76,
+      "zombies": 0
+    }
+  },
+  "physicalMemoryBytes": "25769803776",
+  "swap": "vm.swapusage: total = 25088.00M  used = 24111.88M  free = 976.12M  (encrypted)",
+  "vmStat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     3806.\nPages active:                                 307191.\nPages inactive:                               309896.\nPages speculative:                               390.\nPages throttled:                                   0.\nPages wired down:                             345730.\nPages purgeable:                                   2.\n\"Translation faults\":                    21014350514.\nPages copy-on-write:                       299940302.\nPages zero filled:                        9497075128.\nPages reactivated:                        7797652892.\nPages purged:                              769532270.\nFile-backed pages:                            182693.\nAnonymous pages:                              434784.\nPages stored in compressor:                  4232791.\nPages occupied by compressor:                 563229.\nDecompressions:                           9302261246.\nCompressions:                             9794934100.\nPageins:                                   367986365.\nPageouts:                                    6350793.\nSwapins:                                    83865591.\nSwapouts:                                  102873947."
+}

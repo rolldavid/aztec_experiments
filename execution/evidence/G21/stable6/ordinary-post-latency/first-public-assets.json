@@ -1,0 +1,32 @@
+[
+  {
+    "path": "reader.mjs",
+    "sha256": "e92484f7ef5a1b9a0e7e5c43b398c7dcc3383404c4cca29d129536ae93f854fa",
+    "matches": true
+  },
+  {
+    "path": "reader-client.mjs",
+    "sha256": "1e3741dd3282882cd5374c8db299828b36415e4811291721f7822dcf230f67c6",
+    "matches": true
+  },
+  {
+    "path": "reader-updates.mjs",
+    "sha256": "66dc805cded109c18afd92fd1c1ff26857635613e6b7cb521e37617f42679854",
+    "matches": true
+  },
+  {
+    "path": "wallet/runtime.json",
+    "sha256": "56c8290037931317745924900d080ff7f4a1c1bcd99d8b0324a5208bddab037f",
+    "matches": true
+  },
+  {
+    "path": "wallet/runtime.mjs",
+    "sha256": "7657429218c79eeb4bf341441ece0e75fc009592cd871c897a260d1d6eac4d9a",
+    "matches": true
+  },
+  {
+    "path": "wallet/aztec_bundle.js",
+    "sha256": "9002c77c308e1e1a7b19dedca9cb9dbafd6e6c9cbcab3b1201644e0b5b57a2e5",
+    "matches": true
+  }
+]

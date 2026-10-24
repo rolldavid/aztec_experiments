@@ -1,0 +1,19 @@
+✔ public revision notification renders a Bok response without navigation or polling (633.607625ms)
+✔ confirmed post refresh preserves a fully loaded thread and follows its new tail through subsequent live replies (427.821042ms)
+✔ confirmed post refresh retains a partially loaded thread without fetching unseen history (408.776042ms)
+✔ thread refresh rejects mixed snapshots and retains its loaded extent for retry (422.813542ms)
+✔ navigation cancels a thread extent refresh without adding its delayed replies to the new route (411.54075ms)
+✔ an unrendered conversation never inherits another conversation’s loaded end on rapid navigation (417.304459ms)
+✔ proposed Bok reply appears in a loaded conversation and checkpoint-only progress confirms the same post (460.423375ms)
+✔ proposed reply disappears on rollback and replacement inclusion never duplicates the old reply (350.048125ms)
+✔ confirmation metadata cannot change inside a paginated snapshot or omit a post status (431.01225ms)
+✔ inclusion joins the SSE render and sends its announced revision without another feed request (270.696417ms)
+✔ public effect rebuilds a missing feed instead of waiting for an unavailable refresh target (254.765958ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4684.405958

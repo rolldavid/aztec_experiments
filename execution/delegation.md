@@ -1,3 +1,15 @@
+# Current ordinary post 36-second target — 24 October 2026
+
+Implementation, independent review, build and publication are complete for
+`26be933b-closurefix`. Root owns browser-access troubleshooting and the remaining
+bounded ordinary-post latency/memory acceptance. The release agent verified
+publication evidence. No browser test or deployment is running.
+
+Latest measured08734c06 remains41.711s; current26be933b is unverified. Do not mark
+the36-second goal complete without current-release measurements. The browser
+service returns an access denial despite the owner reporting access enabled.
+No duplicate paid requests or blind repetitions for favorable block timing.
+
 # Current ordinary post inclusion — 24 October 2026
 
 Completed and published: static UI/SDK f12bdc3e. Real ordinary post appeared

@@ -5,6 +5,35 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
+## Current ordinary-post target: 36 seconds
+
+UI release `26be933b-closurefix` is published. Core remains `6c2c64f0`;
+contracts and service processes were unchanged by this static release. Changes
+include overlapping operation-scoped preparation, low-credit private execution
+reuse, batches of eight on the owned gateway, zero-window RPC microtask dispatch,
+and release of proof witness objects before receipt waiting.
+
+The latest measured release remains `08734c06`: **41.711 seconds**, exceeding
+the target. Its preparation took9.376s, fee estimation7.767s, proving17.617s,
+and submission1.019s. Earlier individual samples measured34.634s and34.337s;
+these do not establish current-release performance. Current latency and memory
+acceptance remain unverified. Browser automation returns an access denial even
+though the owner reports browser use enabled; resetting the tool did not clear it.
+
+The owner terminated Chrome for Testing after reporting30GB memory use. A native
+proof-object retention regression was reproduced and fixed (old code fails the
+GC test; both corrected send paths pass). The overall30GB cause is unproven.
+No replacement browser has been launched. A bounded process guard has only been
+tested against isolated Python fixtures, not a browser.
+
+The initial stage rejected a stale wallet input before activation. The corrected
+build checks every tracked wallet input against the exact source commit. Publication
+and public hashes are recorded in
+[scheduler-memory-publication.json](../execution/evidence/G21/stable6/ordinary-post-latency/scheduler-memory-publication.json)
+and [scheduler-memory-public-assets.json](../execution/evidence/G21/stable6/ordinary-post-latency/scheduler-memory-public-assets.json).
+The files named `final-publication.json` and `final-public-assets.json` in that
+folder refer to the older087 release, not current-release acceptance.
+
 ## Ordinary post display — 24 October
 
 The same proposed feed already includes ordinary posts. The remaining sender-side
@@ -77,7 +106,7 @@ verified after publication.
 [browser observations](../execution/evidence/G21/stable6/proposed-replies/browser-observation.json),
 [worker completion](../execution/evidence/G21/stable6/proposed-replies/worker-completion.json).
 
-## Verified current release — 2m35.2s, automatic reply rendering
+## Historical comparable Bok benchmark — 2m35.2s, automatic reply rendering
 
 Browser23e6cde5 and worker cdab01f7 completed the identical267-character request
 from original tree a25ff3c2 in **155.233s**, **66.6% below464.264s**. Worker

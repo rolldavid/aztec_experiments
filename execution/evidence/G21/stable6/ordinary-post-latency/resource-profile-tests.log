@@ -1,0 +1,18 @@
+✔ resource trace preserves phase times and native response sizes without URL or account data (1.909167ms)
+✔ only exact same-origin fetch/XHR endpoint classes are recorded (0.14275ms)
+✔ non-finite metrics and unrecognized protocol strings cannot enter diagnostic output (0.106875ms)
+✔ trace bounds each entry type, keeps phase records ordered and excludes long-task attribution (3.186208ms)
+✔ unsupported long-task observation and diagnostic callbacks cannot affect other observations (0.368125ms)
+✔ normal visits create no observers or diagnostic UI (0.823333ms)
+✔ opt-in panel shows sanitized resource and long-task records alongside measures (1.084708ms)
+✔ native utility timing is opt-in, duration-only and never changes action outcomes (1.208958ms)
+✔ wallet and proof asset contention is observable without filenames or hash queries (0.759667ms)
+✔ visibility diagnostics use fixed states and monotonic timestamps with a bounded buffer (0.593625ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53.176917

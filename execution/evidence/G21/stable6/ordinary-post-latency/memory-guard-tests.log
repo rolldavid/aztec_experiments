@@ -1,0 +1,11 @@
+test_measurement_error_stops_owned_root_only (__main__.GuardTest.test_measurement_error_stops_owned_root_only) ... ok
+test_nonisolated_session_refused (__main__.GuardTest.test_nonisolated_session_refused) ... ok
+test_normal_exit (__main__.GuardTest.test_normal_exit) ... ok
+test_owned_family_threshold_and_unrelated_survives (__main__.GuardTest.test_owned_family_threshold_and_unrelated_survives) ... ok
+test_wrong_identity_and_executable_never_signal (__main__.GuardTest.test_wrong_identity_and_executable_never_signal) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.910s
+
+OK
+{"fixture": "owned_family_threshold", "baseline_bytes": 14828336, "limit_bytes": 31605552, "unrelated_survived": true}

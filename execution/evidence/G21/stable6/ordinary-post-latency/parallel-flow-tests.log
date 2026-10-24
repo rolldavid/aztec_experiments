@@ -1,0 +1,34 @@
+✔ real native kernel orchestration validates detached output once before proof generation (5.614042ms)
+✔ failed validation stops native kernel orchestration before expensive proof (1.981917ms)
+✔ native PXE validates actual kernel output inside one queue operation, then proves and persists tags (269.566917ms)
+✔ native proof aggregates use circuit kinds, preserve existing totals and execute no extra stages (8.883834ms)
+✔ native PXE revert discards before proof or tag persistence (8.156291ms)
+✔ native PXE gas discards before proof or tag persistence (7.614667ms)
+✔ native PXE invalid discards before proof or tag persistence (7.575792ms)
+✔ native opt-in preserves the existing proof-only API (0.807292ms)
+✔ exact native source pins reject changed dependencies (0.274042ms)
+✔ complete transformed PXE loads with its real module bindings (690.324084ms)
+✔ public execution and admission succeed concurrently and drain before proof (8.630667ms)
+✔ public execution and admission public concurrently and drain before proof (7.920709ms)
+✔ public execution and admission validate concurrently and drain before proof (8.119125ms)
+✔ explicit synchronization exposes a newly included name through the actual autoSync:false SDK queue (1.992333ms)
+✔ failed synchronization and context changes prevent every private operation without retry (1.775708ms)
+✔ capabilities and method receivers are captured before asynchronous synchronization (0.215959ms)
+✔ preference head observes the synchronized anchor through the supported operation queue (1.181ms)
+✔ saved resume options are captured before synchronization without invoking accessors (0.324875ms)
+✔ RC22 balance cursor is captured before synchronization and accessor input is never evaluated (0.234083ms)
+✔ interrupted Bok release captures exact id and action before synchronization without getters or extra fields (0.196333ms)
+✔ one flow reuses its anchor and refreshes after its own confirmed transaction (0.19575ms)
+✔ public moderator identity does not synchronize private state (0.11ms)
+✔ parallel readiness and synchronization succeed drain before private application (1.931416ms)
+✔ parallel readiness and synchronization sync drain before private application (0.260625ms)
+✔ parallel readiness and synchronization context drain before private application (0.206417ms)
+✔ prefetched readiness is scoped to the held operation and replacement ownership rejects before application (0.118417ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2486.946208

@@ -1,0 +1,12 @@
+✔ ordinary action starts public readiness while private synchronization remains held (575.622375ms)
+✔ a shared account flow attests network once and a new flow validates again (65.939791ms)
+✔ real application canonical predecessor reads across one executeAction scopes (17.464ms)
+✔ prefetched public readiness is reused by the same flow without private work and expires with its owner (3.108333ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1709.710333

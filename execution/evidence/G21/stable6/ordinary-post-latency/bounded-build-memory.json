@@ -1,0 +1,23 @@
+[
+  {
+    "script": "scripts/build-sdk.mjs",
+    "exitCode": 0,
+    "seconds": 8.909,
+    "peakAggregateRssMiB": 1186.22,
+    "samples": 37
+  },
+  {
+    "script": "scripts/check-sdk.mjs",
+    "exitCode": 0,
+    "seconds": 0.461,
+    "peakAggregateRssMiB": 193.22,
+    "samples": 2
+  },
+  {
+    "script": "scripts/rolling-wallet-assets.mjs",
+    "exitCode": 0,
+    "seconds": 0.694,
+    "peakAggregateRssMiB": 351.45,
+    "samples": 3
+  }
+]

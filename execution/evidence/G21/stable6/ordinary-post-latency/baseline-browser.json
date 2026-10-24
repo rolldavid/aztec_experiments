@@ -1,0 +1,135 @@
+{
+  "source": "f12bdc3e",
+  "timeOrigin": 1792821682426.105,
+  "clickAt": "2026-10-24T06:03:12.925Z",
+  "visibleObservedAt": "2026-10-24T06:03:51.218Z",
+  "records": [
+    {
+      "name": "rolling.action.sync",
+      "start": 110963.0150001049,
+      "duration": 3513.689999938011
+    },
+    {
+      "name": "rolling.action.payment-prefetch",
+      "start": 116605.41500008106,
+      "duration": 4999.054999947548
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 116605.22000002861,
+      "duration": 4999.90499997139
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 110962.84500002861,
+      "duration": 10653.215000033379
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 121675.5,
+      "duration": 0.010000109672546387
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 121675.52000010014,
+      "duration": 239.1949999332428
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 121675.4050000906,
+      "duration": 317.2099999189377
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 121992.625,
+      "duration": 0.43500006198883057
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 121993.06000006199,
+      "duration": 691.789999961853
+    },
+    {
+      "name": "rolling.proof.transport.serialize",
+      "start": 129410.62999999523,
+      "duration": 427.42000007629395
+    },
+    {
+      "name": "rolling.proof.transport.submit",
+      "start": 129838.12000000477,
+      "duration": 1792.5600000619888
+    },
+    {
+      "name": "rolling.proof.transport.wait",
+      "start": 131630.86500000954,
+      "duration": 8051.170000076294
+    },
+    {
+      "name": "rolling.proof.local.decompress",
+      "start": 139684.1100000143,
+      "duration": 23.860000014305115
+    },
+    {
+      "name": "rolling.proof.local.verify",
+      "start": 139708.0150001049,
+      "duration": 187.99500000476837
+    },
+    {
+      "name": "rolling.proof.native.total",
+      "start": 122709.56500005722,
+      "duration": 17211.80999994278
+    },
+    {
+      "name": "rolling.proof.native.proof-transport",
+      "start": 129430.55000019073,
+      "duration": 10490.849999904633
+    },
+    {
+      "name": "rolling.proof.native.private-witness",
+      "start": 136424.0900001526,
+      "duration": 3497.2999999523163
+    },
+    {
+      "name": "rolling.proof.native.public-validation",
+      "start": 138257.96000003815,
+      "duration": 1663.4350000619888
+    },
+    {
+      "name": "rolling.proof.native.unaccounted",
+      "start": 138935.78999996185,
+      "duration": 985.6100001335144
+    },
+    {
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 139346.7800002098,
+      "duration": 574.6149998903275
+    },
+    {
+      "name": "rolling.proof.native.sync",
+      "start": 139921.38500010967,
+      "duration": 0
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 122684.87000000477,
+      "duration": 18141.570000052452
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 140826.45000004768,
+      "duration": 776.3700000047684
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 144455.4850000143,
+      "duration": 677.085000038147
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 145127.8450000286,
+      "duration": 4.710000038146973
+    }
+  ],
+  "clickToFirstIncludedRenderSeconds": 34.63366,
+  "note": "Inclusion matched visible first feed update after submission. Proof native substage starts are reconstructed aggregates; do not add overlapping durations."
+}

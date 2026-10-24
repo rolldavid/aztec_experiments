@@ -1,0 +1,22 @@
+✔ data HTTP waits for pre-existing work then a fresh successful canonical sync; status stays immediate (49.280334ms)
+✔ data HTTP waits for pre-existing work then a fresh failed canonical sync; status stays immediate (37.689125ms)
+✔ concurrent reads coalesce one next cycle and close drains existing work without another cycle (2.2045ms)
+✔ a failed fresh sync never serves an older ready policy (2.274ms)
+✔ fresh read joins bounded durable policy catch-up but stops on no progress (3.623042ms)
+✔ status static and invalid requests do not request a new canonical cycle (3.105375ms)
+✔ exact announced publication reads reuse checked snapshot without another verification cycle (5.259042ms)
+✔ announced read joins active verification and reuses its result without another cycle (3.034417ms)
+✔ announced read joins active verification and rejects its failure (2.384917ms)
+✔ changed revision cannot reuse an older announced publication (1.423167ms)
+✔ changed scope cannot reuse an older announced publication (1.23725ms)
+✔ changed checkpoint cannot reuse an older announced publication (1.406708ms)
+✔ changed state cannot reuse an older announced publication (1.429375ms)
+✔ published reuse retains index ownership checks and refuses a stale storage generation (2.184584ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 173.63625
