@@ -90,7 +90,7 @@ test('synthetic public reader query checked, exact scalar observed and duplicate
 });
 test('synthetic proof frame counts bounded opaque witnesses without retaining metadata or witness data',async()=>{
  const trace=make();trace.registerEndpoint('trusted-proof',origin);
- const body=encodeJob({board:a,chainId:'31337',rollupVersion:'1',mode:'real',circuits:['a'.repeat(64)]},[new TextEncoder().encode('PRIVATE_SENTINEL')]);
+ const body=await encodeJob({board:a,chainId:'31337',rollupVersion:'1',mode:'real',circuits:['a'.repeat(64)]},[new Map([[0,'01'.repeat(32)]])]);
  await sent(trace,origin+'/v1/jobs',options(body));await sent(trace,origin+'/v1/jobs/'+'b'.repeat(64),{});
  const s=trace.snapshot();assert.equal(s.requestCoverageComplete,true);assert.equal(s.rows[0].witnessCount,1);assert(!JSON.stringify(s).includes('PRIVATE_SENTINEL'));assert(!JSON.stringify(s).includes(a));
 });
@@ -130,7 +130,7 @@ test('synthetic exact bounded configuration and fixed labels/phases',()=>{
 
 test('synthetic proof metadata unknown fields fail coverage without reading witnesses',async()=>{
  const trace=make();trace.registerEndpoint('trusted-proof',origin);
- const body=encodeJob({board:a,chainId:'31337',rollupVersion:'1',mode:'real',circuits:['a'.repeat(64)],extra:'PRIVATE_SENTINEL'},[new Uint8Array([1])]);
+ const body=await encodeJob({board:a,chainId:'31337',rollupVersion:'1',mode:'real',circuits:['a'.repeat(64)],extra:'PRIVATE_SENTINEL'},[new Map()]);
  await sent(trace,origin+'/v1/jobs',options(body));assert.equal(trace.snapshot().requestCoverageComplete,false);assert.equal(trace.snapshot().observerErrors,1);assert(!JSON.stringify(trace.snapshot()).includes('PRIVATE_SENTINEL'));
 });
 test('synthetic inherited request fields fail observation without invoking getters',async()=>{
@@ -248,7 +248,7 @@ test('installed SDK client and default fetch serialize actual Tx buffers without
   assert.equal(batch[0].method,'aztec_isValidTx');assert.equal(typeof batch[0].params[0].data,'string');assert(batch[0].params[0].data.length>4096);assert.equal(batch[0].params[0].chonkProof,'AAAAAA==');
   return Response.json(batch.map(r=>({jsonrpc:'2.0',id:r.id,result:{result:'valid'}})));
  });
- try{const client=createSafeJsonRpcClient(origin,AztecNodeApiSchema,{namespaceMethods:'aztec',log:{debug(){},warn(){}}});assert.deepEqual(await client.isValidTx(tx,{isSimulation:true}),{result:'valid'});}
+ try{const client=createSafeJsonRpcClient(origin,AztecNodeApiSchema,{namespaceMethods:'aztec',log:{isLevelEnabled(){return false;},debug(){},warn(){}}});assert.deepEqual(await client.isValidTx(tx,{isSimulation:true}),{result:'valid'});}
  finally{globalThis.fetch=original;}
  const result=trace.snapshot();assert.equal(calls,1);assert.equal(result.opaqueTransactions,1);assert.equal(result.unsupported,0);assert.equal(result.unknown,0);assert.equal(result.observerErrors,0);assert.equal(result.requestCoverageComplete,false);
 });

@@ -49,6 +49,9 @@ export function rollingResourceTiming(entry,origin){
    const value=entry[source];if(Number.isFinite(value)&&value>=0)result[key]=value;
   }
   if(!Number.isFinite(result.start)||!Number.isFinite(result.duration))return null;
+  if(endpoint==='prover-submit'&&Array.isArray(entry.serverTiming))for(const phase of entry.serverTiming.slice(0,16)){
+   if(['body','validate','queue'].includes(phase.name)&&Number.isFinite(phase.duration)&&phase.duration>=0)result['server'+phase.name[0].toUpperCase()+phase.name.slice(1)]=phase.duration;
+  }
   result.protocol=['h2','h3','http/1.1','http/1.0'].includes(entry.nextHopProtocol)?entry.nextHopProtocol:'unknown';
   return result;
  }catch{return null;}

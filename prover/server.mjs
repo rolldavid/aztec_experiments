@@ -67,13 +67,18 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
     res.setHeader('Connection','close');res.once('finish',()=>req.socket.destroy());reply(404,{error:'Proof service not offered'});return;
    }
    if(req.method==='POST'&&req.url==='/v1/jobs'){
+    const receivedAt=performance.now();
     const client=admit();if(client===undefined)return;
     if(req.headers['content-type']!=='application/octet-stream'){reply(415,{error:'Binary job required'});return;}
     uploads++;let body;
     try{const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>MAX_REQUEST_BYTES)throw Object.assign(Error(),{status:413});chunks.push(chunk);}body=Buffer.concat(chunks);}finally{uploads--;}
-    const {metadata}=decodeJob(body);
+    const bodyAt=performance.now(),{metadata}=decodeJob(body);
     if(metadata.board!==board||String(metadata.chainId)!==String(chainId)||String(metadata.rollupVersion)!==String(rollupVersion)||metadata.mode!==(proofsEnabled?'real':'disabled')){reply(403,{error:'Board or proof mode mismatch'});return;}
-    const id=await queue.submit(body,client);reply(202,{id});return;
+    const validatedAt=performance.now(),id=await queue.submit(body,client),queuedAt=performance.now();
+    // Numeric stage durations only: never circuit IDs, job IDs, account data or
+    // witness contents. Queue time includes persistence and worker scheduling.
+    res.setHeader('Server-Timing',`body;dur=${(bodyAt-receivedAt).toFixed(3)},validate;dur=${(validatedAt-bodyAt).toFixed(3)},queue;dur=${(queuedAt-validatedAt).toFixed(3)}`);
+    reply(202,{id});return;
    }
    const match=/^\/v1\/jobs\/([a-f0-9]{64})$/.exec(req.url);
    if(req.method==='GET'&&match){const job=queue.get(match[1]);reply(job?200:404,job??{error:'Job not found'});return;}

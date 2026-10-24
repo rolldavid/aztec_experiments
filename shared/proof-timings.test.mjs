@@ -40,9 +40,9 @@ test('transport instruments existing serialization, submit and result wait witho
  const calls=[],id='a'.repeat(64),result={mode:'real',compressedProof:'AA=='};
  const client=createRemoteProverClient({url:'https://prover.example',board:'private-board',chainId:1,rollupVersion:1,
   fetchImpl:async(url,options)=>{calls.push([url,options.method??'GET']);advance(7);return {ok:true,text:async()=>JSON.stringify(options.method==='POST'?{id}:options.method==='DELETE'?{}:{state:'complete',result})};}});
- assert.deepEqual(await client.prove([]),result);
+ assert.deepEqual(await client.prove([{bytecode:Uint8Array.of(1),vk:Uint8Array.of(2),witness:new Map([[0,'01'.repeat(32)]])}]),result);
  assert.deepEqual(calls.map(c=>c[1]),['POST','GET','DELETE']);
- assert.deepEqual(entries.map(e=>e.name),['rolling.proof.transport.serialize','rolling.proof.transport.submit','rolling.proof.transport.wait']);
+ assert.deepEqual(entries.map(e=>e.name),['rolling.proof.transport.circuit-ids','rolling.proof.transport.dictionary','rolling.proof.transport.compress','rolling.proof.transport.serialize','rolling.proof.transport.submit','rolling.proof.transport.wait']);
  assert(!JSON.stringify(entries).includes('private-board'));
 }));
 test('remote proof decompression and verification keep the exact checks and expose only numeric spans',()=>observed(async(entries,advance)=>{

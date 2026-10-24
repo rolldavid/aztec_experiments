@@ -1,9 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createRemoteProverClient} from '../shared/remote-prover-client.mjs';
 const options={url:'https://prover.test',board:'0x'+'1'.repeat(64),chainId:11155111,rollupVersion:1,pollMs:1};
-for(const [status,code]of [[429,'BB_REMOTE_PROVER_BUSY'],[403,'BB_REMOTE_PROVER_REJECTED'],[503,'BB_REMOTE_PROVER_OFFLINE']])test('safe prover HTTP classification '+status,async()=>{const client=createRemoteProverClient({...options,fetchImpl:async()=>new Response('private response',{status})});await assert.rejects(client.prove([]),error=>error.code===code&&!error.message.includes('private'));});
-test('network failure is redacted and distinguished from proof failure',async()=>{const client=createRemoteProverClient({...options,fetchImpl:async()=>{throw Error('private witness detail');}});await assert.rejects(client.prove([]),{code:'BB_REMOTE_PROVER_OFFLINE'});});
-test('queueing waits for completion without resubmitting',async()=>{let posts=0,reads=0;const client=createRemoteProverClient({...options,fetchImpl:async(_url,request)=>{if(request.method==='POST'){posts++;return Response.json({id:'a'.repeat(64)});}if(request.method==='DELETE')return Response.json({acknowledged:true});return Response.json(++reads===1?{state:'queued'}:{state:'complete',result:{mode:'real',proof:'result'}});}});assert.equal((await client.prove([])).proof,'result');assert.equal(posts,1);assert.equal(reads,2);});
-test('failed job cannot leak server details',async()=>{let requests=0;const client=createRemoteProverClient({...options,fetchImpl:async()=>Response.json(++requests===1?{id:'a'.repeat(64)}:{state:'failed',code:'private witness',message:'secret'})});await assert.rejects(client.prove([]),error=>error.code==='BB_REMOTE_PROVER_FAILED'&&!error.message.includes('secret'));});
+for(const [status,code]of [[429,'BB_REMOTE_PROVER_BUSY'],[403,'BB_REMOTE_PROVER_REJECTED'],[503,'BB_REMOTE_PROVER_OFFLINE']])test('safe prover HTTP classification '+status,async()=>{const client=createRemoteProverClient({...options,fetchImpl:async()=>new Response('private response',{status})});await assert.rejects(client.prove([{bytecode:Uint8Array.of(1),vk:Uint8Array.of(2),witness:new Map([[0,'01'.repeat(32)]])}]),error=>error.code===code&&!error.message.includes('private'));});
+test('network failure is redacted and distinguished from proof failure',async()=>{const client=createRemoteProverClient({...options,fetchImpl:async()=>{throw Error('private witness detail');}});await assert.rejects(client.prove([{bytecode:Uint8Array.of(1),vk:Uint8Array.of(2),witness:new Map([[0,'01'.repeat(32)]])}]),{code:'BB_REMOTE_PROVER_OFFLINE'});});
+test('queueing waits for completion without resubmitting',async()=>{let posts=0,reads=0;const client=createRemoteProverClient({...options,fetchImpl:async(_url,request)=>{if(request.method==='POST'){posts++;return Response.json({id:'a'.repeat(64)});}if(request.method==='DELETE')return Response.json({acknowledged:true});return Response.json(++reads===1?{state:'queued'}:{state:'complete',result:{mode:'real',proof:'result'}});}});assert.equal((await client.prove([{bytecode:Uint8Array.of(1),vk:Uint8Array.of(2),witness:new Map([[0,'01'.repeat(32)]])}])).proof,'result');assert.equal(posts,1);assert.equal(reads,2);});
+test('failed job cannot leak server details',async()=>{let requests=0;const client=createRemoteProverClient({...options,fetchImpl:async()=>Response.json(++requests===1?{id:'a'.repeat(64)}:{state:'failed',code:'private witness',message:'secret'})});await assert.rejects(client.prove([{bytecode:Uint8Array.of(1),vk:Uint8Array.of(2),witness:new Map([[0,'01'.repeat(32)]])}]),error=>error.code==='BB_REMOTE_PROVER_FAILED'&&!error.message.includes('secret'));});
 
 test('terminal proof is consumed once even if acknowledgement fails',async()=>{
  const methods=[];const client=createRemoteProverClient({...options,fetchImpl:async(_url,request)=>{
@@ -11,7 +11,7 @@ test('terminal proof is consumed once even if acknowledgement fails',async()=>{
   if(request.method==='POST')return Response.json({id:'b'.repeat(64)});
   if(request.method==='DELETE')throw Error('connection lost during acknowledgement');
   return Response.json({state:'complete',result:{mode:'real',compressedProof:'retained'}});
- }});assert.equal((await client.prove([])).compressedProof,'retained');assert.deepEqual(methods,['POST','GET','DELETE']);
+ }});assert.equal((await client.prove([{bytecode:Uint8Array.of(1),vk:Uint8Array.of(2),witness:new Map([[0,'01'.repeat(32)]])}])).compressedProof,'retained');assert.deepEqual(methods,['POST','GET','DELETE']);
 });
 
 test('a stalled terminal acknowledgement never blocks the received proof',async()=>{
@@ -19,5 +19,5 @@ test('a stalled terminal acknowledgement never blocks the received proof',async(
   if(request.method==='POST')return Response.json({id:'c'.repeat(64)});
   if(request.method==='DELETE'){ackSignal=request.signal;return new Promise(()=>{});}
   return Response.json({state:'complete',result:{mode:'real',compressedProof:'received'}});
- }});assert.equal((await client.prove([])).compressedProof,'received');assert(ackSignal instanceof AbortSignal);
+ }});assert.equal((await client.prove([{bytecode:Uint8Array.of(1),vk:Uint8Array.of(2),witness:new Map([[0,'01'.repeat(32)]])}])).compressedProof,'received');assert(ackSignal instanceof AbortSignal);
 });

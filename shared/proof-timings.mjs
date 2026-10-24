@@ -1,6 +1,6 @@
 // Numeric diagnostics only. The opt-in Rolling performance panel consumes these
 // fixed labels; no execution objects, function names or RPC arguments are emitted.
-const stages=new Set(['transport.serialize','transport.submit','transport.wait','local.decompress','local.verify']);
+const stages=new Set(['transport.serialize','transport.circuit-ids','transport.dictionary','transport.compress','transport.submit','transport.wait','local.decompress','local.verify']);
 function emit(stage,duration,timing=globalThis.performance,end){
  try{
   if(!Number.isFinite(duration)||duration<0)return;

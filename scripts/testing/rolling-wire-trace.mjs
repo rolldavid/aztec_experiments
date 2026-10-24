@@ -131,10 +131,10 @@ export function createRollingWireTrace({roles,limits={}}={}){
    const length=new DataView(body.buffer,body.byteOffset,body.byteLength).getUint32(0);
    if(length>32768||length+4>body.byteLength)throw Error();
    const meta=JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(body.subarray(4,4+length)));
-   if(!meta||Object.keys(meta).sort().join(',')!=='board,chainId,circuits,lengths,mode,rollupVersion,version'||typeof meta.board!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(meta.board)||!['real','disabled'].includes(meta.mode)||[meta.chainId,meta.rollupVersion].some(v=>typeof v!=='string'||!/^[0-9]{1,20}$/.test(v)))throw Error();
-   if(meta.version!==1||!Array.isArray(meta.circuits)||meta.circuits.length<1||meta.circuits.length>32||meta.circuits.some(v=>typeof v!=='string'||!/^[a-f0-9]{64}$/.test(v))||!Array.isArray(meta.lengths)||meta.lengths.length!==meta.circuits.length||meta.lengths.some(v=>!Number.isSafeInteger(v)||v<1)||meta.lengths.reduce((a,b)=>a+b,4+length)!==body.byteLength)throw Error();
+   if(!meta||Object.keys(meta).sort().join(',')!=='board,chainId,circuits,counts,mode,payloadBytes,rollupVersion,uncompressedBytes,version'||typeof meta.board!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(meta.board)||!['real','disabled'].includes(meta.mode)||[meta.chainId,meta.rollupVersion].some(v=>typeof v!=='string'||!/^[0-9]{1,20}$/.test(v)))throw Error();
+   if(meta.version!==2||!Array.isArray(meta.circuits)||meta.circuits.length<1||meta.circuits.length>32||meta.circuits.some(v=>typeof v!=='string'||!/^[a-f0-9]{64}$/.test(v))||!Array.isArray(meta.counts)||meta.counts.length!==meta.circuits.length||meta.counts.some(v=>!Number.isSafeInteger(v)||v<0||v>500000)||meta.counts.reduce((a,b)=>a+b,0)>1500000||!Number.isInteger(meta.uncompressedBytes)||meta.uncompressedBytes<4||meta.uncompressedBytes>64*1024*1024||!Number.isInteger(meta.payloadBytes)||meta.payloadBytes<1||meta.payloadBytes+4+length!==body.byteLength)throw Error();
    token(meta.board,label,at,found);record.proofMode=meta.mode;
-   record.witnessCount=meta.lengths.length; // Never traverse/decompress witnesses.
+   record.witnessCount=meta.counts.length; // Never traverse/decompress witnesses.
   }else{
    if(typeof body!=='string'){counts.unsupported++;return record;}
    if(body.length>cap.maxBodyBytes){counts.truncated++;return record;}
@@ -299,7 +299,7 @@ export function validateRollingPublicRoles(value){
 // Same no-retry, bounded-body SDK transport as the public reader. The caller's
 // existing deadline owns the whole run; this read never starts after it expires.
 export function createRollingCaptureNode({url,remaining,fetchImpl=fetch}){
- const discard=()=>{},silent={debug:discard,info:discard,warn:discard,error:discard,trace:discard,verbose:discard,fatal:discard};
+ const discard=()=>{},silent={isLevelEnabled:()=>false,debug:discard,info:discard,warn:discard,error:discard,trace:discard,verbose:discard,fatal:discard};
  return createSafeJsonRpcClient(url,AztecNodeApiSchema,{namespaceMethods:'aztec',maxBatchSize:3,log:silent,fetch:async(host,body)=>{
   try{
    const timeout=Math.min(5000,remaining());assert(Number.isSafeInteger(timeout)&&timeout>0);

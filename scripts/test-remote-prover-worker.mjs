@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {abiEncode,serializeWitness} from '@aztec-foundation/noir-noirc_abi';
+import {abiEncode,deserializeWitness,serializeWitness} from '@aztec-foundation/noir-noirc_abi';
 import {loadCircuitCatalog} from '../prover/catalog.mjs';
 import {createProcessWorker} from '../prover/process-worker.mjs';
 import {encodeJob} from '../shared/remote-prover-wire.mjs';
@@ -19,7 +19,7 @@ test('actual isolated worker accepts configured board and rejects forged board/n
  const base={board:'0x'+'1'.padStart(64,'0'),chainId:'31337',rollupVersion:'1',mode:'disabled',circuits:[id]};
  try{
   for(const [patch,valid] of [[{},true],[{board:'0x'+'2'.padStart(64,'0')},false],[{chainId:'1'},false],[{rollupVersion:'2'},false]]){
-   await fs.writeFile(file,encodeJob({...base,...patch},[witness]));
+   await fs.writeFile(file,await encodeJob({...base,...patch},[deserializeWitness(witness)]));
    if(valid)assert.deepEqual(await worker.prove(file),{mode:'disabled'});else await assert.rejects(worker.prove(file),e=>e.code==='board-binding');
   }
  }finally{await worker.close();await fs.rm(directory,{recursive:true,force:true});}
@@ -37,7 +37,7 @@ test('standalone fee funding is limited to the configured fee contract and netwo
   const [id,c]=[...catalog].find(([,c])=>c.functionName==='PrivateFPC:'+name),inputs=Object.fromEntries(c.abi.parameters.map(p=>[p.name,zero(p.type)]));
   inputs.inputs.call_context.contract_address.inner='2';inputs.inputs.tx_context.chain_id=chain;inputs.inputs.tx_context.version='1';
   const witness=serializeWitness(abiEncode(c.abi,inputs,zero(c.abi.return_type.abi_type)));
-  await fs.writeFile(file,encodeJob({board:'0x'+'1'.padStart(64,'0'),chainId:'31337',rollupVersion:'1',mode:'disabled',circuits:[id]},[witness]));
+  await fs.writeFile(file,await encodeJob({board:'0x'+'1'.padStart(64,'0'),chainId:'31337',rollupVersion:'1',mode:'disabled',circuits:[id]},[deserializeWitness(witness)]));
   const worker=createProcessWorker({proofsEnabled:false,privateFeeAddress:configured});
   try{if(valid)assert.deepEqual(await worker.prove(file),{mode:'disabled'});else await assert.rejects(worker.prove(file),e=>e.code==='board-binding');}finally{await worker.close();}
  }}finally{await fs.rm(directory,{recursive:true,force:true});}
@@ -61,7 +61,7 @@ test('plugin-only proofs require configured receivers, exact entrypoint calls an
   if(scenario==='bad-padding')inputs.app_payload.function_calls[1].args_hash='0';
   if(scenario==='fee-only'){call.target_address.inner='2';call.function_selector.inner=String([...selectors.fee][0]);call.is_public=false;}
   const witness=serializeWitness(abiEncode(circuit.abi,inputs,zero(circuit.abi.return_type.abi_type)));
-  await fs.writeFile(file,encodeJob(base,[witness]));
+  await fs.writeFile(file,await encodeJob(base,[deserializeWitness(witness)]));
   const worker=createProcessWorker({proofsEnabled:false,privateFeeAddress:fee,pluginAddresses:scenario==='no-allowlist'?[]:[address]});
   try{if(scenario==='valid')assert.deepEqual(await worker.prove(file),{mode:'disabled'});else await assert.rejects(worker.prove(file),e=>e.code==='board-binding',scenario);}finally{await worker.close();}
  }}finally{await fs.rm(directory,{recursive:true,force:true});}
@@ -73,7 +73,7 @@ test('board and fee calls cannot bypass a private plugin claim binding',async()=
  const circuitWitness=(name,target,chain)=>{const [id,c]=[...catalog].find(([,c])=>c.functionName===name),input=Object.fromEntries(c.abi.parameters.map(p=>[p.name,zero(p.type)]));input.inputs.call_context.contract_address.inner=target;input.inputs.tx_context.chain_id=chain;input.inputs.tx_context.version='1';return [id,serializeWitness(abiEncode(c.abi,input,zero(c.abi.return_type.abi_type)))];};
  try{for(const kind of ['board','fee'])for(const [target,chain,valid] of [['3','31337',true],['4','31337',false],['3','1',false]]){
   const base=circuitWitness(kind==='board'?'Billboard:post':'PrivateFPC:mint_and_pay_fee',kind==='board'?'1':'2','31337'),plugin=circuitWitness('PluginAdapter:claim',target,chain);
-  await fs.writeFile(file,encodeJob({board:address(1),chainId:'31337',rollupVersion:'1',mode:'disabled',circuits:[base[0],plugin[0]]},[base[1],plugin[1]]));
+  await fs.writeFile(file,await encodeJob({board:address(1),chainId:'31337',rollupVersion:'1',mode:'disabled',circuits:[base[0],plugin[0]]},[deserializeWitness(base[1]),deserializeWitness(plugin[1])]));
   const worker=createProcessWorker({proofsEnabled:false,privateFeeAddress:address(2),pluginAddresses:[address(3)]});
   try{if(valid)assert.deepEqual(await worker.prove(file),{mode:'disabled'});else await assert.rejects(worker.prove(file),e=>e.code==='board-binding');}finally{await worker.close();}
  }}finally{await fs.rm(directory,{recursive:true,force:true});}

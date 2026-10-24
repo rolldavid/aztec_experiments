@@ -1,4 +1,3 @@
-import {serializeWitness} from '@aztec-foundation/noir-noirc_abi';
 import {encodeJob,circuitId} from './remote-prover-wire.mjs';
 import {measureProofStage} from './proof-timings.mjs';
 const failure=code=>Object.assign(Error('Remote proof did not complete.'),{code});
@@ -9,8 +8,8 @@ export function createRemoteProverClient({url,board,chainId,rollupVersion,proofs
  const base=endpoint.href.replace(/\/$/,'');
  return Object.freeze({async prove(steps,publicInputs=[]){
   const {metadata,body}=await measureProofStage('transport.serialize',async()=>{
-   const metadata={board,chainId:String(chainId),rollupVersion:String(rollupVersion),mode:proofsEnabled?'real':'disabled',circuits:await Promise.all(steps.map(s=>circuitId(s.bytecode,s.vk)))};
-   return {metadata,body:encodeJob(metadata,steps.map(s=>serializeWitness(s.witness)))};
+   const metadata={board,chainId:String(chainId),rollupVersion:String(rollupVersion),mode:proofsEnabled?'real':'disabled',circuits:await measureProofStage('transport.circuit-ids',()=>Promise.all(steps.map(s=>circuitId(s.bytecode,s.vk))))};
+   return {metadata,body:await encodeJob(metadata,steps.map(s=>s.witness),measureProofStage)};
   });
   async function request(path,options={}){
    let response,text;

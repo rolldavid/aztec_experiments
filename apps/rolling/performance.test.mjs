@@ -111,3 +111,10 @@ test('visibility diagnostics use fixed states and monotonic timestamps with a bo
  assert.equal(latest.length,64);assert(latest.every(entry=>['visible','hidden'].includes(entry.state)));assert(!JSON.stringify(latest).includes('private-data'));
  stop();assert.equal(listeners.size,0);
 });
+
+test('proof admission records only fixed numeric server phase durations',()=>{
+ const timings=[{name:'body',duration:12,description:'private'},{name:'validate',duration:.2},{name:'queue',duration:3},{name:'private-id',duration:4},{name:'body',duration:-1}];
+ const result=rollingResourceTiming(resource('/prover/v1/jobs',{serverTiming:timings}),origin);
+ assert.equal(result.serverBody,12);assert.equal(result.serverValidate,.2);assert.equal(result.serverQueue,3);assert(!JSON.stringify(result).includes('private'));
+ const node=rollingResourceTiming(resource('/prover/v1/node',{serverTiming:timings}),origin);assert.equal(node.serverBody,undefined);
+});

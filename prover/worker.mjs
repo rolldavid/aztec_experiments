@@ -4,12 +4,12 @@ import {rollingSelectors,validateRollingJob} from './application-policy.mjs';
 import {pluginSelectors,validatePluginPayload} from './plugin-policy.mjs';
 import fs from 'node:fs/promises';
 import {gunzipSync} from 'node:zlib';
-import {decompressWitness} from '@aztec-foundation/noir-acvm_js';
-import {abiDecode} from '@aztec-foundation/noir-noirc_abi';
+import {abiDecode,serializeWitness} from '@aztec-foundation/noir-noirc_abi';
 import {Barretenberg,AztecClientBackend} from '@aztec-foundation/bb.js';
 import {workerNativeProfile,initializeWorkerNative,assertWorkerNativeProfile} from './worker-native-profile.mjs';
 import {loadCircuitCatalog} from './catalog.mjs';
 import {decodeJob} from '../shared/remote-prover-wire.mjs';
+import {decodeWitnessDictionary} from '../shared/remote-witness-dictionary.mjs';
 // Native BB unrefs its process/socket between requests. Keep the job owner
 // alive until its result has been sent and the backend has been destroyed.
 process.channel?.ref();
@@ -17,7 +17,7 @@ const send=value=>new Promise((resolve,reject)=>process.send(value,error=>error?
 let stage="read";
 const setStage=value=>{stage=value;process.send?.({progress:stage});};
 try{
- const {metadata,witnesses}=decodeJob(await fs.readFile(process.argv[2]));
+ const {metadata,payload}=decodeJob(await fs.readFile(process.argv[2]));
  if(metadata.mode!==process.env.PROVER_PROOFS)throw Error('Mode mismatch');
  setStage('native-init');
  const nativeProfile=workerNativeProfile();
@@ -26,34 +26,37 @@ try{
  const applicationProfile=process.env.PROVER_APPLICATION_PROFILE??'legacy';
  const catalog=await loadCircuitCatalog({applicationProfile}),circuits=metadata.circuits.map(id=>{const c=catalog.get(id);if(!c)throw Error('Unknown circuit');return c;});
  setStage("decompress");
- let total=0;const raw=witnesses.map(w=>{const r=gunzipSync(w,{maxOutputLength:16*1024*1024});total+=r.length;if(total>64*1024*1024)throw Error('Witness limit');return r;});
+ const unpacked=gunzipSync(payload,{maxOutputLength:metadata.uncompressedBytes});
+ if(unpacked.length!==metadata.uncompressedBytes)throw Error('Witness limit');
+ const witnesses=decodeWitnessDictionary(unpacked,metadata.counts);
+ let total=0;const raw=witnesses.map(w=>{const r=gunzipSync(serializeWitness(w),{maxOutputLength:16*1024*1024});total+=r.length;if(total>64*1024*1024)throw Error('Witness limit');return r;});
  setStage("board-binding");
  if(applicationProfile==='rolling'){
   const options={metadata,privateBokAddress:process.env.PROVER_PRIVATE_BOK,privateFeeAddress:process.env.PROVER_PRIVATE_FEE};
-  const decoded=circuits.map((c,i)=>/^(RollingBoard|PrivateBok|PrivateFPC|SchnorrInitializerlessAccount):/.test(c.functionName)?abiDecode(c.abi,decompressWitness(witnesses[i])).inputs:undefined);
+  const decoded=circuits.map((c,i)=>/^(RollingBoard|PrivateBok|PrivateFPC|SchnorrInitializerlessAccount):/.test(c.functionName)?abiDecode(c.abi,witnesses[i]).inputs:undefined);
   const selectors=await rollingSelectors(loadRollingArtifacts());
   validateRollingJob(circuits,decoded,{...options,selectors});
  }else{
  let boardCalls=0,feeClaims=0;
  for(let i=0;i<circuits.length;i++)if(circuits[i].functionName.startsWith('Billboard:')){
-  const inputs=abiDecode(circuits[i].abi,decompressWitness(witnesses[i])).inputs;
+  const inputs=abiDecode(circuits[i].abi,witnesses[i]).inputs;
   if(BigInt(inputs.inputs.call_context.contract_address.inner)!==BigInt(metadata.board))throw Error('Wrong board');
   if(BigInt(inputs.inputs.tx_context.chain_id)!==BigInt(metadata.chainId)||BigInt(inputs.inputs.tx_context.version)!==BigInt(metadata.rollupVersion))throw Error('Wrong network');boardCalls++;
  }
  if(process.env.PROVER_PRIVATE_FEE)for(let i=0;i<circuits.length;i++)if(circuits[i].functionName.startsWith('PrivateFPC:')){
-  const inputs=abiDecode(circuits[i].abi,decompressWitness(witnesses[i])).inputs;
+  const inputs=abiDecode(circuits[i].abi,witnesses[i]).inputs;
   if(BigInt(inputs.inputs.call_context.contract_address.inner)!==BigInt(process.env.PROVER_PRIVATE_FEE))throw Error('Wrong fee contract');
   if(BigInt(inputs.inputs.tx_context.chain_id)!==BigInt(metadata.chainId)||BigInt(inputs.inputs.tx_context.version)!==BigInt(metadata.rollupVersion))throw Error('Wrong fee network');
   if(circuits[i].functionName==='PrivateFPC:mint_and_pay_fee')feeClaims++;
  }
  const pluginAddresses=JSON.parse(process.env.PROVER_PLUGINS||'[]');
  for(let i=0;i<circuits.length;i++)if(circuits[i].functionName.startsWith('PluginAdapter:')){
-  const input=abiDecode(circuits[i].abi,decompressWitness(witnesses[i])).inputs.inputs;
+  const input=abiDecode(circuits[i].abi,witnesses[i]).inputs.inputs;
   if(circuits[i].functionName!=='PluginAdapter:claim'||!pluginAddresses.some(address=>BigInt(address)===BigInt(input.call_context.contract_address.inner))||BigInt(input.tx_context.chain_id)!==BigInt(metadata.chainId)||BigInt(input.tx_context.version)!==BigInt(metadata.rollupVersion))throw Error('Unapproved plugin circuit');
  }
  if(!boardCalls){
   const selectors=await pluginSelectors();let authorized=0;
-  for(let i=0;i<circuits.length;i++)if(circuits[i].functionName==='SchnorrInitializerlessAccount:entrypoint')authorized+=validatePluginPayload(abiDecode(circuits[i].abi,decompressWitness(witnesses[i])).inputs,{metadata,pluginAddresses,privateFeeAddress:process.env.PROVER_PRIVATE_FEE,selectors,allowFeeOnly:feeClaims>0});
+  for(let i=0;i<circuits.length;i++)if(circuits[i].functionName==='SchnorrInitializerlessAccount:entrypoint')authorized+=validatePluginPayload(abiDecode(circuits[i].abi,witnesses[i]).inputs,{metadata,pluginAddresses,privateFeeAddress:process.env.PROVER_PRIVATE_FEE,selectors,allowFeeOnly:feeClaims>0});
   if(!authorized&&!feeClaims)throw Error('Board operation or authorized plugin/fee claim required');
  }
  }
