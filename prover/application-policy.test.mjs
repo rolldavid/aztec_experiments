@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {bindRollingCircuit, validateRollingPayload, validateRollingJob, rollingSelectors} from './application-policy.mjs';
-import {ARTIFACTS, COMMON_INPUTS, loadRollingArtifacts, sha} from './rolling-artifacts.mjs';
+import {ARTIFACTS, COMMON_INPUTS, loadRollingArtifacts, permittedInput, sha} from './rolling-artifacts.mjs';
 import {pluginSelectors} from './plugin-policy.mjs';
 import {FunctionSelector, loadContractArtifact} from '@aztec-labs/stdlib/abi';
 
@@ -89,6 +89,28 @@ function artifactFixture() {
   const save=()=>write('prover/rolling-artifacts.json',JSON.stringify(manifest));save();
   return {root,write,manifest,save,close:()=>fs.rmSync(root,{recursive:true,force:true})};
 }
+test('owner delivery catalog binds generated native sources without allowing unrelated build files', () => {
+  const f=artifactFixture();try{
+    const target=f.manifest.artifacts[0],raw=JSON.parse(fs.readFileSync(path.join(f.root,target.path)));
+    const paths=['billboard/owner_delivery/src/delivery.nr','.build/owner-delivery/aztec-nr/aztec/src/messages/discovery/mod.nr','.build/owner-delivery/aztec-nr/uint-note/src/uint_note.nr'];
+    for(const [index,source] of paths.entries()){
+      assert(permittedInput(source));f.write(source,'owner fixture');f.manifest.inputs[source]=sha('owner fixture');
+      raw.file_map[index+2]={path:source,source:'owner fixture'};
+    }
+    const bytes=JSON.stringify(raw);f.write(target.path,bytes);target.sha256=sha(bytes);f.save();
+    assert.equal(loadRollingArtifacts(f.root).length,2);
+    const generated=paths[1];f.write(generated,'changed');
+    assert.throws(()=>loadRollingArtifacts(f.root),/provenance/);
+    f.manifest.inputs[generated]=sha('changed');f.save();
+    assert.throws(()=>loadRollingArtifacts(f.root),/local source mismatch/);
+    delete f.manifest.inputs[generated];f.save();
+    assert.throws(()=>loadRollingArtifacts(f.root),/local source mismatch/);
+    f.write(generated,'owner fixture');f.manifest.inputs[generated]=sha('owner fixture');
+    const foreign='.build/owner-delivery/aztec-nr/foreign/src/other.nr';f.write(foreign,'foreign');f.manifest.inputs[foreign]=sha('foreign');f.save();
+    assert.throws(()=>loadRollingArtifacts(f.root),/provenance/);
+    assert.equal(permittedInput('.build/owner-delivery/aztec-nr/aztec/src/../other.nr'),false);
+  }finally{f.close();}
+});
 test('artifact provenance rejects missing, stale, raw and symlinked release inputs', () => {
   // Deliberately synthetic bytes exercise release checks, never proving APIs.
   const f=artifactFixture();try{
