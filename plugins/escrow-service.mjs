@@ -266,19 +266,24 @@ export async function runPrivateBokRequest({request,board,escrow,store,provider,
   return {status:'accounted-without-reply',replayed:false};
  };
  if(saved?.phase==='accounting-only'){assert(invocation,'Atomic final reply requires invocation accounting');return finishWithoutReply();}
- const finishAtomic=async()=>{
-  try{await metering.finishWithReply(saved.args);}
+ const finishAtomic=async(observeOnly=false)=>{
+  let completion;
+  try{completion=await metering.finishWithReply(saved.args,{observeOnly});}
   catch(error){
-   if(error?.code!=='BOK_FINAL_BATCH_REVERTED')throw error;
+   if(observeOnly||error?.code!=='BOK_FINAL_BATCH_REVERTED')throw error;
    // Canonical reversion rolled back settlement and reply together. Close only
    // accounting from genuine retained receipts; never repeat the failed reply.
    saved={...saved,phase:'accounting-only',replyFailure:'canonical-revert'};await save(saved);return finishWithoutReply();
   }
   const published=await board.readRequest(request.postId);
   assert(published?.replied&&published.target===request.target&&published.requestId===request.requestId&&published.pluginId===request.pluginId,'Authenticated Rolling reply unavailable');
-  await save({...saved,phase:'finished'});return {status:'finished',replayed:false};
+  const phase=completion.included?'reply-included':'finished';
+  await save({...saved,phase});return {status:completion.included?'included':'finished',replayed:false};
  };
- if(saved?.phase==='final-intent'){assert(invocation,'Atomic final reply requires invocation accounting');return finishAtomic();}
+ // The normal bounded recovery scan revisits this exact receipt. It must never
+ // invoke a mutator, provider, repository tool or accounting fallback.
+ if(saved?.phase==='reply-included')return finishAtomic(true);
+ if(saved?.phase==='final-intent'){assert(invocation,'Atomic final reply requires invocation accounting');return finishAtomic(store.read().privateBok?.finalization?.status==='included');}
 
  let result=saved?.phase==='result-ready'?saved.result:undefined;
  if(saved?.phase==='result-ready')assert(invocation&&result&&typeof result.replyText==='string'&&saved.resultDigest===digest(result),'Saved result binding unavailable');

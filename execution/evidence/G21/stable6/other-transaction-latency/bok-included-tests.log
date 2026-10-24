@@ -1,0 +1,235 @@
+✔ accepted publication with uncertain private mirror retains exact identity and omits operator URL (1.774166ms)
+✔ Rolling hosted composition reserves before paid call, settles, authenticates reply and releases remainder (4.269917ms)
+✔ unknown provider call remains fenced across hosted restart without another invocation (0.738959ms)
+✔ settlement-only continuation preserves original active request and never replays provider or finishes (2.709583ms)
+✔ settlement-only replacement binds exact original signed operation before saving authority (5.898084ms)
+✔ settlement-only continuation without replacement reconciles canonical original and rejects unknown provider (2.114667ms)
+✔ trusted original billing closes accounting without reply or another provider call (1.659125ms)
+✔ trusted billing rejects changed scope input cost receipt and original evidence before chain mutation (7.820834ms)
+✔ interrupted billing reconciliation resumes original chain operation and never republishes a reply (1.760541ms)
+✔ earlier settled receipt and changed limits cannot trap the current two-call billing recovery (2.382ms)
+✔ billing recovery retains original lease and never treats reply recovery as lost billing (0.692416ms)
+✔ one-shot billing owner refuses the active service lease before SDK or evidence access (79.973959ms)
+✔ billing recovery persists original receipt in the actual file store across an interrupted owner (153.852125ms)
+✔ reply receipt loss permits only inspection then finish, never provider or reply retransmission (1.518417ms)
+✔ pending hosted finish resumes only its canonical original operation without provider or reply replay (1.375292ms)
+✔ crash after durable agent intent cannot restart even before a paid call (0.231667ms)
+✔ canonical invocation or journal identity changes reject before billing (1.082583ms)
+✔ missing reply linkage cannot release credits as a successful authenticated reply (0.738292ms)
+✔ real HTTP hosted owner drains current request before closing its listener (32.521583ms)
+✔ explicit Rolling descriptor cannot select legacy account funding (1.892542ms)
+✔ hosted filesystem lease rejects second owner and preserves a replaced lock (108.090042ms)
+✔ actual SDK board projection gates canonical plugin, moderation, checkpointed and native proof mode (development=true) (683.095333ms)
+✔ actual SDK board projection gates canonical plugin, moderation, checkpointed and native proof mode (development=false) (570.299833ms)
+✔ actual SDK board projection gates canonical plugin, moderation, proposed and native proof mode (development=true) (607.298292ms)
+✔ actual SDK board projection gates canonical plugin, moderation, proposed and native proof mode (development=false) (554.916292ms)
+✔ restarted confirmed reply must remain canonical and linked before releasing unused credits (2.630125ms)
+✔ moderation drift during reservation remains a known pre-provider rejection (0.428834ms)
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":1,"stage":"agent.history","durationMs":0.026,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":1,"stage":"agent.history","durationMs":0.292,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":2,"stage":"agent.open","durationMs":0.003,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":2,"stage":"agent.open","durationMs":0.036,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":3,"stage":"agent.context","durationMs":0.002,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":3,"stage":"agent.context","durationMs":0.14,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":4,"stage":"agent.model","durationMs":0.002,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":4,"stage":"agent.model","durationMs":0.734,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":5,"stage":"agent.accept","durationMs":0.002,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":5,"stage":"agent.accept","durationMs":0.037,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":6,"stage":"agent.close","durationMs":0.002,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":6,"stage":"agent.close","durationMs":0.021,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":1,"stage":"agent.history","durationMs":0.001,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":1,"stage":"agent.history","durationMs":0.026,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":2,"stage":"agent.open","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":2,"stage":"agent.open","durationMs":0.009,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":3,"stage":"agent.context","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":3,"stage":"agent.context","durationMs":0.007,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":4,"stage":"agent.summary","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":4,"stage":"agent.summary","durationMs":0.61,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":5,"stage":"agent.model","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":5,"stage":"agent.model","durationMs":0.772,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":6,"stage":"agent.accept","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":6,"stage":"agent.accept","durationMs":0.007,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":7,"stage":"agent.close","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":7,"stage":"agent.close","durationMs":0.006,"result":"success"}
+✔ private actor file and SDK decode failures cannot leak private sentinels (3.97075ms)
+✔ captured conversation guard runs after reservation and current policy before each paid call (1.161833ms)
+✔ history change during reservation rejects before the paid boundary without replacing context (0.462958ms)
+✔ conversation enabled request cannot execute provider without actual capture (0.659458ms)
+✔ hosted projection preserves native checkpointed and numbered selectors in both proof modes (0.203167ms)
+✔ actual agent uses guarded metering for small direct history and current answer (3.025875ms)
+✔ actual agent uses guarded metering for large summarized history and current answer (2.018083ms)
+✔ hosted recovery discovers replied pending finish outside the public pending feed (7.297417ms)
+✔ hosted recovery skips finished and uncertain paid-call journals (2.274708ms)
+✔ hosted recovery rejects scope and canonical request drift before dispatch (6.942625ms)
+✔ hosted recovery rejects symlink, FIFO and malformed journals without private parser output (6.467666ms)
+✔ hosted frozen escrow port preserves metadata and method receivers through the wallet lane (0.370208ms)
+✔ hosted frozen escrow ports share serialization and preserve the first exact rejected operation (0.426166ms)
+✔ hosted request reaches existing reserve paid settle reply and finish through the frozen escrow wrapper (0.991792ms)
+✔ operator-connected source and artifacts never enter static publication or default mirror (0.180458ms)
+✔ truncated paid completion publishes explicit failure and finishes genuine accounting without accepting an app (1.236583ms)
+✔ terminal no-reply admission authenticates original limits and canonical settlement read-only (1.376125ms)
+✔ terminal no-reply admission refuses changed phase (1.034334ms)
+✔ terminal no-reply admission refuses changed finished (1.349958ms)
+✔ terminal no-reply admission refuses changed call (1.023083ms)
+✔ terminal no-reply admission refuses changed receipt (1.085792ms)
+✔ terminal no-reply admission refuses changed charge (1.075542ms)
+✔ terminal no-reply admission refuses changed budget (1.289583ms)
+✔ terminal no-reply admission refuses changed state (1.212625ms)
+✔ terminal no-reply admission refuses changed reserved (1.20625ms)
+✔ terminal no-reply admission refuses changed target (1.323125ms)
+✔ terminal no-reply admission refuses changed plugin (1.123625ms)
+✔ terminal no-reply admission refuses changed limits (1.374542ms)
+✔ terminal no-reply admission refuses changed sequence (1.196125ms)
+✔ bounded predecessor pages skip authenticated terminal history but stop at unknown barriers (1.183417ms)
+✔ queued predecessor read retains its caller and sole ownership until it settles (0.245959ms)
+✔ closing predecessor admission drains its owned read without admitting or scanning another row (0.168416ms)
+✔ saved reply recovery remains dispatchable after moderation or plugin disable (6.935167ms)
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":1,"stage":"agent.history","durationMs":0.001,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":1,"stage":"agent.history","durationMs":0.05,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":2,"stage":"agent.open","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":2,"stage":"agent.open","durationMs":0.025,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":3,"stage":"agent.context","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":3,"stage":"agent.context","durationMs":0.008,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":4,"stage":"agent.model","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":4,"stage":"agent.model","durationMs":0.543,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":5,"stage":"agent.accept","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":5,"stage":"agent.accept","durationMs":0.012,"result":"success"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":6,"stage":"agent.close","durationMs":0,"result":"started"}
+{"requestId":"0x0000000000000000000000000000000000000000000000000000000000000002","span":6,"stage":"agent.close","durationMs":0.01,"result":"success"}
+✔ service shutdown drains the owned predecessor scan before closing resources (0.540584ms)
+✔ terminal node pins checkpointed reads and retains original canonical rechecks (development=true) (0.231583ms)
+✔ terminal node pins checkpointed reads and retains original canonical rechecks (development=false) (0.102833ms)
+✔ terminal accounting from a different checkpoint cannot exempt a predecessor (1.597833ms)
+✔ accepted hosted recovery publishes once and finishes with settled original billing and no model replay (1.420875ms)
+✔ accepted recovery fences mirror failures, unknown billing and canonical identity/accounting changes (12.453042ms)
+✔ accepted recovery rechecks canonical invocation after publication and never resends ambiguous reply (2.181416ms)
+✔ trusted accepted reply binds exact publication links and never exposes connected source (0.831375ms)
+✔ recovered reply absent or reverted receipts never permit another reply send or finish (1.918083ms)
+✔ thread pool exhaustion before running permits replenishment and the same original request once (1.316541ms)
+✔ existing entered agent intent stays fenced without re-admission even if pool capacity returns (0.1925ms)
+✔ thread admission rejects changed canonical initial-history before durable run or paid work (0.129292ms)
+✔ thread admission rejects changed canonical after-allocation before durable run or paid work (0.078458ms)
+✔ thread admission rejects changed canonical request before durable run or paid work (0.102416ms)
+✔ durable dispatch hint skips fenced billing before escrow construction and observes accepted recovery changes (7.266167ms)
+✔ explicit retained candidate validation feeds existing hosted recovery without another provider call (597.5495ms)
+✔ hosted first quote resumes only its original unsubmitted reserve and consumes recovery before entering agent (2.342708ms)
+✔ submitted first reserve waits for exact canonical original hash before the first provider call without resending (2.111792ms)
+✔ first received response resumes settlement and the original tool result without another provider call (1.6305ms)
+✔ received result with no saved message remains accounting-only and cannot restart the agent (0.508667ms)
+✔ restored reply intent waits for the exact saved operation before canonical inspection and never reposts (1.030541ms)
+✔ restored reply cannot finish on a waiter result without a matching canonical original receipt (3.876833ms)
+✔ hosted invocation accounting meters multiple calls under one reserve and settles before authenticated reply (4.152625ms)
+✔ hosted invocation accounting retains produced result across unsettled chain operation and resumes without agent (1.460959ms)
+✔ hosted invocation accounting preserves accepted revision recovery without replaying paid calls (1.410333ms)
+✔ hosted invocation accounting closes unknown original provider without a model or tool replay (2.211125ms)
+✔ hosted invocation result-ready is discoverable after restart without model admission (12.677791ms)
+✔ generated validation failure settles actual invocation usage and refunds unused credit (1.86875ms)
+✔ generated failure result resumes pending settlement without another model call (1.250834ms)
+✔ unresolved STATIC_UNAVAILABLE is not converted to a generated validation failure (0.458125ms)
+✔ unresolved STATIC_CLEANUP_REQUIRED is not converted to a generated validation failure (0.378625ms)
+✔ unresolved STATIC_RECORD_FAILED is not converted to a generated validation failure (0.371416ms)
+✔ unresolved UNKNOWN_PROVIDER is not converted to a generated validation failure (0.36225ms)
+✔ input limit after 0 paid calls finishes genuine accounting without another provider call (0.548167ms)
+✔ input limit after 2 paid calls finishes genuine accounting without another provider call (1.400167ms)
+✔ configured code context above 64 KiB reaches provider while exact bound remains enforced (1.374209ms)
+✔ canonical atomic reply reversion closes genuine billing without retrying the reply or agent (1.291208ms)
+✔ accounting-only path resumes its original settlement after canonical batch reversion (1.477542ms)
+✔ unbound failed final receipt cannot authorize accounting-only close: canonical (0.680916ms)
+✔ unbound failed final receipt cannot authorize accounting-only close: argsDigest (0.639458ms)
+✔ unbound failed final receipt cannot authorize accounting-only close: method (0.635583ms)
+✔ successful final receipt without canonical refund or authenticated board reply cannot report success (1.427208ms)
+✔ canonical final batch revert remains reconcilable after request is fenced before resume (1.308959ms)
+✔ expired active canonical final revert fences then reconciles known billing without attempting settle (1.329792ms)
+✔ concurrent expiry racing failed-final accounting fence requires canonical close failure: true (1.534791ms)
+✔ concurrent expiry racing failed-final accounting fence requires canonical close failure: false (0.91775ms)
+✔ concurrent expiry accounting resumes original included reconciliation after lost observation (1.631875ms)
+✔ three model calls perform one immediate board guard each without duplicate prequote reads (1.988333ms)
+✔ immediate paid guard rejects board usable changed during quote (0.333375ms)
+✔ immediate paid guard rejects board replied changed during quote (0.228458ms)
+✔ immediate paid guard rejects board requestId changed during quote (0.219709ms)
+✔ immediate paid guard rejects board target changed during quote (0.203958ms)
+✔ immediate paid guard rejects board pluginId changed during quote (0.199834ms)
+✔ invocation history preflight rejects before the durable paid boundary (0.2775ms)
+✔ invocation provider preflight rejects before the durable paid boundary (0.200542ms)
+✔ repeated hosted preflight failures retain the same unsent quote before one paid invocation (5.970458ms)
+✔ hosted activated invocation with no model call replies and refunds in one final transaction (0.381084ms)
+✔ hosted input rejection before its first provider call releases the full activated budget with its reply (0.340959ms)
+✔ operator-pinned repository namespace survives plugin upgrades without changing payment scope (0.350459ms)
+✔ hosted native prover concurrency defaults to one and accepts bounded operator selection (0.306ms)
+✔ all hosted entry points reject invalid native prover concurrency before external work (0.664167ms)
+✔ hosted native prover concurrency initializes the shared singleton before use and rejects mismatched reuse (0.453625ms)
+✔ hosted capacity checks journal byte limit before catalogue without a paid call (0.905208ms)
+✔ fresh atomic finalization reuses its exact canonical terminal result without a second receipt inspection (0.779834ms)
+✔ atomic finalization uncertain or incorrectly bound mutator returns require fresh original inspection (5.137209ms)
+✔ reused atomic receipt does not replace fresh conservation and refund validation (1.842125ms)
+✔ canonical reverted atomic mutator result retains the separate accounting reconciliation inspection (1.104542ms)
+✔ hosted accepted finalization resumes exact unsent proof without another model call (1.109584ms)
+✔ hosted unsent status cannot authorize another operation or submitted outcome (2.986042ms)
+✔ hosted included reply returns before checkpoint, then exact receipt promotes without model or mutation (1.292458ms)
+✔ included reply orphan or changed identity stays visible and never authorizes fallback or replay (5.895333ms)
+✔ included accounting requires matching receipt snapshot and refund conservation before publishing completion (2.428833ms)
+✔ included journal is found by the existing bounded recovery scan and dispatches no model admission (3.197959ms)
+✔ interrupted included bookkeeping resumes in observation-only mode before hosted phase write (1.04875ms)
+✔ unit fake: public request is hash-pinned and configuration-bound (6.186708ms)
+✔ unit fake: exact canonical success records fee and only one submission across restart (5.567375ms)
+✔ unit fake: accepted send with lost response reconciles without another send (0.968291ms)
+✔ unit fake: pending outcome remains pending after restart and never reproves (0.897542ms)
+✔ unit fake: pending finish reopens original hash and records canonical fee without resubmission (1.272291ms)
+✔ unit fake: failure before send consumes intent without leaking error or reproving (0.631333ms)
+✔ unit fake: actual reverted receipt records charged fee before returning failure (0.896958ms)
+✔ unit fake: mismatched receipt hash retains fee evidence but cannot pass (0.865958ms)
+✔ unit fake: mismatched effect or reorg cannot qualify canonical inclusion (1.804125ms)
+✔ unit fake: changed network, class or operator denies subsequent action (0.653459ms)
+✔ unit fake: wrong proven public target is never submitted (0.463833ms)
+✔ unit fake: lost lease or failed durable write prevents proving and sending (0.412417ms)
+✔ unit fake: real-proof production advances at checkpoint without waiting for finalized tip (1.344542ms)
+✔ unit fake: historical finalized binding reopens exact original operation without rewriting history or resending (1.943958ms)
+✔ unit fake: policy evolution never admits changed identity or unrecognized confirmation policy (1.779209ms)
+✔ unit fake: posting reservation and 180-second margin required before inference (0.523541ms)
+✔ unit fake: conservation, target and operation digest mismatches fail closed (0.355041ms)
+✔ unit fake: explicit local restriction and proof labels cannot be silently changed (0.2615ms)
+✔ unit fake: all allowed operator ABI methods retain exact args and reject copied identities (3.075042ms)
+✔ unit fake: absent, unreadable and dropped outcomes do not authorize submission replay (0.614291ms)
+✔ unit fake: changed actual fee payer or effect fee cannot pass (0.794458ms)
+✔ unit fake: malformed schema and changed proof mode reject journal reopening (0.423542ms)
+✔ unit fake: included fee/effect history survives unavailable, pending, dropped and reorg observations (1.157458ms)
+✔ unit fake: requested real rejects disabled node or disabled/unknown PXE before proof/send (0.880791ms)
+✔ unit fake: disabled requires matching actual node and native PXE false (0.776333ms)
+✔ unit fake: loss of network verification invalidates current pass while retaining inclusion history (0.520667ms)
+✔ unit fake: authenticated reply uses exact flattened ABI and cannot replay after restart (3.806125ms)
+✔ unit fake: only first never-submitted reserve can continue once after proof preparation failure (1.938041ms)
+✔ unit fake: native observer waits on original submitted hash then rechecks canonical effect without proving or sending (0.88275ms)
+✔ unit fake: first settlement and reply remain owned until native checkpoint, then inspect exact original effect (8.10725ms)
+✔ unit fake: native observation preserves reverted or dropped outcomes and does not replay (1.490792ms)
+✔ unit fake: lost native observation retains signed intent for state-driven continuation without another proof/send (0.837375ms)
+✔ explicit dropped settlement replacement retains both hashes, canonical fees and one-use lineage (2.339083ms)
+✔ replacement never admits missing/pending receipts, wrong authority or changed reservation (2.379542ms)
+✔ replacement admission consumed before proof; failure and unknown send never reprove or resend (2.598125ms)
+✔ replacement rechecks reservation and late original inclusion after proof before broadcasting (2.200917ms)
+✔ unit fake: one reservation observation shares identical checkpoint/latest snapshot (0.2915ms)
+✔ unit fake: independent pinned storage slots are read concurrently and fresh on the next guard (6.00025ms)
+✔ unit fake: distinct latest block and reorg during final guard remain authoritative (0.533583ms)
+✔ unit fake: atomic final reply proves and submits one exact ordered three-call transaction (1.144334ms)
+✔ unit fake: atomic final reply rejects non-revertible calls before broadcast (0.4605ms)
+✔ unit fake: final batch pending/lost acknowledgement observes one original hash (1.478958ms)
+✔ pinned SDK gas and transaction types: funded native ceiling preserves exact request and batch with one validated proof (189.913542ms)
+✔ funded fixed ceiling: exact balance admits; one unit short fails before private work (0.909ms)
+✔ required native validation, failed validation or altered proven fees prevent broadcast (0.970083ms)
+✔ explicit final reply replacement binds all nine original arguments and never repeats (1.898708ms)
+✔ explicit final reply replacement refuses altered message authority and pending original (1.633166ms)
+✔ final reply replacement consumed before simulation/proof failure cannot be automatically retried (0.731417ms)
+✔ proposed reservation permits paid admission but a reorg fences it and final observation still waits checkpoint (0.74125ms)
+✔ exact unsent final batch retries on a later invocation without replaying any submission (1.662833ms)
+✔ unsent final batch retry rechecks lease class and exact arguments before proof (1.430792ms)
+✔ any submission or replacement evidence prevents unsent finalization re-entry (1.991584ms)
+✔ successful proposed final reply releases at exact inclusion with receipt-block accounting (1.113375ms)
+✔ native final reply waiter selects proposed but a proposed revert still requires checkpoint (1.197084ms)
+✔ proposed final receipt cannot survive changed canonical block or accounting class (1.242583ms)
+ℹ tests 189
+ℹ suites 0
+ℹ pass 189
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5041.06925

@@ -1132,3 +1132,49 @@ test('hosted unsent status cannot authorize another operation or submitted outco
   await assert.rejects(x.run());await assert.rejects(x.run());assert.equal(attempts,1);assert.equal(x.events.filter(v=>v==='paid').length,1);
  }
 });
+
+function includedInvocationFixture(){
+ const x=invocationFixture(),finalize=x.args.escrow.finalize_reply;
+ x.args.escrow.finalize_reply=async(...args)=>{
+  await finalize(...args);const id=args.at(-1).operationId,original=x.ops.get(id);
+  const result={...original,status:'included',txHash:f(501),blockNumber:7,blockHash:f(77),accounting:{canonical:true,request:{...x.row},anchor:{number:7,hash:f(77),finality:'proposed'}}};x.ops.set(id,result);return result;
+ };
+ return x;
+}
+test('hosted included reply returns before checkpoint, then exact receipt promotes without model or mutation',async()=>{
+ const x=includedInvocationFixture();assert.deepEqual(await x.run(),{status:'included',replayed:false});
+ assert.equal(x.store.read().privateBok.finished,false);assert.equal(x.store.read().hostedPrivateBok.phase,'reply-included');assert.equal(x.store.read().privateBok.calls[0].phase,'received');
+ const before=[...x.events],id=[...x.ops.keys()][0];let inspections=0;const inspect=x.args.escrow.inspectOperation;
+ x.args.escrow.inspectOperation=async key=>{inspections++;assert.equal(key,id);return inspect(key);};
+ x.args.escrow.finalize_reply=async()=>assert.fail('No mutator on inclusion observation');x.args.escrow.waitForOperation=async()=>assert.fail('Normal observation must not hold worker');x.args.provider.execute=async()=>assert.fail('No model replay');x.args.runAgent=async()=>assert.fail('No agent replay');
+ assert.equal((await x.run()).status,'included');assert.equal(inspections,1);assert.deepEqual(x.events,before);
+ x.ops.get(id).status='succeeded';assert.equal((await x.run()).status,'finished');assert.equal(inspections,2);assert.equal(x.store.read().privateBok.finished,true);assert.equal(x.store.read().privateBok.calls[0].phase,'settled');assert.deepEqual(x.events,before);
+});
+test('included reply orphan or changed identity stays visible and never authorizes fallback or replay',async()=>{
+ for(const mutation of ['pending','dropped','failed','hash','block','digest','accounting']){
+  const x=includedInvocationFixture();await x.run();const before=structuredClone(x.store.read()),record=x.ops.values().next().value;
+  if(['pending','dropped','failed'].includes(mutation))record.status=mutation;if(mutation==='hash')record.txHash=f(999);if(mutation==='block')record.blockHash=f(999);if(mutation==='digest')record.argsDigest='wrong';if(mutation==='accounting')record.accounting.anchor.hash=f(999);
+  for(const method of ['finalize_reply','waitForOperation','finish','close_uncertain','reconcile','settle'])x.args.escrow[method]=async()=>assert.fail('Observation cannot mutate or wait');
+  await assert.rejects(x.run(),/no longer canonical|anchor mismatch/);assert.deepEqual(x.store.read(),before);assert.deepEqual(x.events,['paid','finalize_reply']);
+ }
+});
+test('included accounting requires matching receipt snapshot and refund conservation before publishing completion',async()=>{
+ for(const change of ['missing','block','conservation','secondary']){
+  const x=includedInvocationFixture(),finalize=x.args.escrow.finalize_reply;
+  x.args.escrow.finalize_reply=async(...args)=>{const result=await finalize(...args);if(change==='missing')delete result.accounting;if(change==='block')result.accounting.anchor.number++;if(change==='conservation')result.accounting.request.refunded--;if(change==='secondary')result.accounting.request.secondary_done=false;return result;};
+  await assert.rejects(x.run(),/accounting|conservation/);assert.equal(x.store.read().privateBok.finished,false);assert.equal(x.store.read().hostedPrivateBok.phase,'final-intent');
+ }
+});
+test('included journal is found by the existing bounded recovery scan and dispatches no model admission',async t=>{
+ const x=includedInvocationFixture();await x.run();const directory=await fs.mkdtemp(path.join(os.tmpdir(),'bok-included-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const scope={chainId:'31337',rollupVersion:'1',rollupAddress:'public',receiver:f(5)},request={...x.args.request,threadId:f(9)},id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
+ const state=JSON.stringify(x.store.read(),(_key,value)=>typeof value==='bigint'?String(value):value);await fs.writeFile(path.join(directory,id+'.json'),state,{mode:0o600});const lease={assertHeld:async()=>{}};
+ assert.equal(await hostedRequestDispatchable({request,directory,scope,pluginId:request.pluginId,lease,repositories:{hasAcceptedRecovery:()=>assert.fail('No agent admission')},repository:'owner/project'}),true);
+ const scanner=hostedRecoveryScanner({directory,scope,pluginId:request.pluginId,lease,board:{readRequest:async()=>({...x.current,threadId:f(9)})}});try{assert.equal((await scanner())[0].requestId,request.requestId);}finally{await scanner.close();}
+});
+test('interrupted included bookkeeping resumes in observation-only mode before hosted phase write',async()=>{
+ const x=includedInvocationFixture();let fail=true;x.control.writeFailure=value=>fail&&value.hostedPrivateBok?.phase==='reply-included';
+ await assert.rejects(x.run(),/disk/);assert.equal(x.store.read().privateBok.finalization.status,'included');assert.equal(x.store.read().hostedPrivateBok.phase,'final-intent');fail=false;
+ x.args.escrow.finalize_reply=async()=>assert.fail('No resend after included billing write');x.args.escrow.waitForOperation=async()=>assert.fail('No new checkpoint wait');
+ assert.equal((await x.run()).status,'included');assert.deepEqual(x.events,['paid','finalize_reply']);
+});

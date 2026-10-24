@@ -557,3 +557,27 @@ test('any submission or replacement evidence prevents unsent finalization re-ent
   assert.deepEqual(f.counts(),{proofs:1,sends:0},key);
  }
 });
+
+test('successful proposed final reply releases at exact inclusion with receipt-block accounting',async()=>{
+ const f=await fixture({admissionTier:'proposed'}),args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],op=f.op('finalize_reply',args);
+ f.receipt.status='proposed';f.sdk.waitForTx=async()=>assert.fail('Already included reply must not wait for checkpoint');
+ const result=await f.port.finalize_reply(...args,op);
+ assert.equal(result.status,'included');assert.equal(result.canonical,true);assert.equal(result.accounting.anchor.number,10);assert.equal(result.accounting.anchor.hash,H(57));assert.equal(result.accounting.anchor.finality,'proposed');
+ assert.equal(result.accounting.request.budget,'1000');assert.doesNotThrow(()=>JSON.stringify(f.journal()));assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ const reopened=await f.create();assert.equal((await reopened.inspectOperation(op.operationId)).status,'included');
+ f.receipt.status='checkpointed';const confirmed=await reopened.inspectOperation(op.operationId);assert.equal(confirmed.status,'succeeded');assert.equal(confirmed.txHash,result.txHash);assert.equal(confirmed.blockHash,result.blockHash);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+});
+test('native final reply waiter selects proposed but a proposed revert still requires checkpoint',async()=>{
+ for(const reverted of [false,true]){
+  const f=await fixture({admissionTier:'proposed'}),args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],op=f.op('finalize_reply',args),waits=[];
+  f.receipt.status='pending';f.sdk.waitForTx=async(_node,_hash,options)=>{waits.push(options.waitForStatus);assert.equal(options.timeout,0);f.receipt.status=options.waitForStatus;f.receipt.executionResult=reverted?'reverted':'success';return f.receipt;};
+  const result=await f.port.finalize_reply(...args,op);assert.equal(result.status,reverted?'failed':'included');assert.deepEqual(waits,reverted?['proposed','checkpointed']:['proposed']);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ }
+});
+test('proposed final receipt cannot survive changed canonical block or accounting class',async()=>{
+ for(const change of ['block','class']){
+  const f=await fixture({admissionTier:'proposed'}),args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],op=f.op('finalize_reply',args);
+  f.receipt.status='proposed';await f.port.finalize_reply(...args,op);f.set(change==='block'?'blockMismatch':'class',change==='block'?true:H(999));
+  await assert.rejects(f.port.inspectOperation(op.operationId),/mismatch|changed/);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+ }
+});

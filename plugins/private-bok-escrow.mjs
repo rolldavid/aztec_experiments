@@ -54,7 +54,8 @@ export function createPrivateBokEscrowFactory(sdk) {
   assert.equal(artifact.name,'PrivateBok');
   const classId = (await getContractClassFromArtifact(artifact)).id.toString();
   // Paid execution may use native proposed inclusion when explicitly selected.
-  // Mutation completion still requires checkpoint inclusion in both proof modes.
+  // Successful atomic replies may release their worker at proposed inclusion.
+  // Reverts, replacement authority and all other mutations retain checkpoint finality.
   const finality = 'checkpointed';
   assert(['checkpointed','proposed'].includes(admissionTier));
   const identity = Object.freeze({network:`eip155-${chainId}:aztec-${version}:${rollup}`,escrow:addr.toString()});
@@ -180,12 +181,23 @@ export function createPrivateBokEscrowFactory(sdk) {
     assert(history.length<8,'Included receipt history limit; retain journal for reconciliation');
     await recordUpdate({includedHistory:[...history,included]});
    }
-   if(!['checkpointed','proven','finalized'].includes(receipt.status))return {status:'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
-   const tip=await selectedBlock(finality,read);assert(tip&&Number(tip.number)>=Number(receipt.blockNumber),'Checkpoint unavailable');
-   // Recheck the configured class and state against the same required finality.
-   await anchored(finality,read);
+   const includedReply=record.method==='finalize_reply'&&admissionTier==='proposed'&&receipt.status==='proposed'&&receipt.executionResult==='success';
+   if(!includedReply&&!['checkpointed','proven','finalized'].includes(receipt.status))return {status:'pending',canonical:false,method:record.method,argsDigest:record.argsDigest};
+   let accounting;
+   if(record.method==='finalize_reply'&&receipt.executionResult==='success'){
+    // Read refund/settlement state at this exact transaction's block, never a
+    // later unrelated proposed head. This is public accounting, not a PXE cache.
+    const {instance,...snapshot}=await anchored(Number(receipt.blockNumber),read);
+    assert.equal(snapshot.anchor.hash,String(receipt.blockHash),'Accounting block mismatch');
+    accounting=JSON.parse(JSON.stringify(snapshot,(_key,value)=>typeof value==='bigint'?String(value):value));
+    accounting.anchor.finality=includedReply?'proposed':finality;
+   }
+   if(!includedReply){
+    const tip=await selectedBlock(finality,read);assert(tip&&Number(tip.number)>=Number(receipt.blockNumber),'Checkpoint unavailable');
+    await anchored(finality,read);
+   }
    assert.equal(String((await node.getBlock(receipt.blockNumber))?.hash),String(receipt.blockHash),'Receipt block changed during inspection');
-   const result={status:receipt.executionResult==='success'?'succeeded':'failed',canonical:true,method:record.method,argsDigest:record.argsDigest,
+   const result={status:includedReply?'included':receipt.executionResult==='success'?'succeeded':'failed',canonical:true,method:record.method,argsDigest:record.argsDigest,...(accounting?{accounting}:{}),
     txHash:record.txHash,transactionFee:String(receipt.transactionFee),blockNumber:observation.blockNumber,blockHash:observation.blockHash};
    await recordUpdate({observation:{...observation,canonical:true},result});return result;
   };
@@ -200,27 +212,33 @@ export function createPrivateBokEscrowFactory(sdk) {
    const observed=await inspectOne(operationId,true,read);
    // Observe both exact hashes: an original late inclusion is also authoritative,
    // while each included transaction keeps its own fee/effect history.
-   const result=original.status==='succeeded'&&original.canonical?original:observed;
+   const result=['succeeded','included'].includes(original.status)&&original.canonical?original:observed;
    await update(operationId,{result});return result;
   };
   const waitForOperation=async operationId=>{
    const observed=await inspect(operationId);
-   if(observed.status==='succeeded'||observed.status==='failed')return observed;
+   if(['succeeded','failed','included'].includes(observed.status))return observed;
    const original=journal().operations[operationId],record=original?.replacement??original;
    if(record&&!record.txHash)return observed;
    assert(record?.txHash&&record.phase==='submission-unknown','Original submitted operation required');
    assert.equal(typeof sdk.waitForTx,'function','Native receipt observer required');
    try{
-    await measureBokStage('escrow.wait',()=>sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality,timeout:0,dontThrowOnRevert:true}));
+    await measureBokStage('escrow.wait',()=>sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:record.method==='finalize_reply'&&admissionTier==='proposed'?'proposed':finality,timeout:0,dontThrowOnRevert:true}));
    }catch{
     // A dropped transaction or a lost receipt response is not permission to send
     // again. Preserve authoritative failure/fee evidence if it is now available.
     const result=await inspect(operationId);
-    if(result.status==='succeeded'||result.status==='failed')return result;
+    if(['succeeded','failed','included'].includes(result.status))return result;
     throw Error('Escrow receipt observation unavailable; inspect original intent');
    }
-   // The native waiter supplies progress, never canonical application authority.
-   return inspect(operationId);
+   // A proposed revert cannot authorize accounting-only replacement actions.
+   // Keep that existing checkpoint boundary, without holding successful replies.
+   const result=await inspect(operationId);
+   if(result.status==='pending'&&journal().operations[operationId].observation?.executionResult==='reverted'){
+    await measureBokStage('escrow.wait',()=>sdk.waitForTx(node,TxHash.fromString(record.txHash),{waitForStatus:finality,timeout:0,dontThrowOnRevert:true}));
+    return inspect(operationId);
+   }
+   return result;
   };
   const usable=async(request,callId,maximum)=>{
    scope(request);sequence(callId);amount(maximum);

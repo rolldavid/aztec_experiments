@@ -346,11 +346,12 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
   // The native atomic mutator already waits for and authenticates this exact
   // operation's canonical receipt. Reuse only that immediate terminal result;
   // restored operations and uncertain returns still inspect the original tx.
-  const terminal=method==='finalize_reply'&&['succeeded','failed'].includes(returned?.status)&&returned.canonical===true&&returned.method===method&&returned.argsDigest===argsDigest;
+  const terminal=method==='finalize_reply'&&['succeeded','failed','included'].includes(returned?.status)&&returned.canonical===true&&returned.method===method&&returned.argsDigest===argsDigest;
   let observed=terminal?returned:await escrow.inspectOperation(operationId);
   if(observed?.status==='pending'&&typeof escrow.waitForOperation==='function')observed=await escrow.waitForOperation(operationId);
   if(method==='finalize_reply'&&observed?.status==='failed'&&observed.canonical===true&&observed.method===method&&observed.argsDigest===argsDigest)throw Object.assign(Error('Final reply transaction reverted; accounting only'),{code:'BOK_FINAL_BATCH_REVERTED'});
-  if(observed?.status!=='succeeded'||observed.canonical!==true||observed.method!==method||observed.argsDigest!==argsDigest)throw Error('Chain operation unresolved; inspect original transaction');
+  if(!(observed?.status==='succeeded'||method==='finalize_reply'&&observed?.status==='included')||observed.canonical!==true||observed.method!==method||observed.argsDigest!==argsDigest)throw Error('Chain operation unresolved; inspect original transaction');
+  return observed;
  };
  const reservationMatches=r=>{
   const b=journal().reservation;if(!b)return false;
@@ -451,7 +452,7 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
   if(['possibly-sent','fenced'].includes(c.phase)){await fence(id);throw Error('Provider outcome unknown; original receipt required');}
   if(!['quoted','reserved'].includes(c.phase))throw Error('Invalid call journal phase');return {callId:id,readyForComplete:true,replyAvailable:false};
  };
- const finishWithReply=async replyArgs=>{
+ const finishWithReply=async (replyArgs,{observeOnly=false}={})=>{
   if(typeof escrow.finalize_reply!=='function')throw Error('Atomic final reply capability required');
   if(!Array.isArray(replyArgs)||replyArgs.length!==6||replyArgs[0]!==binding.requestId)throw Error('Final reply identity changed');
   await adoptReservation();let j=journal();const a=aggregate();
@@ -470,11 +471,22 @@ function invocationMetering({provider,escrow,store,binding,cap,savedCaps,claimRe
    const before=await read();
    if(before.state!==2||!reservationMatches(before))throw Error('Final reply reservation changed');
   }
-  await operate('finalize_reply',args);
-  const observed=await escrow.request(binding.requestId),after=validated(observed);
+  let completion;
+  if(observeOnly){
+   if(existing.length!==1||!j.finalization)throw Error('Original included finalization required');
+   completion=await escrow.inspectOperation(operationId);
+   if(!['included','succeeded'].includes(completion?.status)||completion.canonical!==true||completion.method!=='finalize_reply'||completion.argsDigest!==argsDigest||completion.txHash!==j.finalization.txHash||completion.blockNumber!==j.finalization.blockNumber||completion.blockHash!==j.finalization.blockHash)
+    throw Object.assign(Error('Included reply is no longer canonical; original transaction retained'),{code:'BOK_INCLUDED_REPLY_UNRESOLVED'});
+  }else completion=await operate('finalize_reply',args);
+  const provisional=completion?.status==='included';
+  if(provisional&&(!completion.accounting||!/^0x[0-9a-f]{64}$/.test(completion.txHash??'')||!uint(completion.blockNumber)||!/^0x[0-9a-f]{64}$/.test(completion.blockHash??'')))throw Error('Exact included accounting required');
+  const observed=completion?.accounting??await escrow.request(binding.requestId),after=validated(observed);
+  if(completion?.accounting&&(observed.anchor?.number!==completion.blockNumber||observed.anchor?.hash!==completion.blockHash))throw Error('Final reply accounting anchor mismatch');
   if(!settlementMatches(after,a)||after.state!==4||after.available!==0n||after.reserved!==0n||observed.request.secondary_done!==true)throw Error('Final reply accounting mismatch');
-  j=journal();for(const c of Object.values(j.calls))c.phase='settled';await save({...j,finished:true});
-  return {finished:true,charge:a.charge,receipt:a.receipt};
+  j=journal();if(!provisional)for(const c of Object.values(j.calls))c.phase='settled';
+  const finalization=completion?.txHash?{operationId,txHash:completion.txHash,blockNumber:completion.blockNumber,blockHash:completion.blockHash,status:provisional?'included':'confirmed'}:j.finalization;
+  await save({...j,finished:!provisional,...(finalization?{finalization}:{})});
+  return {finished:!provisional,...(provisional?{included:true}:{}),charge:a.charge,receipt:a.receipt};
  };
  return {
   finishWithReply:exclusive(finishWithReply),settle:exclusive(settle),validateReconciliation:exclusive(validateReconciliation),resume:exclusive(resume),
