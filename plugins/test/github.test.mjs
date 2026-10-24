@@ -164,3 +164,67 @@ for (const published of [false,true]) test('app workspace step-limit summary kee
  assert.equal(result.replyText,published?'Application published.\nApp: https://artifacts.example/t/one/\nSource: https://artifacts.example/t/one/source.json':'Execution step limit reached.');
  assert.equal(closed,1);
 });
+
+const authoringPlan={version:1,scenarios:[{name:'startup',path:'index.html',steps:[{action:'reload'},{action:'expectVisible',selector:'body'}]}]};
+async function browserAuthoringSession(){
+ let work;const session=await githubToolbox({repository:'owner/project',api:checkoutApi,runCommand:async(_,args)=>{
+  if(args[0]==='clone'){work=args.at(-1);await fs.mkdir(work);await fs.writeFile(path.join(work,'browser-tests.json'),JSON.stringify(authoringPlan,null,2)+'\n');return {stdout:''};}
+  if(args[0]==='rev-parse')return {stdout:'sha\n'};
+  if(['sparse-checkout','checkout'].includes(args[0]))return {stdout:''};throw Error('Unexpected command');
+ }}).open({postId:'0x1'});
+ return session;
+}
+test('browser plan authoring exposes typed steps and preserves exact source separately from parsed plan',async()=>{
+ const s=await browserAuthoringSession();try{
+  const read=await s.call('read_file',{path:'browser-tests.json'});
+  assert.equal(read.text,JSON.stringify(authoringPlan,null,2)+'\n');assert.deepEqual(read.parsedBrowserPlan,authoringPlan);
+  const schema=s.definitions.find(t=>t.function.name==='edit_browser_plan').function.parameters.properties.append.items.properties.steps.items;
+  assert.equal(schema.additionalProperties,false);assert.deepEqual(schema.required,['action']);assert.equal(schema.properties.action.enum.length,10);
+  assert.equal(schema.properties.selector.anyOf.length,3);assert.equal(schema.properties.checked.type,'boolean');assert.equal(schema.properties.count.maximum,512);assert.match(schema.description,/reload: no other fields/);
+ }finally{await s.close();}
+});
+test('structured selectors compile literals once; raw CSS and untouched scenarios remain exact',async()=>{
+ const s=await browserAuthoringSession();try{
+  const literal='quote" backslash\\ café 🌍\n\r\f\t\x7f';
+  const raw='input[data-name="a\\"b"]';
+  const scenario={name:'literal selectors',path:'index.html',steps:[{action:'check',selector:{base:'input',attributes:{type:'checkbox','data-token':literal}},checked:true},{action:'expectCount',selector:{css:raw},count:1},{action:'expectVisible',selector:raw}]};
+  const original=structuredClone(scenario);await s.call('edit_browser_plan',{append:[scenario]});assert.deepEqual(scenario,original,'caller arguments unchanged');
+  const r=await s.call('read_file',{path:'browser-tests.json'});assert.deepEqual(r.parsedBrowserPlan,JSON.parse(r.text));assert.deepEqual(r.parsedBrowserPlan.scenarios[0],authoringPlan.scenarios[0]);
+  assert.equal(r.parsedBrowserPlan.scenarios[1].steps[0].selector,'input[type="checkbox"][data-token="quote\\" backslash\\\\ café 🌍\\a \\d \\c \\9 \\7f "]');
+  assert.equal(r.parsedBrowserPlan.scenarios[1].steps[1].selector,raw);assert.equal(r.parsedBrowserPlan.scenarios[1].steps[2].selector,raw);
+ }finally{await s.close();}
+});
+for(const selector of [{base:'input',attributes:{}},{base:'input',attributes:{'a]': 'x'}},{base:'input,button',attributes:{type:'checkbox'}},{base:'input',attributes:{type:true}},{base:'input',attributes:{type:'\0'}},{base:'input',attributes:{type:'\ud800'}},{base:'input',attributes:{type:'x'},css:'button'},{base:'input',attributes:Object.fromEntries(Array.from({length:9},(_,i)=>['a'+i,'v']))},{css:'body',extra:true},{base:'input',attributes:{name:'x'.repeat(300)}}])test('invalid structured selector cannot mutate browser plan '+JSON.stringify(selector),async()=>{
+ const s=await browserAuthoringSession();try{
+  const before=(await s.call('read_file',{path:'browser-tests.json'})).text;
+  await assert.rejects(s.call('edit_browser_plan',{append:[{name:'bad',path:'index.html',steps:[{action:'expectVisible',selector}]}]}),/File unchanged/);
+  assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,before);
+ }finally{await s.close();}
+});
+test('typed authoring retains exact action-specific validation before writing',async()=>{
+ const s=await browserAuthoringSession();try{
+  const before=(await s.call('read_file',{path:'browser-tests.json'})).text;
+  for(const step of [{action:'check',selector:{base:'input',attributes:{type:'checkbox'}}},{action:'reload',selector:{css:'body'}},{action:'expectVisible',selector:{css:'body'},checked:true}]){
+   await assert.rejects(s.call('edit_browser_plan',{append:[{name:'bad fields',path:'index.html',steps:[step,{action:'expectVisible',selector:'body'}]}]}),/File unchanged/);
+   assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,before);
+  }
+ }finally{await s.close();}
+});
+test('actual browser structured selectors match literal quotes backslashes controls and Unicode without weakening coverage',{skip:process.env.BOK_BROWSER_TESTS!=='1',timeout:40000},async()=>{
+ const {chromium}=await import('playwright');const {browserInput,browserReceipt,exerciseBrowser,validateBrowserPlan}=await import('../browser-validation.mjs');
+ const s=await browserAuthoringSession();try{
+  const literal='quote" backslash\\ café 🌍\n\r\f\t\x7f',raw='input[data-name="a\\"b"]';
+  await s.call('edit_browser_plan',{replace:[{index:0,scenario:{name:'literal selectors',path:'index.html',steps:[
+   {action:'check',selector:{base:'input',attributes:{type:'checkbox','data-token':literal}},checked:true},
+   {action:'expectChecked',selector:{base:'input',attributes:{'data-token':literal}},checked:true},
+   {action:'check',selector:{css:raw},checked:true},{action:'expectChecked',selector:raw,checked:true},
+   {action:'reload'},{action:'expectCount',selector:{base:'input',attributes:{'data-token':literal}},count:1},
+  ]}}]});
+  const plan=validateBrowserPlan(JSON.parse((await s.call('read_file',{path:'browser-tests.json'})).text));
+  const html='<!doctype html><meta charset="utf-8"><p>Fixture</p><input id="first" type="checkbox"><input id="second" type="checkbox"><script>first.dataset.token='+JSON.stringify(literal)+';second.dataset.name='+JSON.stringify('a"b')+';</script>';
+  const input={artifacts:[{path:'index.html',data:Buffer.from(html).toString('base64')}],plan,origin:'https://artifacts.example',boardOrigin:'https://board.example',deadline:Date.now()+30000};
+  const result=await exerciseBrowser(browserInput(input),chromium);assert.equal(browserReceipt(result,input).passed,true);
+  const incomplete=structuredClone(input);incomplete.deadline=Date.now()+30000;incomplete.plan.scenarios[0].steps.splice(2,2);
+  await assert.rejects(exerciseBrowser(browserInput(incomplete),chromium),/visible controls/);
+ }finally{await s.close();}
+});

@@ -296,3 +296,12 @@ test('capacity candidate includes complete initial repository tools and source b
  f.options.model.canFitInput=async input=>{checked=structuredClone(input);assert(input.messages.some(m=>m.role==='tool'&&m.content.includes(source)));assert.equal(input.tools.length,4);return true;};
  await f.run();assert.equal(f.calls.length,1);assert(checked.messages.some(m=>m.content?.startsWith('Prior conversation originals')));
 });
+
+test('seeded browser plan keeps exact JSON source and parsed steps as distinct untrusted fields',async()=>{
+ const plan={version:1,scenarios:[{name:'checkbox',path:'index.html',steps:[{action:'check',selector:'input[type="checkbox"]',checked:true}]}]},text=JSON.stringify(plan,null,2)+'\n';let input;
+ const toolbox={open:async()=>({sourceRevision:'a'.repeat(40),definitions:['list_files','read_file','check_workspace'].map(name=>({function:{name}})),call:async name=>name==='list_files'?{files:['browser-tests.json'],truncated:false}:{text,browserPlan:{steps:1},parsedBrowserPlan:plan},close:async()=>{}})};
+ await createAgent({toolbox,instructions:'Help',model:{complete:async value=>{input=value;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',text:'Edit'});
+ const result=JSON.parse(input.messages.find(m=>m.tool_call_id==='initial_repository_read_0').content);
+ assert.equal(result.text,text);assert.deepEqual(result.parsedBrowserPlan,plan);assert.equal(result.contentTrust,'untrusted repository data');
+ assert(!input.messages[0].content.includes(text));
+});

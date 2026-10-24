@@ -19,7 +19,40 @@ function browserPlanText(text){
  let plan;try{plan=JSON.parse(text);}catch{throw Error('Use valid JSON in browser-tests.json.');}
  return browserPlanSummary(plan);
 }
-const scenarioSchema={type:'object',properties:{name:{type:'string'},path:{type:'string'},steps:{type:'array',description:'expectChecked applies only to checkbox or radio inputs. To assert a button is disabled, use expectCount with selector button:disabled and count 1; use button:enabled for enabled state.',minItems:1,maxItems:BROWSER_PLAN_MAX_STEPS,items:{type:'object'}}},required:['name','path','steps'],additionalProperties:false};
+const cssText={type:'string',minLength:1,maxLength:300};
+const selectorSchema={description:'Prefer literal attribute values: {base:"input",attributes:{type:"checkbox"}}. For other CSS use {css:"#submit:disabled"}. Raw CSS strings remain exact and are never unescaped.',anyOf:[cssText,
+ {type:'object',properties:{css:cssText},required:['css'],additionalProperties:false},
+ {type:'object',properties:{base:{type:'string',pattern:'^(?:[A-Za-z][A-Za-z0-9-]*|\\*)$'},attributes:{type:'object',minProperties:1,maxProperties:8,propertyNames:{pattern:'^[A-Za-z_][A-Za-z0-9_-]{0,63}$'},additionalProperties:{type:'string',maxLength:300}}},required:['base','attributes'],additionalProperties:false},
+]};
+const stepFields={selector:selectorSchema,value:{type:'string',maxLength:2000},text:{type:'string',maxLength:2000},checked:{type:'boolean'},count:{type:'integer',minimum:0,maximum:512},key:{type:'string',minLength:1,maxLength:40,pattern:'^[A-Za-z0-9+]+$'},index:{type:'integer',minimum:0,maximum:99}};
+const stepActions={fill:['selector','value'],click:['selector'],check:['selector','checked'],select:['selector','value'],press:['selector','key'],reload:[],expectText:['selector','text'],expectCount:['selector','count'],expectChecked:['selector','checked'],expectVisible:['selector']};
+const stepSchema={type:'object',description:'Required fields by action: fill/select: selector,value; click/expectVisible: selector; check/expectChecked: selector,checked; press: selector,key; expectText: selector,text; expectCount: selector,count; reload: no other fields. Optional index is allowed only with selector. Other action fields are rejected before writing.',properties:{action:{type:'string',enum:Object.keys(stepActions)},...stepFields},required:['action'],additionalProperties:false};
+const scenarioSchema={type:'object',properties:{name:{type:'string',minLength:1,maxLength:120},path:{type:'string',minLength:1,maxLength:240},steps:{type:'array',description:'expectChecked applies only to checkbox or radio inputs. Assert disabled buttons with expectCount and {css:"button:disabled"}, count 1.',minItems:1,maxItems:BROWSER_PLAN_MAX_STEPS,items:stepSchema}},required:['name','path','steps'],additionalProperties:false};
+// This authoring shorthand produces ordinary version-1 CSS selectors. Never
+// infer intent from, repair, or unescape a caller's existing CSS string.
+function authoringSelector(value){
+ const fail=()=>{throw Error('Use selector {css: string} or {base: string, attributes: literal string values}. Base must be a tag name or *. Attributes require 1 to 8 simple names; strings must be well-formed, without NUL, and compiled CSS must fit 300 characters. File unchanged.');};
+ const text=v=>typeof v==='string'&&v.length<=300&&v.isWellFormed()&&!v.includes('\0');
+ const css=v=>{if(!text(v)||!v.length)fail();return v;};
+ if(typeof value==='string')return css(value);
+ if(!value||typeof value!=='object'||Array.isArray(value))fail();
+ const keys=Object.keys(value).sort().join(',');
+ if(keys==='css')return css(value.css);
+ if(keys!=='attributes,base')fail();
+ const base=css(value.base),attributes=value.attributes;if(!/^(?:[A-Za-z][A-Za-z0-9-]*|\*)$/.test(base))fail();
+ if(!attributes||typeof attributes!=='object'||Array.isArray(attributes))fail();
+ const entries=Object.entries(attributes);if(!entries.length||entries.length>8)fail();
+ // CSS quoted strings escape quotes/backslashes and encode control characters
+ // as hex escapes with a terminator. Unicode and literal backslashes stay literal.
+ const quote=v=>'"'+v.replace(/[\\"\x01-\x1f\x7f]/g,c=>c==='"'||c==='\\'?'\\'+c:'\\'+c.charCodeAt(0).toString(16)+' ')+'"';
+ let result=base;
+ for(const [name,literal]of entries){if(!/^[A-Za-z_][A-Za-z0-9_-]{0,63}$/.test(name)||!text(literal))fail();result+='['+name+'='+quote(literal)+']';}
+ return css(result);
+}
+function authoringScenario(scenario){
+ if(!scenario||typeof scenario!=='object'||!Array.isArray(scenario.steps))return scenario;
+ return {...scenario,steps:scenario.steps.map(step=>step&&Object.hasOwn(step,'selector')?{...step,selector:authoringSelector(step.selector)}:step)};
+}
 
 
 /** GitHub implementation of the agent tool API. Writes stay in a fresh branch.
@@ -96,7 +129,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
       definition('list_files','List current workspace files, including uncommitted edits',{prefix:string}),
       definition('read_file','Read a UTF-8 repository file',{path:string}),
       definition('write_file','Write a UTF-8 file in the isolated checkout',{path:string,content:string}),
-      definition('edit_browser_plan','Change only selected browser-tests.json scenarios. Indices refer to the current plan. Keep existing scenarios unless the requested change needs them changed. The complete resulting plan is checked before writing; returns the remaining step budget. Omitted or empty remove, replace and append arrays leave those operations unchanged. Provide at least one edit; for example, append alone can add scenarios. Use plain CSS selectors such as input[type=checkbox] or #clear-completed. JSON escaping is only transport syntax; do not double-escape the quotes delimiting CSS attribute values. Correct a failing selector without deleting the intended coverage.',{remove:{type:'array',maxItems:8,items:{type:'integer',minimum:0,maximum:7}},replace:{type:'array',maxItems:8,items:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:7},scenario:scenarioSchema},required:['index','scenario'],additionalProperties:false}},append:{type:'array',maxItems:8,items:scenarioSchema}},[]),
+      definition('edit_browser_plan','Change only selected browser-tests.json scenarios. Indices refer to the current plan. Keep existing scenarios unless the requested change needs them changed. The complete resulting plan is checked before writing; returns the remaining step budget. Omitted or empty remove, replace and append arrays leave those operations unchanged. Provide at least one edit; for example, append alone can add scenarios. Prefer selector objects with literal attribute values, for example {base:"input",attributes:{type:"checkbox"}}, or {css:"#clear-completed"} for other CSS. The tool compiles attributes without asking you to construct CSS quotes. Use parsedBrowserPlan from reads to edit scenarios; text is the separate exact file source. Raw CSS is preserved exactly; do not add a second layer of JSON escaping. Correct a failing selector without deleting the intended coverage.',{remove:{type:'array',maxItems:8,items:{type:'integer',minimum:0,maximum:7}},replace:{type:'array',maxItems:8,items:{type:'object',properties:{index:{type:'integer',minimum:0,maximum:7},scenario:scenarioSchema},required:['index','scenario'],additionalProperties:false}},append:{type:'array',maxItems:8,items:scenarioSchema}},[]),
       definition('edit_file','Apply all related exact replacements to one existing UTF-8 file in a single call. Each old_text must match once in the CURRENT original file; ranges must not overlap. Include every independent change you can prepare from the supplied source in edits. All edits are validated before one atomic write; a rejected edit leaves the entire file unchanged. Never match text introduced by another edit in this call.',{path:string,edits:{type:'array',minItems:1,maxItems:32,items:{type:'object',properties:{old_text:{type:'string',minLength:1},new_text:string},required:['old_text','new_text'],additionalProperties:false}}}),
       definition('read_pr','Read a PR in this repository',{number:{type:'integer',minimum:1}}),
       definition('create_pr','Publish current edits as a new pull request; never merge',{title:string,body:string}),
@@ -132,7 +165,7 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
           }
           return {files:current.slice(0,500),truncated:current.length>500};
         }
-        if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');const text=await fs.readFile(file,'utf8');let browserPlan;if(path.relative(work,file)==='browser-tests.json')try{browserPlan=browserPlanText(text);}catch{/* Invalid source remains readable for repair. */}return {text,...(browserPlan?{browserPlan}:{})};}
+        if(name==='read_file'){const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file)))||(await fs.stat(file)).size>100000)throw Error('File too large');const text=await fs.readFile(file,'utf8');let browserPlan,parsedBrowserPlan;if(path.relative(work,file)==='browser-tests.json')try{browserPlan=browserPlanText(text);parsedBrowserPlan=JSON.parse(text);}catch{/* Invalid source remains readable for repair. */}return {text,...(browserPlan?{browserPlan,parsedBrowserPlan}:{})};}
         if(name==='edit_browser_plan'){
           if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).some(k=>!['append','remove','replace'].includes(k)))throw Error('Use only append, remove and replace arrays for browser scenario edits; unused arrays may be omitted.');
           for(const key of ['append','remove','replace'])if(Object.hasOwn(args,key)&&(!Array.isArray(args[key])||args[key].length>8))throw Error('Browser scenario '+key+' must be an array with at most 8 entries.');
@@ -142,8 +175,8 @@ export function githubToolbox({repository,api,allowWrites=false,draftPr=false,ru
           const plan=JSON.parse(await fs.readFile(file,'utf8'));browserPlanSummary(plan);const used=new Set();
           const index=n=>{if(!Number.isInteger(n)||n<0||n>=plan.scenarios.length||used.has(n))throw Error('Scenario index must exist and occur once');used.add(n);};
           for(const n of edits.remove)index(n);const replacements=new Map();
-          for(const row of edits.replace){if(!row||Object.keys(row).sort().join()!=='index,scenario')throw Error('Invalid scenario replacement');index(row.index);replacements.set(row.index,row.scenario);}
-          const removed=new Set(edits.remove),next={...plan,scenarios:plan.scenarios.flatMap((s,i)=>removed.has(i)?[]:[replacements.get(i)??s]).concat(edits.append)};
+          for(const row of edits.replace){if(!row||Object.keys(row).sort().join()!=='index,scenario')throw Error('Invalid scenario replacement');index(row.index);replacements.set(row.index,authoringScenario(row.scenario));}
+          const removed=new Set(edits.remove),next={...plan,scenarios:plan.scenarios.flatMap((s,i)=>removed.has(i)?[]:[replacements.get(i)??s]).concat(edits.append.map(authoringScenario))};
           const browserPlan=browserPlanSummary(next);await fs.writeFile(file,JSON.stringify(next,null,2)+'\n');if(workspace)await workspace.retain();return {edited:'browser-tests.json',browserPlan};
         }
         if(name==='write_file'){if(typeof args.content!=='string'||Buffer.byteLength(args.content)>100000)throw Error('File too large');const oversized=await ensureFiles(),file=await safe(args.path);if(oversized.has(pathKey(path.relative(work,file))))throw Error('File too large');const browserPlan=path.relative(work,file)==='browser-tests.json'?browserPlanText(args.content):undefined;await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,args.content);if(workspace)await workspace.retain();return {written:args.path,...(browserPlan?{browserPlan}:{})};}
