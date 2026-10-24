@@ -14,7 +14,7 @@ import {createSynchronizedRollingApplication} from '../../shared/rolling/synchro
 import {createRollingApplication} from '../../shared/rolling/application.mjs';
 import {verifyRollingDeployment,observeRollingSetup,rollingSetupErrorCode} from '../../shared/rolling/deployment.mjs';
 const fail=code=>Object.assign(Error('The private account is unavailable. Preserve recovery records.'),{code});
-export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','account-register','contracts-register','journal-open','wallet-bind','account-manager','application-bind']);
+export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','journal-open','wallet-bind','account-manager','account-register','contracts-register','application-bind']);
 const refreshMethods=Object.freeze({readAccountStatus:'account-status',ownedIdentities:'owned-names',readModeratorStatus:'moderator-status',readBokStatus:'bok-status'});
 const refreshCodes=new Set(['ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_RESPONSE','ROLLING_ABI_MISMATCH','ROLLING_RECOVERY_REQUIRED','PRIVATE_FEE_PREPARATION_FAILED','PRIVATE_FEE_PROVIDER_REQUIRED','PRIVATE_FEE_CONFIGURATION_REQUIRED','PRIVATE_FEE_OWNER_IS_PAYER','PRIVATE_FEE_CHAIN_MISMATCH','PRIVATE_FEE_CAP_TOO_LOW','PRIVATE_FEE_NONCANONICAL_ADDRESS','PRIVATE_FEE_NOT_PUBLISHED','PRIVATE_FEE_CLASS_MISMATCH','PRIVATE_FEE_ARTIFACT_INVALID','PRIVATE_FEE_INVALID_VALUE','PRIVATE_FEE_INVALID_ADDRESS','PRIVATE_FEE_INVALID_GAS','PRIVATE_FEE_BALANCE_INSUFFICIENT']);
 function refreshErrorCode(error){try{const d=error!=null?Object.getOwnPropertyDescriptor(error,'code'):null;return d&&Object.hasOwn(d,'value')&&refreshCodes.has(d.value)?d.value:rollingSetupErrorCode(error);}catch{return 'unknown';}}
@@ -349,23 +349,12 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    const secret=sdk.Fr.fromHexString(captured.secretKey),salt=new sdk.Fr(BigInt(captured.salt));
    const accountContract=new sdk.SchnorrInitializerlessAccountContract(sdk.deriveSigningKey(secret));
    const keys=await sdk.deriveKeys(secret),artifact=await accountContract.getContractArtifact();
-   const instance=await sdk.getContractInstanceFromInstantiationParams(artifact,{salt,publicKeys:keys.publicKeys,
-    constructorArtifact:undefined,constructorArgs:undefined,immutablesHash:await accountContract.getImmutablesHash()});
-   if(instance.address.toString()!==captured.address)throw fail('ROLLING_ACCOUNT_MISMATCH');
    begin('store-open');
    await guard();store=await sdk.openPXEStore({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
    begin('pxe-create');
    await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:'checkpointed'},{store,remoteProver:remote});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
-   begin('account-register');
-   const partialAddress=await sdk.computePartialAddress(instance);await guard();
-   await pxe.registerAccount(keys,partialAddress);
-   begin('contracts-register');
-   for(const [contractArtifact,contractInstance]of [[artifact,instance],[boardArtifact,deployment.board.instance],[privateFeeArtifact,deployment.privateFee.instance]]){
-    await guard();await pxe.registerContractClass(contractArtifact);
-    await guard();await pxe.registerContract(contractInstance);
-   }
    // The first private operation selects the anchor once. Opening the engine
    // itself does not require a second, immediately discarded synchronization.
    begin('journal-open');
@@ -377,7 +366,19 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    if(wallet.aztecNode!==node||wallet.pxe!==pxe||!routing.isPrivateWalletForNode(wallet,node))throw fail('ROLLING_PRIVATE_ROUTE');
    begin('account-manager');
    await guard();wallet._accountManager=await sdk.AccountManager.create(wallet,secret,accountContract,{salt});
-   if(wallet._accountManager.address.toString()!==captured.address)throw fail('ROLLING_ACCOUNT_MISMATCH');
+   await guard();
+   // The manager already derived this instance. Register that exact result,
+   // after checking its address, instead of deriving the account a second time.
+   const instance=wallet._accountManager.getInstance();
+   if(instance.address.toString()!==captured.address||wallet._accountManager.address.toString()!==captured.address)throw fail('ROLLING_ACCOUNT_MISMATCH');
+   begin('account-register');
+   const partialAddress=await sdk.computePartialAddress(instance);await guard();
+   await pxe.registerAccount(keys,partialAddress);
+   begin('contracts-register');
+   for(const [contractArtifact,contractInstance]of [[artifact,instance],[boardArtifact,deployment.board.instance],[privateFeeArtifact,deployment.privateFee.instance]]){
+    await guard();await pxe.registerContractClass(contractArtifact);
+    await guard();await pxe.registerContract(contractInstance);
+   }
    // Cold preference recovery needs only registered keys and the scoped PXE
    // cursor. The signing capsule can trigger ordinary note discovery, so create
    // it lazily under the same account lease before an ordinary operation.

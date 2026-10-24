@@ -72,6 +72,7 @@ async function deploymentFixture({chainId='31337'}={}){
 
 import {deriveKeys,deriveMasterMessageSigningSecretKey as deriveSigningKey} from '@aztec-labs/stdlib/keys';
 import {SchnorrInitializerlessAccountContract} from '@aztec-labs/accounts/schnorr';
+import {AccountManager} from '@aztec-labs/aztec.js/wallet';
 import {computePartialAddress} from '@aztec-labs/stdlib/contract';
 import {Tx} from '@aztec-labs/stdlib/tx';
 import {encodeArguments} from '@aztec-labs/stdlib/abi';
@@ -112,7 +113,7 @@ async function sessionFixture({chainId='31337'}={}){
   createPXE:async(n,c,o)=>{held('create-pxe');state.pxeConfig=structuredClone(c);assert.equal(n,f.node);assert.equal(o.store,store);assert.deepEqual(o.remoteProver,{url:'http://127.0.0.1:3',board:String(f.board.address)});if(state.failCreatePXE)throw Error('pxe failed');return pxe;},
   isPrivatePXEForNode:(p,n)=>!state.wrongPXE&&p===pxe&&n===f.node,
   createBrowserJournalStorage:()=>privateStore,createL2Journal,
-  AccountManager:{create:async()=>{held('account-manager');return {address:accountInstance.address};}},
+  AccountManager:{create:async()=>{held('account-manager');return {address:accountInstance.address,getInstance:()=>accountInstance};}},
   ContractFunctionInteraction:class{async simulate(){held('signing-capsule');}},
   Contract:{at:()=>({methods:{preference_head:()=>({simulate:async()=>{held('preference-head');return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='preference_head')),[Fr.ZERO,Fr.ONE,Fr.ZERO,Fr.ZERO])};}}),register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
@@ -1125,4 +1126,46 @@ test('Bok capability checks current context after all four reads drain',{timeout
  f.input.node.getPublicStorageAt=async(...args)=>{if(++count===4)entered.resolve();await gate.promise;return read(...args);};
  const pending=verifyRollingBokCapability(f.input);const rejection=assert.rejects(pending,error=>error===failure);
  await entered.promise;invalid=true;gate.resolve();await rejection;assert.equal(f.state.inspections,0);
+});
+
+
+test('session registers the exact supported native account-manager instance without deriving it twice',async()=>{
+ const f=await sessionFixture();let manager,immutables=0,managerCalls=0,privateKeys;
+ f.input.sdk.getContractInstanceFromInstantiationParams=async()=>{throw Error('Duplicate account instance derivation');};
+ f.input.sdk.SchnorrInitializerlessAccountContract=class extends SchnorrInitializerlessAccountContract{
+  async getImmutablesHash(){immutables++;return super.getImmutablesHash();}
+ };
+ f.input.sdk.AccountManager={create:async(...args)=>{
+  managerCalls++;assert.equal(args[0],f.wallet);assert.equal(f.state.registrations,0);
+  manager=await AccountManager.create(...args);return manager;
+ }};
+ const registerAccount=f.pxe.registerAccount,registerContract=f.pxe.registerContract;let registeredInstance;
+ f.pxe.registerAccount=async(keys,partial)=>{
+  privateKeys=keys;assert.equal(String(partial),String(await computePartialAddress(manager.getInstance())));
+  assert.deepEqual(keys.publicKeys.toBuffer(),manager.getPublicKeys().toBuffer());
+  await registerAccount(keys,partial);
+ };
+ f.pxe.registerContract=async instance=>{
+  if(!registeredInstance){registeredInstance=instance;assert.equal(instance,manager.getInstance());}
+  return registerContract(instance);
+ };
+ const session=await createRollingWalletSession(f.input);
+ assert.equal(managerCalls,1);assert.equal(immutables,1);assert(privateKeys);
+ assert.equal(f.wallet._accountManager,manager);assert.equal(String(manager.address),f.input.account.address);
+ assert.equal(f.state.syncs,0);assert.equal(f.state.sends,0);
+ await session.application.ownedIdentities();assert.equal(f.state.syncs,1);
+ assert.equal(f.state.events.filter(event=>event==='signing-capsule').length,1);
+ await session.close();
+});
+
+for(const inconsistent of ['instance','manager'])test('inconsistent '+inconsistent+' address rejects before any account registration or journal access',async()=>{
+ const f=await sessionFixture(),create=f.input.sdk.AccountManager.create;
+ f.input.sdk.AccountManager.create=async(...args)=>{
+  const manager=await create(...args),instance=manager.getInstance(),wrong=new AztecAddress(new Fr(999));
+  return inconsistent==='instance'?{address:manager.address,getInstance:()=>({...instance,address:wrong})}:{address:wrong,getInstance:()=>instance};
+ };
+ for(const name of ['read','compareAndSwap'])f.privateStore[name]=async()=>{assert.fail('No journal access before account validation');};
+ await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_ACCOUNT_MISMATCH'});
+ assert.equal(f.state.registrations,0);assert.equal(f.state.events.filter(event=>event==='register-class'||event==='register-contract').length,0);
+ assert.equal(f.state.syncs,0);assert.equal(f.state.sends,0);assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);assert.equal(f.state.active,false);
 });
