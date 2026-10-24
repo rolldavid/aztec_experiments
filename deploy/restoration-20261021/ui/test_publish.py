@@ -7,6 +7,7 @@ import os
 import pathlib
 import re
 import stat
+import shutil
 import tempfile
 import types
 import unittest
@@ -29,7 +30,7 @@ class RepeatPublication(unittest.TestCase):
         (self.old_ui / 'wallet/runtime.json').write_bytes(b'old runtime')
         (self.new_ui / 'wallet/runtime.json').write_bytes(b'new runtime')
         os.symlink(self.old_ui, self.base / 'current')
-        self.packet = self.root / 'packet'
+        self.packet = self.root / ('ui-' + 'b' * 12)
         self.packet.mkdir()
         self.old_source = self.root / 'old-source'
         self.new_source = self.root / 'new-source'
@@ -57,7 +58,7 @@ class RepeatPublication(unittest.TestCase):
             return self.root / text.lstrip('/') if text.startswith('/proc/') else pathlib.Path(value)
 
         self.ns = {'hashlib': hashlib, 'json': json, 'os': os, 'pathlib': types.SimpleNamespace(Path=path, PurePosixPath=pathlib.PurePosixPath),
-                   're': re, 'stat': stat, 'SOURCE': self.old_source, 'RUNNING': self.old_source, 'NEXT': self.new_source,
+                   're': re, 'stat': stat, 'shutil': shutil, 'PACKET_ROOT': self.root, 'SOURCE': self.old_source, 'RUNNING': self.old_source, 'NEXT': self.new_source,
                    'UI': self.new_ui, 'BASE': self.base, 'P': self.packet, 'CADDY': self.caddy, 'NOTIFY': self.notify,
                    '__file__': str(SOURCE_FILE), 'sha': lambda data: hashlib.sha256(data).hexdigest(),
                    'urllib': types.SimpleNamespace(request=types.SimpleNamespace(urlopen=self.urlopen))}
@@ -197,6 +198,98 @@ class RepeatPublication(unittest.TestCase):
                 self.assertNotIn(['systemctl', 'daemon-reload'], self.calls)
                 if name != 'pointer':
                     getattr(self, name).write_bytes(original)
+
+
+    def payload_fixture(self):
+        name = 'apps/rolling/reader.mjs'
+        for directory in (self.packet / 'files', self.new_source):
+            target = directory / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(b'verified installed payload')
+        self.plan['files'] = {name: {'sha256': self.ns['digest'](self.new_source / name), 'previousSha256': None}}
+        (self.packet / 'payload.tgz').write_bytes(b'owned uploaded archive')
+        self.result['payloadArchiveSha256'] = self.ns['digest'](self.packet / 'payload.tgz')
+        (self.packet / 'plan.json').write_text(json.dumps(self.plan))
+        self.result['planSha256'] = self.ns['digest'](self.packet / 'plan.json')
+        (self.packet / 'stage-result.json').write_text(json.dumps(self.result))
+        return name
+
+    def test_success_removes_only_verified_packet_payload_and_keeps_rollback_metadata(self):
+        name = self.payload_fixture()
+        self.ns['activate']()
+        self.assertFalse((self.packet / 'files').exists())
+        self.assertFalse((self.packet / 'payload.tgz').exists())
+        self.assertEqual((self.new_source / name).read_bytes(), b'verified installed payload')
+        self.assertEqual((self.new_ui / 'wallet/runtime.json').read_bytes(), b'new runtime')
+        for name in ['plan.json', 'stage-result.json', 'activation-result.json', 'application.service.before',
+                     'application.service.next', 'current.before', 'payload-cleanup-result.json']:
+            self.assertTrue((self.packet / name).is_file(), name)
+        self.assert_unchanged_controls()
+
+    def test_failed_activation_keeps_payload_for_inspection(self):
+        name = self.payload_fixture()
+        self.fail_readback = True
+        with self.assertRaises(OSError): self.ns['activate']()
+        self.assertTrue((self.packet / 'files' / name).exists())
+        self.assertTrue((self.packet / 'payload.tgz').exists())
+        self.assertFalse((self.packet / 'payload-cleanup-result.json').exists())
+
+    def test_cleanup_authenticates_entire_tree_archive_and_installed_copies_before_any_delete(self):
+        name = self.payload_fixture()
+        for damage in ['extra', 'symlink', 'archive', 'installed', 'static']:
+            with self.subTest(damage=damage):
+                changed = None
+                if damage == 'extra':
+                    changed = self.packet / 'files/unrelated'; changed.write_bytes(b'do not delete')
+                elif damage == 'symlink':
+                    changed = self.packet / 'files/unrelated'; os.symlink(self.old_source, changed)
+                else:
+                    changed = {'archive': self.packet / 'payload.tgz', 'installed': self.new_source / name,
+                               'static': self.new_ui / 'wallet/runtime.json'}[damage]
+                    original = changed.read_bytes(); changed.write_bytes(b'tampered')
+                with self.assertRaises(AssertionError): self.ns['cleanup_packet_payload'](self.result)
+                self.assertTrue((self.packet / 'files' / name).is_file())
+                self.assertTrue((self.packet / 'payload.tgz').is_file())
+                if damage in ['extra', 'symlink']: changed.unlink()
+                else: changed.write_bytes(original)
+        self.ns['P'] = self.new_source
+        with self.assertRaises(AssertionError): self.ns['cleanup_packet_payload'](self.result)
+        self.assertTrue((self.packet / 'files' / name).exists())
+
+    def test_capacity_counts_replacements_and_new_assets_once_before_stage_mutations(self):
+        source = self.old_source
+        old_bytes, new_bytes = b'old artifact', b'new artifact contents'
+        asset = '.build/sdk/sdk.mjs'
+        manifest = '.build/rolling-wallet/manifest.json'
+        for directory in [source, self.packet / 'files']:
+            (directory / asset).parent.mkdir(parents=True, exist_ok=True)
+            (directory / manifest).parent.mkdir(parents=True, exist_ok=True)
+        def description(data):
+            return {'files': {'/wallet/sdk.mjs': {'file': asset, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}}}
+        (source / asset).write_bytes(old_bytes)
+        (source / manifest).write_text(json.dumps(description(old_bytes)))
+        (self.packet / 'files' / asset).write_bytes(new_bytes)
+        (self.packet / 'files' / manifest).write_text(json.dumps(description(new_bytes)))
+        (source / 'apps/rolling').mkdir(parents=True)
+        (source / 'apps/rolling/live.html').write_bytes(b'page')
+        self.ns['PUBLIC'] = {'/': 'live.html'}
+        self.plan['files'] = {name: {'sha256': self.ns['digest'](self.packet / 'files' / name)} for name in [asset, manifest]}
+        existing = self.base / 'by-hash' / hashlib.sha256(old_bytes).hexdigest() / 'wallet/sdk.mjs'
+        existing.parent.mkdir(parents=True); existing.write_bytes(old_bytes)
+        payload_bytes = sum((self.packet / 'files' / name).stat().st_size for name in [asset, manifest])
+        required_data = payload_bytes + len(new_bytes) + len(b'page') + 1024 * 1024
+        self.ns['shutil'] = types.SimpleNamespace(disk_usage=lambda _: types.SimpleNamespace(free=required_data + 1024**3 - 1))
+        with self.assertRaisesRegex(RuntimeError, 'Insufficient disk space'): self.ns['capacity_preflight']()
+        self.assertEqual(list(self.new_source.iterdir()), [])
+        self.assertFalse((self.base / 'by-hash' / hashlib.sha256(new_bytes).hexdigest()).exists())
+        self.ns['shutil'] = types.SimpleNamespace(disk_usage=lambda _: types.SimpleNamespace(free=required_data + 1024**3))
+        self.assertEqual(self.ns['capacity_preflight'](), required_data)
+        stage = next(node for node in TREE.body if isinstance(node, ast.If) and ast.unparse(node.test) == "mode == 'stage'")
+        calls = [ast.unparse(node) for node in stage.body]
+        check = next(i for i, value in enumerate(calls) if value == 'capacity_preflight()')
+        copy = next(i for i, value in enumerate(calls) if "['cp', '-al'" in value)
+        export = next(i for i, value in enumerate(calls) if value.startswith('export_assets('))
+        self.assertLess(check, copy); self.assertLess(check, export)
 
 
 if __name__ == '__main__':

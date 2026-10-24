@@ -8,7 +8,8 @@ appUnit (base unit in unitFiles), notifySha256, expectedCurrentUi (exact absolut
 current symlink target). Caddy routing and its notify drop-in must already exist.
 Payload at packet/files/<relative>. No private values leave host.
 """
-import hashlib,json,os,pathlib,re,shlex,stat,subprocess,sys,urllib.request
+import hashlib,json,os,pathlib,re,shlex,shutil,stat,subprocess,sys,urllib.request
+PACKET_ROOT=pathlib.Path('/var/lib/rolling-bootstrap-private')
 P=pathlib.Path(sys.argv[1]).resolve();mode=sys.argv[2];assert mode in ('stage','activate')
 m=json.loads((P/'plan.json').read_text());assert re.fullmatch('[0-9a-f]{40}',m['commit'])
 BASE=pathlib.Path('/opt/rolling-ui');SOURCE=pathlib.Path(m['configuredSource']);RUNNING=pathlib.Path(m['runningSource']);NEXT=pathlib.Path('/opt/rolling-app/releases/ui-'+m['commit'][:12]);UI=BASE/'releases'/m['commit'];CADDY=pathlib.Path('/etc/rolling-app/Caddyfile')
@@ -102,6 +103,64 @@ def export_assets(source,description,destination=None):
 
 PUBLIC={'/':'live.html','/archive/':'archive.html','/archive/snapshot.json':'archive.json','/reader.mjs':'reader.mjs','/reader-client.mjs':'reader-client.mjs','/profile-view.mjs':'profile-view.mjs','/avatar-upload.mjs':'avatar-upload.mjs','/performance.mjs':'performance.mjs','/reader-updates.mjs':'reader-updates.mjs','/wallet-action.mjs':'wallet-action.mjs','/model.mjs':'model.mjs','/navigation.mjs':'navigation.mjs','/style.css':'style.css','/wallet-panel.mjs':'wallet-panel.mjs','/wallet-cache-worker.mjs':'wallet-cache-worker.mjs'}
 
+def packet_archive_hash():
+ archive=P/'payload.tgz'
+ if not archive.exists() and not archive.is_symlink():return None
+ info=archive.lstat();assert stat.S_ISREG(info.st_mode) and info.st_uid==os.getuid()
+ return digest(archive)
+
+def capacity_preflight():
+ # cp -al shares source file data. Replacements, new immutable assets and static
+ # HTML/modules consume new blocks. Reserve 1GiB for metadata and service writes.
+ reservations={}
+ def reserve(target,size):
+  parent=target
+  while not parent.exists():parent=parent.parent
+  device=parent.stat().st_dev
+  entry=reservations.setdefault(device,{'path':parent,'bytes':0})
+  entry['bytes']+=size
+ def candidate(name):return P/'files'/name if name in m['files'] else SOURCE/name
+ reserve(NEXT.parent,sum((P/'files'/name).stat().st_size for name in m['files']))
+ missing=set()
+ for source,select in [(RUNNING,lambda name:RUNNING/name),(SOURCE,candidate)]:
+  manifest=json.loads(select('.build/rolling-wallet/manifest.json').read_text())
+  for url,entry in manifest['files'].items():
+   assert re.fullmatch('/(?:wallet|crs)/[A-Za-z0-9_.-]+',url) and re.fullmatch('[0-9a-f]{64}',entry['sha256'])
+   relative=pathlib.PurePosixPath(entry['file']);assert not relative.is_absolute() and '..' not in relative.parts
+   file=select(str(relative));assert file.resolve().is_relative_to((P/'files').resolve()) or file.resolve().is_relative_to(source.resolve())
+   assert file.stat().st_size==entry['bytes']
+   target=BASE/'by-hash'/entry['sha256']/url.lstrip('/')
+   if not target.exists() and target not in missing:reserve(BASE,entry['bytes']);missing.add(target)
+ reserve(BASE,sum(candidate('apps/rolling/'+name).stat().st_size for name in PUBLIC.values())+1024*1024)
+ for entry in reservations.values():
+  required=entry['bytes']+1024*1024*1024
+  if shutil.disk_usage(entry['path']).free<required:raise RuntimeError('Insufficient disk space for UI stage and 1GiB operating reserve')
+ return sum(entry['bytes'] for entry in reservations.values())
+
+def cleanup_packet_payload(result):
+ # This is packet garbage collection, never release retention. Authenticate the
+ # exact installed content and the complete owned packet tree before unlinking.
+ assert P.parent==PACKET_ROOT and P.name=='ui-'+m['commit'][:12] and P.resolve()==P
+ info=P.lstat();assert stat.S_ISDIR(info.st_mode) and info.st_uid==os.getuid() and not (info.st_mode & 0o022)
+ for name,entry in m['files'].items():
+  safe_relative(name);assert not (NEXT/name).is_symlink() and digest(NEXT/name)==entry['sha256']
+ for name,want in result['files'].items():
+  relative=pathlib.PurePosixPath(name);assert not relative.is_absolute() and '..' not in relative.parts
+  assert not (UI/name).is_symlink() and digest(UI/name)==want
+ assert packet_archive_hash()==result.get('payloadArchiveSha256')
+ files=P/'files';found=set()
+ if files.exists() or files.is_symlink():
+  for item in [files,*files.rglob('*')]:
+   info=item.lstat();assert info.st_uid==os.getuid() and not (info.st_mode & 0o022) and (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode))
+   if stat.S_ISREG(info.st_mode):
+    name=str(item.relative_to(files));assert name in m['files'] and digest(item)==m['files'][name]['sha256'];found.add(name)
+  assert found==set(m['files'])
+ elif m['files']:raise AssertionError('Packet files missing before cleanup')
+ if files.exists():shutil.rmtree(files)
+ archive=P/'payload.tgz'
+ if archive.exists():archive.unlink()
+ atomic(P/'payload-cleanup-result.json',json.dumps({'commit':m['commit'],'filesRemoved':len(found),'archiveRemoved':result.get('payloadArchiveSha256') is not None}).encode(),0o600)
+
 def activate():
  r=json.loads((P/'stage-result.json').read_text())
  assert r['schemaVersion']==1 and r['commit']==m['commit'] and r['source']==str(NEXT) and r['ui']==str(UI)
@@ -144,7 +203,8 @@ def activate():
   preserved()
   raise
  atomic(P/'activation-result.json',json.dumps({'commit':m['commit'],'appPid':m['appPid'],'runningSource':str(RUNNING),'nextSource':str(NEXT),'ui':str(UI),'previousUi':m['expectedCurrentUi'],'protectedPids':m['protectedPids'],'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256']}).encode(),0o600)
- print('{"activated":true,"appRestarted":false,"proxyRestarted":false}')
+ cleanup_packet_payload(r)
+ print('{"activated":true,"appRestarted":false,"proxyRestarted":false,"payloadCleaned":true}')
 
 assert os.getuid()==0
 assert re.fullmatch(r'/opt/rolling-ui/releases/[0-9a-f]{40}',m['expectedCurrentUi'])
@@ -157,6 +217,8 @@ if mode=='stage':
  for name,entry in m['files'].items():
   safe_relative(name);old=SOURCE/name;payload=P/'files'/name;assert not payload.is_symlink() and digest(payload)==entry['sha256']
   assert (not old.exists() and not old.is_symlink()) if entry['previousSha256'] is None else (not old.is_symlink() and digest(old)==entry['previousSha256'])
+ capacity_preflight()
+ archive_hash=packet_archive_hash()
  run(['cp','-al',str(SOURCE),str(NEXT)])
  for name,entry in m['files'].items():
   target=NEXT/name;reference=target if target.exists() else NEXT/'apps/rolling/wallet-panel.mjs';info=reference.stat();atomic(target,(P/'files'/name).read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
@@ -176,7 +238,7 @@ if mode=='stage':
  atomic(P/'application.service.next',updated.encode(),0o600)
  public_directory(UI);export_assets(RUNNING,old);export_assets(NEXT,new,UI)
  for url,name in PUBLIC.items():public_file(UI/(url.lstrip('/')+('index.html' if url.endswith('/') else '')),(NEXT/'apps/rolling'/name).read_bytes())
- result={'schemaVersion':1,'commit':m['commit'],'source':str(NEXT),'ui':str(UI),'planSha256':digest(P/'plan.json'),'publisherSha256':digest(pathlib.Path(__file__)),'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256'],'expectedCurrentUi':m['expectedCurrentUi'],'unitSha256':digest(P/'application.service.next'),'walletConfigSha256':digest(NEXT/'deploy/runtime-wallet.json') if (NEXT/'deploy/runtime-wallet.json').is_file() else None,'files':{str(f.relative_to(UI)):digest(f) for f in UI.rglob('*') if f.is_file()}}
+ result={'schemaVersion':1,'payloadArchiveSha256':archive_hash,'commit':m['commit'],'source':str(NEXT),'ui':str(UI),'planSha256':digest(P/'plan.json'),'publisherSha256':digest(pathlib.Path(__file__)),'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256'],'expectedCurrentUi':m['expectedCurrentUi'],'unitSha256':digest(P/'application.service.next'),'walletConfigSha256':digest(NEXT/'deploy/runtime-wallet.json') if (NEXT/'deploy/runtime-wallet.json').is_file() else None,'files':{str(f.relative_to(UI)):digest(f) for f in UI.rglob('*') if f.is_file()}}
  atomic(P/'stage-result.json',json.dumps(result,sort_keys=True).encode(),0o600)
  for name,entry in m['files'].items():assert (not (SOURCE/name).exists()) if entry['previousSha256'] is None else digest(SOURCE/name)==entry['previousSha256']
  preserved();print(json.dumps({'staged':True,'files':len(result['files'])}))
