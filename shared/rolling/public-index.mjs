@@ -208,7 +208,8 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   const semantic=c=>{const {generation,revision,...rest}=c;return rest;};
   let control=null,previous=null,oldSequence=0n,loaded=false,busy=false,ready=false,unavailable=false,origin=null;
   let oldPages=null,comparisonDone=false,orphanedCache=false,failed=false,currentBlock=null,resumedOwned=false;
-  let contentRevision=0;
+  let contentRevision=0,confirmationRevision=0n,confirmationCheckpoint=null;
+  const publicationRevision=()=>control?`${epoch}:${control.generation}:${BigInt(control.revision)+confirmationRevision}`:null;
   // A rejected native read invalidates this publication, not durable ownership.
   // Track the actual transport boundary even when the ABI decoder sanitizes it.
   // Schema/identity/storage failures never acquire this recovery permission.
@@ -218,8 +219,8 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     try{return await upstream[name](...args);}catch(error){upstreamFailed=true;throw error;}
   }]));
   const state=()=>({schemaVersion:3,state:unavailable?'unavailable':ready?'ready':loaded?'syncing':'authenticating',
-    scope,complete:ready,authenticationEpoch:epoch,contentRevision:`${epoch}:${contentRevision}`,revision:control?`${epoch}:${control.generation}:${control.revision}`:null,
-    checkpoint:copy(control?.checkpoint??null),cursor:copy(control?.cursor??null),cacheComparison:comparisonDone?(orphanedCache?'canonical-prefix':resumedOwned?'service-owned':'complete'):'pending'});
+    scope,complete:ready,authenticationEpoch:epoch,contentRevision:`${epoch}:${contentRevision}`,revision:publicationRevision(),
+    confirmationTier,confirmationCheckpoint:copy(confirmationCheckpoint),checkpoint:copy(control?.checkpoint??null),cursor:copy(control?.cursor??null),cacheComparison:comparisonDone?(orphanedCache?'canonical-prefix':resumedOwned?'service-owned':'complete'):'pending'});
   function assertOwned(){check(same(storage.inspect().control,control),'PUBLIC_FEED_CONFLICT');}
   function status(){if(ready){try{assertOwned();}catch{ready=false;unavailable=true;}}return state();}
   function publication(){check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');assertOwned();return state();}
@@ -240,17 +241,21 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     // MAC binds all normalized public query inputs and the exact authenticated
     // publication, including deployment and Home configuration. No cache row or
     // external token can confer canonical authority or survive a restart/reorg.
-    const binding=JSON.stringify([scope,deployment,control.generation,control.revision,control.checkpoint,view,allowed[view].map(k=>[k,input[k]]),input.limit,curated]);
+    const binding=JSON.stringify([scope,deployment,control.generation,control.revision,control.checkpoint,confirmationCheckpoint,view,allowed[view].map(k=>[k,input[k]]),input.limit,curated]);
     const mac=last=>createHmac('sha256',cursorSecret).update(binding).update(':').update(last).digest('hex').slice(0,16);
     let after=null;
     if(cursor!==null){check(view!=='post'&&typeof cursor==='string'&&/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/.test(cursor),'ROLLING_PUBLIC_CURSOR_STALE');
       const [e,last,signature]=cursor.split(':');check(e===tokenEpoch&&timingSafeEqual(Buffer.from(signature,'hex'),Buffer.from(mac(last),'hex')),'ROLLING_PUBLIC_CURSOR_STALE');after=String(BigInt('0x'+last));}
     try{
-      assertOwned();const page=storage.readPublicPage({expectedControl:control,view,params:input,after,homeSubboards:curated});
+      assertOwned();const page=storage.readPublicPage({expectedControl:control,view,params:input,after,homeSubboards:curated,...(view==='bok-accounting'?{throughBlock:confirmationCheckpoint.number}:{})});
       check(page.trusted===false&&page.generation===control.generation&&page.revision===control.revision);
       const nextCursor=page.nextAfter===null?null:(()=>{const last=key(page.nextAfter);return `${tokenEpoch}:${last}:${mac(last)}`;})();
-      const envelope={schemaVersion:1,scope,...(view==='bok-accounting'?{bokScope:scope.bok}:{}),checkpoint:{number:Number(control.checkpoint.number),hash:control.checkpoint.hash},complete:true,...page.value,
-        ...(view==='post'?{}:{nextCursor}),revision:`${epoch}:${control.generation}:${control.revision}`};
+      const selectedCheckpoint=view==='bok-accounting'?confirmationCheckpoint:control.checkpoint;
+      const annotate=post=>post?{...post,confirmation:BigInt(post.position.blockNumber)<=BigInt(confirmationCheckpoint.number)?'confirmed':'pending'}:post;
+      const value={...page.value,...(page.value.posts?{posts:page.value.posts.map(annotate)}:{}),...(Object.hasOwn(page.value,'post')?{post:annotate(page.value.post)}:{})};
+      const envelope={schemaVersion:1,scope,...(view==='bok-accounting'?{bokScope:scope.bok}:{}),checkpoint:{number:Number(selectedCheckpoint.number),hash:selectedCheckpoint.hash},
+        confirmationTier:view==='bok-accounting'?'checkpointed':confirmationTier,confirmationCheckpoint:{number:Number(confirmationCheckpoint.number),hash:confirmationCheckpoint.hash},complete:true,...value,
+        ...(view==='post'?{}:{nextCursor}),revision:publicationRevision()};
       check(bytes(JSON.stringify(envelope))<=1048576,'ROLLING_PUBLIC_CAPACITY');assertOwned();return copy(envelope);
     }catch(error){const code=error&&Object.getOwnPropertyDescriptor(error,'code')?.value;
       if(code==='ROLLING_PUBLIC_STORAGE_CONFLICT'||code==='PUBLIC_FEED_CONFLICT'){ready=false;unavailable=true;failed=true;}
@@ -305,10 +310,11 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     const anchors=new Map();
     async function anchor(n){const key=String(n);if(anchors.has(key))return anchors.get(key);
       const b=await read(()=>node.getBlockData(n));check(b,'ROLLING_PUBLIC_UNAVAILABLE');
-      const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(n!==confirmationTier)check(number===String(n));
+      const number=String(b.header?.globalVariables?.blockNumber),h=textHash(b.blockHash);check(uint(number,53)&&hash(h));if(!['checkpointed','proposed'].includes(n))check(number===String(n));
       const value={number,hash:h};anchors.set(key,value);anchors.set(number,value);return value;}
     try{
       await identity();const target=await anchor(confirmationTier);check(BigInt(target.number)>=BigInt(scope.bok?.deployment.blockNumber??deployment.blockNumber));
+      const confirmed=confirmationTier==='checkpointed'?target:await anchor('checkpointed');check(BigInt(confirmed.number)<=BigInt(target.number));
       const deployed=await anchor(deployment.blockNumber);check(deployed.hash===deployment.blockHash);
       const base=await anchor(deployment.blockNumber-1);
       if(origin)check(same(origin,base));else origin=base;
@@ -327,6 +333,7 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       assertOwned();
       const recheck=async extra=>{anchors.clear();await identity();check(same(await anchor(deployment.blockNumber),deployed));check(same(await anchor(Number(base.number)),base));
         check(same(await anchor(Number(target.number)),target));
+        check(same(await anchor(Number(confirmed.number)),confirmed));
         if(extra)check((await anchor(Number(extra.number))).hash===extra.hash);
         assertOwned();};
       // A checked canonical mismatch permits inverse work; missing data is never
@@ -346,7 +353,10 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
             cache(same(semantic(next.value.before),semantic(control)));comparisonDone=true;orphanedCache=true;
           }else finishComparison();
         }
-        await recheck(control.checkpoint);storage.recordOwnedPublication?.({expectedControl:control,deployment});ready=true;return state();
+        await recheck(control.checkpoint);storage.recordOwnedPublication?.({expectedControl:control,deployment});
+        // Confirmations change visible status even when no new content is indexed.
+        if(!same(confirmationCheckpoint,confirmed)){confirmationCheckpoint=copy(confirmed);confirmationRevision++;contentRevision++;}
+        ready=true;return state();
       }
       const number=Number(control.cursor.blockNumber),canonical=await anchor(number);
       // The current block body is immutable under its canonical hash. Reuse it
@@ -429,13 +439,13 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     let prior=after===null?-1n:BigInt(after);
     for(const row of result.rows){check(['postId','threadId','order','requestId','target','pluginId','adapter'].every(k=>field(row[k])));check(BigInt(row.order)>prior);prior=BigInt(row.order);}
     check(result.nextAfter===null||result.rows.length===limit&&result.nextAfter===result.rows.at(-1).order);
-    assertOwned();return copy({rows:result.rows,nextAfter:result.nextAfter,revision:`${epoch}:${control.generation}:${control.revision}`});
+    assertOwned();return copy({rows:result.rows,nextAfter:result.nextAfter,revision:publicationRevision()});
   }
   function scanPosts({after=null,limit=64,pendingOnly=false}={}){
     check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');check(typeof pendingOnly==='boolean');check(after===null||field(after));check(Number.isSafeInteger(limit)&&limit>=1&&limit<=100);
     assertOwned();const page=storage.readPublicPage({expectedControl:control,view:pendingOnly?'pending':'chronological',params:{limit},after,homeSubboards:curated});
     check(page.trusted===false&&page.generation===control.generation&&page.revision===control.revision);
-    const result={scope,checkpoint:{number:Number(control.checkpoint.number),hash:control.checkpoint.hash},complete:true,...page.value,nextAfter:page.nextAfter,revision:`${epoch}:${control.generation}:${control.revision}`};
+    const result={scope,checkpoint:{number:Number(control.checkpoint.number),hash:control.checkpoint.hash},complete:true,...page.value,nextAfter:page.nextAfter,revision:publicationRevision()};
     check(bytes(JSON.stringify(result))<=1048576,'ROLLING_PUBLIC_CAPACITY');assertOwned();return copy(result);
   }
   return Object.freeze({scope,step,sync:step,status,publication,query,scanPosts,scanPendingPredecessors});

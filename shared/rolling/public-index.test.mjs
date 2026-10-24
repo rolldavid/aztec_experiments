@@ -472,7 +472,12 @@ test('persistent publication and authenticated reduction reject an external proj
 });
 
 // Bounded query integration: actual decoder/store, labelled canonical-node data.
-function stripPersistentEnvelope(value){const {revision,nextCursor,...rest}=value;return rest;}
+function stripPersistentEnvelope(value){
+ const {revision,nextCursor,confirmationCheckpoint,confirmationTier,...rest}=structuredClone(value);
+ if(confirmationCheckpoint){assert.deepEqual(confirmationCheckpoint,rest.checkpoint);assert.equal(confirmationTier,'checkpointed');
+  for(const post of rest.posts??(rest.post?[rest.post]:[])){assert.equal(post.confirmation,'confirmed');delete post.confirmation;}}
+ return rest;
+}
 for(const view of ['feed','home','board','thread','profile','post','directory'])test(`persistent authenticated ${view} envelope matches legacy view`,async t=>{
  const f=await persistentFixture(t),old=await f.create(),a=await f.open();await old.sync();await f.drain(a.index);
  const params=view==='board'?{id:f.boardId}:view==='thread'?{root:'10'}:view==='profile'?{nameId:f.nameId}:view==='post'?{id:'10'}:{};
@@ -568,7 +573,7 @@ async function bokIndexFixture(t){
  const abi=bokArtifact.outputs.structs.events.find(e=>e.path==='PrivateBok::AccountingChanged'),tag=await computeLogTag((await EventSelector.fromSignature(decodeFunctionSignature('AccountingChanged',abi.fields))).toField(),DomainSeparator.EVENT_LOG_TAG);
  const accounting=(id,patch={})=>{const p={request_id:BigInt(id),state:1,sequence:0,budget:100,available:100,reserved:0,charged:0,refunded:0,trailer:1,...patch};return new PublicLog(instance.address,[tag,...encodeArguments({parameters:abi.fields},abi.fields.map(k=>p[k.name]))]);};
  const resources=[];t.after(()=>resources.forEach(s=>s.close()));const directory=path.join(f.directory,'bok');
- const open=async()=>{const storage=createRollingPublicSqliteStore(directory,{scope:capturedScope});resources.push(storage);return {storage,index:await createRollingPersistentPublicIndex({node:f.node,artifact,bokArtifact,scope:capturedScope,deployment:f.options.deployment,storage})};};
+ const open=async(extra={})=>{const storage=createRollingPublicSqliteStore(directory,{scope:capturedScope});resources.push(storage);return {storage,index:await createRollingPersistentPublicIndex({node:f.node,artifact,bokArtifact,scope:capturedScope,deployment:f.options.deployment,storage,...extra})};};
  return {...f,open,accounting,capturedScope,bokArtifact,directory};
 }
 test('Bok cold SQLite rebuild uses retained immutable state after deployment snapshot pruning',async t=>{
@@ -695,4 +700,38 @@ test('default persistent index excludes proposed posts until checkpoint',async t
  f.node.getBlockData=n=>blockData(n==='checkpointed'?2:n);
  f.node.getTxReceipt=async tx=>{const r=await receipt(tx);return {...r,status:r.blockNumber>2?'proposed':'checkpointed'};};
  const {index}=await f.open();await f.drain(index);assert.equal(index.status().checkpoint.number,'2');assert.equal(index.query('post',{id:'10'}).post,null);
+});
+
+
+test('proposed publication promotes the same post on checkpoint-only progress and invalidates old cursors',async t=>{
+ const f=await persistentFixture(t);f.put(4,[await f.post(20,4,'Second')]);let checkpoint=2;
+ const read=f.node.getBlockData,receipt=f.node.getTxReceipt;f.node.getBlockData=n=>read(n==='proposed'?4:n==='checkpointed'?checkpoint:n);
+ f.node.getTxReceipt=async tx=>{const r=await receipt(tx);return {...r,status:r.blockNumber>checkpoint?'proposed':'checkpointed'};};
+ const {index,storage}=await f.open(undefined,{confirmationTier:'proposed'});await f.drain(index);
+ const first=index.query('feed',{limit:1}),before=index.status(),stored=storage.inspect().control;
+ assert.equal(first.posts[0].id,'20');assert.equal(first.posts[0].confirmation,'pending');assert.deepEqual(first.confirmationCheckpoint,{number:2,hash:hex(1002)});assert(first.nextCursor);
+ checkpoint=4;await index.step();const after=index.query('feed',{limit:1});
+ assert.equal(after.posts[0].id,'20');assert.equal(after.posts[0].confirmation,'confirmed');assert.deepEqual(after.confirmationCheckpoint,{number:4,hash:hex(1004)});
+ assert.notEqual(after.revision,first.revision);assert.notEqual(index.status().contentRevision,before.contentRevision);assert.deepEqual(storage.inspect().control,stored,'confirmation changes no projection or transaction');
+ assert.throws(()=>index.query('feed',{limit:1,cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ const unchanged=index.status();await index.step();assert.equal(index.status().revision,unchanged.revision);assert.equal(index.status().contentRevision,unchanged.contentRevision);
+ checkpoint=2;await index.step();assert.equal(index.query('post',{id:'20'}).post.confirmation,'pending','checkpoint regression removes confirmed status');
+});
+
+test('proposed accounting returns last checkpointed state and bounded empty pages until confirmation',async t=>{
+ const f=await bokIndexFixture(t);f.put(3,[f.accounting(7)]);f.put(4,[f.accounting(1),f.accounting(2),f.accounting(7,{state:4,sequence:1,available:0,charged:25,refunded:75})]);let checkpoint=3;
+ const read=f.node.getBlockData,receipt=f.node.getTxReceipt;f.node.getBlockData=n=>read(n==='proposed'?4:n==='checkpointed'?checkpoint:n);
+ f.node.getTxReceipt=async tx=>{const r=await receipt(tx);return {...r,status:r.blockNumber>checkpoint?'proposed':'checkpointed'};};
+ const {index}=await f.open({confirmationTier:'proposed'});await f.drain(index);
+ const first=index.query('bok-accounting',{limit:1});assert.deepEqual(first.requests,[]);assert(first.nextCursor);assert.equal(first.checkpoint.number,3);assert.equal(first.confirmationTier,'checkpointed');
+ const second=index.query('bok-accounting',{limit:1,cursor:first.nextCursor});assert.deepEqual(second.requests,[]);assert(second.nextCursor);assert.notEqual(second.nextCursor,first.nextCursor);
+ const db=new DatabaseSync(path.join(f.directory,'rolling-public-v3.sqlite'));try{
+  const plan=db.prepare("EXPLAIN QUERY PLAN SELECT value FROM events INDEXED BY events_accounting WHERE length(CAST(value AS BLOB))<=1048576 AND json_valid(value) AND g=? AND json_extract(value,'$.type')='AccountingChanged' AND json_extract(value,'$.payload.request_id')=? AND pos<=? ORDER BY pos DESC LIMIT 1").all('1','7','f'.repeat(192));
+  assert(plan.some(row=>/SEARCH events USING INDEX events_accounting/.test(row.detail)));assert(!plan.some(row=>/SCAN|TEMP B-TREE/.test(row.detail)));
+ }finally{db.close();}
+ const third=index.query('bok-accounting',{limit:1,cursor:second.nextCursor});assert.equal(third.nextCursor,null);assert.equal(third.requests[0].requestId,'7');assert.equal(third.requests[0].state,'1');assert.equal(third.requests[0].charged,'0');assert.equal(third.requests[0].position.blockNumber,'3');
+ checkpoint=4;await index.step();assert.throws(()=>index.query('bok-accounting',{limit:1,cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ const confirmed=index.query('bok-accounting');assert.deepEqual(confirmed.requests.map(row=>row.requestId),['1','2','7']);assert.equal(confirmed.requests[2].charged,'25');assert.equal(confirmed.requests[2].refunded,'75');assert.equal(confirmed.checkpoint.number,4);
+ checkpoint=3;f.put(4,[f.accounting(7,{state:2,available:60,reserved:40})],50);await index.step();await f.drain(index);
+ assert.equal(index.query('bok-accounting').requests[0].charged,'0');checkpoint=4;await index.step();const fork=index.query('bok-accounting');assert.equal(fork.requests.length,1);assert.equal(fork.requests[0].reserved,'40');assert.equal(fork.requests[0].charged,'0');
 });

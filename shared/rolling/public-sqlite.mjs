@@ -94,6 +94,7 @@ export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=fal
  CREATE INDEX IF NOT EXISTS projection_slug ON projection(g,kind,slug,k);
  CREATE TABLE IF NOT EXISTS events(g TEXT NOT NULL,pos TEXT NOT NULL,segment TEXT NOT NULL,value TEXT NOT NULL,PRIMARY KEY(g,pos)) WITHOUT ROWID;
  CREATE INDEX IF NOT EXISTS events_segment ON events(g,segment,pos);
+ CREATE INDEX IF NOT EXISTS events_accounting ON events(g,json_extract(value,'$.type'),json_extract(value,'$.payload.request_id'),pos) WHERE length(CAST(value AS BLOB))<=1048576 AND json_valid(value);
  CREATE TABLE IF NOT EXISTS segments(g TEXT NOT NULL,seq TEXT NOT NULL,value TEXT NOT NULL,PRIMARY KEY(g,seq)) WITHOUT ROWID;
  CREATE TABLE IF NOT EXISTS inverse(g TEXT NOT NULL,seq TEXT NOT NULL,kind TEXT NOT NULL,k TEXT NOT NULL,value TEXT NOT NULL,PRIMARY KEY(g,seq,kind,k)) WITHOUT ROWID;
  CREATE TABLE IF NOT EXISTS blocks(g TEXT NOT NULL,n TEXT NOT NULL,value TEXT NOT NULL,PRIMARY KEY(g,n)) WITHOUT ROWID;`);
@@ -255,17 +256,19 @@ export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=fal
  }
  // A single guarded snapshot returns cache data only. The persistent index
  // alone earns canonical publication and authenticates opaque external cursors.
- function readPublicPage({expectedControl,view,params={},after=null,homeSubboards=[]}){
+ function readPublicPage({expectedControl,view,params={},after=null,homeSubboards=[],throughBlock=null}){
   const expected=captureExpected(expectedControl),input=captureExpected(params),curated=['0',...normalizeHomeSubboards(captureExpected(homeSubboards))];
   const allowed={'bok-accounting':[],home:[],feed:[],chronological:[],pending:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
   requireThat(typeof view==='string'&&Object.hasOwn(allowed,view));requireThat(Object.keys(input).every(k=>k==='limit'||allowed[view].includes(k)));
   const limit=input.limit??50;requireThat(bounded(limit,1,100));
+  requireThat(throughBlock===null||view==='bok-accounting'&&uint(throughBlock,53));
   const field=v=>uint(v)&&BigInt(v)<0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
   const idKey={board:'id',thread:'root',profile:'nameId',post:'id'}[view];if(idKey)requireThat(field(input[idKey]));
   requireThat(after===null||field(after));requireThat(view!=='post'||after===null);
   const query=input.query??'';requireThat(typeof query==='string'&&query.length<=120&&!query.includes('\0'));const q=query.trim().toLowerCase();
   return transaction(false,()=>{
    const b=budget(limits.maxReadBytes),c=current(expected,b);requireThat(c);const g=c.generation;
+   requireThat(throughBlock===null||BigInt(throughBlock)<=BigInt(c.checkpoint.number));
    const work={candidateRows:0,materializedRows:0,materializedBytes:0,seeks:0};
    const points=new Map();
    const point=(table,id)=>{const k=table+':'+id;if(!points.has(k)){const value=projectionRead(g,table,id,b);points.set(k,value);if(value!==undefined)work.materializedRows++;}return points.get(k);};
@@ -300,11 +303,21 @@ export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=fal
    let value,nextAfter=null;
    if(view==='bok-accounting'){
     requireThat(capturedScope.bok,'ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED');value={requests:[]};
+    let examined=0,last=after;
     for(const row of rows('accounting',[after===null?'':key(after)],limit+1)){
-     if(value.requests.length===limit){nextAfter=value.requests.at(-1).requestId;break;}
-     const request=point('bok',row.k);requireThat(request&&request.requestId===row.k);
+     if(examined===limit){nextAfter=last;break;}
+     let request=point('bok',row.k);requireThat(request&&request.requestId===row.k);
+     if(throughBlock!==null&&BigInt(request.position.blockNumber)>BigInt(throughBlock)){
+      // The same authenticated history supplies the last checkpointed value;
+      // a proposed refund must not overwrite the settled accounting response.
+      work.seeks++;
+      const event=readSized("SELECT value FROM events INDEXED BY events_accounting WHERE length(CAST(value AS BLOB))<=1048576 AND json_valid(value) AND g=? AND json_extract(value,'$.type')='AccountingChanged' AND json_extract(value,'$.payload.request_id')=? AND pos<=? ORDER BY pos DESC LIMIT 1",[g,row.k,key(throughBlock)+'f'.repeat(128)],b);
+      if(!event){examined++;last=row.k;continue;}
+      const p=event.payload;requireThat(event.type==='AccountingChanged'&&p.request_id===row.k&&BigInt(event.position.blockNumber)<=BigInt(throughBlock));
+      request={requestId:p.request_id,state:p.state,sequence:p.sequence,budget:p.budget,available:p.available,reserved:p.reserved,charged:p.charged,refunded:p.refunded,position:clone(event.position)};
+     }
      const candidate={requests:[...value.requests,clone(request)]};
-     if(!fits(candidate)){if(!value.requests.length)throw capacity();nextAfter=value.requests.at(-1).requestId;break;}value=candidate;
+     if(!fits(candidate)){if(!value.requests.length)throw capacity();nextAfter=last;break;}value=candidate;examined++;last=row.k;
     }
    }else if(view==='post'){
     const p=point('posts',input.id),page=valueFor(p?[visible(p)]:[]);const {posts,...metadata}=page;value={post:posts[0]??null,...metadata};if(!fits(value))throw capacity();
