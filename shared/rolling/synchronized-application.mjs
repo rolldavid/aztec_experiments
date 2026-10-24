@@ -41,7 +41,8 @@ export function createSynchronizedRollingApplication({application,synchronize,co
    if(name!=='readModeratorStatus'&&(!scope||!scope.synchronized)){
     // The native sync and public readiness reads are independent. Neither
     // failure may release the account lease while its sibling is still running.
-    const reads=[synchronize];if(scope&&prepareContext)reads.push(()=>prepareContext({predecessor:name==='prepare'}));
+    const reads=[synchronize];if(scope&&prepareContext)reads.push(()=>prepareContext({predecessor:name==='prepare',
+      ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['post','reply','quote','repost'].includes(captured[0]?.type)?{ordinaryPayment:true}:{})}));
     const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));
     const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
     if(scope&&operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});

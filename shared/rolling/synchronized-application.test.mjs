@@ -113,3 +113,9 @@ test('only new preparation requests an overlapping predecessor observation',asyn
  await app.prepare({type:'post'});scope={};await app.submitPrepared('id');scope={};await app.readAccountStatus();
  assert.deepEqual(seen,[{predecessor:true},{predecessor:false},{predecessor:false}]);
 });
+test('only one-click ordinary posting starts payment metadata during synchronization',async()=>{
+ const seen=[];let scope={preparationReads:[]};const raw=Object.fromEntries(names.map(name=>[name,()=>({})]));
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},operationScope:()=>scope,synchronize:()=>{},prepareContext:options=>seen.push(options)});
+ await app.prepare({type:'post'},{immediate:true});scope={preparationReads:[]};await app.prepare({type:'bok'},{immediate:true});scope={};await app.prepare({type:'post'},{immediate:true});
+ assert.deepEqual(seen,[{predecessor:true,ordinaryPayment:true},{predecessor:true},{predecessor:true}]);
+});

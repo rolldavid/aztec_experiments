@@ -801,7 +801,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     // Readiness and the previous terminal transaction are independent of native
     // synchronization. The journal permit belongs only to this held operation
     // and its exact authenticated bytes; prepare still reauthenticates both.
-    async prefetchContext({predecessor=false}={}){
+    async prefetchContext({predecessor=false,ordinaryPayment=false}={}){
       await localGuard();const owner=getOperationScope();
       const results=await Promise.allSettled([
         guard,
@@ -809,6 +809,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           if(!predecessor||!owner)return;
           const saved=await (await slot()).read();
           if(saved.value&&(terminalHistory(saved.value)||saved.value.status==='cancelled'&&saved.value.predecessor))await session.journal.inspectOutcome();
+        },
+        async()=>{
+          if(!ordinaryPayment||!owner)return;
+          // Ordinary payment preparation uses public metadata and local class
+          // registration, with no private balance utility or action arguments.
+          const context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
+          const prepared=await measure('action.payment-prefetch',()=>payment(undefined,undefined,{ordinaryProof:true}));
+          await localGuard();check(getOperationScope()===owner&&session.wallet===context.wallet&&session.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
+          preparedPayments.set(owner,{phase:'metadata',payment:prepared,...context});
         },
       ].map(read=>Promise.resolve().then(read)));
       const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
@@ -950,9 +959,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         // screening and fee-note work; its final canonical/local fences remain.
         const postingAnchor=field(action.subboard??'0')===zero?await balanceAnchor():undefined;
         checkPaymentOwner();
+        const earlier=preparedPayments.get(paymentScope);preparedPayments.delete(paymentScope);
+        const earlyPayment=action.type!=='bok'&&earlier?.phase==='metadata'&&earlier.wallet===session.wallet&&earlier.pxe===session.wallet.pxe&&earlier.node===session.node?earlier.payment:null;
         const values=await Promise.allSettled([
           ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor})),
-          ()=>measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:action.type!=='bok'})),
+          ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:action.type!=='bok'})),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkPaymentOwner();

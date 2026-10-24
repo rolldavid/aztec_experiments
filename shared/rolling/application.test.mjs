@@ -2295,3 +2295,29 @@ test('failed speculative history read does not override actual native execution 
  assert.equal((await Promise.allSettled(scope.preparationReads))[0].status,'rejected');
  assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
 });
+
+for(const replaceScope of [false,true])test(`ordinary fee metadata overlaps readiness and ${replaceScope?'new operation refreshes':'same operation reuses once'}`,async()=>{
+ const f=fixture();let scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ let started=0,payments=0;const gate=Promise.withResolvers(),entered=Promise.withResolvers(),inspect=f.options.sdk.inspectTrustedNode;
+ const arrive=async()=>{if(++started===2)entered.resolve();await gate.promise;};
+ f.options.sdk.inspectTrustedNode=async(...args)=>{await arrive();return inspect(...args);};
+ f.options.sdk.preparePrivateFeePayment=async input=>{assert.equal(input.creditCheck,'ordinary-post-proof');payments++;await arrive();return {metadata:'owned'};};f.app=f.restart();
+ const reading=f.app.prefetchContext({ordinaryPayment:true});await entered.promise;assert.equal(payments,1);assert.equal(f.state.privateReads.length,0);gate.resolve();await reading;
+ if(replaceScope)scope={preparationReads:[]};
+ const prepared=await f.app.prepare({type:'post',deposit:'9',content:'Early ordinary payment'},{immediate:true});await f.app.submitPrepared(prepared.intentId);
+ assert.equal(payments,replaceScope?2:1);
+});
+for(const failure of ['readiness','payment'])test(`ordinary payment prefetch ${failure} failure drains independent preparation`,async()=>{
+ const f=fixture(),scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers();let settled=false;
+ f.options.sdk.inspectTrustedNode=async()=>{if(failure==='readiness')throw Error(failure);entered.resolve();await gate.promise;};
+ f.options.sdk.preparePrivateFeePayment=async()=>{if(failure==='payment')throw Error(failure);entered.resolve();await gate.promise;return {};};f.app=f.restart();
+ const work=f.app.prefetchContext({ordinaryPayment:true}).finally(()=>settled=true),observed=assert.rejects(work,new RegExp(failure));
+ await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await observed;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+for(const replacement of ['scope','pxe'])test(`early payment rejects ${replacement} replacement before publishing its owned result`,async()=>{
+ const f=fixture();let scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers();f.options.sdk.preparePrivateFeePayment=async()=>{entered.resolve();await gate.promise;return {};};f.app=f.restart();
+ const work=f.app.prefetchContext({ordinaryPayment:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ if(replacement==='scope')scope={};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
