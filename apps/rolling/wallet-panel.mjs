@@ -191,7 +191,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let postingRules=null,rulesScope=null,updateRules=()=>{};
  let initializationAttempt=0,setupMode=null;
  let runtimePending=null,initializationPending=null,initializing=false,connectPending=null;
- let postingInProgress=false,operationSettled=Promise.resolve();
+ let postingInProgress=false,postingOperation=null,operationSettled=Promise.resolve();
  let bokHost=null,updateBokForm=()=>{},bokRefreshNeeded=false;
  const ownBokPosts=new Map();
  let identityHost=null,inlineCreation=false,accountSettingsOpen=false,selectedName='0',selectedLabel='Anonymous';
@@ -370,9 +370,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }).finally(()=>{accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();}});
  }
  async function work(fn,failureMessage=nameFailure,{posting=false}={}){
-  if(busy)return;const finishTiming=posting?beginRollingMeasure('post.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
+  if(busy)return;const finishTiming=posting?beginRollingMeasure('post.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;postingOperation=null;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
   try{if(initializationPending)await initializationPending;await accountRefreshPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
-   try{if(setupMode){setupMode=null;note('');}postingInProgress=false;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
+   try{if(setupMode){setupMode=null;note('');}if(postingOperation?.included&&postingOperation.epoch===accountEpoch&&unlocked()&&(error||intent||postingOperation.failed)&&!dialog.open)dialog.showModal();postingInProgress=false;postingOperation=null;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    // Failed actions must expose their feedback even when the form was scrolled.
    if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}}finally{transactionTiming.complete();finishTiming();finishOperation();requestAccountRefresh();}
   }
@@ -398,6 +398,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(!session){blocked=true;session=await runtime.createSession({onProgress:progress=>{
    const diagnostic=projectRollingInitialization(progress);
    if(epoch!==accountEpoch||invalidated||reloadRequired||!unlocked()||(['private-refresh','funding-claim'].includes(diagnostic?.stage)?!session:attempt!==initializationAttempt))return;
+   if(progress?.stage==='included'){showIncludedPost(progress);return;}
    if(diagnostic)dialog.setAttribute('data-rolling-initialization',JSON.stringify(diagnostic));
    if(!busy&&(bokBalance.pending||accountRefreshPending)&&diagnostic?.stage==='private-refresh')return;
    const fundingKind=view==='topup'&&topupKind==='bok'||intent?.action?.type==='claim-bok'?'bok':'posting',credit=fundingKind==='bok'?'Bok credit':'posting balance';
@@ -818,14 +819,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     ownBokPosts.set(result.txHash,{requestId:null,pluginId:null,reply:null,replyBlock:null,replyConfirmed:false,confirmedReply:null});
     if(ownBokPosts.size>128)ownBokPosts.delete(ownBokPosts.keys().next().value);
    }
-   if(immediateTypes.has(result.action?.type)){if(postingTypes.has(result.action?.type)||['bio','avatar'].includes(result.action?.type)){draft={...draft,content:''};releasePreviews();}note('');if(dialog.open)dialog.close();}
+   if(immediateTypes.has(result.action?.type)){if(postingTypes.has(result.action?.type)||['bio','avatar'].includes(result.action?.type)){draft={...draft,content:''};releasePreviews();}note('');if(dialog.open&&!postingOperation?.included)dialog.close();}
    if(result.action?.type==='preference')preferenceUpdates.set(result.action.kind+':'+result.action.target,result.action.enabled);
    notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':actionLabel(result.action)+': done.';
    if(postingTypes.has(result.action?.type)){
     // Confirmation finishes the interaction. Feed and affected balance reads
     // update independently, without holding the composer open or its busy state.
     intent=null;accountRefreshNeeded=true;
-    void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{notice='Posted. The feed could not refresh; reload it to see your post.';if(!busy)render();});
+    if(!postingOperation?.included)void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{notice='Posted. The feed could not refresh; reload it to see your post.';if(!busy)render();});
     return;
    }
    try{await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
@@ -842,11 +843,24 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    notice='Transaction reverted. A network fee may have been charged. Recovery checks must complete before a new action.';await refresh();
   }else note(result.status==='prepared'?'The saved action has not been sent. Review before confirming.':'The transaction is still unconfirmed or unknown. Check later; do not resend.');
  }
+ // Inclusion changes presentation only. The transaction promise and private
+ // account lock continue until checkpoint confirmation has been verified.
+ function showIncludedPost(progress){
+  const active=postingOperation;
+  if(!busy||!postingInProgress||!active||active.included||active.epoch!==accountEpoch||!unlocked()||
+   intent?.intentId!==active.intentId||progress.intentId!==active.intentId||!postingTypes.has(intent?.action?.type)||intent.bok?.phase==='authorize'||
+   !/^0x[0-9a-f]{64}$/.test(progress.txHash)||!/^0x[0-9a-f]{64}$/.test(progress.blockHash)||
+   !Number.isSafeInteger(progress.blockNumber)||progress.blockNumber<=0)return;
+  active.included=true;active.txHash=progress.txHash;
+  note('Confirmation pending');closeButton.disabled=false;if(dialog.open)dialog.close();
+  void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{});
+ }
  async function executeAction(action,{immediate=immediateTypes.has(action.type),onResult=()=>{}}={}){
   const epoch=accountEpoch;checkAccount(epoch);blocked=true;
   if(immediate){
    let result;
-   try{result=await session.application.executeAction(action,{onPrepared:prepared=>{checkAccount(epoch);intent=prepared;}});checkAccount(epoch);}finally{blocked=false;}
+   try{result=await session.application.executeAction(action,{onPrepared:prepared=>{checkAccount(epoch);intent=prepared;if(postingInProgress&&postingTypes.has(prepared.action?.type))postingOperation={epoch,intentId:prepared.intentId,included:false};}});checkAccount(epoch);}finally{blocked=false;}
+   if(postingOperation?.included)postingOperation.failed=result.status!=='confirmed';
    onResult(result);await receive(result);return result;
   }
   try{intent=await session.application.prepare(action);checkAccount(epoch);}finally{blocked=false;}
@@ -1285,7 +1299,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
   }
  }
- function close(){if(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending&&!accountRefreshPending){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
+ function close(){if(!postingOperation?.included&&(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending&&!accountRefreshPending)){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
  dialog.addEventListener('close',()=>{if(returnFocus?.isConnected)returnFocus.focus();});
  dialog.addEventListener('keydown',event=>{

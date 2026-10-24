@@ -452,3 +452,39 @@ test('orphaned pending Bok reply cannot refresh refunded balance; replacement wa
  f.panel.observePublicPosts([publicBokParent('22')],snapshot(116,114));
  await f.document.until(()=>f.reads()===3&&!f.host.textContent.includes('updating'));
 });
+
+const includedPost=(intentId='post-1')=>({stage:'included',intentId,txHash:'0x'+'c'.repeat(64),blockNumber:108,blockHash:'0x'+'d'.repeat(64)});
+for(const outcome of ['confirmed','unknown','reverted','error'])test(`regular post inclusion releases composer before ${outcome} while preserving account serialization`,{timeout:3000},async t=>{
+ const canonical=Promise.withResolvers(),sending=Promise.withResolvers();let effects=0;
+ const f=await fixture(t,{posting:{status:outcome,submit:()=>{sending.resolve();return canonical.promise;},effect:()=>effects++}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'1000000'});
+ await f.document.until(()=>f.host.textContent.includes('1 USDC available'));
+ const editor=f.document.querySelector('textarea');editor.value='Regular post, no assistant';editor.fire('input');
+ f.document.querySelector('[data-action-review]').fire('click');await sending.promise;
+ const before=f.core();f.progress(includedPost('unrelated'));assert.equal(f.document.querySelector('dialog').open,true);assert.equal(effects,0);
+ f.progress({...includedPost(),blockNumber:0});assert.equal(f.document.querySelector('dialog').open,true);
+ f.progress(includedPost());await Promise.resolve();
+ assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ assert.equal(effects,1);assert.equal(editor.value,'Regular post, no assistant');assert.deepEqual(f.core(),before);assert.equal(f.reads(),1);
+ f.progress(includedPost());assert.equal(effects,1);
+ assert.deepEqual(await f.panel.act({type:'like',post:'1'}),{status:'blocked',reason:'busy'});
+ if(outcome==='confirmed'){
+  f.panel.open({type:'post'});assert.equal(f.document.querySelector('dialog').open,true);assert.equal(f.panel.close(),true);f.panel.open({type:'post'});
+ }
+ if(outcome==='error')canonical.reject(Error('failed checkpoint'));else canonical.resolve();
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.document.querySelector('dialog').open,true,'reopened view or subsequent failure remains visible');
+ if(outcome==='confirmed')assert.equal(effects,1);else assert(f.document.querySelector('[role=alert]')||f.document.body.textContent.includes('unconfirmed')||f.document.body.textContent.includes('reverted'));
+ await new Promise(setImmediate);
+});
+
+test('nonposting inclusion never dismisses the account dialog or refreshes the public feed',{timeout:3000},async t=>{
+ const canonical=Promise.withResolvers(),sending=Promise.withResolvers();let effects=0;
+ const f=await fixture(t,{posting:{submit:()=>{sending.resolve();return canonical.promise;},effect:()=>effects++}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'1000000'});
+ await f.document.until(()=>f.host.textContent.includes('1 USDC available'));
+ const action=f.panel.act({type:'like',post:'10'});await sending.promise;
+ f.progress(includedPost());await Promise.resolve();
+ assert.equal(f.document.querySelector('dialog').open,true);assert.equal(effects,0);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ canonical.resolve();await action;await new Promise(setImmediate);
+});

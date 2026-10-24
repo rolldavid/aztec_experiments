@@ -77,7 +77,7 @@ globalThis.fetch=async(url,options)=>{
  if(state.holdRules===id)await new Promise(resolve=>state.ruleReleases[id]=resolve);
  return new Response(JSON.stringify(body),{status:override.unavailable?503:200,headers:{'Content-Type':'application/json'}});
 };
-window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;},onPrivateChange:()=>{state.privateChanges++;}});
+window.panel=mountRollingWalletPanel({loadRuntime:async()=>{state.loads++;await boundary('load');return runtime;},onPublicEffect:()=>{state.effects++;state.publicEffect?.();},onPrivateChange:()=>{state.privateChanges++;}});
 document.getElementById('open').onclick=()=>window.panel.open(window.defaults);
 window.ready=true;`;
 async function browserFixture(t){
@@ -1646,4 +1646,35 @@ for(const homeOnly of [false,true])test(`Bok balance automatically updates only 
  await page.evaluate(()=>test.observeReply('confirmed',115));
  assert.equal(await page.evaluate(()=>test.bokReads),3);
  assert.deepEqual(await page.evaluate(()=>({sessions:test.sessions,status:test.statusReads,names:test.owned})),before);
+});
+
+for(const outcome of ['confirmed','error'])test(`regular post becomes visible at inclusion while checkpoint ${outcome==='confirmed'?'is pending':'later fails'}`,async t=>{
+ const {page}=await browserFixture(t);
+ await page.evaluate(()=>{
+  test.hold='submit';test.publicEffect=()=>{const row=document.createElement('article');row.id='included-post';row.textContent='My ordinary message · Confirmation pending';document.getElementById('reader').replaceChildren(row);};
+ });
+ await open(page,{type:'post'});await page.getByLabel('Message',{exact:true}).fill('My ordinary message');
+ await page.getByRole('button',{name:'Post',exact:true}).click();await page.waitForFunction(()=>typeof test.release==='function');
+ await page.evaluate(()=>{
+  test.inclusion={stage:'included',intentId:'42',txHash:'0x'+'c'.repeat(64),blockNumber:108,blockHash:'0x'+'d'.repeat(64)};
+  test.sessionProgress({...test.inclusion,intentId:'not-this-operation'});
+ });
+ assert(await page.locator('dialog').isVisible());assert.equal(await page.evaluate(()=>test.effects),0);
+ const before=await page.evaluate(()=>({status:test.statusReads,sends:test.sends,bok:test.bokReads??0,sessions:test.sessions}));
+ await page.evaluate(()=>test.sessionProgress(test.inclusion));await page.locator('#included-post').waitFor();
+ assert(!await page.locator('dialog').isVisible());assert.equal(await page.locator('dialog').getAttribute('aria-busy'),'true');
+ assert.equal(await page.locator('#included-post').innerText(),'My ordinary message · Confirmation pending');
+ assert.deepEqual(await page.evaluate(()=>({status:test.statusReads,sends:test.sends,bok:test.bokReads??0,sessions:test.sessions})),before);
+ assert.deepEqual(await page.evaluate(()=>panel.act({type:'like',post:'10'})),{status:'blocked',reason:'busy'});
+ await page.evaluate(()=>test.sessionProgress(test.inclusion));assert.equal(await page.evaluate(()=>test.effects),1);
+ if(outcome==='confirmed'){
+  await page.getByRole('button',{name:'Open account',exact:true}).click();assert(await page.getByRole('button',{name:'Close account panel',exact:true}).isEnabled());
+  await page.getByRole('button',{name:'Close account panel',exact:true}).click();assert(!await page.locator('dialog').isVisible());
+  await page.getByRole('button',{name:'Open account',exact:true}).click();
+ }
+ await page.evaluate(outcome=>{if(outcome==='error')test.failure='submit';test.hold=null;test.release();},outcome);
+ await page.waitForFunction(()=>document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(await page.locator('dialog').isVisible());
+ if(outcome==='error')assert(await page.getByRole('alert').isVisible());
+ assert.equal(await page.evaluate(()=>test.effects),1);
 });
