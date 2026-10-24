@@ -60,8 +60,9 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
   const privateResult=await simulator.private(payload,from,privateSettings),lower=privateResult.gasUsed.totalGas;
   const gasLimits=allocate(reservation-1n,lower,caps,ceiling.maxFeesPerGas);
   if(gasLimits){
+   if(cost(gasLimits,ceiling.maxFeesPerGas)>reservation)throw fail('BB_GAS_LIMIT_EXCEEDED');
    let probe;
-   try{probe=await simulator.public(payload,from,settings(gasLimits,Gas.empty()));}catch(error){if(!outOfGas(error))throw error;}
+   try{probe=await simulator.public(payload,from,settings(gasLimits,Gas.empty()),false,privateResult);}catch(error){if(!outOfGas(error))throw error;}
    if(probe){
     const error=probe.publicOutput?.revertReason;
     if(error&&!refundExhausted(error,prepared)){if(!outOfGas(error))throw error;}
@@ -69,7 +70,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
     else {
      const main=probe.gasUsed.totalGas;
      const teardown=new Gas(...dimensions.map(k=>Math.max(0,Math.min(ceiling.teardownGasLimits[k],gasLimits[k]-main[k]))));
-     const full=await simulator.public(payload,from,settings(gasLimits,teardown));
+     const full=await simulator.public(payload,from,settings(gasLimits,teardown),false,privateResult);
      if(successful(full)){
       let limits=getGasLimits(full.gasUsed,caps,0.1);
       if(dimensions.some(k=>full.gasUsed.teardownGas[k]>ceiling.teardownGasLimits[k]))throw fail('BB_GAS_LIMIT_EXCEEDED');

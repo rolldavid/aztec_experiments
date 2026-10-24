@@ -73,12 +73,12 @@ test('cold claim retains bridge witness and application payload',async()=>{
  const r=await estimatePrivateFeeTransaction(h.input);assert.deepEqual(r.payload.calls.map(c=>c.name),['claim','mint_and_pay_fee','application']);assert.equal(r.payload.calls[1].args[3].toBigInt(),r.reservation);assert.equal(r.payload.authWitnesses[0],auth);assert.equal(r.payload.capsules[0],capsule);assert.equal(r.payload.extraHashedArgs[0],extra);
 });
 test('SDK adapter sends zero-priced private measurement only to local PXE, with account scopes',async()=>{
- const calls=[],wallet={completeFeeOptions:async value=>{calls.push(value);return value;},createTxExecutionRequestFromPayloadAndFee:async()=>({request:true}),scopesFrom:from=>[from],senderForTagsFrom:from=>from,pxe:{simulateTx:async(_req,opts)=>{calls.push(opts);return 'private';}},simulateTx:async(_payload,opts)=>{calls.push(opts);return 'public';}};
- const adapter=createPrivateFeeSimulator(wallet),gas=GasSettings.forEstimation({maxFeesPerGas:GasFees.empty()});assert.equal(await adapter.private({feePayer:'payer'},'author',gas),'private');assert.equal(calls[1].simulatePublic,false);assert.deepEqual(calls[1].scopes,['author']);assert.equal(calls[1].senderForTags,'author');await adapter.public({},'author',gas,true);assert.equal(calls[2].skipTxValidation,false);assert.equal(calls[2].skipFeeEnforcement,false);
+ const measured={publicInputs:{constants:{anchorBlockHeader}}},calls=[],wallet={completeFeeOptions:async value=>{calls.push(value);return value;},createTxExecutionRequestFromPayloadAndFee:async()=>({request:true}),scopesFrom:from=>[from],senderForTagsFrom:from=>from,pxe:{simulateTx:async(_req,opts)=>{calls.push(opts);return measured;}},simulateTx:async(_payload,opts)=>{calls.push(opts);return 'public';}};
+ const adapter=createPrivateFeeSimulator(wallet),gas=GasSettings.forEstimation({maxFeesPerGas:GasFees.empty()});assert.equal(await adapter.private({feePayer:'payer'},'author',gas),measured);assert.equal(calls[1].simulatePublic,false);assert.deepEqual(calls[1].scopes,['author']);assert.equal(calls[1].senderForTags,'author');await adapter.public({},'author',gas,true);assert.equal(calls[2].skipTxValidation,false);assert.equal(calls[2].skipFeeEnforcement,false);
 });
 
 test('SDK adapter retains native public revert gas while strict wallet validation still rejects it',async()=>{
- const failure=new SimulationError('Out of gas',[]),request={tx:true},privateResult=new TxSimulationResult(undefined,{forPublic:{},gasUsed:Gas.empty()});privateResult.toSimulatedTx=async()=>request;
+ const failure=new SimulationError('Out of gas',[]),request={tx:true},privateResult=new TxSimulationResult(undefined,{forPublic:{},constants:{anchorBlockHeader},gasUsed:Gas.empty()});privateResult.toSimulatedTx=async()=>request;
  let strict=0,publicCalls=0;const wallet={completeFeeOptions:async value=>value,createTxExecutionRequestFromPayloadAndFee:async()=>request,scopesFrom:from=>[from],senderForTagsFrom:from=>from,pxe:{simulateTx:async(_tx,opts)=>{assert.equal(opts.simulatePublic,false);return privateResult;}},simulateTx:async()=>{strict++;throw failure;}},node={simulatePublicCalls:async(tx,skip)=>{assert.equal(tx,request);assert.equal(skip,true);publicCalls++;return {txEffect:{revertCode:RevertCode.REVERTED},revertReason:failure,gasUsed:{totalGas:new Gas(3,9),teardownGas:Gas.empty()}};}};
  const adapter=createPrivateFeeSimulator(wallet,node),gas=new GasSettings(new Gas(100,1000),Gas.empty(),new GasFees(2n,3n),GasFees.empty());const measured=await adapter.public({},'author',gas);assert.equal(measured.publicOutput.revertReason,failure);assert.equal(measured.gasUsed.totalGas.l2Gas,9);assert.equal(strict,0);assert.equal(publicCalls,1);await assert.rejects(adapter.public({},'author',gas,true),error=>error===failure);assert.equal(strict,1);
 });
@@ -250,4 +250,11 @@ test('wallet inclusion progress preserves exact workflow and waits before confir
  const waiting=sendPrivateFeeTransaction(h.input).then(value=>{resolved=true;return value;});
  await included;assert.equal(resolved,false);assert.equal(confirmed,0);assert.deepEqual(progress,[{...identity,journalOperation:operation}]);
  release({status:'checkpointed',transactionFee:1n});await waiting;assert.equal(resolved,true);assert.equal(confirmed,1);
+});
+
+for(const immediate of [false,true])test('each reservation reuses only its own private result in both public probes, immediate='+immediate,async()=>{
+ const h=fixture(),bindings=new WeakMap(),originalPrivate=h.input.simulator.private,originalPublic=h.input.simulator.public;let reused=0;
+ h.input.simulator.private=async(payload,...args)=>{const result=await originalPrivate(payload,...args);bindings.set(result,payload);return result;};
+ h.input.simulator.public=async(payload,from,gas,enforce,measurement)=>{if(!enforce){assert.equal(bindings.get(measurement),payload);assert(payload.calls[0].args[0].toBigInt()>=gas.getFeeLimit().toBigInt());reused++;}else assert.equal(measurement,undefined);return originalPublic(payload,from,gas,enforce);};
+ const result=await estimatePrivateFeeTransaction({...h.input,deferSimulation:immediate});assert(reused>=2);assert(result.maximumFee<=h.input.prepared.availableCredit);assert.equal(h.sends.length,0);
 });
