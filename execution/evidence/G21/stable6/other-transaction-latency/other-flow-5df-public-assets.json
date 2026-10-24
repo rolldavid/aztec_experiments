@@ -1,0 +1,14 @@
+[
+  {
+    "route": "/wallet/runtime.mjs",
+    "sha256": "d8cb4785938139e04a035b79d41323bdd7aac979f0fa9dcf619c26cc4b79f685",
+    "expected": "d8cb4785938139e04a035b79d41323bdd7aac979f0fa9dcf619c26cc4b79f685",
+    "match": true
+  },
+  {
+    "route": "/wallet/aztec_bundle.js",
+    "sha256": "104b6f2910ff3085ed71938910d588d17d94993c28821e563b56d19860aad6c6",
+    "expected": "104b6f2910ff3085ed71938910d588d17d94993c28821e563b56d19860aad6c6",
+    "match": true
+  }
+]

@@ -693,10 +693,9 @@ test('proposed Bok reply appears in a loaded conversation and checkpoint-only pr
  assert.equal(await reply.locator('.author').textContent(),'Bok');assert.equal(await reply.getAttribute('data-confirmation'),'pending');
  assert.equal(await reply.getByRole('link',{name:'https://example.com/app',exact:true}).getAttribute('href'),'https://example.com/app');
  assert.equal(await reply.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/1');
- for(const name of ['Reply','Like','Unlike','Quote','Repost']){
+ for(const name of ['Reply','Like','Unlike','Quote','Repost','Mark thread read']){
   const action=reply.getByRole('button',{name,exact:true,includeHidden:true});assert.equal(await action.isEnabled(),true,name);assert.equal(await action.getAttribute('title'),null);
  }
- assert.equal(await reply.getByRole('button',{name:'Mark thread read',exact:true,includeHidden:true}).isDisabled(),true);
  assert.equal(await reply.getByRole('button',{name:'Bookmark',exact:true}).isEnabled(),true);
  assert.equal(await reply.getByRole('button',{name:'Subscribe to thread',exact:true,includeHidden:true}).isEnabled(),true);
  assert.equal(await page.getByRole('article').count(),33);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);

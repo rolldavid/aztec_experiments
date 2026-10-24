@@ -119,7 +119,7 @@ function postCard(post,data){
  const more=(...actions)=>el('details',{class:'post-more'},el('summary',{class:'action'},'More'),el('div',{class:'post-secondary-actions'},actions));
  // Moderation removes content, not the ability to manage private notifications.
  const threadControls=()=>[preferenceButton('Subscribe to thread',4,r.root),
-  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?afterConfirmation(socialButton('Mark thread read',()=>({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)}))):null];
+  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?socialButton('Mark thread read',()=>({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)})):null];
  if(post.text===null||post.removal||board?.rejected===true){
   article.append(el('p',{class:'removed'},'This post is unavailable under the board’s moderation policy.'));
   // A rejected subboard also redacts posts without an individual removal event.

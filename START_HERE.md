@@ -18,7 +18,7 @@ Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build`
 
 ## Other transaction performance — active
 
-Owner target: at least50% end-to-end reduction across all other flows. UId4cfeee0 with incoming included claims, like fee qualification and sparse preference reads and the08b4 exact-anchor accounting backend are published. Bok94d1a719 is published. Like, bookmark, name, bio and Bok-funding baselines are captured. The first like after-test returned in12.199s versus56.933s baseline; included display improved only modestly. The repaired bookmark completed in22.773s versus58.264s baseline; unbookmark20.037s. Exact visible/usable endpoints and broader qualification remain in the performance record. Broader matched coverage and the overall50% acceptance remain outstanding. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
+Owner target: at least50% end-to-end reduction across all other flows. UI5df7df9d with proposed bridge readiness, preference fees, included Bok actions and sparse preference reads and the08b4 exact-anchor accounting backend are published. Bok94d1a719 is published. Like, bookmark, name, bio and Bok-funding baselines are captured. The first like after-test returned in12.199s versus56.933s baseline; included display improved only modestly. The repaired bookmark completed in22.773s versus58.264s baseline; unbookmark20.037s. Exact visible/usable endpoints and broader qualification remain in the performance record. Broader matched coverage and the overall50% acceptance remain outstanding. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
 
 ## Current deployment
 

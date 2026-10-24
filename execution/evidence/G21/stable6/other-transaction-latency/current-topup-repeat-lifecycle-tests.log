@@ -1,0 +1,15 @@
+✔ direct private-fee confirmed claim survives later workflow replacement but rejects a reorg (114.908875ms)
+✔ direct bok confirmed claim survives later workflow replacement but rejects a reorg (19.008334ms)
+✔ direct private-fee manual over-cap claim checkpoints before send and retains confirmed successor (13.518167ms)
+✔ direct bok manual over-cap claim checkpoints before send and retains confirmed successor (14.272458ms)
+✔ included aggregate claim retains authenticated custody and permits a successor payment without checkpoint (97.087833ms)
+✔ included private-fee claim retains authenticated custody and permits a successor payment without checkpoint (10.424041ms)
+✔ included bok claim retains authenticated custody and permits a successor payment without checkpoint (12.729041ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1144.887709

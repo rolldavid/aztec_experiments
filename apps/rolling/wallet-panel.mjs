@@ -388,6 +388,21 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function startSetup(){setupMode='wallet';note('Opening your account…');render();}
  function clearOperationFeedback(){error='';notice='';note('');for(const node of content.querySelectorAll('[data-operation-feedback]'))node.remove();}
+ let moderatorLookup=null;
+ // Optional menu discovery must not lock the presentation. Actual moderator
+ // submissions still perform their native authority check before sending.
+ function requestModeratorMenu(){
+  if(moderatorLookup||moderatorStatus!==null||busy||!session||!unlocked()||typeof session.application.readModeratorStatus!=='function')return;
+  const epoch=accountEpoch,active=session;
+  const pending=Promise.resolve().then(async()=>{
+   if(epoch!==accountEpoch||active!==session||!unlocked())return;
+   const value=await active.application.readModeratorStatus();
+   if(epoch!==accountEpoch||active!==session||!unlocked())return;
+   moderatorStatus={authorized:value?.authorized===true};onPrivateChange();
+   if(!busy&&dialog.open&&view==='overview')render();
+  }).catch(()=>{}).finally(()=>{if(moderatorLookup===pending)moderatorLookup=null;});
+  moderatorLookup=pending;
+ }
  async function loadBok(){const epoch=accountEpoch;checkAccount(epoch);await bokBalance.load();checkAccount(epoch);bokStatus=bokBalance.snapshot().value;}
  // View reads stay serialized; refresh and account changes invalidate these private results.
  async function loadView({loadIdentity=false}={}){
@@ -431,7 +446,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  async function work(fn,failureMessage=actionFailure,{posting=false,action=false}={}){
   if(busy)return;createdNameFeedback=null;const finishTiming=posting?beginRollingMeasure('post.interaction'):action?beginRollingMeasure('action.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;actionOperation=null;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
-  try{if(initializationPending)await initializationPending;await composerPreparation;await accountRefreshPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
+  try{if(initializationPending)await initializationPending;await composerPreparation;await moderatorLookup;await accountRefreshPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
    try{if(actionOperation?.included&&!postingInProgress&&(error||actionOperation.failed)){actionFeedback.textContent=error?(actionOperation.confirmed?'Confirmed. Account details could not refresh.':'The change could not be confirmed.'):actionOperation.resultStatus==='reverted'?'The change reverted.':'Confirmation is still pending.';actionFeedback.hidden=false;}if(setupMode){setupMode=null;note('');}if(actionOperation?.included&&actionOperation.modal&&actionOperation.epoch===accountEpoch&&unlocked()&&(error||intent||actionOperation.failed)&&!dialog.open)dialog.showModal();postingInProgress=false;actionOperation=null;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    const created=createdNameFeedback;createdNameFeedback=null;
    if(created&&created.epoch===accountEpoch&&created.name===selectedName&&unlocked()){
@@ -1398,7 +1413,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
       const needsFunding=status?.status==='fee-needed'||status?.status==='collateral-pending',needsTopup=status?.status==='fee-needed'&&status?.depositIds?.length>0;
       content.append(el('h3',{},needsTopup?'Add to your posting balance':needsFunding?'One more step before your first post':'Ready for a conversation?'),paragraph(needsTopup?'Your deposit is already in place. Add posting credit to keep going.':needsFunding?'Set up your posting balance to join in.':'Post anonymously, or choose a name when you write.'),button(needsTopup?'Add posting credit':needsFunding?'Set up posting':'Write a post',()=>{if(needsTopup){topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;}if(needsFunding)selectView(needsTopup?'topup':'funding');else chooseAction('post');},true));
       const settings=el('details',{class:'account-links'},el('summary',{},'Account settings'));
-      settings.open=accountSettingsOpen;settings.addEventListener('toggle',()=>{accountSettingsOpen=settings.open;if(settings.open&&moderatorStatus===null&&!busy)void work(async()=>{const epoch=accountEpoch;moderatorStatus=await session.application.readModeratorStatus();checkAccount(epoch);onPrivateChange();});});
+      settings.open=accountSettingsOpen;settings.addEventListener('toggle',()=>{accountSettingsOpen=settings.open;if(settings.open)requestModeratorMenu();});
       settings.append(button('Refresh account',()=>void work(refresh)),button('Your names',()=>selectView('names')),button('Follows and bookmarks',()=>selectView('preferences')));
       if(typeof session.application.readBalances==='function')settings.append(button('Balance and withdrawals',()=>{balances=null;bokAccounting=null;selectView('balances');}));
       settings.append(button('Create a board',()=>chooseAction('subboard')));if(moderatorStatus?.authorized)settings.append(button('Update site rules',()=>chooseAction('set-main-policy')),button('Transfer moderator authority',()=>chooseAction('transfer-moderator')));

@@ -1,0 +1,14 @@
+✔ funding claim keeps derived secret encrypted and revalidates receipt before one journalled send (13.046625ms)
+✔ held private-fee claim uses only its exact native membership cache (2.07875ms)
+✔ held bok claim uses only its exact native membership cache (1.271ms)
+✔ claim refuses native membership cache cached-node replacement during verification (0.967541ms)
+✔ claim refuses native membership cache route replacement during verification (0.635167ms)
+✔ claim verification receives the existing application measurement capability unchanged (0.885625ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1295.113042

@@ -1,0 +1,37 @@
+✔ preference and read marker encode actual ABI, preserve exact payer/journal and submit only after confirmation (75.344125ms)
+✔ read marker validates canonical revision/thread/block without accepting a caller header hash (2.9825ms)
+✔ preference and read-marker initial simulation errors propagate without intent or send (1.593292ms)
+✔ explicit replacement preserves immutable marker and renews fee consent (272.770875ms)
+✔ marker replacement requires explicit same-height new canonical hash and retains original context (117.948458ms)
+✔ replacement beforeSubmit rechecks marker after proving and keeps signed evidence (182.26525ms)
+✔ saved-byte original marker resumes once after restart without estimate or proof (140.393083ms)
+✔ saved-byte replacement marker resumes once after restart without estimate or proof (407.92025ms)
+✔ saved-byte recovery fences marker without new fees or transport (60.434917ms)
+✔ saved-byte beforeSubmit revalidates marker after synchronization (38.682875ms)
+✔ saved-byte late predecessor marker change prevents broadcast (198.316292ms)
+✔ replacement late predecessor marker change prevents first broadcast (187.072333ms)
+✔ Bok interrupted release rejects unknown authorization, foreign input, changed request and canonical reorg (32.671ms)
+✔ positive pre-proof preserves marker context at renewal (3.869ms)
+✔ positive pre-proof preserves marker context at fee-estimate (2.803917ms)
+✔ positive pre-proof preserves marker context at submission (3.302792ms)
+✔ positive pre-proof preserves marker context at journal (4.155834ms)
+✔ positive pre-proof preserves marker context at broadcast (5.661125ms)
+✔ positive pre-proof unchanged read-marker context renews and sends once (6.175584ms)
+✔ immediate read-marker retains exact action and one submission estimate (1.564958ms)
+✔ immediate read marker still vetoes a changed canonical block before broadcast (4.12075ms)
+✔ exact read-marker fee profile only qualifies immediate submission, immediate=false (1.589916ms)
+✔ exact read-marker fee profile only qualifies immediate submission, immediate=true (1.320292ms)
+✔ canonical reorg discards orphaned prefix under a new epoch and rebuilds, not merges (84.358875ms)
+✔ read marker validation resumes across steps and orphaned hashes cannot suppress notifications (29.177709ms)
+✔ unknown marker canonical header is a failure, never an orphan/empty success (14.135667ms)
+✔ canonical change during CAS suppresses publication; retained ciphertext is checked on explicit restart (18.820291ms)
+✔ unknown checkpoint block does not get classified as a canonical reorg or silently reset (18.374458ms)
+✔ marker continuation metadata is strictly bound and cannot skip beyond the authenticated prefix (20.718292ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3062.119

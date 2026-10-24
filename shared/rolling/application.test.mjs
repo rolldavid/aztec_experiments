@@ -2761,3 +2761,10 @@ test('immediate cancellation still rejects an unresolved reservation before proo
  const f=proposedBokActionFixture(expiryFixture());await finishBokAccounting(f);
  await assert.rejects(executeRollingAction(f.app,{type:'cancel-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
 });
+
+
+test('claim verification receives the existing application measurement capability unchanged',async()=>{
+ const f=fundingFixture(),stages=[];f.options.measure=async(stage,operation)=>{stages.push(stage);return operation();};
+ const verify=f.options.sdk.prepareFundingClaim;f.options.sdk.prepareFundingClaim=async input=>{assert.equal(input.measure,f.options.measure);return input.measure('action.claim-receipt',()=>verify(input));};
+ const prepared=await f.restart().prepare({type:'claim-deposit',receipt:f.receipt});assert(prepared.intentId);assert(stages.includes('action.claim-receipt'));assert.equal(f.state.sends,0);
+});

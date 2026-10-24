@@ -32,10 +32,10 @@ function dom(t){
  const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>{document.ruleReads=(document.ruleReads??0)+1;return new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}});}});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null,depositIds=['9'],moderator=false}={}){
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null,depositIds=['9'],moderator=false,moderatorRead=null}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={...(warm?{preparePostingState:async deposit=>{session.busy=true;try{await warm(deposit);}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
-  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{core.names++;const names=await posting?.namesRead?.(core.names);if(names)return names;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:moderator};},
+  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{if(session.busy)throw Object.assign(Error('busy'),{code:'ROLLING_BUSY'});core.names++;const names=await posting?.namesRead?.(core.names);if(names)return names;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;if(!moderatorRead)return {authorized:moderator};session.busy=true;try{return await moderatorRead();}finally{session.busy=false;}},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{}),...(posting.inclusion?{inclusion:posting.inclusion}:{}),...(posting.nameAvailability?{nameAvailability:posting.nameAvailability}:{})};},
@@ -844,4 +844,38 @@ test('Bok cancellation with uncertain submit leaves saved unknown action and no 
  f.document.querySelectorAll('button').find(b=>b.textContent==='Release unused credit').fire('click');
  await f.document.until(()=>f.document.querySelector('[role=alert]')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('[data-action-confirm]'),null);assert(f.document.body.textContent.includes('Check your action'));
+});
+
+
+test('optional moderator menu lookup leaves ordinary account navigation available and is single-flight',{timeout:3000},async t=>{
+ const held=Promise.withResolvers(),entered=Promise.withResolvers();
+ const f=await fixture(t,{defaults:{},profile:true,balanceRead:async()=>({available:true,availableCredit:'0'}),moderatorRead:()=>{entered.resolve();return held.promise;}});
+ const settings=f.document.querySelector('.account-links');settings.open=true;settings.fire('toggle');await entered.promise;settings.fire('toggle');
+ assert.equal(f.core().moderator,1);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
+ const names=f.document.querySelectorAll('button').find(b=>b.textContent==='Your names');assert.equal(names.disabled,false);names.fire('click');
+ await Promise.resolve();assert.equal(f.core().names,0,'dependent native read joins the existing lease');held.resolve({authorized:true});
+ await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Edit bio for River Lane'));await new Promise(resolve=>setImmediate(resolve));
+ assert(f.document.querySelectorAll('button').some(b=>b.textContent==='Edit bio for River Lane'));assert.equal(f.panel.moderatorAuthorized(),true);
+});
+test('optional moderator failure grants no authority and does not interrupt account settings',{timeout:3000},async t=>{
+ const held=Promise.withResolvers();const f=await fixture(t,{defaults:{},balanceRead:async()=>({available:true,availableCredit:'0'}),moderatorRead:()=>held.promise});
+ const settings=f.document.querySelector('.account-links');settings.open=true;settings.fire('toggle');await Promise.resolve();held.reject(Error('private failure'));
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(f.panel.moderatorAuthorized(),false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
+ assert(!f.document.body.textContent.includes('private failure'));assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Transfer moderator authority'));
+ assert.equal(f.document.querySelectorAll('button').find(b=>b.textContent==='Your names').disabled,false);
+});
+test('optional moderator result after sign out cannot restore authority',{timeout:3000},async t=>{
+ const held=Promise.withResolvers(),entered=Promise.withResolvers();const f=await fixture(t,{defaults:{},balanceRead:async()=>({available:true,availableCredit:'0'}),moderatorRead:()=>{entered.resolve();return held.promise;}});
+ f.session.close=async()=>{};f.runtime.account.endSession=async()=>{};
+ const settings=f.document.querySelector('.account-links');settings.open=true;settings.fire('toggle');await entered.promise;
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Sign out').fire('click');
+ await Promise.resolve();held.resolve({authorized:true});await f.document.until(()=>f.document.body.textContent.includes('You are signed out.'));await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.panel.moderatorAuthorized(),false);assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Transfer moderator authority'));
+});
+
+test('optional moderator lookup ignores an external account replacement before resolution',{timeout:3000},async t=>{
+ const held=Promise.withResolvers(),entered=Promise.withResolvers();const f=await fixture(t,{defaults:{},balanceRead:async()=>({available:true,availableCredit:'0'}),moderatorRead:()=>{entered.resolve();return held.promise;}});
+ const settings=f.document.querySelector('.account-links');settings.open=true;settings.fire('toggle');await entered.promise;
+ f.runtime.getAccount=()=>null;held.resolve({authorized:true});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.panel.moderatorAuthorized(),false);assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Transfer moderator authority'));
 });

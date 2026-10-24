@@ -491,3 +491,39 @@ test('membership route is captured before awaits and operation evidence cannot s
  f.input.ethProvider.getNetwork=async()=>{entered.resolve();await held.promise;return getNetwork();};
  const work=prepareFundingClaim(f.input);await entered.promise;f.input.membershipNode={getL1ToL2MessageMembershipWitness:async()=>{throw Error('changed input');}};held.resolve();assert.equal((await work).status,'claim-ready');assert.equal(reads,2);
 });
+
+for(const kind of ['collateral','collateral-cancel','private-fee','bok'])test(`claim binding overlap ${kind} starts independent reads together and preserves exact final fences`,async()=>{
+ const f=await fixture(kind),canonical=Promise.withResolvers(),bindings=Promise.withResolvers(),canonicalStarted=Promise.withResolvers(),bindingsStarted=Promise.withResolvers();
+ const provider=f.input.ethProvider,block=provider.getBlock,call=provider.call;let blockCalls=0,settled=false;f.state.reads=[];
+ provider.getBlock=async(...args)=>{if(++blockCalls===1){canonicalStarted.resolve();await canonical.promise;}return block(...args);};
+ provider.call=async(...args)=>{bindingsStarted.resolve();await bindings.promise;return call(...args);};
+ const work=prepareFundingClaim(f.input).finally(()=>{settled=true;});
+ await Promise.all([canonicalStarted.promise,bindingsStarted.promise]);assert.equal(settled,false);assert(!f.state.reads.includes('witness'));
+ canonical.resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(!f.state.reads.includes('witness'));
+ bindings.resolve();assert.equal((await work).status,'claim-ready');assert(blockCalls>=2);assert.equal(f.state.reads.filter(x=>x==='witness').length,1);assert.equal(f.state.reads.filter(x=>x==='l2').length,2);
+});
+for(const failure of ['canonical','binding-sync','binding-async','context'])test(`claim binding overlap drains the held sibling on ${failure}`,async()=>{
+ const f=await fixture('bok'),entered=Promise.withResolvers(),held=Promise.withResolvers(),failed=Promise.withResolvers(),provider=f.input.ethProvider,block=provider.getBlock,call=provider.call;let settled=false,calls=0;
+ provider.getBlock=async(...args)=>{if(++calls===1){if(failure==='canonical'){await entered.promise;failed.resolve();throw Error('PRIVATE failed canonical');}entered.resolve();await held.promise;}return block(...args);};
+ provider.call=(...args)=>{if(failure==='canonical')return(async()=>{entered.resolve();await held.promise;return call(...args);})();
+  if(failure==='context')return(async()=>{await entered.promise;f.state.guardError=true;failed.resolve();return call(...args);})();
+  if(failure==='binding-sync'){failed.resolve();throw Error('PRIVATE failed binding');}
+  return(async()=>{await entered.promise;failed.resolve();throw Error('PRIVATE failed binding');})();};
+ const work=prepareFundingClaim(f.input).finally(()=>{settled=true;}),rejected=assert.rejects(work,{code:'ROLLING_FUNDING_UNKNOWN'});
+ await failed.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(!f.state.reads.includes('witness'));held.resolve();await rejected;
+});
+test('claim stage instrumentation uses only fixed labels and measures the actual overlapping operations',async()=>{
+ const f=await fixture('bok'),events=[],active=new Set(),provider=f.input.ethProvider,call=provider.call;let observedOverlap=false;
+ provider.call=(...args)=>{observedOverlap||=active.has('action.claim-initial-canonical')&&active.has('action.claim-bindings');return call(...args);};
+ f.input.measure=async(stage,operation)=>{assert.equal(typeof operation,'function');active.add(stage);events.push([stage,'start']);try{return await operation();}finally{events.push([stage,'end']);active.delete(stage);}};
+ assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');assert.equal(observedOverlap,true);
+ assert.deepEqual(events.filter(x=>x[1]==='start').map(x=>x[0]),['action.claim-receipt','action.claim-initial-canonical','action.claim-bindings','action.claim-effects','action.claim-membership','action.claim-final-canonical']);
+ assert.equal(active.size,0);assert(!JSON.stringify(events).includes(f.secret));assert(!JSON.stringify(events).includes(f.input.owner));
+});
+test('claim instrumentation capability is captured before awaits without reading getters',async()=>{
+ const f=await fixture();Object.defineProperty(f.input,'measure',{get(){assert.fail('must not invoke a measurement getter');}});
+ await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});
+ const g=await fixture(),network=g.input.ethProvider.getNetwork,seen=[];
+ g.input.measure=async(stage,operation)=>{seen.push(stage);return operation();};g.input.ethProvider.getNetwork=()=>{g.input.measure=()=>assert.fail('replaced measurement');return network();};
+ assert.equal((await prepareFundingClaim(g.input)).status,'claim-ready');assert(seen.includes('action.claim-final-canonical'));
+});

@@ -280,7 +280,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const claimGuard=async()=>{await localGuard();if(held)check(session.operationScope()===held&&session.wallet===claimOwner.wallet&&session.wallet.pxe===claimOwner.pxe&&session.node===claimOwner.node&&session.walletSecret===claimOwner.secret&&session.walletSalt===claimOwner.salt&&claimOwner.pxe.node===claimOwner.cachedNode&&sdk.isPrivatePXEForNode(claimOwner.pxe,claimOwner.node),'ROLLING_CONTEXT_CHANGED');};
     const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,...(held?{operationScope:held,membershipNode:claimOwner.cachedNode}:{}),...(kind==='bok'&&bokTopupScope?{bokTopupScope}:{}),
       secrets,...(aggregate?{aggregateIntent:aggregate.intent,...(aggregate.aggregateCustody?{aggregateCustody:aggregate.aggregateCustody}:{})}:{}),
-      privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:claimGuard});
+      privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:claimGuard,measure});
     await guard();if(verified.status!=='claim-ready')throw Object.assign(Error('Funding is not ready to claim.'),{code:'ROLLING_FUNDING_NOT_READY',reason:verified.reason});return verified.claim;
   }
   async function verifiedFeeClaim(action,record){
