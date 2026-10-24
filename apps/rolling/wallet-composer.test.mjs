@@ -545,3 +545,13 @@ test('initial account refresh already warms the observed checkpoint without a du
  await f.panel.initialize();assert.equal(f.calls.status,1);
  f.panel.observePublicPosts([],warmHead(50));await Promise.resolve();assert.equal(f.calls.status,1);
 });
+
+test('a bounded fee reservation failure explains the outcome without exposing private errors',{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{prepare:()=>{throw Object.assign(Error('PRIVATE_BALANCE_SENTINEL'),{code:'BB_FEE_RESERVATION_UNAFFORDABLE'});}}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});
+ const editor=f.document.querySelector('textarea');editor.value='Keep my post';editor.fire('input');
+ const button=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});button.fire('click');
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(f.document.body.textContent.includes('A fee estimate could not fit your posting credit. No transaction was sent.'));
+ assert(!f.document.body.textContent.includes('PRIVATE_BALANCE_SENTINEL'));assert.deepEqual(f.submissions,[]);assert(f.document.body.textContent.includes('Keep my post'));
+});

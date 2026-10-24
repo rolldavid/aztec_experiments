@@ -161,6 +161,7 @@ function publicOperationFailure(error) {
     BB_MESSAGE_LONG:'Your message is too long. Shorten it to fit the 992-byte limit.',
     BB_ACCOUNT_RECORD_INVALID:'Saved account information is damaged. Open Account to use your existing passkey or restore an encrypted backup. Your saved data has not been replaced.',
     BB_PASSKEY_PRF_UNSUPPORTED:'This passkey cannot unlock your private account. Use a passkey with PRF support, or restore your encrypted recovery file.',
+    BB_FEE_RESERVATION_UNAFFORDABLE:'A fee estimate could not fit your posting credit. No transaction was sent. You can add posting credit and try again.',
     BB_FEE_ESTIMATION_UNSTABLE:'The fee estimate did not settle. No transaction was sent. Try again after the account finishes syncing.',
     BB_PASSKEY_CANCELLED:'Passkey approval was cancelled. Your account has not changed. Try unlocking again when ready.',
     BB_PASSKEY_UNSUPPORTED:'This browser or passkey cannot unlock a private account. Use a passkey with PRF support, or restore your encrypted recovery file.',

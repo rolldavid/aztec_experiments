@@ -62,8 +62,14 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  const initial=await measure('action.fee-private-initial',()=>simulator.private(initialPayload,from,privateSettings));
  let reservation=min(maximum,cost(initial.gasUsed.totalGas,ceiling.maxFeesPerGas)*2n+1n);
  let reservationFromBalance=reservation===available;
+ const measuredReservations=new Set();let measuredFeeExceedsCredit=false;
  for(let pass=0;pass<8;pass++){
-  await guard();const payload=await payloadFor(reservation);
+  await guard();
+  // Note selection can cycle between a balance-clamped probe and a fee-derived
+  // probe. Repeating either cannot establish a new quote. This reports the
+  // bounded search outcome, not proof that every possible reservation fails.
+  if(measuredReservations.has(reservation))throw fail(measuredFeeExceedsCredit?'BB_FEE_RESERVATION_UNAFFORDABLE':'BB_FEE_ESTIMATION_UNSTABLE');
+  measuredReservations.add(reservation);const payload=await payloadFor(reservation);
   const privateResult=await measure('action.fee-private-candidate',()=>simulator.private(payload,from,privateSettings)),lower=privateResult.gasUsed.totalGas;
   // The patched SDK regenerates a detached synthetic kernel solely for measurement.
   // Full caps avoid guessing how credit should be split across DA and L2. This
@@ -87,10 +93,10 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
       const gasSettings=settings(limits.gasLimits,limits.teardownGasLimits),required=gasSettings.getFeeLimit().toBigInt();
       if(required<=available){
        // Changing the reservation can select more private notes and increase gas.
-       // Keep the exact measured payload if it covers the quote. A balance-clamped
-       // probe is never published: derive a new reservation from measured gas and
-       // measure that payload before handing it to the authoritative proof.
-       if(required>reservation||reservationFromBalance){
+       // Keep the exact measured payload if it covers the quote. A clamped amount
+       // is publishable only if independently derived from measured gas. When
+       // that fee differs, measure its new payload before authoritative proof.
+       if(required>reservation||(reservationFromBalance&&required!==reservation)){
         reservation=required||1n;reservationFromBalance=false;continue;
        }
        const finalReservation=reservation,finalPayload=payload;await guard();
@@ -101,7 +107,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
        if(dimensions.some(k=>final.gasUsed.totalGas[k]>gasSettings.gasLimits[k]||final.gasUsed.teardownGas[k]>gasSettings.teardownGasLimits[k]))throw fail('BB_GAS_LIMIT_EXCEEDED');
        await guard();const simulationValidation=await createPrivateFeeSimulationValidation({wallet,simulationPXE,payload:finalPayload,from,gasSettings,result:final,inputSnapshot});
        return {payload:finalPayload,gasSettings,reservation:finalReservation,maximumFee:required,passes:pass+1,simulationValidation};
-      }
+      }else measuredFeeExceedsCredit=true;
      }else {
       const error=full.publicOutput?.revertReason;
       if(!refundReservationShortage(error,prepared)&&!( !simulator.detachedMeasurement&&outOfGas(error)))throw error??fail('BB_SIMULATION_FAILED');

@@ -84,6 +84,13 @@ function nameFailure(failure){
   return code.value==='ROLLING_NAME_INVALID'?'Enter a valid first and last name. Use 1–32 ASCII letters, spaces, apostrophes or hyphens in each part; start and end with a letter. Bok is reserved.':code.value==='ROLLING_NAME_TAKEN'?'This name is already registered. Choose another first and last name.':code.value==='ROLLING_NAME_AVAILABILITY_UNAVAILABLE'?'Name availability could not be checked. Your draft is preserved; try again when the private connection is available.':null;
  }catch{return null;}
 }
+function actionFailure(failure){
+ try{const code=Object.getOwnPropertyDescriptor(failure??{},'code')?.value;
+  if(code==='BB_FEE_RESERVATION_UNAFFORDABLE')return 'A fee estimate could not fit your posting credit. No transaction was sent. You can add posting credit and try again.';
+  if(code==='BB_FEE_ESTIMATION_UNSTABLE')return 'The posting fee could not be estimated. No transaction was sent.';
+ }catch{return null;}
+ return nameFailure(failure);
+}
 function decimal(value,decimals){const text=BigInt(value).toString().padStart(decimals+1,'0'),fraction=text.slice(-decimals).replace(/0+$/,'');return text.slice(0,-decimals)+(fraction?'.'+fraction:'');}
 // Presentation only. Never feed rounded amounts back into payment authorization.
 export function compactAmount(value,decimals,places,roundUp=false){
@@ -380,7 +387,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    catch{if(epoch===accountEpoch)accountRefreshNeeded=true;}
   }).finally(()=>{accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();requestPostingWarmup();}});
  }
- async function work(fn,failureMessage=nameFailure,{posting=false}={}){
+ async function work(fn,failureMessage=actionFailure,{posting=false}={}){
   if(busy)return;const finishTiming=posting?beginRollingMeasure('post.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;postingOperation=null;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
   try{if(initializationPending)await initializationPending;await accountRefreshPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
    try{if(setupMode){setupMode=null;note('');}if(postingOperation?.included&&postingOperation.epoch===accountEpoch&&unlocked()&&(error||intent||postingOperation.failed)&&!dialog.open)dialog.showModal();postingInProgress=false;postingOperation=null;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
@@ -1018,7 +1025,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     await checkPostingRules(action,{confirm:direct});
     if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
     try{await executeAction(action,{immediate:direct});}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}
-   },nameFailure,{posting:postingTypes.has(action.type)});
+   },actionFailure,{posting:postingTypes.has(action.type)});
   };
   const cost=el('strong'),balance=el('strong');
   if(immediateTypes.has(draft.type)){

@@ -326,3 +326,26 @@ test('an already sufficient measured reservation is retained without another pri
  assert.equal(h.calls.filter(c=>c.phase==='public').length,1);
  assert.equal(result.payload,h.calls.at(-1).payload);assert(result.reservation>result.maximumFee);
 });
+
+test('live fragmented-credit cycle stops before repeating any reservation or sending',async()=>{
+ const prices=new GasFees(0n,2129014393943n),available=4716900000000000000n;
+ const firstFee=2141318n*prices.feePerL2Gas;
+ const h=fixture({available,prices,actualPrices:new GasFees(0n,1250000200000n),
+  privateGas:r=>r===1n?new Gas(2560,832625):r===available?new Gas(2144,964850):r<=firstFee?new Gas(r<firstFee?2624:2688,r<firstFee?894225:955825):new Gas(2720,986625),
+  main:new Gas(2368,1219583),refund:new Gas(192,27510)});
+ h.input.prepared.gasSettings=new GasSettings(new Gas(117624,6540000),new Gas(58812,817500),prices,GasFees.empty());
+ h.input.node.getNodeInfo=async()=>({txsLimits:{gas:new Gas(117624,6540000)}});
+ await assert.rejects(sendPrivateFeeTransaction({...h.input,deferSimulation:true}),{code:'BB_FEE_RESERVATION_UNAFFORDABLE'});
+ const measured=h.calls.filter(c=>c.phase==='public'),reservations=measured.map(c=>c.payload.calls[0].args[0].toBigInt());
+ assert.equal(measured.length,5);assert.equal(new Set(reservations).size,5);
+ assert.deepEqual(reservations.slice(1),[firstFee,2202918n*prices.feePerL2Gas,available,2211943n*prices.feePerL2Gas]);
+ assert.equal(h.calls.filter(c=>c.phase==='private').length,6);assert(h.calls.every(c=>!c.enforce));assert.equal(h.sends.length,0);
+});
+
+test('independently measured fee equal to a clamped reservation reuses the exact measured payload',async()=>{
+ const h=fixture({available:131n});
+ const result=await estimatePrivateFeeTransaction({...h.input,deferSimulation:true});
+ assert.equal(result.maximumFee,131n);assert.equal(result.reservation,result.maximumFee);
+ assert.equal(h.calls.filter(c=>c.phase==='public').length,1);assert.equal(result.payload,h.calls.at(-1).payload);
+ assert.equal(h.sends.length,0);
+});
