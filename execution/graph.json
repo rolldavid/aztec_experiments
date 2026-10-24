@@ -9842,10 +9842,10 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "request": "Substantial measured Post-to-Bok latency reduction; 20\u201350 percent improvement across all measured stages",
+    "request": "Render Aztec-included posts and Bok replies immediately with Confirmation pending; automatically update at checkpoint and remove orphaned replies. Keep money accounting checkpointed.",
     "status": "active",
-    "execution_lane": "Implementation published and accepted: browser23e6cde5, worker cdab01f7. Root owns exact performance evidence and remaining public-network checkpoint target.",
-    "checkpoint": "Fresh comparable browser run155.232870s,66.5637percent below464.264s. All8appcontrolled categories31.471\u201397.314percent lower; oneprivateexecution/proof, zerointernalproofsync, oneactualbrowsergate176checks, no repairs, automatic fullconversation reply/refund without Loadmore. Manual exact app feature/reload checkpassed. Charge23465/refund226535microUSDC, balance0.583128. Exactfinalwait70.838758s:68.337196beforeeligible slot1902 boundary01:26:36UTC; nativewaitreturned2.501571afterL1timestamp.30starget notachieved.",
-    "next_action": "Public-network checkpoint target remains external constraint. Do not rerun paid benchmarks to seek favorable slot timing, weaken canonical confirmation, or relabel proposed as settled. Existing app-controlled targets and complete publication verified; any further work must identify an actual avoidable delay or an explicitly authorized network/policy change."
+    "execution_lane": "Parallel backend proposed feed/watermark and reader UI; root integration, focused acceptance and publication.",
+    "checkpoint": "User explicitly authorized proposed inclusion for visible replies on24October. Existing measured155.233s result waits for checkpointed feed. Goal network blocker no longer prevents requested earlier rendering.",
+    "next_action": "Integrate reviewed proposed feed and UI changes, verify inclusion/promotion/rollback and accounting boundary, publish and observe actual reply before checkpoint."
   }
 }

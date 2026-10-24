@@ -5,6 +5,20 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
+## Proposed reply display —24October
+
+The owner authorizes displaying Aztec-included replies before checkpointing, with
+“Confirmation pending” and automatic promotion. Source98ac1821 implements a
+proposed public feed, checkpoint watermark, pending labels and rollback removal.
+Accounting continues to use checkpointed events. Focused checks passed208backend,
+14browser and18accounting cases; two backend opt-in checks were skipped.
+
+The initial live test exposed an incomplete deployment packet: the older core
+release's event decoder rejected proposed receipts. Public-index, public-sqlite,
+public-server **and public-events** must be deployed together. The transaction
+must not be replayed. Corrective publication and live transition verification are
+in progress; this is not yet an end-to-end acceptance claim.
+
 ## Verified current release — 2m35.2s, automatic reply rendering
 
 Browser23e6cde5 and worker cdab01f7 completed the identical267-character request
