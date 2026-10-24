@@ -156,6 +156,40 @@ export function validatedKernelProve(source){
         // authoritative kernel output or witnesses subsequently proved.
         if (beforeProof) await beforeProof(PrivateKernelTailCircuitPublicInputs.fromBuffer(tailOutput.publicInputs.toBuffer()));
         let chonkProof;`);
+ // Settled native read requests already contain the canonical tree values.
+ // Begin independent membership reads before init; pending/transient reads are
+ // deliberately excluded. The unchanged reset builder still checks every hint.
+ source=replace(source,'        const generateWitnesses = !skipProofGeneration || profileMode !== \'none\';',`        const settledReads = skipProofGeneration ? Promise.resolve([]) : this.prefetchSettledReadRequests(executionResult);
+        try {
+        const generateWitnesses = !skipProofGeneration || profileMode !== 'none';`);
+ source=replace(source,'        // Validation receives a detached SDK value.',`        const settledResults = await settledReads;
+        const settledFailure = settledResults.find(result => result.status === 'rejected');
+        if (settledFailure) throw settledFailure.reason;
+        // Validation receives a detached SDK value.`);
+ source=replace(source,`        };
+    }
+    /**
+   * Checks that the public inputs`, `        };
+        } finally {
+            // Preserve an earlier native failure while draining all started I/O.
+            await settledReads;
+        }
+    }
+    /**
+   * Checks that the public inputs`);
+ source=replace(source,'    /** Prefetches updated class id hints',`    prefetchSettledReadRequests(executionResult) {
+        const reads = [];
+        for (const [field, method] of [['noteHashReadRequests','getNoteHashMembershipWitness'], ['nullifierReadRequests','getNullifierMembershipWitness']]) {
+            const values = collectNested([executionResult.entrypoint], execution => execution.publicInputs[field].getActiveItems())
+                .filter(request => request.contractAddress.isZero())
+                .map(request => Fr.fromString(request.value.toString()));
+            for (const value of uniqueBy(values, value => value.toString())) {
+                reads.push(() => this.oracle[method](value));
+            }
+        }
+        return Promise.allSettled(reads.map(read => Promise.resolve().then(read)));
+    }
+    /** Prefetches updated class id hints`);
  source=instrumentKernelPhases(source);
  return source;
 }

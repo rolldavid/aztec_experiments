@@ -8,8 +8,8 @@ import {pathToFileURL} from 'node:url';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {Gas,GasSettings} from '@aztec-labs/stdlib/gas';
-import {PrivateKernelTailCircuitPublicInputs,PartialPrivateTailPublicInputsForPublic} from '@aztec-labs/stdlib/kernel';
-import {PrivateSimulationResult,TxProvingResult} from '@aztec-labs/stdlib/tx';
+import {ScopedReadRequest,ReadRequest,ClaimedLengthArray,ScopedNoteHash,NoteHash,ScopedNullifier,Nullifier,getNoteHashReadRequestResetActions,getNullifierReadRequestResetActions,ReadRequestActionEnum,PrivateKernelTailCircuitPublicInputs,PartialPrivateTailPublicInputsForPublic} from '@aztec-labs/stdlib/kernel';
+import {collectNested,PrivateSimulationResult,TxProvingResult} from '@aztec-labs/stdlib/tx';
 import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs';
 const pxeSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url),'utf8');
 const kernelSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js',import.meta.url),'utf8');
@@ -27,17 +27,19 @@ function inputs(){const value=PrivateKernelTailCircuitPublicInputs.empty();value
 function kernelHarness(){
  const calls=[],tail=inputs(),output={publicInputs:{feePayer:tail.feePayer,minRevertibleSideEffectCounter:0},verificationKey:{keyAsBytes:Buffer.alloc(0)},outputWitness:new Map(),bytecode:Buffer.alloc(0)};
  const text=method(kernel,'async proveWithKernels(', '\n    /**');
+ const prefetch=method(kernel,'    prefetchSettledReadRequests(', '\n    /** Prefetches updated');
  const Class=vm.runInNewContext(`(class {
   fakeProofs=false;maxBatchSize=1;log={info(){},debug(){}};oracle={};
   proofCreator={generateResetTailOutput:async()=>{calls.push('tail');return {...output,publicInputs:tail};},generateHidingToPublicOutput:async()=>{calls.push('hiding');return output;},createChonkProof:async()=>{calls.push('proof');return {removePublicInputs:()=> 'proof'};}};
   prefetchUpdatedClassIdHints=async()=>new Map();consumeNextApp=async stack=>stack.pop();
   runBatchedKernel=async()=>{calls.push('kernel');return output;};getVkData=async()=>({});ensurePublicInputsMatch=()=>calls.push('verify-proof');
   ${text}
- })`,{...nativeTimingBindings,calls,tail,output,Timer,NULL_SIMULATE_OUTPUT:output,CircuitKind:{Kernel:1,HidingKernel:2},PrivateKernelTailCircuitPublicInputs,
+  ${prefetch}
+ })`,{...nativeTimingBindings,Fr,collectNested,uniqueBy:(values,key)=>[...new Map(values.map(value=>[key(value),value])).values()],calls,tail,output,Timer,NULL_SIMULATE_OUTPUT:output,CircuitKind:{Kernel:1,HidingKernel:2},PrivateKernelTailCircuitPublicInputs,
  collectNoteHashNullifierCounterMap:()=>new Map(),getFinalMinRevertibleSideEffectCounter:()=>0,
  BatchPlanner:class{decideBatchSize(){return 1;}},PrivateKernelResetPrivateInputsBuilder:class{needsReset(){return true;}async build(){return {}; }},
  PaddedSideEffectAmounts:{empty:()=>({})},computeTxExpirationTimestamp:()=>0n,PrivateKernelResetTailCircuitPrivateInputs:class{isForPublic(){return true;}},HidingKernelToPublicPrivateInputs:class{}});
- return {instance:new Class(),tail,calls,execution:{entrypoint:{},publicFunctionCalldata:[1]}};
+ return {instance:new Class(),tail,calls,execution:{entrypoint:{nestedExecutionResults:[],publicInputs:{noteHashReadRequests:{getActiveItems:()=>[]},nullifierReadRequests:{getActiveItems:()=>[]}}},publicFunctionCalldata:[1]}};
 }
 test('real native kernel orchestration validates detached output once before proof generation',async()=>{
  const h=kernelHarness(),original=h.tail.toBuffer();
@@ -259,4 +261,41 @@ for(const failure of ['witness','class'])test(`native hint prefetch ${failure} f
  assert.equal(waiting.length,3);assert.equal(finished,false);assert(!f.events.some(e=>e[0]==='prepare-discarded'||e[0]==='prepare-committed'));
  waiting.forEach(gate=>gate.resolve());await assert.rejects(work,failure==='witness'?/witness unavailable/:/Invalid ordinary sync class/);
  assert.equal(f.events.at(-1)[0],'prepare-discarded');assert(!f.events.some(e=>e[0]==='prepare-committed'));
+});
+
+function settledExecution(notes=[],nullifiers=[],nested=[]){return {nestedExecutionResults:nested,publicInputs:{noteHashReadRequests:{getActiveItems:()=>notes},nullifierReadRequests:{getActiveItems:()=>nullifiers}}};}
+const settledRequest=(value,contract=AztecAddress.ZERO)=>new ScopedReadRequest(new ReadRequest(new Fr(value),2),contract);
+function settleHarness(notes,nullifiers,source){
+ const h=kernelHarness(),anchor={hash:'fixed-test-anchor'},cached=withCache(source);
+ h.execution.entrypoint=settledExecution(notes,nullifiers,[settledExecution(notes,nullifiers)]);
+ h.instance.oracle=new PrivateKernelOracle({}, {}, {}, cached,{toBlockParameter:async()=>anchor});
+ return {...h,cached,anchor};
+}
+test('settled prefetch uses native classification, deduplicates and joins native cache before init',async()=>{
+ const calls=[],gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ const source={getNoteHashMembershipWitness:async(anchor,value)=>{calls.push(['note',anchor,value.toString()]);if(calls.length===2)entered.resolve();await gate.promise;return {native:'note'};},getNullifierMembershipWitness:async(anchor,value)=>{calls.push(['nullifier',anchor,value.toString()]);if(calls.length===2)entered.resolve();await gate.promise;return {native:'nullifier'};}};
+ const h=settleHarness([settledRequest(1),settledRequest(3,AztecAddress.fromFieldUnsafe(new Fr(9)))],[settledRequest(2),settledRequest(4,AztecAddress.fromFieldUnsafe(new Fr(9)))],source);
+ const run=h.instance.runBatchedKernel,initEntered=Promise.withResolvers();let init=false;h.instance.runBatchedKernel=async(...args)=>{assert.equal(calls.length,2,'membership network callbacks dispatch before init starts');init=true;initEntered.resolve();await entered.promise;const results=await Promise.all([h.instance.oracle.getNoteHashMembershipWitness(new Fr(1)),h.instance.oracle.getNullifierMembershipWitness(new Fr(2))]);assert.deepEqual(results,[{native:'note'},{native:'nullifier'}]);return run(...args);};
+ const proving=h.instance.proveWithKernels({},h.execution,{simulate:false});await entered.promise;await initEntered.promise;assert.equal(init,true);assert.equal(calls.length,2);gate.resolve();await proving;assert.equal(calls.length,2);assert.ok(calls.every(c=>c[1]===h.anchor));assert.deepEqual(calls.map(c=>c[2]),[new Fr(1).toString(),new Fr(2).toString()]);
+});
+for(const failureAt of ['membership','kernel'])test('settled prefetch '+failureAt+' failure drains siblings and never generates proof',async()=>{
+ const error=Error(failureAt+' failed'),gate=Promise.withResolvers(),entered=Promise.withResolvers();let calls=0,done=false;
+ const source={getNoteHashMembershipWitness:async()=>{if(++calls===2)entered.resolve();if(failureAt==='membership')throw error;return {};},getNullifierMembershipWitness:async()=>{if(++calls===2)entered.resolve();await gate.promise;return {};}};
+ const h=settleHarness([settledRequest(1)],[settledRequest(2)],source);
+ if(failureAt==='kernel')h.instance.runBatchedKernel=async()=>{await entered.promise;throw error;};
+ const observed=assert.rejects(h.instance.proveWithKernels({},h.execution,{simulate:false}).finally(()=>{done=true;}),e=>e===error);
+ await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(done,false);assert.equal(h.calls.includes('proof'),false);gate.resolve();await observed;assert.equal(h.calls.includes('proof'),false);
+});
+test('native anchor cache invalidates settled prefetch on different hash',async()=>{
+ let count=0;const h=settleHarness([settledRequest(1)],[],{getNoteHashMembershipWitness:async()=>{count++;return {};}});
+ await h.instance.prefetchSettledReadRequests(h.execution);await h.instance.prefetchSettledReadRequests(h.execution);assert.equal(count,1);
+ h.instance.oracle.blockHeader={toBlockParameter:async()=>({hash:'different-test-anchor'})};await h.instance.prefetchSettledReadRequests(h.execution);assert.equal(count,2);
+});
+
+test('prefetch classification matches actual native reset actions including pending and unresolved reads',async()=>{
+ const address=AztecAddress.fromFieldUnsafe(new Fr(9)),requests=[settledRequest(1),settledRequest(3,address),settledRequest(4,address)];
+ const array=new ClaimedLengthArray(requests,requests.length),notes=new ClaimedLengthArray([new ScopedNoteHash(new NoteHash(new Fr(3),1),address)],1),nullifiers=new ClaimedLengthArray([new ScopedNullifier(new Nullifier(new Fr(3),Fr.ZERO,1),address)],1);
+ for(const actions of [getNoteHashReadRequestResetActions(array,notes),getNullifierReadRequestResetActions(array,nullifiers)])assert.deepEqual(actions.actions.slice(0,3),[ReadRequestActionEnum.READ_AS_SETTLED,ReadRequestActionEnum.READ_AS_PENDING,ReadRequestActionEnum.SKIP]);
+ const calls=[],h=settleHarness(requests,requests,{getNoteHashMembershipWitness:async(_,value)=>{calls.push(['note',value.toString()]);return {};},getNullifierMembershipWitness:async(_,value)=>{calls.push(['nullifier',value.toString()]);return {};}});
+ await h.instance.prefetchSettledReadRequests(h.execution);assert.deepEqual(calls,[['note',new Fr(1).toString()],['nullifier',new Fr(1).toString()]]);
 });
