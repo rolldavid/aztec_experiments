@@ -1,0 +1,41 @@
+{
+  "sourceCommit": "ace21870",
+  "mode": "Native TXE, real Board/FPC, projected native log cache, no real proof or WAN",
+  "result": "Existing atomic owner-delivery case passed; four private notes and five settled notes including existing refund; fresh-store restoration unchanged.",
+  "spanCount": 326,
+  "observedWindowMs": 436.788,
+  "nestedSpansAreNotAdditive": true,
+  "selectedSpans": {
+    "rolling.proof.native.phase.circuit": {
+      "calls": 8,
+      "inclusiveTotalMs": 786.915,
+      "maximumMs": 349.045
+    },
+    "rolling.proof.native.phase.oracle-call-private-function": {
+      "calls": 2,
+      "inclusiveTotalMs": 346.394,
+      "maximumMs": 301.891
+    },
+    "node.getPrivateLogsByTags": {
+      "calls": 11,
+      "inclusiveTotalMs": 73.803,
+      "maximumMs": 12.515
+    },
+    "rolling.proof.native.phase.oracle-sealv": {
+      "calls": 5,
+      "inclusiveTotalMs": 1.041,
+      "maximumMs": 0.273
+    },
+    "rolling.proof.native.phase.oracle-openv": {
+      "calls": 5,
+      "inclusiveTotalMs": 0.924,
+      "maximumMs": 0.226
+    }
+  },
+  "limitations": [
+    "TXE fixture wraps native log cache only; repeated getContract calls do not represent browser PXE network calls.",
+    "Fixture OwnerPostingAccount uses default discovery: two336-tag waves arise from that account and handshake discovery. Production SchnorrInitializerlessAccount explicitly uses do_sync_state_no_op; these waves do not justify a production optimization.",
+    "No wall-clock network latency improvement is claimed. Real browser capture must measure residual immutable node reads."
+  ],
+  "instrumentation": "Existing fixed-name circuit/oracle PerformanceObserver plus numeric node-call durations, temporary test-only observer; no arguments, account identities, tag values or contents recorded."
+}
