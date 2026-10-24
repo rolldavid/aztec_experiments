@@ -1601,7 +1601,7 @@ async function preproofFixture(base){
  f.options.accountSession.wallet.pxe.sync=async()=>{};
  const cap={checkpoint:async options=>{(f.state.checkpointOptions??=[]).push(options);const p=await f.options.accountSession.journal.assertCanStart(options);return {encoded:p.encoded};},send:async(payload,opts,lifecycle)=>{
   f.state.proofs=(f.state.proofs??0)+1;const journal=f.options.accountSession.journal;journal.setOperation(opts.journalOperation);const prior=await journal.assertCanStart();
-  await lifecycle.guard('pre-proof');if(f.state.interrupt==='proof')throw Error('proof interrupted');
+  await lifecycle.guard('preparing');if(f.state.interrupt==='proof')throw Error('proof interrupted');
   if(f.state.pauseProof)await f.state.pauseProof;if(f.state.beforeJournal)await f.state.beforeJournal();await lifecycle.guard('pre-proof');
   const tx=new JournalTx(hex(serial++));await journal.prepare(tx,prior);f.state.signedHash=tx.hash;
   if(f.state.interrupt==='journal')throw Error('journal interruption');
@@ -1693,7 +1693,7 @@ test('positive pre-proof late proof is vetoed after exact workflow revocation, b
  const original=f.options.accountSession.preproofRecovery;
  // The engine test separately validates the immutable capability; this double
  // exposes the suspended lifecycle to test a second application's exact CAS.
- f.options.accountSession.preproofRecovery={...original,send:async(...args)=>{const lifecycle=args[2],guard=lifecycle.guard;args[2]={...lifecycle,guard:async phase=>{await guard(phase);if(phase==='pre-proof')entered();}};return original.send(...args);}};
+ f.options.accountSession.preproofRecovery={...original,send:async(...args)=>{const lifecycle=args[2],guard=lifecycle.guard;args[2]={...lifecycle,guard:async phase=>{await guard(phase);if(phase==='preparing')entered();}};return original.send(...args);}};
  const pending=f.restart().submitPrepared(p.intentId);await started;
  const next=await f.restart().prepareInterrupted(p.intentId);assert.equal(next.status,'prepared');release();await assert.rejects(pending,{code:'ROLLING_RECOVERY_REQUIRED'});
  assert.equal(await f.options.accountSession.journal.inspect(),null);assert.equal(f.state.sends,0);
@@ -1982,9 +1982,9 @@ test('posting policy storage overlaps screening and rejects a changed canonical 
  }
 });
 
-test('application requests fresh predecessor verification immediately before and after proof',async()=>{
+test('application reauthenticates the same-flow predecessor before and after proof',async()=>{
  const f=await preproofFixture(),prepared=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(prepared.intentId);
- assert.deepEqual(f.state.checkpointOptions.map(options=>options?.fresh===true),[false,true,true]);assert.equal(f.state.sends,1);
+ assert.deepEqual(f.state.checkpointOptions.map(options=>options?.fresh===true),[false,false,false]);assert.equal(f.state.sends,1);
 });
 
 for(const separate of [false,true])test(`real application canonical predecessor reads across ${separate?'separate prepare/submit':'one executeAction'} scopes`,async()=>{
@@ -1994,7 +1994,7 @@ for(const separate of [false,true])test(`real application canonical predecessor 
  node.getTxReceipt=async hash=>{if(String(hash)===predecessor)receiptReads++;return originalReceipt(hash);};node.getBlock=async(...args)=>{blockReads++;return originalBlock(...args);};
  owner={};const action={type:'unlike',post:'5'};
  if(separate){const prepared=await f.app.prepare(action,{immediate:true});owner={};await f.app.submitPrepared(prepared.intentId);}else await executeRollingAction(f.app,action);
- assert.equal(receiptReads,separate?4:3,'One owned initial observation, fresh separate submit if needed, and both proof boundaries');assert.equal(blockReads,separate?5:4,'Predecessor blocks plus the new outcome block');assert.equal(f.state.sends,2);
+ assert.equal(receiptReads,separate?2:1,'One canonical observation per owned flow, exact journal checks at both proof boundaries');assert.equal(blockReads,separate?3:2,'Predecessor blocks plus the new outcome block');assert.equal(f.state.sends,2);
 });
 
 for(const reorg of [false,true])test(`cancelled unsent draft then reload acknowledges only its canonical predecessor: ${reorg}`,async()=>{

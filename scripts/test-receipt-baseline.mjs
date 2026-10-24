@@ -83,13 +83,13 @@ test('shared timestamp reads the canonical header, including zero',async()=>{
 });
 
 for(const failure of ['none','before-prepare','signed-callback','before-broadcast','progress-revocation'])test(`user positive pre-proof lifecycle: ${failure}`,async()=>{
- const events=[];let f,phase='pre-proof',guardCalls=0,revoked=false;
+ const events=[];let f,phase='preparing',guardCalls=0,revoked=false;
  const journal={assertCanStart:async()=>({encoded:null}),setOperation:()=>{},prepare:async()=>{events.push('persisted');assert.equal(f.calls.submit,0);},confirmed:()=>{events.push('confirmed');}};
  f=fixture('user',{transactionJournal:journal,progress:stage=>{if(stage==='submitting'&&failure==='progress-revocation')revoked=true;}});
  const capability=f.routing.createPreproofRecovery(f.wallet,f.node,journal);
- const lifecycle={guard:async stage=>{events.push(stage);assert.equal(stage,phase);guardCalls++;if(revoked)throw Error('observer revoked attempt');if(failure==='before-prepare'&&guardCalls===2||failure==='before-broadcast'&&stage==='signed')throw Error('revoked');},signed:async hash=>{events.push('signed-checkpoint');assert.equal(hash,TxHash.zero().toString());assert.equal(f.calls.submit,0);if(failure==='signed-callback')throw Error('checkpoint failed');phase='signed';}};
+ const lifecycle={guard:async stage=>{events.push(stage);assert.equal(stage,phase);if(phase==='preparing')phase='pre-proof';guardCalls++;if(revoked)throw Error('observer revoked attempt');if(failure==='before-prepare'&&guardCalls===2||failure==='before-broadcast'&&stage==='signed')throw Error('revoked');},signed:async hash=>{events.push('signed-checkpoint');assert.equal(hash,TxHash.zero().toString());assert.equal(f.calls.submit,0);if(failure==='signed-callback')throw Error('checkpoint failed');phase='signed';}};
  const run=()=>capability.send({},{from:'fixture',transactionJournal:journal,journalOperation:'test',wait:{timeout:0.03,interval:0.01}},lifecycle);
- if(failure==='none'){await run();assert.equal(f.calls.submit,1);assert.deepEqual(events,['pre-proof','pre-proof','persisted','signed-checkpoint','signed','confirmed']);}
+ if(failure==='none'){await run();assert.equal(f.calls.submit,1);assert.deepEqual(events,['preparing','pre-proof','persisted','signed-checkpoint','signed','confirmed']);}
  else {await assert.rejects(run());assert.equal(f.calls.submit,0);assert.equal(events.includes('persisted'),failure!=='before-prepare');}
 });
 test('user positive pre-proof capability rejects forged wallet, replaced send, and another journal',async()=>{
@@ -111,10 +111,10 @@ test('user positive pre-proof captures lifecycle functions before asynchronous p
  assert.equal(checkpoints,1);assert.equal(f.calls.submit,1);
 });
 
-for(const lifecycle of [true,false])test(`user engine predecessor freshness reaches journal at proof boundaries: lifecycle=${lifecycle}`,async()=>{
+for(const lifecycle of [true,false])test(`user engine predecessor checks reach journal at distinct proof boundaries: lifecycle=${lifecycle}`,async()=>{
  const reads=[],journal={assertCanStart:async options=>{reads.push(options?.fresh===true);return {encoded:null};},setOperation:()=>{},prepare:async()=>{},confirmed:()=>{}};
  const f=fixture('user',{transactionJournal:journal});
- if(lifecycle){const cap=f.routing.createPreproofRecovery(f.wallet,f.node,journal);await cap.send({},{from:'fixture',transactionJournal:journal,journalOperation:'test',wait:{timeout:0.03,interval:0.01}},{guard:async phase=>{if(phase==='pre-proof')await cap.checkpoint({fresh:true});},signed:async()=>{}});assert.deepEqual(reads,[true,false,true]);}
+ if(lifecycle){const cap=f.routing.createPreproofRecovery(f.wallet,f.node,journal);await cap.send({},{from:'fixture',transactionJournal:journal,journalOperation:'test',wait:{timeout:0.03,interval:0.01}},{guard:async phase=>{if(phase!=='signed')await cap.checkpoint();},signed:async()=>{}});assert.deepEqual(reads,[false,false,false]);}
  else{await f.send();assert.deepEqual(reads,[true]);}
  assert.equal(f.calls.proof,1);assert.equal(f.calls.submit,1);
 });

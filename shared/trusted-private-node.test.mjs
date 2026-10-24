@@ -42,7 +42,7 @@ test('internal diagnostics preserve both different snapshots without relaxing pe
  const f=fixture();f.state.latestBlockNumber=7;f.state.latestBlockHash=h(7);const info=f.node.getNodeInfo;let n=0;f.node.getNodeInfo=async()=>{if(++n===2){f.state.latestBlockNumber=6;f.state.latestBlockHash=h(6);}return info();};
  let error;try{await inspectTrustedNode(f.node,options);}catch(e){error=e;}assert.deepEqual(getTrustedNodeFailureDiagnostic(error).snapshots.map(x=>x.state.latest),[7,6]);assert.equal(n,2);assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);
 });
-for(const stage of ['checkpointed','proposed','final'])test('internal canonical diagnostic identifies '+stage+' fence without leaking malformed fields',async()=>{
+for(const stage of ['checkpointed','proposed'])test('internal canonical diagnostic identifies '+stage+' fence without leaking malformed fields',async()=>{
  const f=fixture();let proposed=0;f.node.getBlockData=async n=>{const current=n===7?'checkpointed':++proposed===1?'proposed':'final';return {header:{globalVariables:{blockNumber:n}},blockHash:current===stage?h(99):h(n),extra:'PRIVATE_SENTINEL'};};
  let error;try{await inspectTrustedNode(f.node,options);}catch(e){error=e;}const d=getTrustedNodeFailureDiagnostic(error);assert.equal(d.reason,'CANONICAL_ANCHOR');assert.equal(d.canonical.stage,stage);assert.equal(d.canonical.observedHash,h(99));assert.equal(d.canonical.requested,stage==='checkpointed'?7:8);assert(!JSON.stringify(d).includes('PRIVATE_SENTINEL'));
 });
@@ -56,7 +56,7 @@ test('internal malformed or upstream errors have no diagnostic authority',async(
 test('development fake: bounded public readiness, only public methods and canonical recheck',async()=>{
   const f=fixture(),r=await inspectTrustedNode(f.node,options);
   assert.deepEqual(r,{ready:true,chainId:'31337',rollupVersion:'1',rollupAddress:rollup,proofsEnabled:true,latestBlockNumber:8,latestBlockHash:h(8),checkpointedBlockNumber:7,finalizedBlockNumber:3,oldestHistoricBlockNumber:0,syncedL1Timestamp:'990',checkedAtSeconds:1000,lagSeconds:10});
-  assert.ok(Object.isFrozen(r));assert.deepEqual(f.calls.filter(x=>x[0]==='getBlockData'),[['getBlockData',7],['getBlockData',8],['getBlockData',8]]);
+  assert.ok(Object.isFrozen(r));assert.deepEqual(f.calls.filter(x=>x[0]==='getBlockData'),[['getBlockData',7],['getBlockData',8]]);
   assert.equal(isTrustedPrivateNode(f.node),false);
 });
 test('development fake: one complete fresh snapshot handles measured 1420/1419 head transition',async()=>{
@@ -69,7 +69,7 @@ test('development fake: one complete fresh snapshot handles measured 1420/1419 h
   const result=await inspectTrustedNode(f.node,options);
   assert.equal(result.latestBlockNumber,1420);assert.equal(result.latestBlockHash,h(1420));assert.equal(snapshots,2);
   for(const method of ['getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp'])assert.equal(f.calls.filter(x=>x[0]===method).length,2);
-  assert.deepEqual(f.calls.filter(x=>x[0]==='getBlockData'),[['getBlockData',1419],['getBlockData',1420],['getBlockData',1420]]);
+  assert.deepEqual(f.calls.filter(x=>x[0]==='getBlockData'),[['getBlockData',1419],['getBlockData',1420]]);
 });
 test('development fake: finality transition gets one complete fresh snapshot',async()=>{
   const f=fixture(),originalInfo=f.node.getNodeInfo;let snapshots=0;f.state.finalizedBlockNumber=2;
@@ -107,13 +107,13 @@ for(const [label,change,code]of[
 });
 for(const [name,mutate] of [
   ['chain',f=>f.info.l1ChainId++],['version',f=>f.info.rollupVersion++],['rollup',f=>f.info.l1ContractAddresses.rollupAddress='0x'+'34'.repeat(20)],['proof policy',f=>f.info.realProofs=false]
-])test('development fake: rejects wrong '+name+' before sync/private calls',async()=>{const f=fixture();mutate(f);await rejects(()=>inspectTrustedNode(f.node,options),'IDENTITY');assert.deepEqual(f.calls,[['getNodeInfo']]);});
+])test('development fake: rejects wrong '+name+' before canonical/private calls',async()=>{const f=fixture();mutate(f);await rejects(()=>inspectTrustedNode(f.node,options),'IDENTITY');assert.deepEqual(f.calls,[['getNodeInfo'],['getChainTips'],['getWorldStateSyncStatus'],['getSyncedL1Timestamp']]);});
 for(const [name,mutate] of [
   ['unsynced trees',f=>f.state.treesAreSynched=false],['world lag',f=>f.state.latestBlockNumber--],['forked world',f=>f.state.latestBlockHash=h(77)],
   ['finality mismatch',f=>f.state.finalizedBlockNumber=2],['pruned checkpoint',f=>f.state.oldestHistoricBlockNumber=8],['tip order',f=>f.tips.proven.block.number=9],
   ['same-height fork',f=>f.tips.checkpointed.block={number:8,hash:h(99)}],['missing anchor',f=>f.node.getBlockData=async()=>undefined],
   ['incorrect header coordinate',f=>f.node.getBlockData=async n=>({blockHash:h(n),header:{globalVariables:{blockNumber:n+1}}})],
-  ['reorg during inspection',f=>{let seen=0;f.node.getBlockData=async n=>({blockHash:h(n===8&&++seen>1?99:n),header:{globalVariables:{blockNumber:n}}});}]
+  ['reorg between metadata and anchor verification',f=>{f.node.getBlockData=async n=>({blockHash:h(n===8?99:n),header:{globalVariables:{blockNumber:n}}});}]
 ])test('development fake: rejects '+name,async()=>{const f=fixture();mutate(f);await rejects(()=>inspectTrustedNode(f.node,options),'UNSYNCED');});
 test('development fake: exact lag boundary, stale and future clocks',async()=>{
   for(const [stamp,passes] of [[880n,true],[879n,false],[1001n,false]]){const f=fixture();f.node.getSyncedL1Timestamp=async()=>stamp;if(passes)assert.equal((await inspectTrustedNode(f.node,options)).lagSeconds,120);else await rejects(()=>inspectTrustedNode(f.node,options),'STALE');}
@@ -293,15 +293,13 @@ test('mock transport: 32 MiB client cap cancels bounded stream before reading re
 }));
 
 
-test('actual safeRPC with labelled Fetch: independent public metadata coalesces without merging the final fence',async()=>withFetch(async set=>{
+test('actual safeRPC with labelled Fetch: public identity and metadata coalesce before one canonical anchor batch',async()=>withFetch(async set=>{
   const f=fixture(),batches=[];f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));
   set(async(url,init)=>{const body=JSON.parse(init.body);batches.push(body.map(x=>[x.method,x.params]));return new Response(jsonStringify(await responseFor(f,body)),{headers:{'content-type':'application/json'}});});
   await create();
   assert.deepEqual(batches,[
-    [['aztec_getNodeInfo',[]]],
-    [['aztec_getChainTips',[]],['aztec_getWorldStateSyncStatus',[]],['aztec_getSyncedL1Timestamp',[]]],
+    [['aztec_getNodeInfo',[]],['aztec_getChainTips',[]],['aztec_getWorldStateSyncStatus',[]],['aztec_getSyncedL1Timestamp',[]]],
     [['aztec_getBlockData',[7]],['aztec_getBlockData',[8]]],
-    [['aztec_getBlockData',[8]]],
   ]);
 }));
 
@@ -324,7 +322,7 @@ function historicalFixture(){const f=fixture();f.tips.proposed={number:1471,hash
 test('explicit checkpoint readiness authenticates measured1471/1470 historical state and reports honest heads',async()=>{
  const f=historicalFixture(),r=await inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'});
  assert.equal(r.latestBlockNumber,1470);assert.equal(r.latestBlockHash,h(1470));assert.equal(r.readinessBlockNumber,1470);assert.equal(r.readinessBlockHash,h(1470));assert.equal(r.readinessTier,'checkpointed');
- assert.equal(f.calls.filter(x=>x[0]==='getNodeInfo').length,1);assert.equal(f.calls.filter(x=>x[0]==='getBlockData').length,2);
+ assert.equal(f.calls.filter(x=>x[0]==='getNodeInfo').length,1);assert.equal(f.calls.filter(x=>x[0]==='getBlockData').length,1);
  assert.equal(getTrustedNodeCanonicalBlock(r,1470,h(1470)).blockHash,h(1470));
  assert.equal(getTrustedNodeCanonicalBlock(r,1470,h(999)),undefined);assert.equal(getTrustedNodeCanonicalBlock({...r},1470,h(1470)),undefined);
  await rejects(()=>inspectTrustedNode(historicalFixture().node,options),'UNSYNCED');
@@ -338,8 +336,8 @@ for(const [label,change]of[
  ['not synced',f=>{f.state.treesAreSynched=false;}],
  ['stale',f=>{f.node.getSyncedL1Timestamp=async()=>1n;}],
 ])test('explicit historical readiness rejects '+label,async()=>{const f=historicalFixture();change(f);await rejects(()=>inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'}),label==='stale'?'STALE':'UNSYNCED');});
-for(const stage of ['selected','world','final-selected','final-world'])test('explicit historical readiness preserves '+stage+' canonical fence',async()=>{
- const f=historicalFixture(),names=['selected','world','final-selected','final-world'];let reads=0;
+for(const stage of ['selected','world'])test('explicit historical readiness preserves '+stage+' canonical fence',async()=>{
+ const f=historicalFixture(),names=['selected','world'];let reads=0;
  Object.assign(f.state,{latestBlockNumber:1471,latestBlockHash:h(1471)});
  f.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n}},blockHash:h(names[reads++]===stage?999:n)});
  let failure;try{await inspectTrustedNode(f.node,{...options,readinessTier:'checkpointed'});}catch(e){failure=e;}
@@ -378,3 +376,18 @@ for(const count of [8,9])test('actual safeRPC coalesces '+count+' simultaneous o
   assert.deepEqual(results.map(result=>result.header.globalVariables.blockNumber),Array.from({length:count},(_,i)=>i));
   assert.equal(new Set(batches.flat().map(call=>call.id)).size,count);
 }));
+
+test('identity and public metadata start together; no canonical query runs before identity settles',async()=>{
+ const f=fixture(),gate=deferred(),entered=deferred();let metadata=0;
+ f.node.getNodeInfo=async()=>{entered.resolve();await gate.promise;return f.info;};
+ for(const name of ['getChainTips','getWorldStateSyncStatus','getSyncedL1Timestamp']){const read=f.node[name];f.node[name]=async()=>{metadata++;return read();};}
+ const result=inspectTrustedNode(f.node,options);await entered.promise;await turn();
+ assert.equal(metadata,3);assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);gate.resolve();assert.equal((await result).ready,true);
+});
+test('identity rejection drains already-started public metadata without releasing readiness',async()=>{
+ const f=fixture(),gate=deferred(),entered=deferred();let finished=false;
+ f.info.l1ChainId=1;f.node.getWorldStateSyncStatus=async()=>{entered.resolve();await gate.promise;return f.state;};
+ const result=inspectTrustedNode(f.node,options).catch(error=>{finished=true;return error;});
+ await entered.promise;await turn();assert.equal(finished,false);assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);
+ gate.resolve();assert.equal((await result).code,'BB_TRUSTED_NODE_IDENTITY');
+});

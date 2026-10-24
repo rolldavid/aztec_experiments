@@ -102,13 +102,15 @@ export async function inspectTrustedNode(node, options) {
   };
   try {
     for(let snapshot=0;snapshot<2;snapshot++){
-    const info=await node.getNodeInfo();
-    const chainId=info?.l1ChainId,version=info?.rollupVersion,realProofs=info?.realProofs,rollup=info?.l1ContractAddresses?.rollupAddress;
-    if(!natural(chainId) || !natural(version) || typeof realProofs!=='boolean')throw fail('UNAVAILABLE');
-    if(String(chainId)!==p.chainId || String(version)!==p.version || hex(rollup,20)!==p.rollup || realProofs!==p.proofsEnabled)throw fail('IDENTITY');
-    // Identity stays first. Snapshot each result on fulfillment, before waiting
-    // for its peer; a batch is not an atomic chain snapshot or a readiness lease.
-    const [tips,state,stamp]=await readTogether([
+    // These requests contain public metadata only. Read and validate identity
+    // alongside the detached chain snapshot; no private work starts until the
+    // whole group and its canonical anchors have passed.
+    const [,tips,state,stamp]=await readTogether([
+      async()=>{const info=await node.getNodeInfo();
+        const chainId=info?.l1ChainId,version=info?.rollupVersion,realProofs=info?.realProofs,rollup=info?.l1ContractAddresses?.rollupAddress;
+        if(!natural(chainId)||!natural(version)||typeof realProofs!=='boolean')throw fail('UNAVAILABLE');
+        if(String(chainId)!==p.chainId||String(version)!==p.version||hex(rollup,20)!==p.rollup||realProofs!==p.proofsEnabled)throw fail('IDENTITY');
+        return true;},
       async()=>{const value=await node.getChainTips();return {
         proposed:block(value?.proposed),checkpointed:block(value?.checkpointed?.block),
         proven:block(value?.proven?.block),finalized:block(value?.finalized?.block)};},
@@ -116,7 +118,7 @@ export async function inspectTrustedNode(node, options) {
         latest:value?.latestBlockNumber,latestHash:hex(value?.latestBlockHash,32),
         final:value?.finalizedBlockNumber,oldest:value?.oldestHistoricBlockNumber,synced:value?.treesAreSynched};},
       // Timestamp is independent public metadata. Snapshot it with the tips,
-      // then retain both canonical checks after this entire group settles.
+      // then validate canonical anchors after this entire group settles.
       async()=>{const value=await node.getSyncedL1Timestamp();
         if(typeof value!=='bigint' || value<0n || value>BigInt(Number.MAX_SAFE_INTEGER))throw fail('UNAVAILABLE');return value;},
     ]);
@@ -141,19 +143,19 @@ export async function inspectTrustedNode(node, options) {
       throw unsynced('METADATA_MISMATCH');
     }
     const world={number:latest,hash:latestHash};
-    await canonicalPhase(node,historical?[[selected,'selected'],[world,'world']]:
-      checkpointed.number===proposed.number?[[proposed,'proposed']]:[[checkpointed,'checkpointed'],[proposed,'proposed']],unsynced);
     const suppliedNow=options.nowSeconds,now=suppliedNow===undefined ? Math.floor(Date.now()/1000) : suppliedNow;
     if(!natural(now))throw fail('CONFIG');
     const lag=now-Number(stamp);
     // Native local automine advances its own chain clock and may stay idle.
-    // Canonical tips and synchronized world state above establish readiness;
+    // Canonical anchors and synchronized world state establish readiness;
     // wall time is only a public-network freshness policy. Identity and the
     // actual node proof mode have already been checked before this branch.
     if(p.proofsEnabled && (lag<0 || lag>p.maxLagSeconds))throw fail('STALE');
-    // Recheck the selected canonical anchor after synchronization reads. A reorg
-    // invalidates this readiness snapshot; never manufacture missing state.
-    const finalBlocks=await canonicalPhase(node,historical?[[selected,'final-selected'],[world,'final-world']]:[[proposed,'final']],unsynced);
+    // Check each distinct anchor once, after all synchronization metadata has
+    // settled. Repeating the same read with no intervening state read adds no
+    // atomicity: this remains a snapshot, and the server gates every request.
+    const finalBlocks=await canonicalPhase(node,historical?[[selected,'selected'],[world,'world']]:
+      [[checkpointed,'checkpointed'],[proposed,'proposed']],unsynced);
     const result=Object.freeze({ready:true,chainId:p.chainId,rollupVersion:p.version,rollupAddress:p.rollup,proofsEnabled:p.proofsEnabled,
       latestBlockNumber:latest,latestBlockHash:latestHash,checkpointedBlockNumber:checkpointed.number,
       ...(historical?{readinessTier:p.readinessTier,readinessBlockNumber:selected.number,readinessBlockHash:selected.hash}:{}),

@@ -188,7 +188,7 @@
         const journal = opts.transactionJournal ?? this._transactionJournal;
         const lifecycle=opts[preproofToken]?preproofLifecycles.get(opts[preproofToken]):null;
         if(opts[preproofToken]&&!lifecycle)throw Object.assign(new Error('Invalid pre-proof lifecycle.'),{code:'BB_JOURNAL_INVALID'});
-        if(lifecycle){lifecycle.check();if(lifecycle.journal!==journal)throw Object.assign(new Error('Invalid pre-proof journal.'),{code:'BB_JOURNAL_INVALID'});await lifecycle.guard('pre-proof');}
+        if(lifecycle){lifecycle.check();if(lifecycle.journal!==journal)throw Object.assign(new Error('Invalid pre-proof journal.'),{code:'BB_JOURNAL_INVALID'});await lifecycle.guard('preparing');}
         if (opts.journalOperation && !journal) throw Object.assign(new Error('Durable transaction journal is required.'), {code:'BB_JOURNAL_INVALID'});
         if (opts.journalOperation && journal) journal.setOperation(opts.journalOperation);
         const previousJournal = journal ? await journal.assertCanStart(lifecycle?undefined:{fresh:true}) : null;

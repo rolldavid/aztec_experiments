@@ -70,7 +70,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   }
   // Only the owning account lock supplies this identity. A canonical permit is
   // local to that operation and exact authenticated journal bytes; it is never
-  // carried across actions or used at a proof boundary without revalidation.
+  // carried across actions; every use reauthenticates the journal and owner.
   let canonicalPermit=null;
   const ownedScope=()=>{try{const value=operationScope?.();if(value!=null&&typeof value!=='object')throw invalid();return value??null;}catch(error){canonicalPermit=null;throw error;}};
   async function checkedScope(expected){try{if(expected&&contextGuard)await contextGuard();if(ownedScope()!==expected)throw fail();}catch(error){canonicalPermit=null;throw error;}}
@@ -103,7 +103,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       if(!predecessor&&replacement?.encoded===previous.encoded) {await rejectedAttempts(previous,{requireMissingAnchor:replacement.requireMissingAnchor});return previous;}
       if(!predecessor&&acknowledged!==previous.tx.getTxHash().toString())throw fail();
       // Prior displays never authorize a replacement. Within the current owned
-      // operation only, reuse the canonical check until an explicit proof fence.
+      // operation only, reuse the canonical check unless explicitly refreshed.
       if(canonicalPermit?.hash!==previous.tx.getTxHash().toString()){
         canonicalPermit=null;
         const receipt=predecessor?await readCanonicalReceipt(node,previous.tx.getTxHash(),waitOptions):await waitForCanonicalReceipt(node,previous.tx,waitOptions);
