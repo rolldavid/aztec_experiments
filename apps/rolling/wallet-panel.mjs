@@ -213,7 +213,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  dialog.append(el('div',{class:'dialog-top'},title,closeButton),description,live,content);
  document.body.append(dialog);
  const bokBalance=createBokBalanceQuery({identity:()=>unlocked()?session:null,read:()=>session.application.readBokStatus(),onChange:()=>{
-  bokStatus=bokBalance.snapshot().value;renderBokControls();updateBokForm();updateTopupQuote();if(bokRefreshNeeded&&!bokBalance.pending)requestBokBalance();
+  bokStatus=bokBalance.snapshot().value;renderBokControls();updateBokForm();updateTopupQuote();if(bokRefreshNeeded&&!bokBalance.pending)requestBokBalance();requestPostingWarmup();
  }});
  function invalidateBokBalance(){bokStatus=null;bokBalance.invalidate();}
  function bokBalanceText(){const {phase,value}=bokBalance.snapshot();return value?.available===true?`${decimal(value.availableCredit,6)} USDC available${phase==='loading'?' · updating':''}`:phase==='loading'?'Checking balance…':phase==='error'?'Balance unavailable':phase==='unavailable'?'Bok is unavailable':'Balance not loaded';}
@@ -227,6 +227,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  // first contained a home-feed reply; its parent alone does not tell us the
  // reply's block. Conversation rows provide the exact confirmation directly.
  function observePublicPosts(posts,{checkpoint,confirmationCheckpoint}={}){
+  if(Array.isArray(posts)&&Number.isSafeInteger(confirmationCheckpoint?.number)&&confirmationCheckpoint.number>=0&&/^0x[0-9a-f]{64}$/.test(confirmationCheckpoint?.hash)){
+   postingCheckpoint=confirmationCheckpoint.number+':'+confirmationCheckpoint.hash;requestPostingWarmup();
+  }
   if(!ownBokPosts.size||!Array.isArray(posts)||!unlocked())return;
   for(const post of posts){
    const own=ownBokPosts.get(post?.position?.txHash),invocation=post?.invocation;
@@ -274,7 +277,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){updateBokForm=()=>{};renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){ownBokPosts.clear();bokRefreshNeeded=false;preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){warmedPostingCheckpoint=null;ownBokPosts.clear();bokRefreshNeeded=false;preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){const updated=preferenceUpdates.get(kind+':'+target);if(updated!==undefined&&unlocked())return updated;if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -360,14 +363,22 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function viewReady(){return rollingViewReady({view,type:draft.type,identityAttached:!!identityHost,namesLoaded,cursor,moderatorStatus,actionsLoaded});}
  function selectView(next){if(busy)return;clearOperationFeedback();view=next;if(next==='balances'&&!balances){void work(async()=>{const epoch=accountEpoch;balances=await session.application.readBalances({cursor:0});checkAccount(epoch);});return;}if(next==='preferences'&&!preferences)void work(recoverPreferences);else if(viewReady())render();else void work(loadView);}
- let accountRefreshPending=null,accountRefreshNeeded=false,updatePostingBalance=()=>{};const transactionTiming=rollingStageObserver();
+ let accountRefreshPending=null,accountRefreshNeeded=false,postingCheckpoint=null,warmedPostingCheckpoint=null,updatePostingBalance=()=>{};const transactionTiming=rollingStageObserver();
+ // A confirmed feed head only wakes the existing native account read. It never
+ // supplies a trusted anchor or replaces the fresh checks in Post. Warm board
+ // and fee-contract discovery while editing, once per head, without a timer.
+ function requestPostingWarmup(){
+  if(!postingCheckpoint||postingCheckpoint===warmedPostingCheckpoint||!dialog.open||view!=='action'||!COMPOSER_TYPES.has(draft.type)||
+   initializing||busy||blocked||setupMode||intent||status?.status!=='fee-ready'||!session||!unlocked()||session.busy||accountRefreshPending||bokBalance.pending||topupQuotePending)return;
+  accountRefreshNeeded=true;requestAccountRefresh();
+ }
  function requestAccountRefresh(){
   if(!accountRefreshNeeded||accountRefreshPending||busy||!session||!unlocked())return;
-  accountRefreshNeeded=false;const epoch=accountEpoch,active=session;
+  accountRefreshNeeded=false;const epoch=accountEpoch,active=session;warmedPostingCheckpoint=postingCheckpoint;
   accountRefreshPending=Promise.resolve().then(async()=>{
    try{const next=await active.application.readAccountStatus();checkAccount(epoch);if(session!==active)return;status=next;intent=next.intent??null;}
    catch{if(epoch===accountEpoch)accountRefreshNeeded=true;}
-  }).finally(()=>{accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();}});
+  }).finally(()=>{accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();requestPostingWarmup();}});
  }
  async function work(fn,failureMessage=nameFailure,{posting=false}={}){
   if(busy)return;const finishTiming=posting?beginRollingMeasure('post.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;postingOperation=null;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
@@ -380,8 +391,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function unlocked(){if(invalidated||reloadRequired)return false;const current=runtime?runtime.getAccount():null;if(accountIdentity&&current!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');return false;}return !!current;}
  async function refresh(){
   const epoch=accountEpoch;checkAccount(epoch);balances=null;bokAccounting=null;recoveryInspection=null;invalidateBokBalance();clearPreferences();blocked=true;
-  const next=await session.application.readAccountStatus();
-  checkAccount(epoch);status=next;intent=next.intent??null;
+  const refreshCheckpoint=postingCheckpoint,next=await session.application.readAccountStatus();
+  checkAccount(epoch);warmedPostingCheckpoint=refreshCheckpoint;status=next;intent=next.intent??null;
   if(next.status==='recovering'){
    if(!intent?.intentId)throw Error('Missing recovery intent');
   }
@@ -1285,7 +1296,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(runtime.canStartTestAccount&&view==='overview'&&!intent)content.append(button('Start new test account',startTestAccount));
    content.append(button('Sign out',()=>void signOut()));
   }
-  controlsBusy(busy);renderBokControls();requestBokBalance();if(view==='topup'&&!busy&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected))queueMicrotask(requestTopupQuote);
+  controlsBusy(busy);renderBokControls();requestBokBalance();requestPostingWarmup();if(view==='topup'&&!busy&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected))queueMicrotask(requestTopupQuote);
   if(view==='funding'&&session?.funding&&!busy&&!blocked&&!intent&&!fundingQuote&&!fundingQuoteRequested&&!fundingAutomatic&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected)){
    queueMicrotask(()=>{if((dialog.open||inlineCreation)&&view==='funding'&&!busy&&!fundingQuoteRequested)void work(prepareFundingQuote,aggregateFundingFailure);});
   }
@@ -1326,6 +1337,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(!dialog.open&&view==='action'&&COMPOSER_TYPES.has(draft.type))requestBokBalance(true);
   if(!dialog.open){returnFocus=document.activeElement;render();dialog.showModal();closeButton.focus();}
   if(!initializationPending)void initialize();
+  requestPostingWarmup();
   if(initializing)return;
   if(session&&unlocked()&&view==='preferences'&&!preferences)void work(recoverPreferences);
   if(session&&unlocked()&&view!=='preferences'){

@@ -488,3 +488,60 @@ test('nonposting inclusion never dismisses the account dialog or refreshes the p
  assert.equal(f.document.querySelector('dialog').open,true);assert.equal(effects,0);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
  canonical.resolve();await action;await new Promise(setImmediate);
 });
+
+
+const warmHead=(number,hash='1')=>({checkpoint:{number:number+3,hash:'0x'+'f'.repeat(64)},confirmationCheckpoint:{number,hash:'0x'+hash.repeat(64)}});
+test('confirmed feed heads warm board and fee reads once while editing and coalesce newer heads',{timeout:3000},async t=>{
+ const first=Promise.withResolvers(),second=Promise.withResolvers(),started=[Promise.withResolvers(),Promise.withResolvers()];let refreshes=0;
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{balanceRefresh:()=>{const index=refreshes++;started[index]?.resolve();return index===0?first.promise:second.promise;}}});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ const editor=f.document.querySelector('textarea');editor.value='Keep typing';editor.fire('input');
+ f.panel.observePublicPosts([],warmHead(10));await started[0].promise;
+ assert.equal(editor.disabled,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
+ f.panel.observePublicPosts([],warmHead(10));f.panel.observePublicPosts([],warmHead(11));f.panel.observePublicPosts([],warmHead(12));
+ assert.equal(refreshes,1);editor.value+=' while syncing';editor.fire('input');
+ first.resolve();await started[1].promise;assert.equal(refreshes,2);
+ assert.equal(f.panel.close(),true);f.panel.observePublicPosts([],warmHead(13));second.resolve();
+ await f.document.until(()=>f.document.querySelector('.composer-cost').textContent.includes('Balance 1'));
+ await Promise.resolve();assert.equal(refreshes,2);assert.equal(f.document.querySelector('textarea'),editor);assert.equal(editor.value,'Keep typing while syncing');
+ assert.equal(f.core().names,0);assert.equal(f.core().moderator,0);assert.deepEqual(f.submissions,[]);
+});
+
+test('prewarming ignores proposed-only progress and noncomposer views, then warms latest head on opening',{timeout:3000},async t=>{
+ const entered=Promise.withResolvers(),f=await fixture(t,{defaults:{},balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{balanceRefresh:()=>entered.resolve()}});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ f.panel.observePublicPosts([],warmHead(20));f.panel.observePublicPosts([],{checkpoint:{number:30,hash:'0x'+'2'.repeat(64)}});
+ await Promise.resolve();assert.equal(f.core().status,1);assert.equal(f.panel.close(),true);f.panel.open({type:'reply',parent:'10',root:'1',subboard:'0'});
+ await entered.promise;assert.equal(f.core().status,2);
+ await f.document.until(()=>f.document.querySelector('.composer-cost').textContent.includes('Balance 1'));
+ f.panel.observePublicPosts([],warmHead(20));await Promise.resolve();assert.equal(f.core().status,2);
+});
+
+test('Post joins an active warm read without submitting early or refreshing the same head again',{timeout:3000},async t=>{
+ const held=Promise.withResolvers(),started=Promise.withResolvers(),f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{balanceRefresh:()=>{started.resolve();return held.promise;}}});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ const editor=f.document.querySelector('textarea');editor.value='Post after sync';editor.fire('input');
+ f.panel.observePublicPosts([],warmHead(30));await started.promise;
+ f.document.querySelector('[data-action-review]').fire('click');await Promise.resolve();assert.equal(f.prepared(),null);assert.deepEqual(f.submissions,[]);
+ held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false'&&!f.document.querySelector('dialog').open);
+ assert.deepEqual(f.submissions,['post-1']);assert.equal(f.prepared().content,'Post after sync');
+});
+
+test('failed warming waits for another checkpoint instead of retrying or disabling the editor',{timeout:3000},async t=>{
+ const failed=Promise.withResolvers(),next=Promise.withResolvers();let refreshes=0;
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{balanceRefresh:()=>{if(++refreshes===1)return failed.promise;next.resolve();}}});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ f.panel.observePublicPosts([],warmHead(40));await Promise.resolve();failed.reject(Error('private detail'));
+ await f.document.until(()=>f.document.querySelector('.composer-cost').textContent.includes('Balance (updating)'));
+ for(let i=0;i<4;i++){f.panel.observePublicPosts([],warmHead(40));await Promise.resolve();}
+ assert.equal(refreshes,1);assert.equal(f.document.querySelector('textarea').disabled,false);assert(!f.document.body.textContent.includes('private detail'));
+ f.panel.observePublicPosts([],warmHead(40,'2'));await next.promise;assert.equal(refreshes,2);
+});
+
+
+test('initial account refresh already warms the observed checkpoint without a duplicate read',{timeout:3000},async t=>{
+ const f=signInFixture(t,{restored:true});
+ f.panel.observePublicPosts([],warmHead(50));f.panel.open({type:'post',content:'Keep initial draft'});
+ await f.panel.initialize();assert.equal(f.calls.status,1);
+ f.panel.observePublicPosts([],warmHead(50));await Promise.resolve();assert.equal(f.calls.status,1);
+});
