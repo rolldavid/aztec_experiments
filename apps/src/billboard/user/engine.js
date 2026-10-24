@@ -301,12 +301,21 @@
         if (this._contextGuard) await this._contextGuard();
         this._progress('submitting');
         if(lifecycle){lifecycle.check();await lifecycle.guard('signed');}
-        await a.submitOnceWithReconciliation(rawNode,tx);
+        await measured('submitToAztec',()=>a.submitOnceWithReconciliation(rawNode,tx));
+        let acknowledgedAt=null,inclusionObserved=false;try{acknowledgedAt=performance.now();}catch{/* Optional timing. */}
         this._progress('confirming');
         const waitOpts=typeof opts.wait==='object'?opts.wait:{};
         const receipt=await a.waitForSuccessfulReceipt(rawNode,tx,{
           timeoutMs:(waitOpts.timeout ?? 0)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
-          onIncluded:inclusion=>this._progress('included',{...inclusion,journalOperation:opts.journalOperation}),
+          onIncluded:inclusion=>{
+            if(!inclusionObserved){inclusionObserved=true;try{
+              // Observation includes receipt polling; this is not block production time.
+              if(!Number.isFinite(acknowledgedAt))throw Error('Timing unavailable');
+              const name='rolling.transaction.aztec-inclusion';performance.clearMeasures(name);
+              performance.measure(name,{start:acknowledgedAt,end:performance.now()});
+            }catch{/* Timing cannot interrupt inclusion display. */}}
+            this._progress('included',{...inclusion,journalOperation:opts.journalOperation});
+          },
         });
         if (journal) journal.confirmed(receipt);
         this._actualFees=(this._actualFees||0n)+BigInt(receipt.transactionFee??0);
