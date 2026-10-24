@@ -61,6 +61,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  await guard();const initialPayload=await payloadFor(1n);
  const initial=await measure('action.fee-private-initial',()=>simulator.private(initialPayload,from,privateSettings));
  let reservation=min(maximum,cost(initial.gasUsed.totalGas,ceiling.maxFeesPerGas)*2n+1n);
+ let reservationFromBalance=reservation===available;
  for(let pass=0;pass<8;pass++){
   await guard();const payload=await payloadFor(reservation);
   const privateResult=await measure('action.fee-private-candidate',()=>simulator.private(payload,from,privateSettings)),lower=privateResult.gasUsed.totalGas;
@@ -85,9 +86,14 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
       if(cost(limits.gasLimits,ceiling.maxFeesPerGas)>available){limits=getGasLimits(measured,caps,0);limits.teardownGasLimits=refundLimits;}
       const gasSettings=settings(limits.gasLimits,limits.teardownGasLimits),required=gasSettings.getFeeLimit().toBigInt();
       if(required<=available){
-       const finalReservation=required||1n,finalPayload=await payloadFor(finalReservation);await guard();
-       // The measured reservation may differ from the probes. Immediate sends validate
-       // its exact payload and gas settings inside the native proving operation.
+       // Changing the reservation can select more private notes and increase gas.
+       // Keep the exact measured payload if it covers the quote. A balance-clamped
+       // probe is never published: derive a new reservation from measured gas and
+       // measure that payload before handing it to the authoritative proof.
+       if(required>reservation||reservationFromBalance){
+        reservation=required||1n;reservationFromBalance=false;continue;
+       }
+       const finalReservation=reservation,finalPayload=payload;await guard();
        if(deferSimulation)return {payload:finalPayload,gasSettings,reservation:finalReservation,maximumFee:required,passes:pass+1,atomicSimulation:true};
        const simulationPXE=wallet.pxe,inputSnapshot=snapshotPrivateFeeSimulationInput(finalPayload,from,gasSettings);
        const final=await simulator.public(finalPayload,from,gasSettings,true);
@@ -103,7 +109,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
   }
   }
   if(reservation===maximum)break;
-  reservation=min(maximum,reservation*2n);
+  reservation=min(maximum,reservation*2n);reservationFromBalance=reservation===available;
  }
  // A bounded allocation search is not a proof of insufficient credit: note
  // selection can change between candidates. Never trigger a payment on this error.
