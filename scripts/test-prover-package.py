@@ -131,13 +131,20 @@ export const getSchemaParameters=()=>{},getSchemaReturnType=()=>{},parseWithOpti
 export const AztecNodeApiSchema={};
 export const BlockHash={fromString:value=>({toString:()=>value})};
 export const getVersioningResponseHandler=()=>()=>{};
+export class NoRetryError extends Error{};
+export const makeBackoff=()=>[];
+export const retry=async operation=>operation();
 """
-        for name, exports in [('@aztec-labs/foundation', ['json-rpc/client', 'json-rpc', 'schemas']),
+        for name, exports in [('@aztec-labs/foundation', ['json-rpc/client', 'json-rpc', 'schemas', 'retry']),
                               ('@aztec-labs/stdlib', ['interfaces/client', 'versioning', 'block'])]:
             target = self.release / 'node_modules' / name
             target.mkdir(parents=True)
             (target / 'package.json').write_text(json.dumps({'name':name,'type':'module','exports':{'./'+key:'./fixture.mjs' for key in exports}}))
             (target / 'fixture.mjs').write_text(sdk)
+        bb = self.release/'node_modules/@aztec-foundation/bb.js'
+        bb.mkdir(parents=True)
+        (bb/'package.json').write_text(json.dumps({'name':'@aztec-foundation/bb.js','type':'module','exports':'./fixture.mjs'}))
+        (bb/'fixture.mjs').write_text("export const BarretenbergSync={initSingleton:async()=>{}};\n")
 
     def test_startup_wrapper_exact_public_source_enters_isolated_hash_inventory(self):
         import hashlib
@@ -176,6 +183,37 @@ assert.equal((await wrong.health()).ready,false);
 globalThis.fixtureLag=121;assert.equal((await query.health()).ready,false);globalThis.fixtureLag=0;
 globalThis.fixtureProofs=false;assert.equal((await query.health()).ready,false);
 const disabled=await createPrivateQuery({...options,proofsEnabled:false});assert.equal((await disabled.health()).ready,true);
+""")
+
+    def test_current_proof_wire_and_native_witness_helpers_enter_isolated_package(self):
+        for relative in ('shared/remote-prover-wire.mjs', 'shared/remote-witness-dictionary.mjs',
+                         'prover/native-witness-bytes.mjs'):
+            self.assertEqual((self.release/relative).read_bytes(), (ROOT/relative).read_bytes())
+        # Stub only the native serializer import: this tests package composition,
+        # while native byte equality is covered by native-witness-bytes.test.mjs.
+        abi=self.release/'node_modules/@aztec-foundation/noir-noirc_abi'
+        abi.mkdir(parents=True)
+        (abi/'package.json').write_text(json.dumps({'name':'@aztec-foundation/noir-noirc_abi',
+            'type':'module','exports':'./fixture.mjs'}))
+        (abi/'fixture.mjs').write_text("export function serializeWitness(){throw Error('Native execution forbidden in packaging test');}\n")
+        self.run_isolated("""
+const {encodeJob,decodeJob}=await import('./shared/remote-prover-wire.mjs');
+const {decodeWitnessDictionary}=await import('./shared/remote-witness-dictionary.mjs');
+const {nativeWitnessBytes}=await import('./prover/native-witness-bytes.mjs');
+const {gunzipSync}=await import('node:zlib');
+const witness=new Map([[1,'0'.repeat(63)+'1']]);
+const metadata={board:'0x'+'01'.repeat(32),chainId:'31337',rollupVersion:'1',mode:'real',circuits:['ab'.repeat(32)]};
+const job=decodeJob(await encodeJob(metadata,[witness]));
+const decoded=decodeWitnessDictionary(gunzipSync(job.payload),job.metadata.counts);
+assert.deepEqual([...decoded[0]],[...witness]);
+assert.deepEqual(nativeWitnessBytes(decoded)[0],nativeWitnessBytes([witness])[0]);
+""")
+
+    def test_missing_proof_dictionary_fails_packaged_wire_import(self):
+        (self.release/'shared/remote-witness-dictionary.mjs').unlink()
+        self.run_isolated("""
+await assert.rejects(import('./shared/remote-prover-wire.mjs'),
+ e=>e.code==='ERR_MODULE_NOT_FOUND'&&e.url.endsWith('/shared/remote-witness-dictionary.mjs'));
 """)
 
     def test_missing_dependency_fails_static_import_without_ancestor_fallback(self):
