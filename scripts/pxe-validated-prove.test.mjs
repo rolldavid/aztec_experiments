@@ -47,7 +47,7 @@ test('failed validation stops native kernel orchestration before expensive proof
  const h=kernelHarness();await assert.rejects(h.instance.proveWithKernels({},h.execution,{simulate:false,skipFeeEnforcement:false,profileMode:'none',beforeProof:async()=>{h.calls.push('validate');throw Error('revert');}}),/revert/);
  assert.deepEqual(h.calls,['kernel','tail','hiding','validate']);
 });
-function pxeHarness(failure,executionSteps=[]){
+function pxeHarness(failure,executionSteps=[],gates={}){
  const calls=[],publicInputs=inputs(),execution={entrypoint:{taggingIndexRanges:[],contractClassLogs:[],nestedExecutionResults:[]},publicFunctionCalldata:[]};
  const request={txContext:{gasSettings:GasSettings.empty()}};
  const ctx={changeSetId:3,syncTime:0,anchorBlockHeader:{},recording:{stats:()=>({})},totalMs:()=>0};
@@ -56,14 +56,14 @@ function pxeHarness(failure,executionSteps=[]){
  const validate=method(pxe,'async #validateKernelPublicInputs(', '\n    // Public API');
  const Class=vm.runInNewContext(`(class {
   operationQueue={runSynced:async work=>{calls.push('queue');try{const result=await work(ctx);calls.push('commit');return result;}catch(e){calls.push('discard');throw e;}}};
-  log={debug(){}};senderTaggingStore={};node={isValidTx:async(tx,opts)=>{calls.push('validate');assert.equal(opts.isSimulation,true);assert.equal(opts.skipFeeEnforcement,false);return {result:failure==='invalid'?'invalid':'valid'};}};
+  log={debug(){}};senderTaggingStore={};node={isValidTx:async(tx,opts)=>{calls.push('validate');await gates.validate?.();assert.equal(opts.isSimulation,true);assert.equal(opts.skipFeeEnforcement,false);return {result:failure==='invalid'?'invalid':'valid'};}};
   #getSimulatorForTx=()=>({});#executePrivate=async()=>{calls.push('private');return execution;};
-  #simulatePublicCalls=async(tx,skipFee)=>{calls.push('public');assert.equal(skipFee,false);return {txEffect:{revertCode:{isOK:()=>failure!=='revert'}},gasUsed:{totalGas:failure==='gas'?new Gas(2**32-1,2**32-1):Gas.empty(),teardownGas:Gas.empty()}};};
+  #simulatePublicCalls=async(tx,skipFee)=>{calls.push('public');await gates.public?.();assert.equal(skipFee,false);return {txEffect:{revertCode:{isOK:()=>failure!=='revert'}},gasUsed:{totalGas:failure==='gas'?new Gas(2**32-1,2**32-1):Gas.empty(),teardownGas:Gas.empty()}};};
   #prove=async(_request,_creator,_execution,_anchor,config)=>{calls.push('kernel');await config.beforeProof?.(publicInputs);calls.push('proof');return {publicInputs,chonkProof:{},executionSteps};};
   ${prove}
   ${privateProve}
   ${validate}
- })`,{calls,ctx,assert,request,publicInputs,execution,executionSteps,CircuitKind,failure,Gas,Timer,PrivateSimulationResult,TxProvingResult,inspect:()=>'',persistSenderTaggingIndexRangesForTx:async()=>calls.push('tags')});
+ })`,{calls,ctx,assert,request,publicInputs,execution,executionSteps,CircuitKind,failure,gates,Gas,Timer,PrivateSimulationResult,TxProvingResult,inspect:()=>'',persistSenderTaggingIndexRangesForTx:async()=>calls.push('tags')});
  return {instance:new Class(),request,calls};
 }
 test('native PXE validates actual kernel output inside one queue operation, then proves and persists tags',async()=>{
@@ -80,7 +80,7 @@ test('native proof aggregates use circuit kinds, preserve existing totals and ex
 });
 for(const failure of ['revert','gas','invalid'])test('native PXE '+failure+' discards before proof or tag persistence',async()=>{
  const h=pxeHarness(failure);await assert.rejects(h.instance.proveTxWithPublicValidation(h.request,{scopes:[]}));
- assert.deepEqual(h.calls,['queue','private','kernel','public',...(failure==='invalid'?['validate']:[]),'discard']);
+ assert.deepEqual(h.calls,['queue','private','kernel','public','validate','discard']);
 });
 test('native opt-in preserves the existing proof-only API',async()=>{
  const h=pxeHarness();await h.instance.proveTx(h.request,{scopes:[]});assert.deepEqual(h.calls,['queue','private','kernel','proof','tags','commit']);
@@ -97,4 +97,15 @@ test('complete transformed PXE loads with its real module bindings',async()=>{
   const target=path.join(directory,'dest','pxe.js');await fs.writeFile(target,pxe);
   const loaded=await import(pathToFileURL(target));assert.equal(typeof loaded.PXE,'function');
  }finally{await fs.rm(directory,{recursive:true,force:true});}
+});
+
+for(const failure of [null,'public','validate'])test(`public execution and admission ${failure??'succeed'} concurrently and drain before proof`,async()=>{
+ const gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),error=Error('Exact validation failure');let count=0,settled=false;
+ const wait=index=>async()=>{if(++count===2)entered.resolve();await gates[index].promise;if((failure==='public'?0:failure==='validate'?1:-1)===index)throw error;};
+ const h=pxeHarness(undefined,[],{public:wait(0),validate:wait(1)});
+ const proving=h.instance.proveTxWithPublicValidation(h.request,{scopes:[]}).finally(()=>{settled=true;});const observed=failure?assert.rejects(proving,e=>e===error):proving;
+ await entered.promise;assert.equal(count,2);assert(!h.calls.includes('proof'));assert(!h.calls.includes('tags'));
+ gates[failure==='validate'?1:0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(!h.calls.includes('discard'));
+ gates[0].resolve();gates[1].resolve();await observed;
+ assert.equal(h.calls.includes('proof'),!failure);assert.equal(h.calls.includes('tags'),!failure);assert.equal(h.calls.at(-1),failure?'discard':'commit');
 });

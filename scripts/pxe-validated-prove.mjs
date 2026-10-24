@@ -36,7 +36,16 @@ export function validatedPxeProve(source){
     // synthetic kernel implementation or second private execution is involved.
     async #validateKernelPublicInputs(txRequest, privateExecutionResult, publicInputs) {
         const simulatedTx = await new PrivateSimulationResult(privateExecutionResult, publicInputs).toSimulatedTx();
-        const output = publicInputs.forPublic ? await this.#simulatePublicCalls(simulatedTx, false) : undefined;
+        // Both checks consume the same detached transaction and are read-only.
+        // Drain both before failing; native proof generation still starts only
+        // after public execution, gas and admission have all succeeded.
+        const results = await Promise.allSettled([
+            () => publicInputs.forPublic ? this.#simulatePublicCalls(simulatedTx, false) : undefined,
+            () => this.node.isValidTx(simulatedTx, {isSimulation: true, skipFeeEnforcement: false}),
+        ].map(read => Promise.resolve().then(read)));
+        const failure = results.find(result => result.status === 'rejected');
+        if (failure) throw failure.reason;
+        const output = results[0].value;
         if (publicInputs.forPublic && (!output?.txEffect?.revertCode?.isOK() || output.revertReason)) {
             throw Object.assign(new Error('Transaction public validation failed'), {code:'BB_SIMULATION_FAILED'});
         }
@@ -45,7 +54,7 @@ export function validatedPxeProve(source){
         if (['daGas', 'l2Gas'].some(key => (gas?.totalGas ?? publicInputs.gasUsed)[key] > limits.gasLimits[key] || (gas?.teardownGas[key] ?? 0) > limits.teardownGasLimits[key])) {
             throw Object.assign(new Error('Transaction exceeds its fixed gas limits'), {code:'BB_GAS_LIMIT_EXCEEDED'});
         }
-        const validation = await this.node.isValidTx(simulatedTx, {isSimulation: true, skipFeeEnforcement: false});
+        const validation = results[1].value;
         if (validation.result !== 'valid') throw Object.assign(new Error('Transaction preflight validation failed'), {code:'BB_SIMULATION_FAILED'});
     }
     // Public API
