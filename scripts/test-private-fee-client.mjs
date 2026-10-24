@@ -245,3 +245,26 @@ test('publication failure drains held metadata before failing without registrati
  state.instance.currentContractClassId=new Fr(9);
  await assert.rejects(preparePrivateFeePayment(input),{code:'PRIVATE_FEE_CLASS_MISMATCH'});assert.equal(state.reads,0);
 });
+
+
+test('qualified like metadata payment performs no balance utility and retains publication/price checks',async()=>{
+ const f=fixture();f.input.creditCheck='qualified-like-proof';f.state.balance=0n;
+ const prepared=await preparePrivateFeePayment(f.input);assert.equal(f.state.reads,0);assert.equal(Object.hasOwn(prepared,'availableCredit'),false);
+ assert.equal(prepared.creditCheck,'qualified-like-proof');assert.equal((await prepared.paymentMethod.getExecutionPayload()).calls[0].name,'pay_fee');
+ f.state.instance.currentContractClassId=new Fr(99);await assert.rejects(preparePrivateFeePayment(f.input),{code:'PRIVATE_FEE_CLASS_MISMATCH'});assert.equal(f.state.reads,0);
+ const claim=fixture();claim.input.creditCheck='qualified-like-proof';claim.input.claim={amount:5000n,salt:new Fr(3),leafIndex:new Fr(4)};
+ await assert.rejects(preparePrivateFeePayment(claim.input),{code:'PRIVATE_FEE_CONFIGURATION_REQUIRED'});assert.equal(claim.state.reads,0);
+});
+
+test('qualified like defers native credit until enrichment and keeps metadata exact without rereading RPCs',async()=>{
+ const {input,state}=fixture();input.creditCheck='qualified-like-proof';input.wallet.pxe={};let metadata=0;
+ const info=input.node.getNodeInfo;input.node.getNodeInfo=async()=>{metadata++;return info();};
+ const prepared=await preparePrivateFeePayment(input);assert.equal(state.reads,0);assert.equal(metadata,1);assert(!Object.hasOwn(prepared,'availableCredit'));
+ const read=await prepared.withAvailableCredit();assert.equal(state.reads,1);assert.equal(metadata,1);assert.equal(read.creditCheck,'read-balance');assert.equal(read.availableCredit,1300n);assert.equal(read.paymentMethod,prepared.paymentMethod);assert.equal(read.gasSettings,prepared.gasSettings);
+ state.balance=42n;assert.equal((await prepared.withAvailableCredit()).availableCredit,42n);assert.equal(state.reads,2);assert(!Object.hasOwn(prepared,'availableCredit'));
+});
+for(const phase of ['before','during'])test(`qualified like credit rejects PXE replacement ${phase} native read`,async()=>{
+ const {input,state}=fixture();input.creditCheck='qualified-like-proof';input.wallet.pxe={};const prepared=await preparePrivateFeePayment(input),utility=input.wallet.executeUtility;
+ if(phase==='before')input.wallet.pxe={};else input.wallet.executeUtility=async(...args)=>{const result=await utility(...args);input.wallet.pxe={};return result;};
+ await assert.rejects(prepared.withAvailableCredit(),{code:'PRIVATE_FEE_CONTEXT_CHANGED'});assert.equal(state.reads,phase==='before'?0:1);
+});

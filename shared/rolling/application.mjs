@@ -160,7 +160,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   // plugin continuations keep their existing settlement policy in this rollout.
   const proposedTransactions=session?.proposedTransactions===true;
   const includedAction=record=>proposedTransactions&&!record.withdrawal&&!record.bok&&!record.bokReleaseSource&&
-    ['post','reply','quote','repost','like','unlike','preference','read-marker','name','bio','avatar','subboard','moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator'].includes(record.action?.type);
+    ['screen','claim-deposit','claim-private-fee','claim-bok','post','reply','quote','repost','like','unlike','preference','read-marker','name','bio','avatar','subboard','moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator'].includes(record.action?.type);
   const usableStatus=status=>['included','confirmed','reverted'].includes(status);
   const getOperationScope=typeof session?.operationScope==='function'?session.operationScope.bind(session):()=>callScope;
   const chainInfoMethod=session?.wallet?.getChainInfo,accountsMethod=session?.wallet?.getAccounts;
@@ -194,6 +194,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     await localGuard();return bok;
   }
   const ordinaryPost=record=>{if(!['post','reply','quote','repost'].includes(record.action.type)||record.method!=='post'||record.bok)return undefined;check(deployment.board.instance,'BB_POST_FEE_PROFILE_MISMATCH');return deployment.board.instance;};
+  const qualifiedLike=record=>{if(record.feeProfile!=='like-v1'||record.preproofReview||record.replacementReview||!['like','unlike'].includes(record.action.type)||record.method!=='set_like'||record.bok)return undefined;check(deployment.board.instance,'BB_LIKE_FEE_PROFILE_MISMATCH');return deployment.board.instance;};
   const scope=session&&fixed&&{account:owner,chainId:String(fixed.network.chainId),version:String(fixed.network.version),
     rollup:fixed.network.rollup,board:fixed.board,portal:fixed.portal};
   const slot=()=>slotPromise??=createEncryptedJournalSlot({storage:privateStore,walletSecret:session.walletSecret,walletSalt:session.walletSalt,
@@ -295,11 +296,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     }
     return claim;
   }
-  async function payment(action,record,{ordinaryProof=false}={}){
+  async function payment(action,record,{ordinaryProof=false,likeProof=false}={}){
     const claim=await verifiedFeeClaim(action,record);
     return sdk.preparePrivateFeePayment({wallet:session.wallet,node:session.node,owner:session.owner,
       privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas,measure,
-      ...(claim?{claim}:{}),...(ordinaryProof?{creditCheck:'ordinary-post-proof'}:{})});
+      ...(claim?{claim}:{}),...(ordinaryProof?{creditCheck:'ordinary-post-proof'}:likeProof?{creditCheck:'qualified-like-proof'}:{})});
   }
   async function collateralClaim(action){
     // Receipt metadata cannot replace the authenticated deployment or inject
@@ -866,7 +867,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await fence();check(Number.isSafeInteger(result?.anchor?.number)&&result.anchor.number>0&&Number.isSafeInteger(result.value)&&result.value>=0&&result.value<=0xffffffff,'ROLLING_INVALID_RESPONSE');
       preparedPolicies.set(scope,{...context,number:result.anchor.number,hash:hashText(result.anchor.hash),mainVersion:result.value});
     },
-    async prefetchContext({predecessor=false,ordinaryPayment=false}={}){
+    async prefetchContext({predecessor=false,ordinaryPayment=false,likePayment=false}={}){
       await localGuard();const owner=getOperationScope();
       const results=await Promise.allSettled([
         guard,
@@ -876,11 +877,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           if(saved.value&&(terminalHistory(saved.value)||saved.value.status==='cancelled'&&saved.value.predecessor))await session.journal.inspectOutcome();
         },
         async()=>{
-          if(!ordinaryPayment||!owner)return;
-          // Ordinary payment preparation uses public metadata and local class
+          if((!ordinaryPayment&&!likePayment)||!owner)return;
+          // Qualified payment preparation uses public metadata and local class
           // registration, with no private balance utility or action arguments.
           const context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
-          const prepared=await measure('action.payment-prefetch',()=>payment(undefined,undefined,{ordinaryProof:true}));
+          const prepared=await measure('action.payment-prefetch',()=>payment(undefined,undefined,{ordinaryProof:ordinaryPayment,likeProof:likePayment}));
           await localGuard();check(getOperationScope()===owner&&session.wallet===context.wallet&&session.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
           preparedPayments.set(owner,{phase:'metadata',payment:prepared,...context});
         },
@@ -1084,10 +1085,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const postingAnchor=(ordinaryPreparation||action.type==='bok')?(earlyPolicy?.anchor??(field(action.subboard??'0')===zero?await balanceAnchor():undefined)):undefined;
         checkPaymentOwner();
         const earlier=preparedPayments.get(paymentScope);preparedPayments.delete(paymentScope);
-        const earlyPayment=ordinaryPreparation&&earlier?.phase==='metadata'&&earlier.wallet===session.wallet&&earlier.pxe===session.wallet.pxe&&earlier.node===session.node?earlier.payment:null;
+        const earlyMode=ordinaryPreparation?'ordinary-post-proof':['like','unlike'].includes(action.type)?'qualified-like-proof':undefined;
+        const earlyPayment=earlyMode&&earlier?.phase==='metadata'&&earlier.payment.creditCheck===earlyMode&&earlier.wallet===session.wallet&&earlier.pxe===session.wallet.pxe&&earlier.node===session.node?earlier.payment:null;
         const values=await Promise.allSettled([
           ()=>measure('action.arguments',async()=>{if(moderationTypes.has(action.type)){moderation=await moderationArguments(action,board);return moderation.args;}return argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor,preparedPolicy:earlyPolicy?.policy});}),
-          ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:ordinaryPreparation})),
+          ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:ordinaryPreparation,likeProof:['like','unlike'].includes(action.type)})),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkPaymentOwner();
@@ -1096,7 +1098,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       // Match the rules actually displayed to this exact canonical preparation.
       // A mismatch must fail before creating an unsigned intent or estimating.
       if(postingRules)check(String(args[2].expected_main_policy_version)===postingRules.parentVersion&&String(args[2].expected_local_policy_version)===postingRules.localVersion,'ROLLING_POSTING_RULES_CHANGED');
-      const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
+      const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(immediate&&['like','unlike'].includes(action.type)?{feeProfile:'like-v1'}:{}),...(moderation?{moderation:moderation.review}:{})};
       if(action.type==='name')record.nameAvailability=await nameAvailability(action);
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(action.type==='cancel-deposit'){
@@ -1130,7 +1132,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         // Claim validation retains its exact bridge fee payload even when the
         // separate review simulation is omitted. Submission rechecks it.
         if(action.type==='claim-private-fee'||action.feeReceipt!==undefined)preparedPayment=await payment(action,record);
-        record.maximumFee=(ordinaryPost(record)?sdk.ordinaryPostFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{ordinaryProof:true}),board:ordinaryPost(record)}).maximumFee:sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee).toString();
+        record.maximumFee=(ordinaryPost(record)?sdk.ordinaryPostFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{ordinaryProof:true}),board:ordinaryPost(record)}).maximumFee:qualifiedLike(record)?sdk.likeFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{likeProof:true}),board:qualifiedLike(record)}).maximumFee:sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee).toString();
       }
       else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();const saved=await store.write(prior,record);
@@ -1273,9 +1275,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           if(cachedPayment.claim)await verifiedFeeClaim(saved.value.action,saved.value);
           await guard();check(session.operationScope()===paymentScope,'ROLLING_CONTEXT_CHANGED');return cachedPayment.payment;
         }
-        return payment(saved.value.action,saved.value,{ordinaryProof:!!ordinaryPost(saved.value)});
+        return payment(saved.value.action,saved.value,{ordinaryProof:!!ordinaryPost(saved.value),likeProof:!!qualifiedLike(saved.value)});
       });
-      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true,ordinaryPost:ordinaryPost(saved.value),measure}));
+      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true,ordinaryPost:ordinaryPost(saved.value),qualifiedLike:qualifiedLike(saved.value),measure}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
       let attempt=null,active;
@@ -1301,7 +1303,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           // action's context afterwards, not before that asynchronous window.
           await checkReplacementReview(saved.value,{synchronize:true});await guard();
         }}:{})};
-      if(!replacing&&ordinaryPost(saved.value))options.onProvingFailure=async error=>{
+      if(!replacing&&(ordinaryPost(saved.value)||qualifiedLike(saved.value)))options.onProvingFailure=async error=>{
         if(!sdk.isPrivateFeeCreditFailure(error,fixed.fee))return;
         // This callback runs inside the built-in wallet before tx conversion,
         // journal preparation or broadcast. Recheck ownership before discarding
@@ -1310,7 +1312,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         check(current.encoded===active.encoded&&(!tx||tx.operation!==operation(id)),'ROLLING_RECOVERY_REQUIRED');
         if(attempt)check(await privateStore.readRecoveryEpoch()===attempt.epoch&&await journalCommitment(true)===attempt.predecessor,'ROLLING_RECOVERY_REQUIRED');
         await (await slot()).write(current,{...saved.value,status:'cancelled'});
-        throw fail('BB_POST_FEE_CREDIT_REQUIRED');
+        throw fail(qualifiedLike(saved.value)?'BB_LIKE_FEE_CREDIT_REQUIRED':'BB_POST_FEE_CREDIT_REQUIRED');
       };
       if(attempt){
         const verify=async phase=>{

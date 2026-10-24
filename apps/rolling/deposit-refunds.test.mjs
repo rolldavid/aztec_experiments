@@ -151,3 +151,53 @@ for (const defect of ['owner','depositId','block','removed']) test('requested re
   };
   await assert.rejects(f.cap.request(f.id)); assert.equal(f.state.sends,0);
 });
+
+function multipleDeposits(count=17){
+ const f=fixture(),ids=Array.from({length:count},(_,i)=>h(100+i));const calls=[],blocks=[],queries=[];
+ f.options.provider.call=async request=>{
+  calls.push(request);assert.equal(request.blockTag,10);const parsed=abi.parseTransaction(request);
+  if(parsed.name==='getDepositIds')return abi.encodeFunctionResult(parsed.fragment,[ids]);
+  const index=ids.indexOf(parsed.args.depositId);assert(index>=0);await f.state.beforeRecord?.(index);
+  return abi.encodeFunctionResult(parsed.fragment,[[index===0?0n:100n,ids[index],h(50),1n,false,0n]]);
+ };
+ const block=f.options.node.getBlockData;f.options.node.getBlockData=async number=>{blocks.push(number);return block(number);};
+ f.options.node.findLeavesIndexes=async(anchor,tree,hashes)=>{
+  queries.push({anchor,tree,hashes});await f.state.beforeNullifiers?.();
+  return hashes.map((_,i)=>i%2===0?{data:BigInt(i),l2BlockNumber:5,l2BlockHash:h(105)}:undefined);
+ };
+ return {...f,ids,calls,blocks,queries};
+}
+test('deposit listing batches native nullifiers once and authenticates each unique decision block once',async()=>{
+ const f=multipleDeposits(),page=await f.cap.list();assert.equal(page.deposits.length,17);assert.equal(page.deposits[0].status,'returned');
+ assert.equal(f.queries.length,1);assert.equal(f.queries[0].hashes.length,16);assert.deepEqual(f.queries[0].anchor,{number:6});assert.equal(f.queries[0].tree,MerkleTreeId.NULLIFIER_TREE);
+ for(let i=1;i<17;i++){assert.equal(page.deposits[i].depositId,f.ids[i]);assert.equal(page.deposits[i].status,i%2===1?'claimed':'available');}
+ assert.equal(f.blocks.filter(n=>n===5).length,1);assert.equal(f.blocks.filter(n=>n===6).length,2,'fresh snapshot and completion checks remain');assert.equal(f.calls.length,18);assert.equal(f.state.sends,0);
+});
+test('deposit reads are bounded to eight and all started reads drain before failure releases busy',async()=>{
+ const f=multipleDeposits(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let started=0,complete=false;
+ f.state.beforeRecord=index=>{started++;if(started===8)entered.resolve();if(index===0)throw Error('record unavailable');return gate.promise;};
+ const work=f.cap.list().then(()=>assert.fail('must reject'),error=>{complete=true;assert.match(error.message,/record unavailable/);});
+ await entered.promise;assert.equal(started,8);assert.equal(complete,false);await assert.rejects(f.cap.list(),{code:'ROLLING_BUSY'});assert.equal(f.queries.length,0);
+ gate.resolve();await work;assert.equal(started,8,'no later batch after rejection');assert.equal(complete,true);f.state.beforeRecord=null;assert.equal((await f.cap.list()).deposits.length,17);
+});
+test('parallel refund snapshot drains held siblings even on a synchronous failure',async()=>{
+ const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let complete=false;
+ f.options.provider.getNetwork=()=>{throw Error('network unavailable');};f.options.node.getNodeInfo=async()=>{entered.resolve();await gate.promise;return {};};
+ const work=f.cap.list().catch(error=>{complete=true;assert.match(error.message,/network unavailable/);});await entered.promise;
+ assert.equal(complete,false);await assert.rejects(f.cap.list(),{code:'ROLLING_BUSY'});gate.resolve();await work;assert.equal(f.state.sends,0);
+});
+test('batched refund hits reject shape conflicts and forks without publishing a partial page',async()=>{
+ for(const defect of ['length','conflict','fork','wallet']){
+  const f=multipleDeposits(3),original=f.options.node.findLeavesIndexes;
+  f.options.node.findLeavesIndexes=async(...args)=>{const rows=await original(...args);if(defect==='length')return [];if(defect==='conflict')return [{data:1n,l2BlockNumber:5,l2BlockHash:h(105)},{data:2n,l2BlockNumber:5,l2BlockHash:h(999)}];if(defect==='fork')f.state.l2Fork=true;if(defect==='wallet')f.state.walletChanged=true;return rows;};
+  await assert.rejects(f.cap.list());assert.equal(f.state.sends,0);
+ }
+});
+test('receipt transaction and block lookup overlap but their rejection drains before refund lock release',async()=>{
+ const f=fixture();f.completedRequest();const gate=Promise.withResolvers(),entered=Promise.withResolvers();let started=0,receiptPhase=false,done=false;
+ const log=f.options.provider.getLogs,block=f.options.provider.getBlock;f.options.provider.getLogs=async(...args)=>{receiptPhase=true;return log(...args);};
+ const mark=()=>{if(++started===3)entered.resolve();};
+ f.options.provider.getTransactionReceipt=()=>{mark();throw Error('receipt unavailable');};f.options.provider.getTransaction=async()=>{mark();await gate.promise;return f.state.tx;};
+ f.options.provider.getBlock=async number=>{if(receiptPhase){mark();await gate.promise;}return block(number);};
+ const work=f.cap.request(f.id).catch(error=>{done=true;assert.match(error.message,/receipt unavailable/);});await entered.promise;assert.equal(started,3);assert.equal(done,false);await assert.rejects(f.cap.list(),{code:'ROLLING_BUSY'});gate.resolve();await work;assert.equal(f.state.sends,0);
+});

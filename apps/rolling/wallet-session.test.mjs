@@ -107,7 +107,7 @@ async function sessionFixture({chainId='31337'}={}){
  const account={secretKey:String(secret),salt:String(salt),address:String(accountInstance.address)};
  const held=event=>{assert.equal(state.active,true,event);state.events.push(event);};
  const store={close:async()=>{held('store-close');state.closes++;if(state.failClose)throw Error('close failed');}};
- const pxe={registerAccount:async()=>{held('register-account');state.registrations++;if(state.failRegister)throw Error('registration failed');},registerContractClass:async()=>{held('register-class');},registerContract:async()=>{held('register-contract');},
+ const pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{held('claim-membership');throw Error('fixture claim adapter must supply membership');}},registerAccount:async()=>{held('register-account');state.registrations++;if(state.failRegister)throw Error('registration failed');},registerContractClass:async()=>{held('register-class');},registerContract:async()=>{held('register-contract');},
   sync:async()=>{held('sync');state.syncs++;if(state.waitSync)await state.waitSync;if(state.failSync)throw Error('sync failed');},
   prepareBoardActionState:async targets=>{held('board-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress,method:targets.method});state.boardStateMethod=targets.method;if(state.waitBoardState)await state.waitBoardState;if(state.failBoardState)throw Error('board state failed');},
   prepareOrdinaryPostState:async targets=>{held('ordinary-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress});if(state.waitOrdinaryState)await state.waitOrdinaryState;if(state.failOrdinaryState)throw Error('ordinary state failed');},
@@ -1377,4 +1377,78 @@ test('display-only included observer requires exact receipt/block and never ente
  canonical=true;executionResult='reverted';assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'reverted');
  status='pending';assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'unavailable');
  node.getTxReceipt=async()=>({txHash:hex(99)});await assert.rejects(observeIncludedTransaction(opts,{txHash}),{code:'ROLLING_INVALID_RESPONSE'});
+});
+
+test('included claim verification is explicit and rejects orphaned or failed proposed receipts',async()=>{
+ const receipt={txHash:hex(91),status:'proposed',executionResult:'success',blockNumber:3,blockHash:hex(92)};let canonical=true;
+ const input={sdk:{TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn(),requireSuccessfulReceipt},node:{getTxReceipt:async()=>receipt,getBlock:async()=>({hash:canonical?hex(92):hex(93)})},txHash:hex(91),contextGuard:async()=>{}};
+ await assert.rejects(verifyRollingTopupClaim(input));await verifyRollingTopupClaim({...input,confirmationTier:'proposed'});canonical=false;await assert.rejects(verifyRollingTopupClaim({...input,confirmationTier:'proposed'}));canonical=true;receipt.executionResult='reverted';await assert.rejects(verifyRollingTopupClaim({...input,confirmationTier:'proposed'}));
+});
+test('proposed funding continuation releases at exact included claim without weakening incoming bridge readiness',async()=>{
+ const f=continuationFixture(),txHash=TxHash.fromString(hex(87));let reconciles=0,records=0;
+ f.input.confirmationTier='proposed';f.input.funding.inspect=async()=>({paymentSaved:true,privateFeeCap:'10',claim:{intentId:f.prepared.intentId,attempted:true}});
+ f.input.application.reconcile=async()=>({...f.prepared,txHash:txHash.toString(),status:++reconciles===1?'unknown':'included'});
+ f.input.funding.recordClaimCompletion=async value=>{assert.equal(value.status,'included');records++;};
+ f.input.node.getTxReceipt=async hash=>{assert(hash.equals(txHash));return MinedTxReceipt.from({txHash,status:'proposed',executionResult:'success',transactionFee:1n,blockHash:BlockHash.fromString(hex(86)),blockNumber:8,slotNumber:8,epochNumber:0,txIndexInBlock:0});};
+ assert.equal((await createFundingContinuation(f.input).advanceClaim()).state,'included');assert.equal(reconciles,2);assert.equal(records,1);assert.equal(f.busy,false);assert(!f.calls.some(c=>c[0]==='submit'));
+});
+
+for(const bok of [false,true])test(`final L1 ${bok?'Bok':'collateral'} gas and fee reads overlap in both review and confirmation`,async()=>{
+ const f=await withdrawalFixture({bok});let wave=0,started=0,gate,entered;
+ const arm=()=>{wave++;started=0;gate=Promise.withResolvers();entered=Promise.withResolvers();};
+ const mark=()=>{if(++started===2)entered.resolve();};
+ f.opts.provider.estimateGas=async()=>{mark();await gate.promise;return 100n;};f.opts.provider.getFeeData=async()=>{mark();await gate.promise;return {gasPrice:2n};};
+ const cap=f.restart();arm();let done=false;const preparing=cap.prepare({maximumGasWei:'1000'}).then(x=>{done=true;return x;});await entered.promise;assert.equal(done,false);assert.equal(started,2);gate.resolve();await preparing;
+ arm();done=false;const confirming=cap.confirm().then(x=>{done=true;return x;});await entered.promise;assert.equal(done,false);assert.equal(f.state.sends,0);gate.resolve();assert.equal((await confirming).status,'refunded');assert.equal(f.state.sends,1);assert.equal(wave,2);
+});
+for(const phase of ['prepare','confirm'])test(`final L1 ${phase} fee failure drains held estimate and never sends`,async()=>{
+ const f=await withdrawalFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let failing=false,started=0,done=false;
+ f.opts.provider.estimateGas=async()=>{if(failing){if(++started===2)entered.resolve();await gate.promise;}return 100n;};
+ f.opts.provider.getFeeData=()=>{if(failing){if(++started===2)entered.resolve();throw Error('fees unavailable');}return {gasPrice:2n};};
+ const cap=f.restart();if(phase==='confirm')await cap.prepare({maximumGasWei:'1000'});failing=true;
+ const work=(phase==='prepare'?cap.prepare({maximumGasWei:'1000'}):cap.confirm()).then(()=>assert.fail('must reject'),()=>{done=true;});await entered.promise;assert.equal(done,false);assert.equal(f.state.sends,0);gate.resolve();await work;assert.equal(f.state.sends,0);
+});
+
+for(const kind of ['collateral','bok','cancellation'])test(`exit membership ${kind} starts four independent reads and fences canonical block after completion`,async()=>{
+ const f=await withdrawalFixture({bok:kind==='bok',cancellation:kind==='cancellation'}),gate=Promise.withResolvers(),entered=Promise.withResolvers();let starts=0,blocks=0,done=false;
+ const wrap=(target,name)=>{const original=target[name];target[name]=async(...args)=>{if(++starts===4)entered.resolve();await gate.promise;return original(...args);};};
+ wrap(f.opts.provider,'getNetwork');for(const name of ['getTxReceipt','getTxEffect','getL2ToL1MembershipWitness'])wrap(f.opts.node,name);
+ const block=f.opts.node.getBlockData;f.opts.node.getBlockData=async(...args)=>{blocks++;assert.equal(starts,4);return block(...args);};
+ const work=f.restart().inspect().then(value=>{done=true;return value;});await entered.promise;assert.equal(done,false);assert.equal(blocks,0);gate.resolve();assert.equal((await work).txHash,f.record.txHash);assert.equal(blocks,1);assert.equal(f.state.sends,0);
+});
+for(const failed of ['getNetwork','getTxReceipt','getTxEffect','getL2ToL1MembershipWitness'])test(`exit membership ${failed} synchronous failure drains all siblings without a canonical query`,async()=>{
+ const f=await withdrawalFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let starts=0,done=false,blocks=0;const failure=Error('read failed');
+ const wrap=(target,name)=>{const original=target[name];target[name]=(...args)=>{if(++starts===4)entered.resolve();if(name===failed)throw failure;return gate.promise.then(()=>original(...args));};};
+ wrap(f.opts.provider,'getNetwork');for(const name of ['getTxReceipt','getTxEffect','getL2ToL1MembershipWitness'])wrap(f.opts.node,name);
+ f.opts.node.getBlockData=async()=>{blocks++;throw Error('must not start');};
+ const work=assert.rejects(f.restart().inspect(),error=>error===failure).then(()=>done=true);await entered.promise;assert.equal(done,false);assert.equal(blocks,0);gate.resolve();await work;assert.equal(blocks,0);assert.equal(f.state.sends,0);
+});
+for(const changed of ['network','receipt','effect','witness','canonical'])test(`exit membership rejects changed ${changed} after the parallel wave`,async()=>{
+ const f=await withdrawalFixture();
+ if(changed==='network')f.state.chainId='1';
+ if(changed==='receipt')f.opts.node.getTxReceipt=async()=>({txHash:f.record.txHash,status:'proposed',executionResult:'success',blockNumber:1,blockHash:hex(42)});
+ if(changed==='effect'){const original=f.opts.node.getTxEffect;f.opts.node.getTxEffect=async()=>({...await original(),l2BlockHash:hex(43)});}
+ if(changed==='witness')f.opts.node.getL2ToL1MembershipWitness=async()=>null;
+ if(changed==='canonical')f.opts.node.getBlockData=async()=>({header:{globalVariables:{blockNumber:1}},blockHash:hex(43)});
+ await assert.rejects(f.restart().inspect());assert.equal(f.state.sends,0);
+});
+
+for(const staleHint of [false,true])test(`withdrawal cooldown observes proposed maturity and rechecks native anchor, staleHint=${staleHint}`,async()=>{
+ const f=await sessionFixture(),contractAt=f.input.sdk.Contract.at,block=f.node.getBlockData,sync=f.pxe.sync;let matured=false,polls=0,prepared=false,opened=false,waits=0;
+ const header=()=>({globalVariables:{blockNumber:matured?11:10,timestamp:matured?200n:100n},hash:async()=>BlockHash.fromString(hex(55))});
+ f.pxe.getSyncedBlockHeader=async()=>header();
+ f.pxe.sync=async()=>{await sync();if(polls===2&&!staleHint)matured=true;};
+ f.node.getBlockData=async number=>{
+  if(!opened)return block(number);
+  if(number==='proposed'){assert(f.state.active);polls++;return {blockHash:hex(55),header:{globalVariables:{blockNumber:11,timestamp:polls===1?199n:200n}}};}
+  if(number==='checkpointed')throw Error('checkpoint timestamp must not delay proposed-native eligibility');
+  const result=await block(number);return {...result,header:{globalVariables:{blockNumber:Number(number),timestamp:matured?200n:100n}}};
+ };
+ f.input.sdk.Contract.at=(...args)=>{const contract=contractAt(...args);return {...contract,methods:{...contract.methods,
+  get_deposit_info:()=>({simulate:async()=>({result:[1n,9n,100n,BigInt(eth(33)),0n,1n,0n,1n,1n,200n,56n]})}),withdraw:()=>({name:'withdraw'})}};};
+ f.input.sdk.retryUntil=async(callback,label,timeout)=>{if(++waits===2){assert(staleHint);throw stop;}assert.equal(label,'withdrawal availability');assert.equal(timeout,0);assert.equal(await callback(),false);assert.equal(await callback(),true);};
+ const stop=Error('qualified native exit preparation');
+ f.input.sdk.estimatePrivateFeeTransaction=async()=>{assert(matured);assert.equal(f.state.syncs,2);prepared=true;throw stop;};
+ const session=await createRollingWalletSession(f.input);opened=true;
+ await assert.rejects(session.application.executeWithdrawal('9'),error=>error===stop);assert.equal(prepared,!staleHint);assert.equal(waits,staleHint?2:1);assert.equal(polls,2);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);await session.close();
 });

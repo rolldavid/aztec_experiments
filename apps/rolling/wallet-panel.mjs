@@ -86,6 +86,7 @@ function nameFailure(failure){
 }
 function actionFailure(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure??{},'code')?.value;
+  if(code==='BB_LIKE_FEE_CREDIT_REQUIRED')return 'Add posting credit to cover this action’s maximum cost. No transaction was sent.';
   if(code==='BB_POST_FEE_CREDIT_REQUIRED')return 'Add posting credit to cover this post’s maximum cost. No transaction was sent.';
   if(code==='BB_POST_FEE_PROFILE_MISMATCH')return 'Posting costs need an application update. Reload the page. No transaction was sent.';
   if(code==='BB_FEE_RESERVATION_UNAFFORDABLE')return 'A fee estimate could not fit your posting credit. No transaction was sent. You can add posting credit and try again.';
@@ -936,22 +937,24 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!provisional&&actionOperation?.included&&!postingTypes.has(result.action?.type)){actionFeedback.textContent=actionLabel(result.action)+': confirmed.';actionFeedback.hidden=false;}
    if(result.action?.type==='transfer-moderator')moderatorStatus=null;
    if(provisional&&['preference','read-marker'].includes(result.action?.type))await measureRollingStage('action.required-account-refresh',recoverPreferences);
-   if(immediateTypes.has(result.action?.type)&&result.action.type!=='name'){
+   if(result.action?.type==='name'){
+    // Only owned-name discovery is required to use a newly included name.
+    // Fee/deposit balances refresh separately after this interaction releases.
+    namesLoaded=false;identities=[];identityRecords=[];cursor=0;
+    await measureRollingStage('action.required-account-refresh',()=>loadView({loadIdentity:true}));
+    const registered=result.nameAvailability?.id;
+    const owned=field(registered)?identityRecords.find(record=>BigInt(record.id)===BigInt(registered)):null;
+    if(owned){selectedName=owned.id;selectedLabel=ownedLabel(owned.id);if(inlineCreation){inlineCreation=false;restoreDialogContent();view='overview';notice='Name created. You’re posting as '+ownedLabel(selectedName)+'.';}}
+   }
+   if(immediateTypes.has(result.action?.type)){
     // Confirmation finishes the interaction. Feed and affected balance reads
     // update independently, without holding the composer open or its busy state.
     intent=null;accountRefreshNeeded=true;onPrivateChange();
     if(!actionOperation?.included&&!['preference','read-marker'].includes(result.action.type))void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{notice='Confirmed. The feed could not refresh; reload it to see the change.';if(!busy)render();});
     return;
    }
-   try{if(!actionOperation?.included)await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
-   if(result.action?.type==='name'){namesLoaded=false;identities=[];identityRecords=[];cursor=0;}
+   try{if(!actionOperation?.included)await onPublicEffect();}catch{notice+=provisional?' Public feed refresh is unavailable; confirmation is pending.':' Public feed refresh is unavailable; the transaction remains confirmed.';}
    await measureRollingStage('action.required-account-refresh',()=>refresh());
-   if(result.action?.type==='name'&&identityHost){
-    await loadView({loadIdentity:true});
-    const registered=result.nameAvailability?.id;
-    const owned=field(registered)?identityRecords.find(record=>BigInt(record.id)===BigInt(registered)):null;
-    if(owned){selectedName=owned.id;selectedLabel=ownedLabel(owned.id);if(inlineCreation){inlineCreation=false;restoreDialogContent();view='overview';notice='Name created. You’re posting as '+ownedLabel(selectedName)+'.';}}
-   }
   }else if(result.status==='reverted'){
    notice='Transaction reverted. A network fee may have been charged. Recovery checks must complete before a new action.';await refresh();
   }else note(result.status==='prepared'?'The saved action has not been sent. Review before confirming.':'The transaction is still unconfirmed or unknown. Check later; do not resend.');
@@ -978,7 +981,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    let result;
    try{result=await session.application.executeAction(action,{...(expectedRules===undefined?{}:{postingRules:expectedRules}),onPrepared:prepared=>{checkAccount(epoch);includedObservation=null;intent=prepared;if(immediateTypes.has(prepared.action?.type)){actionFeedback.textContent='';actionFeedback.hidden=true;actionOperation={epoch,intentId:prepared.intentId,included:false,modal,onIncluded};}}});checkAccount(epoch);}catch(failure){
     if(['ROLLING_POSTING_RULES_CHANGED','ROLLING_SUBBOARD_REJECTED'].includes(failure?.code)){checkAccount(epoch);intent=null;actionOperation=null;await loadRules(rulesId(action),true).catch(()=>{});checkAccount(epoch);throw rulesFailure;}
-    if(failure?.code==='BB_POST_FEE_CREDIT_REQUIRED'){checkAccount(epoch);intent=null;actionOperation=null;accountRefreshNeeded=true;}
+    if(['BB_POST_FEE_CREDIT_REQUIRED','BB_LIKE_FEE_CREDIT_REQUIRED'].includes(failure?.code)){checkAccount(epoch);intent=null;actionOperation=null;accountRefreshNeeded=true;}
     throw failure;
    }finally{blocked=false;}
    if(actionOperation?.included){actionOperation.failed=!['included','confirmed'].includes(result.status);actionOperation.resultStatus=result.status;}
@@ -1185,12 +1188,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);
   const capability=fundingActiveCapability=fundingCapability();render();
   let result;try{result=await capability.advanceClaim();}finally{if(fundingActiveCapability===capability)fundingActiveCapability=null;}checkAccount(epoch);
-  if(result.state==='complete'){
+  if(['included','complete'].includes(result.state)){
+   const provisional=result.state==='included';
+   if(provisional){const claimed=result.intent;includedObservation={txHash:claimed.txHash,action:claimed.action,inclusion:claimed.inclusion,observed:null};actionFeedback.textContent='Credit added: confirmation pending.';actionFeedback.hidden=false;}
    const bokTopup=view==='topup'&&topupKind==='bok';stopFunding();await refresh();checkAccount(epoch);if(bokTopup){await loadBok();checkAccount(epoch);}
-   if(view==='topup'){notice=bokTopup?'Bok credit added.':'Posting credit added.';topupSaved=null;resetTopupQuote();view=draft.content?'action':'overview';}
+   if(view==='topup'){notice=(bokTopup?'Bok credit added.':'Posting credit added.')+(provisional?' Confirmation pending.':'');topupSaved=null;resetTopupQuote();view=draft.content?'action':'overview';}
    else{
     const account=status?.status==='fee-ready'?'Posting collateral and network fee credit were found.':status?.status==='fee-needed'?'Network fee credit is still needed.':status?.status==='collateral-pending'?'Network fee credit was found; posting collateral is not yet available.':'The account still needs a recovery check.';
-    notice=status?.status==='fee-ready'?'Payment confirmed. Your posting balance is set up.':'Payment confirmed. Your posting balance is still being checked. Refresh your account before posting.';view=inlineCreation?'action':'overview';if(inlineCreation)await loadView();
+    notice=status?.status==='fee-ready'?(provisional?'Your posting balance is ready. Confirmation pending.':'Your posting balance is set up.'):'Your posting balance is still being checked. Refresh your account before posting.';view=inlineCreation?'action':'overview';if(inlineCreation)await loadView();
    }
   }
   else if(result.state==='review-payment'){stopFunding();topupQuote=null;notice='Token approval confirmed. Review the separate top-up payment; no deposit is sent automatically.';}

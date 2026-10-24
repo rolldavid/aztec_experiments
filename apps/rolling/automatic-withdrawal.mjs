@@ -1,7 +1,8 @@
 import {executeRollingAction} from './wallet-action.mjs';
 
-// The session owns one account lock throughout. Only confirmed state advances
-// the sequence; an ambiguous send is never retried here.
+// The session owns one account lock throughout. Successful screening inclusion
+// may advance private state after native sync. The exit keeps its settlement
+// policy; an ambiguous send is never retried here.
 export async function executeAutomaticWithdrawal({application,deposit,waitUntil,guard,onProgress=()=>{},onPrepared=()=>{}}){
  let previous=null;
  for(;;){
@@ -19,7 +20,7 @@ export async function executeAutomaticWithdrawal({application,deposit,waitUntil,
   onProgress({stage:type==='screen'?'preparing':'withdrawing'});
   const result=await executeRollingAction(application,{type,deposit},{onPrepared});
   await guard();
-  if(result.status!=='confirmed')return result;
+  if(result.status!=='confirmed'&&!(type==='screen'&&result.status==='included'))return result;
   if(type==='withdraw')return result;
   previous=BigInt(state.screenedSequence);
  }

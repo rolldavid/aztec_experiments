@@ -18,7 +18,7 @@ Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build`
 
 ## Other transaction performance — active
 
-Owner target: at least50% end-to-end reduction across all other flows. First shared preparation/UI batch041a624b is published without restarting services. Like, bookmark, name and Bok-funding baselines are captured; matched after measurements and broader coverage remain outstanding. Reviewed native proposed-state sequencing is integrated with911 affected checks passing; it is not yet deployed. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
+Owner target: at least50% end-to-end reduction across all other flows. UIf844b1de with sparse preference reads and the08b4 exact-anchor accounting backend are published. Bok94d1a719 is published. Like, bookmark, name, bio and Bok-funding baselines are captured. The first like after-test returned in12.199s versus56.933s baseline; included display improved only modestly. The repaired bookmark completed in22.773s versus58.264s baseline; unbookmark20.037s. Exact visible/usable endpoints and broader qualification remain in the performance record. Broader matched coverage and the overall50% acceptance remain outstanding. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
 
 ## Current deployment
 
@@ -29,12 +29,12 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/041a624b21f5149ee367fd4a8c36641fc7fa5400` |
-| Browser SDK SHA256 | `085dc03283bfb20a1541e6b4492a1daaec5fcf8fcc8d00a0566e5aae5d327ace` |
-| Running app | `/opt/rolling-app/releases/ui-7a3ad91ffc14` |
-| Next-start app | `/opt/rolling-app/releases/ui-041a624b21f5` |
+| Browser UI | `/opt/rolling-ui/releases/f844b1deaddff6fe4a025295bba10dd04e483264` |
+| Browser SDK SHA256 | `9afd341487513bd23179298724447229be7d3308e00e5b972d11a3c060c2a4f9` |
+| Running app | `/opt/rolling-app/releases/accounting-08b4ce3364d4` |
+| Next-start app | `/opt/rolling-app/releases/ui-f844b1deaddf` |
 | Prover | `/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad` |
-| Bok | `/opt/rolling-bok/releases/a160e83f006b98678b39a428e5dc683a4815382d` |
+| Bok | `/opt/rolling-bok/releases/94d1a7198f7bd2094be66754bc3aeb8a42f657dd` |
 
 | Contract | Current address |
 | --- | --- |
@@ -50,7 +50,7 @@ Canonical Bok plugin ID is `0x00000000000000000000000000000000000000000000000000
 
 Owner-only discovery is deployed: unconstrained AES256-GCM delivery with native note authorization/nullification and zero extra notes or logs. The rejected counter-note journal must never ship. Empty-store restoration and partial-refund behavior have focused native checks. The signature-derived account root remains quantum-vulnerable as previously disclosed; this change does not claim post-quantum confidentiality.
 
-Accounts derive from the Ethereum wallet signature, with no password/backup import. Your account → Start new test account allows a fresh test account using the same Ethereum owner. Bok remains optional. Posts render at Aztec inclusion; the transaction waiter retains the account lock until checkpoint. Do not relabel included transactions as settled.
+Accounts derive from the Ethereum wallet signature, with no password/backup import. Your account → Start new test account allows a fresh test account using the same Ethereum owner. Bok remains optional. Ordinary actions now release their operation at exact native Aztec inclusion, with fresh predecessor/anchor checks before the next operation. Incoming claims still await the next release. Checkpoint observation updates the UI separately; included transactions are never labeled settled.
 
 **All old test application data is disposable.** Do not preserve, migrate, recover or maintain compatibility with accounts, posts, balances, databases or incomplete flows from old releases. Keep credentials and security controls.
 

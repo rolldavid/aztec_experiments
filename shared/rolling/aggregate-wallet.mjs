@@ -86,7 +86,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  // Completion outlives the single active application workflow. Its original
  // canonical L2 hash remains mandatory before a successor payment.
  async function completedClaim(value){
-  const confirmed=value.confirmedClaim;
+  const confirmed=value.claimCompletion;
   check(value.claim?.attempted&&confirmed&&typeof verifyClaim==='function','RECOVERY_REQUIRED');
   check(confirmed.intentId===value.claim.intentId&&/^0x[0-9a-f]{64}$/.test(confirmed.txHash),'MISMATCH');
   await read(()=>verifyClaim(confirmed.txHash));
@@ -281,7 +281,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   async reviewRevertedClaim(){
    const saved=await stored();check(saved.value?.intent&&saved.value.claim&&typeof reconcileClaim==='function','RECOVERY_REQUIRED');
    const previous=await read(()=>reconcileClaim(saved.value.claim.intentId));check(previous.status==='reverted'&&saved.value.claim.attempted||previous.status==='cancelled','RECOVERY_REQUIRED');
-   await read(()=>slot.write(saved,{...saved.value,claim:null,confirmedClaim:null,explicitClaimReview:true}));
+   await read(()=>slot.write(saved,{...saved.value,claim:null,claimCompletion:null,explicitClaimReview:true}));
   },
   async checkpointClaim(value){
    check(value&&Object.keys(value).sort().join()==='attempted,intentId'&&typeof value.intentId==='string'&&/^0x[0-9a-f]{64}$/.test(value.intentId)&&typeof value.attempted==='boolean');
@@ -294,18 +294,18 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const {result}=await reconcile();check(sameReceipts(action,receipts(result)),'MISMATCH');
    await read(()=>slot.write(saved,{...saved.value,claim:{intentId,attempted:true}}));
   },
-  async recordConfirmedClaim(result){
-   if(result?.status!=='confirmed'||result.action?.type!=='claim-deposit')return;
+  async recordClaimCompletion(result){
+   if(!['included','confirmed'].includes(result?.status)||result.action?.type!=='claim-deposit')return;
    const saved=await stored();if(saved.value?.claim?.intentId!==result.intentId)return;
    check(saved.value.claim.attempted&&typeof reconcileClaim==='function'&&typeof verifyClaim==='function','RECOVERY_REQUIRED');
    const original=await read(()=>reconcileClaim(result.intentId));
-   check(original.status==='confirmed'&&original.intentId===result.intentId&&original.txHash===result.txHash&&/^0x[0-9a-f]{64}$/.test(original.txHash),'MISMATCH');
+   check(['included','confirmed'].includes(original.status)&&original.intentId===result.intentId&&original.txHash===result.txHash&&/^0x[0-9a-f]{64}$/.test(original.txHash),'MISMATCH');
    const payment=await reconcile();await terminalPayment(payment.result);
    const expected=receipts(payment.result);check(sameReceipts(original.action,expected)&&sameReceipts(result.action,expected),'MISMATCH');
-   const confirmed=saved.value.confirmedClaim;
+   const confirmed=saved.value.claimCompletion;
    if(confirmed)check(confirmed.intentId===original.intentId&&confirmed.txHash===original.txHash,'MISMATCH');
    await read(()=>verifyClaim(original.txHash));
-   await read(()=>slot.write(saved,{...saved.value,confirmedClaim:{intentId:original.intentId,txHash:original.txHash}}));
+   await read(()=>slot.write(saved,{...saved.value,claimCompletion:{intentId:original.intentId,txHash:original.txHash,status:original.status}}));
   },
   async recover({wait=false}={}){
    let recovered;
@@ -424,12 +424,12 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
    }
   }
  }
- if(!['confirmed','reverted','cancelled'].includes(next.status)&&next.txHash&&waits){
+ if(!['included','confirmed','reverted','cancelled'].includes(next.status)&&next.txHash&&waits){
   await read('reconcile',()=>waits.claim(next.txHash));
   next=await read('reconcile',()=>application.reconcile(next.intentId));
  }
- if(next.status==='confirmed'&&funding.recordConfirmedClaim)await read('checkpoint',()=>funding.recordConfirmedClaim(next));
- return {state:next.status==='confirmed'?'complete':next.status==='reverted'?'reverted':next.status==='cancelled'?'cancelled':'pending',intent:next};
+ if(['included','confirmed'].includes(next.status)&&funding.recordClaimCompletion)await read('checkpoint',()=>funding.recordClaimCompletion(next));
+ return {state:next.status==='included'?'included':next.status==='confirmed'?'complete':next.status==='reverted'?'reverted':next.status==='cancelled'?'cancelled':'pending',intent:next};
  }catch(error){if(errorValue(error,'code')==='ROLLING_FUNDING_PAUSED')return {state:'paused'};if(!observedFailure)emit('failed',error);throw error;}
 }
 
@@ -469,8 +469,8 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
  }
  async function completedClaim(value){
   check(value.claim?.attempted,'RECOVERY_REQUIRED');
-  if(value.confirmedClaim){const confirmed=value.confirmedClaim;check(confirmed.intentId===value.claim.intentId&&/^0x[0-9a-f]{64}$/.test(confirmed.txHash)&&typeof verifyClaim==='function','MISMATCH');await read(()=>verifyClaim(confirmed.txHash));}
-  else{check(typeof reconcileClaim==='function','RECOVERY_REQUIRED');check((await read(()=>reconcileClaim(value.claim.intentId))).status==='confirmed','RECOVERY_REQUIRED');}
+  if(value.claimCompletion){const confirmed=value.claimCompletion;check(confirmed.intentId===value.claim.intentId&&/^0x[0-9a-f]{64}$/.test(confirmed.txHash)&&typeof verifyClaim==='function','MISMATCH');await read(()=>verifyClaim(confirmed.txHash));}
+  else{check(typeof reconcileClaim==='function','RECOVERY_REQUIRED');check(['included','confirmed'].includes((await read(()=>reconcileClaim(value.claim.intentId))).status),'RECOVERY_REQUIRED');}
  }
  async function archived(hash){const store=await slot(hash),record=await read(()=>store.read());check(record.value?.txHash===hash&&record.value.intent,'MISMATCH');const result=await read(()=>sdk.verifyEthereumIntentReceipt(provider,record.value.intent,hash));check(result?.outcome===record.value.outcome,'MISMATCH');const block=await read(()=>provider.getBlock(result.receipt.blockNumber));check(block?.hash?.toLowerCase()===result.receipt.blockHash.toLowerCase(),'MISMATCH');return {value:record.value,result};}
  const cap={
@@ -554,7 +554,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value'in d&&['BB_ETH_REQUEST_CANCELLED','BB_ETH_INSUFFICIENT_FUNDS','BB_ETH_PREFLIGHT_FAILED'].includes(d.value)){try{await read(()=>current.store.write(saved,current.saved.value));}catch(cleanup){throw new AggregateError([error,cleanup],'Top-up cancellation could not be saved.');}}throw error;}
    return cap.recover();
   },
-  async inspect(){const {saved}=await stored();return saved.value?freeze({paymentSaved:!!saved.value.intent,completed:!!saved.value.confirmedClaim,amount:saved.value.amount,asset:saved.value.asset??'USDC',privateFeeCap:saved.value.privateFeeCap,claim:clone(saved.value.claim),claimAction:kind==='bok'?'claim-bok':'claim-private-fee',explicitClaimReview:saved.value.explicitClaimReview===true,phase:saved.value.phase}):null;},
+  async inspect(){const {saved}=await stored();return saved.value?freeze({paymentSaved:!!saved.value.intent,completed:!!saved.value.claimCompletion,amount:saved.value.amount,asset:saved.value.asset??'USDC',privateFeeCap:saved.value.privateFeeCap,claim:clone(saved.value.claim),claimAction:kind==='bok'?'claim-bok':'claim-private-fee',explicitClaimReview:saved.value.explicitClaimReview===true,phase:saved.value.phase}):null;},
   async recover({wait=false}={}){const {saved}=await stored(),result=await verified(saved.value,wait);check(result.outcome==='success','REVERTED');if(saved.value.phase==='approval')return {approved:true};if(saved.value.phase==='swap')return {swapped:true};const e=result.event;
    return {receipt:{txHash:result.txHash,blockHash:result.receipt.blockHash.toLowerCase(),blockNumber:result.receipt.blockNumber,sender:result.request.from,nonce:String(result.request.nonce),amount:result.request.expected.amount,secretHash:result.request.expected.secretHash,messageKey:e.key,leafIndex:String(e.index)}};
   },
@@ -564,12 +564,12 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    const original=(await cap.recover()).receipt;check(receipt&&Object.keys(receipt).sort().join()===Object.keys(original).sort().join()&&Object.keys(original).every(key=>receipt[key]===original[key]),'MISMATCH');
    await cap.checkpointClaim({intentId,attempted:true});
   },
-  async recordConfirmedClaim(result){
-   if(result?.status!=='confirmed'||result.action?.type!==(kind==='bok'?'claim-bok':'claim-private-fee'))return;
+  async recordClaimCompletion(result){
+   if(!['included','confirmed'].includes(result?.status)||result.action?.type!==(kind==='bok'?'claim-bok':'claim-private-fee'))return;
    const {store,saved}=await stored();if(!saved.value?.claim||saved.value.claim.intentId!==result.intentId)return;
    check(saved.value.claim.attempted&&typeof reconcileClaim==='function'&&typeof verifyClaim==='function','RECOVERY_REQUIRED');
-   const original=await read(()=>reconcileClaim(result.intentId));check(original.status==='confirmed'&&original.intentId===result.intentId&&original.txHash===result.txHash&&/^0x[0-9a-f]{64}$/.test(original.txHash),'MISMATCH');
-   await read(()=>verifyClaim(original.txHash));await read(()=>store.write(saved,{...saved.value,confirmedClaim:{intentId:original.intentId,txHash:original.txHash}}));
+   const original=await read(()=>reconcileClaim(result.intentId));check(['included','confirmed'].includes(original.status)&&original.intentId===result.intentId&&original.txHash===result.txHash&&/^0x[0-9a-f]{64}$/.test(original.txHash),'MISMATCH');
+   await read(()=>verifyClaim(original.txHash));await read(()=>store.write(saved,{...saved.value,claimCompletion:{intentId:original.intentId,txHash:original.txHash,status:original.status}}));
   },
   async reviewRevertedClaim(){const {store,saved}=await stored();check(saved.value?.claim&&typeof reconcileClaim==='function','RECOVERY_REQUIRED');const result=await read(()=>reconcileClaim(saved.value.claim.intentId));check(result.status==='cancelled'||result.status==='reverted'&&saved.value.claim.attempted,'RECOVERY_REQUIRED');await read(()=>store.write(saved,{...saved.value,claim:null,explicitClaimReview:true}));},
   async loadAggregate(hash){check(/^0x[0-9a-f]{64}$/.test(hash));if(kind!=='bok')return null;const {saved}=await stored();let value;
@@ -588,6 +588,6 @@ export async function submitWithFundingCheckpoint({application,topups,aggregate,
  const funding=kind?topups?.[kind]:current.action?.type==='claim-deposit'?aggregate:null;
  if(current.status==='prepared'&&funding)await funding.checkpointSubmission(intentId,kind?current.action.receipt:current.action);
  const result=await application.submitPrepared(intentId);
- if(result.status==='confirmed'&&funding)await funding.recordConfirmedClaim(result);
+ if(['included','confirmed'].includes(result.status)&&funding)await funding.recordClaimCompletion(result);
  return result;
 }

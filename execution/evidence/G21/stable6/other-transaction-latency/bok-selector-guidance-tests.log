@@ -1,0 +1,159 @@
+✔ browser plan rejects missing scenarios (1.122583ms)
+✔ browser plan rejects arbitrary JS (0.419208ms)
+✔ browser plan rejects permission grant (0.113417ms)
+✔ browser plan rejects traversal (0.074875ms)
+✔ browser plan rejects no reload (0.089125ms)
+✔ browser plan rejects no assertion (0.080875ms)
+✔ browser plan accepts bounded declarative interactions (0.107459ms)
+✔ browser plan reports the exact excess step across scenarios without relaxing the limit (1.83025ms)
+✔ browser plan permits adding feature coverage beyond the old 64-step ceiling (0.540417ms)
+✔ browser plan diagnoses field and action without echoing untrusted values (0.357833ms)
+﹣ actual browser supports fragment state, interactions and reload under production policy (0.129833ms) # SKIP
+﹣ actual browser covers recreated anonymous controls across synchronous and hashchange renders (0.082708ms) # SKIP
+﹣ actual browser still rejects a real unexercised recreated sibling (0.043042ms) # SKIP
+﹣ actual browser discovery excludes hidden and disabled controls (0.085833ms) # SKIP
+﹣ actual browser rejects startup storage (0.060875ms) # SKIP
+﹣ actual browser rejects interaction storage (0.045625ms) # SKIP
+﹣ actual browser rejects native dialog (0.0335ms) # SKIP
+﹣ actual browser rejects worker (0.030125ms) # SKIP
+﹣ actual browser rejects missing control coverage (0.052709ms) # SKIP
+﹣ actual browser rejects anonymous duplicate checkbox coverage (0.055959ms) # SKIP
+﹣ actual browser rejects re-enabled descendant coverage (0.038458ms) # SKIP
+﹣ actual browser rejects absolute internal link coverage (0.029792ms) # SKIP
+﹣ actual browser rejects popup declaration (0.024083ms) # SKIP
+﹣ actual browser rejects query resource mismatch (0.024083ms) # SKIP
+﹣ actual browser rejects unhandled offline API (0.023875ms) # SKIP
+﹣ actual browser permits handled unavailable API with visible outcome (0.023542ms) # SKIP
+﹣ actual browser shares a scenario startup check with its exact HTML smoke path (0.027625ms) # SKIP
+﹣ actual browser still smoke-checks uncovered HTML and keeps each scenario context fresh (0.032917ms) # SKIP
+﹣ actual browser identifies extra quote escaping without silently repairing the selector (0.026209ms) # SKIP
+﹣ actual browser preserves matching quoted attribute (0.032125ms) # SKIP
+﹣ actual browser preserves matching intentional CSS quote escape (0.021958ms) # SKIP
+✔ parallel viewport failures drain both fresh contexts before browser closes (7.276292ms)
+✔ reactive replacement retries identity capture without repeating the action (0.5405ms)
+﹣ actual browser rejects expectChecked on a button with a specific type error (0.038292ms) # SKIP
+﹣ actual browser rejects expectChecked on a text input with a specific type error (0.025375ms) # SKIP
+﹣ actual browser expectChecked re-queries a replaced checkbox and supports radio state (0.022167ms) # SKIP
+✔ raw browser selector objects receive a precise schema repair without exposing selector values (0.296167ms)
+✔ plain replies need no repository checkout or API request (6.059375ms)
+✔ filesystem tools share one checkout and a failed clone is never retried (6.126375ms)
+✔ exact edits preserve all other bytes and reject ambiguous, stale or oversized edits before mutation (8.718458ms)
+✔ PR publication preserves commit, files and complete invocation identity: 0x123 (3.214083ms)
+✔ PR publication preserves commit, files and complete invocation identity: 291 (2.750833ms)
+✔ PR publication preserves commit, files and complete invocation identity: 1291 (2.050958ms)
+✔ incomplete or substituted tree cannot materialize files or silently retry (0.972666ms)
+✔ incomplete or substituted tree cannot materialize files or silently retry (0.754416ms)
+✔ failed checkout initialization is cleaned by the session owner (0.798458ms)
+✔ PR reads retain changed files inside the agent budget despite large GitHub metadata (0.829542ms)
+✔ app workspace step-limit summary keeps publication outcome false (0.564917ms)
+✔ app workspace step-limit summary keeps publication outcome true (0.288167ms)
+✔ browser plan authoring exposes typed steps and preserves exact source separately from parsed plan (2.038708ms)
+✔ structured selectors compile literals once; raw CSS and untouched scenarios remain exact (2.292666ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input","attributes":{}} (2.092708ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input","attributes":{"a]":"x"}} (1.488125ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input,button","attributes":{"type":"checkbox"}} (1.3995ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input","attributes":{"type":true}} (1.384875ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input","attributes":{"type":"\u0000"}} (1.512459ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input","attributes":{"type":"\ud800"}} (1.318666ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input","attributes":{"type":"x"},"css":"button"} (1.256708ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input","attributes":{"a0":"v","a1":"v","a2":"v","a3":"v","a4":"v","a5":"v","a6":"v","a7":"v","a8":"v"}} (1.316042ms)
+✔ invalid structured selector cannot mutate browser plan {"css":"body","extra":true} (1.254625ms)
+✔ invalid structured selector cannot mutate browser plan {"base":"input","attributes":{"name":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}} (1.243958ms)
+✔ typed authoring retains exact action-specific validation before writing (2.572542ms)
+﹣ actual browser structured selectors match literal quotes backslashes controls and Unicode without weakening coverage (0.144958ms) # SKIP
+✔ raw browser file rejects object selectors unchanged while edit_browser_plan compiles the same authoring input (3.801125ms)
+✔ fresh agent uses tool output and always closes the checkout (2.333334ms)
+✔ paid history summary excludes latest and main receives summary plus exact latest (1.17425ms)
+✔ small history passes exact originals as untrusted data without a summary call (0.400583ms)
+✔ history policy uses exact UTF-8 JSON boundary 8192 (0.32825ms)
+✔ history policy uses exact UTF-8 JSON boundary 8193 (0.279167ms)
+✔ oversized complete history is rejected before summary or main without truncation (0.566667ms)
+✔ first message has no unnecessary paid summary (0.147042ms)
+✔ conversation incomplete blocks any paid model call (0.126166ms)
+✔ conversation noncanonical blocks any paid model call (0.135041ms)
+✔ conversation wrong latest blocks any paid model call (0.196ms)
+✔ conversation changed latest blocks any paid model call (0.122917ms)
+✔ conversation duplicate blocks any paid model call (0.106334ms)
+✔ conversation invented system role blocks any paid model call (0.127ms)
+✔ conversation oversized message blocks any paid model call (0.126417ms)
+✔ conversation empty blocks any paid model call (0.097042ms)
+✔ unknown summary outcome does not retry or start main model (0.342708ms)
+✔ summary cannot invoke tools or become system authority (0.30225ms)
+✔ summary counts against the request model-call ceiling (0.329584ms)
+✔ successful answer waits for host acceptance before closing invocation workspace (6.879583ms)
+✔ published app links are host-produced, byte bounded, and omit private validation metadata (0.44575ms)
+✔ isolated STATIC_CLEANUP_REQUIRED stops the agent before another paid call or tool (0.257625ms)
+✔ isolated STATIC_RECORD_FAILED stops the agent before another paid call or tool (0.127875ms)
+✔ isolated STATIC_UNAVAILABLE stops the agent before another paid call or tool (0.1105ms)
+✔ main retrieves exact original user and Bok messages without replacing captured direct history (0.413ms)
+✔ main retrieves exact original user and Bok messages without replacing captured summarized history (0.403167ms)
+✔ original-message retrieval rejects other thread without disclosure or external tool (0.354542ms)
+✔ original-message retrieval rejects negative without disclosure or external tool (0.211375ms)
+✔ original-message retrieval rejects over limit without disclosure or external tool (0.204208ms)
+✔ original-message retrieval rejects fraction without disclosure or external tool (0.194458ms)
+✔ original-message retrieval rejects past end without disclosure or external tool (0.1625ms)
+✔ original-message retrieval rejects extra without disclosure or external tool (0.16325ms)
+✔ original-message canonical failure at check 1 stops before another paid model call, summarized=false (0.272209ms)
+✔ original-message canonical failure at check 2 stops before another paid model call, summarized=false (0.149625ms)
+✔ original-message canonical failure at check 3 stops before another paid model call, summarized=false (0.132958ms)
+✔ original-message canonical failure at check 1 stops before another paid model call, summarized=true (0.174542ms)
+✔ original-message canonical failure at check 2 stops before another paid model call, summarized=true (0.185417ms)
+✔ original-message canonical failure at check 3 stops before another paid model call, summarized=true (0.161166ms)
+✔ original-message page bounds escaped bytes and keeps continuation without truncating JSON (0.575541ms)
+✔ original-message retrieval keeps the existing paid model-call ceiling (0.182584ms)
+✔ original-message retrieval uses immutable captured rows after a caller changes its source object (0.221542ms)
+✔ original-message history without canonical guard is unavailable before any paid call (0.139833ms)
+✔ original-message end page is empty and cannot expose latest invoking message (0.169083ms)
+✔ connected private source never reaches a public model reply, changed=true (0.196958ms)
+✔ connected private source never reaches a public model reply, changed=false (0.054959ms)
+✔ connected private source refuses a static-publication result or arbitrary link (0.286708ms)
+✔ bounded step-limit exit accepts through the host without another paid call (0.311291ms)
+✔ bounded output-limit exit accepts through the host without another paid call (0.117ms)
+✔ bounded balance exit accepts through the host without another paid call (0.119708ms)
+✔ bounded step-limit exit cannot publish model or tool summaries from private connected source (0.153792ms)
+✔ bounded output-limit exit cannot publish model or tool summaries from private connected source (0.083208ms)
+✔ bounded balance exit cannot publish model or tool summaries from private connected source (0.068708ms)
+✔ balance failure during acceptance is never a second acceptance attempt (0.222458ms)
+✔ final tool at model limit cannot accept after captured original history changes (0.284834ms)
+✔ unknown completion reason stops before tools, acceptance and another model call (0.185417ms)
+✔ null completion reason stops before tools, acceptance and another model call (0.084833ms)
+✔ truncated final text stops before tools, acceptance and another model call (0.104959ms)
+✔ truncated complete-looking tools stops before tools, acceptance and another model call (0.079875ms)
+✔ filtered final text stops before tools, acceptance and another model call (0.081208ms)
+✔ malformed second tool stops before tools, acceptance and another model call (0.101ms)
+✔ malformed second exact edit stops before tools, acceptance and another model call (0.099333ms)
+✔ duplicate tool ID stops before tools, acceptance and another model call (0.08075ms)
+✔ truncated history summary never reaches the main model or acceptance (0.152291ms)
+✔ completed stop tool batch executes and final answer is accepted (0.135917ms)
+✔ completed tool_calls tool batch executes and final answer is accepted (0.090667ms)
+✔ non-object second tool arguments null reject whole batch before writes (0.145208ms)
+✔ non-object second tool arguments [] reject whole batch before writes (0.10425ms)
+✔ non-object second tool arguments true reject whole batch before writes (0.083458ms)
+✔ non-object second tool arguments 1 reject whole batch before writes (0.107583ms)
+✔ non-object second tool arguments "text" reject whole batch before writes (0.099ms)
+✔ verified publication replaces fabricated model locations and completion claims (0.143125ms)
+✔ verified publication retains link and UTF-8 byte guards 19/32 (0.184583ms)
+✔ verified publication retains link and UTF-8 byte guards 25/28 (0.114084ms)
+✔ verified publication retains link and UTF-8 byte guards 301/301 (0.141292ms)
+✔ static update receives bounded untrusted source before first paid model call without discovery turns (0.530083ms)
+✔ initial context omits whole oversized files explicitly and never preloads connected private sources (0.358042ms)
+✔ new empty generated repository seeds its state without checkout or file reads (0.111292ms)
+✔ explicit final workspace check accepts without another paid turn (0.145ms)
+✔ failed final check returns for repair before one successful acceptance (0.145958ms)
+✔ finish must be unique and last before any tool mutation finish_workspace,edit_file (0.171583ms)
+✔ finish must be unique and last before any tool mutation finish_workspace,finish_workspace (0.101792ms)
+✔ failed edit cannot be hidden by a passing finish later in the same batch (0.130625ms)
+✔ host capacity admits originals above 8KB using the complete request, without summary (0.278959ms)
+✔ complete request capacity failure preserves bounded summary and exact latest request (0.201041ms)
+✔ capacity candidate includes complete initial repository tools and source before choosing history (0.329209ms)
+✔ seeded browser plan keeps exact JSON source and parsed steps as distinct untrusted fields (0.22925ms)
+✔ optional parsed plan never evicts exact files near the initial context limit (0.62125ms)
+✔ agent distinguishes structured browser tool selectors from raw browser-tests file selectors (0.101666ms)
+ℹ tests 151
+ℹ suites 0
+ℹ pass 126
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 25
+ℹ todo 0
+ℹ duration_ms 258.359417

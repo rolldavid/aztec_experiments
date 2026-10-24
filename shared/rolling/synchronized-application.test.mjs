@@ -149,3 +149,14 @@ for(const fail of ['discovery','scope'])test('generic preparation '+fail+' failu
  const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>calls++])),operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContractState:async()=>{entered.resolve();await gate.promise;if(fail==='discovery')throw error;}});
  const observed=assert.rejects(app.prepare({type:'like'}).finally(()=>done=true),fail==='discovery'?e=>e===error:{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;assert.equal(done,false);if(fail==='scope')scope={};gate.resolve();await observed;assert.equal(calls,0);
 });
+
+
+test('only held immediate likes start their qualified metadata alongside native synchronization',async()=>{
+ for(const type of ['like','unlike','bio','preference'])for(const immediate of [false,true]){
+  let seen;const scope={preparationReads:[]},gate=Promise.withResolvers(),entered=Promise.withResolvers();let stages=0,called=false;
+  const arrive=async()=>{if(++stages===2)entered.resolve();await gate.promise;};
+  const raw=Object.fromEntries(names.map(name=>[name,()=>{called=true;return {};} ]));
+  const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},operationScope:()=>scope,synchronize:arrive,prepareContext:async options=>{seen=options;await arrive();}});
+  const work=app.prepare({type},immediate?{immediate:true}:undefined);await entered.promise;assert.equal(called,false);assert.equal(seen.likePayment,immediate&&['like','unlike'].includes(type)?true:undefined);gate.resolve();await work;assert.equal(called,true);
+ }
+});

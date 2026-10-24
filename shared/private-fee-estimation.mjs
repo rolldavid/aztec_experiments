@@ -1,3 +1,4 @@
+import {likeFeeBudget,assertLikePayload} from './like-fees.mjs';
 import {ordinaryPostFeeBudget,assertOrdinaryPostPayload} from './ordinary-post-fees.mjs';
 import {MAX_PROCESSABLE_L2_GAS,MAX_TX_DA_GAS} from '@aztec-labs/constants';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
@@ -31,7 +32,26 @@ function allocate(budget,lower,caps,prices){
  for(let i=0;i<2;i++)if(rates[i]){const extra=min(BigInt(caps[dimensions[i]]-values[i]),remaining/rates[i]);values[i]+=Number(extra);remaining-=extra*rates[i];}
  return new Gas(...values);
 }
-export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,ordinaryPost,measure=(_stage,operation)=>operation(),simulator=createPrivateFeeSimulator(wallet,node)}){
+export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,ordinaryPost,qualifiedLike,measure=(_stage,operation)=>operation(),simulator=createPrivateFeeSimulator(wallet,node)}){
+ let qualifiedApplication;
+ if(qualifiedLike!==undefined){
+  if(ordinaryPost!==undefined||!deferSimulation||typeof wallet.pxe?.proveTxWithPublicValidation!=='function')throw fail('BB_LIKE_FEE_PROFILE_MISMATCH');
+  await guard();const budget=likeFeeBudget({wallet,prepared,board:qualifiedLike});
+  const application=await interaction.request();assertLikePayload({wallet,from,application,board:qualifiedLike});
+  if(prepared.creditCheck==='qualified-like-proof'){
+   if(typeof prepared.withAvailableCredit!=='function')throw fail('BB_LIKE_FEE_PROFILE_MISMATCH');
+   prepared=await prepared.withAvailableCredit();await guard();
+   if(prepared.creditCheck!=='read-balance')throw fail('BB_LIKE_FEE_PROFILE_MISMATCH');
+  }
+  // The class-qualified maximum is an upper bound, not the minimum credit
+  // needed for this action. Low credit uses the existing measured estimator
+  // before any proof/signature/send, with the same exact application payload.
+  if(BigInt(prepared.availableCredit)>=budget.reservation){
+   const payload=mergeExecutionPayloads([await prepared.paymentMethod.withReservation(budget.reservation).getExecutionPayload(),application]);
+   await guard();return {payload,...budget,passes:0,atomicSimulation:true};
+  }
+  qualifiedApplication=application;
+ }
  if(ordinaryPost!==undefined){
   if(!deferSimulation||typeof wallet.pxe?.proveTxWithPublicValidation!=='function')throw fail('BB_POST_FEE_PROFILE_MISMATCH');
   await guard();const budget=ordinaryPostFeeBudget({wallet,prepared,board:ordinaryPost});
@@ -39,6 +59,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
   const payload=mergeExecutionPayloads([await prepared.paymentMethod.withReservation(budget.reservation).getExecutionPayload(),application]);
   await guard();return {payload,...budget,passes:0,atomicSimulation:true};
  }
+ if(prepared.creditCheck==='qualified-like-proof')throw fail('BB_LIKE_FEE_PROFILE_MISMATCH');
  if(prepared.creditCheck==='ordinary-post-proof')throw fail('BB_POST_FEE_PROFILE_MISMATCH');
  // Payment preparation already captured the verified node limits for this
  // operation. A second readiness RPC cannot validate a transaction; the final
@@ -48,7 +69,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  const ceiling=GasSettings.from(prepared.gasSettings),available=BigInt(prepared.availableCredit);
  const caps=new Gas(Math.min(ceiling.gasLimits.daGas,network.daGas,MAX_TX_DA_GAS),Math.min(ceiling.gasLimits.l2Gas,network.l2Gas,MAX_PROCESSABLE_L2_GAS));
  const settings=(gasLimits,teardownGasLimits)=>GasSettings.from({gasLimits,teardownGasLimits,maxFeesPerGas:ceiling.maxFeesPerGas,maxPriorityFeesPerGas:ceiling.maxPriorityFeesPerGas});
- const maximum=min(available,cost(caps,ceiling.maxFeesPerGas)+1n),application=await interaction.request();
+ const maximum=min(available,cost(caps,ceiling.maxFeesPerGas)+1n),application=qualifiedApplication??await interaction.request();
  if(available<=0n)throw fail('PRIVATE_FEE_BALANCE_INSUFFICIENT');
  const payloadFor=async reservation=>mergeExecutionPayloads([await prepared.paymentMethod.withReservation(reservation).getExecutionPayload(),application]);
  // Adequate credit needs no reservation search. Validate the configured maximum

@@ -100,9 +100,10 @@ export async function preparePrivateFeePayment(input) {
   try{return await prepare(input);}catch(error){if(error instanceof PrivateFeePreparationError)throw error;throw new PrivateFeePreparationError('PRIVATE_FEE_PREPARATION_FAILED');}
 }
 async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,expectedChainId,expectedVersion,gasSettings,claim,creditCheck='read-balance',measure=(_stage,operation)=>operation()}={}) {
-  check(['read-balance','ordinary-post-proof'].includes(creditCheck)&&!(creditCheck==='ordinary-post-proof'&&claim!==undefined),'PRIVATE_FEE_CONFIGURATION_REQUIRED');
+  check(['read-balance','ordinary-post-proof','qualified-like-proof'].includes(creditCheck)&&!(creditCheck!=='read-balance'&&claim!==undefined),'PRIVATE_FEE_CONFIGURATION_REQUIRED');
   check(wallet?.getChainInfo&&wallet?.registerContract&&node?.getNodeInfo&&node?.getContract,'PRIVATE_FEE_PROVIDER_REQUIRED');
   check(privateFeeAddress&&privateFeeArtifact,'PRIVATE_FEE_CONFIGURATION_REQUIRED');
+  const paymentPXE=wallet.pxe;
   const author=address(owner),payer=address(privateFeeAddress),chainId=uint(expectedChainId,64),version=uint(expectedVersion,32);
   check(!author.equals(payer),'PRIVATE_FEE_OWNER_IS_PAYER');
   const fixed=normalizePrivateFeeGasSettings(gasSettings);
@@ -154,7 +155,18 @@ async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,e
   // Both refund branches and extreme field/u128 values are exercised by the profile test.
   check(canonical.currentContractClassId.toString()===PRIVATE_FEE_REFUND_PROFILE.classId,'PRIVATE_FEE_ARTIFACT_INVALID');
   const refundGasLimits=new Gas(PRIVATE_FEE_REFUND_PROFILE.daGas,PRIVATE_FEE_REFUND_PROFILE.l2Gas);
-  return {creditCheck,...(creditCheck==='ordinary-post-proof'?{}:{availableCredit}),networkGasLimits:{daGas:nodeInfo.txsLimits.gas.daGas,l2Gas:nodeInfo.txsLimits.gas.l2Gas},refundGasLimits,refundReservationError:PRIVATE_FEE_REFUND_PROFILE.reservationError,paymentMethod,refundSelector,gasSettings:fixed.gasSettings,metadata:{classId:canonical.currentContractClassId.toString(),maximumFee:fixed.maximumFee.toString(),feePayer:payer.toString(),mode:claim===undefined?'private-balance':'bridge-claim',refundUnusedGas:true}};
+  const prepared={creditCheck,...(creditCheck!=='read-balance'?{}:{availableCredit}),networkGasLimits:{daGas:nodeInfo.txsLimits.gas.daGas,l2Gas:nodeInfo.txsLimits.gas.l2Gas},refundGasLimits,refundReservationError:PRIVATE_FEE_REFUND_PROFILE.reservationError,paymentMethod,refundSelector,gasSettings:fixed.gasSettings,metadata:{classId:canonical.currentContractClassId.toString(),maximumFee:fixed.maximumFee.toString(),feePayer:payer.toString(),mode:claim===undefined?'private-balance':'bridge-claim',refundUnusedGas:true}};
+  if(creditCheck!=='qualified-like-proof')return prepared;
+  // Metadata can overlap chain synchronization. Read credit only later, under
+  // the caller's held synchronized account operation; never retain a balance.
+  return {...prepared,withAvailableCredit:async()=>{
+    try{
+      check(wallet.pxe===paymentPXE,'PRIVATE_FEE_CONTEXT_CHANGED');
+      const availableCredit=await privateBalance();
+      check(wallet.pxe===paymentPXE,'PRIVATE_FEE_CONTEXT_CHANGED');
+      return {...prepared,creditCheck:'read-balance',availableCredit};
+    }catch(error){if(error instanceof PrivateFeePreparationError)throw error;throw new PrivateFeePreparationError('PRIVATE_FEE_PREPARATION_FAILED');}
+  }};
 }
 
 // Only the qualified FPC's native private balance assertion is actionable as a

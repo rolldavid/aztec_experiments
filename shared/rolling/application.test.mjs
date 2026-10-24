@@ -70,7 +70,7 @@ function fixture(){
   const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{throw Error('Unexpected fixture membership read');}},getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
-    prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
+    prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
       if(['set_preference','mark_thread_read'].includes(input.interaction.name)&&state.preferenceError)throw state.preferenceError;
       if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
@@ -2214,7 +2214,7 @@ test('ordinary submit binds its arithmetic quote to the verified board',async()=
 });
 
 
-for(const predecessor of [false,true])test(`native ordinary credit failure with predecessor=${predecessor} cancels only its unsigned attempt and allows a fresh post`,async()=>{
+for(const kind of ['post','like'])for(const predecessor of [false,true])test(`native ${kind} credit failure with predecessor=${predecessor} cancels only its unsigned attempt and allows a fresh post`,async()=>{
  const f=await preproofFixture();
  if(predecessor){const first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);}f.options.sdk.isPrivateFeeCreditFailure=isPrivateFeeCreditFailure;
  const original=f.options.accountSession.preproofRecovery;let failNext=true;
@@ -2224,8 +2224,8 @@ for(const predecessor of [false,true])test(`native ordinary credit failure with 
    assert.fail('Native shortage must reject before transaction creation');
   }return original.send(payload,opts,lifecycle);
  }});
- const app=f.restart(),action={type:'post',subboard:'0',name:'0',deposit:'9',content:'Keep this draft'};
- const first=await app.prepare(action,{immediate:true});await assert.rejects(app.submitPrepared(first.intentId),{code:'BB_POST_FEE_CREDIT_REQUIRED'});
+ const app=f.restart(),action=kind==='like'?{type:'like',post:'5'}:{type:'post',subboard:'0',name:'0',deposit:'9',content:'Keep this draft'};
+ const first=await app.prepare(action,{immediate:true});await assert.rejects(app.submitPrepared(first.intentId),{code:kind==='like'?'BB_LIKE_FEE_CREDIT_REQUIRED':'BB_POST_FEE_CREDIT_REQUIRED'});
  assert.equal((await app.reconcile(first.intentId)).status,'cancelled');const previous=await f.options.accountSession.journal.inspect();assert.equal(!!previous,predecessor);assert.equal(f.state.sends,Number(predecessor));
  const next=await app.prepare(action,{immediate:true});assert.notEqual(next.intentId,first.intentId);assert.equal((await app.submitPrepared(next.intentId)).status,'confirmed');assert.equal(f.state.sends,Number(predecessor)+1);
 });
@@ -2318,29 +2318,29 @@ test('failed speculative history read does not override actual native execution 
  assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
 });
 
-for(const replaceScope of [false,true])test(`ordinary fee metadata overlaps readiness and ${replaceScope?'new operation refreshes':'same operation reuses once'}`,async()=>{
+for(const kind of ['post','like'])for(const replaceScope of [false,true])test(`${kind} fee metadata overlaps readiness and ${replaceScope?'new operation refreshes':'same operation reuses once'}`,async()=>{
  const f=fixture();let scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
  let started=0,payments=0;const gate=Promise.withResolvers(),entered=Promise.withResolvers(),inspect=f.options.sdk.inspectTrustedNode;
  const arrive=async()=>{if(++started===2)entered.resolve();await gate.promise;};
  f.options.sdk.inspectTrustedNode=async(...args)=>{await arrive();return inspect(...args);};
- f.options.sdk.preparePrivateFeePayment=async input=>{assert.equal(input.creditCheck,'ordinary-post-proof');payments++;await arrive();return {metadata:'owned'};};f.app=f.restart();
- const reading=f.app.prefetchContext({ordinaryPayment:true});await entered.promise;assert.equal(payments,1);assert.equal(f.state.privateReads.length,0);gate.resolve();await reading;
+ f.options.sdk.preparePrivateFeePayment=async input=>{assert.equal(input.creditCheck,kind==='post'?'ordinary-post-proof':'qualified-like-proof');payments++;await arrive();return {creditCheck:input.creditCheck,metadata:'owned'};};f.app=f.restart();
+ const reading=f.app.prefetchContext(kind==='post'?{ordinaryPayment:true}:{likePayment:true});await entered.promise;assert.equal(payments,1);assert.equal(f.state.privateReads.length,0);gate.resolve();await reading;
  if(replaceScope)scope={preparationReads:[]};
- const prepared=await f.app.prepare({type:'post',deposit:'9',content:'Early ordinary payment'},{immediate:true});await f.app.submitPrepared(prepared.intentId);
+ const prepared=await f.app.prepare(kind==='post'?{type:'post',deposit:'9',content:'Early ordinary payment'}:{type:'like',post:'42'},{immediate:true});await f.app.submitPrepared(prepared.intentId);
  assert.equal(payments,replaceScope?2:1);
 });
-for(const failure of ['readiness','payment'])test(`ordinary payment prefetch ${failure} failure drains independent preparation`,async()=>{
+for(const kind of ['post','like'])for(const failure of ['readiness','payment'])test(`${kind} payment prefetch ${failure} failure drains independent preparation`,async()=>{
  const f=fixture(),scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
  const gate=Promise.withResolvers(),entered=Promise.withResolvers();let settled=false;
  f.options.sdk.inspectTrustedNode=async()=>{if(failure==='readiness')throw Error(failure);entered.resolve();await gate.promise;};
  f.options.sdk.preparePrivateFeePayment=async()=>{if(failure==='payment')throw Error(failure);entered.resolve();await gate.promise;return {};};f.app=f.restart();
- const work=f.app.prefetchContext({ordinaryPayment:true}).finally(()=>settled=true),observed=assert.rejects(work,new RegExp(failure));
+ const work=f.app.prefetchContext(kind==='post'?{ordinaryPayment:true}:{likePayment:true}).finally(()=>settled=true),observed=assert.rejects(work,new RegExp(failure));
  await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await observed;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });
-for(const replacement of ['scope','pxe'])test(`early payment rejects ${replacement} replacement before publishing its owned result`,async()=>{
+for(const kind of ['post','like'])for(const replacement of ['scope','pxe'])test(`early ${kind} payment rejects ${replacement} replacement before publishing its owned result`,async()=>{
  const f=fixture();let scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
  const entered=Promise.withResolvers(),gate=Promise.withResolvers();f.options.sdk.preparePrivateFeePayment=async()=>{entered.resolve();await gate.promise;return {};};f.app=f.restart();
- const work=f.app.prefetchContext({ordinaryPayment:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ const work=f.app.prefetchContext(kind==='post'?{ordinaryPayment:true}:{likePayment:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
  if(replacement==='scope')scope={};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });
 
@@ -2569,7 +2569,7 @@ for(const change of ['receipt','owner'])test(`same-operation claim payment reuse
 
 for(const action of [{type:'like',post:'8'},{type:'unlike',post:'8'},{type:'subboard',slug:'new-board',name:'New',description:'Exact',rules:''},{type:'screen',deposit:'9'},{type:'withdraw',deposit:'9'},...moderatorActions])test('generic action '+action.type+' reuses exactly owned generic payment once',async()=>{
  const f=moderatorActions.includes(action)?moderatorFixture():fixture(),scope={synchronized:true};let payments=0;
- f.options.accountSession.operationScope=()=>scope;f.options.sdk.preparePrivateFeePayment=async input=>{payments++;assert.equal(input.creditCheck,undefined,'No ordinary post gas/credit authority');return {availableCredit:100n};};f.app=f.restart();
+ f.options.accountSession.operationScope=()=>scope;f.options.sdk.preparePrivateFeePayment=async input=>{payments++;assert.equal(input.creditCheck,['like','unlike'].includes(action.type)?'qualified-like-proof':undefined,'Only separately qualified likes omit the balance read');return {availableCredit:100n};};f.app=f.restart();
  const prepared=await f.app.prepare(action,{immediate:true});assert.equal(payments,1);assert.equal(f.state.estimates,0);assert.equal(prepared.maximumFee,'100');
  assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(payments,1);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
 });
@@ -2613,10 +2613,12 @@ test('proposed preference inverse reads the new native revision and retains a pe
  const second=await executeRollingAction(f.app,{...action,enabled:false});
  assert.equal(second.status,'included');assert.equal(second.action.expectedRevision,'1');assert.equal(second.action.enabled,false);assert.equal(f.state.sends,2);
 });
-test('proposed-capable application still requests checkpoint for incoming bridge claim',async()=>{
- const f=fundingFixture();f.options.accountSession.proposedTransactions=true;const app=f.restart();
- const result=await executeRollingAction(app,{type:'claim-deposit',receipt:f.receipt});
- assert.equal(result.status,'confirmed');assert.equal(f.state.sent.opts.confirmationTier,'checkpointed');
+for(const kind of ['collateral','private-fee','bok'])test(`proposed ${kind} claim completes at exact inclusion without bypassing bridge validation`,async()=>{
+ const f=kind==='collateral'?fundingFixture():topUpFixture(kind),action=kind==='collateral'?{type:'claim-deposit',receipt:f.receipt}:f.action;
+ f.options.accountSession.proposedTransactions=true;let acknowledgements=0;
+ f.options.accountSession.journal.included=async receipt=>{assert.equal(receipt.status,'proposed');acknowledgements++;};
+ const send=f.options.accountSession.wallet.sendTx;f.options.accountSession.wallet.sendTx=async(...args)=>{const result=await send(...args);f.state.outcome.receipt.status='proposed';return result;};
+ const result=await executeRollingAction(f.restart(),action);assert.equal(result.status,'included');assert.equal(f.state.sent.opts.confirmationTier,'proposed');assert.equal(acknowledgements,1);assert(f.state.claimReads.length>0);assert.equal(f.state.sends,1);
 });
 test('proposed outcome cannot authorize next action once exact native journal reports no successful inclusion',async()=>{
  const f=proposedFixture();await executeRollingAction(f.app,{type:'name',first:'River',last:'Lane'});
@@ -2639,4 +2641,63 @@ for(const change of ['cached-node','route'])test(`claim refuses native membershi
   return verify(input);
  };
  await assert.rejects(f.restart().prepare(f.action,{immediate:true}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+
+
+test('immediate like uses only its exact class bound; reviewed and other actions retain generic estimation',async()=>{
+ for(const [type,immediate]of [['like',true],['unlike',true],['like',false],['bio',true]]){
+  const f=fixture(),scope={synchronized:true},seen=[];f.options.accountSession.operationScope=()=>scope;
+  f.options.sdk.preparePrivateFeePayment=async input=>{seen.push(input.creditCheck);return input.creditCheck?{creditCheck:input.creditCheck}:{availableCredit:100n};};
+  const estimate=f.options.sdk.estimatePrivateFeeTransaction;let requested;
+  f.options.sdk.estimatePrivateFeeTransaction=async input=>{requested=input;return estimate(input);};
+  const app=f.restart(),action=type==='bio'?{type,name:'5',expectedVersion:'0',content:'Profile'}:{type,post:'42'};
+  const prepared=await app.prepare(action,immediate?{immediate:true}:undefined);await app.submitPrepared(prepared.intentId);
+  if(immediate&&type!=='bio'){assert.deepEqual(seen,['qualified-like-proof']);assert.equal(requested.qualifiedLike,f.options.deployment.board.instance);assert.equal(requested.ordinaryPost,undefined);}
+  else{assert(seen.every(value=>value===undefined));assert.equal(requested.qualifiedLike,undefined);}
+  assert.equal(f.state.sends,1);
+ }
+});
+test('like qualification failure cannot save a workflow or begin a proof',async()=>{
+ const f=fixture();f.options.sdk.likeFeeBudget=()=>{throw Object.assign(Error('mismatch'),{code:'BB_LIKE_FEE_PROFILE_MISMATCH'});};
+ await assert.rejects(f.restart().prepare({type:'like',post:'42'},{immediate:true}),{code:'BB_LIKE_FEE_PROFILE_MISMATCH'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);
+});
+
+
+test('early payment cannot cross from ordinary posting mode into qualified likes',async()=>{
+ const f=fixture(),scope={preparationReads:[]},seen=[];f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.preparePrivateFeePayment=async input=>{seen.push(input.creditCheck);return {creditCheck:input.creditCheck};};f.app=f.restart();
+ await f.app.prefetchContext({ordinaryPayment:true});const prepared=await f.app.prepare({type:'like',post:'42'},{immediate:true});await f.app.submitPrepared(prepared.intentId);
+ assert.deepEqual(seen,['ordinary-post-proof','qualified-like-proof']);assert.equal(f.state.sends,1);
+});
+
+function proposedScreenFixture(){
+ const f=automaticWithdrawalFixture(true),send=f.options.accountSession.wallet.sendTx;let included=0;
+ f.options.accountSession.proposedTransactions=true;
+ f.options.accountSession.journal.included=async receipt=>{assert.equal(receipt.status,'proposed');included++;};
+ f.options.accountSession.wallet.sendTx=async(...args)=>{const result=await send(...args);f.state.outcome.receipt.status=args[1].confirmationTier==='proposed'?'proposed':'checkpointed';return result;};
+ f.app=f.restart();return {...f,included:()=>included};
+}
+test('included screening uses exact proposed policy then collateral exit retains checkpointed policy',async()=>{
+ const f=proposedScreenFixture(),tiers=[],send=f.options.accountSession.wallet.sendTx;
+ f.options.accountSession.wallet.sendTx=async(...args)=>{tiers.push(args[1].confirmationTier);return send(...args);};
+ const result=await f.run();assert.equal(result.status,'confirmed');assert.equal(result.action.type,'withdraw');assert.deepEqual(tiers,['proposed','checkpointed']);assert.equal(f.included(),2);assert.equal(f.state.sends,2);
+});
+test('included screening orphan cannot authorize subsequent collateral exit',async()=>{
+ const f=proposedScreenFixture();const screened=await executeRollingAction(f.app,{type:'screen',deposit:'9'});assert.equal(screened.status,'included');
+ f.state.outcome={...f.state.outcome,outcome:'pending',receipt:null};
+ await assert.rejects(executeRollingAction(f.app,{type:'withdraw',deposit:'9'}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+test('included screening does not waive native deposit time lock before exit preparation',async()=>{
+ const f=proposedScreenFixture();assert.equal((await executeRollingAction(f.app,{type:'screen',deposit:'9'})).status,'included');
+ f.state.responses.get_deposit_info[9]=500n;
+ await assert.rejects(executeRollingAction(f.app,{type:'withdraw',deposit:'9'}),{code:'ROLLING_WITHDRAWAL_NOT_READY'});assert.equal(f.state.sends,1);
+});
+
+test('included screening synchronizes consecutive private note state before preparing the exit',async()=>{
+ const {createSynchronizedRollingApplication}=await import('./synchronized-application.mjs');
+ const f=proposedScreenFixture(),scope={synchronized:false},send=f.options.accountSession.wallet.sendTx;let pendingNote,steps=0;
+ f.options.accountSession.wallet.sendTx=async(...args)=>{const prior=f.state.responses.get_deposit_info;const result=await send(...args);if(args[0].name==='screen'){pendingNote=f.state.responses.get_deposit_info;f.state.responses.get_deposit_info=prior;}return result;};
+ const application=createSynchronizedRollingApplication({application:f.app,operationScope:()=>scope,contextGuard:async()=>{},synchronize:async()=>{steps++;if(pendingNote){f.state.responses.get_deposit_info=pendingNote;pendingNote=null;}}});
+ const result=await executeAutomaticWithdrawal({application,deposit:'9',guard:async()=>{},waitUntil:async()=>assert.fail('no cooldown')});
+ assert.equal(result.status,'confirmed');assert.equal(steps,2);assert.equal(pendingNote,null);assert.deepEqual(f.state.calls.map(call=>call.name),['screen','withdraw']);
 });

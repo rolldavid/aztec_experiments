@@ -35,10 +35,10 @@ function dom(t){
 async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null,depositIds=['9'],moderator=false}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={...(warm?{preparePostingState:async deposit=>{session.busy=true;try{await warm(deposit);}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
-  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:moderator};},
+  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{core.names++;const names=await posting?.namesRead?.(core.names);if(names)return names;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:moderator};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
-  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{}),...(posting.inclusion?{inclusion:posting.inclusion}:{})};},
+  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{}),...(posting.inclusion?{inclusion:posting.inclusion}:{}),...(posting.nameAvailability?{nameAvailability:posting.nameAvailability}:{})};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
  session.application.executeAction=(action,options)=>executeRollingAction(session.application,structuredClone(action),options);
@@ -322,7 +322,7 @@ for(const type of ['name','bio','avatar'])test(`one ${type} save creates and sub
  else if(type==='bio'){const input=f.document.querySelector('textarea');input.value='My exact bio';input.fire('input');}
  else f.document.querySelectorAll('button').find(b=>b.textContent==='Clear avatar').fire('click');
  const save=f.document.querySelector('[data-action-review]');assert(!save.textContent.includes('Review'));assert.equal(save.disabled,false);save.fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.submissions.length,1);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.document.querySelector('dialog').open,false);
- if(type==='name')await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));else{await new Promise(setImmediate);assert.equal(f.reads(),1);}if(type==='bio')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'3',content:'My exact bio'});if(type==='avatar')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'4',width:0,height:0,data:''});
+ await new Promise(setImmediate);assert.equal(f.reads(),1,'name/profile changes do not invalidate unrelated Bok credit');if(type==='bio')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'3',content:'My exact bio'});if(type==='avatar')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'4',width:0,height:0,data:''});
 });
 
 test('a confirmed bookmark allows the next explicit inverse action without a modal',{timeout:3000},async t=>{
@@ -339,9 +339,9 @@ test('funding progress only reports confirmed payment after reaching the private
  assert.equal(fundingProgressMessage({step:'reconcile',state:'started'},'bok'),'Waiting for your Bok credit to confirm…');
  assert(!fundingProgressMessage({step:'prepare',state:'failed'},'bok').includes('Payment confirmed'));
 });
-test('Bok continuation replaces stale Ethereum notice with the observed credit stage',{timeout:3000},async t=>{
+for(const state of ['complete','included'])test('Bok continuation replaces stale Ethereum notice with the observed credit stage: '+state,{timeout:3000},async t=>{
  let f;const gate=Promise.withResolvers(),started=Promise.withResolvers();
- const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){return {...input,phase:'deposit',maximumSwapWei:'1000'};},async confirm(){return {};},async inspect(){return null;},async advanceClaim(){started.resolve();await gate.promise;return {state:'complete'};}};
+ const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){return {...input,phase:'deposit',maximumSwapWei:'1000'};},async confirm(){return {};},async inspect(){return null;},async advanceClaim(){started.resolve();await gate.promise;return {state,intent:{intentId:'0x'+'9'.repeat(64),status:state==='included'?'included':'confirmed',txHash:'0x'+'8'.repeat(64),inclusion:{blockNumber:3,blockHash:'0x'+'7'.repeat(64)},action:{type:'claim-bok'}}};}};
  f=await fixture(t,{topup:cap});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();f.host.querySelectorAll('button').find(b=>b.textContent==='Add credit').fire('click');
  const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pay'&&!b.disabled));pay.fire('click');await started.promise;
  const stale=f.document.createElement('p');stale.setAttribute('data-operation-feedback','');stale.textContent='Payment submitted. Waiting for confirmation…';f.document.querySelector('dialog').append(stale);
@@ -352,7 +352,7 @@ test('Bok continuation replaces stale Ethereum notice with the observed credit s
  f.progress({stage:'submitting'});assert(f.document.body.textContent.includes('Adding your Bok credit…'));assert(!f.document.body.textContent.includes('Sending your action'));
  f.progress({stage:'proof-progress'});assert(f.document.body.textContent.includes('Adding your Bok credit…'));assert(!f.document.body.textContent.includes('Loading your account…'));
  f.progress({stage:'proving'});assert(f.document.body.textContent.includes('Preparing your Bok credit…'));
- gate.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));
+ gate.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));if(state==='included'){assert.match(f.document.body.textContent,/confirmation pending/i);assert(!f.document.body.textContent.includes('Credit added: confirmed'));}
 });
 
 test('explicit fresh account route opens wallet selection and continues into unfunded onboarding',async t=>{
@@ -652,9 +652,9 @@ test('private setting inclusion does not request public feed work or expose unco
  canonical.resolve();assert.equal((await action).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'10'),true);assert.equal(effects,0);await new Promise(setImmediate);
 });
 
-test('a confirmed name is not relabeled failed if its required account details cannot refresh',{timeout:3000},async t=>{
+test('a confirmed name is not relabeled failed if native owned names cannot refresh',{timeout:3000},async t=>{
  const canonical=Promise.withResolvers(),sending=Promise.withResolvers();let effects=0;
- const f=await fixture(t,{profile:true,defaults:{type:'name'},posting:{submit:()=>{sending.resolve();return canonical.promise;},balanceRefresh:()=>{throw Error('read unavailable');},effect:()=>effects++}});
+ const f=await fixture(t,{profile:true,defaults:{type:'name'},posting:{submit:()=>{sending.resolve();return canonical.promise;},namesRead:()=>{throw Error('read unavailable');},effect:()=>effects++}});
  const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
  const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');
  f.document.querySelector('[data-action-review]').fire('click');await sending.promise;f.progress(includedPost());await Promise.resolve();assert.equal(effects,1);
@@ -671,11 +671,11 @@ for(const outcome of ['unknown','reverted','error'])test(`inline ${outcome} afte
  assert.equal(f.document.querySelector('dialog').open,false);assert(!identity.textContent.includes(': confirmed.'));assert(identity.textContent.includes(outcome==='reverted'?'reverted':outcome==='error'?'could not be confirmed':'pending'));await new Promise(setImmediate);
 });
 
-test('transaction confirmation timing stops before required name account refresh',{timeout:3000},async t=>{
+test('transaction confirmation timing stops before required native name discovery',{timeout:3000},async t=>{
  const original=globalThis.performance,measures=new Map();let now=10;
  globalThis.performance={now:()=>now,clearMeasures:name=>measures.delete(name),measure:(name,entry)=>measures.set(name,{...entry})};t.after(()=>{globalThis.performance=original;});
  const canonical=Promise.withResolvers(),sending=Promise.withResolvers(),refresh=Promise.withResolvers(),refreshStarted=Promise.withResolvers();
- const f=await fixture(t,{profile:true,defaults:{type:'name'},balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{submit:()=>{sending.resolve();return canonical.promise;},balanceRefresh:()=>{refreshStarted.resolve();return refresh.promise;}}});
+ const f=await fixture(t,{profile:true,defaults:{type:'name'},balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{submit:()=>{sending.resolve();return canonical.promise;},namesRead:()=>{refreshStarted.resolve();return refresh.promise;}}});
  await f.document.until(()=>f.host.textContent.includes('0 USDC available'));const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');f.document.querySelector('[data-action-review]').fire('click');await sending.promise;
  now=100;f.progress({stage:'confirming'});now=150;canonical.resolve();await refreshStarted.promise;
  assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
@@ -786,4 +786,25 @@ test('same proposed head checkpoint promotion coalesces behind pending observati
  f.panel.observePublicPosts([],{checkpoint,confirmationCheckpoint:next});f.panel.observePublicPosts([],{checkpoint,confirmationCheckpoint:next});assert.equal(reads,1);
  held.resolve({status:'included',txHash:includedPost().txHash});await new Promise(setImmediate);assert.equal(reads,2);assert(identity.textContent.includes(': confirmed.'));
  f.panel.observePublicPosts([],{checkpoint,confirmationCheckpoint:next});await new Promise(setImmediate);assert.equal(reads,2);
+});
+
+test('qualified like native credit shortage leaves no blocking action and permits an explicit retry',{timeout:3000},async t=>{
+ let tries=0;const f=await fixture(t,{posting:{submit:async()=>{if(++tries===1)throw Object.assign(Error('PRIVATE_BALANCE_SENTINEL'),{code:'BB_LIKE_FEE_CREDIT_REQUIRED'});}}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
+ const first=await f.panel.act({type:'like',post:'42'});assert.equal(first.status,'failed');assert(first.message.includes('Add posting credit to cover this action'));assert(!first.message.includes('PRIVATE_BALANCE_SENTINEL'));
+ assert.equal((await f.panel.act({type:'like',post:'42'})).status,'confirmed');assert.equal(tries,2);assert.equal(f.document.querySelector('dialog').open,false);
+});
+
+for(const completion of ['included','confirmed'])test(`new ${completion} name becomes selectable before unrelated account refresh completes`,{timeout:3000},async t=>{
+ const names=Promise.withResolvers(),namesStarted=Promise.withResolvers(),balance=Promise.withResolvers(),balanceStarted=Promise.withResolvers();
+ const f=await fixture(t,{defaults:{type:'name'},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{status:completion,txHash:includedPost().txHash,inclusion:includedPost(),nameAvailability:{id:'7'},namesRead:()=>{namesStarted.resolve();return names.promise;},balanceRefresh:()=>{balanceStarted.resolve();return balance.promise;}}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);
+ const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');
+ f.document.querySelector('[data-action-review]').fire('click');await namesStarted.promise;
+ assert.equal(identity.querySelector('select').value,'0');assert.equal(f.core().status,1,'no fee/deposit refresh before owned-name discovery');
+ assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ names.resolve({identities:['7'],records:[{id:'7',first:'River',last:'Moss'}],nextCursor:null});await balanceStarted.promise;
+ assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.equal(identity.querySelector('select').disabled,false);assert.equal(identity.querySelector('select').value,'7');
+ identity.querySelector('select').value='0';identity.querySelector('select').fire('change');balance.resolve();await new Promise(setImmediate);
+ assert.equal(identity.querySelector('select').value,'0','later balance refresh does not restore the old selection');assert.equal(f.core().names,1);assert.equal(f.core().status,2);
 });

@@ -27,6 +27,20 @@ export function createDepositRefunds({sdk, ethers, provider, node, scope, storag
     read: key => storage.read('rolling-refund-request:' + key),
     compareAndSwap: (key, oldValue, nextValue) => storage.compareAndSwap('rolling-refund-request:' + key, oldValue, nextValue),
   };
+  // Drain every started read before releasing the account operation, including
+  // synchronous failures. Bounded batches avoid flooding provider/extension RPC.
+  const together = async reads => {
+    const results = await Promise.allSettled(reads.map(read => Promise.resolve().then(read)));
+    const failed = results.find(result => result.status === 'rejected');
+    if (failed) throw failed.reason;
+    return results.map(result => result.value);
+  };
+  const batches = async (items, read) => {
+    const values = [];
+    for (let offset = 0; offset < items.length; offset += 8)
+      values.push(...await together(items.slice(offset,offset + 8).map((item,index) => () => read(item,offset + index))));
+    return values;
+  };
   let busy = false;
   async function exclusive(operation) {
     check(!busy, 'ROLLING_BUSY');
@@ -54,22 +68,24 @@ export function createDepositRefunds({sdk, ethers, provider, node, scope, storag
   }
   async function snapshot(session) {
     const {read} = session;
-    check(String((await read(() => provider.getNetwork())).chainId) === fixed.chainId);
-    const info = await read(() => node.getNodeInfo());
+    const [network,info,l1,tips] = await together([
+      () => read(() => provider.getNetwork()), () => read(() => node.getNodeInfo()),
+      () => read(() => provider.getBlock('latest')), () => read(() => node.getChainTips()),
+    ]);
+    check(String(network.chainId) === fixed.chainId);
     check(String(info.l1ChainId) === fixed.chainId && String(info.rollupVersion) === fixed.version &&
       lower(info.l1ContractAddresses.rollupAddress) === fixed.rollup);
-    const l1 = await read(() => provider.getBlock('latest'));
     check(Number.isSafeInteger(l1?.number) && l1.number >= 0);
     hash(l1.hash);
-    const tip = (await read(() => node.getChainTips())).checkpointed?.block;
+    const tip = tips.checkpointed?.block;
     check(Number.isSafeInteger(tip?.number) && tip.number > 0);
     const anchor = {l1: {number:l1.number, hash:hash(l1.hash)}, l2: {number:tip.number, hash:hash(tip.hash)}};
     await recheck(session, anchor);
     return anchor;
   }
   async function recheck({read}, anchor) {
-    const l1 = await read(() => provider.getBlock(anchor.l1.number));
-    const l2 = await read(() => node.getBlockData(anchor.l2.number));
+    const [l1,l2] = await together([() => read(() => provider.getBlock(anchor.l1.number)),
+      () => read(() => node.getBlockData(anchor.l2.number))]);
     check(hash(l1?.hash) === anchor.l1.hash && hash(l2?.blockHash) === anchor.l2.hash &&
       Number(l2?.header?.globalVariables?.blockNumber) === anchor.l2.number, 'ROLLING_CONTEXT_CHANGED');
   }
@@ -78,33 +94,45 @@ export function createDepositRefunds({sdk, ethers, provider, node, scope, storag
     const result = await session.read(() => provider.call({to:fixed.portal, data, blockTag:anchor.l1.number}));
     return abi.decodeFunctionResult(name,result)[0];
   }
-  async function inspect(session, anchor, id) {
-    depositId(id);
-    const record = await call(session, anchor, 'getDeposit', [session.owner,id]);
-    check(record.length === 6 && typeof record.amount === 'bigint' && record.amount >= 0n && record.amount < 2n ** 96n);
-    check(hash(record.secretHash) === id && typeof record.refundRequested === 'boolean');
-    check(record.refundBlock >= 0n && record.refundBlock <= BigInt(anchor.l1.number));
-    check(record.refundRequested === (record.refundBlock > 0n));
-    let decision = null;
-    if (record.amount > 0n) {
-      const inner = await sdk.poseidon2HashWithSeparator([
-        new sdk.Fr(BigInt(fixed.portal)), new sdk.Fr(BigInt(session.owner)), sdk.Fr.fromHexString(id),
-      ],0x42420104);
-      const siloed = await sdk.siloNullifier(sdk.AztecAddress.fromStringUnsafe(fixed.board),inner);
-      const found = await session.read(() => node.findLeavesIndexes({number:anchor.l2.number},sdk.MerkleTreeId.NULLIFIER_TREE,[siloed]));
-      check(Array.isArray(found) && found.length === 1);
-      if (found[0] !== undefined) {
-        const hit = found[0];
-        check(typeof hit.data === 'bigint' && hit.data >= 0n && Number.isSafeInteger(hit.l2BlockNumber) && hit.l2BlockNumber > 0 && hit.l2BlockNumber <= anchor.l2.number);
-        decision = {blockNumber:hit.l2BlockNumber, blockHash:hash(hit.l2BlockHash)};
-        const block = await session.read(() => node.getBlockData(decision.blockNumber));
-        check(hash(block?.blockHash) === decision.blockHash);
-      }
+  async function inspectMany(session, anchor, ids) {
+    ids.forEach(depositId);
+    const records = await batches(ids, id => call(session,anchor,'getDeposit',[session.owner,id]));
+    for (const [index,record] of records.entries()) {
+      check(record.length === 6 && typeof record.amount === 'bigint' && record.amount >= 0n && record.amount < 2n ** 96n);
+      check(hash(record.secretHash) === ids[index] && typeof record.refundRequested === 'boolean');
+      check(record.refundBlock >= 0n && record.refundBlock <= BigInt(anchor.l1.number));
+      check(record.refundRequested === (record.refundBlock > 0n));
     }
-    const status = record.amount === 0n ? 'returned' : record.refundRequested ? 'requested' : decision ? 'claimed' : 'available';
-    return {depositId:id, owner:session.owner, amount:String(record.amount), status,
-      refundBlock:Number(record.refundBlock), decision};
+    const funded = records.map((record,index) => record.amount > 0n ? index : -1).filter(index => index >= 0);
+    const nullifiers = await batches(funded, async index => {
+      const inner = await sdk.poseidon2HashWithSeparator([
+        new sdk.Fr(BigInt(fixed.portal)), new sdk.Fr(BigInt(session.owner)), sdk.Fr.fromHexString(ids[index]),
+      ],0x42420104);
+      return sdk.siloNullifier(sdk.AztecAddress.fromStringUnsafe(fixed.board),inner);
+    });
+    const found = nullifiers.length ? await session.read(() => node.findLeavesIndexes(
+      {number:anchor.l2.number},sdk.MerkleTreeId.NULLIFIER_TREE,nullifiers)) : [];
+    check(Array.isArray(found) && found.length === funded.length);
+    const decisions = new Map(), blocks = new Map();
+    for (const [offset,hit] of found.entries()) {
+      if (hit === undefined) continue;
+      check(typeof hit.data === 'bigint' && hit.data >= 0n && Number.isSafeInteger(hit.l2BlockNumber) && hit.l2BlockNumber > 0 && hit.l2BlockNumber <= anchor.l2.number);
+      const decision = {blockNumber:hit.l2BlockNumber,blockHash:hash(hit.l2BlockHash)};
+      check(!blocks.has(decision.blockNumber) || blocks.get(decision.blockNumber) === decision.blockHash);
+      blocks.set(decision.blockNumber,decision.blockHash);decisions.set(funded[offset],decision);
+    }
+    await batches([...blocks],async ([number,expectedHash]) => {
+      const block = await session.read(() => node.getBlockData(number));
+      check(hash(block?.blockHash) === expectedHash);
+    });
+    return records.map((record,index) => {
+      const decision = decisions.get(index) ?? null;
+      const status = record.amount === 0n ? 'returned' : record.refundRequested ? 'requested' : decision ? 'claimed' : 'available';
+      return {depositId:ids[index],owner:session.owner,amount:String(record.amount),status,
+        refundBlock:Number(record.refundBlock),decision};
+    });
   }
+  const inspect = async (session,anchor,id) => (await inspectMany(session,anchor,[id]))[0];
   async function requestedReceipt(session, anchor, entry) {
     check(entry.status === 'requested' && entry.refundBlock > 0);
     const topic = abi.getEvent('RefundRequested').topicHash;
@@ -117,9 +145,11 @@ export function createDepositRefunds({sdk, ethers, provider, node, scope, storag
     const event = abi.parseLog(log)?.args;
     check(event && lower(event.depositor) === session.owner && hash(event.depositId) === entry.depositId && String(event.amount) === entry.amount);
     const txHash = hash(log.transactionHash);
-    const receipt = await session.read(() => provider.getTransactionReceipt(txHash));
-    const tx = await session.read(() => provider.getTransaction(txHash));
-    const block = await session.read(() => provider.getBlock(entry.refundBlock));
+    const [receipt,tx,block] = await together([
+      () => session.read(() => provider.getTransactionReceipt(txHash)),
+      () => session.read(() => provider.getTransaction(txHash)),
+      () => session.read(() => provider.getBlock(entry.refundBlock)),
+    ]);
     check(receipt?.status === 1 && hash(receipt.hash) === txHash && receipt.blockNumber === entry.refundBlock &&
       hash(receipt.blockHash) === hash(log.blockHash) && hash(block?.hash) === hash(log.blockHash));
     check(hash(tx?.hash) === txHash && lower(tx.from) === session.owner && lower(receipt.from) === session.owner &&
@@ -140,8 +170,7 @@ export function createDepositRefunds({sdk, ethers, provider, node, scope, storag
         const session = await selectedWallet(), anchor = await snapshot(session);
         const ids = await call(session,anchor,'getDepositIds',[session.owner,offset,limit]);
         check(Array.isArray(ids) && ids.length <= limit && new Set(ids.map(lower)).size === ids.length);
-        const deposits = [];
-        for (const id of ids) deposits.push(await inspect(session,anchor,depositId(lower(id))));
+        const deposits = await inspectMany(session,anchor,ids.map(id => depositId(lower(id))));
         await recheck(session,anchor);
         return {owner:session.owner, deposits, nextOffset:ids.length === limit ? offset + limit : null, anchor};
       });

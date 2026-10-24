@@ -125,14 +125,14 @@ import {normalizePrivateFeeGasSettings} from '../private-fee-client.mjs';
 import {advanceAggregateClaim} from './aggregate-wallet.mjs';
 const boardArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 const bokArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url))));
-function durableClaimApplication(f,funding){
+function durableClaimApplication(f,funding,{proposed=false}={}){
  // Original application, ABIs and AES-GCM/CAS workflow; the canonical L2
  // outcome and bridge witness adapter are labelled finite SDK fixtures.
  const state={sends:0,prepares:0,outcome:null},owner=new AztecAddress(Fr.fromString(f.options.owner));
  const node={getBlockData:async()=>({header:{globalVariables:{blockNumber:3}},blockHash:h(60)}),getNodeInfo:async()=>({l1ContractAddresses:{feeJuicePortalAddress:f.options.scope.feePortal,feeJuiceAddress:f.options.scope.feeToken}})};
- const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome,confirmed:()=>{}};
+ const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome,confirmed:()=>{},included:async receipt=>assert.equal(receipt.status,'proposed')};
  const wallet={aztecNode:node,pxe:{getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:3},hash:async()=>h(60),state:{l1ToL2MessageTree:{root:new Fr(61)}}})},getAccounts:async()=>[owner],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async(_payload,options)=>{
-  state.sends++;state.outcome={operation:options.journalOperation,outcome:'success',txHash:h(70),receipt:{txHash:h(70),status:'checkpointed',blockNumber:3,blockHash:h(60),transactionFee:1n}};return {receipt:{}};
+  state.sends++;state.outcome={operation:options.journalOperation,outcome:'success',txHash:h(70),receipt:{txHash:h(70),status:options.confirmationTier==='proposed'?'proposed':'checkpointed',executionResult:'success',blockNumber:3,blockHash:h(60),transactionFee:1n}};return {receipt:{}};
  }};
  const sdk={Fr,AztecAddress,encodeArguments,normalizePrivateFeeGasSettings,isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,inspectTrustedNode:async()=>{},
   Contract:{at:()=>({methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>({result:[0n,...Array(9).fill(0n)]})})})})},
@@ -141,7 +141,7 @@ function durableClaimApplication(f,funding){
   prepareFundingClaim:async input=>({status:'claim-ready',claim:input.kind==='collateral'?{contract:f.options.board,method:'claim_deposit',args:[input.receipt.sender,input.receipt.amount,h(80),input.receipt.leafIndex]}:input.kind==='private-fee'?{contract:f.options.scope.privateFpc,kind:'private-fee-bridge',bridgeClaim:{amount:input.receipt.amount,salt:h(81),leafIndex:input.receipt.leafIndex}}:{contract:f.options.bok,method:'claim',args:[input.receipt.amount,input.secrets.recipientSalt,input.secrets.bridgeSecret,input.receipt.leafIndex]}})};
  const options={sdk,deployment:{board:{address:f.options.board,artifact:boardArtifact},network:f.options.network,portal:f.options.scope.collateralPortal,
   privateFee:{address:f.options.scope.privateFpc,artifact:{},gasSettings:{gasLimits:{daGas:5,l2Gas:5},teardownGasLimits:{daGas:0,l2Gas:1},maxFeesPerGas:{feePerDaGas:1,feePerL2Gas:1},maxPriorityFeesPerGas:{feePerDaGas:0,feePerL2Gas:0}}},bok:{address:f.options.bok,operator:h(16),pluginId:h(17),artifact:bokArtifact}},
-  accountSession:{owner,wallet,node,journal,walletSecret:f.options.walletSecret,walletSalt:f.options.walletSalt},privateStore:f.options.storage,contextGuard:async()=>{},funding:{provider:f.options.provider,loadAggregate:hash=>funding.loadAggregate(hash)}};
+  accountSession:{proposedTransactions:proposed,owner,wallet,node,journal,walletSecret:f.options.walletSecret,walletSalt:f.options.walletSalt},privateStore:f.options.storage,contextGuard:async()=>{},funding:{provider:f.options.provider,loadAggregate:hash=>funding.loadAggregate(hash)}};
  const workflow={state,open:()=>createRollingApplication(options)};f.state.workflow=workflow;return workflow;
 }
 test('original encrypted application workflow relinks after prepare-before-checkpoint interruption and sends once',async()=>{
@@ -176,14 +176,14 @@ test('aggregate completion rejects substituted intent hash and receipts, unknown
  const app=workflow.open(),prepared=await app.prepare({type:'claim-deposit',...receipts});await funding.checkpointClaim({intentId:prepared.intentId,attempted:true});
  const done=await app.submitPrepared(prepared.intentId);
  await assert.rejects(funding.prepare(f.allocation),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
- await assert.rejects(funding.recordConfirmedClaim({...done,txHash:h(71)}),{code:'ROLLING_FUNDING_MISMATCH'});
- for(const key of ['receipt','feeReceipt','bokReceipt'])await assert.rejects(funding.recordConfirmedClaim({...done,action:{...done.action,[key]:{...done.action[key],amount:'999'}}}),{code:'ROLLING_FUNDING_MISMATCH'});
+ await assert.rejects(funding.recordClaimCompletion({...done,txHash:h(71)}),{code:'ROLLING_FUNDING_MISMATCH'});
+ for(const key of ['receipt','feeReceipt','bokReceipt'])await assert.rejects(funding.recordClaimCompletion({...done,action:{...done.action,[key]:{...done.action[key],amount:'999'}}}),{code:'ROLLING_FUNDING_MISMATCH'});
  for(const status of ['unknown','reverted']){
-  await funding.recordConfirmedClaim({...done,status});await assert.rejects(funding.prepare(f.allocation),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
+  await funding.recordClaimCompletion({...done,status});await assert.rejects(funding.prepare(f.allocation),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
  }
  const outcome=workflow.state.outcome;workflow.state.outcome={...outcome,outcome:'reverted'};
- await assert.rejects(funding.recordConfirmedClaim(done),{code:'ROLLING_FUNDING_MISMATCH'});workflow.state.outcome=outcome;
- await funding.recordConfirmedClaim(done);await (await f.open()).prepare(f.allocation);assert.equal(f.state.sends,1);assert.equal(workflow.state.sends,1);
+ await assert.rejects(funding.recordClaimCompletion(done),{code:'ROLLING_FUNDING_MISMATCH'});workflow.state.outcome=outcome;
+ await funding.recordClaimCompletion(done);await (await f.open()).prepare(f.allocation);assert.equal(f.state.sends,1);assert.equal(workflow.state.sends,1);
 });
 
 test('aggregate manual over-cap confirmation checkpoints before send and retains completion for the next quote',async()=>{
@@ -439,7 +439,7 @@ function claimProgressFixture(failureStep,original){
  const rows=[],calls=[],run=(name,value)=>async()=>{calls.push(name);if(name===failureStep)throw original;return value;};
  const saved={paymentSaved:true,privateFeeCap:'10',claim:failureStep==='reconcile'?{intentId:'PRIVATE_ID',attempted:true}:null};
  const prepared={intentId:'PRIVATE_ID',status:'prepared',maximumFee:'10'},confirmed={...prepared,status:'confirmed'};
- return {rows,calls,input:{onProgress:row=>rows.push(row),funding:{inspect:run('inspect',saved),recover:run('recover',{receipt:{private:'SECRET_RECEIPT'}}),checkpointClaim:run('checkpoint'),recordConfirmedClaim:run('record')},application:{readAccountStatus:run('account-status',{status:'fee-ready'}),prepare:run('prepare',prepared),submitPrepared:run('submit',confirmed),reconcile:run('reconcile',confirmed)}}};
+ return {rows,calls,input:{onProgress:row=>rows.push(row),funding:{inspect:run('inspect',saved),recover:run('recover',{receipt:{private:'SECRET_RECEIPT'}}),checkpointClaim:run('checkpoint'),recordClaimCompletion:run('record')},application:{readAccountStatus:run('account-status',{status:'fee-ready'}),prepare:run('prepare',prepared),submitPrepared:run('submit',confirmed),reconcile:run('reconcile',confirmed)}}};
 }
 for(const step of ['inspect','recover','account-status','prepare','checkpoint','submit','reconcile'])test('claim progress reports exact failing '+step+' without exposing original exception or values',async()=>{
  const original=Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_MISMATCH'}),f=claimProgressFixture(step,original);
@@ -823,4 +823,17 @@ test('parallel quote retains final canonical block and wallet guards after indep
   f.options.provider.getBlock=async tag=>{const block=await getBlock(tag);return changed&&change==='canonical'&&typeof tag==='number'?{...block,hash:h(999)}:block;};
   await assert.rejects((await f.open()).prepare(f.allocation));assert.equal(f.state.sends,0);
  }
+});
+
+for(const kind of ['aggregate','private-fee','bok'])test(`included ${kind} claim retains authenticated custody and permits a successor payment without checkpoint`,async()=>{
+ const f=kind==='aggregate'?fixture():topupFixture(kind);f.state.allowance=1000n;let workflow,canonical=true,verified=0;
+ f.options.reconcileClaim=id=>workflow.open().reconcile(id);
+ f.options.verifyClaim=async txHash=>{verified++;return verifyRollingTopupClaim({sdk:{TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn(),requireSuccessfulReceipt},node:{getTxReceipt:async()=>({txHash:h(70),status:'proposed',executionResult:'success',blockNumber:3,blockHash:h(60)}),getBlock:async()=>({hash:canonical?h(60):h(61)})},txHash,contextGuard:f.options.contextGuard,confirmationTier:'proposed'});};
+ const funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();workflow=durableClaimApplication(f,funding,{proposed:true});
+ const result=await advanceAggregateClaim({application:workflow.open(),funding,waits:{claim:async()=>assert.fail('included claim must not wait for checkpoint')}});
+ assert.equal(result.state,'included');assert.equal(result.intent.status,'included');assert.equal(workflow.state.sends,1);assert.equal(f.state.sends,1);assert(verified>0);
+ const original=await funding.loadAggregate(receipts.receipt.txHash);
+ f.options.reconcileClaim=async()=>{throw Error('a later ordinary action has replaced the single workflow');};
+ const reopened=await f.open();await reopened.prepare(f.allocation);assert.deepEqual(await reopened.loadAggregate(receipts.receipt.txHash),original);assert.equal(f.state.sends,1);
+ canonical=false;await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.state.sends,1);
 });
