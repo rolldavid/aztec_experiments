@@ -42,7 +42,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
  if(boundedFee<=available){
   const reservation=boundedFee||1n;await guard();const payload=await payloadFor(reservation);
   // Immediate sends validate and prove this exact bounded payload in one PXE operation.
-  // Reviews and low-credit reservation searches still simulate here.
+  // Reviews validate here; low-credit sends first measure an affordable reservation.
   if(deferSimulation)return {payload,gasSettings:bounded,reservation,maximumFee:boundedFee,passes:0,atomicSimulation:true};
   const simulationPXE=wallet.pxe,inputSnapshot=snapshotPrivateFeeSimulationInput(payload,from,bounded);
   const result=await simulator.public(payload,from,bounded,true);
@@ -78,6 +78,9 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
       const gasSettings=settings(limits.gasLimits,limits.teardownGasLimits),required=gasSettings.getFeeLimit().toBigInt();
       if(required<=available){
        const finalReservation=required||1n,finalPayload=await payloadFor(finalReservation);await guard();
+       // The measured reservation may differ from the probes. Immediate sends validate
+       // its exact payload and gas settings inside the native proving operation.
+       if(deferSimulation)return {payload:finalPayload,gasSettings,reservation:finalReservation,maximumFee:required,passes:pass+1,atomicSimulation:true};
        const simulationPXE=wallet.pxe,inputSnapshot=snapshotPrivateFeeSimulationInput(finalPayload,from,gasSettings);
        const final=await simulator.public(finalPayload,from,gasSettings,true);
        if(!successful(final))throw final.publicOutput?.revertReason??fail('BB_SIMULATION_FAILED');
@@ -98,5 +101,5 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
 }
 export async function sendPrivateFeeTransaction(input){
  const estimated=await estimatePrivateFeeTransaction(input);
- return input.wallet.sendTx(estimated.payload,{from:input.from,fee:{gasSettings:estimated.gasSettings},simulationValidation:estimated.simulationValidation});
+ return input.wallet.sendTx(estimated.payload,{from:input.from,fee:{gasSettings:estimated.gasSettings},simulationValidation:estimated.simulationValidation,atomicSimulation:estimated.atomicSimulation});
 }

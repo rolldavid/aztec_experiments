@@ -184,3 +184,49 @@ test('immediate funded send defers exactly one strict simulation to atomic provi
  assert.equal(result.payload.calls[0].args[0].toBigInt(),result.maximumFee);
  assert(result.maximumFee<=h.input.prepared.availableCredit);
 });
+
+test('immediate low-credit send removes only the final strict simulation and preserves the measured payload and budget',async()=>{
+ const review=fixture(),immediate=fixture();
+ const checked=await estimatePrivateFeeTransaction(review.input);
+ const deferred=await estimatePrivateFeeTransaction({...immediate.input,deferSimulation:true});
+ assert.equal(deferred.atomicSimulation,true);assert.equal(deferred.simulationValidation,undefined);
+ assert.equal(deferred.reservation,checked.reservation);assert.equal(deferred.maximumFee,checked.maximumFee);
+ assert.deepEqual(deferred.gasSettings,checked.gasSettings);assert.deepEqual(deferred.payload,checked.payload);
+ assert.equal(deferred.passes,checked.passes);assert(deferred.passes>0);
+ assert.deepEqual(immediate.calls,review.calls.slice(0,-1));assert.equal(review.calls.at(-1).enforce,true);
+ assert(immediate.calls.every(call=>!call.enforce));assert(deferred.maximumFee<=immediate.input.prepared.availableCredit);
+});
+
+for(const failure of [null,'BB_SIMULATION_FAILED','BB_GAS_LIMIT_EXCEEDED','TX_INVALID'])test('low-credit native atomic handoff '+(failure??'succeeds once'),async()=>{
+ const h=fixture(),observed=[],journaled=[],submitted=[],tx={getTxHash:()=>new Fr(77)};
+ let handedPayload,handedOptions;
+ class SDKWalletBoundary {
+  constructor(pxe){this.pxe=pxe;}
+  completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}
+  async simulateViaEntrypoint(){assert.fail('The immediate send must not add a separate final simulation');}
+  createTxExecutionRequestFromPayloadAndFee(payload,from,fee){return {payload,from,gasSettings:fee.gasSettings};}
+  scopesFrom(from){return [from];}senderForTagsFrom(from){return from;}
+ }
+ const ctx=vm.createContext({performance,console,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});
+ vm.runInContext(await fs.readFile(new URL('../apps/src/billboard/user/engine.js',import.meta.url),'utf8'),ctx);
+ const pxe={proveTx:async()=>assert.fail('Unvalidated proof must never be used'),proveTxWithPublicValidation:async(request,options)=>{
+  observed.push('validate');assert.equal(request.payload,handedPayload);assert.deepEqual(request.gasSettings.toBuffer(),handedOptions.fee.gasSettings.toBuffer());
+  assert.equal(request.from,h.input.from);assert.equal(options.senderForTags,h.input.from);assert.equal(options.scopes[0],h.input.from);
+  assert.equal(request.payload.calls[0].args[0].toBigInt(),request.gasSettings.getFeeLimit().toBigInt());
+  assert(request.gasSettings.getFeeLimit().toBigInt()<=h.input.prepared.availableCredit);
+  if(failure)throw Object.assign(Error(failure),{code:failure});
+  observed.push('prove');return {toTx:async()=>tx};
+ }};
+ const a={BaseWallet:SDKWalletBoundary,GasSettings,submitOnceWithReconciliation:async(_node,value)=>submitted.push(value),waitForSuccessfulReceipt:async()=>({status:'checkpointed',transactionFee:1n})};
+ const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,pxe,{},{},()=>{},Fr.ONE,{transactionJournal:{assertCanStart:async()=>null,prepare:async value=>journaled.push(value),confirmed(){}}});
+ const send=wallet.sendTx.bind(wallet);wallet.sendTx=(payload,options)=>{handedPayload=payload;handedOptions=options;return send(payload,options);};h.input.wallet=wallet;
+ const pending=sendPrivateFeeTransaction({...h.input,deferSimulation:true});
+ if(failure){await assert.rejects(pending,{code:failure});assert.deepEqual(observed,['validate']);assert.equal(journaled.length,0);assert.equal(submitted.length,0);}
+ else{await pending;assert.deepEqual(observed,['validate','prove']);assert.deepEqual(journaled,[tx]);assert.deepEqual(submitted,[tx]);}
+ assert.equal(handedOptions.atomicSimulation,true);assert.equal(handedOptions.simulationValidation,undefined);assert(h.calls.every(call=>!call.enforce));
+});
+
+test('low-credit deferral cannot bypass a probe application failure',async()=>{
+ const h=fixture();h.input.simulator.public=async()=>{throw h.error(undefined,undefined,'Application rejected');};
+ await assert.rejects(sendPrivateFeeTransaction({...h.input,deferSimulation:true}),/Application rejected/);assert.equal(h.sends.length,0);
+});

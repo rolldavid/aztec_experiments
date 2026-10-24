@@ -553,8 +553,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function postingPolicy(board,subboard){
     if(subboard===zero){
-      // main_policy is a PUBLIC ABI method: simulate() executes a whole wallet
-      // transaction. Posting only needs this one anchored storage value.
+      // main_policy is a public static view. Posting needs only this one
+      // storage value read at the canonical account anchor.
       const slot=deployment.board.artifact.storageLayout?.main_version?.slot;check(slot!==undefined,'ROLLING_ABI_MISMATCH');
       const anchor=await balanceAnchor();
       const value=chainValue(await session.node.getPublicStorageAt({hash:anchor.blockHash},deployment.board.address,new sdk.Fr(BigInt(slot))));
@@ -660,8 +660,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const bokContract=async()=>{await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');return sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(bok.address))),deployment.bok.artifact,session.wallet);};
   const uint128=value=>{check(typeof value==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(value)&&BigInt(value)<(1n<<128n));return BigInt(value);};
   async function pluginRecord(){
-    // get_plugin is a public ABI view, so Contract.simulate would execute a
-    // complete wallet transaction. V6 PluginRecord is two Packable fields in
+    // Read the pinned plugin fields at the canonical anchor rather than
+    // simulate the public static view. V6 PluginRecord is two Packable fields in
     // consecutive PublicMutable slots, keyed with the native Map derivation.
     const artifact=deployment.board.artifact,slot=artifact.storageLayout?.plugins?.slot;
     const matches=[...artifact.functions,...(artifact.nonDispatchPublicFunctions??[])].filter(fn=>fn.name==='get_plugin');
