@@ -1,3 +1,4 @@
+import {KERNEL_WORK_PINS} from './kernel-witness-work.mjs';
 import {OWNER_DISCOVERY_PINS,transformOwnerDiscovery} from './patch-pxe-owner-discovery.mjs';
 import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN,preferenceRecoverySource,transformPreferencePage} from './patch-pxe-preference-page.mjs';
 import {INDEXEDDB_ATOMICITY_PINS, transformIndexedDBAtomicity} from './patch-indexeddb-atomicity.mjs';
@@ -46,6 +47,8 @@ function fixture(t) {
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3.wasm': 'synthetic sqlite asset',
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js': 'synthetic sqlite proxy',
   };
+  inputs['scripts/kernel-witness-work.mjs']='// fixture kernel transform';
+  for(const name of Object.keys(KERNEL_WORK_PINS))inputs[name]=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
   inputs['scripts/patch-pxe-owner-discovery.mjs']=fs.readFileSync(new URL('./patch-pxe-owner-discovery.mjs',import.meta.url),'utf8');
   for(const pin of OWNER_DISCOVERY_PINS){
     const source=fs.readFileSync(new URL('./testing/fixtures/pxe-owner-discovery-6.0.0/'+pin.path,import.meta.url),'utf8');
@@ -253,4 +256,11 @@ for(const pin of OWNER_DISCOVERY_PINS)test('owner discovery literal SDK pin '+pi
 
 for(const name of ['scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js'])test('private log projection SDK pin '+name,t=>{
  const f=fixture(t);delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/SDK|source/);
+});
+
+for(const name of ['scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS)])test('kernel witness source closure rejects missing input '+name,t=>{
+ const f=fixture(t);delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input|kernel witness source mismatch/);
+});
+for(const name of Object.keys(KERNEL_WORK_PINS))test('kernel witness literal native pin '+name,t=>{
+ const f=fixture(t);f.write(name,'changed native implementation');f.manifest.inputs[name]=hash('changed native implementation');f.save();assert.throws(()=>checkSdk(f.root),/kernel witness source mismatch/);
 });

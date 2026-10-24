@@ -1,3 +1,4 @@
+import {KERNEL_WORK_PINS} from './kernel-witness-work.mjs';
 import {PRIVATE_LOG_CACHE_PIN} from './pxe-log-projection.mjs';
 import {OWNER_DISCOVERY_PINS} from './patch-pxe-owner-discovery.mjs';
 import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN} from './patch-pxe-preference-page.mjs';
@@ -21,7 +22,7 @@ const preferenceInputs = [
   ...[PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN].map(pin=>['node_modules/@aztec-labs/pxe/'+pin.generated,pin.sha256]),
   [PREFERENCE_PAGE_COMPACT_PIN.source,PREFERENCE_PAGE_COMPACT_PIN.sha256],
 ];
-const requiredInputs = ['scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),'scripts/pxe-sync-snapshot.mjs','shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs','node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js','scripts/patch-pxe-preference-page.mjs',...preferenceInputs.map(([name])=>name),'scripts/patch-indexeddb-atomicity.mjs', ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs', ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-private-event-query.mjs', ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'shared/sdk-entry.mjs', 'shared/sdk-store.mjs', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js', 'scripts/toolchain.mjs', 'toolchain.json', ...SDK_ASSETS.map(([input]) => input)];
+const requiredInputs = ['scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),'scripts/pxe-sync-snapshot.mjs','shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs','node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js','scripts/patch-pxe-preference-page.mjs',...preferenceInputs.map(([name])=>name),'scripts/patch-indexeddb-atomicity.mjs', ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs', ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-private-event-query.mjs', ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'shared/sdk-entry.mjs', 'shared/sdk-store.mjs', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js', 'scripts/toolchain.mjs', 'toolchain.json', ...SDK_ASSETS.map(([input]) => input)];
 const sha = data => createHash('sha256').update(data).digest('hex');
 const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -54,6 +55,7 @@ export function checkSdk(root = ROOT, sdkDir = path.join(root, '.build/sdk')) {
   verify(root, 'package-lock.json', manifest.lockfile, 'lockfile');
   verify(root, 'scripts/build-sdk.mjs', manifest.buildScript, 'build script');
   if(manifest.inputs['node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js']!==PRIVATE_LOG_CACHE_PIN)throw new Error('SDK private log cache source mismatch');
+  for(const [name,digest] of Object.entries(KERNEL_WORK_PINS))if(manifest.inputs[name]!==digest)throw new Error('SDK kernel witness source mismatch');
   for (const name of requiredInputs) {
     if (!Object.hasOwn(manifest.inputs, name)) throw new Error(`Missing SDK input: ${name}`);
   }
