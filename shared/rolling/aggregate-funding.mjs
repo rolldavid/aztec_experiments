@@ -56,6 +56,12 @@ async function simulate(request,preparation,transaction,strict){
  await validState(request,preparation,strict);
  return freeze(transaction);
 }
+// All started public reads settle before the owning operation can release its lock.
+async function together(reads){
+ const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));
+ const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+ return results.map(result=>result.value);
+}
 function freeze(x){if(x && typeof x==='object'){Object.values(x).forEach(freeze);Object.freeze(x);}return x;}
 export const collateralConsentTypes=freeze({DepositFor:[{name:'beneficiary',type:'address'},{name:'executor',type:'address'},{name:'amount',type:'uint256'},{name:'secretHash',type:'bytes32'},{name:'nonce',type:'uint256'},{name:'deadline',type:'uint256'}]});
 /** Trusted session supplies authenticated deployment scope and its public RPC adapter (EIP1193).
@@ -83,20 +89,24 @@ export async function prepareAggregateFunding(input,{provider}={}) {
   check(quantity(await request('eth_chainId',[]))===BigInt(s.chainId),'CHAIN');
   const block=blockSnapshot(await request('eth_getBlockByNumber',['latest',false]));
   const tag=block.number;
-  for(const [address,expected] of [[s.router,s.routerCodeHash],[s.quoter,s.quoterCodeHash]]){
-    const code=await request('eth_getCode',[address,tag]);check(typeof code==='string' && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak256(code)===expected,'RUNTIME');
-  }
   const call=async(address,abi,name,args=[])=>{const data=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag]);try{return abi.decodeFunctionResult(name,data);}catch{fail('PUBLIC_READ_FAILED');}};
-  for(const key of ['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'])check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE');
-  check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true && (!hasBok || (await call(s.bokPortal,bok,'active'))[0]===true),'PORTAL_NOT_READY');
-  const minimum=(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0], maximum=(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0];
+  const [,,minimum,maximum,nonce]=await together([
+    ()=>together([[s.router,s.routerCodeHash],[s.quoter,s.quoterCodeHash]].map(([address,expected])=>async()=>{
+      const code=await request('eth_getCode',[address,tag]);check(typeof code==='string' && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak256(code)===expected,'RUNTIME');
+    })),
+    ()=>together(['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'].map(key=>async()=>check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE'))),
+    async()=>(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0],
+    async()=>(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0],
+    async()=>(await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0].toString(),
+    async()=>check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true,'PORTAL_NOT_READY'),
+    async()=>{if(hasBok)check((await call(s.bokPortal,bok,'active'))[0]===true,'PORTAL_NOT_READY');},
+  ]);
   check(BigInt(a.collateralWei)>=minimum && BigInt(a.collateralWei)<=maximum,'COLLATERAL_BOUNDS');
-  const nonce=(await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0].toString();
   const quote=async(token,amount,poolFee)=>{
     const q=(await call(s.quoter,quoter,'quoteExactOutputSingle',[[s.weth,token,amount,poolFee,0]]))[0];
     check(q>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxEth:((q*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedEth:q.toString()};
   };
-  const fee=await quote(s.feeToken,a.feeAmount,a.feePoolFee), credit=hasBok?await quote(s.bokToken,a.bokAmount,a.bokPoolFee):{amount:'0',maxEth:'0',poolFee:0,quotedEth:'0'};
+  const [fee,credit]=await together([()=>quote(s.feeToken,a.feeAmount,a.feePoolFee),()=>hasBok?quote(s.bokToken,a.bokAmount,a.bokPoolFee):{amount:'0',maxEth:'0',poolFee:0,quotedEth:'0'}]);
   const current=blockSnapshot(await request('eth_getBlockByNumber',[tag,false]));check(current.hash===block.hash && current.timestamp===block.timestamp,'QUOTE_REORG');
   const deadline=((await pendingTime(request,block))+FUNDING_AUTHORIZATION_SECONDS).toString();
   const plan={beneficiary:w.address,collateral:a.collateralWei,collateralSecretHash:a.collateralSecretHash,
@@ -121,11 +131,16 @@ export async function validateAggregateFundingQuote(preparation){
 /** Encode only a locally prepared immutable plan. Revalidate deadline/account/scope before
  * wallet invocation. Ambiguous, dropped or reorged sends are read-only reconciliation, never replay.
  */
-export async function aggregateFundingTransaction(preparation,consent) {
+// Encoding supplies the exact immutable request for gas estimation only. It is
+// not a preflight verdict; aggregateFundingTransaction validates before journaling/send.
+export function encodeAggregateFundingTransaction(preparation,consent) {
   check(prepared.has(preparation),'UNVERIFIED_QUOTE');
   check(typeof consent==='string' && /^0x(?:[0-9a-fA-F]{2}){1,4096}$/.test(consent),'CONSENT');
-  return simulate(prepared.get(preparation),preparation,{from:preparation.plan.beneficiary,to:preparation.scope.router,chainId:preparation.scope.chainId,
-    value:preparation.value,data:router.encodeFunctionData('fund',[preparation.plan,consent]),planHash:preparation.planHash,recovery:'reconcile-only'},false);
+  return freeze({from:preparation.plan.beneficiary,to:preparation.scope.router,chainId:preparation.scope.chainId,
+    value:preparation.value,data:router.encodeFunctionData('fund',[preparation.plan,consent]),planHash:preparation.planHash,recovery:'reconcile-only'});
+}
+export async function aggregateFundingTransaction(preparation,consent) {
+  return simulate(prepared.get(preparation),preparation,encodeAggregateFundingTransaction(preparation,consent),false);
 }
 
 const usdcAbi=new Interface(['function implementation() view returns(address)','function DOMAIN_SEPARATOR() view returns(bytes32)','function balanceOf(address) view returns(uint256)','function authorizationState(address,bytes32) view returns(bool)']);
@@ -154,18 +169,24 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
   const request=async(method,params)=>{try{return await provider.request({method,params});}catch{fail('PUBLIC_READ_FAILED');}};
   check(quantity(await request('eth_chainId',[]))===BigInt(s.chainId),'CHAIN');
   const block=blockSnapshot(await request('eth_getBlockByNumber',['latest',false])),tag=block.number;
-  for(const [address,expected] of [[s.router,s.routerCodeHash],[s.quoter,s.quoterCodeHash],[s.bokToken,s.usdcCodeHash],[s.usdcImplementation,s.usdcImplementationCodeHash]]){
-    const code=await request('eth_getCode',[address,tag]);check(typeof code==='string'&&/^0x(?:[0-9a-f]{2})+$/.test(code)&&keccak256(code)===expected,'RUNTIME');
-  }
   const call=async(address,abi,name,args=[])=>{const value=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag]);try{return abi.decodeFunctionResult(name,value);}catch{fail('PUBLIC_READ_FAILED');}};
-  for(const key of ['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'])check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE');
-  check(String((await call(s.bokToken,usdcAbi,'implementation'))[0]).toLowerCase()===s.usdcImplementation,'USDC_IMPLEMENTATION');
-  const domain={...s.usdcDomain,chainId:s.chainId,verifyingContract:s.bokToken};check((await call(s.bokToken,usdcAbi,'DOMAIN_SEPARATOR'))[0]===TypedDataEncoder.hashDomain(domain),'USDC_DOMAIN');
-  check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true&&(!hasBok||(await call(s.bokPortal,bok,'active'))[0]===true),'PORTAL_NOT_READY');
-  check(BigInt(a.collateralWei)>=(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0]&&BigInt(a.collateralWei)<=(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0],'COLLATERAL_BOUNDS');
-  const nonce=String((await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0]);
+  const domain={...s.usdcDomain,chainId:s.chainId,verifyingContract:s.bokToken};
+  const [,,minimum,maximum,nonce]=await together([
+    ()=>together([[s.router,s.routerCodeHash],[s.quoter,s.quoterCodeHash],[s.bokToken,s.usdcCodeHash],[s.usdcImplementation,s.usdcImplementationCodeHash]].map(([address,expected])=>async()=>{
+      const code=await request('eth_getCode',[address,tag]);check(typeof code==='string'&&/^0x(?:[0-9a-f]{2})+$/.test(code)&&keccak256(code)===expected,'RUNTIME');
+    })),
+    ()=>together(['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'].map(key=>async()=>check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE'))),
+    async()=>(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0],
+    async()=>(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0],
+    async()=>String((await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0]),
+    async()=>check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true,'PORTAL_NOT_READY'),
+    async()=>{if(hasBok)check((await call(s.bokPortal,bok,'active'))[0]===true,'PORTAL_NOT_READY');},
+    async()=>check(String((await call(s.bokToken,usdcAbi,'implementation'))[0]).toLowerCase()===s.usdcImplementation,'USDC_IMPLEMENTATION'),
+    async()=>check((await call(s.bokToken,usdcAbi,'DOMAIN_SEPARATOR'))[0]===TypedDataEncoder.hashDomain(domain),'USDC_DOMAIN'),
+  ]);
+  check(BigInt(a.collateralWei)>=minimum&&BigInt(a.collateralWei)<=maximum,'COLLATERAL_BOUNDS');
   const quote=async(token,amount,poolFee)=>{const quoted=(await call(s.quoter,quoter,'quoteExactOutputSingle',[[s.bokToken,token,amount,poolFee,0]]))[0];check(quoted>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxUsdc:((quoted*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedUsdc:quoted.toString()};};
-  const collateral=await quote(s.weth,a.collateralWei,a.collateralPoolFee),fee=await quote(s.feeToken,a.feeAmount,a.feePoolFee);
+  const [collateral,fee]=await together([()=>quote(s.weth,a.collateralWei,a.collateralPoolFee),()=>quote(s.feeToken,a.feeAmount,a.feePoolFee)]);
   const deadline=((await pendingTime(request,block))+FUNDING_AUTHORIZATION_SECONDS).toString(),validAfter='0';
   const plan={beneficiary:w.address,relayer:relay.address,collateral:{amount:a.collateralWei,maxUsdc:collateral.maxUsdc,poolFee:collateral.poolFee},collateralSecretHash:a.collateralSecretHash,
     fee:{amount:a.feeAmount,maxUsdc:fee.maxUsdc,poolFee:fee.poolFee},feeSecretHash:a.feeSecretHash,bokAmount:a.bokAmount,bokCommitment:a.bokCommitment,bokSecretHash:a.bokSecretHash,

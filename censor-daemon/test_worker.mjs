@@ -155,7 +155,7 @@ function rollingFixture(t,development=true){
  const state={read:()=>value,async write(next){value=next;}};
  const prepare=async record=>{f.calls.prepare++;return {hash:hex(50+Number(BigInt(record.job.postId))),sha256:'ab'.repeat(32),maximumFee:'100'};};
  const owned=ownRollingPersistentPublicIndex(index,{close(){}});
- f.signer=rollingModerationAdapter({index:owned,node,scope:rscope,lease:{async assertHeld(){}},state,deadline:async()=> '2000',development,stopping:()=>Boolean(f.stopping),
+ f.signer=rollingModerationAdapter({index:owned,node,scope:rscope,lease:{async assertHeld(){}},state,deadline:async(...args)=>f.deadline?f.deadline(...args):'2000',development,stopping:()=>Boolean(f.stopping),
   prepare:async record=>f.prepare?f.prepare(record):prepare(record),assertAuthority:async()=>{f.calls.authority++;if(f.authorityError)throw Error('changed');},
   broadcast:async tx=>{f.calls.broadcast++;if(f.broadcastError)throw Error('lost response');const p=f.posts.find(p=>BigInt(p.id)===BigInt(tx.hash)-50n);p.text=null;p.removal={policy:String(BigInt(f.version)+(p.record.subboard==='0'?0n:1n<<32n)),reason:'Spam',penalized:false,position:{blockNumber:'11',blockHash:hex(60),txHash:tx.hash}};}});
  f.evaluate=async()=>{f.calls.evaluate++;return {isViolation:false};};
@@ -300,4 +300,38 @@ for(const signed of [false,true])test('Rolling exclusive restart recovers '+(sig
  next.recoverLeases();const recovered=next.leaseNext({worker:'replacement'});assert(recovered);
  assert.equal(recovered.job.state,signed?'reconciling':'leased');assert.notEqual(recovered.lease.token,original.lease.token);
  assert.throws(()=>f.store.renew(original.key,original.lease.token),/lease/);assert.equal(f.calls.broadcast,0);
+});
+
+const gate=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+test('Rolling deadline ingestion starts eight reads together, drains each bounded batch and preserves ordering',async t=>{
+ const f=rollingFixture(t);f.posts=Array.from({length:17},(_,i)=>f.post(i+1));const held=gate();let active=0,maximum=0,started=0;
+ f.deadline=async()=>{const n=++started;active++;maximum=Math.max(maximum,active);try{if(n<=8)await held.promise;return '2000';}finally{active--;}};
+ const result=f.signer.list();await tick();assert.equal(started,8);assert.equal(active,8);held.resolve();const page=await result;
+ assert.equal(started,17);assert.equal(maximum,8);assert.deepEqual(page.posts.map(p=>p.postId),f.posts.map(p=>hex(p.id)));assert.equal(page.policies.length,2);
+});
+test('Rolling failed deadline batch drains siblings and does not advance scan cursor',async t=>{
+ const f=rollingFixture(t);f.posts=Array.from({length:9},(_,i)=>f.post(i+1));const held=gate(),failure=Error('deadline unavailable'),seen=[];let count=0,finished=false;
+ f.index.scanPosts=({after})=>{seen.push(after);return {posts:f.posts,checkpoint:f.checkpoint,nextAfter:'9',revision:f.revision};};
+ f.deadline=async()=>{const n=++count;if(n===1)throw failure;if(n<=8)await held.promise;return '2000';};
+ const result=f.signer.list().finally(()=>{finished=true;});const rejected=assert.rejects(result,error=>error===failure);
+ await tick();assert.equal(count,8);assert.equal(finished,false);held.resolve();await rejected;assert.equal(count,8);
+ f.deadline=async()=> '2000';await f.signer.list();assert.deepEqual(seen,[null,null]);
+});
+test('Rolling projection change during parallel deadlines rejects the entire page',async t=>{
+ const f=rollingFixture(t);f.deadline=async()=>{f.finalRevision='2';return '2000';};await assert.rejects(f.run(),/Mixed public projection/);assert.equal(f.store.list().length,0);assert.equal(f.calls.evaluate,0);
+});
+test('Rolling completed work with queued backlog requests immediate catch-up, terminal/idle does not',async t=>{
+ const f=rollingFixture(t);const first=await f.run({maxJobs:1});assert.equal(first.complete,false);assert.equal(first.catchUp,true);
+ const second=await f.run({maxJobs:1});assert.equal(second.complete,true);assert.equal(second.catchUp,false);assert.equal((await f.run()).catchUp,false);
+});
+for(const kind of ['inference','unknown-send'])test('Rolling '+kind+' failure cannot trigger busy-loop catch-up',async t=>{
+ const f=rollingFixture(t);if(kind==='inference')f.evaluate=async()=>{throw Error('model unavailable');};else{f.evaluate=async()=>({isViolation:true,reason:'Spam'});f.broadcastError=true;}
+ assert.equal((await f.run()).catchUp,false);assert.equal((await f.run()).catchUp,false);
+});
+test('Rolling paginated catch-up requires a changed nonempty cursor and stops at final page',async t=>{
+ const f=rollingFixture(t);let page=0;f.index.scanPosts=()=>({posts:f.posts,checkpoint:f.checkpoint,nextAfter:page++<2?String(page):null,revision:f.revision});
+ assert.equal((await f.run({maxJobs:0})).catchUp,true);assert.equal((await f.run({maxJobs:0})).catchUp,true);assert.equal((await f.run({maxJobs:0})).catchUp,false);
+ f.index.scanPosts=()=>({posts:f.posts,checkpoint:f.checkpoint,nextAfter:'same',revision:f.revision});
+ assert.equal((await f.run({maxJobs:0})).catchUp,true);assert.equal((await f.run({maxJobs:0})).catchUp,false);
 });

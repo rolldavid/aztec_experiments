@@ -1,4 +1,4 @@
-import {beginRollingMeasure,rollingStageObserver} from './performance.mjs';
+import {beginRollingMeasure,measureRollingStage,rollingStageObserver} from './performance.mjs';
 // Presentation only. Account restoration is delegated to the runtime; wallet prompts require a click.
 import {allowance,createMessageContent} from './model.mjs';
 import {createPublicReader} from './reader-client.mjs';
@@ -200,10 +200,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let postingRules=null,rulesScope=null,updateRules=()=>{};
  let initializationAttempt=0,setupMode=null;
  let runtimePending=null,initializationPending=null,initializing=false,connectPending=null;
- let postingInProgress=false,postingOperation=null,operationSettled=Promise.resolve();
+ let postingInProgress=false,actionOperation=null,operationSettled=Promise.resolve();
  let bokHost=null,updateBokForm=()=>{},bokRefreshNeeded=false;
  const ownBokPosts=new Map();
  let identityHost=null,inlineCreation=false,accountSettingsOpen=false,selectedName='0',selectedLabel='Anonymous';
+ const actionFeedback=el('span',{class:'inline-action-feedback',role:'status','aria-live':'polite',hidden:''});
  const identityControls=el('div',{class:'posting-name-controls'}),inlineName=el('section',{class:'inline-name',hidden:''});
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let depositRefundPage=null;
@@ -237,14 +238,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  // reply's block. Conversation rows provide the exact confirmation directly.
  function observePublicPosts(posts,{checkpoint,confirmationCheckpoint,renderedPosts}={}){
   if(Number.isSafeInteger(confirmationCheckpoint?.number)&&confirmationCheckpoint.number>=0&&typeof confirmationCheckpoint.hash==='string'&&/^0x[0-9a-f]{64}$/.test(confirmationCheckpoint.hash)){composerCheckpoint=confirmationCheckpoint.number+':'+confirmationCheckpoint.hash;requestComposerPreparation();}
-  const active=postingOperation;
-  if(active?.txHash&&!active.included&&Array.isArray(renderedPosts))for(const post of renderedPosts){
+  const active=actionOperation;
+  if(active?.txHash&&!active.included&&postingTypes.has(intent?.action?.type)&&Array.isArray(renderedPosts))for(const post of renderedPosts){
    const position=post?.position,blockNumber=Number(position?.blockNumber);
    if(position?.txHash===active.txHash&&['pending','confirmed'].includes(post.confirmation)&&
     typeof position.blockNumber==='string'&&/^[1-9][0-9]*$/.test(position.blockNumber)&&
     Number.isSafeInteger(checkpoint?.number)&&blockNumber<=checkpoint.number&&
     (blockNumber!==checkpoint.number||position.blockHash===checkpoint.hash)){
-    showIncludedPost({intentId:active.intentId,txHash:active.txHash,blockNumber,blockHash:position.blockHash},{alreadyRendered:true});break;
+    showIncludedAction({intentId:active.intentId,txHash:active.txHash,blockNumber,blockHash:position.blockHash},{alreadyRendered:true});break;
    }
   }
   if(!ownBokPosts.size||!Array.isArray(posts)||!unlocked())return;
@@ -294,7 +295,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){updateBokForm=()=>{};renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){composerAttempt=null;composerCheckpoint='open';ownBokPosts.clear();bokRefreshNeeded=false;preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){actionFeedback.textContent='';actionFeedback.hidden=true;composerAttempt=null;composerCheckpoint='open';ownBokPosts.clear();bokRefreshNeeded=false;preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){const updated=preferenceUpdates.get(kind+':'+target);if(updated!==undefined&&unlocked())return updated;if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -399,16 +400,16 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  // balance scan ahead of Post. Submission synchronizes and validates its state.
  function requestAccountRefresh(){
   if(!accountRefreshNeeded||accountRefreshPending||busy||!session||!unlocked())return;
-  accountRefreshNeeded=false;const epoch=accountEpoch,active=session;
+  accountRefreshNeeded=false;const epoch=accountEpoch,active=session,finishRefresh=beginRollingMeasure('account.status-refresh');
   accountRefreshPending=Promise.resolve().then(async()=>{
    try{const next=await active.application.readAccountStatus();checkAccount(epoch);if(session!==active)return;status=next;intent=next.intent??null;}
    catch{if(epoch===accountEpoch)accountRefreshNeeded=true;}
-  }).finally(()=>{accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();}});
+  }).finally(()=>{finishRefresh();accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();}});
  }
- async function work(fn,failureMessage=actionFailure,{posting=false}={}){
-  if(busy)return;const finishTiming=posting?beginRollingMeasure('post.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;postingOperation=null;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
+ async function work(fn,failureMessage=actionFailure,{posting=false,action=false}={}){
+  if(busy)return;const finishTiming=posting?beginRollingMeasure('post.interaction'):action?beginRollingMeasure('action.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;actionOperation=null;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
   try{if(initializationPending)await initializationPending;await composerPreparation;await accountRefreshPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
-   try{if(setupMode){setupMode=null;note('');}if(postingOperation?.included&&postingOperation.epoch===accountEpoch&&unlocked()&&(error||intent||postingOperation.failed)&&!dialog.open)dialog.showModal();postingInProgress=false;postingOperation=null;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
+   try{if(actionOperation?.included&&!postingInProgress&&(error||actionOperation.failed)){actionFeedback.textContent=error?(actionOperation.confirmed?'Confirmed. Account details could not refresh.':'The change could not be confirmed.'):actionOperation.resultStatus==='reverted'?'The change reverted.':'Confirmation is still pending.';actionFeedback.hidden=false;}if(setupMode){setupMode=null;note('');}if(actionOperation?.included&&actionOperation.modal&&actionOperation.epoch===accountEpoch&&unlocked()&&(error||intent||actionOperation.failed)&&!dialog.open)dialog.showModal();postingInProgress=false;actionOperation=null;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
    // Failed actions must expose their feedback even when the form was scrolled.
    if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}}finally{transactionTiming.complete();finishTiming();finishOperation();requestAccountRefresh();requestComposerPreparation();}
   }
@@ -434,9 +435,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(!session){blocked=true;session=await runtime.createSession({onProgress:progress=>{
    const diagnostic=projectRollingInitialization(progress);
    if(epoch!==accountEpoch||invalidated||reloadRequired||!unlocked()||(['private-refresh','funding-claim'].includes(diagnostic?.stage)?!session:attempt!==initializationAttempt))return;
-   if(progress?.stage==='included'){showIncludedPost(progress);return;}
-   if(progress?.stage==='submitting'&&postingOperation?.epoch===accountEpoch&&progress.intentId===postingOperation.intentId&&
-    /^0x[0-9a-f]{64}$/.test(progress.txHash)&&!postingOperation.txHash)postingOperation.txHash=progress.txHash;
+   if(progress?.stage==='included'){showIncludedAction(progress);return;}
+   if(progress?.stage==='submitting'&&actionOperation?.epoch===accountEpoch&&progress.intentId===actionOperation.intentId&&
+    /^0x[0-9a-f]{64}$/.test(progress.txHash)&&!actionOperation.txHash)actionOperation.txHash=progress.txHash;
    if(diagnostic)dialog.setAttribute('data-rolling-initialization',JSON.stringify(diagnostic));
    if(!busy&&(bokBalance.pending||accountRefreshPending)&&diagnostic?.stage==='private-refresh')return;
    const fundingKind=view==='topup'&&topupKind==='bok'||intent?.action?.type==='claim-bok'?'bok':'posting',credit=fundingKind==='bok'?'Bok credit':'posting balance';
@@ -880,6 +881,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
  }
  async function receive(result){
+  // The sender has returned. Account/UI refreshes are not blockchain waiting.
+  transactionTiming.complete();
   if(result.bok||result.action?.type==='bok'||['claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(result.action?.type))invalidateBokBalance();
   recoveryInspection=null;intent=result;blocked=false;
   if(['confirmed','reverted'].includes(result.status)&&['preference','read-marker'].includes(result.action?.type))clearPreferences();
@@ -887,24 +890,26 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(result.status==='authorized'){note('');notice='Bok request authorized. Review the saved post when ready; it has not been published.';return;}
   if(['bok-post-reverted','bok-release-reverted'].includes(result.status)){note('');notice=(result.status==='bok-post-reverted'?'The Bok post reverted.':'The Bok release or expiry reverted.')+' A network fee may have been charged. The funded request remains saved; no action is retried automatically.';return;}
   if(result.status==='confirmed'){
+   if(actionOperation?.intentId===result.intentId)actionOperation.confirmed=true;
    if(result.action?.type==='bok'&&typeof result.txHash==='string'&&/^0x[0-9a-f]{64}$/i.test(result.txHash)&&!ownBokPosts.has(result.txHash)){
     ownBokPosts.set(result.txHash,{requestId:null,pluginId:null,reply:null,replyBlock:null,replyConfirmed:false,confirmedReply:null});
     if(ownBokPosts.size>128)ownBokPosts.delete(ownBokPosts.keys().next().value);
    }
-   if(immediateTypes.has(result.action?.type)){if(postingTypes.has(result.action?.type)||['bio','avatar'].includes(result.action?.type)){draft={...draft,content:''};releasePreviews();}note('');if(dialog.open&&!postingOperation?.included)dialog.close();}
+   if(immediateTypes.has(result.action?.type)){if(postingTypes.has(result.action?.type)||['bio','avatar'].includes(result.action?.type)){draft={...draft,content:''};releasePreviews();}note('');if(dialog.open&&!actionOperation?.included&&actionOperation?.modal!==false)dialog.close();}
    if(result.action?.type==='preference')preferenceUpdates.set(result.action.kind+':'+result.action.target,result.action.enabled);
    notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':actionLabel(result.action)+': done.';
-   if(postingTypes.has(result.action?.type)){
+   if(actionOperation?.included&&!postingTypes.has(result.action?.type)){actionFeedback.textContent=actionLabel(result.action)+': confirmed.';actionFeedback.hidden=false;}
+   if(immediateTypes.has(result.action?.type)&&result.action.type!=='name'){
     // Confirmation finishes the interaction. Feed and affected balance reads
     // update independently, without holding the composer open or its busy state.
-    intent=null;accountRefreshNeeded=true;
-    if(!postingOperation?.included)void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{notice='Posted. The feed could not refresh; reload it to see your post.';if(!busy)render();});
+    intent=null;accountRefreshNeeded=true;onPrivateChange();
+    if(!actionOperation?.included&&!['preference','read-marker'].includes(result.action.type))void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{notice='Confirmed. The feed could not refresh; reload it to see the change.';if(!busy)render();});
     return;
    }
-   try{await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
+   try{if(!actionOperation?.included)await onPublicEffect();}catch{notice+=' Public feed refresh is unavailable; the transaction remains confirmed.';}
    if(result.action?.type==='name'){namesLoaded=false;identities=[];identityRecords=[];cursor=0;}
    if(result.action?.type==='transfer-moderator')moderatorStatus=null;
-   await refresh();
+   await measureRollingStage('action.required-account-refresh',()=>refresh());
    if(result.action?.type==='name'&&identityHost){
     await loadView({loadIdentity:true});
     const registered=result.nameAvailability?.id;
@@ -917,35 +922,37 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  // Inclusion changes presentation only. The transaction promise and private
  // account lock continue until checkpoint confirmation has been verified.
- function showIncludedPost(progress,{alreadyRendered=false}={}){
-  const active=postingOperation;
-  if(!busy||!postingInProgress||!active||active.included||active.epoch!==accountEpoch||!unlocked()||
-   intent?.intentId!==active.intentId||progress.intentId!==active.intentId||!postingTypes.has(intent?.action?.type)||intent.bok?.phase==='authorize'||
+ function showIncludedAction(progress,{alreadyRendered=false}={}){
+  const active=actionOperation;
+  if(!busy||!active||active.included||active.epoch!==accountEpoch||!unlocked()||
+   intent?.intentId!==active.intentId||progress.intentId!==active.intentId||!immediateTypes.has(intent?.action?.type)||intent.bok?.phase==='authorize'||
    active.txHash&&active.txHash!==progress.txHash||
    !/^0x[0-9a-f]{64}$/.test(progress.txHash)||!/^0x[0-9a-f]{64}$/.test(progress.blockHash)||
    !Number.isSafeInteger(progress.blockNumber)||progress.blockNumber<=0)return;
   active.included=true;active.txHash=progress.txHash;
   note('Confirmation pending');closeButton.disabled=false;
-  if(dialog.open){const finish=beginRollingMeasure('post.composer-close');dialog.close();finish();}
-  if(!alreadyRendered)void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{});
+  if(!postingTypes.has(intent.action.type)){const finish=beginRollingMeasure('action.included');finish();actionFeedback.textContent=actionLabel(intent.action)+': confirmation pending.';actionFeedback.hidden=false;}
+  try{active.onIncluded?.();}catch{}
+  if(active.modal&&dialog.open){const finish=postingTypes.has(intent.action.type)?beginRollingMeasure('post.composer-close'):()=>{};dialog.close();finish();}
+  if(!alreadyRendered&&!['preference','read-marker'].includes(intent.action.type))void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{});
  }
- async function executeAction(action,{immediate=immediateTypes.has(action.type),postingRules:expectedRules,onResult=()=>{}}={}){
+ async function executeAction(action,{immediate=immediateTypes.has(action.type),postingRules:expectedRules,onResult=()=>{},onIncluded=()=>{},modal=true}={}){
   const epoch=accountEpoch;checkAccount(epoch);blocked=true;
   if(immediate){
    let result;
-   try{result=await session.application.executeAction(action,{...(expectedRules===undefined?{}:{postingRules:expectedRules}),onPrepared:prepared=>{checkAccount(epoch);intent=prepared;if(postingInProgress&&postingTypes.has(prepared.action?.type))postingOperation={epoch,intentId:prepared.intentId,included:false};}});checkAccount(epoch);}catch(failure){
-    if(['ROLLING_POSTING_RULES_CHANGED','ROLLING_SUBBOARD_REJECTED'].includes(failure?.code)){checkAccount(epoch);intent=null;postingOperation=null;await loadRules(rulesId(action),true).catch(()=>{});checkAccount(epoch);throw rulesFailure;}
-    if(failure?.code==='BB_POST_FEE_CREDIT_REQUIRED'){checkAccount(epoch);intent=null;postingOperation=null;accountRefreshNeeded=true;}
+   try{result=await session.application.executeAction(action,{...(expectedRules===undefined?{}:{postingRules:expectedRules}),onPrepared:prepared=>{checkAccount(epoch);intent=prepared;if(immediateTypes.has(prepared.action?.type)){actionFeedback.textContent='';actionFeedback.hidden=true;actionOperation={epoch,intentId:prepared.intentId,included:false,modal,onIncluded};}}});checkAccount(epoch);}catch(failure){
+    if(['ROLLING_POSTING_RULES_CHANGED','ROLLING_SUBBOARD_REJECTED'].includes(failure?.code)){checkAccount(epoch);intent=null;actionOperation=null;await loadRules(rulesId(action),true).catch(()=>{});checkAccount(epoch);throw rulesFailure;}
+    if(failure?.code==='BB_POST_FEE_CREDIT_REQUIRED'){checkAccount(epoch);intent=null;actionOperation=null;accountRefreshNeeded=true;}
     throw failure;
    }finally{blocked=false;}
-   if(postingOperation?.included)postingOperation.failed=result.status!=='confirmed';
+   if(actionOperation?.included){actionOperation.failed=result.status!=='confirmed';actionOperation.resultStatus=result.status;}
    onResult(result);await receive(result);return result;
   }
   try{intent=await session.application.prepare(action);checkAccount(epoch);}finally{blocked=false;}
   note('Review the saved action before confirming.');return intent;
  }
  let panelApi;
- async function act(defaults){
+ async function act(defaults,{onIncluded=()=>{}}={}){
   // Capture the user's exact target and selected operation before any await.
   const type=defaults?.type;if(!readerActionTypes.has(type))return {status:'failed',message:'This action is unavailable.'};
   const action={type};
@@ -962,7 +969,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(busy)return {status:'blocked',reason:'busy'};
   if(!session||!unlocked()||blocked||status?.status!=='fee-ready'||intent){panelApi.open(action);return {status:'blocked',reason:intent?'existing-action':'setup'};}
   let outcome;
-  await work(async()=>{note('Saving…');await executeAction(action,{onResult:result=>{outcome=result;}});});
+  await work(async()=>{note('Saving…');await executeAction(action,{modal:false,onIncluded,onResult:result=>{outcome=result;}});},actionFailure,{action:true});
   if(outcome)return {status:outcome.status};
   return intent?.status==='unknown'?{status:'unknown'}:{status:'failed',message:error||'This action could not complete. Try again.'};
  }
@@ -1086,7 +1093,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     if(!direct)await checkPostingRules(action);
     if(kind==='avatar')Object.assign(action,selectedAvatar?.clear?{width:0,height:0,data:''}:{width:100,height:100,data:await blobData(selectedAvatar.blob)});
     try{await executeAction(action,{immediate:direct,postingRules:expectedRules});}catch(failure){if(kind==='bio'||kind==='avatar')profileSnapshot=null;throw failure;}
-   },actionFailure,{posting:postingTypes.has(action.type)});
+   },actionFailure,{posting:postingTypes.has(action.type),action:direct});
   };
   const cost=el('strong'),balance=el('strong');
   if(immediateTypes.has(draft.type)){
@@ -1295,7 +1302,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     if(!runtime||initializing)void initialize();else if(session&&unlocked())void work(loadView);
    }else{selectedName=select.value;selectedLabel=ownedLabel(selectedName);if(['post','reply','quote','repost','bok'].includes(draft.type))draft.name=selectedName;}
   });
-  identityControls.replaceChildren(label('Post as',select));
+  identityControls.replaceChildren(label('Post as',select),actionFeedback);
 
   if(inlineCreation){
    const cancel=button('Cancel',()=>{if(busy||intent)return;inlineCreation=false;restoreDialogContent();clearOperationFeedback();renderIdentityControls();});cancel.disabled=busy||!!intent;identityControls.append(cancel);
@@ -1378,7 +1385,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
   }
  }
- function close(){if(!postingOperation?.included&&(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending&&!accountRefreshPending&&!composerPreparation)){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
+ function close(){if(!actionOperation?.included&&(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending&&!accountRefreshPending&&!composerPreparation)){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
  dialog.addEventListener('close',()=>{if(returnFocus?.isConnected)returnFocus.focus();});
  dialog.addEventListener('keydown',event=>{

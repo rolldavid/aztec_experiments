@@ -66,14 +66,15 @@ function preferenceLabel(label,kind,target){return privatePanel?.preferenceEnabl
 function socialButton(label,action,attrs={}){
  let feedback;
  const node=button(label,()=>void run(),attrs);
- const run=createInlineAction({action,perform:async captured=>{
+ const run=createInlineAction({action,perform:async (captured,onIncluded)=>{
   let panel;try{panel=await accountPanel();}catch{walletPanel=null;return {status:'failed',message:'Account tools could not load. Try again.'};}
-  return panel.act(captured);
+  return panel.act(captured,{onIncluded});
  },onState(state,captured,result){
   feedback?.remove();feedback=null;
-  node.disabled=state==='pending'||state==='unknown';
+  node.disabled=['pending','included','unknown'].includes(state);
   if(state==='pending'){node.setAttribute('aria-busy','true');node.textContent=({like:'Liking…',unlike:'Removing like…','read-marker':'Marking read…'})[captured.type]??'Saving…';return;}
   node.removeAttribute('aria-busy');
+  if(state==='included'){node.textContent='Confirmation pending';announce('Change included. Confirmation pending.');return;}
   node.textContent=attrs['data-private-setting']?preferenceLabel(attrs['data-private-setting'],Number(attrs['data-kind']),attrs['data-target']):label;
   const message=state==='confirmed'?'Saved.':state==='unknown'?'Still waiting for confirmation.':state==='reverted'?'This change did not go through.':state==='failed'?(result.message||'This change could not be saved. Try again.'):state==='blocked'&&result.reason==='busy'?'Another action is still finishing.':'';
   if(message)announce(message);

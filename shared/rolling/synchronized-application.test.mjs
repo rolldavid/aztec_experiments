@@ -132,3 +132,20 @@ test('captured policy read is requested only for synchronized ordinary main-boar
   await app.prepare(input,options);assert.deepEqual(seen,[{ordinaryPolicy:wanted,ordinaryPost:Boolean(scope)&&options?.immediate===true&&['post','reply','quote','repost'].includes(input.type)}]);
  }
 });
+
+const genericBoardActions={like:'set_like',unlike:'set_like',preference:'set_preference','read-marker':'mark_thread_read',name:'register_name',bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator',screen:'screen',withdraw:'withdraw'};
+test('known generic actions prepare exact native methods after sync; other financial/Bok/post paths remain separate',async()=>{
+ for(const type of [...Object.keys(genericBoardActions),'bok','claim-bok','claim-deposit','cancel-deposit','withdraw-bok','cancel-bok-request','expire-bok-request','post']){
+  const seen=[],scope={};const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>seen.push('action')])),operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>seen.push('sync'),prepareContractState:({method})=>seen.push(method)});
+  await app.prepare({type});assert.deepEqual(seen,genericBoardActions[type]?['sync',genericBoardActions[type],'action']:['sync','action']);
+ }
+});
+test('already synchronized preference context still prepares Board state without duplicate global sync',async()=>{
+ const seen=[],scope={};const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>seen.push(name)])),operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>seen.push('sync'),prepareContractState:({method})=>seen.push(method)});
+ await app.readPreferenceHead();await app.prepare({type:'preference'});assert.deepEqual(seen,['sync','readPreferenceHead','set_preference','prepare']);
+});
+for(const fail of ['discovery','scope'])test('generic preparation '+fail+' failure cannot enter application or release early',async()=>{
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers(),error=Error('discovery failed');let scope={},calls=0,done=false;
+ const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>calls++])),operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContractState:async()=>{entered.resolve();await gate.promise;if(fail==='discovery')throw error;}});
+ const observed=assert.rejects(app.prepare({type:'like'}).finally(()=>done=true),fail==='discovery'?e=>e===error:{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;assert.equal(done,false);if(fail==='scope')scope={};gate.resolve();await observed;assert.equal(calls,0);
+});

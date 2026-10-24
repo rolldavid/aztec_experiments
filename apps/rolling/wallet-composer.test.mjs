@@ -302,12 +302,12 @@ test('compact monetary displays round balances down and payment caps up',()=>{
 
 for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'preference',kind:1,target:'42',enabled:true},{type:'preference',kind:2,target:'0',enabled:false},{type:'read-marker',thread:'42',throughBlock:'19'}])test(`reader ${action.type} acts once without opening a modal (${action.kind??''})`,{timeout:3000},async t=>{
  const f=await fixture(t,{posting:{}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
- const result=await f.panel.act(action);await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));assert.equal(result.status,'confirmed');assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.submissions.length,1);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.deepEqual(f.prepared(),{...action,...(['preference','read-marker'].includes(action.type)?{expectedRevision:'7'}:{})});
+ const result=await f.panel.act(action);await new Promise(setImmediate);assert.equal(f.reads(),1,'unrelated Bok balance is not rescanned');assert.equal(result.status,'confirmed');assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.submissions.length,1);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.deepEqual(f.prepared(),{...action,...(['preference','read-marker'].includes(action.type)?{expectedRevision:'7'}:{})});
  if(action.type==='preference')assert.equal(f.panel.preferenceEnabled(action.kind,action.target),action.enabled);
 });
 test('reader action captures target before waiting and blocks double clicks',{timeout:3000},async t=>{
  const gate=Promise.withResolvers(),started=Promise.withResolvers(),f=await fixture(t,{posting:{prepare:()=>{started.resolve();return gate.promise;}}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
- const action={type:'like',post:'42'},first=f.panel.act(action);action.post='99';await started.promise;assert.deepEqual(await f.panel.act({type:'like',post:'42'}),{status:'blocked',reason:'busy'});assert.equal(f.document.querySelector('dialog').open,false);gate.resolve();assert.equal((await first).status,'confirmed');await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));assert.equal(f.prepared().post,'42');assert.equal(f.submissions.length,1);
+ const action={type:'like',post:'42'},first=f.panel.act(action);action.post='99';await started.promise;assert.deepEqual(await f.panel.act({type:'like',post:'42'}),{status:'blocked',reason:'busy'});assert.equal(f.document.querySelector('dialog').open,false);gate.resolve();assert.equal((await first).status,'confirmed');await new Promise(setImmediate);assert.equal(f.reads(),1,'unrelated Bok balance is not rescanned');assert.equal(f.prepared().post,'42');assert.equal(f.submissions.length,1);
 });
 for(const status of ['unknown','reverted'])test(`reader ${status} is not reported as successful or resent automatically`,{timeout:3000},async t=>{
  const f=await fixture(t,{posting:{status}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();assert.equal((await f.panel.act({type:'like',post:'42'})).status,status);assert.equal(f.submissions.length,1);assert.equal(f.document.querySelector('dialog').open,false);
@@ -322,13 +322,13 @@ for(const type of ['name','bio','avatar'])test(`one ${type} save creates and sub
  else if(type==='bio'){const input=f.document.querySelector('textarea');input.value='My exact bio';input.fire('input');}
  else f.document.querySelectorAll('button').find(b=>b.textContent==='Clear avatar').fire('click');
  const save=f.document.querySelector('[data-action-review]');assert(!save.textContent.includes('Review'));assert.equal(save.disabled,false);save.fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.submissions.length,1);assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.document.querySelector('dialog').open,false);
- await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));if(type==='bio')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'3',content:'My exact bio'});if(type==='avatar')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'4',width:0,height:0,data:''});
+ if(type==='name')await f.document.until(()=>f.reads()>=2&&f.host.textContent.includes('0 USDC available'));else{await new Promise(setImmediate);assert.equal(f.reads(),1);}if(type==='bio')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'3',content:'My exact bio'});if(type==='avatar')assert.deepEqual(f.prepared(),{type,name:'5',expectedVersion:'4',width:0,height:0,data:''});
 });
 
 test('a confirmed bookmark allows the next explicit inverse action without a modal',{timeout:3000},async t=>{
  const f=await fixture(t,{posting:{}});await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
  assert.equal((await f.panel.act({type:'preference',kind:1,target:'42',enabled:true})).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'42'),true);
- assert.equal((await f.panel.act({type:'preference',kind:1,target:'42',enabled:false})).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'42'),false);assert.equal(f.submissions.length,2);assert.equal(f.document.querySelector('dialog').open,false);await f.document.until(()=>f.reads()>=3&&f.host.textContent.includes('0 USDC available'));
+ assert.equal((await f.panel.act({type:'preference',kind:1,target:'42',enabled:false})).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'42'),false);assert.equal(f.submissions.length,2);assert.equal(f.document.querySelector('dialog').open,false);await new Promise(setImmediate);assert.equal(f.reads(),1,'bookmark updates do not invalidate unrelated Bok credit');
 });
 
 test('funding progress only reports confirmed payment after reaching the private-credit stages',()=>{
@@ -478,15 +478,39 @@ for(const outcome of ['confirmed','unknown','reverted','error'])test(`regular po
  await new Promise(setImmediate);
 });
 
-test('nonposting inclusion never dismisses the account dialog or refreshes the public feed',{timeout:3000},async t=>{
+for(const outcome of ['confirmed','unknown','reverted','error'])test(`inline inclusion is visible but keeps its transaction locked until ${outcome}`,{timeout:3000},async t=>{
+ const canonical=Promise.withResolvers(),sending=Promise.withResolvers(),refresh=Promise.withResolvers();let effects=0,inclusions=0;
+ const f=await fixture(t,{posting:{status:outcome,submit:()=>{sending.resolve();return canonical.promise;},effect:()=>effects++,balanceRefresh:()=>outcome==='confirmed'?refresh.promise:undefined}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'1000000'});await f.document.until(()=>f.host.textContent.includes('1 USDC available'));
+ const editor=f.document.querySelector('textarea');editor.value='Unrelated draft';editor.fire('input');
+ let settled=false;const action=f.panel.act({type:'like',post:'10'},{onIncluded:()=>inclusions++}).then(value=>{settled=true;return value;});await sending.promise;
+ const before=f.core();f.progress(includedPost('other'));f.progress({...includedPost(),blockHash:'bad'});assert.equal(inclusions,0);
+ f.progress({stage:'submitting',intentId:'post-1',txHash:includedPost().txHash});
+ f.progress({...includedPost(),txHash:'0x'+'e'.repeat(64)});assert.equal(inclusions,0);
+ f.progress(includedPost());await Promise.resolve();f.progress(includedPost());
+ assert.equal(inclusions,1);assert.equal(settled,false);assert.equal(effects,1);assert.deepEqual(f.core(),before);
+ assert(identity.textContent.includes('confirmation pending'));assert.equal(f.document.querySelector('dialog').open,true,'inline action cannot close unrelated composer');assert.equal(editor.value,'Unrelated draft');
+ assert.deepEqual(await f.panel.act({type:'unlike',post:'10'}),{status:'blocked',reason:'busy'});
+ if(outcome==='error')canonical.reject(Error('private provider failure'));else canonical.resolve();
+ const result=await action;assert.equal(result.status,outcome==='error'?'unknown':outcome);
+ if(outcome==='confirmed'){assert(identity.textContent.includes('confirmed'));assert.equal(effects,1);assert.equal(f.document.querySelector('dialog').open,true);refresh.resolve();}
+ else{assert(!identity.textContent.includes(': confirmed.'));if(outcome==='reverted')assert(identity.textContent.includes('The change reverted.'));}
+ await new Promise(setImmediate);
+});
+
+test('profile inclusion closes only its own modal while canonical confirmation remains pending',{timeout:3000},async t=>{
  const canonical=Promise.withResolvers(),sending=Promise.withResolvers();let effects=0;
- const f=await fixture(t,{posting:{submit:()=>{sending.resolve();return canonical.promise;},effect:()=>effects++}});
- await f.started.promise;f.balance.resolve({available:true,availableCredit:'1000000'});
+ const f=await fixture(t,{profile:true,defaults:{type:'bio',name:'5'},posting:{submit:()=>{sending.resolve();return canonical.promise;},effect:()=>effects++}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);
+ f.balance.resolve({available:true,availableCredit:'1000000'});
  await f.document.until(()=>f.host.textContent.includes('1 USDC available'));
- const action=f.panel.act({type:'like',post:'10'});await sending.promise;
- f.progress(includedPost());await Promise.resolve();
- assert.equal(f.document.querySelector('dialog').open,true);assert.equal(effects,0);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
- canonical.resolve();await action;await new Promise(setImmediate);
+ const editor=f.document.querySelector('textarea');editor.value='My new bio';editor.fire('input');f.document.querySelector('[data-action-review]').fire('click');await sending.promise;
+ f.progress(includedPost());await Promise.resolve();assert.equal(f.document.querySelector('dialog').open,false);assert(identity.textContent.includes('confirmation pending'));assert.equal(effects,1);
+ f.panel.open({type:'bio',name:'5'});assert.equal(f.document.querySelector('dialog').open,true);
+ canonical.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.document.querySelector('dialog').open,true,'confirmation does not close a reopened view');assert.equal(effects,1);
+ await new Promise(setImmediate);
 });
 
 
@@ -617,4 +641,44 @@ test('background screening captures the selected deposit and coalesces a changed
  const select=f.document.querySelectorAll('select').find(value=>value.options.some(option=>option.value==='10'));
  assert(select);select.value='10';select.fire('change');assert.deepEqual(seen,['9']);gate.resolve();await new Promise(setImmediate);assert.deepEqual(seen,['9','10']);
  f.panel.observePublicPosts([],warmHead(91));select.value='9';select.fire('change');await new Promise(setImmediate);assert.deepEqual(seen,['9','10','9'],'queued work reads only the final selection');
+});
+
+test('private setting inclusion does not request public feed work or expose unconfirmed preferences',{timeout:3000},async t=>{
+ const canonical=Promise.withResolvers(),sending=Promise.withResolvers();let effects=0,included=0;
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{submit:()=>{sending.resolve();return canonical.promise;},effect:()=>effects++}});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ const before=f.panel.preferenceEnabled(1,'10'),action=f.panel.act({type:'preference',kind:1,target:'10',enabled:true},{onIncluded:()=>included++});await sending.promise;
+ f.progress(includedPost());await Promise.resolve();assert.equal(included,1);assert.equal(effects,0);assert.equal(f.panel.preferenceEnabled(1,'10'),before);
+ canonical.resolve();assert.equal((await action).status,'confirmed');assert.equal(f.panel.preferenceEnabled(1,'10'),true);assert.equal(effects,0);await new Promise(setImmediate);
+});
+
+test('a confirmed name is not relabeled failed if its required account details cannot refresh',{timeout:3000},async t=>{
+ const canonical=Promise.withResolvers(),sending=Promise.withResolvers();let effects=0;
+ const f=await fixture(t,{profile:true,defaults:{type:'name'},posting:{submit:()=>{sending.resolve();return canonical.promise;},balanceRefresh:()=>{throw Error('read unavailable');},effect:()=>effects++}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');
+ f.document.querySelector('[data-action-review]').fire('click');await sending.promise;f.progress(includedPost());await Promise.resolve();assert.equal(effects,1);
+ canonical.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(identity.textContent.includes('Confirmed. Account details could not refresh.'));assert.equal(effects,1);assert.equal(f.document.querySelector('dialog').open,true);
+});
+
+for(const outcome of ['unknown','reverted','error'])test(`inline ${outcome} after inclusion leaves the closed composer closed`,{timeout:3000},async t=>{
+ const canonical=Promise.withResolvers(),sending=Promise.withResolvers();
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:outcome,submit:()=>{sending.resolve();return canonical.promise;}}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
+ const pending=f.panel.act({type:'like',post:'10'});await sending.promise;f.progress(includedPost());assert.equal(f.document.querySelector('dialog').open,false);
+ if(outcome==='error')canonical.reject(Error('private detail'));else canonical.resolve();await pending;
+ assert.equal(f.document.querySelector('dialog').open,false);assert(!identity.textContent.includes(': confirmed.'));assert(identity.textContent.includes(outcome==='reverted'?'reverted':outcome==='error'?'could not be confirmed':'pending'));await new Promise(setImmediate);
+});
+
+test('transaction confirmation timing stops before required name account refresh',{timeout:3000},async t=>{
+ const original=globalThis.performance,measures=new Map();let now=10;
+ globalThis.performance={now:()=>now,clearMeasures:name=>measures.delete(name),measure:(name,entry)=>measures.set(name,{...entry})};t.after(()=>{globalThis.performance=original;});
+ const canonical=Promise.withResolvers(),sending=Promise.withResolvers(),refresh=Promise.withResolvers(),refreshStarted=Promise.withResolvers();
+ const f=await fixture(t,{profile:true,defaults:{type:'name'},balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{submit:()=>{sending.resolve();return canonical.promise;},balanceRefresh:()=>{refreshStarted.resolve();return refresh.promise;}}});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');f.document.querySelector('[data-action-review]').fire('click');await sending.promise;
+ now=100;f.progress({stage:'confirming'});now=150;canonical.resolve();await refreshStarted.promise;
+ assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ now=999;refresh.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.deepEqual(measures.get('rolling.action.required-account-refresh'),{start:150,end:999});assert.equal(measures.get('rolling.action.interaction').end,999);await new Promise(setImmediate);
 });

@@ -132,6 +132,11 @@ const {BlockHash}=await import('@aztec-labs/stdlib/block');
 const {ORDINARY_POST_GAS_PROFILE:syncProfile}=await import('../shared/ordinary-post-fees.mjs');
 const {OperationQueue:PreparationOperationQueue}=await import('../node_modules/@aztec-labs/pxe/dest/operation_queue.js');
 const preparationQueues=[];test.after(async()=>{await Promise.all(preparationQueues.map(queue=>queue.stop()));});
+
+const {loadContractArtifact,getAllFunctionAbis}=await import('@aztec-labs/stdlib/abi');
+const actualBoardArtifact=loadContractArtifact(JSON.parse(await fs.readFile(process.env.ROLLING_TEST_ARTIFACT??new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8')));
+const qualifiedBoardMethods=['set_like','set_preference','mark_thread_read','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
+
 async function ordinarySyncFixture({written=false}={}){
  const owner=AztecAddress.fromFieldUnsafe(new Fr(100)),fee=AztecAddress.fromFieldUnsafe(new Fr(200)),board=AztecAddress.fromFieldUnsafe(new Fr(300));
  const calls=[FunctionCall.from({name:'pay_fee',to:fee,selector:FunctionSelector.fromString('0xc8772dde'),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(5)]}),FunctionCall.from({name:'post',to:board,selector:FunctionSelector.fromString(syncProfile.postSelector),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(6)]})];
@@ -143,10 +148,11 @@ async function ordinarySyncFixture({written=false}={}){
  const node=withCache({getContract:async(address,anchor)=>{events.push(['class',address.toString(),anchor]);if(holdClass)await new Promise(resolve=>classGates.push(resolve));return {currentContractClassId:Fr.fromString(classes.get(address.toString()))};},
  getPublicDataWitness:async(anchor,slot)=>{events.push(['witness',slot.toString(),anchor]);if(holdWitness)await new Promise((resolve,reject)=>witnesses.push({resolve,reject}));if(failWitness)throw Error('witness unavailable');const value=PublicDataWitness.random();value.leafPreimage.leaf.slot=written?slot:Fr.ZERO;return value;},
  getPublicStorageAt:async(anchor,address,slot)=>{events.push(['storage',slot.toString(),anchor]);return Fr.ZERO;}});
- const store={getContractInstance:async()=>assert.fail('All classes served by canonical fixture'),getFunctionCall:async(name,args,address)=>({name,args,to:address,selector:FunctionSelector.fromString('0x418ef5da')})};
+ const store={getContractArtifact:async classId=>{assert.equal(classId.toString(),syncProfile.boardClassId);return actualBoardArtifact;},getContractInstance:async()=>assert.fail('All classes served by canonical fixture'),getFunctionCall:async(name,args,address)=>({name,args,to:address,selector:FunctionSelector.fromString('0x418ef5da')})};
  const classService=new ContractClassService(node,store);
  const noteStore={getNotes:async(_filter,id)=>{assert.equal(id,42);return [];}};
  const service=new ContractSyncService(node,store,classService,noteStore,{debug(){},warn(){}},{concurrentContractSyncEnabled:false});
+ const invoke=service.ensureContractSynced.bind(service);service.ensureContractSynced=async options=>{events.push(['invoke-selector',options.contract.toString(),options.functionToInvokeAfterSync?.toString()]);return invoke(options);};
  const ctx={changeSetId:42,anchorBlockHeader},scopes=[owner],simulator={identity:'same'};
  const utility=async(sim,call,auth,actualScopes,anchor,id)=>{
   assert.equal(sim,simulator);assert.equal(anchor,anchorBlockHeader);assert.equal(id,42);assert.deepEqual(actualScopes,scopes);assert.equal(auth.length,0);
@@ -157,9 +163,10 @@ async function ordinarySyncFixture({written=false}={}){
  const text=method(pxe,'async #syncOrdinaryPostCalls(', '\n    // Public API');
  const Class=vm.runInNewContext(`(class {node=node;contractStore=store;keyStore={};contractClassService=classService;contractSyncService=service;#executeUtility=utility;#getSimulatorForTx=()=>simulator;
  operationQueue=queue;${text}
+ ${method(pxe,'prepareBoardActionState(', '\n    // Public API')}
  async run(){try{await this.#syncOrdinaryPostCalls(request,calls,simulator,ctx,scopes);await service.settle(ctx.changeSetId);events.push(['private-ready']);service.onOperationEnd(ctx.changeSetId,'committed');}catch(error){await service.settle(ctx.changeSetId);service.onOperationEnd(ctx.changeSetId,'discarded');events.push(['discard']);throw error;}}
  })`,{...nativeTimingBindings,...syncBindings,classService,service,utility,request,calls,simulator,ctx,scopes,events,allToCompletion,queue,node,store,PrivateKernelOracle});
- return {prepare:(targets={owner,board,privateFee:fee})=>new Class().prepareOrdinaryPostState(targets),run:()=>new Class().run(),request,calls,events,pending,classes,hold:()=>{hold=true;},fail:address=>{failAddress=address;},owner,fee,board,service,witnesses,classGates,node,anchorBlockHeader,oracle:()=>new PrivateKernelOracle(store,classService,{},node,anchorBlockHeader),holdWitness:()=>{holdWitness=true;},holdClass:()=>{holdClass=true;},failWitness:()=>{failWitness=true;},advance:()=>{anchorNumber++;}};
+ return {prepareGeneric:(name,targets={owner,board,privateFee:fee})=>new Class().prepareBoardActionState({...targets,method:name}),store,prepare:(targets={owner,board,privateFee:fee})=>new Class().prepareOrdinaryPostState(targets),run:()=>new Class().run(),request,calls,events,pending,classes,hold:()=>{hold=true;},fail:address=>{failAddress=address;},owner,fee,board,service,witnesses,classGates,node,anchorBlockHeader,oracle:()=>new PrivateKernelOracle(store,classService,{},node,anchorBlockHeader),holdWitness:()=>{holdWitness=true;},holdClass:()=>{holdClass=true;},failWitness:()=>{failWitness=true;},advance:()=>{anchorNumber++;}};
 }
 test('exact native account payload pre-syncs three known contracts concurrently in one change set without learned predictions',async()=>{
  const f=await ordinarySyncFixture();f.hold();const work=f.run();
@@ -298,4 +305,35 @@ test('prefetch classification matches actual native reset actions including pend
  for(const actions of [getNoteHashReadRequestResetActions(array,notes),getNullifierReadRequestResetActions(array,nullifiers)])assert.deepEqual(actions.actions.slice(0,3),[ReadRequestActionEnum.READ_AS_SETTLED,ReadRequestActionEnum.READ_AS_PENDING,ReadRequestActionEnum.SKIP]);
  const calls=[],h=settleHarness(requests,requests,{getNoteHashMembershipWitness:async(_,value)=>{calls.push(['note',value.toString()]);return {};},getNullifierMembershipWitness:async(_,value)=>{calls.push(['nullifier',value.toString()]);return {};}});
  await h.instance.prefetchSettledReadRequests(h.execution);assert.deepEqual(calls,[['note',new Fr(1).toString()],['nullifier',new Fr(1).toString()]]);
+});
+
+test('generic Board preparation pins the real artifact class and authentic native ABI for all qualified actions',async()=>{
+ const {getContractClassFromArtifact}=await import('@aztec-labs/stdlib/contract');assert.equal((await getContractClassFromArtifact(actualBoardArtifact)).id.toString(),syncProfile.boardClassId);
+ for(const name of qualifiedBoardMethods){
+  const f=await ordinarySyncFixture(),fn=getAllFunctionAbis(actualBoardArtifact).find(fn=>fn.name===name);assert(fn,name);
+  const expected=await FunctionSelector.fromNameAndParameters(fn.name,fn.parameters);await f.prepareGeneric(name);
+  assert.equal(f.events.find(e=>e[0]==='invoke-selector'&&e[1]===f.board.toString())[2],expected.toString());
+  assert.equal(f.events.filter(e=>e[0]==='sync-start').length,3);assert.equal(f.events.filter(e=>e[0]==='witness').length,fn.functionType==='private'?3:2);
+  assert.equal(f.events.at(-1)[0],'prepare-committed');
+ }
+});
+test('generic preparation shares actual native state cache across methods without another discovery',async()=>{
+ const f=await ordinarySyncFixture();await f.prepareGeneric('set_like');await f.prepareGeneric('set_preference');await f.run();
+ assert.equal(f.events.filter(e=>e[0]==='sync-start').length,3);assert.equal(f.events.filter(e=>e[0]==='class').length,3);assert.equal(f.events.filter(e=>e[0]==='witness').length,3);
+ f.service.wipe();f.advance();await f.prepareGeneric('withdraw');assert.equal(f.events.filter(e=>e[0]==='sync-start').length,6);assert.equal(f.events.filter(e=>e[0]==='class').length,6);assert.equal(f.events.filter(e=>e[0]==='witness').length,6);
+});
+for(const name of ['sync_state','post_with_bok','claim_deposit','claim','authorize_request','pay_fee','unknown'])test('generic preparation excludes '+name,async()=>{
+ const f=await ordinarySyncFixture();assert.throws(()=>f.prepareGeneric(name),/Invalid Board state method/);assert.equal(f.events.length,0);
+});
+for(const target of ['owner','board','fee'])test('generic preparation rejects upgraded '+target+' class before native discovery',async()=>{
+ const f=await ordinarySyncFixture();f.classes.set(f[target].toString(),new Fr(999).toString());await assert.rejects(f.prepareGeneric('set_like'),/Invalid ordinary sync class/);assert(!f.events.some(e=>e[0]==='sync-start'));assert.equal(f.events.at(-1)[0],'prepare-discarded');
+});
+test('generic native discovery failure drains siblings, discards and does not cache partial state',async()=>{
+ const f=await ordinarySyncFixture();f.hold();const run=f.prepareGeneric('set_bio');const rejected=assert.rejects(run,/native sync failed/);
+ for(let i=0;i<50&&f.pending.length<3;i++)await new Promise(resolve=>setImmediate(resolve));assert.equal(f.pending.length,3);
+ f.pending[0].reject(Error('native sync failed'));await new Promise(resolve=>setImmediate(resolve));assert(!f.events.some(e=>e[0]==='prepare-discarded'));f.pending.slice(1).forEach(g=>g.resolve());await rejected;assert.equal(f.events.at(-1)[0],'prepare-discarded');
+});
+test('generic preparation detaches addresses and method before native queue yields',async()=>{
+ const f=await ordinarySyncFixture(),held=Promise.withResolvers();const original=f.store.getContractArtifact;f.store.getContractArtifact=async id=>{await held.promise;return original(id);};
+ const targets={owner:f.owner,board:f.board,privateFee:f.fee};const run=f.prepareGeneric('set_like',targets);targets.board=AztecAddress.ZERO;held.resolve();await run;assert(f.events.some(e=>e[0]==='sync-start'&&e[1]===f.board.toString()));
 });

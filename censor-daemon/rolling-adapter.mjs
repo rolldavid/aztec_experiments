@@ -9,6 +9,8 @@ const field=value=>'0x'+BigInt(value).toString(16).padStart(64,'0');
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const fieldHash=value=>field(BigInt('0x'+hash(value))%modulus);
 const clone=value=>structuredClone(value);
+// Every started read settles before its owner can fail or start another batch.
+const drained=async reads=>{const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));const failed=results.find(r=>r.status==='rejected');if(failed)throw failed.reason;return results.map(r=>r.value);};
 const intentBinding=record=>({post:{...record.post,flagged:false},policy:record.policy,intent:record.intent});
 
 /** Current parent/local union, with both versions and immutable content bound to
@@ -65,20 +67,26 @@ export function rollingModerationAdapter({index,node,scope,lease,state,deadline,
   async list({postIds=[]}={}){
    assert(postIds.length<=64);await sync();
    if(anchor){const block=await node.getBlockData(anchor.number);if(block?.blockHash!==anchor.hash)after=null;}
-   const page=index.scanPosts({after,limit:64});anchor=page.checkpoint;after=page.nextAfter;
+   const previousAfter=after,page=index.scanPosts({after,limit:64});
    const ids=[...new Set([...page.posts.map(p=>field(p.id)),...postIds])],posts=[],policies=new Map(),missingPostIds=[];
-   for(const id of ids){const input=await current(id);if(!input){missingPostIds.push(id);continue;}
+   // Eight independent anchored deadline reads per batch; at most128 IDs.
+   // Keep cursor advancement behind the complete authenticated page.
+   for(let offset=0;offset<ids.length;offset+=8){
+    const batch=ids.slice(offset,offset+8),inputs=await drained(batch.map(id=>()=>current(id)));
+    for(const [i,input] of inputs.entries()){const id=batch[i];if(!input){missingPostIds.push(id);continue;}
     // Removed public text is deliberately redacted. Preserve the original
     // evaluated bytes only from our own durable queue via the caller below.
     assert.equal(input.revision,page.revision,'Mixed public projection');
     posts.push(input.post);policies.set(input.policy.policyVersion,input.policy);
+    }
    }
    // The owned reader exposes guarded queries, not the persistent index's
    // internal publication method. Recheck canonical authority and revision.
    const final=index.query('home',{limit:1});
    assert.equal(final.revision,page.revision,'Mixed public projection');
    assert.deepEqual(final.checkpoint,page.checkpoint,'Public checkpoint changed');
-   return {scope,checkpoint:page.checkpoint,posts,policies:[...policies.values()],complete:false,scanComplete:page.nextAfter===null,missingPostIds};
+   anchor=page.checkpoint;after=page.nextAfter;
+   return {scope,checkpoint:page.checkpoint,posts,policies:[...policies.values()],complete:false,scanComplete:page.nextAfter===null,scanProgress:page.posts.length>0&&JSON.stringify(previousAfter)!==JSON.stringify(page.nextAfter),missingPostIds};
   },
   inspectRemoval:inspect,
   async submitRemoval(record){
@@ -139,14 +147,7 @@ export async function createRollingModerationService({configFile,stateDirectory,
   const [raw]=loadRollingArtifacts(),artifact=loadContractArtifact(raw),address=AztecAddress.fromStringUnsafe(config.boardAddress),classId=String((await getContractClassFromArtifact(artifact)).id);
   for(const name of ['moderator','portal_address','post_flag_deadline','main_version','post_exists','post_flagged','subboards'])assert(artifact.storageLayout[name]?.slot,'Pinned moderation layout missing');
   const read=async(slot,checkpoint)=>node.getPublicStorageAt({number:checkpoint.number,hash:checkpoint.hash},address,slot);
-  const assertAuthority=async(checkpoint,record)=>{await checkNetwork();const instance=await node.getContract(address,checkpoint);assert.equal(String(instance?.currentContractClassId),classId);assert.equal(String(await read(artifact.storageLayout.moderator.slot,checkpoint)),config.operatorAddress);assert.equal(String((await node.getBlock(checkpoint.number))?.hash),checkpoint.hash);
-   const latest=await node.getBlock('latest'),at={number:Number(latest.number),hash:String(latest.hash)};
-   assert.equal(String(await read(artifact.storageLayout.moderator.slot,at)),config.operatorAddress);
-   if(record){assert.equal((await read(artifact.storageLayout.main_version.slot,at)).toBigInt(),BigInt(record.policy.context.mainVersion));
-    for(const [name,expected] of [['post_exists',1n],['post_flagged',0n]])assert.equal((await read(await deriveStorageSlotInMap(artifact.storageLayout[name].slot,Fr.fromString(record.job.postId)),at)).toBigInt(),expected,'Latest moderation target changed');
-    if(record.policy.context.subboard!=='0'){const slot=await deriveStorageSlotInMap(artifact.storageLayout.subboards.slot,Fr.fromString(field(record.policy.context.subboard)));assert.equal((await read(new Fr(slot.toBigInt()+4n),at)).toBigInt(),0n,'Subboard rejected');}
-   }
-   assert.equal(String((await node.getBlock(at.number))?.hash),at.hash);};
+  const assertAuthority=(checkpoint,record)=>assertRollingModerationAuthority({checkpoint,record,checkNetwork,node,read,address,classId,operatorAddress:config.operatorAddress,layout:artifact.storageLayout,deriveStorageSlotInMap,Fr});
   const tip=await node.getBlock('checkpointed'),checkpoint={number:Number(tip.number),hash:String(tip.hash)};await assertAuthority(checkpoint);
   const instance=await node.getContract(address,checkpoint);await wallet.registerContract(instance,artifact);const contract=await Contract.at(address,artifact,wallet);
   const portalValue=(await read(artifact.storageLayout.portal_address.slot,checkpoint)).toBigInt();assert(portalValue>0n&&portalValue<2n**160n);
@@ -179,4 +180,34 @@ export async function prepareRollingRemoval({record,contract,wallet,account,conf
    const calls=tx.getPublicCallRequestsWithCalldata();assert.equal(calls.length,1);assert.equal(String(calls[0].request.contractAddress),config.boardAddress);assert.equal(String(calls[0].request.msgSender),config.operatorAddress);assert.equal(String(calls[0].functionSelector),String(call.selector));assert.deepEqual(calls[0].args.map(x=>x.toBigInt()),call.args.map(x=>x.toBigInt()));
    assert(tx.data.constants.txContext.gasSettings.getFeeLimit().toBigInt()<=BigInt(config.maxTransactionFee),'Proven fee ceiling exceeded');
    return {tx,hash:String(tx.getTxHash()),sha256:createHash('sha256').update(tx.toBuffer()).digest('hex'),maximumFee:String(maximumFee)};
+}
+
+/** Same before/after-proof authority checks; only independent reads overlap.
+ * All storage values are hash-anchored and their numeric headers rechecked. */
+export async function assertRollingModerationAuthority({checkpoint,record,checkNetwork,node,read,address,classId,operatorAddress,layout,deriveStorageSlotInMap,Fr}){
+ await checkNetwork();
+ const [instance,moderator,latest]=await drained([
+  ()=>node.getContract(address,checkpoint),()=>read(layout.moderator.slot,checkpoint),()=>node.getBlock('latest'),
+ ]);
+ assert.equal(String(instance?.currentContractClassId),classId);
+ assert.equal(String(moderator),operatorAddress);
+ const at={number:Number(latest.number),hash:String(latest.hash)};
+ const reads=[()=>read(layout.moderator.slot,at)];
+ if(record){
+  reads.push(()=>read(layout.main_version.slot,at));
+  for(const name of ['post_exists','post_flagged'])reads.push(async()=>read(await deriveStorageSlotInMap(layout[name].slot,Fr.fromString(record.job.postId)),at));
+  if(record.policy.context.subboard!=='0')reads.push(async()=>{const slot=await deriveStorageSlotInMap(layout.subboards.slot,Fr.fromString(field(record.policy.context.subboard)));return read(new Fr(slot.toBigInt()+4n),at);});
+ }
+ // The original checkpoint is rechecked after its initial reads, concurrently
+ // with the latest anchored storage batch. The latest anchor is fenced last.
+ const [original,...values]=await drained([()=>node.getBlock(checkpoint.number),...reads]);
+ assert.equal(String(original?.hash),checkpoint.hash);
+ assert.equal(String(values[0]),operatorAddress);
+ if(record){
+  assert.equal(values[1].toBigInt(),BigInt(record.policy.context.mainVersion));
+  assert.equal(values[2].toBigInt(),1n,'Latest moderation target changed');
+  assert.equal(values[3].toBigInt(),0n,'Latest moderation target changed');
+  if(record.policy.context.subboard!=='0')assert.equal(values[4].toBigInt(),0n,'Subboard rejected');
+ }
+ assert.equal(String((await node.getBlock(at.number))?.hash),at.hash);
 }

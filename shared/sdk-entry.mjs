@@ -4,7 +4,7 @@ import {createPostingKernelPreload} from './posting-kernel-preload.mjs';
 export const preloadPostingKernels=createPostingKernelPreload(new LazyArtifactProvider());
 export {prepareBokCreditPurchase} from './rolling/bok-credit-purchase.mjs';
 export {createEncryptedJournalSlot} from './journal-record.mjs';
-export {prepareAggregateFunding, validateAggregateFundingQuote, aggregateFundingTransaction, prepareAggregateUsdcFunding, aggregateUsdcFundingTransaction} from './rolling/aggregate-funding.mjs';
+export {prepareAggregateFunding, validateAggregateFundingQuote, encodeAggregateFundingTransaction, aggregateFundingTransaction, prepareAggregateUsdcFunding, aggregateUsdcFundingTransaction} from './rolling/aggregate-funding.mjs';
 export {validateAggregateFundingIntent, verifyAggregateFundingEffects} from './rolling/aggregate-recovery.mjs';
 import './browser-runtime-policy.mjs';
 export {prepareFundingClaim} from './rolling/funding-receipts.mjs';

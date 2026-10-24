@@ -9,7 +9,7 @@ function replace(source,before,after){if(source.split(before).length!==2)throw E
 // sync, anchor, staged writes, failure discard and final tagging persistence.
 export function validatedPxeProve(source){
  if(sha(source)!==PREFERENCE_PAGE_PINS.find(pin=>pin.path==='dest/pxe.js').after)throw Error('PXE validated proof source mismatch');
- source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
+ source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
  source=replace(source,'}, txRequest, privateExecutionResult) {\n        const { publicInputs, chonkProof, executionSteps, timings: { proving } = {} } = await this.#prove',`}, txRequest, privateExecutionResult, validatePublic = false) {
         let validationTime;
         const beforeProof = validatePublic ? async publicInputs => {
@@ -132,6 +132,35 @@ export function validatedPxeProve(source){
             await allToCompletion([
                 this.#syncOrdinaryPostTargets(targets,this.#getSimulatorForTx(),ctx,scopes),
                 allToCompletion(targets.map(target=>oracle.getUpdatedClassIdHints(target.address))),
+            ]);
+        });
+    }
+    // Public API\n`);
+ source=replace(source,'    // Public API\n',`    prepareBoardActionState({owner,board,privateFee,method}) {
+        // No posting gas/history assumptions. Resolve the actual named ABI from
+        // the registered, class-pinned Board; these are state preparation only.
+        const allowed=['set_like','set_preference','mark_thread_read','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
+        if(!allowed.includes(method))throw new Error('Invalid Board state method');
+        const profile=${JSON.stringify(ORDINARY_POST_GAS_PROFILE)};
+        const targets=[{address:SyncAddress.fromStringUnsafe(owner.toString()),classId:profile.accountClassId},
+            {address:SyncAddress.fromStringUnsafe(privateFee.toString()),classId:profile.privateFeeClassId,selector:SyncSelector.fromString('0xc8772dde')},
+            {address:SyncAddress.fromStringUnsafe(board.toString()),classId:profile.boardClassId}];
+        if(new Set(targets.map(target=>target.address.toString())).size!==3)throw new Error('Invalid Board state targets');
+        const scopes=[targets[0].address];
+        return this.operationQueue.runSynced(async ctx=>{
+            const artifact=await this.contractStore.getContractArtifact(SyncFr.fromString(profile.boardClassId));
+            const matches=artifact&&syncFunctionAbis(artifact).filter(fn=>fn.name===method);
+            if(matches?.length!==1 || !['private','public'].includes(matches[0].functionType))throw new Error('Invalid Board state ABI');
+            const fn=matches[0],accountAbi=new SyncAccountEntrypoint(targets[0].address,undefined).getEntrypointAbi();
+            targets[0].selector=await SyncSelector.fromNameAndParameters(accountAbi.name,accountAbi.parameters);
+            targets[2].selector=await SyncSelector.fromNameAndParameters(fn.name,fn.parameters);
+            const oracle=new PrivateKernelOracle(this.contractStore,this.contractClassService,this.keyStore,this.node,ctx.anchorBlockHeader);
+            // A public Board call has no private Board kernel frame. Its state
+            // is still needed by the action's preparation utilities.
+            const privateTargets=fn.functionType==='private'?targets:targets.slice(0,2);
+            await allToCompletion([
+                this.#syncOrdinaryPostTargets(targets,this.#getSimulatorForTx(),ctx,scopes),
+                allToCompletion(privateTargets.map(target=>oracle.getUpdatedClassIdHints(target.address))),
             ]);
         });
     }

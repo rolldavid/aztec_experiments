@@ -2482,3 +2482,43 @@ for(const present of [false,true])test(`selected native screening metadata remai
  const input=f.state.witnessPrefetches[0];assert.equal(input.owner.toString(),hex(3));assert.equal(input.noteHashWitnessHints,present?metadata:undefined);
  assert.equal(f.state.privateReads.filter(read=>read.name==='get_screen_hints').length,1);assert.equal(f.state.sends,0);assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
 });
+
+// One held synchronized operation sees one immutable native preference snapshot.
+// Separate calls/anchors and interrupted proof renewal must read current state.
+test('immediate preference flow reads its head once and does not resynchronize inside proof boundaries',async()=>{
+ const f=await preproofFixture();let operation={synchronized:true},syncs=0;
+ f.options.accountSession.operationScope=()=>operation;
+ f.options.accountSession.wallet.pxe.sync=async()=>{syncs++;};
+ f.app=f.restart();
+ const result=await executeRollingAction(f.app,{type:'preference',kind:1,target:'42',enabled:true});
+ assert.equal(result.status,'confirmed');assert.equal(f.state.sends,1);assert.equal(syncs,0);
+ assert.equal(f.state.privateReads.filter(row=>row.name==='preference_head').length,1);
+ operation={synchronized:true};f.state.preferenceHead=preferenceHead(true,1,1,11);
+ assert.equal((await f.app.readPreferenceHead()).revision,'1');
+ assert.equal(f.state.privateReads.filter(row=>row.name==='preference_head').length,2);
+});
+for(const changed of ['anchor','scope','unsynchronized'])test(`preference snapshot does not survive ${changed}`,async()=>{
+ const f=fixture();let operation={synchronized:true},height=1,hash=42;
+ f.options.accountSession.operationScope=()=>operation;
+ f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:height},hash:async()=>hex(hash)});
+ f.app=f.restart();assert.equal((await f.app.readPreferenceHead()).revision,'0');
+ f.state.preferenceHead=preferenceHead(true,1,1,11);
+ if(changed==='anchor'){height++;hash++;}else if(changed==='scope')operation={synchronized:true};else operation.synchronized=false;
+ assert.equal((await f.app.readPreferenceHead()).revision,'1');
+ assert.equal(f.state.privateReads.filter(row=>row.name==='preference_head').length,2);
+});
+test('preference snapshot rejects scope changes during its private read without retaining a result',async()=>{
+ const f=fixture();let operation={synchronized:true};f.options.accountSession.operationScope=()=>operation;f.app=f.restart();
+ f.state.beforePreferenceHead=async()=>{operation={synchronized:true};};
+ await assert.rejects(f.app.readPreferenceHead(),{code:'ROLLING_CONTEXT_CHANGED'});
+ delete f.state.beforePreferenceHead;f.state.preferenceHead=preferenceHead(true,1,2,11);
+ assert.equal((await f.app.readPreferenceHead()).revision,'2');
+ assert.equal(f.state.privateReads.filter(row=>row.name==='preference_head').length,2);
+});
+test('immediate read marker still vetoes a changed canonical block before broadcast',async()=>{
+ const f=await preproofFixture();const operation={synchronized:true};f.options.accountSession.operationScope=()=>operation;f.app=f.restart();
+ f.state.beforeBroadcast=()=>{f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(43)});};
+ await assert.rejects(executeRollingAction(f.app,{type:'read-marker',thread:'42',throughBlock:'10'}),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});
+ assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.filter(row=>row.name==='preference_head').length,1);
+ assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);
+});

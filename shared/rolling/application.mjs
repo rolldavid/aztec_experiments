@@ -154,7 +154,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   void publicReader; // Never route personalized requests through public readers.
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
   let busy=false,callScope=null,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
-  const networkChecks=new WeakMap(),preparedPayments=new WeakMap(),preparedPolicies=new WeakMap();
+  const networkChecks=new WeakMap(),preparedPayments=new WeakMap(),preparedPolicies=new WeakMap(),preparedPreferenceHeads=new WeakMap();
   const session=accountSession;
   const getOperationScope=typeof session?.operationScope==='function'?session.operationScope.bind(session):()=>callScope;
   const chainInfoMethod=session?.wallet?.getChainInfo,accountsMethod=session?.wallet?.getAccounts;
@@ -345,14 +345,37 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(value&&Object.getPrototypeOf(value)===Object.prototype&&Reflect.ownKeys(value).length===names.length,'ROLLING_INVALID_ACTION');
     return Object.fromEntries(names.map(name=>{const d=Object.getOwnPropertyDescriptor(value,name);check(d&&Object.hasOwn(d,'value'),'ROLLING_INVALID_ACTION');return [name,d.value];}));
   }
-  async function preferenceHead(){
-    await guard();const board=await contract();await guard();
+  async function preferenceSnapshot(){
+    const operation=getOperationScope();
+    if(!operation||operation.synchronized!==true)return null;
+    await localGuard();
+    const wallet=session.wallet,pxe=wallet.pxe,node=session.node;
+    const header=await pxe.getSyncedBlockHeader(),hash=hashText(await header.hash());
+    const number=Number(header.globalVariables.blockNumber);
+    check(Number.isSafeInteger(number)&&number>0,'ROLLING_INVALID_RESPONSE');
+    await localGuard();
+    check(getOperationScope()===operation&&operation.synchronized===true&&session.wallet===wallet&&wallet.pxe===pxe&&session.node===node,'ROLLING_CONTEXT_CHANGED');
+    return {operation,wallet,pxe,node,hash,number};
+  }
+  function samePreferenceSnapshot(a,b){
+    return a&&b&&a.operation===b.operation&&a.wallet===b.wallet&&a.pxe===b.pxe&&a.node===b.node&&a.hash===b.hash&&a.number===b.number;
+  }
+  async function preferenceHead({ownedSnapshot=false}={}){
+    await guard();const snapshot=ownedSnapshot?await preferenceSnapshot():null;
+    const retained=snapshot&&preparedPreferenceHeads.get(snapshot.operation);
+    if(retained&&samePreferenceSnapshot(snapshot,retained.snapshot))return clone(retained.head);
+    const board=await contract();await guard();
     const record=await utility(board,'preference_head',[session.owner]);
     check(record&&typeof record.initialized==='boolean','ROLLING_INVALID_RESPONSE');
     const numeric=(value,max)=>{check(typeof value==='string'&&/^0x[0-9a-f]{64}$/.test(value),'ROLLING_INVALID_RESPONSE');const n=BigInt(value);check(n<=max,'ROLLING_INVALID_RESPONSE');return n;};
     const schema=numeric(record.schema,0xffffffffn),revision=numeric(record.revision,0xffffffffffffffffn),digest=numeric(record.digest,FIELD_MODULUS-1n);
     check(schema===1n&&(record.initialized?revision>0n&&digest>0n:revision===0n&&digest===0n),'ROLLING_INVALID_RESPONSE');
-    await guard();return {initialized:record.initialized,schema:1,revision:String(revision),digest:String(digest)};
+    await guard();const head={initialized:record.initialized,schema:1,revision:String(revision),digest:String(digest)};
+    if(snapshot){
+      check(samePreferenceSnapshot(snapshot,await preferenceSnapshot()),'ROLLING_CONTEXT_CHANGED');
+      preparedPreferenceHeads.set(snapshot.operation,{snapshot,head:clone(head)});
+    }
+    return head;
   }
   async function markerContext(record){
     if(record.action.type!=='read-marker')return null;
@@ -389,10 +412,17 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       head.revision===record.action.expectedRevision&&same(marker,consent.marker)&&
       (!record.replacementReview||same(head,record.replacementReview.head));
   }
-  async function checkPreproofPreferenceContext(record,{synchronize=false}={}){
+  async function checkPreproofPreferenceContext(record,{synchronize=false,ownedSnapshot=false}={}){
     if(!preferenceAction(record))return;
-    if(synchronize){await guard();await session.wallet.pxe.sync();await guard();}
-    const head=await preferenceHead(),marker=await markerContext(record);
+    // The normal immediate flow already owns a synchronized PXE snapshot and
+    // holds its account lease through signing. Native execution validates its
+    // revision/nullifier; repeating sync here cannot close the cross-browser race.
+    // Renewals and separate submissions retain fresh synchronization.
+    const reuse=ownedSnapshot&&getOperationScope()?.synchronized===true;
+    if(synchronize&&!reuse){await guard();await session.wallet.pxe.sync();await guard();}
+    const reads=await Promise.allSettled([preferenceHead({ownedSnapshot:reuse}),markerContext(record)]);
+    const failure=reads.find(read=>read.status==='rejected');if(failure)throw failure.reason;
+    const [head,marker]=reads.map(read=>read.value);
     // A new proof may renew fees and its anchor, never the saved revision or
     // the canonical block acknowledged by a read marker.
     check(savedContextMatches(record,{marker:record.originalMarker??null},head,marker),'ROLLING_RECOVERY_CONTEXT_CHANGED');
@@ -957,7 +987,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {name:id,bioVersion:String(bioVersion),avatarVersion:String(avatarVersion)};
     });},
-    async readPreferenceHead(){return exclusive(async()=>Object.freeze(await preferenceHead()));},
+    async readPreferenceHead(){return exclusive(async()=>Object.freeze(await preferenceHead({ownedSnapshot:true})));},
     async ownedIdentities({cursor=0}={}){return exclusive(async()=>{await guard();check(Number.isInteger(cursor)&&cursor>=0&&cursor<=0xffffffff-8);
       const values=await utility(await contract(),'owned_name_records',[session.owner,cursor]);check(Array.isArray(values)&&values.length===8,'ROLLING_INVALID_RESPONSE');
       const records=[],seen=new Set();let empty=false;
@@ -1074,7 +1104,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         record.args=[requestId,target,String(budget)];
         if(immediate){record.bok.phase='atomic';record.method='post_with_bok';record.args=[...args,bok.pluginId,requestId];}
       }
-      if(preferenceAction(record)){record.originalPreferenceHead=await preferenceHead();check(record.originalPreferenceHead.revision===action.expectedRevision,'ROLLING_RECOVERY_CONTEXT_CHANGED');}
+      if(preferenceAction(record)){record.originalPreferenceHead=await preferenceHead({ownedSnapshot:immediate});check(record.originalPreferenceHead.revision===action.expectedRevision,'ROLLING_RECOVERY_CONTEXT_CHANGED');}
       if(action.type==='read-marker')record.originalMarker=await markerContext(record);
       const selected=await interaction(await selectedContract(record),record);record.encoded=selected.encoded;
       // Immediate actions use the application's configured ceiling. Submission
@@ -1270,7 +1300,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           // both proof boundaries; native validation checks live chain state.
           if(phase!=='signed')check(await journalCommitment()===attempt.predecessor,'ROLLING_RECOVERY_REQUIRED');
           else {const tx=await session.journal.inspect();check(tx?.operation===operation(id)&&tx.txHash===current.value.txHash,'ROLLING_RECOVERY_REQUIRED');}
-          await checkPreproofPreferenceContext(current.value,{synchronize:true});
+          await checkPreproofPreferenceContext(current.value,{synchronize:true,ownedSnapshot:!saved.value.preproofReview&&paymentScope?.synchronized===true});
           await guard();check(await privateStore.readRecoveryEpoch()===attempt.epoch&&(await savedIntent(id)).encoded===active.encoded,'ROLLING_RECOVERY_REQUIRED');
         };
         await localPreproof.send(estimated.payload,options,{guard:verify,signed:async txHash=>{

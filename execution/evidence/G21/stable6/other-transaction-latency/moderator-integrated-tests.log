@@ -1,0 +1,184 @@
+✔ moderation reads independent fields together, all at captured hashes, then checks final canonical anchor (4.074167ms)
+✔ moderation initial failure waits for started siblings and never starts latest storage (0.842958ms)
+✔ moderation later batch failure drains sibling reads and never passes final authority (0.7035ms)
+✔ moderation rejects class (0.866833ms)
+✔ moderation rejects checkpoint moderator (0.306125ms)
+✔ moderation rejects latest moderator (0.29375ms)
+✔ moderation rejects policy (0.239667ms)
+✔ moderation rejects missing post (0.342833ms)
+✔ moderation rejects flagged post (0.254208ms)
+✔ moderation rejects rejected board (0.266291ms)
+✔ moderation rejects checkpoint fork (0.175375ms)
+✔ moderation rejects latest fork (0.185917ms)
+✔ moderation startup and main-board omit only inapplicable target reads (0.189833ms)
+✔ synchronous read throws still drain started siblings (2.143125ms)
+=== Daemon Integration Tests (with mock infra) ===
+
+  ✓ dry-run flags violation in output but does not call declare-immoral
+  ✓ dry-run with OK verdict does not flag
+  ✓ skips already-flagged posts
+  ✓ empty public text fails input validation before model evaluation
+  ✓ reasoning-only model output is an observable failure and cannot flag
+  ✓ processes multiple posts with mixed verdicts
+  ✓ missing --portal-address exits with error
+  ✓ --from cannot bypass durable moderation jobs
+  ✓ non-dry-run calls declare-immoral via CLI
+  ✓ reads policy from contract output
+  ✓ rejects a local policy override instead of signing with fallback text
+  ✓ evaluates posts past the collateral penalty window
+  ✓ does not expire moderation when collateral penalty window approaches
+  ✓ processes oldest unflagged posts first (censor window urgency)
+  ✓ model cannot add a destination, operation or post index to a verdict
+  ✓ failed signing is not reported as a completed successful job
+  ✓ production CLI cannot bypass model isolation with skip-bootstrap
+  ✓ old post policy fails closed without model or signer action
+  ✓ empty contract policy fails closed without model or signer action
+  ✓ restart retains completed decisions without re-evaluating or resubmitting
+  ✓ pending receipt remains durable and restart does not resend
+  ✓ current policy is used for an older post after policy update
+  ✓ private fee configuration is mandatory at daemon startup
+  ✓ Ethereum endpoint is mandatory at daemon startup
+
+=== Results ===
+  Passed: 24
+  Failed: 0
+✔ censor-daemon/test_daemon.mjs (4042.424833ms)
+✔ snapshot ingestion persists jobs, exact policy and checkpoint across reopen (6.887584ms)
+✔ invalid snapshot is atomic and preserves prior checkpoint and jobs (4.360667ms)
+✔ failed evaluation remains retryable despite complete snapshot ingestion (5.143917ms)
+✔ competing SQLite connections cannot acquire overlapping leases (13.082916ms)
+✔ a distinct worker process observes the existing lease (50.780042ms)
+✔ expired evaluation lease retries but rejects stale worker writes (8.28625ms)
+✔ expired submit-intent lease must reconcile, never resign (4.162417ms)
+✔ expired submitted lease must reconcile, never resign (4.481125ms)
+✔ released signing lease can reconcile immediately without waiting for expiration (4.469541ms)
+✔ submission requires actual hash and cannot silently replace prior hash (4.438833ms)
+✔ checkpointed successful receipt plus matching canonical flag completes job (4.274292ms)
+✔ proven successful receipt plus matching canonical flag completes job (3.954958ms)
+✔ finalized successful receipt plus matching canonical flag completes job (3.159917ms)
+✔ cannot confirm with pending evidence (3.796334ms)
+✔ cannot confirm with reverted evidence (3.947417ms)
+✔ cannot confirm with wrong-post evidence (3.587584ms)
+✔ cannot confirm with wrong-hash evidence (3.421541ms)
+✔ cannot confirm with wrong-reason evidence (3.343417ms)
+✔ known finalized revert becomes retryable without losing job (3.014959ms)
+✔ unknown submitted outcome cannot become ordinary retry (4.314625ms)
+✔ collateral-window priority and exhausted attempts are explicit (5.28375ms)
+✔ orphaned submitted post remains reconciling; unsubmitted post becomes manual review (5.537125ms)
+✔ historical policy is bound separately from current policy and empty board checkpoint persists (3.56925ms)
+✔ reconciliation exhaustion cannot permit unrelated signing (5.266875ms)
+✔ included successful submission awaits canonical event without blocking unrelated jobs (4.568541ms)
+✔ expired lease of known included submission preserves submitted state (3.840708ms)
+✔ authenticated journal replacement records predecessor plus new canonical receipt (4.662208ms)
+✔ replacement rejects wrong-source (6.76425ms)
+✔ replacement rejects missing-predecessor (4.012792ms)
+✔ replacement rejects no-receipt (5.3095ms)
+✔ replacement rejects wrong-receipt (4.29875ms)
+✔ visible flag does not turn known included submission back into a blocking unknown (6.340375ms)
+✔ database capacity exhaustion rolls back snapshot and checkpoint atomically (4.283167ms)
+✔ reorg reinclusion with changed time resets unsigned evaluation and archives prior decision (4.876125ms)
+✔ reorg-altered signed post preserves old intent and cannot be automatically reevaluated (4.9965ms)
+✔ known successful submission finality polling does not exhaust unknown-outcome retries (6.4395ms)
+✔ missing historical policy cannot commit jobs or advance feed checkpoint (2.74525ms)
+✔ already flagged public post is observational manual review, never invented model success (4.05975ms)
+✔ collateral deadline does not prevent a removal intent (4.11ms)
+✔ reorged successful receipt cannot bypass uncertainty fence through manual review (5.082042ms)
+✔ snapshot missing clears successful inclusion and retains recovery fence (7.221125ms)
+✔ snapshot changed clears successful inclusion and retains recovery fence (5.573875ms)
+✔ model rollover keeps included prior-model transactions eligible for finality reconciliation (5.682ms)
+✔ model rollover backoff blocks only the already-signed post while unrelated jobs proceed (15.800833ms)
+✔ finalized old-model revert permits evaluation by the new model without reviving stale evaluation (6.85225ms)
+✔ model upgrade explicitly supersedes unsigned queued work and revokes stale evaluation (4.071125ms)
+✔ model upgrade explicitly supersedes unsigned leased work and revokes stale evaluation (3.775459ms)
+✔ model upgrade explicitly supersedes unsigned retryable-error work and revokes stale evaluation (4.657459ms)
+✔ model upgrade preserves terminal failures and durable unresolved signing intents (5.230458ms)
+✔ returning to an earlier model requeues only its explicitly superseded unsigned work (3.993416ms)
+✔ new policy reevaluates old allowed posts and retains publication metadata (3.420833ms)
+✔ policy update preserves included prior-policy receipt and intent (5.637833ms)
+✔ OK decision survives database reopen without reevaluation (10.103583ms)
+✔ evaluation uses current policy B for a post published under A (4.59975ms)
+✔ empty board with policy A then B persists cursor without evaluation (3.283084ms)
+✔ checkpointed signer response is durable progress, never completion (5.316959ms)
+✔ lost signer response recovers saved hash read-only after deadline (7.234625ms)
+✔ dropped transaction under superseded policy never signs again (6.4955ms)
+✔ checkpointed revert clears old intent and permits bounded fresh attempt (8.057958ms)
+✔ unknown submission blocks unrelated signing (25.843875ms)
+✔ known included success awaiting finality lets another job run (7.50125ms)
+✔ collateral deadline passing during inference still permits removal (5.141125ms)
+✔ post missing during inference prevents old decision signing (4.352334ms)
+✔ post changed during inference prevents old decision signing (3.807292ms)
+✔ expired evaluation lease prevents stale worker signing (5.011458ms)
+✔ matching checkpointed receipt and canonical flag completes without resigning (6.391ms)
+✔ snapshot missing scope fails before database ingestion or model (2.740708ms)
+✔ snapshot other-board scope fails before database ingestion or model (2.437ms)
+✔ scope changing after inference fails before signing (4.153959ms)
+✔ canonical receipt mismatch never completes or signs a replacement (5.733584ms)
+✔ lost response under superseded policy remains fenced while reconciling (5.8655ms)
+✔ lost replacement response reconciles finalized journal state after deadline (10.028291ms)
+✔ lost replacement response reconciles reverted journal state after deadline (8.110792ms)
+✔ lost replacement response reconciles pending journal state after deadline (7.795833ms)
+✔ lost replacement response reconciles unrelated journal state after deadline (7.939459ms)
+✔ new model completes after retiring unsigned old-model retry without false attention (8.692042ms)
+✔ policy update during inference retires stale decision without signing (6.336ms)
+✔ old-policy flag finalizes after policy update without duplicate signing (7.21125ms)
+✔ old-policy finalized revert allows current-policy evaluation (8.971959ms)
+✔ superseded dropped flag continues observing until finalized success (11.595542ms)
+✔ superseded dropped flag continues observing until finalized reverted (10.057083ms)
+✔ timing separates actual model/submission from reconciliation and contains no content (6.902833ms)
+✔ timing sink failure does not change a saved successful submission (5.592083ms)
+✔ Rolling human and Bok posts use identical parent/local union and survive reopen (11.332416ms)
+✔ Rolling parent policy change reevaluates completed human and Bok posts (13.242333ms)
+✔ Rolling policy changes during inference cannot submit old verdict (15.788167ms)
+✔ Rolling development checkpointed removal requires canonical PostRemoved and preserves nonpenalized outcome (10.497459ms)
+✔ Rolling production checkpointed removal requires canonical PostRemoved and preserves nonpenalized outcome (9.706875ms)
+✔ Rolling uncertain broadcast remains fenced through restart without duplicate send (8.085958ms)
+✔ Rolling preparing crash cannot create a new transaction after restart (7.445416ms)
+✔ Rolling changed authority fails before prepare or broadcast (5.415958ms)
+✔ Rolling removed post reorg reopens exact uncertainty fence (9.803917ms)
+✔ Rolling explicit missing canonical post invalidates completed evaluation (6.344458ms)
+✔ Rolling wrong canonical block cannot complete removal (4.786125ms)
+✔ Rolling authority or policy change after proof preparation prevents broadcast (4.914833ms)
+✔ Rolling fee failure leaves preparing fence without broadcast or automatic reproving (6.066792ms)
+✔ Rolling confirmed removal reorg under newer policy invalidates old completion (9.666959ms)
+✔ Rolling canonical removal retained after restart does not falsely reopen completion (8.097916ms)
+✔ Rolling native preparation binds exact public remove_post and fee ceiling (0.591875ms)
+✔ Rolling native fee ceiling rejects before proving (0.588541ms)
+✔ Rolling native payload rejects changed name (0.451417ms)
+✔ Rolling native payload rejects changed to (0.137459ms)
+✔ Rolling native payload rejects changed type (0.107791ms)
+✔ Rolling native payload rejects changed args (0.349041ms)
+✔ Rolling native payload rejects an extra call before proving (0.117416ms)
+✔ Rolling native proven transaction rejects another target before journal or send (0.176042ms)
+✔ Rolling valid empty repost does not poison ingestion beside an ordinary violation (6.606875ms)
+✔ Rolling empty message remains invalid for {"kind":"1","reference":"0"} (2.469958ms)
+✔ Rolling empty message remains invalid for {"kind":"3","reference":"0"} (2.098417ms)
+✔ Rolling empty message remains invalid for {"kind":"2","reference":"2"} (2.169458ms)
+✔ Rolling persistent index drains multiple bounded steps before moderation (5.337542ms)
+✔ Rolling unfinished catchup respects shutdown and never infers completion (2.213583ms)
+✔ Rolling main violations remove human and Bok despite hostile local override (6.6135ms)
+✔ Rolling local-only violations remove human and Bok after main permits (6.685625ms)
+✔ Rolling main inference failure persists unresolved with no transaction (3.281709ms)
+✔ Rolling local inference failure persists unresolved with no transaction (3.045625ms)
+✔ Rolling adapter ingests through actual owned public-reader facade without internal publication method (5.063333ms)
+✔ Rolling final guarded query rejects changed revision before model or signing (2.31ms)
+✔ Rolling final guarded query rejects unavailable final query before model or signing (2.152417ms)
+✔ Rolling catch-up consumes retained work beyond the old step cap before publishing (10.072ms)
+✔ Rolling catch-up preserves the first native failure without retrying it (13.610167ms)
+✔ Rolling inference outliving the former lease completes under the same owner (7.679708ms)
+✔ Rolling exclusive restart recovers unsigned work without elapsed ownership expiry (4.778042ms)
+✔ Rolling exclusive restart recovers signed work without elapsed ownership expiry (3.76225ms)
+✔ Rolling deadline ingestion starts eight reads together, drains each bounded batch and preserves ordering (14.142458ms)
+✔ Rolling failed deadline batch drains siblings and does not advance scan cursor (4.689625ms)
+✔ Rolling projection change during parallel deadlines rejects the entire page (2.500375ms)
+✔ Rolling completed work with queued backlog requests immediate catch-up, terminal/idle does not (6.711292ms)
+✔ Rolling inference failure cannot trigger busy-loop catch-up (5.40025ms)
+✔ Rolling unknown-send failure cannot trigger busy-loop catch-up (5.357791ms)
+✔ Rolling paginated catch-up requires a changed nonempty cursor and stops at final page (5.296417ms)
+ℹ tests 146
+ℹ suites 0
+ℹ pass 146
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4051.833625

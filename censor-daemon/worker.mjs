@@ -114,16 +114,17 @@ export async function processModerationCycle({store,signer,node,scope,evaluate,w
  * Once intent exists, this worker ONLY inspects it; an uncertain send is never
  * interpreted as permission to make another public removal transaction. */
 export async function processRollingModerationCycle({store,signer,evaluate,worker,log=()=>{},dryRun=false,maxJobs=10,stopping=()=>false}){
+ let scanAdvanced=false,scanRemaining=false,completedJobs=0;
  const ingest=async ids=>{
   const snapshot=await signer.list({postIds:ids});
   if(scopeKey(snapshot.scope)!==scopeKey(signer.scope))throw Error('Rolling snapshot scope changed');
   for(const post of snapshot.posts)if(post.flagged){const previous=store.list().find(r=>r.job.postId===post.postId&&JSON.stringify(r.post.context)===JSON.stringify(post.context));if(previous)post.text=previous.post.text;}
-  store.ingestSnapshot(snapshot);return snapshot;
+  store.ingestSnapshot(snapshot);scanAdvanced ||= snapshot.scanProgress===true;scanRemaining=snapshot.scanComplete===false;return snapshot;
  };
  const old=store.list(),offset=signer.reconcileOffset??0;
  const sweep=old.slice(offset,offset+64);
  for(const record of sweep)if(record.job.state==='confirmed-flag'&&(await signer.reconcileRemoval(record)).state!=='confirmed')store.invalidateCompletion(record.key);
- const initial=await ingest(sweep.map(r=>r.job.postId));
+ await ingest(sweep.map(r=>r.job.postId));
  signer.reconcileOffset=offset+64>=old.length?0:offset+64;
  for(let count=0;count<maxJobs&&!stopping();count++){
   let record=store.leaseNext({worker});if(!record)break;
@@ -140,7 +141,7 @@ export async function processRollingModerationCycle({store,signer,evaluate,worke
     const verdict=await moderateRollingPost(modelText,record.policy.text,evaluate);store.renew(key,token);
     await ingest([record.job.postId]);record=store.get(key);
     if(record?.lease?.token!==token)continue;
-    if(!verdict.isViolation){store.transition(key,token,{state:'evaluated-ok',decision:verdict});continue;}
+    if(!verdict.isViolation){store.transition(key,token,{state:'evaluated-ok',decision:verdict});completedJobs++;continue;}
     if(dryRun){store.transition(key,token,{state:'manual-review',errorCode:'DRY_RUN_VIOLATION'});continue;}
     record=store.transition(key,token,{state:'submit-intent',decision:verdict});
     // Adapter persists its own preparing fence before any wallet work, then the
@@ -153,7 +154,7 @@ export async function processRollingModerationCycle({store,signer,evaluate,worke
     if(saved.txHash&&!record.job.transactionHash)record=store.transition(key,token,{state:'submitted',transactionHash:saved.txHash});
    }
    const outcome=await signer.reconcileRemoval(record);
-   if(outcome.state==='confirmed')store.transition(key,token,{state:'confirmed-flag',receipt:outcome.receipt,flagEvent:outcome.flagEvent});
+   if(outcome.state==='confirmed'){store.transition(key,token,{state:'confirmed-flag',receipt:outcome.receipt,flagEvent:outcome.flagEvent});completedJobs++;}
    else if(outcome.state==='submitted'&&outcome.receipt){store.transition(key,token,{state:'submitted',transactionHash:record.job.transactionHash,receipt:outcome.receipt});release();}
    else {store.transition(key,token,{state:'reconciling',errorCode:'REMOVAL_UNRESOLVED'});release();}
   }catch{
@@ -163,5 +164,8 @@ export async function processRollingModerationCycle({store,signer,evaluate,worke
   }
  }
  const status=store.status(),pending=store.list().filter(r=>!superseded(r)&&!['evaluated-ok','confirmed-flag'].includes(r.job.state)&&!(r.job.state==='manual-review'&&!r.intent&&['FLAG_ALREADY_PRESENT',...(dryRun?['DRY_RUN_VIOLATION']:[])].includes(r.errorCode)));
- return {status,complete:initial.scanComplete!==false&&pending.length===0};
+ // Only successful progress with explicit remaining work skips idle polling.
+ // Unknown sends, failed inference and unchanged pages never cause a spin.
+ const catchUp=(scanAdvanced&&scanRemaining)||(completedJobs>0&&!pending.some(r=>r.intent||r.lease)&&pending.some(r=>r.job.state==='queued'&&!r.lease&&!r.intent&&!r.orphaned));
+ return {status,complete:!scanRemaining&&pending.length===0,catchUp};
 }

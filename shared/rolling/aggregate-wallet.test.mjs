@@ -10,7 +10,7 @@ import {claimSecrets} from '../private-fee-funding.mjs';
 import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {createEthereumJournal,verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
-import {prepareAggregateFunding,validateAggregateFundingQuote,aggregateFundingTransaction,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
+import {prepareAggregateFunding,validateAggregateFundingQuote,encodeAggregateFundingTransaction,aggregateFundingTransaction,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction,aggregateFundingAbi} from './aggregate-funding.mjs';
 import {validateAggregateFundingIntent} from './aggregate-recovery.mjs';
 import {createAggregateWallet} from './aggregate-wallet.mjs';
 import {verifyRollingTopupClaim} from '../../apps/rolling/wallet-session.mjs';
@@ -53,7 +53,7 @@ function fixture({chainId='31337'}={}){
     ...(p.bok.amount>0n?[log(scope.bokPortal,bok,'Deposited',[p.bokCommitment,p.bok.amount,h(32),3])]:[])
    ]};if(state.unknown)throw Error('Lost acknowledgement');state.landed=true;return {hash:h(20)};
   }}};
- const options={sdk:{Fr,prepareBokCreditPurchase,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,validateAggregateFundingQuote,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
+ const options={sdk:{Fr,prepareBokCreditPurchase,computeSecretHash,poseidon2HashWithSeparator,deriveBoardDepositSecret,claimSecrets,createEncryptedJournalSlot,createEthereumJournal,verifyEthereumIntentReceipt,prepareAggregateFunding,validateAggregateFundingQuote,encodeAggregateFundingTransaction,aggregateFundingTransaction,validateAggregateFundingIntent},ethers,scope,
   network:{chainId,version:'1',rollup:a(11)},board:h(12),bok:h(13),owner:h(14),walletSecret:h(15),walletSalt:'0',storage,provider,
   reconcileClaim:id=>state.workflow.open().reconcile(id),verifyClaim:async hash=>assert.equal(hash,h(70)),
   verifyFeeCredit:async amount=>{assert.equal(typeof amount,'string');state.creditChecks=(state.creditChecks??0)+1;if(state.creditRejected)throw Object.assign(Error('Insufficient credit'),{code:'ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT',minimumFeeCredit:'1000'});},
@@ -727,4 +727,62 @@ test('switching an unfinished USDC approval to ETH creates an atomic purchase wi
  f.state.balance=0n;const next=await f.open(),quote=await next.prepare(f.allocation);assert.equal(quote.phase,'deposit');assert.equal(quote.asset,'ETH');assert.equal(quote.maximumSwapWei,'303');
  assert.equal((await next.confirm()).receipt.amount,'300');assert.equal(f.state.sends,2);
  assert.deepEqual([...f.transactions.values()].map(tx=>tx.to),[f.scope.token,f.options.topupScope.router]);
+});
+
+test('ETH confirmation estimates exact encoded calldata then simulates it once before journal intent/broadcast',async()=>{
+ const f=fixture(),app=await f.open(),seen=[],original=f.options.provider.send,estimate=f.options.provider.estimateGas;
+ f.options.provider.send=async(method,params)=>{if(method==='eth_call'&&params[1]==='pending'){seen.push({phase:'simulate',request:params[0]});assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);}return original(method,params);};
+ f.options.provider.estimateGas=async request=>{seen.push({phase:'estimate',request:{...request}});return estimate(request);};
+ await app.prepare(f.allocation);await app.confirm();
+ assert.deepEqual(seen.map(value=>value.phase),['estimate','simulate','estimate']);
+ for(const key of ['from','to','data'])assert.equal(seen[0].request[key],seen[1].request[key]);
+ assert.equal(BigInt(seen[0].request.value),BigInt(seen[1].request.value));assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);
+});
+for(const change of ['pending-state','expiry','encoded-request'])test(`ETH final authority rejects ${change} changed during gas estimation without sending`,async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);
+ const original=f.options.provider.estimateGas;
+ f.options.provider.estimateGas=async request=>{
+  if(change==='pending-state')f.state.simulationFails=true;
+  if(change==='expiry')f.state.pendingTime=1901;
+  return original(request);
+ };
+ if(change==='encoded-request'){
+  const encode=f.options.sdk.encodeAggregateFundingTransaction;
+  f.options.sdk.encodeAggregateFundingTransaction=(...args)=>({...encode(...args),value:'1'});
+ }
+ await assert.rejects(app.confirm());assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);
+});
+
+for(const owned of [false,true])test(`top-up phase checks stay fresh while owned slot reads reuse scope: ${owned}`,async()=>{
+ const f=topupFixture();f.state.allowance=1000n;let operation={},scopes=0;
+ f.options.resolveScope=async()=>{scopes++;return f.scope;};if(owned)f.options.operationScope=()=>operation;
+ const cap=await f.open();await cap.prepare(f.allocation);assert.equal(scopes,1);
+ operation={};scopes=0;await cap.confirm();assert.equal(scopes,owned?2:3,'Fresh confirm and presend phase checks remain');
+ operation={};scopes=0;
+ await cap.inspect();await cap.recover();await cap.checkpointClaim({intentId:h(900),attempted:false});await cap.checkpointClaim({intentId:h(900),attempted:true});
+ assert.equal(scopes,owned?1:4,'Only journal plumbing reuses same-operation qualification');
+ operation={};await cap.inspect();assert.equal(scopes,owned?2:5,'New operation always qualifies afresh');
+});
+for(const change of ['scope','guard','operation'])test(`top-up scope reuse refuses ${change} changes`,async()=>{
+ const f=topupFixture();let operation={},calls=0,invalid=false;
+ f.options.operationScope=()=>operation;
+ f.options.contextGuard=async()=>{if(invalid)throw Error('Account replaced');};
+ f.options.resolveScope=async()=>{calls++;return f.scope;};
+ const cap=await f.open();await cap.inspect();assert.equal(calls,1);
+ if(change==='guard'){invalid=true;await assert.rejects(cap.inspect(),/Account replaced/);assert.equal(calls,1);}
+ else if(change==='scope'){operation={};f.scope.portal=a(999);await assert.rejects(cap.inspect(),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(calls,2);}
+ else{
+  operation={};const before=operation;f.options.resolveScope=async()=>f.scope;
+  // Captured resolver switches the owned operation while it is being qualified.
+  const g=topupFixture();g.options.operationScope=()=>operation;g.options.resolveScope=async()=>{operation={};return g.scope;};
+  await assert.rejects((await g.open()).inspect(),{code:'ROLLING_FUNDING_MISMATCH'});assert.notEqual(operation,before);
+ }
+});
+test('top-up presend qualification failure invalidates earlier same-operation scope',async()=>{
+ const f=topupFixture();f.state.allowance=1000n;let operation={},calls=0,reject=false;
+ f.options.operationScope=()=>operation;f.options.resolveScope=async()=>{calls++;if(reject)throw Error('Portal disabled');return f.scope;};
+ const cap=await f.open();await cap.prepare(f.allocation);operation={};
+ const guard=f.wallet.guard;let guards=0;f.wallet.guard=async()=>{await guard();if(++guards===2)reject=true;};
+ await assert.rejects(cap.confirm());assert.equal(f.state.sends,0);
+ const before=calls;await assert.rejects(cap.inspect(),/Portal disabled/);assert(calls>before);
 });

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Interface,keccak256,TypedDataEncoder,AbiCoder,encodeBytes32String} from 'ethers';
-import {prepareAggregateFunding,validateAggregateFundingQuote,aggregateFundingTransaction,aggregateFundingAbi,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction} from './aggregate-funding.mjs';
+import {prepareAggregateFunding,validateAggregateFundingQuote,encodeAggregateFundingTransaction,aggregateFundingTransaction,aggregateFundingAbi,prepareAggregateUsdcFunding,aggregateUsdcFundingTransaction} from './aggregate-funding.mjs';
 const address=n=>'0x'+n.toString(16).padStart(40,'0'),field=n=>'0x'+n.toString(16).padStart(64,'0');
 const r=new Interface(aggregateFundingAbi), p=new Interface(['function depositNonces(address) view returns(uint256)','function depositsEnabled() view returns(bool)','function getDeposit(address) view returns(uint128)','function MIN_DEPOSIT() view returns(uint256)','function MAX_DEPOSIT() view returns(uint256)']);
 const b=new Interface(['function active() view returns(bool)']);
@@ -122,4 +122,60 @@ for(const make of [fixture,usdcFixture])test('zero Bok rejects nonzero disabled 
 test('zero Bok USDC still authenticates the payment token implementation',async()=>{
  const f=usdcFixture({badImplementation:true});Object.assign(f.input.allocation,{bokAmount:'0',bokCommitment:field(0),bokSecretHash:field(0)});
  await assert.rejects(f.prepare(),{code:'AGGREGATE_USDC_IMPLEMENTATION'});
+});
+
+const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
+for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]]){
+ test(`${asset} same-block metadata starts together and drains rejected siblings`,async()=>{
+  const f=make(),original=f.provider.request,held=deferred(),started=deferred();let active=0,maximum=0,finished=false;
+  f.provider.request=async call=>{
+   const anchored=call.method==='eth_getCode'||call.method==='eth_call'&&call.params[1]==='0x10';
+   if(!anchored)return original(call);
+   assert.equal(call.params[1],'0x10');active++;maximum=Math.max(maximum,active);
+   try{
+    if(call.method==='eth_getCode'&&call.params[0]===f.input.scope.router){started.resolve();await held.promise;return original(call);}
+    if(call.method==='eth_getCode'&&call.params[0]===f.input.scope.quoter)throw Error('Rejected runtime read');
+    return await original(call);
+   }finally{active--;}
+  };
+  const result=f.prepare();result.then(()=>{finished=true;},()=>{finished=true;});
+  await started.promise;await new Promise(resolve=>setImmediate(resolve));
+  assert(maximum>=10,'Independent metadata must overlap');assert.equal(finished,false,'Failure cannot escape while sibling read remains active');
+  held.resolve();await assert.rejects(result,{code:'AGGREGATE_PUBLIC_READ_FAILED'});assert.equal(active,0);
+  assert(!f.calls.some(call=>call.method==='eth_call'&&call.params[0].to===f.input.scope.quoter),'No dependent quote after failed metadata');
+ });
+ test(`${asset} independent asset quotes overlap at the captured block and reject a later reorg`,async()=>{
+  const options={},f=make(options),original=f.provider.request,held=deferred(),both=deferred();let started=0,finished=false;
+  f.provider.request=async call=>{
+   if(call.method==='eth_call'&&call.params[0].to===f.input.scope.quoter){
+    assert.equal(call.params[1],'0x10');if(++started===2)both.resolve();await held.promise;
+   }
+   return original(call);
+  };
+  const result=f.prepare();result.then(()=>{finished=true;},()=>{finished=true;});
+  await both.promise;assert.equal(finished,false);options.reorg=true;held.resolve();
+  await assert.rejects(result,{code:'AGGREGATE_QUOTE_REORG'});assert.equal(started,2);
+ });
+}
+test('encoding for gas estimation performs no public reads and never substitutes for final preflight',async()=>{
+ const options={},f=fixture(options),quote=await f.prepare(),count=f.calls.length;
+ const encoded=encodeAggregateFundingTransaction(quote,'0x1234');assert.equal(f.calls.length,count);assert(Object.isFrozen(encoded));
+ assert.throws(()=>encodeAggregateFundingTransaction(structuredClone(quote),'0x1234'),{code:'AGGREGATE_UNVERIFIED_QUOTE'});
+ assert.throws(()=>encodeAggregateFundingTransaction(quote,'not-a-signature'),{code:'AGGREGATE_CONSENT'});
+ assert.notEqual(encodeAggregateFundingTransaction(quote,'0x5678').data,encoded.data);
+ options.simulationFails=true;await assert.rejects(aggregateFundingTransaction(quote,'0x1234'),{code:'AGGREGATE_PUBLIC_READ_FAILED'});
+});
+
+for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])test(`${asset} rejected asset quote drains its held sibling`,async()=>{
+ const f=make(),original=f.provider.request,held=deferred(),both=deferred();let count=0,finished=false;
+ f.provider.request=async call=>{
+  if(call.method==='eth_call'&&call.params[0].to===f.input.scope.quoter){
+   if(++count===1){await held.promise;return original(call);}
+   both.resolve();throw Error('Quote rejected');
+  }
+  return original(call);
+ };
+ const result=f.prepare();result.then(()=>{finished=true;},()=>{finished=true;});
+ await both.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false);
+ held.resolve();await assert.rejects(result,{code:'AGGREGATE_PUBLIC_READ_FAILED'});assert.equal(count,2);
 });

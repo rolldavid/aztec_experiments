@@ -240,7 +240,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    // scope after consent, before any payment intent, rather than consuming the
    // short quote lifetime with native reads before the wallet even opens.
    await read(current.recheckScope);
-   const tx=await read(()=>sdk.aggregateFundingTransaction(quote,consent));
+   const tx=await read(()=>sdk.encodeAggregateFundingTransaction(quote,consent));
    const expected={kind:'aggregate-funding',routerCodeHash:s.routerCodeHash,collateralPortal:s.collateralPortal,feePortal:s.feePortal,bokPortal:s.bokPortal,privateFpc:s.privateFpc,planHash:tx.planHash};
    const gasRequest={from:tx.from,to:tx.to,data:tx.data,value:BigInt(tx.value),nonce,chainId:BigInt(tx.chainId)};
    const gas=await read(()=>provider.estimateGas(gasRequest)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
@@ -258,7 +258,8 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     // Validate deadline again after any wallet consent interaction, before both
     // encrypted intent writes and the journal's one broadcast.
     await read(()=>verifyFeeCredit(current.feeAmount));
-    await read(()=>sdk.aggregateFundingTransaction(quote,consent));
+    const verified=await read(()=>sdk.aggregateFundingTransaction(quote,consent));
+    check(['from','to','chainId','data','value','planHash'].every(key=>verified[key]===tx[key]),'MISMATCH');
     const intent={from:tx.from,to:tx.to,chainId:tx.chainId,nonce:ethereumNonce,data:tx.data.toLowerCase(),value:tx.value,expected};
     sdk.validateAggregateFundingIntent(intent);
     await slot.write(current.saved,{...current.saved.value,intent});await contextGuard();await wallet.guard();
@@ -434,17 +435,25 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
 
 /** Direct token top-ups compose the original Ethereum journal and private claim
  * workflow. They never touch posting collateral or create a public L2 account. */
-export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,resolveScope,reconcileClaim,verifyClaim,swapScope,topupScope}){
+export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,resolveScope,reconcileClaim,verifyClaim,swapScope,topupScope,operationScope}){
  check(['private-fee','bok'].includes(kind));const n=freeze(clone(network));topupScope=topupScope===undefined?undefined:freeze(clone(topupScope));let captured,prepared;
  const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;};
  const tokenAbi=new ethers.Interface(['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','function approve(address,uint256) returns(bool)']);
  const portalAbi=new ethers.Interface(kind==='bok'?['function deposit(bytes32,uint128,bytes32)']:['function depositToAztecPublic(bytes32,uint256,bytes32)']);
- async function context(){
+ // Slot construction reuses qualification only inside the current held account
+ // operation. Payment phase boundaries still request fresh mutable authority.
+ const scopedContexts=new WeakMap();
+ const owned=()=>{const operation=operationScope?.();check(operation===undefined||operation===null||typeof operation==='object','MISMATCH');return operation;};
+ async function context({fresh=false}={}){
+  await contextGuard();const operation=owned();
+  if(operation&&!fresh&&scopedContexts.has(operation))return scopedContexts.get(operation);
+  if(operation)scopedContexts.delete(operation);
   const scope=await read(resolveScope);check(scope&&Object.keys(scope).sort().join()==='portal,recipient,token');
   for(const key of ['portal','token'])check(/^0x[0-9a-f]{40}$/.test(scope[key])&&BigInt(scope[key])>0n);
   check(/^0x[0-9a-f]{64}$/.test(scope.recipient)&&BigInt(scope.recipient)>0n);
   if(captured)check(JSON.stringify(scope)===JSON.stringify(captured),'MISMATCH');else captured=freeze(clone(scope));
-  check(String((await read(()=>provider.getNetwork())).chainId)===n.chainId,'MISMATCH');return captured;
+  check(String((await read(()=>provider.getNetwork())).chainId)===n.chainId,'MISMATCH');
+  check(owned()===operation,'MISMATCH');if(operation)scopedContexts.set(operation,captured);return captured;
  }
  async function slot(hash){const scope=await context(),frame=['ROLLING_TOPUP_FUNDING_V1',n.chainId,n.version,n.rollup,board,owner,kind,scope.portal,scope.token,scope.recipient];if(hash!==undefined){check(/^0x[0-9a-f]{64}$/.test(hash));frame.push(hash);}frame.push(1);return sdk.createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:JSON.stringify(frame),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});}
  async function stored(){const store=await slot(),saved=await read(()=>store.read());if(saved.value)check(saved.value.kind===kind&&saved.value.schemaVersion===1,'MISMATCH');return {store,saved};}
@@ -528,10 +537,10 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    return freeze({kind,phase,...values,exchanged,maximumSwapWei:request.value,walletName:wallet.name,token:captured.token,portal:captured.portal});
   },
   async confirm(){
-   const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');const {wallet,request}=current;await context();await read(wallet.guard);
+   const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');const {wallet,request}=current;await context({fresh:true});await read(wallet.guard);
    if(current.saved.value?.intent){const prior=await verified(current.saved.value);if(prior.outcome==='success'&&current.saved.value.phase==='deposit')await completedClaim(current.saved.value);}else if(current.priorHash)await archived(current.priorHash);
    let saved=await read(()=>current.store.write(current.saved,current.value));
-   const prepareRequest=async tx=>{await read(wallet.guard);await context();const fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
+   const prepareRequest=async tx=>{await read(wallet.guard);await context({fresh:true});const fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
     const gasLimit=tx.gasLimit??(await read(()=>provider.estimateGas(tx)))*2n;
     check(typeof gasLimit==='bigint'&&gasLimit>0n&&typeof price==='bigint'&&price>0n&&(!current.value.fixedGasBudget||gasLimit*price<=BigInt(current.value.gasBudgetWei)),'GAS_CHANGED');
     await read(wallet.guard);return {gasLimit,...(fees.maxFeePerGas!==undefined&&fees.maxFeePerGas!==null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})};

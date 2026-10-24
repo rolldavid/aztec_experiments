@@ -1,3 +1,14 @@
+# All transaction flow performance —25 October2026
+
+Owner goal:50% end-to-end reduction per nonordinary-posting flow. Currentbaseline browser74c, hostedBok6cb, prover702. No sourcechanges before baseline identification; source-only agentdrafts, rootserializedbuild/livewrites, one existingIAB and one retainedbuildtree.
+
+- pending_reply_ui: exhaustive social/profile/name/preferences/subboard/moderation UI inventory; exact duplicatework and included/terminalpresentation. Draft scopedUIpatch separately from sharedapplication changes.
+- pending_feed_release: allsignup/topup/bridge/withdrawal/refundpaths, Ethereum approvals/signatures and Aztecclaim operations; source-backed duplicatechecks/synchronizations.
+- proposed_feed_design: hostedBok/operator/moderator transaction paths, currentSDK applicability, exact guard/simulation/proof repetitions.
+- Root: catalog every live flow, record current beforetimings and completiondefinitions, optimize shared orchestration, integrate/review/publish and verify50% evidence for everylisted flow.
+
+Measure visible inclusion AND canonicalusable completion separately. UI changes must not relabel pending funds or imply settlement. Keep allslow/failure results; no favorableblocktiming selection. Oldstate disposable; no migrations or extra notes. Sharedsourcewriters must coordinate; no dependency copies or newChromeprofiles.
+
 # Posting performance acceptance —25 October2026
 
 Completed current measured request on published74c2142c: two realproof posts11.095/11.894seconds, every subtarget passed including fullprivate→kernel1243/1218ms. Both automaticallycheckpointed. Earlier slowerobservations retained; no universalnetworklatency guarantee.

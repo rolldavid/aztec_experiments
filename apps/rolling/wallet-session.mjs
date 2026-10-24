@@ -144,7 +144,7 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   const w=r.withdrawal;check((r.action.type==='withdraw-bok')===isBok(r));check((r.action.type==='cancel-deposit')===isCancellation(r));check(/^0x[0-9a-f]{40}$/.test(w.depositor)&&BigInt(w.depositor)>0n&&/^[1-9][0-9]*$/.test(w.amount)&&BigInt(w.amount)<(1n<<(isBok(r)?128n:96n)));if(isBok(r)){check(typeof resolveBokScope==='function'&&hash(w.nonce)&&BigInt(w.nonce)>0n&&sdk.Fr.fromHexString(w.nonce).toString()===w.nonce&&JSON.stringify(await read(resolveBokScope))===JSON.stringify(w.bokScope));}else check(hash(w.depositId)&&BigInt(w.depositId)>0n&&sdk.Fr.fromHexString(w.depositId).toString()===w.depositId);return structuredClone(r);
  }
  const journal=(r,extra={})=>sdk.createEthereumJournal({storage,walletSecret,walletSalt,scope:{...exitScope(r),depositor:r.withdrawal.depositor},provider,contextGuard,...extra});
- async function membership(r){
+ async function membership(r,{retain=false}={}){
   const network=await read(()=>provider.getNetwork());check(String(network.chainId)===fixed.chainId);
   const selected=exitScope(r),bok=isBok(r);
   const content=sdk.Fr.fromHexString(await sha256Field(bok?ethers.getBytes(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32','uint256','address','uint128','bytes32'],[ethers.encodeBytes32String('PLUGIN_EXIT_V1'),fixed.chainId,selected.portal,selected.board,fixed.version,r.withdrawal.depositor,r.withdrawal.amount,r.withdrawal.nonce])):encodeDepositExitCommitment(isCancellation(r)?'refund':'exit',{l1ChainId:fixed.chainId,rollupAddress:fixed.rollup,rollupVersion:fixed.version,boardAddress:fixed.board,portalAddress:fixed.portal},{depositor:r.withdrawal.depositor,amount:r.withdrawal.amount,depositId:r.withdrawal.depositId})));
@@ -159,7 +159,21 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   const block=await read(()=>node.getBlockData(receipt.blockNumber));check(hash(block.blockHash)===blockHash&&Number(block.header?.globalVariables?.blockNumber)===receipt.blockNumber);
   const args = bok ? [r.withdrawal.depositor,r.withdrawal.amount,r.withdrawal.nonce]
     : isCancellation(r) ? [r.withdrawal.depositor,r.withdrawal.depositId] : [r.withdrawal.depositId];
-  return (bok ? bokAbi : boardAbi).encodeFunctionData(isCancellation(r) ? 'refund' : 'withdraw',[...args,epoch,count,index,path]).toLowerCase();
+  const data=(bok ? bokAbi : boardAbi).encodeFunctionData(isCancellation(r) ? 'refund' : 'withdraw',[...args,epoch,count,index,path]).toLowerCase();
+  return retain?Object.freeze({data,txHash:r.txHash,blockNumber:receipt.blockNumber,blockHash}):data;
+ }
+ async function recheckMembership(proof){
+  // The effect and path belong to this exact successful transaction/block.
+  // Recheck its live canonical authority, not the immutable proof bytes, after
+  // wallet/journal preparation. The portal call still checks current Outbox state.
+  const reads=await Promise.allSettled([
+   ()=>read(()=>provider.getNetwork()),()=>read(()=>node.getTxReceipt(sdk.TxHash.fromString(proof.txHash))),
+  ].map(fn=>Promise.resolve().then(fn)));
+  const failure=reads.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+  const [network,receipt]=reads.map(result=>result.value);
+  check(String(network.chainId)===fixed.chainId);
+  check(['checkpointed','proven','finalized'].includes(receipt?.status)&&receipt.executionResult==='success'&&hash(receipt.txHash)===proof.txHash&&receipt.blockNumber===proof.blockNumber&&hash(receipt.blockHash)===proof.blockHash);
+  const block=await read(()=>node.getBlockData(proof.blockNumber));check(hash(block?.blockHash)===proof.blockHash&&Number(block.header?.globalVariables?.blockNumber)===proof.blockNumber);
  }
  const cost=result=>{const r=result.receipt,price=r?.gasPrice??r?.effectiveGasPrice;return typeof r?.gasUsed==='bigint'&&r.gasUsed>=0n&&typeof price==='bigint'&&price>=0n?String(r.gasUsed*price):null;};
  async function canonicalReceipt(result){
@@ -223,13 +237,13 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   cancel(){quote=null;},
   async confirm(){
    const q=quote;quote=null;check(q);const r=await original();check(r.intentId===q.r.intentId&&r.txHash===q.r.txHash&&JSON.stringify(r.withdrawal)===JSON.stringify(q.r.withdrawal));
-   await read(q.wallet.guard);check(await membership(r)===q.data);
+   await read(q.wallet.guard);const proof=await membership(r,{retain:true});check(proof.data===q.data);
    let j;
    const signer={getAddress:()=>q.wallet.signer.getAddress(),sendTransaction:async request=>{
     if(q.saved)check(request.from===q.saved.from&&request.to===q.saved.to&&request.data===q.saved.data&&String(request.value)===q.saved.value&&String(request.chainId)===q.saved.chainId&&request.nonce===q.saved.nonce);
-    await read(q.wallet.guard);check(await membership(r)===q.data);await read(()=>provider.call(request));
+    await read(q.wallet.guard);await read(()=>provider.call(request));
     const gas=await read(()=>provider.estimateGas(request)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
-    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(q.maximumGasWei));await read(q.wallet.guard);check(await membership(r)===q.data);
+    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(q.maximumGasWei));await read(q.wallet.guard);await recheckMembership(proof);
     if(q.saved)check(requestIdentity(await read(()=>j.inspectRequest()))===requestIdentity(q.saved));
     return q.wallet.signer.sendTransaction({...request,gasLimit:gas*2n,...(fees.maxFeePerGas!=null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})});
    }};
@@ -448,7 +462,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     if(selected.bokTopup&&!bokTopupScope)throw fail('ROLLING_SESSION_CONFIG');
     funding.bokTopupScope=bokTopupScope;
     const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getLogs','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);const value=await fundingRead(name,args);await guardRoute();return value;}]));
-    topups={};for(const kind of ['private-fee',...(selected.bok?['bok']:[])])topups[kind]=await createStandaloneTopupWallet({sdk,ethers,kind,network,board:deployment.board.address.toString(),owner:captured.address,walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,topupScope:kind==='bok'?bokTopupScope:undefined,
+    topups={};for(const kind of ['private-fee',...(selected.bok?['bok']:[])])topups[kind]=await createStandaloneTopupWallet({sdk,ethers,kind,network,board:deployment.board.address.toString(),owner:captured.address,walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,operationScope:()=>operationScope,topupScope:kind==='bok'?bokTopupScope:undefined,
      resolveScope:async()=>verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee:deployment.privateFee.address.toString(),bok:kind==='bok'?await ensureBok():undefined,kind,contextGuard:guardRoute}),verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute}),reconcileClaim:async id=>{await pxe.sync();await initializeAccount();return app.reconcile(id);}});
     const aggregateLookup=funding.loadAggregate;
     funding.loadAggregate=async(hash,kind)=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(kind==='bok'&&topups.bok?await topups.bok.loadAggregate(hash):null);};
@@ -482,7 +496,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  let refreshPhase=null;
  const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?'account.sync':'action.sync',()=>ordinaryPolicy&&typeof pxe.syncWithAnchorRead==='function'?app.prefetchPostingPolicy(read=>pxe.syncWithAnchorRead(read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
   if(ordinaryPost){await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress}));await guardRoute();}
- },contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
+ },prepareContractState:async({method})=>{await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareBoardActionState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress,method}));await guardRoute();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
  async function observedRead(name,call,args){
   const method=refreshMethods[name];if(!method)return locked(()=>call(...args));
   let step=method+'/lock',contextChecks=0;

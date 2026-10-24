@@ -16,7 +16,7 @@ const anchorBlockHeader={hash:async()=>new Fr(91)};
 after(()=>BarretenbergSync.destroySingleton());
 function fixture({available=500n,prices=new GasFees(2n,3n),privateGas=()=>new Gas(10,20),main=new Gas(2,10),refund=new Gas(1,5),actualPrices=prices}={}){
  const payer=AztecAddress.fromFieldUnsafe(new Fr(42)),selector=FunctionSelector.fromString('0x12345678'),calls=[],sends=[];
- const prepared={refundGasLimits:refund,refundReservationError:'13277422931216639996',availableCredit:available,paymentMethod:new PrivateFeePaymentMethod(payer,1n),refundSelector:selector.toString(),gasSettings:new GasSettings(new Gas(100,1000),new Gas(50,500),prices,GasFees.empty())};
+ const prepared={networkGasLimits:new Gas(1000,10000),refundGasLimits:refund,refundReservationError:'13277422931216639996',availableCredit:available,paymentMethod:new PrivateFeePaymentMethod(payer,1n),refundSelector:selector.toString(),gasSettings:new GasSettings(new Gas(100,1000),new Gas(50,500),prices,GasFees.empty())};
  const reservation=p=>p.calls.find(c=>c.name==='pay_fee')?.args[0].toBigInt()??p.calls.find(c=>c.name==='mint_and_pay_fee').args[3].toBigInt();
  const error=(address=payer,sel=selector,message='Not enough L2GAS gas left')=>new SimulationError(message,[{contractAddress:address,functionSelector:sel}]);
  const input={prepared,from:AztecAddress.fromFieldUnsafe(new Fr(43)),interaction:{request:async()=>new ExecutionPayload([],[],[],[])},node:{getNodeInfo:async()=>({txsLimits:{gas:new Gas(1000,10000)}})},wallet:{pxe:{getSyncedBlockHeader:async()=>anchorBlockHeader},sendTx:async(...args)=>{sends.push(args);return {receipt:{status:'checkpointed'}};}},simulator:{detachedMeasurement:true,
@@ -92,7 +92,7 @@ for(const changed of ['nested','selector','contract','data','message-only'])test
  await assert.rejects(sendPrivateFeeTransaction(h.input),e=>e===failure);assert.equal(h.sends.length,0);
 });
 
-test('operator ceilings above node limits do not reject a small measured transaction',async()=>{const h=fixture();h.input.node.getNodeInfo=async()=>({txsLimits:{gas:new Gas(90,900)}});const r=await estimatePrivateFeeTransaction(h.input);assert(r.gasSettings.gasLimits.l2Gas<=900);});
+test('operator ceilings above node limits do not reject a small measured transaction',async()=>{const h=fixture();h.input.prepared.networkGasLimits=new Gas(90,900);const r=await estimatePrivateFeeTransaction(h.input);assert(r.gasSettings.gasLimits.l2Gas<=900);});
 test('reverted final simulation without optional reason cannot be accepted',async()=>{const h=fixture(),simulate=h.input.simulator.public;h.input.simulator.public=async(...args)=>{const r=await simulate(...args);if(args[3])r.publicOutput.txEffect.revertCode=RevertCode.REVERTED;return r;};await assert.rejects(sendPrivateFeeTransaction(h.input),{code:'BB_SIMULATION_FAILED'});assert.equal(h.sends.length,0);});
 test('cold setup out-of-gas fails closed rather than disguising rejection as funding shortage',async()=>{const h=fixture();h.input.simulator.public=async()=>{throw Error('[SETUP] UNRECOVERABLE ERROR! The transaction will be thrown out. Not enough L2GAS gas left');};await assert.rejects(sendPrivateFeeTransaction(h.input),/SETUP/);assert.equal(h.sends.length,0);});
 
@@ -142,7 +142,7 @@ test('adequate credit uses one strict native simulation at the configured fee ma
  assert(actual<result.reservation);assert.equal(result.reservation-actual,3069n);
 });
 test('adequate-credit maximum and teardown stay inside current native gas caps',async()=>{
- const h=fixture({available:3200n});h.input.node.getNodeInfo=async()=>({txsLimits:{gas:new Gas(90,900)}});
+ const h=fixture({available:3200n});h.input.prepared.networkGasLimits=new Gas(90,900);
  const result=await estimatePrivateFeeTransaction(h.input);
  assert.equal(h.calls.length,1);assert.deepEqual(result.gasSettings.gasLimits,new Gas(90,900));assert.deepEqual(result.gasSettings.teardownGasLimits,new Gas(1,5));
  assert.equal(result.maximumFee,2880n);assert(result.maximumFee<=h.input.prepared.gasSettings.getFeeLimit().toBigInt());
@@ -302,7 +302,7 @@ test('reservation growth remeasures the additional private notes before immediat
   privateGas:r=>r===1n?new Gas(2560,832625):new Gas(r>firstReservation?2688:2624,r>firstReservation?955825:894225),
   main:new Gas(2368,1221113),refund:new Gas(192,27510)});
  h.input.prepared.gasSettings=new GasSettings(new Gas(117624,6540000),new Gas(58812,817500),prices,GasFees.empty());
- h.input.node.getNodeInfo=async()=>({txsLimits:{gas:new Gas(117624,6540000)}});
+ h.input.prepared.networkGasLimits=new Gas(117624,6540000);
  const result=await estimatePrivateFeeTransaction({...h.input,deferSimulation:true});
  const measured=h.calls.filter(c=>c.phase==='public');
  assert.equal(measured[0].payload.calls[0].args[0].toBigInt(),firstReservation);
@@ -335,7 +335,7 @@ test('live fragmented-credit cycle stops before repeating any reservation or sen
   privateGas:r=>r===1n?new Gas(2560,832625):r===available?new Gas(2144,964850):r<=firstFee?new Gas(r<firstFee?2624:2688,r<firstFee?894225:955825):new Gas(2720,986625),
   main:new Gas(2368,1219583),refund:new Gas(192,27510)});
  h.input.prepared.gasSettings=new GasSettings(new Gas(117624,6540000),new Gas(58812,817500),prices,GasFees.empty());
- h.input.node.getNodeInfo=async()=>({txsLimits:{gas:new Gas(117624,6540000)}});
+ h.input.prepared.networkGasLimits=new Gas(117624,6540000);
  await assert.rejects(sendPrivateFeeTransaction({...h.input,deferSimulation:true}),{code:'BB_FEE_RESERVATION_UNAFFORDABLE'});
  const measured=h.calls.filter(c=>c.phase==='public'),reservations=measured.map(c=>c.payload.calls[0].args[0].toBigInt());
  assert.equal(measured.length,5);assert.equal(new Set(reservations).size,5);
@@ -349,4 +349,18 @@ test('independently measured fee equal to a clamped reservation reuses the exact
  assert.equal(result.maximumFee,131n);assert.equal(result.reservation,result.maximumFee);
  assert.equal(h.calls.filter(c=>c.phase==='public').length,1);assert.equal(result.payload,h.calls.at(-1).payload);
  assert.equal(h.sends.length,0);
+});
+
+
+test('generic estimation reuses verified payment network limits without another readiness request',async()=>{
+ const h=fixture({available:10000n});h.input.node.getNodeInfo=async()=>{throw Error('duplicate node metadata read');};
+ h.input.prepared.networkGasLimits=new Gas(90,900);
+ const result=await estimatePrivateFeeTransaction({...h.input,deferSimulation:true});
+ assert.equal(result.passes,0);assert.equal(result.gasSettings.gasLimits.daGas,90);assert.equal(result.gasSettings.gasLimits.l2Gas,900);
+ assert.equal(h.calls.length,0);assert.equal(h.sends.length,0);
+});
+for(const network of [undefined,{daGas:-1,l2Gas:900},{daGas:90,l2Gas:NaN},{daGas:90,l2Gas:1.5}])test('generic estimation rejects unverified malformed captured limits '+JSON.stringify(network),async()=>{
+ const h=fixture();h.input.prepared.networkGasLimits=network;
+ await assert.rejects(estimatePrivateFeeTransaction(h.input),{code:'PRIVATE_FEE_CONFIGURATION_REQUIRED'});
+ assert.equal(h.calls.length,0);assert.equal(h.sends.length,0);
 });

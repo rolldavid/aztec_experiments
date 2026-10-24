@@ -28,13 +28,15 @@ function balanceArguments(args){
   return [{cursor:d.value}];
  }catch{throw Object.assign(Error('Invalid Rolling balance cursor'),{code:'ROLLING_BALANCE_CURSOR_INVALID'});}
 }
-export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null,prepareContext}){
- if(typeof synchronize!=='function'||typeof contextGuard!=='function'||prepareContext!==undefined&&typeof prepareContext!=='function')throw Error('Rolling synchronization unavailable');
+const boardStateMethods=Object.freeze({like:'set_like',unlike:'set_like',preference:'set_preference','read-marker':'mark_thread_read',name:'register_name',bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator',screen:'screen',withdraw:'withdraw'});
+export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null,prepareContext,prepareContractState}){
+ if(typeof synchronize!=='function'||typeof contextGuard!=='function'||prepareContext!==undefined&&typeof prepareContext!=='function'||prepareContractState!==undefined&&typeof prepareContractState!=='function')throw Error('Rolling synchronization unavailable');
  const calls=methods.map(name=>{
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
   return [name,async(...args)=>{
    const captured=name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args):args;
+   const stateMethod=name==='prepare'&&Object.hasOwn(boardStateMethods,captured[0]?.type)?boardStateMethods[captured[0].type]:undefined;
    await contextGuard();
    const scope=operationScope();
    // Moderator identity is public storage; it needs no private-state sync.
@@ -50,7 +52,13 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     if(scope&&operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
     if(scope)scope.synchronized=true;
    }
-   await contextGuard();const result=await call(...captured);
+   await contextGuard();
+   if(scope&&stateMethod&&prepareContractState){
+    await prepareContractState({method:stateMethod});
+    if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
+    await contextGuard();
+   }
+   const result=await call(...captured);
    if(scope&&['submitPrepared','resumeSaved'].includes(name)&&['confirmed','authorized','reverted','bok-post-reverted','bok-release-reverted'].includes(result?.status))scope.synchronized=false;
    return result;
   }];

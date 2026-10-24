@@ -9,6 +9,14 @@ function options(){
   boardArtifact:{},privateFeeArtifact:{},account:{address:'0x'+'2'.repeat(64),secretKey:'0x'+'3'.repeat(64),salt:'0'},
   trustedQuery:{url:'http://127.0.0.1:1',allowLocalDev:true},contextGuard:()=>{},locks:{request:async(_name,_options,fn)=>fn({})}}};
 }
+for(const failure of [false,true])test('generic Board state preparation holds native account lease before action, failure='+failure,async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();f.state.waitBoardState=gate.promise;f.state.failBoardState=failure;
+ const session=await createRollingWalletSession(f.input),original=f.pxe.prepareBoardActionState;
+ f.pxe.prepareBoardActionState=async targets=>{entered.resolve();return original(targets);};
+ let done=false;const work=session.application.prepare({type:'name',first:'Fresh',last:'Willow'}).finally(()=>done=true),observed=failure?assert.rejects(work,/board state failed/):work;
+ await entered.promise;assert.equal(done,false);assert.equal(f.state.active,true);assert.equal(f.state.boardStateMethod,'register_name');gate.resolve();await observed;assert.equal(f.state.active,false);await session.close();
+});
+
 test('unsupported cross-tab custody fails before any SDK/network access',async()=>{
  const {input,accesses}=options();input.locks={};await assert.rejects(createRollingWalletSession(input),{code:'ROLLING_SESSION_CONFIG'});assert.deepEqual(accesses,[]);
 });
@@ -101,6 +109,7 @@ async function sessionFixture({chainId='31337'}={}){
  const store={close:async()=>{held('store-close');state.closes++;if(state.failClose)throw Error('close failed');}};
  const pxe={registerAccount:async()=>{held('register-account');state.registrations++;if(state.failRegister)throw Error('registration failed');},registerContractClass:async()=>{held('register-class');},registerContract:async()=>{held('register-contract');},
   sync:async()=>{held('sync');state.syncs++;if(state.waitSync)await state.waitSync;if(state.failSync)throw Error('sync failed');},
+  prepareBoardActionState:async targets=>{held('board-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress,method:targets.method});state.boardStateMethod=targets.method;if(state.waitBoardState)await state.waitBoardState;if(state.failBoardState)throw Error('board state failed');},
   prepareOrdinaryPostState:async targets=>{held('ordinary-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress});if(state.waitOrdinaryState)await state.waitOrdinaryState;if(state.failOrdinaryState)throw Error('ordinary state failed');},
   getSyncedBlockHeader:async()=>{held('preference-header');return {globalVariables:{blockNumber:10},hash:async()=>BlockHash.fromString(hex(55))};},
   getPrivateEvents:async()=>{held('preference-events');if(state.waitEvents)await state.waitEvents;if(state.failEvents)throw Error('PRIVATE_SENTINEL');return [];},
@@ -1304,4 +1313,34 @@ for(const outcome of ['success','failure','account-change'])test(`composer nativ
   if(outcome==='account-change')f.state.wrongPXE=true;gate.resolve();await observed;
   assert.equal(calls,1);assert.equal(f.state.events.filter(x=>x==='screen-hints').length,1);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
  }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
+});
+
+for(const kind of ['collateral','bok','cancellation'])test(`${kind} withdrawal confirms one immutable proof and freshly fences receipt/header before send`,async()=>{
+ const f=await withdrawalFixture({bok:kind==='bok',cancellation:kind==='cancellation'}),counts={};
+ for(const name of ['getTxReceipt','getTxEffect','getL2ToL1MembershipWitness','getBlockData']){
+  const original=f.opts.node[name];f.opts.node[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return original(...args);};
+ }
+ await f.cap.prepare({maximumGasWei:'1000'});for(const name of Object.keys(counts))counts[name]=0;
+ assert.equal((await f.cap.confirm()).status,'refunded');assert.equal(f.state.sends,1);
+ assert.deepEqual(counts,{getTxReceipt:2,getTxEffect:1,getL2ToL1MembershipWitness:1,getBlockData:2});
+});
+for(const changed of ['fork','receipt-block','receipt-revert','chain'])test(`withdrawal final authority catches ${changed} after immutable proof capture`,async()=>{
+ const f=await withdrawalFixture();await f.cap.prepare({maximumGasWei:'1000'});
+ f.state.onFees=()=>{
+  if(changed==='fork')f.state.l2Fork=true;
+  if(changed==='chain')f.state.chainId='1';
+  if(changed.startsWith('receipt'))f.opts.node.getTxReceipt=async()=>({txHash:f.record.txHash,status:'checkpointed',executionResult:changed==='receipt-revert'?'app_logic_reverted':'success',blockNumber:2,blockHash:hex(43)});
+ };
+ await assert.rejects(f.cap.confirm());assert.equal(f.state.sends,0);
+});
+test('withdrawal final parallel authority check drains a held receipt when network read rejects',async()=>{
+ const f=await withdrawalFixture(),held=Promise.withResolvers(),started=Promise.withResolvers();await f.cap.prepare({maximumGasWei:'1000'});
+ const receipt=f.opts.node.getTxReceipt,network=f.opts.provider.getNetwork;let final=false,finished=false;
+ f.state.onFees=()=>{final=true;};f.opts.node.getTxReceipt=async(...args)=>{if(final){started.resolve();await held.promise;}return receipt(...args);};
+ // The provider adapter captures methods at creation, so reconstruct before preparing.
+ f.opts.provider.getNetwork=async()=>{if(final)throw Error('Network unavailable');return network();};
+ const cap=f.restart();await cap.prepare({maximumGasWei:'1000'});final=false;
+ const run=cap.confirm().finally(()=>{finished=true;});const rejected=assert.rejects(run);
+ await started.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false);
+ held.resolve();await rejected;assert.equal(f.state.sends,0);
 });

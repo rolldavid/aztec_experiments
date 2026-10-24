@@ -9842,10 +9842,19 @@
     "resource_closeout": "execution/evidence/G12/resource-closeout-20261020/closeout.json"
   },
   "current_operating_request": {
-    "request": "Ordinary post click-to-visible after Aztec inclusion at most15seconds; complete fee preparation strictly less than1second; private witness construction at most1.25seconds. Inspect prover CPU/server timing and affordable spot capacity within existing1500USD/month hosting budget. Browser-to-prover request submission and acceptance strictly less than1second (owner added24October). Entire pre-proof application preparation (account sync, rules, arguments, paymentmetadata) strictly less than1second. Owner now requires owner-only state discovery with durable records recoverable in another browser and AES encryption entirely unconstrained; no local-only choice or old-state migration. Owner explicitly forbids additional private notes for discovery; preserve the existing application note count.",
-    "status": "complete",
-    "execution_lane": "Parallel: preparation/readiness/predecessor/rules; native private execution/logs/witness/kernel/publicvalidation; upload/proverstartup/resultdelivery. Root integrates, publishes, verifies and investigates Aztec inclusion/feed latency.",
-    "checkpoint": "25 October: published74c2142c; two current-release real-proof posts228/600characters visible after actualinclusion in11.095/11.894s. Full private\u2192kernel wall1243/1218ms, prep836/814ms, fee ready fromclick769/755ms, encode+upload848/810ms. All measured targets pass, independent review approved. Both automatically checkpointed. Earlier27\u201328s results retained; acceptance is observed cases, not a network-wide guarantee. All services active, sourcepushed, owned transfer/draft cleanup complete.",
-    "next_action": "Current measured performance request complete. Preserve evidence and known external-network variance; do not resume historical campaigns without owner scope."
-  }
+    "request": "Owner25October: apply all proven posting optimizations across ALL other application transaction flows; new goal at least50% end-to-end reduction for every flow against currentpublished74c baseline. Cover Ethereum/Aztec user and operator paths, preservevalidation and genuine usable completion.",
+    "status": "active",
+    "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
+    "checkpoint": "Baseline UI74c/sourceac27 unchanged. Starting exhaustive inventory and source-backed opportunity audit; no50% claims without per-flow before/after evidence. Priorpostingacceptance retained.",
+    "next_action": "Capture representative currentlive baselines while agents audit exactflows; document visibility/inclusion and canonical/usable completion separately; integrate bounded shared optimizations after review."
+  },
+  "completed_operating_requests": [
+    {
+      "request": "Ordinary post click-to-visible after Aztec inclusion at most15seconds; complete fee preparation strictly less than1second; private witness construction at most1.25seconds. Inspect prover CPU/server timing and affordable spot capacity within existing1500USD/month hosting budget. Browser-to-prover request submission and acceptance strictly less than1second (owner added24October). Entire pre-proof application preparation (account sync, rules, arguments, paymentmetadata) strictly less than1second. Owner now requires owner-only state discovery with durable records recoverable in another browser and AES encryption entirely unconstrained; no local-only choice or old-state migration. Owner explicitly forbids additional private notes for discovery; preserve the existing application note count.",
+      "status": "complete",
+      "execution_lane": "Parallel: preparation/readiness/predecessor/rules; native private execution/logs/witness/kernel/publicvalidation; upload/proverstartup/resultdelivery. Root integrates, publishes, verifies and investigates Aztec inclusion/feed latency.",
+      "checkpoint": "25 October: published74c2142c; two current-release real-proof posts228/600characters visible after actualinclusion in11.095/11.894s. Full private\u2192kernel wall1243/1218ms, prep836/814ms, fee ready fromclick769/755ms, encode+upload848/810ms. All measured targets pass, independent review approved. Both automatically checkpointed. Earlier27\u201328s results retained; acceptance is observed cases, not a network-wide guarantee. All services active, sourcepushed, owned transfer/draft cleanup complete.",
+      "next_action": "Current measured performance request complete. Preserve evidence and known external-network variance; do not resume historical campaigns without owner scope."
+    }
+  ]
 }

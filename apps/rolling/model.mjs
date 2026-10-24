@@ -52,13 +52,15 @@ export function createInlineAction({action,perform,onState}) {
     if(uncertain)return Promise.resolve(uncertain);
     const captured=Object.freeze({...action()});
     onState('pending',captured);
-    pending=Promise.resolve().then(()=>perform(captured)).then(result=>{
+    let active=true,included=false;
+    const onIncluded=()=>{if(active&&!included){included=true;onState('included',captured);}};
+    pending=Promise.resolve().then(()=>perform(captured,onIncluded)).then(result=>{
       if(!['confirmed','reverted','blocked','cancelled','failed','unknown'].includes(result?.status))result={status:'unknown'};
       if(result.status==='unknown')uncertain=result;
       onState(result.status,captured,result);return result;
     },()=>{
       uncertain={status:'unknown'};onState('unknown',captured,uncertain);return uncertain;
-    }).finally(()=>{pending=null;});
+    }).finally(()=>{active=false;pending=null;});
     return pending;
   };
 }

@@ -61,3 +61,10 @@ test('setup or a definite failure requires a new explicit click, with current pr
   await run();assert.equal(sent.length,1);enabled=false;await run();assert.deepEqual(sent.map(a=>a.enabled),[true,false]);
  }
 });
+
+test('included inline progress is nonterminal, deduplicated and cannot revive a settled action',async()=>{
+ const held=Promise.withResolvers(),states=[];let progress,calls=0;
+ const run=createInlineAction({action:()=>({type:'like',post:'7'}),perform:async(action,onIncluded)=>{calls++;progress=onIncluded;await held.promise;return {status:'confirmed'};},onState:state=>states.push(state)});
+ const pending=run();await Promise.resolve();progress();progress();assert.deepEqual(states,['pending','included']);assert.equal(run(),pending);assert.equal(calls,1);
+ held.resolve();await pending;progress();assert.deepEqual(states,['pending','included','confirmed']);
+});

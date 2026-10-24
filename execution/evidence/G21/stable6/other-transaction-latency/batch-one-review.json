@@ -1,0 +1,22 @@
+{
+  "status": "source-verified-not-published",
+  "ordinaryPostingUnchanged": true,
+  "noContractRedeploy": true,
+  "reviews": {
+    "fundingQuotes": "proposed_feed_design",
+    "fundingScopeWithdrawal": "proposed_feed_design",
+    "moderator": "pending_feed_release",
+    "UI": "pending_feed_release",
+    "genericNativeState": "pending_reply_ui",
+    "preferenceAndFeeMetadata": "pending_feed_release"
+  },
+  "tests": {
+    "application": 409,
+    "genericFee": 68,
+    "fundingQuote": 152,
+    "moderatorRoot": 146,
+    "UIAndFundingSession": 458,
+    "nativeAndWrapper": 71
+  },
+  "acceptance": "Live after measurements pending;50percent goal not achieved"
+}
