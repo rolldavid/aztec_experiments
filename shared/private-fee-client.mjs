@@ -95,7 +95,7 @@ export function normalizePrivateFeeGasSettings(value) {
 export async function preparePrivateFeePayment(input) {
   try{return await prepare(input);}catch(error){if(error instanceof PrivateFeePreparationError)throw error;throw new PrivateFeePreparationError('PRIVATE_FEE_PREPARATION_FAILED');}
 }
-async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,expectedChainId,expectedVersion,gasSettings,claim}={}) {
+async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,expectedChainId,expectedVersion,gasSettings,claim,measure=(_stage,operation)=>operation()}={}) {
   check(wallet?.getChainInfo&&wallet?.registerContract&&node?.getNodeInfo&&node?.getContract,'PRIVATE_FEE_PROVIDER_REQUIRED');
   check(privateFeeAddress&&privateFeeArtifact,'PRIVATE_FEE_CONFIGURATION_REQUIRED');
   const author=address(owner),payer=address(privateFeeAddress),chainId=uint(expectedChainId,64),version=uint(expectedVersion,32);
@@ -104,21 +104,21 @@ async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,e
   const artifact=artifactOf(privateFeeArtifact);
   // Network identity, prices and canonical artifact derivation are independent.
   // Drain every read before releasing the caller's account lease on failure.
-  const observations=await Promise.allSettled([
+  const observations=await measure('action.fee-metadata',()=>Promise.allSettled([
     ()=>wallet.getChainInfo(),()=>node.getNodeInfo(),()=>node.getCurrentMinFees(),()=>derivePrivateFeeInstance(artifact),
-  ].map(read=>Promise.resolve().then(read)));
+  ].map(read=>Promise.resolve().then(read))));
   const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
   const [walletChain,nodeInfo,minimum,canonical]=observations.map(value=>value.value);
   check(uint(walletChain.chainId,64)===chainId&&uint(walletChain.version,32)===version&&uint(nodeInfo.l1ChainId,64)===chainId&&uint(nodeInfo.rollupVersion,32)===version,'PRIVATE_FEE_CHAIN_MISMATCH');
   check(['feePerDaGas','feePerL2Gas'].every(key=>fixed.gasSettings.maxFeesPerGas[key]>=uint(minimum[key],128)),'PRIVATE_FEE_CAP_TOO_LOW');
   check(equal(canonical.address,payer),'PRIVATE_FEE_NONCANONICAL_ADDRESS');
-  const binding=await Promise.allSettled([requirePublishedPrivateFee(node,canonical),privateFeeRegistered(wallet,canonical)]);
+  const binding=await measure('action.fee-binding',()=>Promise.allSettled([requirePublishedPrivateFee(node,canonical),privateFeeRegistered(wallet,canonical)]));
   const bindingFailure=binding.find(value=>value.status==='rejected');if(bindingFailure)throw bindingFailure.reason;
   const registered=binding[1].value;
   let paymentMethod,availableCredit,smallClaim;
   const privateBalance=async()=>{
     check(wallet.executeUtility,'PRIVATE_FEE_PROVIDER_REQUIRED');
-    const {result}=await Contract.at(payer,artifact,wallet).methods.balance_of(author).simulate({from:author});
+    const {result}=await measure('action.fee-balance',()=>Contract.at(payer,artifact,wallet).methods.balance_of(author).simulate({from:author}),{nativeUtility:true});
     return uint(result,128);
   };
   if(claim!==undefined) {

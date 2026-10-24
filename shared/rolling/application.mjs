@@ -236,7 +236,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const matches=[...artifact.functions,...(artifact.nonDispatchPublicFunctions??[])].filter(f=>f.name===name);
     check(matches.length===1,'ROLLING_ABI_MISMATCH');const abi=matches[0];
     check(!abi.returnTypes||abi.returnTypes.length<=1,'ROLLING_ABI_MISMATCH');
-    const out=await board.methods[name](...args).simulate({from:session.owner});
+    const run=()=>board.methods[name](...args).simulate({from:session.owner});
+    const out=await (name==='get_screen_hints'?measure('action.screening',run,{nativeUtility:true}):run());
     return utilityPlain(out.result??out,abi.returnType??abi.returnTypes?.[0]);
   }
   async function fundingClaim(kind,metadata){
@@ -281,7 +282,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
     }
     return sdk.preparePrivateFeePayment({wallet:session.wallet,node:session.node,owner:session.owner,
-      privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas,
+      privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas,measure,
       ...(claim?{claim}:{})});
   }
   async function collateralClaim(action){
@@ -602,7 +603,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const subboard=field(action.subboard??'0'),kind=action.type==='quote'?2:action.type==='repost'?3:1;
         let policy,screening;
         if(subboard===zero){
-          const observations=await Promise.allSettled([postingPolicy(board,subboard),screeningArguments(board,field(action.deposit,true))]);
+          const observations=await Promise.allSettled([measure('action.policy',()=>postingPolicy(board,subboard)),screeningArguments(board,field(action.deposit,true))]);
           const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
           [policy,screening]=observations.map(value=>value.value);
         }else{policy=await postingPolicy(board,subboard);screening=await screeningArguments(board,field(action.deposit,true));}

@@ -190,3 +190,17 @@ test('actual SDK BaseWallet registration path drops two redundant PXE writes for
  pxe.getContractInstance=async()=>({...instance});pxe.getContractArtifact=async()=>artifact;
  await preparePrivateFeePayment(input);assert.deepEqual([classWrites,instanceWrites],[1,1]);assert.equal(state.reads,2);
 });
+
+test('fee preparation diagnostics observe existing reads without repeating work',async()=>{
+  const {input,state}=fixture(),seen=[];
+  input.measure=async(stage,operation,options)=>{
+    seen.push({stage,options});return await operation();
+  };
+  const prepared=await preparePrivateFeePayment(input);
+  assert.equal(prepared.availableCredit,1300n);assert.equal(state.reads,1);assert.equal(state.registered,1);
+  assert.deepEqual(seen,[
+    {stage:'action.fee-metadata',options:undefined},
+    {stage:'action.fee-binding',options:undefined},
+    {stage:'action.fee-balance',options:{nativeUtility:true}},
+  ]);
+});
