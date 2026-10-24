@@ -2070,7 +2070,7 @@ for(const failed of ['header','block'])test(`final anchor ${failed} failure drai
  assert.equal(finished,false);assert.equal(f.values.size,0);held.resolve();await rejection;assert.equal(f.state.sends,0);
 });
 for(const changed of ['local-anchor','canonical-block','context'])test(`parallel final anchor checks reject ${changed} without saving an intent`,{timeout:3000},async()=>{
- const f=fixture();let headerReads=0;const originalHeader=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;
+ const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;let headerReads=0;const originalHeader=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;
  f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>++headerReads===2&&changed==='local-anchor'?{globalVariables:{blockNumber:2,timestamp:100n},hash:async()=>hex(43)}:originalHeader();
  f.options.accountSession.node.getBlockData=async height=>{
   if(changed==='context')f.state.guard=false;
@@ -2145,4 +2145,35 @@ test('prefetched public readiness is reused by the same flow without private wor
  const reads=f.state.privateReads.length;await f.app.prefetchContext();assert.equal(f.state.privateReads.length,reads);assert.equal(checks,1);
  await f.app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'One prefetched flow'},{immediate:true});assert.equal(checks,1);
  scope={};await f.app.prefetchContext();assert.equal(checks,2);
+});
+
+
+test('main-board policy anchor precedes private utilities and its public read overlaps both',{timeout:3000},async()=>{
+ const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;
+ const headerGate=Promise.withResolvers(),headerEntered=Promise.withResolvers(),readsGate=Promise.withResolvers(),readsEntered=Promise.withResolvers();
+ let headers=0,started=0;const originalHeader=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;
+ const arrive=()=>{assert.equal(headers,1);if(++started===3)readsEntered.resolve();};
+ f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>{
+  if(++headers===1){headerEntered.resolve();await headerGate.promise;}
+  return originalHeader();
+ };
+ f.state.beforeHintsRead=async()=>{arrive();await readsGate.promise;};
+ f.state.beforePolicyRead=async()=>{arrive();await readsGate.promise;};
+ f.options.sdk.preparePrivateFeePayment=async()=>{arrive();await readsGate.promise;return {availableCredit:100n};};
+ const app=f.restart(),pending=app.prepare({type:'post',deposit:'9',content:'One anchor, concurrent reads'},{immediate:true});
+ await headerEntered.promise;assert.equal(started,0);headerGate.resolve();await readsEntered.promise;
+ assert.equal(f.values.size,0);readsGate.resolve();assert.equal((await pending).status,'prepared');
+ assert.equal(headers,2);assert.equal(f.state.policyReads.length,1);assert.equal(f.state.privateReads.filter(r=>r.name==='get_screen_hints').length,1);
+ assert.equal(f.state.sends,0);
+});
+for(const replacement of ['scope','pxe'])test(`main-board anchor rejects ${replacement} replacement before launching sibling work`,{timeout:3000},async()=>{
+ const f=fixture();let scope={};f.options.accountSession.operationScope=()=>scope;
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers();let payments=0;
+ const originalHeader=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;
+ f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>{entered.resolve();await gate.promise;return originalHeader();};
+ f.options.sdk.preparePrivateFeePayment=async()=>{payments++;return {availableCredit:100n};};
+ const app=f.restart(),pending=app.prepare({type:'post',deposit:'9',content:'Exact anchor owner'},{immediate:true});
+ const rejected=assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ if(replacement==='scope')scope={};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};
+ gate.resolve();await rejected;assert.equal(payments,0);assert.equal(f.state.privateReads.length,0);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });

@@ -552,12 +552,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       name:BigInt(draft.name_id),reference:BigInt(draft.reference),nonce:BigInt(nonce),content});
     return field((await sdk.poseidon2HashWithSeparator(preimage.map(n=>new sdk.Fr(n)),INVOCATION_DOMAIN)).toString(),true);
   }
-  async function postingPolicy(board,subboard){
+  async function postingPolicy(board,subboard,preparedAnchor){
     if(subboard===zero){
       // main_policy is a public static view. Posting needs only this one
       // storage value read at the canonical account anchor.
       const slot=deployment.board.artifact.storageLayout?.main_version?.slot;check(slot!==undefined,'ROLLING_ABI_MISMATCH');
-      const anchor=await balanceAnchor();
+      const anchor=preparedAnchor??await balanceAnchor();
       const value=chainValue(await session.node.getPublicStorageAt({hash:anchor.blockHash},deployment.board.address,new sdk.Fr(BigInt(slot))));
       check(value<=0xffffffffn,'ROLLING_INVALID_RESPONSE');await checkBalanceAnchor(anchor);
       return {mainVersion:Number(value),localVersion:0};
@@ -567,7 +567,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(policy[4]!==true,'ROLLING_SUBBOARD_REJECTED');
     return {mainVersion:Number(BigInt(policy[0])),localVersion:Number(BigInt(policy[2]))};
   }
-  async function argumentsFor(action,board,nonce,{atomicBok=false}={}){
+  async function argumentsFor(action,board,nonce,{atomicBok=false,postingAnchor}={}){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
       case 'cancel-deposit':return cancellationArguments(action);
@@ -603,7 +603,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const subboard=field(action.subboard??'0'),kind=action.type==='quote'?2:action.type==='repost'?3:1;
         let policy,screening;
         if(subboard===zero){
-          const observations=await Promise.allSettled([measure('action.policy',()=>postingPolicy(board,subboard)),screeningArguments(board,field(action.deposit,true))]);
+          const observations=await Promise.allSettled([measure('action.policy',()=>postingPolicy(board,subboard,postingAnchor)),screeningArguments(board,field(action.deposit,true))]);
           const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
           [policy,screening]=observations.map(value=>value.value);
         }else{policy=await postingPolicy(board,subboard);screening=await screeningArguments(board,field(action.deposit,true));}
@@ -912,13 +912,19 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const paymentOwner=paymentScope&&{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
       let args,preparedPayment;
       if(paymentScope){
+        const checkPaymentOwner=()=>check(session.operationScope()===paymentScope&&session.wallet===paymentOwner.wallet&&
+          session.wallet.pxe===paymentOwner.pxe&&session.node===paymentOwner.node,'ROLLING_CONTEXT_CHANGED');
+        // Capture this operation's local anchor before either private utility
+        // enters the native PXE queue. The public policy read can then overlap
+        // screening and fee-note work; its final canonical/local fences remain.
+        const postingAnchor=field(action.subboard??'0')===zero?await balanceAnchor():undefined;
+        checkPaymentOwner();
         const values=await Promise.allSettled([
-          ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:action.type==='bok'})),
+          ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor})),
           ()=>measure('action.payment-prefetch',()=>payment(action)),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
-        await guard();check(session.operationScope()===paymentScope&&session.wallet===paymentOwner.wallet&&
-          session.wallet.pxe===paymentOwner.pxe&&session.node===paymentOwner.node,'ROLLING_CONTEXT_CHANGED');
+        await guard();checkPaymentOwner();
         args=plain(values[0].value);preparedPayment=values[1].value;
       }else args=moderation?moderation.args:plain(await measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:immediate&&action.type==='bok'})));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
