@@ -1,0 +1,59 @@
+{
+  "published": true,
+  "commit": "9f34170a0d7334fa976f039ecf10f5589049cdc1",
+  "source": "/opt/rolling-app/releases/9f34170a0d7334fa976f039ecf10f5589049cdc1",
+  "previousSource": "/opt/rolling-app/releases/4bd439b95151c40984140a8ad6695ce02632ea0a",
+  "uiUnchanged": "/opt/rolling-ui/releases/4bd439b95151c40984140a8ad6695ce02632ea0a",
+  "sourcePinsSha256": "1177bd0602e6a0b18dd97a824b3673998ba999c16617e8fb0cd0f5c5f48c92b2",
+  "files": {
+    "shared/rolling/public-index.mjs": "964874a092a98521894bc3c55545868de862c0c12e5e253671eabc023ef211e5"
+  },
+  "candidateSha256": "5d451fddf524fe4d0e666bd9c933065a1b48ad95ba940bf91de252e48ea01065",
+  "units": {
+    "rolling-application.service": {
+      "MainPID": "692833",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-application-proxy.service": {
+      "MainPID": "692836",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-node.service": {
+      "MainPID": "561964",
+      "NRestarts": "69",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-query.service": {
+      "MainPID": "565186",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board-prover.service": {
+      "MainPID": "651105",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board-prover-proxy.service": {
+      "MainPID": "630307",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-moderator.service": {
+      "MainPID": "567551",
+      "NRestarts": "31",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "unitSha256": "db44866cbbda350261b0baac2ccb35e711f042df8bd35579d5a500ff5bc4a6eb",
+  "observedAt": "2026-10-24T03:37:04.197954+00:00",
+  "readiness": "check /api/status separately; process active is not index readiness"
+}

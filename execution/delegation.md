@@ -1,4 +1,32 @@
-# Current performance work — 24 October 2026
+# Current proposed reply display — 24 October 2026
+
+Completed source: core9f34170a, worker52ef5da0 and UI8f16fcd3 deployed.
+Owner explicitly authorized inclusion display before checkpoint; money accounting
+remains checkpointed. Actual reply appeared pending and promoted automatically,
+35.220s earlier public availability, without refresh or duplicate. The same accepted
+job finished with exactly two model calls, charge10962/refund239038; hosted app
+was opened and checked. No additional paid request was submitted.
+
+- proposed_feed_design: proposed feed, canonical-head race and bounded publication
+  quota fixes implemented; independently reviewed final balance refresh.
+- pending_reply_ui: pending/confirmed UI and checkpoint-triggered balance refresh
+  implemented; independently reviewed backend and publication quota changes.
+- pending_feed_release: complete source dependency checks and narrow core/worker/UI
+  deployment packets reviewed; root performed all service mutations.
+- Root: integration, live browser/SSE acceptance, final asset checks and push.
+
+All agents' assigned implementation/review work is complete. Worker health is ready,
+active0; no observer or paid request remains running. Focused results and exact
+source bindings are in docs/BOK_LATENCY.md and the proposed-replies evidence folder.
+The independent optional browser skip and baseline stale broad-reader fixtures are
+explicitly recorded; do not claim the full historical browser suite passes.
+
+Old test data is disposable. No migration/recovery project is needed. Proposed
+inclusion is not Ethereum settlement. The prior30-secondcheckpoint target remains
+separate from this completed earlier-display request.
+
+## Previous performance acceptance (historical)
+
 
 Browser `23e6cde5` and worker `cdab01f7` are published. SDK `267fcf91`
 remains pinned. Root integrated and pushed the completed parallel work:

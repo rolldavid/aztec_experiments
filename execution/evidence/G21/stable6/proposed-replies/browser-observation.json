@@ -1,0 +1,12 @@
+{
+  "pendingObservedAt": "2026-10-24T03:48:01.742Z",
+  "pendingLabel": true,
+  "confirmedObservedAt": "2026-10-24T03:49:01.306Z",
+  "confirmedLabelAbsent": true,
+  "appObservedAt": "2026-10-24T03:49:35.262Z",
+  "acceptedAppSubtitleVisible": true,
+  "replyRevision": "0502cb031c8cbe0dd9458542315fa072270c99cb",
+  "noRefreshOrNavigationBeforeConfirmation": true,
+  "screenshot": "/tmp/live-reply-confirmed.png",
+  "balanceRefreshIssue": "Corrected in8f16fcd3: separate observed/confirmed reply tracking queues one private balance refresh at checkpoint.73focused tests pass including realbrowser0.333128\u21920.572166 pending/promotion cases. Real existing account balance reader independently returned0.572166 after manual refresh; this latter check is not an automatic-promotion claim."
+}

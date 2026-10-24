@@ -1,0 +1,30 @@
+{
+  "published": true,
+  "commit": "52ef5da01fccd811db416eef83eba02561a09726",
+  "source": "/opt/rolling-bok/releases/52ef5da01fccd811db416eef83eba02561a09726",
+  "previousSource": "/opt/rolling-bok/releases/cdab01f79a34a0c2d1cfde107e76d46380a646da",
+  "sourcePinsSha256": "6b78d99d29f25f22060df8ca3d1e26e4b2ab867b2ba673b95a38b0a24eb73704",
+  "files": {
+    "plugins/github-app-broker.mjs": "8d066887586006e19353ee31138d6e8c41bc30ddef30d783b7721efde58b8306",
+    "plugins/publication-limits.mjs": "e730f4e83beb6bd3dd619b863af6332019eb555354b6eec46171c375ae4ea859",
+    "plugins/static-publication.mjs": "5d1c16c92f91632eec94672c107284c1145620843441f6f3222db9810a0ab88f"
+  },
+  "candidateSha256": "67acab2280c5b15ceaa969df1792e60bc1ad7e81f9ac3e3012fbb6c987a6248f",
+  "units": {
+    "rolling-bok-testnet.service": {
+      "MainPID": "15179",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-bok-artifact-proxy.service": {
+      "MainPID": "15181",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "unitSha256": "7eebae96d0c5b036ae161a0059977763e0886d399aef24898a6284fd50a408ab",
+  "observedAt": "2026-10-24T03:47:22.018619+00:00",
+  "readiness": "check worker health and original request separately; process active is not acceptance"
+}

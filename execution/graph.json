@@ -9844,8 +9844,8 @@
   "current_operating_request": {
     "request": "Render Aztec-included posts and Bok replies immediately with Confirmation pending; automatically update at checkpoint and remove orphaned replies. Keep money accounting checkpointed.",
     "status": "active",
-    "execution_lane": "Parallel backend proposed feed/watermark and reader UI; root integration, focused acceptance and publication.",
-    "checkpoint": "User explicitly authorized proposed inclusion for visible replies on24October. Existing measured155.233s result waits for checkpointed feed. Goal network blocker no longer prevents requested earlier rendering.",
-    "next_action": "Integrate reviewed proposed feed and UI changes, verify inclusion/promotion/rollback and accounting boundary, publish and observe actual reply before checkpoint."
+    "execution_lane": "Completed proposed reply display and coupled balance refresh; reviewed source deployed.",
+    "checkpoint": "Core9f34170a, worker52ef5da0, UI8f16fcd3 deployed. Actual reply20747629 appeared pending at03:47:39.910 and confirmed automatically03:48:15.130 (35.220s earlier feed availability), browser observed both without refresh/duplicate. Same accepted request finished with exactly2modelcalls, generated app verified, charge10962/refund239038. Publication20/mirror64capacity defect and early-balance-refresh defect fixed with focused independent-reviewed tests.",
+    "next_action": "This display request is complete: included replies show pending and promote automatically, balance follows confirmation, source is deployed and final public hashes match. Await new owner feedback; do not repeat a paid benchmark for better slot timing. Prior30secondcanonicalcheckpoint performance target remains separately network-limited."
   }
 }

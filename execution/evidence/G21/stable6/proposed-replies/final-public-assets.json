@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-10-24T03:57:56.190764+00:00",
+  "assets": {
+    "reader.mjs": {
+      "sha256": "26efbb25fc92e1dbdb85dc2fa40c470cf5060ec5e79a8dd353a0d482e619c668",
+      "matches": true
+    },
+    "wallet-panel.mjs": {
+      "sha256": "5f5dcb2fefff3cf53cee6937479c79b4bb9c0c304d597025aac668dada134442",
+      "matches": true
+    }
+  },
+  "feed": {
+    "state": "ready",
+    "confirmationTier": "proposed",
+    "checkpoint": {
+      "number": 2087,
+      "hash": "0x28aa3fa23a221b02c0a4db49729f4151e230f89cd6872f792c3e772308bcf751"
+    },
+    "confirmationCheckpoint": {
+      "number": "2087",
+      "hash": "0x28aa3fa23a221b02c0a4db49729f4151e230f89cd6872f792c3e772308bcf751"
+    }
+  }
+}

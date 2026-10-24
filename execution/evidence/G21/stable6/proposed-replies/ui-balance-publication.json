@@ -1,0 +1,63 @@
+{
+  "published": true,
+  "commit": "8f16fcd343c6ad7542a6b06b8d94f3e05d92935b",
+  "ui": "/opt/rolling-ui/releases/8f16fcd343c6ad7542a6b06b8d94f3e05d92935b",
+  "assetSource": "/opt/rolling-app/releases/ui-8f16fcd343c6ad7542a6b06b8d94f3e05d92935b",
+  "previousUi": "/opt/rolling-ui/releases/4bd439b95151c40984140a8ad6695ce02632ea0a",
+  "sourcePinsSha256": "8b46e5bd68ae1ac231267165fc80ce6d3ba0b76496c4c8a46ba75deee8292ffb",
+  "files": {
+    "apps/rolling/reader.mjs": "26efbb25fc92e1dbdb85dc2fa40c470cf5060ec5e79a8dd353a0d482e619c668",
+    "apps/rolling/wallet-panel.mjs": "5f5dcb2fefff3cf53cee6937479c79b4bb9c0c304d597025aac668dada134442"
+  },
+  "walletUnchanged": {
+    "wallet/runtime.mjs": "0a99083eb9e3177d0ae2eff5024883a539f61b019484b78d5922116c7bcbddb4",
+    "wallet/aztec_bundle.js": "267fcf917c91fd4507b642ebe059268530919cb8c5445786980632ad5dc55902",
+    "wallet/runtime.json": "993f851378158514d42b20df4f35f4350fc629a22a1233bc1dc4e51b248c4f64"
+  },
+  "candidateSha256": "60a36217ab68bc746ba83296e4c708eee0555f5b8b39d6c619411bc2e22685c1",
+  "unitsUnchanged": {
+    "rolling-application.service": {
+      "MainPID": "692833",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-application-proxy.service": {
+      "MainPID": "692836",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-node.service": {
+      "MainPID": "561964",
+      "NRestarts": "69",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-query.service": {
+      "MainPID": "565186",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board-prover.service": {
+      "MainPID": "651105",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board-prover-proxy.service": {
+      "MainPID": "630307",
+      "NRestarts": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "rolling-moderator.service": {
+      "MainPID": "567551",
+      "NRestarts": "31",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "observedAt": "2026-10-24T03:56:12.114049+00:00"
+}

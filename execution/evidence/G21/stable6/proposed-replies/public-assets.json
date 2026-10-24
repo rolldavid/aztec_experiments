@@ -1,0 +1,51 @@
+{
+  "observedAt": "2026-10-24T03:43:35.231108+00:00",
+  "files": {
+    "reader.mjs": "276b5fc2673e73afc5ce3e95a44d9ddd717527a94f6a33106459ef8eba13d601",
+    "style.css": "d2a960c8b8affebe5ead6c8bf5c5900edecd5be620885ae23b6ed4cf33fb0915",
+    "wallet/runtime.mjs": "0a99083eb9e3177d0ae2eff5024883a539f61b019484b78d5922116c7bcbddb4",
+    "wallet/runtime.json": "993f851378158514d42b20df4f35f4350fc629a22a1233bc1dc4e51b248c4f64"
+  },
+  "status": {
+    "schemaVersion": 1,
+    "state": "ready",
+    "scope": {
+      "chainId": "11155111",
+      "rollupVersion": "679261766",
+      "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+      "boardAddress": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+      "classId": "0x0593ff56fceb4afb79463d591a25a1078fd5860e18a5774ef6d6525b31dac58e",
+      "bok": {
+        "address": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+        "classId": "0x00a1d7347b3931e365c56dfd7a76317651afcaf8a8af09728dd818dc197fe277",
+        "operatorAddress": "0x119fa1d976f386eb0b3577a9661c923ce02ca500fbc1e68096718aa7f24948e5",
+        "deployer": "0x0233a0ebe93af15f273c200ce05a893ae2c7e87c0b24196eec705c1d09f6ceaa",
+        "salt": "0x24b0d6a500873a1b1c16307e9216b66164e4ce1b25c8ee8eda8f5ca356e86e22",
+        "deployment": {
+          "txHash": "0x0cd0008ed181ca8bb35c14bebbdd4dde7c38fa594dd121460faf585043a38ec6",
+          "blockNumber": 1496,
+          "blockHash": "0x07acaed6362154eafbb8a1eb35403992564cea8edbdc8eb8ebc71ba88a57094a"
+        }
+      }
+    },
+    "complete": true,
+    "authenticationEpoch": "a993b837-58c3-475d-8a24-32eefc3bc745",
+    "contentRevision": "a993b837-58c3-475d-8a24-32eefc3bc745:7",
+    "revision": "a993b837-58c3-475d-8a24-32eefc3bc745:3:3011",
+    "confirmationTier": "proposed",
+    "confirmationCheckpoint": {
+      "number": "2074",
+      "hash": "0x16f6d8d14350bf1aae18131ede011ea08ee7da1de5610bd98f6e94c11c7de54c"
+    },
+    "checkpoint": {
+      "number": 2075,
+      "hash": "0x276aa270f7ccdc659f7c426d85a095505db2e6e80cb9909e1ead8bf9d1459623"
+    },
+    "cursor": {
+      "blockNumber": "2076",
+      "nextTxIndex": "0",
+      "block": null
+    },
+    "cacheComparison": "service-owned"
+  }
+}

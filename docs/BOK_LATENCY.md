@@ -5,19 +5,47 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
-## Proposed reply display —24October
+## Proposed reply display — 24 October
 
-The owner authorizes displaying Aztec-included replies before checkpointing, with
-“Confirmation pending” and automatic promotion. Source98ac1821 implements a
-proposed public feed, checkpoint watermark, pending labels and rollback removal.
-Accounting continues to use checkpointed events. Focused checks passed208backend,
-14browser and18accounting cases; two backend opt-in checks were skipped.
+The public feed previously waited for Ethereum checkpointing before displaying
+Aztec replies. The owner explicitly authorized earlier inclusion display.
+Core9f34170a now publishes included replies with “Confirmation pending”, promotes
+that same post automatically at checkpoint, and removes rolled-back proposals.
+Accounting remains checkpointed. No transaction/contract/SDK format changed.
 
-The initial live test exposed an incomplete deployment packet: the older core
-release's event decoder rejected proposed receipts. Public-index, public-sqlite,
-public-server **and public-events** must be deployed together. The transaction
-must not be replayed. Corrective publication and live transition verification are
-in progress; this is not yet an end-to-end acceptance claim.
+Actual reply `20747629626764702482240701407711282217325231814313926637708946959278279282367`
+was available pending at03:47:39.910UTC in Aztec block2079 while the checkpoint
+was2078. It became confirmed at03:48:15.130UTC: **35.220 seconds earlier feed
+availability**. The open browser showed the pending label at03:48:01.742 and its
+automatic removal at03:49:01.306, with no reload/navigation or duplicate post.
+The generated app opened and displayed the requested subtitle. This is a display
+transition acceptance, not a new comparable post-to-reply latency benchmark.
+
+The first deployment missed the matching `public-events.mjs` dependency and the
+live test exposed a proposed-head/checkpoint race; both are fixed. The same request
+also hit an existing20-revision static-publication limit. Worker52ef5da0 replaces
+that limit and the mirror64-revision admission limit with a shared2048 ceiling
+derived from the existing8192-file budget, retaining byte/catalog limits. Its
+already-accepted revision published through normal continuation: exactly two model
+calls before and after, no request replay. Worker finished ready/active0, charge
+0.010962USDC, refund0.239038USDC, canonical final transaction
+`0x068f0802fbb1a680f676f76d7054815c8ad6441722cfd68829f607c802fd2ff1`.
+
+Focused checks:208backend pass(two existing opt-in skips),106head-change checks,
+14browser and18accounting checks;169publication/mirror checks(one existing opt-in
+skip). Independent reviews approved each change. The broad reader suite also has
+pre-existing stale UI fixture failures reproduced on baseline1275fc39; no claim
+that the entire browser suite passes. A final live balance check found the display
+refreshed on pending reply appearance but not its checkpoint promotion. UI8f16fcd3
+corrects that transition with one balance read;73focused checks pass, including
+real Chromium cases0.333128→0.572166 after confirmation. The real account balance
+reader separately returned0.572166 after a manual refresh. No extra paid request
+was run to verify this narrow correction. Public assets and running services were
+verified after publication.
+
+[Live transition evidence](../execution/evidence/G21/stable6/proposed-replies/live-transitions.json),
+[browser observations](../execution/evidence/G21/stable6/proposed-replies/browser-observation.json),
+[worker completion](../execution/evidence/G21/stable6/proposed-replies/worker-completion.json).
 
 ## Verified current release — 2m35.2s, automatic reply rendering
 
