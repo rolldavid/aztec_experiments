@@ -4,12 +4,13 @@ import {rollingSelectors,validateRollingJob} from './application-policy.mjs';
 import {pluginSelectors,validatePluginPayload} from './plugin-policy.mjs';
 import fs from 'node:fs/promises';
 import {gunzipSync} from 'node:zlib';
-import {abiDecode,serializeWitness} from '@aztec-foundation/noir-noirc_abi';
+import {abiDecode} from '@aztec-foundation/noir-noirc_abi';
 import {Barretenberg,AztecClientBackend} from '@aztec-foundation/bb.js';
 import {workerNativeProfile,initializeWorkerNative,assertWorkerNativeProfile} from './worker-native-profile.mjs';
 import {loadCircuitCatalog} from './catalog.mjs';
 import {decodeJob} from '../shared/remote-prover-wire.mjs';
 import {decodeWitnessDictionary} from '../shared/remote-witness-dictionary.mjs';
+import {nativeWitnessBytes,assertNativeWitnessFormat} from './native-witness-bytes.mjs';
 // Native BB unrefs its process/socket between requests. Keep the job owner
 // alive until its result has been sent and the backend has been destroyed.
 process.channel?.ref();
@@ -29,7 +30,8 @@ try{
  const unpacked=gunzipSync(payload,{maxOutputLength:metadata.uncompressedBytes});
  if(unpacked.length!==metadata.uncompressedBytes)throw Error('Witness limit');
  const witnesses=decodeWitnessDictionary(unpacked,metadata.counts);
- let total=0;const raw=witnesses.map(w=>{const r=gunzipSync(serializeWitness(w),{maxOutputLength:16*1024*1024});total+=r.length;if(total>64*1024*1024)throw Error('Witness limit');return r;});
+ assertNativeWitnessFormat();
+ const raw=nativeWitnessBytes(witnesses);
  setStage("board-binding");
  if(applicationProfile==='rolling'){
   const options={metadata,privateBokAddress:process.env.PROVER_PRIVATE_BOK,privateFeeAddress:process.env.PROVER_PRIVATE_FEE};
