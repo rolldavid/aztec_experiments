@@ -50,6 +50,9 @@ await patchPxeReorgAnchor(patchedRoot);
 const preparationRoot = await copyPackage('preparation');
 for (const pin of PINS) await writeFile(join(preparationRoot,pin.path),await readFile(join(repo,'scripts/testing/fixtures/pxe-reorg-anchor','preparation-'+pin.path.split('/').at(-1))));
 const { BlockSynchronizer: Preparation } = await import(pathToFileURL(join(preparationRoot,PINS[1].path)));
+const optimizedRoot = await copyPackage('optimized');
+for (const pin of PINS) await writeFile(join(optimizedRoot,pin.path),await readFile(join(repo,'scripts/testing/fixtures/pxe-reorg-anchor','optimized-'+pin.path.split('/').at(-1))));
+const { BlockSynchronizer: Optimized } = await import(pathToFileURL(join(optimizedRoot,PINS[1].path)));
 const { BlockSynchronizer: Original } = await import(pathToFileURL(join(originalRoot,PINS[1].path)));
 const { BlockSynchronizer: Patched } = await import(pathToFileURL(join(patchedRoot,PINS[1].path)));
 const quiet = { trace(){}, debug(){}, verbose(){}, info(){}, warn(){}, error(){}, getBindings(){return {};} };
@@ -143,13 +146,13 @@ test('same-height fork rolls back conservatively and delivers new typed-hash can
   assert.notEqual((await (await f.anchor.getBlockHeader()).hash()).toString(),old);assert.equal((await (await f.anchor.getBlockHeader()).hash()).toString(),f.chain[15].hash.toString());assert.deepEqual(f.state.prunes,[10]);assert.equal(await f.balance(),0n);
 });
 test('missing target after stream prefetch cannot commit partial rollback or prune cursor',async t=>{
-  const f=await fixture(t);await f.seed();const before=await f.snapshot();f.state.tip=12;let reads=0;
-  f.state.onRead=async q=>q?.hash?.toString()===f.chain[12].hash.toString()&&++reads>1?{handled:true,value:undefined}:undefined;
+  const f=await fixture(t);await f.seed();const before=await f.snapshot();f.state.tip=12;
+  f.state.onRead=async q=>q===12?{handled:true,value:undefined}:undefined;
   await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_/);assert.deepEqual(await f.snapshot(),before);assert.deepEqual(f.state.prunes,[]);
 });
 test('stale/wrong returned header rejects before any rollback',async t=>{
-  const f=await fixture(t);await f.seed();const before=await f.snapshot();f.state.tip=12;let reads=0;
-  f.state.onRead=async q=>q?.hash?.toString()===f.chain[12].hash.toString()&&++reads>1?{handled:true,value:f.chain[15]}:undefined;
+  const f=await fixture(t);await f.seed();const before=await f.snapshot();f.state.tip=12;
+  f.state.onRead=async q=>q===12?{handled:true,value:f.chain[15]}:undefined;
   await assert.rejects(f.sync.sync(),/^Error: PXE_REORG_ANCHOR_/);assert.deepEqual(await f.snapshot(),before);
 });
 test('rollback failure after actual NoteStore mutation aborts every store/anchor/tip atomically',async t=>{
@@ -336,41 +339,59 @@ for(const cached of [false,true])for(const scenario of ['unchanged','advancing']
   assert(counts[1].hashReads<=counts[0].hashReads,'Repeated immutable downloads are never added');
   assert.equal(after.sync.syncPass,undefined,'No header authority survives the operation');
   const hashReads=after.state.hashReads;await after.sync.sync();
-  assert.equal(after.state.hashReads-hashReads,cached?0:1,'The new pass reauthenticates immutable content; SDK cache may serve the hash-pinned bytes');
+  assert.equal(after.state.hashReads-hashReads,0,'The new pass authenticates the numeric response without another hash lookup');
   t.diagnostic(JSON.stringify({scenario,cached,before:counts[0],after:counts[1]}));
 });
 
-test('independent pinned and canonical reads overlap, drain on failure, and canonicality is never cached',async t=>{
-  const f=await fixture(t);await f.advance(10);
-  f.sync.syncPass={failed:false,pending:new Set(),headers:new Map()};
-  let release,numberReached;const gate=new Promise(r=>release=r),number=new Promise(r=>numberReached=r);
-  let hashes=0,numbers=0;
-  f.state.onRead=async q=>{
-    if(q?.hash){hashes++;await gate;}
-    if(q===10){numbers++;numberReached();}
-  };
-  const first=f.sync.checkedHeader(f.id(10));
-  await number;assert.equal(hashes,1,'Hash lookup has started while canonical read completes');
-  release();await first;
-  await f.sync.checkedHeader(f.id(10));
-  assert.equal(hashes,1);assert.equal(numbers,2);
-  f.chain[10]=await block(10,99);
-  await assert.rejects(f.sync.checkedHeader({number:10,hash:(await (await f.anchor.getBlockHeader()).hash()).toString()}),/PXE_REORG_ANCHOR_UNAVAILABLE/);
-  f.sync.syncPass=undefined;
+test('exact optimized predecessor upgrades to numeric-only output; modified or mixed pairs fail closed',async()=>{
+ assert.equal((await inspectPxeReorgAnchor(optimizedRoot)).state,'optimized');
+ for(const pin of PINS){
+  const source=await readFile(join(optimizedRoot,pin.path),'utf8');assert.equal(sha(source),pin.optimized);
+  assert.equal(transformPxeReorgAnchor(source,pin.path),await readFile(join(patchedRoot,pin.path),'utf8'));
+  assert.throws(()=>transformPxeReorgAnchor(source+'\n',pin.path),/PATCH_SOURCE/);
+ }
+ const mixed=await copyPackage('mixed-optimized');await writeFile(join(mixed,PINS[0].path),await readFile(join(optimizedRoot,PINS[0].path)));
+ await assert.rejects(patchPxeReorgAnchor(mixed),/PATCH_STATE/);
 });
 
+for(const cached of [false,true])for(const scenario of ['unchanged','advancing'])test(`numeric-only headers preserve every canonical read: ${scenario}, cache=${cached}`,async t=>{
+ const before=await fixture(t,{Constructor:Optimized,cached}),after=await fixture(t,{cached}),counts=[];
+ for(const f of [before,after]){
+  await f.advance(10);for(const key of ['reads','tipReads','hashReads','numberReads'])f.state[key]=0;
+  if(scenario==='advancing')f.state.tip=12;await f.sync.sync();
+  counts.push(Object.fromEntries(['reads','tipReads','hashReads','numberReads'].map(key=>[key,f.state[key]])));
+ }
+ assert.deepEqual(await after.snapshot(),await before.snapshot());
+ assert.equal(counts[1].numberReads,counts[0].numberReads,'Every numeric canonicality boundary remains');
+ assert.equal(counts[1].tipReads,counts[0].tipReads,'Every live tip boundary remains');
+ assert(counts[1].hashReads<=counts[0].hashReads);
+ if(!cached||scenario==='advancing')assert(counts[1].hashReads<counts[0].hashReads,'Remove actual extra node reads when content is not already cached');
+ t.diagnostic(JSON.stringify({scenario,cached,before:counts[0],after:counts[1]}));
+});
 
-test('canonical lookup failure cannot release an unfinished immutable header request',async t=>{
-  const f=await fixture(t);await f.advance(10);
-  f.sync.syncPass={failed:false,pending:new Set(),headers:new Map()};
-  let release,entered;const gate=new Promise(r=>release=r),reading=new Promise(r=>entered=r);
-  f.state.onRead=async q=>{
-    if(q?.hash){entered();await gate;}
-    if(q===10)throw Error('PRIVATE_SENTINEL');
-  };
-  let finished=false;
-  const checking=f.sync.checkedHeader(f.id(10)).finally(()=>finished=true);
-  const rejected=assert.rejects(checking,/^Error: PXE_REORG_ANCHOR_UNAVAILABLE$/);
-  await reading;await new Promise(r=>setImmediate(r));assert.equal(finished,false);
-  release();await rejected;f.sync.syncPass=undefined;
+test('checkedHeader reads canonical number afresh and returns that exact verified header',async t=>{
+ const f=await fixture(t);await f.advance(10);f.sync.syncPass={failed:false,pending:new Set()};
+ let numbers=0;f.state.onRead=async q=>{assert.equal(q,10);numbers++;};
+ const expected=f.id(10);
+ assert.equal(await f.sync.checkedHeader(expected),f.chain[10].header);
+ assert.equal(await f.sync.checkedHeader(expected),f.chain[10].header);assert.equal(numbers,2);
+ f.chain[10]=await block(10,99);await assert.rejects(f.sync.checkedHeader(expected),/^Error: PXE_REORG_ANCHOR_UNAVAILABLE$/);
+ assert.equal(numbers,3);f.sync.syncPass=undefined;
+});
+
+for(const failure of ['missing','height','hash','computed-hash','throw','hash-throw'])test(`numeric header ${failure} cannot change anchor, notes or tips`,async t=>{
+ const f=await fixture(t);await f.seed();const before=await f.snapshot();f.state.tip=12;
+ f.state.onRead=async q=>{
+  if(q!==12)return;
+  if(failure==='throw')throw Error('PRIVATE_SENTINEL');
+  let value=f.chain[12];
+  if(failure==='missing')value=undefined;
+  if(failure==='height')value={...value,header:f.chain[11].header};
+  if(failure==='hash')value={...value,hash:f.chain[11].hash};
+  if(failure==='computed-hash')value={...value,header:(await block(12,55)).header};
+  if(failure==='hash-throw')value={...value,header:{getBlockNumber:()=>12,hash:async()=>{throw Error('PRIVATE_SENTINEL');}}};
+  return {handled:true,value};
+ };
+ await assert.rejects(f.sync.sync(),e=>/^PXE_REORG_ANCHOR_/.test(e.message)&&!e.message.includes('PRIVATE_SENTINEL'));
+ assert.deepEqual(await f.snapshot(),before);assert.deepEqual(f.state.prunes,[]);
 });
