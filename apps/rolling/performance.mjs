@@ -37,11 +37,12 @@ export function rollingStageObserver(){
 // No URLs, query strings, job IDs, RPC methods or attribution enter the trace.
 export function rollingResourceTiming(entry,origin){
  try{
-  if(!['fetch','xmlhttprequest'].includes(entry.initiatorType))return null;
   const url=new URL(entry.name);if(url.origin!==origin||url.username||url.password)return null;
-  const endpoint=url.pathname==='/prover/v1/node'?'node':url.pathname==='/prover/v1/jobs'?'prover-submit':
+  const asset=/^\/wallet\/[a-zA-Z0-9_.-]+$/.test(url.pathname)?'wallet-asset':/^\/crs\/[a-zA-Z0-9_.-]+$/.test(url.pathname)?'proof-asset':null;
+  if(!(asset?['fetch','xmlhttprequest','script']:['fetch','xmlhttprequest']).includes(entry.initiatorType))return null;
+  const endpoint=asset??(url.pathname==='/prover/v1/node'?'node':url.pathname==='/prover/v1/jobs'?'prover-submit':
    /^\/prover\/v1\/jobs\/[a-f0-9]{64}$/.test(url.pathname)?'prover-job':
-   /^\/api\/(?:status|home|feed|board|directory|thread|profile|post|bok-accounting)$/.test(url.pathname)?'public-read':null;
+   /^\/api\/(?:status|home|feed|board|directory|thread|profile|post|bok-accounting)$/.test(url.pathname)?'public-read':null);
   if(!endpoint)return null;
   const result={kind:'resource',endpoint};
   for(const [key,source]of Object.entries({start:'startTime',duration:'duration',fetchStart:'fetchStart',domainLookupStart:'domainLookupStart',domainLookupEnd:'domainLookupEnd',connectStart:'connectStart',secureConnectionStart:'secureConnectionStart',connectEnd:'connectEnd',requestStart:'requestStart',responseStart:'responseStart',responseEnd:'responseEnd',transferSize:'transferSize',encodedBodySize:'encodedBodySize',decodedBodySize:'decodedBodySize'})){

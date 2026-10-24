@@ -21,7 +21,7 @@ test('resource trace preserves phase times and native response sizes without URL
  }
 });
 test('only exact same-origin fetch/XHR endpoint classes are recorded',()=>{
- for(const entry of [resource('/wallet/sdk.js'),resource('/api/unknown'),resource('/api/profile/123'),resource('/prover/v1/jobs/not-a-job'),resource('/prover/v1/node/extra'),resource('/prover/v1/node',{name:'https://other.example/prover/v1/node'}),resource('/prover/v1/node',{name:'https://secret@board.example/prover/v1/node'}),resource('/prover/v1/node',{initiatorType:'script'}),resource('/api/events',{initiatorType:'other'})])assert.equal(rollingResourceTiming(entry,origin),null);
+ for(const entry of [resource('/wallet/nested/sdk.js'),resource('/api/unknown'),resource('/api/profile/123'),resource('/prover/v1/jobs/not-a-job'),resource('/prover/v1/node/extra'),resource('/prover/v1/node',{name:'https://other.example/prover/v1/node'}),resource('/prover/v1/node',{name:'https://secret@board.example/prover/v1/node'}),resource('/prover/v1/node',{initiatorType:'script'}),resource('/api/events',{initiatorType:'other'})])assert.equal(rollingResourceTiming(entry,origin),null);
  assert.equal(rollingResourceTiming(resource('/prover/v1/node',{initiatorType:'xmlhttprequest'}),origin).endpoint,'node');
 });
 test('non-finite metrics and unrecognized protocol strings cannot enter diagnostic output',()=>{
@@ -89,4 +89,13 @@ test('native utility timing is opt-in, duration-only and never changes action ou
   const count=measures.filter(x=>x.name.includes('.native-')).length;
   await inactive.measureRollingStage('action.screening',async()=>result,{nativeUtility:true});assert.equal(measures.filter(x=>x.name.includes('.native-')).length,count);
  }finally{for(const [key,descriptor]of originals)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}
+});
+
+test('wallet and proof asset contention is observable without filenames or hash queries',()=>{
+ for(const [path,endpoint]of [['/wallet/private_sdk-123.js?sha256=secret','wallet-asset'],['/crs/crs.bin?sha256=secret','proof-asset']])for(const initiatorType of ['fetch','xmlhttprequest','script']){
+  const result=rollingResourceTiming(resource(path,{initiatorType}),origin);assert.equal(result.endpoint,endpoint);
+  assert(!JSON.stringify(result).includes('secret'));assert(!JSON.stringify(result).includes('sdk'));assert(!JSON.stringify(result).includes('crs.bin'));
+ }
+ assert.equal(rollingResourceTiming(resource('/wallet/sdk.js',{initiatorType:'img'}),origin),null);
+ assert.equal(rollingResourceTiming(resource('/crs/crs.bin',{name:'https://external.example/crs/crs.bin'}),origin),null);
 });
