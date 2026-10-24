@@ -317,3 +317,12 @@ test('optional parsed plan never evicts exact files near the initial context lim
  assert.deepEqual(results.slice(1).map(r=>r.text),Object.values(files));assert.equal(results[3].parsedBrowserPlan,undefined);
  assert(Buffer.byteLength(JSON.stringify([seed,...input.messages.filter(m=>m.role==='tool')]))<=24576);
 });
+
+test('agent distinguishes structured browser tool selectors from raw browser-tests file selectors',async()=>{
+ let system;
+ const toolbox={open:async()=>({definitions:[],summary:x=>x,close:async()=>{}})};
+ await createAgent({toolbox,instructions:'Build',model:{complete:async({messages})=>{system=messages[0].content;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',postId:'post',text:'Build'});
+ assert.match(system,/In edit_browser_plan arguments only, prefer selector objects/);
+ assert.match(system,/writing or editing browser-tests\.json directly, every selector MUST be a CSS string/);
+ assert.match(system,/selector objects are invalid in that file/);
+});

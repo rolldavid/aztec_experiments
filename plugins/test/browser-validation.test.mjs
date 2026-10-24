@@ -175,3 +175,12 @@ test('actual browser expectChecked re-queries a replaced checkbox and supports r
   {action:'expectChecked',selector:'#radio',checked:true},
  ]);assert.equal(result.passed,true);
 });
+
+test('raw browser selector objects receive a precise schema repair without exposing selector values',()=>{
+ for(const selector of [{css:'#PRIVATE_SENTINEL'},{base:'input',attributes:{type:'PRIVATE_SENTINEL'}},'', 'x'.repeat(301)]){
+  assert.throws(()=>validateBrowserPlan(plan([{action:'click',selector}])),error=>{
+   assert.equal(error.browserPlan.code,'BROWSER_SELECTOR');assert.equal(error.browserPlan.path,'scenarios[0].steps[0].selector');
+   assert.match(error.message,/CSS selector string/);assert.match(error.message,/only in edit_browser_plan arguments/);assert(!error.message.includes('PRIVATE_SENTINEL'));return true;
+  });
+ }
+});

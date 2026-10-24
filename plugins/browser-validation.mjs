@@ -12,6 +12,7 @@ const browserPlanMessages=Object.freeze({
  BROWSER_VERSION:'Set version to the number 1.',
  BROWSER_SCENARIOS:'Provide between 1 and 8 scenarios.',
  BROWSER_TEXT:'Use nonempty text within the documented length limit for this field.',
+ BROWSER_SELECTOR:'Use a nonempty CSS selector string of at most 300 characters in browser-tests.json. Selector objects are supported only in edit_browser_plan arguments.',
  BROWSER_PATH:'Use a relative HTML file path without empty, dot or parent segments.',
  BROWSER_STEPS:'Provide at least one step in this scenario.',
  BROWSER_ACTION:'Use a documented action: fill, click, check, select, press, reload, expectText, expectCount, expectChecked or expectVisible.',
@@ -48,7 +49,7 @@ export function validateBrowserPlan(plan){
    const at=where+'.steps['+j+']';
    require(step&&Object.hasOwn(actions,step.action),'BROWSER_ACTION',at+'.action');const keys=['action',...actions[step.action]];
    if(Object.hasOwn(step,'index')){require(actions[step.action].includes('selector'),'BROWSER_INDEX_ACTION',at+'.index');require(Number.isInteger(step.index)&&step.index>=0&&step.index<100,'BROWSER_INDEX',at+'.index');keys.push('index');}
-   exact(step,keys,at);if(step.selector!==undefined)text(step.selector,300,at+'.selector');
+   exact(step,keys,at);if(step.selector!==undefined)require(typeof step.selector==='string'&&step.selector.length>0&&step.selector.length<=300,'BROWSER_SELECTOR',at+'.selector');
    for(const key of ['value','text'])if(Object.hasOwn(step,key))require(typeof step[key]==='string'&&step[key].length<=2000,'BROWSER_VALUE',at+'.'+key);
    if(Object.hasOwn(step,'key')){text(step.key,40,at+'.key');require(/^[A-Za-z0-9+]+$/.test(step.key),'BROWSER_KEY',at+'.key');}
    if(Object.hasOwn(step,'checked'))require(typeof step.checked==='boolean','BROWSER_CHECKED',at+'.checked');

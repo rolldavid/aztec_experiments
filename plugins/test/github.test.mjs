@@ -228,3 +228,18 @@ test('actual browser structured selectors match literal quotes backslashes contr
   await assert.rejects(exerciseBrowser(browserInput(incomplete),chromium),/visible controls/);
  }finally{await s.close();}
 });
+
+test('raw browser file rejects object selectors unchanged while edit_browser_plan compiles the same authoring input',async()=>{
+ const s=await browserAuthoringSession();try{
+  const before=(await s.call('read_file',{path:'browser-tests.json'})).text;
+  assert.match(s.definitions.find(t=>t.function.name==='write_file').function.description,/every selector must be a CSS string, never an object/);
+  const scenario={name:'new scenario',path:'index.html',steps:[{action:'expectVisible',selector:{css:'#PRIVATE_SENTINEL'}}]};
+  await assert.rejects(s.call('write_file',{path:'browser-tests.json',content:JSON.stringify({version:1,scenarios:[...authoringPlan.scenarios,scenario]})}),error=>{
+   assert.match(error.message,/CSS selector string/);assert.match(error.message,/only in edit_browser_plan arguments/);assert.match(error.message,/scenarios\[1\]\.steps\[0\]\.selector/);assert.match(error.message,/File unchanged/);assert(!error.message.includes('PRIVATE_SENTINEL'));return true;
+  });
+  assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,before);
+  await s.call('edit_browser_plan',{append:[scenario]});
+  const result=await s.call('read_file',{path:'browser-tests.json'});assert.equal(result.parsedBrowserPlan.scenarios[1].steps[0].selector,'#PRIVATE_SENTINEL');
+  await s.call('write_file',{path:'browser-tests.json',content:result.text});assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,result.text);
+ }finally{await s.close();}
+});
