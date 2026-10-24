@@ -156,6 +156,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   let busy=false,callScope=null,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
   const networkChecks=new WeakMap(),preparedPayments=new WeakMap(),preparedPolicies=new WeakMap(),preparedPreferenceHeads=new WeakMap();
   const session=accountSession;
+  // Only this browser capability enables provisional completion. Funding and
+  // plugin continuations keep their existing settlement policy in this rollout.
+  const proposedTransactions=session?.proposedTransactions===true;
+  const includedAction=record=>proposedTransactions&&!record.withdrawal&&!record.bok&&!record.bokReleaseSource&&
+    ['post','reply','quote','repost','like','unlike','preference','read-marker','name','bio','avatar','subboard','moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator'].includes(record.action?.type);
+  const usableStatus=status=>['included','confirmed','reverted'].includes(status);
   const getOperationScope=typeof session?.operationScope==='function'?session.operationScope.bind(session):()=>callScope;
   const chainInfoMethod=session?.wallet?.getChainInfo,accountsMethod=session?.wallet?.getAccounts;
   const preproof=session?.preproofRecovery;
@@ -266,9 +272,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     // Full network/account attestation brackets verification. Per-read fences
     // check local session identity without multiplying those network queries.
     const operationScope=session.operationScope?.(),held=operationScope?.synchronized===true?operationScope:undefined;
-    const claimOwner={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,secret:session.walletSecret,salt:session.walletSalt};
-    const claimGuard=async()=>{await localGuard();if(held)check(session.operationScope()===held&&session.wallet===claimOwner.wallet&&session.wallet.pxe===claimOwner.pxe&&session.node===claimOwner.node&&session.walletSecret===claimOwner.secret&&session.walletSalt===claimOwner.salt,'ROLLING_CONTEXT_CHANGED');};
-    const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,...(held?{operationScope:held}:{}),...(kind==='bok'&&bokTopupScope?{bokTopupScope}:{}),
+    const claimOwner={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,secret:session.walletSecret,salt:session.walletSalt,cachedNode:held?session.wallet.pxe.node:undefined};
+    if(held)check(sdk.isPrivatePXEForNode(claimOwner.pxe,claimOwner.node)&&typeof claimOwner.cachedNode?.getL1ToL2MessageMembershipWitness==='function','ROLLING_CONTEXT_CHANGED');
+    const claimGuard=async()=>{await localGuard();if(held)check(session.operationScope()===held&&session.wallet===claimOwner.wallet&&session.wallet.pxe===claimOwner.pxe&&session.node===claimOwner.node&&session.walletSecret===claimOwner.secret&&session.walletSalt===claimOwner.salt&&claimOwner.pxe.node===claimOwner.cachedNode&&sdk.isPrivatePXEForNode(claimOwner.pxe,claimOwner.node),'ROLLING_CONTEXT_CHANGED');};
+    const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,...(held?{operationScope:held,membershipNode:claimOwner.cachedNode}:{}),...(kind==='bok'&&bokTopupScope?{bokTopupScope}:{}),
       secrets,...(aggregate?{aggregateIntent:aggregate.intent,...(aggregate.aggregateCustody?{aggregateCustody:aggregate.aggregateCustody}:{})}:{}),
       privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:claimGuard});
     await guard();if(verified.status!=='claim-ready')throw Object.assign(Error('Funding is not ready to claim.'),{code:'ROLLING_FUNDING_NOT_READY',reason:verified.reason});return verified.claim;
@@ -318,20 +325,20 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const operation=id=>`ROLLING_WORKFLOW_V1:${id}`;
   function summary(record){return {intentId:record.id,action:clone(record.action),status:record.status,maximumFee:record.maximumFee,
     nonce:record.nonce,txHash:record.txHash??null,...(record.withdrawal?{withdrawal:clone(record.withdrawal),actualNetworkFee:record.actualNetworkFee??null}:{}),...(record.moderation?{moderation:clone(record.moderation)}:{}),stage:record.bok?`bok-${record.bok.phase}`:'single-transaction',...(record.bok?{bok:{phase:record.bok.phase,budget:record.bok.budget,availableCredit:record.bok.availableCredit,authorizationTxHash:record.bok.authorizationTxHash??null,...(['post','atomic'].includes(record.bok.phase)?{mainPolicyVersion:record.args[2].expected_main_policy_version,localPolicyVersion:record.args[2].expected_local_policy_version}:{})}}:{}),...(record.bokReleaseSource?{bokRelease:{sourceIntentId:record.bokReleaseSource.id}}:{}),...(record.replacementReview?{replacementReview:clone(record.replacementReview)}:{}),
-    ...(record.nameAvailability?{nameAvailability:clone(record.nameAvailability)}:{}),...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
+    ...(record.inclusion?{inclusion:clone(record.inclusion)}:{}),...(record.nameAvailability?{nameAvailability:clone(record.nameAvailability)}:{}),...(preferenceAction(record)?{inclusionHistory:clone(record.inclusionHistory??[])}:{})};}
   async function checkBokRecord(record){const scopes=[record?.bok?.scope,record?.fundingBok?.scope,record?.bokRequestScope,record?.bokReleaseSource?.bok?.scope];if(scopes.some(Boolean)||record?.withdrawal?.kind==='bok')await ensureBok({bind:record.bok?.phase==='atomic'});for(const savedScope of scopes)if(savedScope)check(bok&&JSON.stringify(savedScope)===JSON.stringify(bok),'ROLLING_CONTEXT_CHANGED');}
   async function savedIntent(id){const saved=await (await slot()).read();check(saved.value&&saved.value.id===id,'ROLLING_INTENT_NOT_FOUND');await checkBokRecord(saved.value);return saved;}
-  function acknowledge(found,expected){
+  async function acknowledge(found,expected){
     check(found&&found.operation===expected.operation&&found.txHash===expected.txHash&&
       ['success','reverted'].includes(found.outcome)&&found.receipt?.txHash?.toString()===found.txHash,'ROLLING_RECOVERY_REQUIRED');
     // inspectOutcome verified this exact receipt canonically. assertCanStart still
     // rechecks canonicality and rejects non-final reverted sender-tagging ranges.
-    session.journal.confirmed(found.receipt);
+    if(found.receipt.status==='proposed')await session.journal.included(found.receipt);else session.journal.confirmed(found.receipt);
   }
   // Historical receipts belong to this account/board journal, not whichever
   // optional plugin is currently offered. Continuations and exits still require
   // their original plugin; a local terminal label alone never proves completion.
-  const terminalHistory=record=>['confirmed','reverted'].includes(record.status)&&!record.withdrawal&&
+  const terminalHistory=record=>usableStatus(record.status)&&!record.withdrawal&&
     !(record.status==='confirmed'&&record.bok?.phase==='authorize')&&
     !(record.status==='reverted'&&(record.bok?.phase==='post'||record.bokReleaseSource));
   async function outcome(saved,{history=false}={}){
@@ -340,8 +347,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const found=await session.journal.inspectOutcome({reuse:historical});
     if(!found||found.operation!==operation(saved.value.id))return {...summary(saved.value),status:'unknown'};
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
-    acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
-    const next={...saved.value,...(saved.value.withdrawal?{actualNetworkFee:String(chainValue(found.receipt.transactionFee))}:{}),status:found.outcome==='success'?'confirmed':'reverted',txHash:found.txHash,...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
+    if(found.receipt?.status==='proposed'&&!includedAction(saved.value))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
+    await acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
+    const next={...saved.value,...(saved.value.withdrawal?{actualNetworkFee:String(chainValue(found.receipt.transactionFee))}:{}),status:found.outcome==='success'?(found.receipt.status==='proposed'?'included':'confirmed'):'reverted',txHash:found.txHash,...(includedAction(saved.value)?{inclusion:{blockNumber:found.receipt.blockNumber,blockHash:hashText(found.receipt.blockHash)}}:{}),...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
     if(historical&&!terminalHistory(next))await checkBokRecord(next);
     await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:next.bokReleaseSource&&next.status==='reverted'?{status:'bok-release-reverted'}:{})};
   }
@@ -394,7 +402,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const history=clone(record.inclusionHistory??[]);if(!preferenceAction(record))return history;
     const receipt=found.receipt,fee=receipt.transactionFee;
     check(Number.isSafeInteger(receipt.blockNumber)&&receipt.blockNumber>0&&
-      ['checkpointed','proven','finalized'].includes(receipt.status)&&
+      (['checkpointed','proven','finalized'].includes(receipt.status)||includedAction(record)&&receipt.status==='proposed')&&
       (typeof fee==='bigint'||typeof fee==='string')&&/^(0|[1-9][0-9]{0,76})$/.test(String(fee))&&BigInt(fee)<FIELD_MODULUS,'ROLLING_INVALID_RESPONSE');
     const fact={blockNumber:receipt.blockNumber,blockHash:hashText(receipt.blockHash),executionResult:found.outcome,transactionFee:String(fee)};
     let attempt=history.find(row=>row.txHash===found.txHash);
@@ -474,7 +482,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const custody=await loadAggregate(a.receipt.txHash);
       if(!['aggregate-funding','aggregate-usdc-funding'].includes(custody?.intent?.expected?.kind))return false;
     }else if(epoch!==p.epoch)return false;
-    if(record.predecessor)acknowledge(await session.journal.inspectOutcome(),record.predecessor);
+    if(record.predecessor)await acknowledge(await session.journal.inspectOutcome(),record.predecessor);
     if(await journalCommitment()!==p.predecessor)return false;
     await guard();check((await savedIntent(record.id)).encoded===saved.encoded,'ROLLING_RECOVERY_REQUIRED');
     return await privateStore.readRecoveryEpoch()===epoch;
@@ -585,7 +593,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     try{
       await guard();const map=deployment.board.artifact.storageLayout?.registered_names?.slot;
       check(map!==undefined,'ROLLING_ABI_MISMATCH');
-      const head=await session.node.getBlockData('checkpointed'),blockNumber=Number(head?.header?.globalVariables?.blockNumber),blockHash=hashText(head?.blockHash);
+      const head=await session.node.getBlockData(proposedTransactions?'proposed':'checkpointed'),blockNumber=Number(head?.header?.globalVariables?.blockNumber),blockHash=hashText(head?.blockHash);
       check(Number.isSafeInteger(blockNumber)&&blockNumber>0,'ROLLING_INVALID_RESPONSE');anchor={blockNumber,blockHash};
       const slot=await sdk.deriveStorageSlotInMap(new sdk.Fr(BigInt(map)),new sdk.Fr(BigInt(id)));await guard();
       // Match RollingBoard's Map<Field,PublicMutable<bool>> at this exact canonical
@@ -674,7 +682,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function moderatorStatus(){
     await guard();const slot=deployment.board.artifact.storageLayout?.moderator?.slot;check(slot!==undefined,'ROLLING_ABI_MISMATCH');
-    const head=await session.node.getBlockData('checkpointed'),number=Number(head?.header?.globalVariables?.blockNumber),hash=hashText(head?.blockHash);
+    const head=await session.node.getBlockData(proposedTransactions?'proposed':'checkpointed'),number=Number(head?.header?.globalVariables?.blockNumber),hash=hashText(head?.blockHash);
     check(Number.isSafeInteger(number)&&number>0,'ROLLING_INVALID_RESPONSE');await guard();
     const address=new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.board)));
     const moderator=field((await session.node.getPublicStorageAt({hash},address,new sdk.Fr(BigInt(slot)))).toString(),true);
@@ -900,7 +908,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         }else{
           // Every public page is fetched independently of matches. Owned IDs
           // never leave this closure and never terminate the uniform scan early.
-          const page=await readAccountingPage({limit:50,cursor:scan.publicCursor});
+          const page=await readAccountingPage({limit:50,cursor:scan.publicCursor,...(proposedTransactions?{snapshot:{number:anchor.blockNumber,hash:anchor.blockHash}}:{})});
           check(page?.schemaVersion===1&&page.complete===true&&page.checkpoint?.number===anchor.blockNumber&&page.checkpoint?.hash===anchor.blockHash&&typeof page.revision==='string'&&page.revision.length>0&&page.revision.length<=256,'ROLLING_BOK_ACCOUNTING_INCOMPLETE');
           const scope=page.scope,b=page.bokScope,instance=deployment.bok.instance;
           check(scope?.chainId===fixed.network.chainId&&scope.rollupVersion===fixed.network.version&&scope.rollupAddress===fixed.network.rollup&&scope.boardAddress===fixed.board&&same(scope.bok,b)&&b?.address===bok.address&&b.operatorAddress===bok.operator&&b.classId===instance?.currentContractClassId.toString()&&b.classId===instance?.originalContractClassId.toString()&&b.deployer===instance?.deployer.toString()&&b.salt===instance?.salt.toString(),'ROLLING_BOK_ACCOUNTING_INCOMPLETE');
@@ -966,7 +974,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       const pending=(await (await slot()).read()).value;
       const reservation=pending&&['submitting','unknown'].includes(pending.status)?{status:'unresolved',maximumFee:pending.maximumFee}:null;
-      await checkBalanceAnchor(anchor);balanceContinuation=empty?null:{token:crypto.randomUUID(),offset:offset+10,anchor:clone(anchor)};return {anchor,fee:{available:String(fee),token:'FEE',complete:true,availableMeaning:'settled-private-credit',pendingReservation:reservation,withdrawal:'not-supported'},bok:credit,
+      await checkBalanceAnchor(anchor);balanceContinuation=empty?null:{token:crypto.randomUUID(),offset:offset+10,anchor:clone(anchor)};return {anchor,fee:{available:String(fee),token:'FEE',complete:true,availableMeaning:proposedTransactions?'included-private-credit':'settled-private-credit',pendingReservation:reservation,withdrawal:'not-supported'},bok:credit,
         collateral:{deposits,complete:empty,nextCursor:balanceContinuation?.token??null}};
     });},
     async readModeratorStatus(){return exclusive(moderatorStatus);},
@@ -976,8 +984,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       return exclusive(async()=>{await guard();const saved=await (await slot()).read();
         if(saved.value&&saved.value.status!=='cancelled'){
           if(!terminalHistory(saved.value))await checkBokRecord(saved.value);
-          if(!['confirmed','reverted'].includes(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
-          const canonical=await outcome(saved,{history:true});if(canonical.status==='confirmed'&&saved.value.withdrawal&&!await refundComplete({...saved.value,txHash:canonical.txHash}))return {status:'recovering',intent:canonical};if(!['confirmed','reverted'].includes(canonical.status))return {status:'recovering',intent:canonical};
+          if(!usableStatus(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
+          const canonical=await outcome(saved,{history:true});if(canonical.status==='confirmed'&&saved.value.withdrawal&&!await refundComplete({...saved.value,txHash:canonical.txHash}))return {status:'recovering',intent:canonical};if(!usableStatus(canonical.status))return {status:'recovering',intent:canonical};
         }
         const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');
         let fee;try{fee=await payment();}catch(error){if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n)};throw error;}
@@ -1031,10 +1039,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         session.wallet.pxe===policyOwner.pxe&&session.node===policyOwner.node,'ROLLING_CONTEXT_CHANGED');
       const readPredecessor=async()=>{
         const store=await slot();let prior=await store.read();
-        if(prior.value&&prior.value.status!=='cancelled'){check(['confirmed','reverted'].includes(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
-          const final=await outcome(prior,{history:true});check(['confirmed','reverted'].includes(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
+        if(prior.value&&prior.value.status!=='cancelled'){check(usableStatus(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
+          const final=await outcome(prior,{history:true});check(usableStatus(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
         // A cancelled unsent draft still acknowledges its prior confirmed transaction.
-        if(prior.value?.status==='cancelled'&&prior.value.predecessor)acknowledge(await session.journal.inspectOutcome({reuse:true}),prior.value.predecessor);
+        if(prior.value?.status==='cancelled'&&prior.value.predecessor)await acknowledge(await session.journal.inspectOutcome({reuse:true}),prior.value.predecessor);
         const previousTx=await session.journal.assertCanStart();
         return {store,prior,predecessor:previousTx?.value?{operation:previousTx.value.operation??null,txHash:previousTx.value.txHash}:null};
       };
@@ -1284,7 +1292,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await (await slot()).write(saved,{...saved.value,status:attempt?'pre-proof':'submitting',...(attempt?{preproof:attempt}:{})});
       active=await savedIntent(id);await guard();progress('submitting');
       const options={from:session.owner,fee:{gasSettings:estimated.gasSettings},simulationValidation:estimated.simulationValidation,atomicSimulation:estimated.atomicSimulation===true,
-        transactionJournal:session.journal,journalOperation:operation(id),...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok&&saved.value.bok.phase!=='atomic'?{beforeSubmit:async()=>{
+        transactionJournal:session.journal,journalOperation:operation(id),confirmationTier:includedAction(saved.value)?'proposed':'checkpointed',...(saved.value.bokReleaseSource?{beforeSubmit:()=>checkBokRelease(saved.value.bokReleaseSource,saved.value.action.type)}:{}),...(saved.value.moderation?{beforeSubmit:async()=>{await checkModeration(saved.value);await guard();}}:{}),...(saved.value.bok&&saved.value.bok.phase!=='atomic'?{beforeSubmit:async()=>{
           await checkBokThread(saved.value.action,await contract());
           if(saved.value.bok.phase==='post')await waitingBok(saved.value);else await bokContext();await guard();
         }}:{}),...(replacing?{beforeSubmit:async hash=>{

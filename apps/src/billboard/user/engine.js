@@ -196,7 +196,9 @@
         if(opts[preproofToken]&&!lifecycle)throw Object.assign(new Error('Invalid pre-proof lifecycle.'),{code:'BB_JOURNAL_INVALID'});
         if(lifecycle){lifecycle.check();if(lifecycle.journal!==journal)throw Object.assign(new Error('Invalid pre-proof journal.'),{code:'BB_JOURNAL_INVALID'});await lifecycle.guard('preparing');}
         if (opts.journalOperation && !journal) throw Object.assign(new Error('Durable transaction journal is required.'), {code:'BB_JOURNAL_INVALID'});
-        if (opts.journalOperation && journal) journal.setOperation(opts.journalOperation);
+        const confirmationTier=opts.confirmationTier??'checkpointed';
+        if(!['checkpointed','proposed'].includes(confirmationTier)||confirmationTier==='proposed'&&(!journal||!opts.journalOperation))throw Object.assign(new Error('Invalid transaction confirmation policy.'),{code:'BB_JOURNAL_INVALID'});
+        if (opts.journalOperation && journal) journal.setOperation(opts.journalOperation,{confirmationTier});
         const previousJournal = journal ? await journal.assertCanStart(lifecycle?undefined:{fresh:true}) : null;
         const fixedGas = !!opts.fee?.gasSettings;
         const checkedGas = fixedGas ? a.GasSettings.from(opts.fee.gasSettings) : null;
@@ -312,7 +314,7 @@
         this._progress('confirming');
         const waitOpts=typeof opts.wait==='object'?opts.wait:{};
         const receipt=await a.waitForSuccessfulReceipt(rawNode,tx,{
-          timeoutMs:(waitOpts.timeout ?? 0)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
+          confirmationTier,timeoutMs:(waitOpts.timeout ?? 0)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
           onIncluded:inclusion=>{
             if(!inclusionObserved){inclusionObserved=true;try{
               // Observation includes receipt polling; this is not block production time.
@@ -323,9 +325,9 @@
             this._progress('included',{...inclusion,journalOperation:opts.journalOperation});
           },
         });
-        if (journal) journal.confirmed(receipt);
+        if (journal) {if(receipt.status==='proposed')await journal.included(receipt);else journal.confirmed(receipt);}
         this._actualFees=(this._actualFees||0n)+BigInt(receipt.transactionFee??0);
-        log('  Tx confirmed! Block: ' + receipt.blockNumber + ', Status: ' + receipt.status, 'success');
+        log('  Tx '+(receipt.status==='proposed'?'included':'confirmed')+'! Block: ' + receipt.blockNumber + ', Status: ' + receipt.status, 'success');
         return { receipt };
       }
     }

@@ -3,6 +3,8 @@ import {measureProofPhase,beginProofSpan} from './proof-timings.mjs';
 export const transactionError=(code,message)=>Object.assign(new Error(message),{code});
 const accepted=new Set(['checkpointed','proven','finalized']);
 const pending=new Set(['pending','proposed']);
+function tier(value='checkpointed'){if(!['proposed','checkpointed'].includes(value))throw transactionError('BB_SUBMISSION_UNKNOWN','Invalid transaction confirmation tier.');return value;}
+const admitted=(status,minimum)=>accepted.has(status)||minimum==='proposed'&&status==='proposed';
 const hash=value=>value?.toString?.();
 export async function boundedTransactionRead(fn, timeoutMs=20000) {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 20000) throw transactionError('BB_SUBMISSION_UNKNOWN','Transaction read deadline expired.');
@@ -13,19 +15,21 @@ export async function boundedTransactionRead(fn, timeoutMs=20000) {
     })]);
   } finally {clearTimeout(timer);}
 }
-export function requireSuccessfulReceipt(receipt,txHash) {
-  if(hash(receipt?.txHash)!==hash(txHash) || !accepted.has(receipt?.status) || receipt.executionResult!=='success' ||
+export function requireSuccessfulReceipt(receipt,txHash,{confirmationTier='checkpointed'}={}) {
+  const minimum=tier(confirmationTier);
+  if(hash(receipt?.txHash)!==hash(txHash) || !admitted(receipt?.status,minimum) || receipt.executionResult!=='success' ||
     !Number.isSafeInteger(receipt.blockNumber) || receipt.blockNumber<1 || !receipt.blockHash) {
     throw transactionError('BB_TRANSACTION_FAILED','Transaction does not have a successful confirmed receipt.');
   }
   return receipt;
 }
 // A bounded read-only check. Pending/dropped is not permission to replace or resend.
-export async function readCanonicalReceipt(node,txHash,{readTimeoutMs=20000}={}) {
+export async function readCanonicalReceipt(node,txHash,{readTimeoutMs=20000,confirmationTier='checkpointed'}={}) {
+  const minimum=tier(confirmationTier);
   const receipt=await boundedTransactionRead(()=>node.getTxReceipt(txHash),readTimeoutMs);
   if(hash(receipt?.txHash)!==hash(txHash))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt identity does not match.');
-  if(pending.has(receipt.status)||receipt.status==='dropped')return null;
-  if(!accepted.has(receipt.status)||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!receipt.blockHash||!['success','reverted'].includes(receipt.executionResult))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt is incomplete.');
+  if(!admitted(receipt.status,minimum)&&(pending.has(receipt.status)||receipt.status==='dropped'))return null;
+  if(!admitted(receipt.status,minimum)||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!receipt.blockHash||!['success','reverted'].includes(receipt.executionResult))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt is incomplete.');
   const block=await boundedTransactionRead(()=>node.getBlock(receipt.blockNumber),readTimeoutMs);
   if(!block||hash(block.hash)!==hash(receipt.blockHash))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block is not canonical.');
   return receipt;
@@ -54,7 +58,8 @@ export async function classifyDroppedTransaction(node,tx,receipt,{readTimeoutMs=
   }
   throw transactionError('BB_SUBMISSION_UNKNOWN','Drop reason is unconfirmed. Reconcile before retrying.');
 }
-export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,onPoll=()=>{},onIncluded,readTimeoutMs=20000}={}) {
+export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,onPoll=()=>{},onIncluded,readTimeoutMs=20000,confirmationTier='checkpointed'}={}) {
+  const minimum=tier(confirmationTier);
   if(!Number.isFinite(timeoutMs)||timeoutMs<0||(intervalMs!==undefined&&(!Number.isFinite(intervalMs)||intervalMs<=0)))throw transactionError('BB_SUBMISSION_UNKNOWN','Transaction wait configuration is invalid.');
   const txHash=tx.getTxHash(),readLimit=timeoutMs===0?readTimeoutMs:Math.min(readTimeoutMs,timeoutMs);let stateConflict,lastInclusion;
   try {
@@ -86,7 +91,7 @@ export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,on
       }
       if(pending.has(observed.status))onPoll();
       return observed;
-    }},txHash,{timeout:timeoutMs/1000,...(intervalMs===undefined?{}:{interval:(timeoutMs===0?intervalMs:Math.min(intervalMs,timeoutMs))/1000}),ignoreDroppedReceiptsFor:0,dontThrowOnRevert:true});
+    }},txHash,{timeout:timeoutMs/1000,waitForStatus:minimum,...(intervalMs===undefined?{}:{interval:(timeoutMs===0?intervalMs:Math.min(intervalMs,timeoutMs))/1000}),ignoreDroppedReceiptsFor:0,dontThrowOnRevert:true});
     if(!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!receipt.blockHash)throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block identity is unavailable.');
     const block=await boundedTransactionRead(()=>node.getBlock(receipt.blockNumber),readLimit);
     if(!block||hash(block.hash)!==hash(receipt.blockHash))throw transactionError('BB_SUBMISSION_UNKNOWN','Receipt block is not confirmed canonical.');
@@ -99,5 +104,5 @@ export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,on
 }
 
 export async function waitForSuccessfulReceipt(node,tx,options={}) {
-  return requireSuccessfulReceipt(await waitForCanonicalReceipt(node,tx,options),tx.getTxHash());
+  return requireSuccessfulReceipt(await waitForCanonicalReceipt(node,tx,options),tx.getTxHash(),options);
 }

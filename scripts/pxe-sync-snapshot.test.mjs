@@ -18,7 +18,7 @@ import { BlockHeader } from '@aztec-labs/stdlib/tx';
 import { Barretenberg, BarretenbergSync } from '@aztec-foundation/bb.js';
 import { PXE_REORG_ANCHOR_PINS as PINS, inspectPxeReorgAnchor, patchPxeReorgAnchor } from './patch-pxe-reorg-anchor.mjs';
 
-const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const repo = process.env.ROLLING_NATIVE_TEST_ROOT ?? resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const installed = await realpath(join(repo, 'node_modules/@aztec-labs/pxe'));
 const installedBefore = await inspectPxeReorgAnchor(installed);
 const temporary = await realpath(await mkdtemp(join(tmpdir(), 'rolling-pxe-anchor-')));
@@ -76,7 +76,7 @@ async function fixture(t,{Constructor=Patched,tier='checkpointed',cached=false}=
   const node={getChainTips:async()=> {
     state.tipReads++;
     const n=state.selected??state.tip;
-    return {proposed:id(state.tip),checkpointed:checkpoint(tier==='proposed'?state.tip:n),
+    return {proposed:id(state.tip),checkpointed:checkpoint(state.checkpoint??(tier==='proposed'?state.tip:n)),
       proven:checkpoint(['proven','finalized'].includes(tier)?n:0),finalized:checkpoint(tier==='finalized'?n:0)};
   },getBlock:get,getBlockData:async q=>{const r=await get(q);return r?{...r,blockHash:r.hash}:undefined;},
   wipeCache(){state.nodeWipes++;},getBlocks(){throw Error('Unexpected payload download');}};
@@ -98,7 +98,7 @@ async function fixture(t,{Constructor=Patched,tier='checkpointed',cached=false}=
     await other.set('value',15);assert.equal(await balance(),90n);
   };
   const snapshot=async()=>({header:(await anchor.getBlockHeader()).toBuffer().toString('hex'),tips:await tips.getL2Tips(),balance:await balance(),other:await other.getAsync('value')});
-  return {db,notes,anchor,tips,sync,node,state,chain,id,advance,seed,snapshot,balance,other};
+  return {db,notes,anchor,tips,sync,node,state,chain,id,advance,seed,snapshot,balance,other,commit,add,owner,contract};
 }
 
 
@@ -239,4 +239,18 @@ test('fork after anchor commit is rejected by the retained completion check',asy
  const update=f.sync.updateAnchorBlockHeader.bind(f.sync);
  f.sync.updateAnchorBlockHeader=async header=>{await update(header);f.chain[12]=await block(12,999);};
  await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_/);
+});
+
+test('proposed private state remains usable across note spends while checkpoint lags, then native rollback retracts descendants',async t=>{
+ const f=await fixture(t,{tier:'proposed',cached:true});f.state.checkpoint=10;await f.seed(true);
+ assert.equal((await f.tips.getL2Tips()).checkpointed.block.number,10);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),15);assert.equal(await f.balance(),90n);
+ await f.advance(16);await f.commit(async c=>{
+  const available=await f.notes.getNotes({contractAddress:f.contract,scopes:[f.owner]},c);
+  const previous=available.find(note=>note.note.items[0].toBigInt()===80n);assert(previous,'native store exposes included change without checkpoint');
+  await f.notes.applyNullifiers([{data:previous.siloedNullifier,l2BlockNumber:16}],c);
+  await f.notes.addNotes([await f.add(16,70,1004)],f.owner,c);
+ });
+ assert.equal(await f.balance(),80n);assert.equal((await f.tips.getL2Tips()).checkpointed.block.number,10);
+ f.state.tip=12;await f.sync.sync();assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);assert.equal(await f.balance(),100n,'native rollback removes both descendant change and spends');
+ assert.deepEqual(f.state.prunes,[12]);assert.equal((await f.tips.getL2Tips()).checkpointed.block.number,10);
 });

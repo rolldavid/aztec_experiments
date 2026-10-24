@@ -256,12 +256,12 @@ export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=fal
  }
  // A single guarded snapshot returns cache data only. The persistent index
  // alone earns canonical publication and authenticates opaque external cursors.
- function readPublicPage({expectedControl,view,params={},after=null,homeSubboards=[],throughBlock=null}){
+ function readPublicPage({expectedControl,view,params={},after=null,homeSubboards=[],throughBlock=null,throughHash=null}){
   const expected=captureExpected(expectedControl),input=captureExpected(params),curated=['0',...normalizeHomeSubboards(captureExpected(homeSubboards))];
   const allowed={'bok-accounting':[],home:[],feed:[],chronological:[],pending:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
   requireThat(typeof view==='string'&&Object.hasOwn(allowed,view));requireThat(Object.keys(input).every(k=>k==='limit'||allowed[view].includes(k)));
   const limit=input.limit??50;requireThat(bounded(limit,1,100));
-  requireThat(throughBlock===null||view==='bok-accounting'&&uint(throughBlock,53));
+  requireThat(throughBlock===null?throughHash===null:view==='bok-accounting'&&uint(throughBlock,53)&&(throughHash===null||hash(throughHash)));
   const field=v=>uint(v)&&BigInt(v)<0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
   const idKey={board:'id',thread:'root',profile:'nameId',post:'id'}[view];if(idKey)requireThat(field(input[idKey]));
   requireThat(after===null||field(after));requireThat(view!=='post'||after===null);
@@ -269,6 +269,12 @@ export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=fal
   return transaction(false,()=>{
    const b=budget(limits.maxReadBytes),c=current(expected,b);requireThat(c);const g=c.generation;
    requireThat(throughBlock===null||BigInt(throughBlock)<=BigInt(c.checkpoint.number));
+   if(throughHash!==null){
+    // Authenticate the requested public anchor in the same guarded SQLite
+    // snapshot as every accounting row. Reorg rollback removes these blocks.
+    const block=readSized('SELECT value FROM blocks WHERE g=? AND n=?',[g,key(throughBlock)],b);
+    requireThat(block&&block.number===throughBlock&&block.hash===throughHash);
+   }
    const work={candidateRows:0,materializedRows:0,materializedBytes:0,seeks:0};
    const points=new Map();
    const point=(table,id)=>{const k=table+':'+id;if(!points.has(k)){const value=projectionRead(g,table,id,b);points.set(k,value);if(value!==undefined)work.materializedRows++;}return points.get(k);};

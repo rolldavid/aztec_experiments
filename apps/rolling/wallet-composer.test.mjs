@@ -38,7 +38,7 @@ async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,to
   readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:moderator};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
-  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{})};},
+  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{}),...(posting.inclusion?{inclusion:posting.inclusion}:{})};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
  session.application.executeAction=(action,options)=>executeRollingAction(session.application,structuredClone(action),options);
@@ -747,4 +747,43 @@ test('unfinished refund send failure exposes saved unknown action without anothe
  f.document.querySelectorAll('button').find(b=>b.textContent.startsWith('Refund ')).fire('click');
  await f.document.until(()=>f.document.querySelector('[role=alert]')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('[data-action-confirm]'),null);assert(f.document.body.textContent.includes('Check your action'));
+});
+
+test('included completion releases inline action for the next explicit action before checkpoint', {timeout:3000},async t=>{
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers();let calls=0;
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},submit:()=>{calls++;if(calls===1){entered.resolve();return gate.promise;}}}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ const first=f.panel.act({type:'like',post:'10'});await entered.promise;f.progress(includedPost());gate.resolve();
+ assert.equal((await first).status,'included');assert(identity.textContent.includes('confirmation pending'));
+ assert.equal((await f.panel.act({type:'unlike',post:'10'})).status,'included');assert.equal(calls,2);
+ await new Promise(setImmediate);
+});
+test('checkpoint observer is display-only, deduplicated, and cannot overwrite newer action feedback', {timeout:3000},async t=>{
+ const held=Promise.withResolvers();let reads=0;
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash}}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);f.session.observeIncluded=async()=>++reads===1?held.promise:{status:'included',txHash:includedPost().txHash};
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));assert.equal((await f.panel.act({type:'like',post:'10'})).status,'included');
+ const head={checkpoint:{number:110,hash:'0x'+'a'.repeat(64)}};f.panel.observePublicPosts([],head);f.panel.observePublicPosts([],head);await Promise.resolve();assert.equal(reads,1);
+ assert.equal((await f.panel.act({type:'unlike',post:'10'})).status,'included');held.resolve({status:'confirmed',txHash:includedPost().txHash});await new Promise(setImmediate);
+ assert(identity.textContent.includes('confirmation pending'));assert(!identity.textContent.includes(': confirmed.'));
+});
+test('checkpoint observer promotes matching latest included action without another send or account operation', {timeout:3000},async t=>{
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash}}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);f.session.observeIncluded=async()=>({status:'confirmed',txHash:includedPost().txHash});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));await f.panel.act({type:'like',post:'10'});await new Promise(setImmediate);const before=f.core();
+ f.panel.observePublicPosts([],{checkpoint:{number:110,hash:'0x'+'a'.repeat(64)}});await new Promise(setImmediate);
+ assert(identity.textContent.includes(': confirmed.'));assert.deepEqual(f.core(),before);assert.equal(f.submissions.length,1);
+});
+
+test('same proposed head checkpoint promotion coalesces behind pending observation', {timeout:3000},async t=>{
+ const held=Promise.withResolvers();let reads=0;
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash}}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);f.session.observeIncluded=async()=>++reads===1?held.promise:{status:'confirmed',txHash:includedPost().txHash};
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));await f.panel.act({type:'like',post:'10'});
+ const checkpoint={number:110,hash:'0x'+'a'.repeat(64)},prior={number:107,hash:'0x'+'b'.repeat(64)},next={number:108,hash:includedPost().blockHash};
+ f.panel.observePublicPosts([],{checkpoint,confirmationCheckpoint:prior});await Promise.resolve();assert.equal(reads,1);
+ f.panel.observePublicPosts([],{checkpoint,confirmationCheckpoint:next});f.panel.observePublicPosts([],{checkpoint,confirmationCheckpoint:next});assert.equal(reads,1);
+ held.resolve({status:'included',txHash:includedPost().txHash});await new Promise(setImmediate);assert.equal(reads,2);assert(identity.textContent.includes(': confirmed.'));
+ f.panel.observePublicPosts([],{checkpoint,confirmationCheckpoint:next});await new Promise(setImmediate);assert.equal(reads,2);
 });

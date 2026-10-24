@@ -2,7 +2,7 @@
 // and the caller's current-account guard. These are synthetic unit checks.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
+import {createRollingWalletSession,createRollingRefundSession,observeIncludedTransaction} from './wallet-session.mjs';
 function options(){
  const accesses=[];return {accesses,input:{sdk:new Proxy({},{get(_target,key){accesses.push(key);throw Error('Unexpected SDK access');}}),
   routing:{},ethers:{},config:{network:{chainId:31337,rollupVersion:1,rollupAddress:'0x'+'1'.repeat(40)}},
@@ -350,7 +350,7 @@ test('session diagnostic does not hide account invalidation or invoke exception 
 for(const mode of [undefined,true,false])test(`native PXE configuration follows captured proof mode ${mode}`,async()=>{
  const f=await sessionFixture();if(mode!==undefined)f.input.proofsEnabled=mode;f.deploymentState.proofsEnabled=mode??true;
  const session=await createRollingWalletSession(f.input);
- try{assert.equal(f.state.trustedProofsEnabled,mode??true);assert.deepEqual(f.state.pxeConfig,{proverEnabled:mode??true,autoSync:false,syncChainTip:'checkpointed'});assert.equal(f.state.syncs,0);assert.equal(f.state.registrations,1);}
+ try{assert.equal(f.state.trustedProofsEnabled,mode??true);assert.deepEqual(f.state.pxeConfig,{proverEnabled:mode??true,autoSync:false,syncChainTip:'proposed'});assert.equal(f.state.syncs,0);assert.equal(f.state.registrations,1);}
  finally{await session.close();}assert.equal(f.state.stops,1);assert.equal(f.state.closes,1);
 });
 test('native PXE disabled configuration rejects nondevelopment networks before any SDK access',async()=>{
@@ -680,6 +680,14 @@ test('RC22 Bok accounting fetch uses only fixed same-origin uniform pages',async
  assert.deepEqual(calls.map(([url])=>url),['https://board.invalid/api/bok-accounting?limit=50','https://board.invalid/api/bok-accounting?limit=50&cursor='+encodeURIComponent('a'.repeat(32)+':'+hex(12).slice(2)+':'+'b'.repeat(16))]);
  for(const [,options]of calls){assert.equal(options.method,'GET');assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');assert.equal(options.body,undefined);}
  for(const cursor of ['https://evil.invalid','x&owner=secret',{},''])await assert.rejects(reader({limit:50,cursor}));await assert.rejects(reader({limit:100,cursor:null}));assert.equal(calls.length,2);
+});
+test('uniform Bok accounting binds every page to an exact public snapshot without private identifiers',async()=>{
+ const calls=[],reader=createUniformBokAccountingReader({origin:'https://board.invalid',fetcher:async(url)=>{calls.push(url);return new Response(JSON.stringify({complete:true}));}});
+ const snapshot={number:123,hash:hex(90)},cursor='a'.repeat(32)+':'+hex(12).slice(2)+':'+'b'.repeat(16);
+ await reader({limit:50,cursor:null,snapshot});await reader({limit:50,cursor,snapshot});
+ for(const input of calls){const url=new URL(input);assert.equal(url.searchParams.get('blockNumber'),'123');assert.equal(url.searchParams.get('blockHash'),snapshot.hash);assert.deepEqual([...url.searchParams.keys()].filter(key=>key!=='cursor').sort(),['blockHash','blockNumber','limit']);}
+ for(const invalid of [null,{}, {number:123},{hash:hex(90)},{number:0,hash:hex(90)},{number:1.5,hash:hex(90)},{number:123,hash:'invalid'},{...snapshot,owner:'private'}])await assert.rejects(reader({limit:50,cursor:null,snapshot:invalid}));
+ assert.equal(calls.length,2);
 });
 for(const mode of ['status','oversize','utf8','json','read-falsy'])test('RC22 Bok accounting rejects '+mode+' without publishing partial data',async()=>{
  let cancelled=0,released=0;
@@ -1357,4 +1365,16 @@ test('deposit refund waits under its account lease then prepares immediate gener
  assert.equal(f.state.active,true);assert.equal(estimates,0);assert.equal(f.state.sends,0);release.resolve();
  const prepared=await pending;assert.equal(prepared.status,'prepared');assert.equal(prepared.maximumFee,normalizePrivateFeeGasSettings(f.options.config.privateFee.gasSettings).maximumFee.toString());
  assert.equal(prepared.withdrawal.depositor,receipt.sender);assert.equal(prepared.withdrawal.depositId,receipt.depositId);assert.equal(estimates,0);assert.equal(f.state.active,false);await session.close();
+});
+
+test('display-only included observer requires exact receipt/block and never enters private state or journal',async()=>{
+ const txHash=hex(90),blockHash=hex(91);let status='proposed',executionResult='success',canonical=true,guards=0;
+ const sdk={TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn()},node={getTxReceipt:async hash=>({txHash:hash,status,executionResult,blockNumber:12,blockHash}),getBlock:async()=>({hash:canonical?blockHash:hex(92)})};
+ const opts={sdk,node,contextGuard:async()=>guards++};
+ assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'included');assert.equal(guards,4);
+ status='checkpointed';assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'confirmed');
+ status='proposed';canonical=false;assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'unavailable');
+ canonical=true;executionResult='reverted';assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'reverted');
+ status='pending';assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'unavailable');
+ node.getTxReceipt=async()=>({txHash:hex(99)});await assert.rejects(observeIncludedTransaction(opts,{txHash}),{code:'ROLLING_INVALID_RESPONSE'});
 });

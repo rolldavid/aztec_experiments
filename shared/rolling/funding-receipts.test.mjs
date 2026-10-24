@@ -1,3 +1,4 @@
+import {withCache} from '../../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js';
 // Labelled RPC doubles; actual pinned ABI decoding, SDK hashes, 36-level Merkle
 // paths, deterministic FPC artifact and custody helpers. No funds, proofs or services.
 import test,{before,after} from 'node:test';
@@ -13,7 +14,7 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {BlockHash,BlockParameterSchema} from '@aztec-labs/stdlib/block';
-import {L1Actor,L2Actor,L1ToL2Message} from '@aztec-labs/stdlib/messaging';
+import {L1Actor,L2Actor,L1ToL2Message,getL1ToL2MessageWitness} from '@aztec-labs/stdlib/messaging';
 import {SiblingPath} from '@aztec-labs/foundation/trees';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {computeSecretHash} from '@aztec-labs/stdlib/hash';
@@ -455,4 +456,38 @@ test('claim reuse still authenticates the current Ethereum and Aztec network',as
   f.backend.getNodeInfo=async()=>{const value=await info();return changed&&side==='aztec'?{...value,rollupVersion:999}:value;};
   await prepareFundingClaim(f.input);changed=true;await assert.rejects(prepareFundingClaim(f.input));
  }
+});
+
+for(const kind of ['collateral','private-fee','bok'])test(`actual native cache joins verified ${kind} membership with subsequent private oracle read`,async()=>{
+ const f=await fixture(kind),cache=withCache(f.input.node);f.input.membershipNode=cache;
+ const result=await prepareFundingClaim(f.input);assert.equal(result.status,'claim-ready');assert.equal(f.state.reads.filter(x=>x==='witness').length,1);
+ const parameter={number:f.input.anchor.number,hash:BlockHash.fromString(f.input.anchor.hash)},message=Fr.fromString(f.input.receipt.messageKey);
+ const actual=await getL1ToL2MessageWitness(cache,message,undefined,parameter);assert.equal(actual[0],f.state.witness[0]);assert.deepEqual(actual[1].toFields(),f.state.witness[1].toFields());
+ assert.equal(f.state.reads.filter(x=>x==='witness').length,1,'actual native private oracle helper reuses the same witness');
+ const before=f.state.reads.filter(x=>x==='l2').length;await prepareFundingClaim(f.input);assert(f.state.reads.filter(x=>x==='l2').length>before,'canonical numeric checks remain fresh');assert.equal(f.state.reads.filter(x=>x==='witness').length,1);
+ f.input.anchor.hash=h(301);f.state.l2Hash=h(301);await prepareFundingClaim(f.input);assert.equal(f.state.reads.filter(x=>x==='witness').length,2,'a new block hash cannot reuse old membership');
+});
+
+test('native membership cache evicts rejected reads and never suppresses canonical reorg checks',async()=>{
+ const f=await fixture('bok'),original=f.backend.getL1ToL2MessageMembershipWitness;let calls=0;
+ f.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{calls++;if(calls===1)throw Error('PRIVATE transport');return original(...args);};f.input.membershipNode=withCache(f.input.node);
+ await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_UNKNOWN'});assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');assert.equal(calls,2);
+ f.state.l2Hash=h(999);await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_REORG'});assert.equal(calls,2);
+});
+
+test('cached membership is still checked against exact leaf index and native anchor root',async()=>{
+ const f=await fixture('bok');f.input.membershipNode={getL1ToL2MessageMembershipWitness:async()=>[10n,f.state.witness[1]]};
+ await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});
+ f.input.membershipNode={getL1ToL2MessageMembershipWitness:async()=>[9n,new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,Array(L1_TO_L2_MSG_TREE_HEIGHT).fill(Fr.ZERO.toBuffer()))]};
+ await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});
+});
+
+test('membership route is captured before awaits and operation evidence cannot survive a changed route',async()=>{
+ const f=await fixture('bok'),cache=withCache(f.input.node);let reads=0;f.input.operationScope={};f.input.membershipNode=cache;
+ await prepareFundingClaim(f.input);
+ f.input.membershipNode={getL1ToL2MessageMembershipWitness:async(...args)=>{reads++;return f.input.node.getL1ToL2MessageMembershipWitness(...args);}};
+ await prepareFundingClaim(f.input);assert.equal(reads,1,'different reader does not inherit operation evidence');
+ const held=Promise.withResolvers(),entered=Promise.withResolvers(),getNetwork=f.input.ethProvider.getNetwork;f.input.operationScope={};
+ f.input.ethProvider.getNetwork=async()=>{entered.resolve();await held.promise;return getNetwork();};
+ const work=prepareFundingClaim(f.input);await entered.promise;f.input.membershipNode={getL1ToL2MessageMembershipWitness:async()=>{throw Error('changed input');}};held.resolve();assert.equal((await work).status,'claim-ready');assert.equal(reads,2);
 });

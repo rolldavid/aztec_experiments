@@ -59,7 +59,7 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     await contextGuard();
    }
    const result=await call(...captured);
-   if(scope&&['submitPrepared','resumeSaved'].includes(name)&&['confirmed','authorized','reverted','bok-post-reverted','bok-release-reverted'].includes(result?.status))scope.synchronized=false;
+   if(scope&&['submitPrepared','resumeSaved'].includes(name)&&['included','confirmed','authorized','reverted','bok-post-reverted','bok-release-reverted'].includes(result?.status))scope.synchronized=false;
    return result;
   }];
  });

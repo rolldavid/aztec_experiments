@@ -55,7 +55,7 @@ export function createInlineAction({action,perform,onState}) {
     let active=true,included=false;
     const onIncluded=()=>{if(active&&!included){included=true;onState('included',captured);}};
     pending=Promise.resolve().then(()=>perform(captured,onIncluded)).then(result=>{
-      if(!['confirmed','reverted','blocked','cancelled','failed','unknown'].includes(result?.status))result={status:'unknown'};
+      if(!['included','confirmed','reverted','blocked','cancelled','failed','unknown'].includes(result?.status))result={status:'unknown'};
       if(result.status==='unknown')uncertain=result;
       onState(result.status,captured,result);return result;
     },()=>{

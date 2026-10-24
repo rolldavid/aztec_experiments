@@ -774,3 +774,35 @@ for(const defect of ['missing-block','invalid-log'])test('proposed '+defect+' wi
  await assert.rejects(index.step());assert.equal(index.status().state,'unavailable');assert.throws(()=>index.query('feed'));
  await assert.rejects(index.step(),{code:'ROLLING_PUBLIC_REOPEN_REQUIRED'});
 });
+
+test('explicit accounting snapshot binds every row and cursor to the indexed canonical wallet anchor',async t=>{
+ const f=await bokIndexFixture(t);f.put(3,[f.accounting(1),f.accounting(7)]);f.put(4,[f.accounting(2),f.accounting(7,{state:4,sequence:1,available:0,charged:25,refunded:75})]);
+ const read=f.node.getBlockData,receipt=f.node.getTxReceipt;let checkpoint=3;
+ f.node.getBlockData=n=>read(n==='proposed'?4:n==='checkpointed'?checkpoint:n);
+ f.node.getTxReceipt=async tx=>{const r=await receipt(tx);return {...r,status:r.blockNumber>checkpoint?'proposed':'checkpointed'};};
+ const {index,storage}=await f.open({confirmationTier:'proposed'});await f.drain(index);
+ const anchor={blockNumber:4,blockHash:hex(1004)},past={blockNumber:3,blockHash:hex(1003)};
+ const callCount=f.calls.length,first=index.query('bok-accounting',{...anchor,limit:2});
+ assert.deepEqual(first.checkpoint,{number:4,hash:hex(1004)});assert.equal(first.confirmationTier,'proposed');assert.deepEqual(first.requests.map(r=>r.requestId),['1','2']);assert(first.nextCursor);
+ const second=index.query('bok-accounting',{...anchor,limit:2,cursor:first.nextCursor});assert.equal(second.requests[0].charged,'25');assert.equal(second.requests[0].refunded,'75');assert.equal(second.requests[0].position.blockNumber,'4');assert.equal(second.nextCursor,null);
+ const historical=index.query('bok-accounting',past);assert.equal(historical.confirmationTier,'checkpointed');assert.deepEqual(historical.requests.map(r=>r.requestId),['1','7']);assert.equal(historical.requests[1].charged,'0');assert.equal(historical.requests[1].position.blockNumber,'3');
+ assert.equal(f.calls.length,callCount,'public projection reads do not add chain RPC or private account queries');
+ for(const changed of [past,{...anchor,blockHash:hex(1234)},{}, {...anchor,limit:1}])assert.throws(()=>index.query('bok-accounting',{limit:2,cursor:first.nextCursor,...changed}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ for(const invalid of [{blockNumber:4},{blockHash:hex(1004)},{blockNumber:'4',blockHash:hex(1004)},{blockNumber:0,blockHash:hex(1004)},{blockNumber:5,blockHash:hex(1005)},{blockNumber:4,blockHash:hex(9999)}])assert.throws(()=>index.query('bok-accounting',invalid),{code:'ROLLING_PUBLIC_INVALID'});
+ assert.equal(index.status().state,'ready','bad public anchors do not poison the index');
+ assert.throws(()=>storage.readPublicPage({expectedControl:storage.inspect().control,view:'bok-accounting',throughBlock:'4',throughHash:hex(9999)}),{code:'ROLLING_PUBLIC_STORAGE_INVALID'});
+ checkpoint=4;await index.step();assert.throws(()=>index.query('bok-accounting',{...anchor,limit:2,cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ checkpoint=3;f.put(4,[f.accounting(7,{state:2,available:60,reserved:40})],50);await index.step();await f.drain(index);
+ assert.throws(()=>index.query('bok-accounting',anchor),{code:'ROLLING_PUBLIC_INVALID'});
+ const fork=index.query('bok-accounting',{blockNumber:4,blockHash:f.blocks.get(4).hash.toString()});assert.equal(fork.requests.find(r=>r.requestId==='7').reserved,'40');
+});
+
+test('default accounting remains empty when confirmed watermark regresses before indexed deployment',async t=>{
+ const f=await bokIndexFixture(t);f.put(3,[f.accounting(7)]);let checkpoint=3;
+ const read=f.node.getBlockData,receipt=f.node.getTxReceipt;
+ f.node.getBlockData=n=>read(n==='proposed'?3:n==='checkpointed'?checkpoint:n);
+ f.node.getTxReceipt=async tx=>{const r=await receipt(tx);return {...r,status:r.blockNumber>checkpoint?'proposed':'checkpointed'};};
+ const {index}=await f.open({confirmationTier:'proposed'});await f.drain(index);checkpoint=0;await index.step();
+ const result=index.query('bok-accounting');assert.deepEqual(result.requests,[]);assert.deepEqual(result.checkpoint,{number:0,hash:hex(1000)});assert.equal(result.confirmationTier,'checkpointed');assert.equal(result.nextCursor,null);
+ const proposed=index.query('bok-accounting',{blockNumber:3,blockHash:hex(1003)});assert.equal(proposed.requests[0].requestId,'7');assert.equal(proposed.confirmationTier,'proposed');
+});

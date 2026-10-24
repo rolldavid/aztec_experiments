@@ -786,3 +786,41 @@ test('top-up presend qualification failure invalidates earlier same-operation sc
  await assert.rejects(cap.confirm());assert.equal(f.state.sends,0);
  const before=calls;await assert.rejects(cap.inspect(),/Portal disabled/);assert(calls>before);
 });
+
+for(const asset of ['ETH','USDC'])test(`standalone ${asset} quote overlaps independent RPC waves without changing calls or final authority`,async()=>{
+ const f=asset==='ETH'?ethTopupFixture():topupFixture();const cap=await f.open(),seen=[];
+ let releaseHead,releaseGas,headEntered,nonceEntered,gasEntered,feeEntered;
+ const headGate=new Promise(r=>releaseHead=r),gasGate=new Promise(r=>releaseGas=r);
+ const headStarted=new Promise(r=>headEntered=r),nonceStarted=new Promise(r=>nonceEntered=r),gasStarted=new Promise(r=>gasEntered=r),feeStarted=new Promise(r=>feeEntered=r);
+ const p=f.options.provider,head=p.getBlock,nonce=p.getTransactionCount,gas=p.estimateGas,fees=p.getFeeData;
+ p.getBlock=async tag=>{if(tag==='latest'&&!seen.includes('head')){seen.push('head');headEntered();await headGate;}return head(tag);};
+ p.getTransactionCount=async(...args)=>{seen.push('nonce');nonceEntered();return nonce(...args);};
+ p.estimateGas=async request=>{seen.push('gas');gasEntered();await gasGate;return gas(request);};
+ p.getFeeData=async()=>{seen.push('fees');feeEntered();return fees();};
+ const preparation=cap.prepare(f.allocation);await headStarted;await nonceStarted;assert.deepEqual(seen,['head','nonce']);releaseHead();
+ await gasStarted;await feeStarted;assert.deepEqual(seen,['head','nonce','gas','fees']);releaseGas();const quote=await preparation;
+ assert.equal(quote.phase,asset==='ETH'?'deposit':'approval');assert.equal(f.state.sends,0);assert.equal(seen.filter(v=>v==='nonce').length,1);assert.equal(seen.filter(v=>v==='fees').length,1);
+ p.getTransactionCount=async()=>8;await assert.rejects(cap.confirm(),{code:'ROLLING_FUNDING_NONCE_CHANGED'});assert.equal(f.state.sends,0);
+});
+for(const wave of ['head-nonce','gas-fees','secret-commitment'])test(`standalone funding drains ${wave} siblings before a synchronous rejection escapes`,async()=>{
+ const f=ethTopupFixture();let entered,release,settled=false;
+ const started=new Promise(r=>entered=r),held=new Promise(r=>release=r),failure=Error('controlled first branch failure');
+ if(wave==='head-nonce'){
+  f.options.provider.getBlock=()=>{throw failure;};f.options.provider.getTransactionCount=async()=>{entered();await held;return 7;};
+ }else if(wave==='gas-fees'){
+  f.options.provider.estimateGas=()=>{throw failure;};f.options.provider.getFeeData=async()=>{entered();await held;return {maxFeePerGas:2n};};
+ }else{
+  f.options.sdk.computeSecretHash=()=>{throw failure;};const original=f.options.sdk.poseidon2HashWithSeparator;
+  f.options.sdk.poseidon2HashWithSeparator=async(...args)=>{entered();await held;return original(...args);};
+ }
+ const cap=await f.open(),pending=cap.prepare(f.allocation).then(()=>{settled=true;return null;},error=>{settled=true;return error;});
+ await started;await new Promise(r=>setImmediate(r));assert.equal(settled,false);release();assert.equal(await pending,failure);assert.equal(f.state.sends,0);await assert.rejects(cap.confirm(),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});
+});
+test('parallel quote retains final canonical block and wallet guards after independent work',async()=>{
+ for(const change of ['canonical','wallet']){
+  const f=ethTopupFixture(),getBlock=f.options.provider.getBlock,fees=f.options.provider.getFeeData;let changed=false;
+  f.options.provider.getFeeData=async()=>{changed=true;if(change==='wallet')f.state.invalid=true;return fees();};
+  f.options.provider.getBlock=async tag=>{const block=await getBlock(tag);return changed&&change==='canonical'&&typeof tag==='number'?{...block,hash:h(999)}:block;};
+  await assert.rejects((await f.open()).prepare(f.allocation));assert.equal(f.state.sends,0);
+ }
+});

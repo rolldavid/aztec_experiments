@@ -18,7 +18,7 @@ Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build`
 
 ## Other transaction performance — active
 
-Owner target: at least50% end-to-end reduction across all other flows. First shared preparation/UI batch041a624b is published without restarting services. Like, bookmark, name and Bok-funding baselines are captured; matched after measurements and broader coverage remain outstanding. Native proposed-state sequencing is under isolated development; it is not yet deployed. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
+Owner target: at least50% end-to-end reduction across all other flows. First shared preparation/UI batch041a624b is published without restarting services. Like, bookmark, name and Bok-funding baselines are captured; matched after measurements and broader coverage remain outstanding. Reviewed native proposed-state sequencing is integrated with911 affected checks passing; it is not yet deployed. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
 
 ## Current deployment
 
@@ -34,7 +34,7 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 | Running app | `/opt/rolling-app/releases/ui-7a3ad91ffc14` |
 | Next-start app | `/opt/rolling-app/releases/ui-041a624b21f5` |
 | Prover | `/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad` |
-| Bok | `/opt/rolling-bok/releases/6cb76060aba07b2eae31284d0e949517dd240d48` |
+| Bok | `/opt/rolling-bok/releases/a160e83f006b98678b39a428e5dc683a4815382d` |
 
 | Contract | Current address |
 | --- | --- |

@@ -118,9 +118,16 @@ export function rollingModerationAdapter({index,node,scope,lease,state,deadline,
 
 /** Trusted native operator composition. Configuration only selects the native
  * devnet/PXE proof flags; application/contract behavior is identical on testnet. */
+// Explicit operator concurrency; the current service has a two-core CPU quota.
+// Higher values require the operator to qualify matching service resources.
+export async function createModeratorPxeOptions(config,{rollingPxeOptions,prepareNativeRuntime,initializeHostedNativeProver,backend}){
+ const threads=config.nativeProverThreads===undefined?2:config.nativeProverThreads;
+ assert(Number.isInteger(threads)&&threads>=1&&threads<=16,'nativeProverThreads must be an integer from 1 to 16');
+ return rollingPxeOptions(config.development,async()=>initializeHostedNativeProver({backend,...await prepareNativeRuntime({}),threads}));
+}
 export async function createRollingModerationService({configFile,stateDirectory,env=process.env,stopping=()=>false}){
  const [{readHostedPrivateFile,rollingOperatorConfig,rollingPxeOptions,operatorNodeFetch,fileState},
-  {acquireHostedLease,readHostedActor,hostedIndexNode},{createAztecNodeClient},{EmbeddedWallet},
+  {acquireHostedLease,readHostedActor,hostedIndexNode,initializeHostedNativeProver},{createAztecNodeClient},{EmbeddedWallet},
   {Fr},{AztecAddress},{Contract},{TxHash},{loadContractArtifact},{getContractClassFromArtifact},{deriveStorageSlotInMap},
   {jsonStringify},{loadRollingArtifacts},{prepareNativeRuntime},{BackendType},
   {createRollingPersistentPublicIndex},{createRollingPublicSqliteStore},{ownRollingPersistentPublicIndex}]=await Promise.all([
@@ -130,7 +137,7 @@ export async function createRollingModerationService({configFile,stateDirectory,
   import('../prover/rolling-artifacts.mjs'),import('../prover/runtime.mjs'),import('@aztec-foundation/bb.js'),
   import('../shared/rolling/public-index.mjs'),import('../shared/rolling/public-sqlite.mjs'),import('../scripts/rolling-public-server.mjs')]);
  const config=JSON.parse((await readHostedPrivateFile(configFile,65536)).toString('utf8'));
- const {deployment,maxTransactionFee,...operator}=config,publicConfig=rollingOperatorConfig(operator);
+ const {deployment,maxTransactionFee,nativeProverThreads,...operator}=config,publicConfig=rollingOperatorConfig(operator);
  assert(typeof maxTransactionFee==='string'&&/^[1-9][0-9]{0,38}$/.test(maxTransactionFee),'Explicit fee ceiling required');
  await fs.mkdir(stateDirectory,{recursive:true,mode:0o700});
  assert.equal(await fs.realpath(stateDirectory),stateDirectory);const stat=await fs.lstat(stateDirectory);assert(stat.isDirectory()&&(stat.mode&0o777)===0o700);
@@ -141,7 +148,7 @@ export async function createRollingModerationService({configFile,stateDirectory,
   const checkNetwork=async()=>{await lease.assertHeld();const info=await node.getNodeInfo();assert.equal(info.realProofs,!config.development);assert.equal(String(info.l1ChainId),config.chainId);assert.equal(String(info.rollupVersion),config.rollupVersion);assert.equal(String(info.l1ContractAddresses.rollupAddress).toLowerCase(),config.rollupAddress);if(wallet)assert.equal(wallet.pxe.proverEnabled,!config.development);};
   await checkNetwork();
   const actor=await readHostedActor({...config,operator:JSON.parse((await readHostedPrivateFile(config.operatorFile,8192)).toString('utf8')),operatorFile:undefined});
-  const pxe=await rollingPxeOptions(config.development,async()=>({backend:BackendType.NativeUnixSocket,...await prepareNativeRuntime({}),threads:1}));
+  const pxe=await createModeratorPxeOptions(config,{rollingPxeOptions,prepareNativeRuntime,initializeHostedNativeProver,backend:BackendType.NativeUnixSocket});
   wallet=await EmbeddedWallet.create(node,{ephemeral:true,pxe});
   const account=await wallet.createSchnorrInitializerlessAccount(actor.secret,actor.salt,actor.signingKey,'public Rolling moderator');assert.equal(String(account.address),config.operatorAddress);
   const [raw]=loadRollingArtifacts(),artifact=loadContractArtifact(raw),address=AztecAddress.fromStringUnsafe(config.boardAddress),classId=String((await getContractClassFromArtifact(artifact)).id);

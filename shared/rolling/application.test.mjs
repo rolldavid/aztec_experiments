@@ -67,7 +67,7 @@ function fixture(){
     assert.equal(opts.transactionJournal,journal);if(state.failSend)throw Error('unknown after send');
     state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77),status:'checkpointed',blockNumber:1,blockHash:hex(42),transactionFee:2n}};return {receipt:{}};
   }};
-  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
+  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{throw Error('Unexpected fixture membership read');}},getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
@@ -732,7 +732,7 @@ async function replacementFixture({marker=false,initialCrash=false,action:reques
  node.getTxReceipt=async hash=>receipts.get(String(hash))??new DroppedTxReceipt(TxHash.fromString(String(hash)));
  node.isValidTx=async tx=>validations.get(String(tx.getTxHash()))??{result:'invalid',reason:['Block header not found']};
  node.getBlock=async()=>({hash:hex(42)});let markerHash=hex(43);
- node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:height===10?markerHash:hex(42)});
+ node.getBlockData=async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:height===10?markerHash:hex(42)});
  f.options.accountSession.wallet.pxe.sync=async()=>{f.state.syncs=(f.state.syncs??0)+1;};
  const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
  const newJournal=()=>createL2Journal({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scope,Tx,node,waitOptions:{timeoutMs:1000,readTimeoutMs:1000,intervalMs:1},contextGuard:f.options.contextGuard});
@@ -1745,7 +1745,7 @@ test('signed replacement remains authoritative after an earlier positive pre-pro
 for(const context of ['marker','head'])for(const boundary of ['renewal','fee-estimate','submission','journal','broadcast'])test(`positive pre-proof preserves ${context} context at ${boundary}`,async()=>{
  const f=await preproofFixture(),action={type:'read-marker',expectedRevision:'0',thread:'42',throughBlock:'10'};
  const p=await f.app.prepare(action);f.state.interrupt='proof';await assert.rejects(f.app.submitPrepared(p.intentId),/proof interrupted/);
- const mutate=()=>{if(context==='head')f.state.preferenceHead=preferenceHead(true,1,1,11);else f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(43)});};
+ const mutate=()=>{if(context==='head')f.state.preferenceHead=preferenceHead(true,1,1,11);else f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(43)});};
  if(boundary==='renewal')mutate();
  if(boundary==='fee-estimate'){const estimate=f.options.sdk.estimatePrivateFeeTransaction;f.options.sdk.estimatePrivateFeeTransaction=async input=>{const result=await estimate(input);mutate();return result;};}
  if(['renewal','fee-estimate'].includes(boundary)){
@@ -2518,7 +2518,7 @@ test('preference snapshot rejects scope changes during its private read without 
 });
 test('immediate read marker still vetoes a changed canonical block before broadcast',async()=>{
  const f=await preproofFixture();const operation={synchronized:true};f.options.accountSession.operationScope=()=>operation;f.app=f.restart();
- f.state.beforeBroadcast=()=>{f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(43)});};
+ f.state.beforeBroadcast=()=>{f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(43)});};
  await assert.rejects(executeRollingAction(f.app,{type:'read-marker',thread:'42',throughBlock:'10'}),{code:'ROLLING_RECOVERY_CONTEXT_CHANGED'});
  assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.filter(row=>row.name==='preference_head').length,1);
  assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);
@@ -2588,4 +2588,55 @@ for(const change of ['scope','pxe'])test('generic payment preparation rejects ch
  f.options.accountSession.operationScope=()=>scope;f.options.sdk.preparePrivateFeePayment=async()=>{entered.resolve();await release.promise;return {availableCredit:100n};};f.app=f.restart();
  const work=f.app.prepare(moderatorActions[0],{immediate:true}),observed=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
  if(change==='scope')scope={synchronized:true};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};release.resolve();await observed;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+
+function proposedFixture(){
+ const f=fixture();f.options.accountSession.proposedTransactions=true;let acknowledgements=0;
+ f.options.accountSession.journal.included=async receipt=>{assert.equal(receipt.status,'proposed');acknowledgements++;};
+ const send=f.options.accountSession.wallet.sendTx;
+ f.options.accountSession.wallet.sendTx=async(...args)=>{const result=await send(...args);f.state.outcome.receipt.status=args[1].confirmationTier==='proposed'?'proposed':'checkpointed';return result;};
+ return {...f,app:f.restart(),acknowledgements:()=>acknowledgements};
+}
+test('proposed ordinary name completes included and next post uses normal native preparation without checkpoint',async()=>{
+ const f=proposedFixture();
+ const named=await executeRollingAction(f.app,{type:'name',first:'River',last:'Lane'});
+ assert.equal(named.status,'included');assert.equal(f.state.sent.opts.confirmationTier,'proposed');assert.equal(f.acknowledgements(),1);
+ assert.equal((await f.app.readAccountStatus()).status,'fee-ready');
+ const post=await executeRollingAction(f.app,{type:'post',deposit:'9',name:named.nameAvailability.id,content:'Next proposed action'});
+ assert.equal(post.status,'included');assert.equal(f.state.sends,2);assert(f.state.privateReads.some(row=>row.name==='get_screen_hints'));
+ assert.equal(f.state.outcome.receipt.status,'proposed');
+});
+test('proposed preference inverse reads the new native revision and retains a pending honest status',async()=>{
+ const f=proposedFixture(),action={type:'preference',kind:1,target:'42',enabled:true};
+ const first=await executeRollingAction(f.app,action);assert.equal(first.status,'included');assert.equal(first.action.expectedRevision,'0');
+ f.state.preferenceHead=preferenceHead(true,1,1,11);
+ const second=await executeRollingAction(f.app,{...action,enabled:false});
+ assert.equal(second.status,'included');assert.equal(second.action.expectedRevision,'1');assert.equal(second.action.enabled,false);assert.equal(f.state.sends,2);
+});
+test('proposed-capable application still requests checkpoint for incoming bridge claim',async()=>{
+ const f=fundingFixture();f.options.accountSession.proposedTransactions=true;const app=f.restart();
+ const result=await executeRollingAction(app,{type:'claim-deposit',receipt:f.receipt});
+ assert.equal(result.status,'confirmed');assert.equal(f.state.sent.opts.confirmationTier,'checkpointed');
+});
+test('proposed outcome cannot authorize next action once exact native journal reports no successful inclusion',async()=>{
+ const f=proposedFixture();await executeRollingAction(f.app,{type:'name',first:'River',last:'Lane'});
+ f.state.outcome={...f.state.outcome,outcome:'pending',receipt:null};
+ await assert.rejects(executeRollingAction(f.app,{type:'post',deposit:'9',content:'No orphan descendants'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ assert.equal(f.state.sends,1);
+});
+
+for(const kind of ['private-fee','bok'])test(`held ${kind} claim uses only its exact native membership cache`,async()=>{
+ const f=topUpFixture(kind),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ const raw=f.options.accountSession.node,cached=f.options.accountSession.wallet.pxe.node;
+ await f.restart().prepare(f.action,{immediate:true});assert(f.state.claimReads.length>0);
+ assert(f.state.claimReads.every(input=>input.node===raw&&input.membershipNode===cached&&input.operationScope===scope));assert.equal(f.state.sends,0);
+});
+for(const change of ['cached-node','route'])test(`claim refuses native membership cache ${change} replacement during verification`,async()=>{
+ const f=topUpFixture('bok'),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ const verify=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=async input=>{
+  if(change==='cached-node')f.options.accountSession.wallet.pxe.node={getL1ToL2MessageMembershipWitness:async()=>null};else f.options.sdk.isPrivatePXEForNode=()=>false;
+  return verify(input);
+ };
+ await assert.rejects(f.restart().prepare(f.action,{immediate:true}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });

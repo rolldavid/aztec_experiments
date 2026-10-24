@@ -1,0 +1,23 @@
+{
+  "reviewers": [
+    "pending_feed_release",
+    "proposed_feed_design"
+  ],
+  "approved": true,
+  "fixedFindings": [
+    "Verify exact predecessor block again after native sync may switch fork",
+    "Observe checkpoint advancement at unchanged proposed tip",
+    "Coalesce latest feed revision while an observer is pending"
+  ],
+  "tests": {
+    "affected": 911,
+    "engine": 2,
+    "nativeState": 1
+  },
+  "unqualified": [
+    "Live name then post before checkpoint",
+    "Live bookmark inverse before checkpoint",
+    "Financial included policy remains separate"
+  ],
+  "semantics": "Ordinary transaction returns included only after exact successful native receipt and canonical block. Next explicit action revalidates predecessor against native anchor. Private preferences/identities are reread, not optimistic deltas. Included is not checkpointed."
+}

@@ -438,6 +438,7 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
 export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,resolveScope,reconcileClaim,verifyClaim,swapScope,topupScope,operationScope}){
  check(['private-fee','bok'].includes(kind));const n=freeze(clone(network));topupScope=topupScope===undefined?undefined:freeze(clone(topupScope));let captured,prepared;
  const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;};
+ const together=async tasks=>{const results=await Promise.allSettled(tasks.map(task=>Promise.resolve().then(task)));const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;return results.map(result=>result.value);};
  const tokenAbi=new ethers.Interface(['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','function approve(address,uint256) returns(bool)']);
  const portalAbi=new ethers.Interface(kind==='bok'?['function deposit(bytes32,uint128,bytes32)']:['function depositToAztecPublic(bytes32,uint256,bytes32)']);
  // Slot construction reuses qualification only inside the current held account
@@ -496,7 +497,10 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
     }
    }else if(priorHash)await archived(priorHash);
    const wallet=await read(captureWallet);await read(wallet.guard);if(reuse)check(wallet.address===reuse.depositor,'MISMATCH');
-   const head=await read(()=>provider.getBlock('latest'));check(Number.isSafeInteger(head?.number)&&/^0x[0-9a-f]{64}$/.test(head?.hash));
+   // These independent reads share the held wallet operation; every sibling
+   // finishes before any failure escapes the account lease.
+   const [head,pendingNonce]=await together([()=>read(()=>provider.getBlock('latest')),()=>read(()=>provider.getTransactionCount(wallet.address,'pending'))]);
+   check(Number.isSafeInteger(head?.number)&&/^0x[0-9a-f]{64}$/.test(head?.hash));check(Number.isSafeInteger(pendingNonce)&&pendingNonce>=0);
    const call=async(name,args)=>tokenAbi.decodeFunctionResult(name,await read(()=>provider.call({to:captured.token,data:tokenAbi.encodeFunctionData(name,args),blockTag:head.number})))[0];
    const atomic=values.asset==='ETH'&&!reuse;
    const tokenReads=atomic?[]:await Promise.allSettled([Promise.resolve().then(()=>call('balanceOf',[wallet.address])),Promise.resolve().then(()=>call('allowance',[wallet.address,captured.portal]))]);
@@ -514,11 +518,11 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
     const previous=await archived(existing.txHash);
     if(previous.result.outcome==='success'&&previous.value.phase==='deposit')await completedClaim(previous.value);
    }
-   let nonce=await read(()=>provider.getTransactionCount(wallet.address,'pending'));check(Number.isSafeInteger(nonce)&&nonce>=0);if(saved.value?.intent&&saved.value.depositor===wallet.address)nonce=Math.max(nonce,saved.value.intent.nonce+1);
+   let nonce=pendingNonce;if(saved.value?.intent&&saved.value.depositor===wallet.address)nonce=Math.max(nonce,saved.value.intent.nonce+1);
    let recipientSalt=reuse?.recipientSalt??sdk.Fr.random().toString(),bridgeSecret=reuse?.bridgeSecret??sdk.Fr.random().toString(),recipient= captured.recipient,secretHash;
    if(kind==='bok'){
-    secretHash=(await read(()=>sdk.computeSecretHash(sdk.Fr.fromString(bridgeSecret)))).toString();
-    recipient=(await read(()=>sdk.poseidon2HashWithSeparator([new sdk.Fr(BigInt(n.chainId)),new sdk.Fr(BigInt(captured.portal)),sdk.Fr.fromString(captured.recipient),new sdk.Fr(BigInt(n.version)),sdk.Fr.fromString(owner),sdk.Fr.fromString(recipientSalt)],0x424b4301))).toString();
+    const [secret,commitment]=await together([()=>read(()=>sdk.computeSecretHash(sdk.Fr.fromString(bridgeSecret))),()=>read(()=>sdk.poseidon2HashWithSeparator([new sdk.Fr(BigInt(n.chainId)),new sdk.Fr(BigInt(captured.portal)),sdk.Fr.fromString(captured.recipient),new sdk.Fr(BigInt(n.version)),sdk.Fr.fromString(owner),sdk.Fr.fromString(recipientSalt)],0x424b4301))]);
+    secretHash=secret.toString();recipient=commitment.toString();
    }else secretHash=(await read(()=>sdk.claimSecrets({walletSecret,owner,record:{...n,privateFeeAddress:captured.recipient,sender:wallet.address,nonce}}))).secretHash.toString();
    const data=phase==='approval'?tokenAbi.encodeFunctionData('approve',[captured.portal,values.amount]):portalAbi.encodeFunctionData(kind==='bok'?'deposit':'depositToAztecPublic',[recipient,values.amount,secretHash]);
    const expected=phase==='approval'?{kind:'approve',amount:values.amount,spender:captured.portal}:{kind:kind==='bok'?'bok-deposit':'fee-deposit',amount:values.amount,secretHash,recipient};
@@ -528,7 +532,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    }):
     {to:phase==='approval'?captured.token:captured.portal,data:data.toLowerCase(),value:'0',expected};
    const request={from:wallet.address,chainId:n.chainId,nonce,...payment};
-   const gas=await read(()=>provider.estimateGas({...request,value:BigInt(request.value),chainId:BigInt(n.chainId)})),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
+   const [gas,fees]=await together([()=>read(()=>provider.estimateGas({...request,value:BigInt(request.value),chainId:BigInt(n.chainId)})),()=>read(()=>provider.getFeeData())]),price=fees.maxFeePerGas??fees.gasPrice;
    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n,'GAS_CHANGED');
    values.gasBudgetWei??=(gas*2n*price).toString();
    check(gas*2n*price<=BigInt(values.gasBudgetWei),'GAS_CHANGED');

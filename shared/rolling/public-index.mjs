@@ -226,13 +226,19 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   function publication(){check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');assertOwned();return state();}
   function query(view,params={}){
     check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');
-    const allowed={'bok-accounting':[],home:[],feed:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
+    const allowed={'bok-accounting':['blockNumber','blockHash'],home:[],feed:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
     check(typeof view==='string'&&Object.hasOwn(allowed,view)&&params&&Object.getPrototypeOf(params)===Object.prototype);
     const input={};for(const [k,d] of Object.entries(Object.getOwnPropertyDescriptors(params))){
       check((k==='cursor'||k==='limit'||allowed[view].includes(k))&&Object.hasOwn(d,'value'));
       check(d.value===null||typeof d.value==='string'&&d.value.length<=120||typeof d.value==='number'&&Number.isSafeInteger(d.value));input[k]=d.value;
     }
     if(view==='bok-accounting')check(scope.bok,'ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED');
+    let accountingCheckpoint=confirmationCheckpoint;
+    if(view==='bok-accounting'&&(Object.hasOwn(input,'blockNumber')||Object.hasOwn(input,'blockHash'))){
+      check(Number.isSafeInteger(input.blockNumber)&&input.blockNumber>=1&&hash(input.blockHash));
+      check(BigInt(input.blockNumber)<=BigInt(control.checkpoint.number));
+      accountingCheckpoint={number:String(input.blockNumber),hash:input.blockHash};
+    }
     const cursor=input.cursor??null;delete input.cursor;input.limit??=50;
     check(Number.isSafeInteger(input.limit)&&input.limit>=1&&input.limit<=100);
     if(view==='directory'){input.query??='';check(typeof input.query==='string'&&input.query.length<=120&&!input.query.includes('\0'));input.query=input.query.trim().toLowerCase();}
@@ -247,14 +253,14 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
     if(cursor!==null){check(view!=='post'&&typeof cursor==='string'&&/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/.test(cursor),'ROLLING_PUBLIC_CURSOR_STALE');
       const [e,last,signature]=cursor.split(':');check(e===tokenEpoch&&timingSafeEqual(Buffer.from(signature,'hex'),Buffer.from(mac(last),'hex')),'ROLLING_PUBLIC_CURSOR_STALE');after=String(BigInt('0x'+last));}
     try{
-      assertOwned();const page=storage.readPublicPage({expectedControl:control,view,params:input,after,homeSubboards:curated,...(view==='bok-accounting'?{throughBlock:confirmationCheckpoint.number}:{})});
+      assertOwned();const page=storage.readPublicPage({expectedControl:control,view,params:view==='bok-accounting'?{limit:input.limit}:input,after,homeSubboards:curated,...(view==='bok-accounting'?{throughBlock:accountingCheckpoint.number,...(Object.hasOwn(input,'blockNumber')?{throughHash:accountingCheckpoint.hash}:{})}:{})});
       check(page.trusted===false&&page.generation===control.generation&&page.revision===control.revision);
       const nextCursor=page.nextAfter===null?null:(()=>{const last=key(page.nextAfter);return `${tokenEpoch}:${last}:${mac(last)}`;})();
-      const selectedCheckpoint=view==='bok-accounting'?confirmationCheckpoint:control.checkpoint;
+      const selectedCheckpoint=view==='bok-accounting'?accountingCheckpoint:control.checkpoint;
       const annotate=post=>post?{...post,confirmation:BigInt(post.position.blockNumber)<=BigInt(confirmationCheckpoint.number)?'confirmed':'pending'}:post;
       const value={...page.value,...(page.value.posts?{posts:page.value.posts.map(annotate)}:{}),...(Object.hasOwn(page.value,'post')?{post:annotate(page.value.post)}:{})};
       const envelope={schemaVersion:1,scope,...(view==='bok-accounting'?{bokScope:scope.bok}:{}),checkpoint:{number:Number(selectedCheckpoint.number),hash:selectedCheckpoint.hash},
-        confirmationTier:view==='bok-accounting'?'checkpointed':confirmationTier,confirmationCheckpoint:{number:Number(confirmationCheckpoint.number),hash:confirmationCheckpoint.hash},complete:true,...value,
+        confirmationTier:view==='bok-accounting'?(BigInt(accountingCheckpoint.number)<=BigInt(confirmationCheckpoint.number)?'checkpointed':'proposed'):confirmationTier,confirmationCheckpoint:{number:Number(confirmationCheckpoint.number),hash:confirmationCheckpoint.hash},complete:true,...value,
         ...(view==='post'?{}:{nextCursor}),revision:publicationRevision()};
       check(bytes(JSON.stringify(envelope))<=1048576,'ROLLING_PUBLIC_CAPACITY');assertOwned();return copy(envelope);
     }catch(error){const code=error&&Object.getOwnPropertyDescriptor(error,'code')?.value;

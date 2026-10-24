@@ -103,11 +103,27 @@ export async function verifyRollingBokCapability({sdk,node,config,artifact,deplo
  await sdk.inspectTrustedNode(node,{expectedNetworkScope:deployment.network,proofsEnabled:deployment.proofsEnabled});await contextGuard();
  return Object.freeze({address,artifact,instance,operator:new sdk.AztecAddress(new sdk.Fr(BigInt(selected.operatorAddress))),pluginId:selected.pluginId});
 }
+// Display-only observation. It owns no account lease, journal or private state.
+// The current operation still authenticates its predecessor independently.
+export async function observeIncludedTransaction({sdk,node,contextGuard},input){
+ const txHash=input?.txHash;
+ if(typeof txHash!=='string'||!/^0x[0-9a-f]{64}$/.test(txHash))throw fail('ROLLING_INVALID_ACTION');
+ const read=async fn=>{await contextGuard();const result=await sdk.boundedTransactionRead(fn);await contextGuard();return result;};
+ const hash=sdk.TxHash.fromString(txHash),receipt=await read(()=>node.getTxReceipt(hash));
+ if(receipt?.txHash?.toString()!==txHash)throw fail('ROLLING_INVALID_RESPONSE');
+ if(['pending','dropped'].includes(receipt.status))return {status:'unavailable',txHash};
+ if(!['proposed','checkpointed','proven','finalized'].includes(receipt.status)||!['success','reverted'].includes(receipt.executionResult)||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!/^0x[0-9a-f]{64}$/.test(receipt.blockHash?.toString()))throw fail('ROLLING_INVALID_RESPONSE');
+ const block=await read(()=>node.getBlock(receipt.blockNumber));
+ if(block?.hash?.toString()!==receipt.blockHash.toString())return {status:'unavailable',txHash};
+ return {status:receipt.executionResult==='reverted'?'reverted':receipt.status==='proposed'?'included':'confirmed',txHash,
+  inclusion:{blockNumber:receipt.blockNumber,blockHash:receipt.blockHash.toString()}};
+}
 // Fixed public-only acquisition. No private identity/ID/filter can be supplied.
 export function createUniformBokAccountingReader({fetcher=globalThis.fetch,origin=globalThis.location?.origin}={}){
- return async({limit,cursor})=>{
+ return async({limit,cursor,snapshot})=>{
   if(limit!==50||!(cursor===null||typeof cursor==='string'&&/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/.test(cursor)))throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
-  const url=new URL('/api/bok-accounting',origin);url.searchParams.set('limit','50');if(cursor!==null)url.searchParams.set('cursor',cursor);
+  if(snapshot!==undefined&&(!snapshot||Object.keys(snapshot).sort().join()!=='hash,number'||!Number.isSafeInteger(snapshot.number)||snapshot.number<1||!/^0x[0-9a-f]{64}$/.test(snapshot.hash)))throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
+  const url=new URL('/api/bok-accounting',origin);url.searchParams.set('limit','50');if(cursor!==null)url.searchParams.set('cursor',cursor);if(snapshot){url.searchParams.set('blockNumber',String(snapshot.number));url.searchParams.set('blockHash',snapshot.hash);}
   const response=await fetcher(url.href,{method:'GET',credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(20000)});
   if(!response.ok)throw fail('ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
   const reader=response.body.getReader(),parts=[];let size=0,failed=false;
@@ -387,14 +403,14 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    await guard();store=await sdk.openPXEStore({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
    begin('pxe-create');
-   await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:'checkpointed'},{store,remoteProver:remote});await guard();
+   await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:'proposed'},{store,remoteProver:remote});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
    // The first private operation selects the anchor once. Opening the engine
    // itself does not require a second, immediately discarded synchronization.
    begin('journal-open');
    const privateStore=sdk.createBrowserJournalStorage();
    await guard();const journal=await sdk.createL2Journal({storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
-    scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard,operationScope:()=>operationScope});
+    scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard,operationScope:()=>operationScope,confirmationTier:'proposed',predecessorAnchor:()=>pxe.getSyncedBlockHeader()});
    begin('wallet-bind');
    await guard();const wallet=routing.createAztecWallet(sdk,pxe,node,node,silent,secret,{contextGuard:guard,transactionJournal:journal,progress:(stage,details)=>{const value=projectRollingTransactionProgress(stage,details);if(value)void Promise.resolve().then(()=>onProgress?.(value)).catch(()=>{});}});
    if(wallet.aztecNode!==node||wallet.pxe!==pxe||!routing.isPrivateWalletForNode(wallet,node))throw fail('ROLLING_PRIVATE_ROUTE');
@@ -468,7 +484,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     funding.loadAggregate=async(hash,kind)=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(kind==='bok'&&topups.bok?await topups.bok.loadAggregate(hash):null);};
    }
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,resolveBok:ensureBok,contextGuard:guard,privateStore,funding,onProgress,measure:measureRollingStage,readBokAccountingPage:createUniformBokAccountingReader(),
-    accountSession:{operationScope:()=>operationScope,owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt,
+    accountSession:{proposedTransactions:true,operationScope:()=>operationScope,owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt,
      ...(typeof routing.createPreproofRecovery==='function'?{preproofRecovery:routing.createPreproofRecovery(wallet,node,journal)}:{})}});
    // The reader owns synchronization, but the session owns this same account
    // lock and PXE lifetime. Its head capability is the raw guarded application
@@ -560,7 +576,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   await measureRollingStage('composer.posting-witnesses',()=>app.prefetchPostingWitnesses(deposit));
   await guardRoute();
  });}
- return Object.freeze({application,preparePostingState,ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ return Object.freeze({application,preparePostingState,observeIncluded:input=>observeIncludedTransaction({sdk,node:privateNode,contextGuard:guardRoute},input),ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

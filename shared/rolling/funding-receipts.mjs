@@ -122,6 +122,12 @@ export async function prepareFundingClaim(input) {
     requireThat(isTrustedPrivateNode(suppliedNode),'UNTRUSTED_NODE');
     const capture=(source,names)=>Object.freeze(Object.fromEntries(names.map(name=>{const fn=source?.[name];requireThat(typeof fn==='function','INVALID');return [name,fn.bind(source)];})));
     const nodeReads=capture(suppliedNode,['getNodeInfo','getContract','getBlockData','getL1ToL2MessageMembershipWitness']);
+    // Only immutable message membership may share the PXE's native hash cache.
+    // Every network/class/canonical read continues through the raw trusted node.
+    const membershipDescriptor=Object.getOwnPropertyDescriptor(input,'membershipNode');
+    requireThat(!membershipDescriptor||Object.hasOwn(membershipDescriptor,'value'),'INVALID');
+    const membershipNode=membershipDescriptor?membershipDescriptor.value:suppliedNode;
+    const membershipRead=capture(membershipNode,['getL1ToL2MessageMembershipWitness']).getL1ToL2MessageMembershipWitness;
     const providerMethods=['getNetwork','getTransactionReceipt','getTransaction','getBlock','call',...(aggregateIntent||bokTopupScope?['getCode']:[])];
     const providerReads=capture(suppliedProvider,providerMethods);
     const loadClaim=suppliedStore===undefined ? null : capture(suppliedStore,['load']).load;
@@ -129,7 +135,7 @@ export async function prepareFundingClaim(input) {
     requireThat(operation===undefined||(operation!==null&&typeof operation==='object'),'INVALID');
     // Only this exact held operation may reuse immutable, fully verified evidence.
     // Route capabilities, custody inputs and the native anchor are part of the key.
-    const capabilities=[...Object.keys(nodeReads).map(name=>suppliedNode[name]),...providerMethods.map(name=>suppliedProvider[name]),suppliedStore?.load];
+    const capabilities=[...Object.keys(nodeReads).map(name=>suppliedNode[name]),...providerMethods.map(name=>suppliedProvider[name]),suppliedStore?.load,membershipNode,membershipNode.getL1ToL2MessageMembershipWitness];
     const key=JSON.stringify([{kind,scope:s,receipt:r,anchor:a,owner},secrets,aggregateIntent,aggregateCustody,bokTopupScope]);
     const previous=operation&&operationClaims.get(operation)?.get(key);
     const reusable=previous&&previous.node===suppliedNode&&previous.provider===suppliedProvider&&previous.artifact===privateFeeArtifact&&previous.store===suppliedStore&&
@@ -278,7 +284,7 @@ export async function prepareFundingClaim(input) {
     const messageSender=kind==='private-fee'?EthAddress.fromField(ProtocolContractAddress.FeeJuice.toField()):EthAddress.fromString(s.portal);
     const message=new L1ToL2Message(new L1Actor(messageSender,Number(s.chainId)),new L2Actor(new AztecAddress(Fr.fromString(messageRecipient)),Number(s.version)),Fr.fromString(content),Fr.fromString(r.secretHash),new Fr(BigInt(r.leafIndex)));
     requireThat(message.hash().toString()===r.messageKey);
-    const [,witness]=await together([checkL2,()=>read(()=>nodeReads.getL1ToL2MessageMembershipWitness({number:a.number,hash:BlockHash.fromString(a.hash)},message.hash()))]);
+    const [,witness]=await together([checkL2,()=>read(()=>membershipRead({number:a.number,hash:BlockHash.fromString(a.hash)},message.hash()))]);
     if(!witness){await together([checkL1,checkL2]);return frozen({status:'waiting',reason:'l2-delivery'});}
     requireThat(Array.isArray(witness) && witness.length===2 && witness[0]===BigInt(r.leafIndex) && witness[1].pathSize===L1_TO_L2_MSG_TREE_HEIGHT);
     const path=witness[1].toFields();requireThat(Array.isArray(path) && path.length===L1_TO_L2_MSG_TREE_HEIGHT);

@@ -36,10 +36,12 @@ export function l2JournalScopeText(scope) {
  * The latest transaction is retained after success. A subsequent request must
  * acknowledge its exact hash, after a fresh canonical receipt check.
  */
-export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,node,acknowledgeTx,crypto=globalThis.crypto,waitOptions={},contextGuard,reconcileOnly=false,operationScope} ) {
+export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,node,acknowledgeTx,crypto=globalThis.crypto,waitOptions={},contextGuard,reconcileOnly=false,operationScope,confirmationTier='checkpointed',predecessorAnchor} ) {
+  if(!['checkpointed','proposed'].includes(confirmationTier)||confirmationTier==='proposed'&&typeof predecessorAnchor!=='function'||confirmationTier==='checkpointed'&&predecessorAnchor!==undefined)throw invalid();
+  const receiptOptions=saved=>({...waitOptions,confirmationTier:confirmationTier==='proposed'&&saved.value?.confirmationTier==='proposed'?'proposed':'checkpointed'});
   if(typeof reconcileOnly!=='boolean'||(operationScope!==undefined&&typeof operationScope!=='function'))throw invalid();
   const slot=await createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:l2JournalScopeText(scope),keyDomain:'AZTEC_BB_L2_JOURNAL_KEY_V1',crypto});
-  let acknowledged=acknowledgeTx,lastHash=null,operation=null,replacement=null;
+  let acknowledged=acknowledgeTx,lastHash=null,operation=null,operationTier='checkpointed',replacement=null;
   function containsApplicationNullifier(tx,value) {
     return typeof value==='string' && /^0x[0-9a-f]{64}$/.test(value) && !/^0x0+$/.test(value) &&
       tx.data?.getNonEmptyNullifiers?.().some(item=>item.toString()===value);
@@ -48,6 +50,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
     const saved=await slot.read();if(saved.value===null)return {...saved,tx:null};
     try {
       const record=saved.value;
+      if(record.confirmationTier!==undefined&&!['checkpointed','proposed'].includes(record.confirmationTier))throw invalid();
       if(record.version!==1||typeof record.txHash!=='string'||!/^0x[0-9a-f]{64}$/.test(record.txHash)||typeof record.tx!=='string'||!/^(?:[0-9a-f]{2})+$/.test(record.tx))throw invalid();
       if(record.replacementPolicy!==undefined&&(record.replacementPolicy!=='missing-anchor'||!Array.isArray(record.replacements)||!record.replacements.length))throw invalid();
       if(record.operation!==undefined&&record.operation!==null&&(typeof record.operation!=='string'||!record.operation.length||record.operation.length>16384))throw invalid();
@@ -81,6 +84,19 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
     await checkedScope(owner);
     canonicalPermit={owner,encoded:saved.encoded,hash:saved.tx.getTxHash().toString(),receipt};
   }
+  // The native PXE selected this header through normal synchronized rollback.
+  // A later proof must include the predecessor's exact block in its ancestry.
+  async function checkPredecessorAnchor(receipt,owner){
+    if(!owner||!receipt)throw fail();
+    const header=await predecessorAnchor();await checkedScope(owner);
+    const number=Number(header?.globalVariables?.blockNumber),hash=(await header?.hash?.())?.toString();await checkedScope(owner);
+    if(!Number.isSafeInteger(number)||number<receipt.blockNumber||!/^0x[0-9a-f]{64}$/.test(hash))throw fail();
+    const reads=await Promise.allSettled([number,...(number===receipt.blockNumber?[]:[receipt.blockNumber])].map(height=>boundedTransactionRead(()=>node.getBlock(height),waitOptions.readTimeoutMs??20000)));
+    const failed=reads.find(read=>read.status==='rejected');if(failed)throw failed.reason;
+    const block=reads[0].value,predecessor=number===receipt.blockNumber?block:reads[1].value;
+    if(block?.hash?.toString()!==hash||predecessor?.hash?.toString()!==receipt.blockHash.toString())throw fail();
+    await checkedScope(owner);
+  }
   async function assertCanStart(options){try{return await checkedCanStart(options);}catch(error){canonicalPermit=null;throw error;}}
   async function checkedCanStart(options={}) {
     if(!options||typeof options!=='object'||Reflect.ownKeys(options).some(key=>!['fresh','predecessor'].includes(key)))throw invalid();
@@ -106,9 +122,13 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       // operation only, reuse the canonical check unless explicitly refreshed.
       if(canonicalPermit?.hash!==previous.tx.getTxHash().toString()){
         canonicalPermit=null;
-        const receipt=predecessor?await readCanonicalReceipt(node,previous.tx.getTxHash(),waitOptions):await waitForCanonicalReceipt(node,previous.tx,waitOptions);
-        if(!receipt)throw fail();
+        const receipt=predecessor?await readCanonicalReceipt(node,previous.tx.getTxHash(),receiptOptions(previous)):await waitForCanonicalReceipt(node,previous.tx,receiptOptions(previous));
+        if(!receipt||receipt.status==='proposed'&&receipt.executionResult!=='success')throw fail();
         await rememberCanonical(previous,receipt,owner);
+      }
+      if(receiptOptions(previous).confirmationTier==='proposed'){
+        const permit=canonicalPermit;
+        if(!permit?.anchorChecked){await checkPredecessorAnchor(permit?.receipt,owner);if(canonicalPermit!==permit)throw fail();permit.anchorChecked=true;}
       }
       // Only this exact authenticated predecessor, checked canonically in the
       // owning operation, can be acknowledged without another receipt read.
@@ -183,7 +203,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
     previous=authenticated;
     if(applicationNullifier!==undefined&&!containsApplicationNullifier(tx,applicationNullifier))throw invalid();
     let replacements=[];
-    const authorization=replacement,selectedOperation=operation;
+    const authorization=replacement,selectedOperation=operation,selectedTier=operationTier;
     if(authorization) {
       if(authorization.encoded!==previous.encoded||selectedOperation!==previous.value.operation||!selectedOperation)throw fail();
       if(previous.value.applicationNullifier!==undefined && applicationNullifier!==previous.value.applicationNullifier)throw fail();
@@ -191,12 +211,18 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       replacements=[...(previous.value.replacements||[]),{txHash:previous.value.txHash,tx:previous.value.tx}];
       if(replacements.length>8||replacements.some(prior=>prior.txHash===tx.getTxHash().toString()))throw fail();
     }
-    if(operation!==selectedOperation||replacement!==authorization)throw fail();
-    await slot.write(previous,{version:1,txHash:tx.getTxHash().toString(),tx:Buffer.from(tx.toBuffer()).toString('hex'),operation:selectedOperation,...(authorization?.requireMissingAnchor?{replacementPolicy:'missing-anchor'}:{}),...(applicationNullifier!==undefined?{applicationNullifier}:{}),...(replacements.length?{replacements}:{})});
+    if(operation!==selectedOperation||operationTier!==selectedTier||replacement!==authorization)throw fail();
+    await slot.write(previous,{version:1,txHash:tx.getTxHash().toString(),tx:Buffer.from(tx.toBuffer()).toString('hex'),operation:selectedOperation,confirmationTier:selectedTier,...(authorization?.requireMissingAnchor?{replacementPolicy:'missing-anchor'}:{}),...(applicationNullifier!==undefined?{applicationNullifier}:{}),...(replacements.length?{replacements}:{})});
     replacement=null;
   }
 
-  function confirmed(receipt) {acknowledged=receipt.txHash.toString();lastHash=acknowledged;}
+  async function included(receipt){
+    if(confirmationTier!=='proposed'||receipt?.status!=='proposed'||receipt.executionResult!=='success')throw invalid();
+    const owner=ownedScope();await checkedScope(owner);const saved=await read();await checkedScope(owner);
+    if(!owner||saved.value?.confirmationTier!=='proposed'||saved.value.txHash!==receipt.txHash.toString())throw fail();
+    acknowledged=receipt.txHash.toString();lastHash=acknowledged;
+  }
+  function confirmed(receipt) {if(!['checkpointed','proven','finalized'].includes(receipt?.status))throw invalid();acknowledged=receipt.txHash.toString();lastHash=acknowledged;}
   function bindRecovery(saved,binding){
     if(binding&&(!saved.tx||saved.value.operation!==binding.expectedOperation||saved.value.txHash!==binding.expectedTxHash))throw fail();
   }
@@ -258,7 +284,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       const result=await waitForCanonicalReceipt(node,saved.tx,waitOptions);confirmed(result);return result;
   }
   return {
-    assertCanStart,prepare,confirmed,
+    assertCanStart,prepare,confirmed,included,
     async inspect(){
       // Metadata only: no mutable Tx or plaintext record escapes into this permit.
       // Fresh storage and account checks remain mandatory on every reuse.
@@ -282,7 +308,8 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       const permitted=reuse&&owner&&canonicalPermit?.owner===owner&&canonicalPermit.encoded===saved.encoded&&canonicalPermit.hash===saved.tx.getTxHash().toString();
       const cached=permitted?canonicalPermit.receipt:null;
       if(!permitted)canonicalPermit=null;
-      const receipt=cached??await readCanonicalReceipt(node,saved.tx.getTxHash(),waitOptions);
+      let receipt=cached??await readCanonicalReceipt(node,saved.tx.getTxHash(),receiptOptions(saved));
+      if(receipt?.status==='proposed'&&receipt.executionResult!=='success')receipt=null;
       if(!await slot.isCurrent(saved.encoded))throw fail();
       await rememberCanonical(saved,receipt,owner);
       return {operation:saved.value.operation??null,txHash:saved.value.txHash,applicationNullifier:saved.value.applicationNullifier??null,outcome:receipt?.executionResult??'pending',receipt};
@@ -339,7 +366,10 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
       if((await read()).encoded!==saved.encoded)throw fail();
       return true;
     },
-    setOperation(value){if(typeof value!=='string'||!value.length||value.length>16384)throw invalid();operation=value;},
+    setOperation(value,{confirmationTier:minimum='checkpointed'}={}){
+      if(typeof value!=='string'||!value.length||value.length>16384||!['checkpointed','proposed'].includes(minimum)||minimum==='proposed'&&confirmationTier!=='proposed')throw invalid();
+      operation=value;operationTier=minimum;
+    },
     get lastTxHash(){return lastHash;},
     async recover(options){const binding=recoveryOptions(options);return recoverSaved(await read(),binding);},
     async reconcilePrevious(options){

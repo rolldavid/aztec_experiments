@@ -50,3 +50,18 @@ test('synchronous read throws still drain started siblings',async()=>{
  f.options.read=()=>{throw failure;};
  const rejection=assert.rejects(f.run().finally(()=>finished=true),e=>e===failure);await tick();assert.equal(finished,false);held.resolve({currentContractClassId:hex(99)});await rejection;
 });
+
+import {createModeratorPxeOptions} from './rolling-adapter.mjs';
+import {rollingPxeOptions} from '../plugins/operations.mjs';
+for(const [configured,expected]of [[undefined,2],[1,1],[2,2],[4,4],[8,8],[16,16]])test('moderator native prover receives explicit validated thread count '+expected,async()=>{
+ let runtime=0,initialized=0;const native={binaryPath:'/qualified/native',crsPath:'/qualified/crs'},prover={qualified:true};
+ const result=await createModeratorPxeOptions({development:false,...(configured===undefined?{}:{nativeProverThreads:configured})},{rollingPxeOptions,backend:'native',prepareNativeRuntime:async options=>{runtime++;assert.deepEqual(options,{});return native;},initializeHostedNativeProver:async options=>{initialized++;assert.deepEqual(options,{backend:'native',...native,threads:expected});return prover;}});
+ assert.equal(runtime,1);assert.equal(initialized,1);assert.equal(result.proverEnabled,true);assert.equal(result.proverOrOptions,prover);
+});
+for(const value of [0,-1,17,1.5,'2',null,NaN,Infinity])test('moderator invalid thread option fails before native setup: '+String(value),async()=>{
+ await assert.rejects(createModeratorPxeOptions({development:false,nativeProverThreads:value},{rollingPxeOptions:()=>assert.fail('No PXE setup'),prepareNativeRuntime:()=>assert.fail('No native setup'),initializeHostedNativeProver:()=>assert.fail('No native setup')}),/nativeProverThreads/);
+});
+test('moderator development proving stays disabled and never initializes native runtime',async()=>{
+ const result=await createModeratorPxeOptions({development:true,nativeProverThreads:2},{rollingPxeOptions,prepareNativeRuntime:()=>assert.fail('Native runtime disabled'),initializeHostedNativeProver:()=>assert.fail('Native prover disabled')});
+ assert.equal(result.proverEnabled,false);assert.equal(result.proverOrOptions,undefined);
+});

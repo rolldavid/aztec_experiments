@@ -239,7 +239,7 @@ test('funding close joins disconnected owned requests before closing its signer 
  await ready;controller.abort();const closing=server.close();await new Promise(r=>setTimeout(r,10));assert.equal(closed,false);release();await request;await closing;assert.equal(closed,true);
 });
 
-test('Bok HTTP acquisition is uniform limit/cursor only and distinguishes unsupported configuration',async t=>{
+test('Bok HTTP acquisition excludes private filters and distinguishes unsupported configuration',async t=>{
  const f=await fixture(t);let pageCalls=0;f.index.query=(view,params)=>{pageCalls++;assert.equal(view,'bok-accounting');return {schemaVersion:1,requests:[],complete:true,revision:'fixed',nextCursor:null};};
  const a=await (await f.get('/api/bok-accounting?limit=2')).json(),b=await (await f.get('/api/bok-accounting?limit=2')).json();assert.deepEqual(a,b);assert.equal(pageCalls,2);
  for(const route of ['?owner=private','?requestId=9','?ids=1,2','?account=private','?cursor=aa&cursor=bb','?limit=101'])assert.equal((await f.get('/api/bok-accounting'+route)).status,400);
@@ -445,4 +445,14 @@ for(const mismatch of ['revision','scope','checkpoint','state'])test('changed '+
 test('published reuse retains index ownership checks and refuses a stale storage generation',async t=>{
  const f=await publicationFixture(t);f.index.query=()=>{throw Object.assign(Error('changed'),{code:'PUBLIC_FEED_CONFLICT'});};
  assert.equal((await f.read()).status,400);assert.equal(f.counts.sync,1);
+});
+
+test('Bok HTTP accepts only paired public snapshot height/hash and preserves exact query binding',async t=>{
+ const f=await fixture(t),seen=[];f.index.query=(view,params)=>{seen.push({view,params});return {schemaVersion:1,requests:[],complete:true,nextCursor:null};};
+ const hash='0x'+'ab'.repeat(32);
+ assert.equal((await f.get('/api/bok-accounting?limit=50&blockNumber=42&blockHash='+hash)).status,200);
+ assert.deepEqual(seen,[{view:'bok-accounting',params:{limit:50,blockNumber:42,blockHash:hash}}]);
+ for(const route of ['?blockNumber=42','?blockHash='+hash,'?blockNumber=0&blockHash='+hash,'?blockNumber=01&blockHash='+hash,'?blockNumber=9007199254740992&blockHash='+hash,'?blockNumber=42&blockHash='+hash.toUpperCase(),'?blockNumber=42&blockNumber=43&blockHash='+hash,'?blockNumber=42&blockHash='+hash+'&owner=private'])assert.equal((await f.get('/api/bok-accounting'+route)).status,400);
+ assert.equal(seen.length,1);
+ assert.equal((await f.get('/api/feed?blockNumber=42&blockHash='+hash)).status,400);
 });

@@ -1,7 +1,7 @@
 import http from 'node:http';
 import {normalizeHomeSubboards} from '../shared/rolling/public-projection.mjs';
 import {pathToFileURL} from 'node:url';
-const routes={'bok-accounting':['limit','cursor'],status:[],home:['limit','cursor'],feed:['limit','cursor'],board:['id','limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
+const routes={'bok-accounting':['limit','cursor','blockNumber','blockHash'],status:[],home:['limit','cursor'],feed:['limit','cursor'],board:['id','limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
 const field=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(v);
 const headers={'Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff','Cache-Control':'no-store',
   'Content-Security-Policy':"default-src 'none'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'};
@@ -107,6 +107,10 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
         if(!allowed.includes(key)||Object.hasOwn(params,key))return reply(400,{schemaVersion:1,error:'invalid-request'});params[key]=value;
       }
       if(params.limit!==undefined){if(!/^[1-9][0-9]{0,2}$/.test(params.limit)||Number(params.limit)>100)return reply(400,{schemaVersion:1,error:'invalid-request'});params.limit=Number(params.limit);}
+      if(view==='bok-accounting'&&(Object.hasOwn(params,'blockNumber')||Object.hasOwn(params,'blockHash'))){
+        if(!/^[1-9][0-9]{0,15}$/.test(params.blockNumber??'')||!Number.isSafeInteger(Number(params.blockNumber))||!/^0x[0-9a-f]{64}$/.test(params.blockHash??''))return reply(400,{schemaVersion:1,error:'invalid-request'});
+        params.blockNumber=Number(params.blockNumber);
+      }
       if(params.cursor!==undefined&&(params.cursor.length>(view==='board'?200:120)||!/^[-0-9a-f:]+$/.test(params.cursor)))return reply(400,{schemaVersion:1,error:'invalid-request'});
       if(params.query!==undefined&&(params.query.length>120||params.query.includes('\0')))return reply(400,{schemaVersion:1,error:'invalid-request'});
       const idKey={board:'id',thread:'root',profile:'nameId',post:'id'}[view];if(idKey&&!field(params[idKey]))return reply(400,{schemaVersion:1,error:'invalid-request'});
