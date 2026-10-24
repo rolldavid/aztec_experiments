@@ -32,7 +32,7 @@ async function fixture(changes=[changed(2),changed(40,3,'8')],height=64){
   getContract:(_,ref)=>run('class',()=>{assert(BlockHash.isBlockHash(ref.hash));return{address:board,currentContractClassId:classId,originalContractClassId:classId};})};
  const pxe={sync:()=>run('sync',()=>{}),getSyncedBlockHeader:()=>run('header',getHeader),
   getPrivateEvents:(selector,filter)=>run('events',()=>{
-   state.lastFilter=filter;assert.equal(filter.contractAddress.toString(),board.toString());assert.deepEqual(filter.scopes.map(x=>x.toString()),[owner.toString()]);
+   state.lastFilter=filter;if(state.rangeLimit&&filter.toBlock-filter.fromBlock>state.rangeLimit)throw Error('PXE_PRIVATE_EVENT_QUERY_LIMIT');assert.equal(filter.contractAddress.toString(),board.toString());assert.deepEqual(filter.scopes.map(x=>x.toString()),[owner.toString()]);
    assert.equal(selector.toString(),state.selector.toString());assert(filter.toBlock<=state.height+1);
    return state.rows.filter(row=>row.l2BlockNumber>=filter.fromBlock&&row.l2BlockNumber<filter.toBlock);
   })};
@@ -59,7 +59,7 @@ async function fixture(changes=[changed(2),changed(40,3,'8')],height=64){
  return {input,state,values,calls,replace,slot,reader:createRollingPreferenceReader(input),restart:()=>createRollingPreferenceReader(input),blockHash};
 }
 test('two bounded steps and actual encrypted prefix restart equal the expected complete result',async()=>{
- const f=await fixture();const first=await f.reader.read();assert.equal(first.status,'recovering');assert.equal(first.complete,false);assert(!('preferences'in first));
+ const f=await fixture();f.state.rangeLimit=32;const first=await f.reader.read();assert.equal(first.status,'recovering');assert.equal(first.complete,false);assert(!('preferences'in first));
  assert.equal(first.progress.scannedThrough,32);assert.equal(first.progress.processedRevision,'1');
  assert.equal(f.state.lastFilter.fromBlock,1); // validation-time deployment checkpoint55 is NOT creation.
  const ciphertext=[...f.values.values()][0];assert(!ciphertext.includes('bookmarks'));assert(!ciphertext.includes(f.input.owner.toString()));
@@ -135,8 +135,7 @@ test('deadline expiry after a pending operation waits for settlement and never c
 test('read marker validation resumes across steps and orphaned hashes cannot suppress notifications',async()=>{
  const changes=Array.from({length:34},(_,i)=>changed(40,6,String(i+1),true,i+1,String(i+101)));
  changes[0].read_hash='999';const f=await fixture(changes,40);
- assert.equal((await f.reader.read()).status,'recovering');
- const validation=await f.restart().read();assert.equal(validation.status,'recovering');assert.equal(validation.progress.markersChecked,32);assert(!('preferences'in validation));
+ const validation=await f.reader.read();assert.equal(validation.status,'recovering');assert.equal(validation.progress.markersChecked,32);assert(!('preferences'in validation));
  const result=await f.restart().read();assert.equal(result.status,'complete');assert.equal(result.preferences.readMarkers.length,33);assert.equal(result.orphanedReadMarkers.length,1);
  assert.equal(result.orphanedReadMarkers[0].thread,'1');
 });
@@ -162,11 +161,11 @@ test('canonical change during CAS suppresses publication; retained ciphertext is
  f.state.hook=null;const result=await f.restart().read();assert.equal(result.status,'complete');assert.equal(result.progress.epoch,1);
 });
 test('failed tail verification preserves the prior authenticated checkpoint',async()=>{
- const f=await fixture();await f.reader.read();const saved=[...f.values.values()][0];f.state.rows.pop();
+ const f=await fixture();f.state.rangeLimit=32;await f.reader.read();const saved=[...f.values.values()][0];f.state.rows.pop();
  await invalid(f.restart().read());assert.equal([...f.values.values()][0],saved);
 });
 test('unknown checkpoint block does not get classified as a canonical reorg or silently reset',async()=>{
- const f=await fixture();await f.reader.read();const saved=[...f.values.values()][0],original=f.input.node.getBlockData;
+ const f=await fixture();f.state.rangeLimit=32;await f.reader.read();const saved=[...f.values.values()][0],original=f.input.node.getBlockData;
  f.input.node.getBlockData=height=>height===32?Promise.resolve(undefined):original(height);
  await invalid(f.restart().read());assert.equal([...f.values.values()][0],saved);
 });
@@ -209,4 +208,26 @@ test('native class lookup retains the exact SDK BlockHash while RPC parsing and 
  const cache=(await (await f.slot()).read()).value;
  assert.deepEqual(cache.checkpoint,{blockNumber:4,blockHash:typed.toString()});
  assert.equal(typeof cache.checkpoint.blockHash,'string');
+});
+
+test('cold sparse 3500-block history uses actual native indexed store once and preserves exact fold',async t=>{
+ const {AztecLmdbStore}=await import('@aztec-labs/kv-store/lmdb');
+ const {PrivateEventStore}=await import(new URL('../storage/private_event_store/private_event_store.js',import.meta.resolve('@aztec-labs/pxe/simulator')));
+ const {mkdtemp,rm}=await import('node:fs/promises');const dir=await mkdtemp('/private/tmp/preference-native-sparse-');
+ const quiet={debug(){},verbose(){},info(){},warn(){},error(){}};const db=AztecLmdbStore.open(dir,64*1024,true,quiet),events=new PrivateEventStore(db);events.logger=quiet;t.after(async()=>{await db.delete();await rm(dir,{recursive:true,force:true});});
+ const f=await fixture([changed(3499)],3500);events.beginChangeSet('seed');
+ for(const [i,row]of f.state.rows.entries())await events.storePrivateEventLog(row.eventSelector,new Fr(i+1),row.packedEvent,new Fr(i+10),{contractAddress:f.input.deployment.board.address,scope:f.input.owner,txHash:row.txHash,l2BlockNumber:row.l2BlockNumber,l2BlockHash:row.l2BlockHash,txIndexInBlock:0,eventIndexInTx:i},'seed');
+ await db.transactionAsync(()=>events.commitChangeSet('seed'));events.beginChangeSet('read');let queries=0;
+ f.input.pxe.getPrivateEvents=(selector,filter)=>{queries++;assert.equal(filter.fromBlock,1);assert.equal(filter.toBlock,3501);return events.getPrivateEvents(selector,filter,'read');};
+ const result=await f.restart().read();assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,['2']);assert.equal(result.preferences.head.revision,'1');assert.equal(queries,1);assert.equal(f.calls.filter(x=>x==='sync').length,1);assert.equal(f.calls.filter(x=>x==='inspect').length,3);assert.equal(f.calls.filter(x=>x==='CAS').length,1);
+});
+test('event capacity splitting stays within one synchronization and commits only its validated prefix',async()=>{
+ const f=await fixture([changed(2),changed(40,3,'8')],3500);f.state.rangeLimit=32;
+ const result=await f.reader.read();assert.equal(result.status,'recovering');assert.equal(result.progress.processedRevision,'1');assert(result.progress.scannedThrough<=32);assert.equal(f.calls.filter(x=>x==='sync').length,1);assert.equal(f.calls.filter(x=>x==='inspect').length,3);assert(f.calls.filter(x=>x==='events').length<=8);assert.equal(f.calls.filter(x=>x==='CAS').length,1);
+});
+
+test('more than512 valid events split without losing revisions and resume at the exact prefix',async()=>{
+ const f=await fixture(Array.from({length:513},(_,i)=>changed(i+1,1,'2',i%2===0)),513);
+ const first=await f.reader.read();assert.equal(first.status,'recovering');assert.equal(first.progress.processedRevision,'256');assert.equal(first.progress.scannedThrough,256);assert.equal(f.calls.filter(x=>x==='sync').length,1);
+ const second=await f.restart().read();assert.equal(second.status,'complete');assert.equal(second.preferences.head.revision,'513');assert.deepEqual(second.preferences.bookmarks,['2']);assert.equal(f.state.lastFilter.fromBlock,257);
 });

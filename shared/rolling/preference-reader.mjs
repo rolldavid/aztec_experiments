@@ -3,7 +3,7 @@ import {createPreferenceFold,resumePreferenceFold} from './preferences.mjs';
 import {createPreferenceEventDecoder} from './preference-events.mjs';
 import {FIELD_MODULUS} from './invocation.mjs';
 
-export const PREFERENCE_READER_LIMITS=Object.freeze({blocks:32,rows:512,decodedBytes:512*1024,markerBlocks:32,markers:512});
+export const PREFERENCE_READER_LIMITS=Object.freeze({rows:512,decodedBytes:512*1024,markerBlocks:32,markers:512});
 const DOMAIN='ROLLING_PREFERENCES_V1';
 const encoder=new TextEncoder();
 const error=code=>Object.assign(Error('Private preferences are unavailable. Preserve recovery data and try an explicit read after the connection is restored.'),{code});
@@ -25,7 +25,9 @@ function dense(input,max=Infinity){assert(Array.isArray(input));const length=Obj
  * signer, service, queue or financial action. Captured SDK/artifact/deployment
  * capabilities come from the authenticated app/session, never UI input.
  *
- * A step scans <=32 blocks/512 returned events/512KiB decoded records. Marker
+ * A step reads the native indexed event range, capped at 512 events/512KiB.
+ * Empty block ranges cost no per-block work. Capacity failures split only the
+ * local query range; native synchronization/ownership stays one per step. Marker
  * validation continues in <=32 distinct headers/512 markers per step. These are
  * reversible work defaults, NOT total preference caps. Snapshot/ciphertext work
  * is O(current preferences), limited by existing encrypted-slot storage capacity.
@@ -134,8 +136,16 @@ export function createRollingPreferenceReader(input){
     if(markers)assert(markers.nextIndex<=before.readMarkers.length);
     let scannedThrough=fromBlock-1,checkpoint=cache?.checkpoint;
     if(fromBlock<=anchor.blockNumber){
-     const toBlock=Math.min(fromBlock+PREFERENCE_READER_LIMITS.blocks,anchor.blockNumber+1);
-     const rows=await checked(()=>getEvents(decoder.selector,{contractAddress:address,scopes:[recipient],fromBlock,toBlock}));
+     let toBlock=anchor.blockNumber+1,rows;
+     // The native event store indexes existing records by block and enforces its
+     // own row/byte limits. Do not turn empty history into per-block RPC pages.
+     for(;;){
+      let capacity=false;
+      try{rows=await checked(()=>getEvents(decoder.selector,{contractAddress:address,scopes:[recipient],fromBlock,toBlock}));}
+      catch(error){if(error?.message!=='PXE_PRIVATE_EVENT_QUERY_LIMIT')throw error;capacity=true;}
+      if(!capacity){assert(Array.isArray(rows));if(rows.length<=PREFERENCE_READER_LIMITS.rows)break;}
+      assert(toBlock-fromBlock>1);toBlock=fromBlock+Math.floor((toBlock-fromBlock)/2);
+     }
      const decoded=dense(rows,PREFERENCE_READER_LIMITS.rows).map(row=>decoder.decode(row,{fromBlock,toBlock}));
      assert(encoder.encode(JSON.stringify(decoded)).byteLength<=PREFERENCE_READER_LIMITS.decodedBytes);
      const blockHashes=new Map();let previousBlock=fromBlock;
