@@ -2138,3 +2138,11 @@ test('a rewritten encrypted intent does not inherit its previous fee preparation
  const saved=await slot.read();await slot.write(saved,saved.value);
  await app.submitPrepared(intent.intentId);assert.equal(payments,2);assert.equal(f.state.sends,1);
 });
+
+test('prefetched public readiness is reused by the same flow without private work and expires with its owner',async()=>{
+ const f=fixture();let scope={},checks=0;f.options.accountSession.operationScope=()=>scope;
+ const inspect=f.options.sdk.inspectTrustedNode;f.options.sdk.inspectTrustedNode=async(...args)=>{checks++;return inspect(...args);};f.app=f.restart();
+ const reads=f.state.privateReads.length;await f.app.prefetchContext();assert.equal(f.state.privateReads.length,reads);assert.equal(checks,1);
+ await f.app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'One prefetched flow'},{immediate:true});assert.equal(checks,1);
+ scope={};await f.app.prefetchContext();assert.equal(checks,2);
+});

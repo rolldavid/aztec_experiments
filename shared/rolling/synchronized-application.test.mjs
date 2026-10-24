@@ -89,3 +89,20 @@ test('public moderator identity does not synchronize private state',async()=>{
  const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{guards++;},synchronize:()=>assert.fail('public identity has no private anchor')});
  assert.deepEqual(await app.readModeratorStatus(),{authorized:true});assert.equal(guards,2);
 });
+
+for(const failure of [null,'sync','context'])test(`parallel readiness and synchronization ${failure??'succeed'} drain before private application`,async()=>{
+ const scope={},gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),error=Error('Exact failure');let started=0,calls=0,settled=false;
+ const work=index=>async()=>{if(++started===2)entered.resolve();await gates[index].promise;if((failure==='sync'?0:failure==='context'?1:-1)===index)throw error;};
+ const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>{calls++;return 'ready';}])),contextGuard:()=>{},operationScope:()=>scope,synchronize:work(0),prepareContext:work(1)});
+ const result=app.prepare({type:'post'}).finally(()=>{settled=true;});const observed=failure?assert.rejects(result,e=>e===error):result;
+ await entered.promise;assert.equal(started,2);assert.equal(calls,0);
+ gates[failure==='context'?1:0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert.equal(scope.synchronized,undefined);
+ gates[0].resolve();gates[1].resolve();await observed;assert.equal(calls,failure?0:1);assert.equal(scope.synchronized,failure?undefined:true);
+});
+test('prefetched readiness is scoped to the held operation and replacement ownership rejects before application',async()=>{
+ let scope={},contexts=0,syncs=0,calls=0;const gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ const raw=Object.fromEntries(names.map(name=>[name,()=>{calls++;}]));
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},operationScope:()=>scope,synchronize:async()=>{syncs++;},prepareContext:async()=>{contexts++;if(contexts===2){entered.resolve();await gate.promise;}}});
+ await app.prepare({type:'post'});await app.prepare({type:'post'});assert.equal(contexts,1);assert.equal(syncs,1);
+ scope={};const pending=app.prepare({type:'post'});await entered.promise;scope={};gate.resolve();await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(calls,2);assert.equal(scope.synchronized,undefined);
+});

@@ -28,8 +28,8 @@ function balanceArguments(args){
   return [{cursor:d.value}];
  }catch{throw Object.assign(Error('Invalid Rolling balance cursor'),{code:'ROLLING_BALANCE_CURSOR_INVALID'});}
 }
-export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null}){
- if(typeof synchronize!=='function'||typeof contextGuard!=='function')throw Error('Rolling synchronization unavailable');
+export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null,prepareContext}){
+ if(typeof synchronize!=='function'||typeof contextGuard!=='function'||prepareContext!==undefined&&typeof prepareContext!=='function')throw Error('Rolling synchronization unavailable');
  const calls=methods.map(name=>{
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
@@ -39,7 +39,13 @@ export function createSynchronizedRollingApplication({application,synchronize,co
    const scope=operationScope();
    // Moderator identity is public storage; it needs no private-state sync.
    if(name!=='readModeratorStatus'&&(!scope||!scope.synchronized)){
-    await synchronize();if(scope)scope.synchronized=true;
+    // The native sync and public readiness reads are independent. Neither
+    // failure may release the account lease while its sibling is still running.
+    const reads=[synchronize];if(scope&&prepareContext)reads.push(prepareContext);
+    const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));
+    const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+    if(scope&&operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
+    if(scope)scope.synchronized=true;
    }
    await contextGuard();const result=await call(...captured);
    if(scope&&['submitPrepared','resumeSaved'].includes(name)&&['confirmed','authorized','reverted','bok-post-reverted','bok-release-reverted'].includes(result?.status))scope.synchronized=false;

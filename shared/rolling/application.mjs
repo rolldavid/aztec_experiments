@@ -779,6 +779,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function refundComplete(record){return !!verifyWithdrawal&&await verifyWithdrawal(clone(summary(record)))===true;}
   return Object.freeze({
+    // Only public readiness reads run here. The session can overlap them with
+    // native PXE synchronization under the same held account-operation scope.
+    prefetchContext:guard,
     async readWithdrawal(){return exclusive(async()=>{await guard();const saved=await (await slot()).read();
       if(!['withdraw','withdraw-bok','cancel-deposit'].includes(saved.value?.action?.type)||!saved.value.withdrawal)return null;
       if(['prepared','cancelled'].includes(saved.value.status))return summary(saved.value);

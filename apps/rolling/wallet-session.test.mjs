@@ -1191,3 +1191,14 @@ test('wallet progress binding forwards included intent without extra private wor
   assert.deepEqual([f.state.sends,f.state.syncs,f.state.registrations],before);
  }finally{await session.close();}
 });
+
+test('ordinary action starts public readiness while private synchronization remains held',async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),seen=Promise.withResolvers();let active=false,reads=0;
+ const inspect=f.input.sdk.inspectTrustedNode;f.input.sdk.inspectTrustedNode=async(...args)=>{if(active){assert(f.state.active);reads++;seen.resolve();}return inspect(...args);};
+ const session=await createRollingWalletSession(f.input);try{
+  active=true;f.state.waitSync=gate.promise;let completed=false;
+  const preparing=session.application.prepare({type:'name',first:'Fresh',last:'Willow'}).then(value=>{completed=true;return value;});
+  await seen.promise;assert.equal(completed,false);assert.equal(f.state.active,true);assert.equal(f.state.sends,0);
+  gate.resolve();const prepared=await preparing;assert.equal(prepared.status,'prepared');assert.equal(reads,1);
+ }finally{gate.resolve();await session.close();}
+});
