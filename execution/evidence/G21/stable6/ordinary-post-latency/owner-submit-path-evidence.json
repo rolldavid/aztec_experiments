@@ -1,0 +1,98 @@
+{
+  "timing": {
+    "commandId": "7cdbc7a1-25d8-44e1-bf30-ab05fe6bea98",
+    "status": "Success",
+    "numericEvidence": [
+      {
+        "localNodeTimingConfig": {
+          "maxBlocksPerCheckpoint": 10,
+          "minTxsPerBlock": 1,
+          "minBlockDuration": 2,
+          "blockDurationMs": 6000,
+          "checkpointProposalSyncGraceSeconds": 12,
+          "buildCheckpointIfEmpty": true,
+          "archiverPollingIntervalMS": 500,
+          "maxPendingTxCount": 1000,
+          "skipIncomingProposals": false
+        },
+        "errorCode": null
+      },
+      {
+        "explicitPublicTimingOverrides": {}
+      }
+    ]
+  },
+  "role": {
+    "commandId": "17c0a41c-7a20-4fb3-aa7f-50d02980c324",
+    "status": "Success",
+    "numericEvidence": [
+      {
+        "nodeFlag": true,
+        "sequencerFlag": false,
+        "logDriver": "none",
+        "telemetryExporterConfigured": false
+      },
+      {
+        "mountedNetworkTiming": {}
+      },
+      {
+        "deployedNativeDefault": "minTxPoolAgeMs",
+        "value": "2_000"
+      },
+      {
+        "deployedNativeDefault": "gossipsubInterval",
+        "value": "700"
+      },
+      {
+        "deployedNativeDefault": "gossipsubFloodPublish",
+        "value": "false"
+      }
+    ]
+  },
+  "peers": {
+    "commandId": "3ce7dcee-5691-4349-b485-f844f43d06ea",
+    "status": "Success",
+    "numericEvidence": [
+      {
+        "observedAt": "2026-10-24T21:26:01.220883+00:00",
+        "peerCount": 12,
+        "statuses": {
+          "connected": 12
+        },
+        "errorCode": null
+      }
+    ]
+  },
+  "sourceFindings": [
+    {
+      "path": "node_modules/@aztec-labs/aztec-node/dest/aztec-node/server.js:758",
+      "finding": "Connectivity and authoritative isValidTx precede pool admission. Full measured browser submission519.95ms includes this."
+    },
+    {
+      "path": "node_modules/@aztec-labs/p2p/dest/client/p2p_client.js:784",
+      "finding": "Pool addPendingTxs is awaited; then propagate begins."
+    },
+    {
+      "path": "node_modules/@aztec-labs/p2p/dest/services/libp2p/libp2p_service.js:1888",
+      "finding": "propagate starts sendToPeers immediately and does not await its completion. No sleep or batch timer."
+    },
+    {
+      "path": "node_modules/@chainsafe/libp2p-gossipsub/dist/src/index.js:1561",
+      "finding": "publish encodes/hashes then pushes to selected peer streams; heartbeat is not a mandatory publication delay."
+    },
+    {
+      "path": "node_modules/@aztec-labs/p2p/dest/mem_pools/tx_pool_v2/tx_pool_v2_impl.js:800",
+      "finding": "Producer eligibility uses receivedAt<=now-minTxPoolAgeMs. This is not a relay delay."
+    },
+    {
+      "path": "node_modules/@aztec-labs/aztec/dest/cli/cmds/start_node.js:77",
+      "finding": "No sequencer option disables validator; local6sblock configuration cannot be asserted for external producers."
+    }
+  ],
+  "limitations": [
+    "No service settings changed.",
+    "Public producer configuration and individual gossip completion timestamp remain unmeasured.",
+    "Local native minimum age2000ms is a deployed default, not verified external-producer override.",
+    "Current12connected peers are a later snapshot, not per-publication recipient count."
+  ]
+}

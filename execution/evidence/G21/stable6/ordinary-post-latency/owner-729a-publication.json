@@ -1,0 +1,82 @@
+{
+  "activation": {
+    "commit": "729a7fb14d0b5ef87a830e4dbff01f7957bf4e5c",
+    "appPid": 1534,
+    "runningSource": "/opt/rolling-app/releases/ui-7a3ad91ffc14",
+    "nextSource": "/opt/rolling-app/releases/ui-729a7fb14d0b",
+    "ui": "/opt/rolling-ui/releases/729a7fb14d0b5ef87a830e4dbff01f7957bf4e5c",
+    "previousUi": "/opt/rolling-ui/releases/fdf3a0adf4e0c8ef5af3341d1736fffc865a0507",
+    "protectedPids": {
+      "rolling-application.service": 1534,
+      "rolling-application-proxy.service": 803,
+      "rolling-node.service": 1522,
+      "rolling-query.service": 1524,
+      "rolling-moderator.service": 2088
+    },
+    "caddySha256": "d1bf263bf2245f9350c78a3dd738eaedd375f859e062c5d2e879e28f877e016e",
+    "notifySha256": "aa8f21c2b5ff13c58983a4b1cbf6482cfb303db74566198102f8b051d46a53ae"
+  },
+  "services": {
+    "rolling-application": "MainPID=1534\nActiveState=active",
+    "rolling-application-proxy": "MainPID=803\nActiveState=active",
+    "rolling-node": "MainPID=1522\nActiveState=active",
+    "rolling-query": "MainPID=1524\nActiveState=active",
+    "rolling-moderator": "MainPID=2088\nActiveState=active",
+    "board-prover": "MainPID=738\nActiveState=active",
+    "board-prover-proxy": "MainPID=739\nActiveState=active"
+  },
+  "sdk": {
+    "file": ".build/sdk/aztec_browser.js",
+    "bytes": 16596144,
+    "sha256": "99e7225eee6b9e76d47cecf6cb9cd30867f7ca407bf469e3a20fa08815559e00"
+  },
+  "payloadCleanup": {
+    "commit": "729a7fb14d0b5ef87a830e4dbff01f7957bf4e5c",
+    "filesRemoved": 7,
+    "archiveRemoved": true
+  },
+  "availableBytes": 4040900608,
+  "realProofs": "real",
+  "publicScripts": [
+    {
+      "url": "/wallet/ethers.js",
+      "bytes": 526551,
+      "sha256": "532950515fd29ae9f7a21ceb2b68100815024d7944c3d5a92246d5b900bd703b"
+    },
+    {
+      "url": "/wallet/aztec_bundle.js",
+      "bytes": 16596144,
+      "sha256": "99e7225eee6b9e76d47cecf6cb9cd30867f7ca407bf469e3a20fa08815559e00"
+    },
+    {
+      "url": "/wallet/crs-client.js",
+      "bytes": 8944,
+      "sha256": "636ea244e87b31e1eae97d1c2e78e8fa3faf91287280c3253d3bddbf90fdd503"
+    },
+    {
+      "url": "/wallet/wallet-providers.js",
+      "bytes": 1648,
+      "sha256": "2eec218af244c5942ac16f0375e2991f1f8c67294d705d4a56da2efe508d9d0c"
+    },
+    {
+      "url": "/wallet/claim-secret-store.js",
+      "bytes": 7525,
+      "sha256": "34cf9515e93a3051a4694df3c0e18cef690f04d885dcc09cd79510b86a7adb2e"
+    },
+    {
+      "url": "/wallet/ethereum-account-session.js",
+      "bytes": 9979,
+      "sha256": "5fa0ad446a3073ff210a048250738b7e5cd0123d80c5166d8ed5b16c3414a14b"
+    },
+    {
+      "url": "/wallet/account.js",
+      "bytes": 17338,
+      "sha256": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2"
+    },
+    {
+      "url": "/wallet/engine.js",
+      "bytes": 135793,
+      "sha256": "b3817d447b8f74b9a3d4dbcb57e2e28c6f4ef617bacdb4daca4518481f156b89"
+    }
+  ]
+}

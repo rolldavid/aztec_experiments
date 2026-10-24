@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "postId": "1669756786412481627268707303897574592349609583697923764642530772018218117271",
+  "txHash": "0x10667ad3351c46bee2e664511e9a9982b2d57388c290a5326bb799f0a4956f07",
+  "blockNumber": 3043,
+  "blockHash": "0x0c6b9a12480472773a00287aec880f0d60dbadbfe630d0fab97e4905a7996120",
+  "timeline": {
+    "click": "2026-10-24T21:15:13.439+00:00",
+    "submitStart": "2026-10-24T21:15:22.052+00:00",
+    "submitAck": "2026-10-24T21:15:22.572+00:00",
+    "browserProposedReceipt": "2026-10-24T21:15:37.709+00:00",
+    "dom": "2026-10-24T21:15:38.092+00:00",
+    "unobstructedFrame": "2026-10-24T21:15:38.092+00:00"
+  },
+  "durationsMs": {
+    "clickToAck": 9133.045,
+    "ackToBrowserProposed": 15137.66,
+    "proposedToDom": 382.26,
+    "clickToUnobstructed": 24653.55
+  },
+  "observer": {
+    "commandId": "c113d145-4e04-4db3-aba4-059e6cf096d7",
+    "pollIntervalMs": 1000,
+    "requests": 270,
+    "errors": 0,
+    "transitions": [
+      {
+        "source": "public",
+        "block": 3042,
+        "firstObservedUtc": "2026-10-24T21:15:19.322+00:00",
+        "requestStartUtc": "2026-10-24T21:15:19.151+00:00",
+        "previousPollStartUtc": "2026-10-24T21:15:18.151+00:00",
+        "previousPollEndUtc": "2026-10-24T21:15:18.321+00:00",
+        "firstObservedRelativeToAckMs": -3249.289
+      },
+      {
+        "source": "feed",
+        "block": 3042,
+        "firstObservedUtc": "2026-10-24T21:15:20.160+00:00",
+        "requestStartUtc": "2026-10-24T21:15:20.151+00:00",
+        "previousPollStartUtc": "2026-10-24T21:15:19.151+00:00",
+        "previousPollEndUtc": "2026-10-24T21:15:19.160+00:00",
+        "firstObservedRelativeToAckMs": -2411.799
+      },
+      {
+        "source": "local",
+        "block": 3042,
+        "firstObservedUtc": "2026-10-24T21:15:20.161+00:00",
+        "requestStartUtc": "2026-10-24T21:15:20.150+00:00",
+        "previousPollStartUtc": "2026-10-24T21:15:19.150+00:00",
+        "previousPollEndUtc": "2026-10-24T21:15:19.161+00:00",
+        "firstObservedRelativeToAckMs": -2410.705
+      },
+      {
+        "source": "local",
+        "block": 3043,
+        "firstObservedUtc": "2026-10-24T21:15:37.158+00:00",
+        "requestStartUtc": "2026-10-24T21:15:37.150+00:00",
+        "previousPollStartUtc": "2026-10-24T21:15:36.150+00:00",
+        "previousPollEndUtc": "2026-10-24T21:15:36.158+00:00",
+        "firstObservedRelativeToAckMs": 14586.107
+      },
+      {
+        "source": "public",
+        "block": 3043,
+        "firstObservedUtc": "2026-10-24T21:15:37.431+00:00",
+        "requestStartUtc": "2026-10-24T21:15:37.151+00:00",
+        "previousPollStartUtc": "2026-10-24T21:15:36.151+00:00",
+        "previousPollEndUtc": "2026-10-24T21:15:36.309+00:00",
+        "firstObservedRelativeToAckMs": 14859.053
+      },
+      {
+        "source": "feed",
+        "block": 3043,
+        "firstObservedUtc": "2026-10-24T21:15:38.158+00:00",
+        "requestStartUtc": "2026-10-24T21:15:38.150+00:00",
+        "previousPollStartUtc": "2026-10-24T21:15:37.150+00:00",
+        "previousPollEndUtc": "2026-10-24T21:15:37.158+00:00",
+        "firstObservedRelativeToAckMs": 15585.881
+      }
+    ]
+  },
+  "conclusions": [
+    "Both independent nodes first observed3043 in the same1-second polling interval; local response preceded public response by273ms.",
+    "3042 already existed on the public node before transaction submission began.",
+    "No checkpoint wait:3043 was displayed while checkpoint remained3041.",
+    "Request intervals bound observation; firstObservedUtc is not a sequencer production timestamp.",
+    "The15.138s receipt wait is predominantly upstream block availability; local feed/rendering adds382ms after browser proposed receipt."
+  ],
+  "headerContext": [
+    {
+      "block": 3041,
+      "checkpoint": 2782,
+      "indexWithinCheckpoint": 0,
+      "slot": 2892,
+      "headerTimestamp": "1792876476"
+    },
+    {
+      "block": 3042,
+      "checkpoint": 2783,
+      "indexWithinCheckpoint": 0,
+      "slot": 2893,
+      "headerTimestamp": "1792876548"
+    },
+    {
+      "block": 3043,
+      "checkpoint": 2784,
+      "indexWithinCheckpoint": 0,
+      "slot": 2894,
+      "headerTimestamp": "1792876620"
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+[
+  {
+    "at": 41293.261962890625,
+    "methods": [
+      "aztec_getNodeInfo",
+      "aztec_getCurrentMinFees",
+      "aztec_getContract"
+    ]
+  },
+  {
+    "at": 41293.77880859375,
+    "methods": [
+      "aztec_getNodeInfo",
+      "aztec_getChainTips",
+      "aztec_getWorldStateSyncStatus",
+      "aztec_getSyncedL1Timestamp"
+    ]
+  },
+  {
+    "at": 41324.19091796875,
+    "methods": [
+      "aztec_getChainTips"
+    ]
+  },
+  {
+    "at": 41353.282958984375,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 41537.282958984375,
+    "methods": [
+      "aztec_getBlockData"
+    ]
+  },
+  {
+    "at": 41568.212890625,
+    "methods": [
+      "aztec_getPublicStorageAt"
+    ]
+  },
+  {
+    "at": 41569.346923828125,
+    "methods": [
+      "aztec_getChainTips",
+      "aztec_getBlock"
+    ]
+  },
+  {
+    "at": 41600.806884765625,
+    "methods": [
+      "aztec_getBlock"
+    ]
+  },
+  {
+    "at": 41915.14404296875,
+    "methods": [
+      "aztec_getPublicDataWitness",
+      "aztec_getPublicDataWitness",
+      "aztec_getPublicDataWitness",
+      "aztec_getPublicDataWitness"
+    ]
+  },
+  {
+    "at": 42331.42578125,
+    "methods": [
+      "aztec_getPublicDataWitness"
+    ]
+  },
+  {
+    "at": 42447.10595703125,
+    "methods": [
+      "aztec_getNoteHashMembershipWitness"
+    ]
+  },
+  {
+    "at": 43154.51904296875,
+    "methods": [
+      "aztec_getNoteHashMembershipWitness",
+      "aztec_getNoteHashMembershipWitness",
+      "aztec_getNullifierMembershipWitness",
+      "aztec_getNullifierMembershipWitness"
+    ]
+  },
+  {
+    "at": 49563.81494140625,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 50819.659912109375,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 52054.008056640625,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 53291.00390625,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 54530.04296875,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  }
+]

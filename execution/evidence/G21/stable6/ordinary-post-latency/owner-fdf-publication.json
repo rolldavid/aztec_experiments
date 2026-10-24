@@ -1,0 +1,42 @@
+{
+  "activation": {
+    "commit": "fdf3a0adf4e0c8ef5af3341d1736fffc865a0507",
+    "appPid": 1534,
+    "runningSource": "/opt/rolling-app/releases/ui-7a3ad91ffc14",
+    "nextSource": "/opt/rolling-app/releases/ui-fdf3a0adf4e0",
+    "ui": "/opt/rolling-ui/releases/fdf3a0adf4e0c8ef5af3341d1736fffc865a0507",
+    "previousUi": "/opt/rolling-ui/releases/ef77925c197de7f6946a75ccc9dbb30e3832c71a",
+    "protectedPids": {
+      "rolling-application.service": 1534,
+      "rolling-application-proxy.service": 803,
+      "rolling-node.service": 1522,
+      "rolling-query.service": 1524,
+      "rolling-moderator.service": 2088
+    },
+    "caddySha256": "d1bf263bf2245f9350c78a3dd738eaedd375f859e062c5d2e879e28f877e016e",
+    "notifySha256": "aa8f21c2b5ff13c58983a4b1cbf6482cfb303db74566198102f8b051d46a53ae"
+  },
+  "services": {
+    "rolling-application": "MainPID=1534\nActiveState=active",
+    "rolling-application-proxy": "MainPID=803\nActiveState=active",
+    "rolling-node": "MainPID=1522\nActiveState=active",
+    "rolling-query": "MainPID=1524\nActiveState=active",
+    "rolling-moderator": "MainPID=2088\nActiveState=active",
+    "board-prover": "MainPID=738\nActiveState=active",
+    "board-prover-proxy": "MainPID=739\nActiveState=active"
+  },
+  "sdk": {
+    "file": ".build/sdk/aztec_browser.js",
+    "bytes": 16594496,
+    "sha256": "50d67ce2ca47af2531636a400ddb7488068aecea93e771db2cd9ba1f729b16ec"
+  },
+  "payloadCleanup": {
+    "commit": "fdf3a0adf4e0c8ef5af3341d1736fffc865a0507",
+    "filesRemoved": 8,
+    "archiveRemoved": true
+  },
+  "availableBytes": 4232171520,
+  "realProofs": "real",
+  "publicSdkVerified": true,
+  "invalidationId": "I4NM1J7TL3Q6UW45SJM792NIXY"
+}

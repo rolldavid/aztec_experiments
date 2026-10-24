@@ -1,0 +1,24 @@
+{
+  "source": "fdf3a0adf4e0c8ef5af3341d1736fffc865a0507",
+  "proofs": "real",
+  "characters": 136,
+  "clickToUnobstructedMs": 24653.549999952316,
+  "prePrivateExecutionMs": 891.9449999332428,
+  "privateApplicationExecutionMs": 1115.4850000143051,
+  "kernelClassHintsMs": 0.5,
+  "kernelBodyMs": 965.3050000667572,
+  "uploadAcceptanceMs": 865.8149999380112,
+  "partitionMs": {
+    "Click to private application execution": 891.9449999332428,
+    "Private application execution": 1115.4850000143051,
+    "Kernel, public validation and request construction": 1642.8150000572205,
+    "Upload and acceptance": 865.8149999380112,
+    "Proof completion, verification and journal": 4097.035000085831,
+    "Submit to Aztec": 519.9499999284744,
+    "Inclusion and visible display": 15520.504999995232
+  },
+  "feeMetadataMs": 343.47000002861023,
+  "feeEstimateMs": 35.40500009059906,
+  "allTargetsMet": false,
+  "scope": "Actual visible included post; separate kernel stage is not included in private application execution."
+}

@@ -1,0 +1,28 @@
+{
+  "source": "729a7fb14d0b5ef87a830e4dbff01f7957bf4e5c",
+  "characters": 141,
+  "realProofs": true,
+  "clickToUnobstructedIncludedMs": 13858.715000033379,
+  "partitionMs": {
+    "clickToPrivateExecutionMs": 737.2999999523163,
+    "privateApplicationExecutionMs": 789.7849999666214,
+    "kernelValidationAndRequestPreparationMs": 1445.5650000572205,
+    "uploadAcceptanceMs": 808.7050000429153,
+    "proofCompletionLocalVerificationAndJournalMs": 3940.939999938011,
+    "submitToAztecMs": 550.5900000333786,
+    "inclusionAndVisibleFrameMs": 5585.830000042915
+  },
+  "partitionSumMs": 13858.715000033379,
+  "feeEstimateMs": 27.59500002861023,
+  "kernelBodyMs": 952.3200000524521,
+  "kernelChildrenMs": {
+    "artifact": 0.9849998950958252,
+    "input-abi": 54.99499988555908,
+    "acvm": 486.1799999475479,
+    "output-abi": 103.99500000476837,
+    "verification-key": 2.840000033378601,
+    "bytecode": 12.605000019073486
+  },
+  "note": "Kernel children are nested, not additional time. One passing total does not establish consistent latency. Prior slower real runs retained. Kernel between-circuit RPC237.85ms is two note and two nullifier membership witnesses; private execution also makes late historical-post membership read.",
+  "automaticCheckpointPromotion": true
+}

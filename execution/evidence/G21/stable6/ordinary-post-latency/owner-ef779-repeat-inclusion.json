@@ -1,0 +1,11 @@
+{
+  "submitAcknowledgedMs": 162041.05999994278,
+  "pendingReceipts": 15,
+  "lastPendingMs": 179806.939999938,
+  "firstProposedMs": 181046.625,
+  "domMs": 181470.06999993324,
+  "unobstructedMs": 181482.80499994755,
+  "ackToLastPendingMs": 17765.87999999523,
+  "lastPendingToFirstProposedMs": 1239.6850000619888,
+  "firstProposedToDOMMs": 423.4449999332428
+}

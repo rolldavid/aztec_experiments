@@ -1,13 +1,13 @@
-# Current posting performance work — 25 October 2026
+# Current posting performance work —25 October2026
 
-Target: click to unobstructed actual Aztec-included post under15seconds, complete pre-proof preparation and upload acceptance each under1second, private execution at most1.25seconds. Published ef77925c: real13.717s and28.189s. First preparation1178ms misses; repeat preparation829ms passes but network/inclusion wait19.442s misses total. Preserve both observations.
+Goal: actual included unobstructed post under15s. Current fdf3a0ad measured24.654s; all observations retained. Preparation892ms, private application1115ms plus kernel965ms, upload866ms. Node block availability added13.579–14.586s; local node273ms ahead of public reference. Do not claim completion.
 
-- proposed_feed_design: background exact-deposit native screening hints to remove first-run233ms nullifier read; Post retains fresh native utility checks.
-- pending_reply_ui: prefetch native kernel class hints using existing exact-anchor cache, independently reviewed native tests.
-- pending_feed_release: investigate repeat transaction inclusion delay from node/public block evidence; completed2.967GB server cleanup and health verification.
-- Root: integration, sole retained build, static publication, actual browser posting and numeric non-overlapping evidence, transfer cleanup.
+- pending_reply_ui: draft explicit scoped metadata for exactly two selected historical-post membership witnesses; reuse native hashes/cache and concurrent preparation drain. No global hooks or extra notes.
+- proposed_feed_design: independent review of that proposal and source-complete publication packet. Kernel diagnostic-work patch already approved87tests.
+- pending_feed_release: inspect actual submission/gossip/proposer delay without changing services or consensus controls.
+- Root: integrate, build once in retained tree, publish and test real posts, clean owned payloads. 729a7fb1 published, real13.859s; exact native kernel spans identify238ms membership batch. Proposed_feed_design drafts native settled-read prefetch alongsideinit; pending_reply_ui reviews, while drafting exact selected-history metadata. Incomplete stage rejected; corrected package activated.
 
-One retained dependency/build tree. Existing IAB tab only; no new Chrome profiles. No migrations or extra private notes. All services running. Do not claim all targets complete based on the fastest run.
+One dependency/build tree, existing IAB only. No new Chrome profiles. All services running. No migrations/recovery machinery.
 
 ## Historical delegation records
 

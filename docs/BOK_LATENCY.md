@@ -1,19 +1,35 @@
-# Bok request latency — 24 October 2026
+# Bok request latency — historical evidence and current posting status
 
 This investigation measures from the browser's actual Post click through the
 canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
-## Current ordinary-post target: 36 seconds
+## Current ordinary-post status — 25 October 2026
 
-UI release `26be933b-closurefix` is published. Core remains `6c2c64f0`;
+The current target is 15 seconds from Post to an unobstructed, actually included
+post. See [the current handover](../START_HERE.md) for deployment and all stage
+targets. Published `ef77925c` measured 13.717s and 28.189s; neither the slow run
+nor its 19.442s inclusion/display interval is excluded. Complete click-to-private
+application execution preparation was 1178/829ms, so the first also misses the
+1 second preparation target. The goal remains active.
+
+Private application execution was 790/835ms. Separate kernel stages took 968/969ms,
+with additional class-hint reads 242/362ms. The native kernel witness totals 672/705ms
+are nested within those kernel stages and must not be added again. These numbers
+do not claim the entire witness/proving pipeline completes within 790/835ms.
+Published `fdf3a0ad` adds selected-deposit screening warmup and native kernel
+registry witness prefetch. Its real136-character post took24.654s: preparation892ms, private application execution1115ms, separate kernel965ms, upload866ms. Independent node observation found our node273ms ahead of the public reference; block arrival was13.579–14.586s after acknowledgement. Rendering followed the browser receipt by382ms. The15-second goal remains unmet. Published729a7fb1 removes disabled kernel diagnostic work and adds precise nested instrumentation; validation87/87. Real141-character post13.859s, preparation737ms, private application790ms, separate kernel952ms, upload809ms. Native kernel children: input ABI55ms, ACVM486ms, output ABI104ms, bytecode13ms; a238ms network batch between circuits remains on the critical path. Automatic checkpoint promotion observed. Prior slower runs remain valid evidence; goal active.
+
+## Historical ordinary-post target: 36 seconds — 24 October
+
+At this historical checkpoint, UI release `26be933b-closurefix` was published. core remained `6c2c64f0`;
 contracts and service processes were unchanged by this static release. Changes
 include overlapping operation-scoped preparation, low-credit private execution
 reuse, batches of eight on the owned gateway, zero-window RPC microtask dispatch,
 and release of proof witness objects before receipt waiting.
 
-The latest measured release remains `08734c06`: **41.711 seconds**, exceeding
+The latest measured release at that checkpoint was `08734c06`: **41.711 seconds**, exceeding
 the target. Its preparation took9.376s, fee estimation7.767s, proving17.617s,
 and submission1.019s. Earlier individual samples measured34.634s and34.337s;
 these do not establish current-release performance. Current latency and memory
