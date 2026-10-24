@@ -129,6 +129,6 @@ test('captured policy read is requested only for synchronized ordinary main-boar
  ]){
   const scope={},seen=[],raw=Object.fromEntries(names.map(name=>[name,()=>{}]));
   const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:options=>seen.push(options)});
-  await app.prepare(input,options);assert.deepEqual(seen,[{ordinaryPolicy:wanted}]);
+  await app.prepare(input,options);assert.deepEqual(seen,[{ordinaryPolicy:wanted,ordinaryPost:Boolean(scope)&&options?.immediate===true&&['post','reply','quote','repost'].includes(input.type)}]);
  }
 });

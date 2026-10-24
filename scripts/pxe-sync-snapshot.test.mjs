@@ -195,7 +195,7 @@ for (const failure of ['none','current','selected','both']) test(`advancing anch
   return header(id);
  };
  f.sync.checkedSelectedAnchor=async()=>{
-  if(++selectedCalls===2){selectedStarted=true;maybeStarted();await selectedGate.promise;if(failure==='selected'||failure==='both')throw Error('selected anchor failed');}
+  if(++selectedCalls===1){selectedStarted=true;maybeStarted();await selectedGate.promise;if(failure==='selected'||failure==='both')throw Error('selected anchor failed');}
   return selected();
  };
  const event=f.sync.doHandleBlockStreamEvent.bind(f.sync);let eventError;
@@ -222,4 +222,21 @@ for (const failure of ['none','current','selected','both']) test(`advancing anch
   assert.equal(await f.balance(),before.balance);assert.equal(await f.other.getAsync('value'),before.other);
   assert.deepEqual((await f.tips.getL2Tips()).checkpointed,before.tips.checkpointed);
  }
+});
+
+test('advancing source snapshot checks the selected anchor once before commit and once at completion',async t=>{
+ const f=await fixture(t);await f.advance(10);f.state.tip=12;
+ const checked=f.sync.checkedSelectedAnchor.bind(f.sync),update=f.sync.updateAnchorBlockHeader.bind(f.sync);
+ let selectedReads=0,commits=0;
+ f.sync.checkedSelectedAnchor=async()=>{selectedReads++;return checked();};
+ f.sync.updateAnchorBlockHeader=async header=>{assert.equal(selectedReads,1);commits++;return update(header);};
+ await f.sync.sync();assert.equal(commits,1);assert.equal(selectedReads,2);
+ assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);
+});
+
+test('fork after anchor commit is rejected by the retained completion check',async t=>{
+ const f=await fixture(t);await f.advance(10);f.state.tip=12;
+ const update=f.sync.updateAnchorBlockHeader.bind(f.sync);
+ f.sync.updateAnchorBlockHeader=async header=>{await update(header);f.chain[12]=await block(12,999);};
+ await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_/);
 });

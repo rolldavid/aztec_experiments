@@ -63,7 +63,8 @@ async function checkPublishedPrivateFee(instance,canonical){
 }
 // Session startup registers this class/instance before any action. Check the
 // native PXE's local records rather than writing the same class and instance
-// again for every fee preparation. Publication remains a fresh node check.
+// again for every fee preparation. Native local records contain the immutable
+// preimage, not a current class. Publication separately checks the current class.
 async function privateFeeRegistered(wallet,canonical) {
   const pxe=wallet.pxe;
   if(typeof pxe?.getContractInstance!=='function'||typeof pxe?.getContractArtifact!=='function')return false;
@@ -74,7 +75,6 @@ async function privateFeeRegistered(wallet,canonical) {
   const [instance,artifact]=values.map(value=>value.value);
   return !!artifact&&!!instance&&equal(instance.address,canonical.address)&&
     equal(instance.originalContractClassId,canonical.originalContractClassId)&&
-    equal(instance.currentContractClassId,canonical.currentContractClassId)&&
     equal(await computeContractAddressFromInstance(instance),canonical.address);
 }
 export async function derivePrivateFeeAddress(privateFeeArtifact) { return (await derivePrivateFeeInstance(privateFeeArtifact)).address; }

@@ -126,6 +126,8 @@ const {ContractClassService}=await import('../node_modules/@aztec-labs/pxe/dest/
 const {withCache}=await import('../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js');
 const {BlockHash}=await import('@aztec-labs/stdlib/block');
 const {ORDINARY_POST_GAS_PROFILE:syncProfile}=await import('../shared/ordinary-post-fees.mjs');
+const {OperationQueue:PreparationOperationQueue}=await import('../node_modules/@aztec-labs/pxe/dest/operation_queue.js');
+const preparationQueues=[];test.after(async()=>{await Promise.all(preparationQueues.map(queue=>queue.stop()));});
 async function ordinarySyncFixture(){
  const owner=AztecAddress.fromFieldUnsafe(new Fr(100)),fee=AztecAddress.fromFieldUnsafe(new Fr(200)),board=AztecAddress.fromFieldUnsafe(new Fr(300));
  const calls=[FunctionCall.from({name:'pay_fee',to:fee,selector:FunctionSelector.fromString('0xc8772dde'),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(5)]}),FunctionCall.from({name:'post',to:board,selector:FunctionSelector.fromString(syncProfile.postSelector),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(6)]})];
@@ -145,11 +147,13 @@ async function ordinarySyncFixture(){
   events.push(['sync-start',call.to.toString()]);if(hold)await new Promise((resolve,reject)=>pending.push({address:call.to.toString(),resolve,reject}));
   if(call.to.toString()===failAddress)throw Error('native sync failed');events.push(['sync-finish',call.to.toString()]);
  };
+ const queue=new PreparationOperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{sync:()=>assert.fail('Preparation must use already selected native anchor')},anchorBlockStore:{getBlockHeader:async()=>anchorBlockHeader},contributors:[service],stagedWriteCoordinator:{begin:()=>{events.push(['prepare-start']);return 42;},commit:async()=>events.push(['prepare-committed']),abort:()=>events.push(['prepare-discarded'])},log:{debug(){},verbose(){},warn(){},error(){}}});queue.start();preparationQueues.push(queue);
  const text=method(pxe,'async #syncOrdinaryPostCalls(', '\n    // Public API');
- const Class=vm.runInNewContext(`(class {contractClassService=classService;contractSyncService=service;#executeUtility=utility;${text}
+ const Class=vm.runInNewContext(`(class {contractClassService=classService;contractSyncService=service;#executeUtility=utility;#getSimulatorForTx=()=>simulator;
+ operationQueue=queue;${text}
  async run(){try{await this.#syncOrdinaryPostCalls(request,calls,simulator,ctx,scopes);await service.settle(ctx.changeSetId);events.push(['private-ready']);service.onOperationEnd(ctx.changeSetId,'committed');}catch(error){await service.settle(ctx.changeSetId);service.onOperationEnd(ctx.changeSetId,'discarded');events.push(['discard']);throw error;}}
- })`,{...nativeTimingBindings,...syncBindings,classService,service,utility,request,calls,simulator,ctx,scopes,events,allToCompletion});
- return {run:()=>new Class().run(),request,calls,events,pending,classes,hold:()=>{hold=true;},fail:address=>{failAddress=address;},owner,fee,board,service};
+ })`,{...nativeTimingBindings,...syncBindings,classService,service,utility,request,calls,simulator,ctx,scopes,events,allToCompletion,queue});
+ return {prepare:(targets={owner,board,privateFee:fee})=>new Class().prepareOrdinaryPostState(targets),run:()=>new Class().run(),request,calls,events,pending,classes,hold:()=>{hold=true;},fail:address=>{failAddress=address;},owner,fee,board,service};
 }
 test('exact native account payload pre-syncs three known contracts concurrently in one change set without learned predictions',async()=>{
  const f=await ordinarySyncFixture();f.hold();const work=f.run();
@@ -205,4 +209,20 @@ test('captured-anchor read enters through the existing native operation queue',a
  instance.blockStateSynchronizer={syncWithAnchorRead:async fn=>{calls++;assert.equal(fn,reader);return {anchor:'native',value:7};}};
  try{const prior=queue.run(()=>gate.promise),pending=instance.syncWithAnchorRead(reader);await new Promise(r=>setImmediate(r));assert.equal(calls,0);gate.resolve();await prior;assert.deepEqual(await pending,{anchor:'native',value:7});assert.equal(calls,1);}
  finally{await queue.stop();}
+});
+
+for(const failure of [false,true])test(`ordinary preparation synchronizes known contracts together before screening/proof, failure=${failure}`,async()=>{
+ const f=await ordinarySyncFixture();f.hold();const prepared=f.prepare();let settled=false;const observed=prepared.finally(()=>settled=true);observed.catch(()=>{});
+ for(let i=0;i<50&&f.pending.length<3;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.pending.length,3);assert(!f.events.some(e=>e[0]==='prepare-committed'));
+ if(failure)f.pending[0].reject(Error('discovery failure'));else f.pending[0].resolve();
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);
+ f.pending.slice(1).forEach(p=>p.resolve());
+ if(failure){await assert.rejects(observed,/discovery failure/);assert.equal(f.events.at(-1)[0],'prepare-discarded');assert.equal(f.service.syncedContracts.size,0);}
+ else{await observed;assert.equal(f.events.at(-1)[0],'prepare-committed');await f.run();assert.equal(f.events.filter(e=>e[0]==='sync-start').length,3,'proof reuses only native synced state');assert.equal(f.events.filter(e=>e[0]==='class').length,3,'late class check uses native exact-anchor cache');}
+});
+test('ordinary preparation rejects unknown classes and duplicate targets before native discovery',async()=>{
+ const f=await ordinarySyncFixture();assert.throws(()=>f.prepare({owner:f.owner,board:f.owner,privateFee:f.fee}),/Invalid ordinary sync targets/);
+ f.classes.set(f.fee.toString(),new Fr(99).toString());await assert.rejects(f.prepare(),/Invalid ordinary sync class/);
+ assert.equal(f.events.filter(e=>e[0]==='sync-start').length,0);
 });

@@ -101,6 +101,7 @@ async function sessionFixture({chainId='31337'}={}){
  const store={close:async()=>{held('store-close');state.closes++;if(state.failClose)throw Error('close failed');}};
  const pxe={registerAccount:async()=>{held('register-account');state.registrations++;if(state.failRegister)throw Error('registration failed');},registerContractClass:async()=>{held('register-class');},registerContract:async()=>{held('register-contract');},
   sync:async()=>{held('sync');state.syncs++;if(state.waitSync)await state.waitSync;if(state.failSync)throw Error('sync failed');},
+  prepareOrdinaryPostState:async targets=>{held('ordinary-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress});if(state.waitOrdinaryState)await state.waitOrdinaryState;if(state.failOrdinaryState)throw Error('ordinary state failed');},
   getSyncedBlockHeader:async()=>{held('preference-header');return {globalVariables:{blockNumber:10},hash:async()=>BlockHash.fromString(hex(55))};},
   getPrivateEvents:async()=>{held('preference-events');if(state.waitEvents)await state.waitEvents;if(state.failEvents)throw Error('PRIVATE_SENTINEL');return [];},
   stop:async()=>{held('stop');state.stops++;if(state.waitStop)await state.waitStop;if(state.failStop)throw Error('stop failed');await store.close();}};
@@ -1192,4 +1193,20 @@ for(const failure of ['prepare','proof'])test(`one-click history work cannot esc
   await assert.rejects(session.application.readAccountStatus(),{code:'ROLLING_BUSY'});
   gate.resolve();await rejected;assert.equal(f.state.active,false);assert.equal(f.state.sends,failure==='prepare'?0:1);
  }finally{gate.resolve();await session.close();}
+});
+
+for(const failure of ['discovery','context'])test(`ordinary preparation holds account lease until shared contract discovery settles: ${failure}`,async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ const session=await createRollingWalletSession(f.input),prepare=f.pxe.prepareOrdinaryPostState;
+ f.pxe.prepareOrdinaryPostState=async targets=>{await prepare(targets);entered.resolve();await gate.promise;if(failure==='discovery')throw Error('discovery failed');};
+ let settled=false;
+ try{
+  const run=session.application.executeAction({type:'post',deposit:'9',content:'Prepare both native contract states'}).finally(()=>settled=true);
+  const rejected=assert.rejects(run,failure==='discovery'?/discovery failed/:{code:'ROLLING_PRIVATE_ROUTE'});
+  await entered.promise;assert.equal(f.state.active,true);assert.equal(settled,false);assert.equal(f.state.sends,0);
+  const events=f.state.events;assert(events.lastIndexOf('sync')<events.lastIndexOf('ordinary-state'));
+  await assert.rejects(session.application.readAccountStatus(),{code:'ROLLING_BUSY'});
+  if(failure==='context')f.state.wrongPXE=true;
+  gate.resolve();await rejected;assert.equal(f.state.active,false);assert.equal(f.state.sends,0);
+ }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
 });

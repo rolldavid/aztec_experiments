@@ -480,7 +480,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
  let refreshPhase=null;
- const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?'account.sync':'action.sync',()=>ordinaryPolicy&&typeof pxe.syncWithAnchorRead==='function'?app.prefetchPostingPolicy(read=>pxe.syncWithAnchorRead(read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
+ const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?'account.sync':'action.sync',()=>ordinaryPolicy&&typeof pxe.syncWithAnchorRead==='function'?app.prefetchPostingPolicy(read=>pxe.syncWithAnchorRead(read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
+  if(ordinaryPost){await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress}));await guardRoute();}
+ },contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
  async function observedRead(name,call,args){
   const method=refreshMethods[name];if(!method)return locked(()=>call(...args));
   let step=method+'/lock',contextChecks=0;

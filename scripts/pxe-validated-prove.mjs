@@ -102,14 +102,31 @@ export function validatedPxeProve(source){
             {address:calls[0].to,selector:calls[0].selector,classId:profile.privateFeeClassId},
             {address:calls[1].to,selector:calls[1].selector,classId:profile.boardClassId}];
         check(new Set(targets.map(target=>target.address.toString())).size===3);
-        // Resolve current classes through the same native anchor-pinned cache
-        // used by syncScope. Unknown or upgraded contracts never get prefetched.
+        await this.#syncOrdinaryPostTargets(targets,simulator,ctx,scopes);
+    }
+    // Preparation and proof share only the native anchor-scoped contract cache.
+    // A discarded operation or anchor change invalidates that cache normally.
+    async #syncOrdinaryPostTargets(targets, simulator, ctx, scopes) {
+        const check=value=>{if(!value)throw new Error('Invalid ordinary sync class');};
         await allToCompletion(targets.map(async target=>check((await this.contractClassService.getCurrentClassId(target.address,ctx.anchorBlockHeader))?.toString()===target.classId)));
         await allToCompletion(targets.map(target=>this.contractSyncService.ensureContractSynced({
             contract:target.address,functionToInvokeAfterSync:target.selector,
             utilityExecutor:(call,execScopes)=>this.#executeUtility(simulator,call,[],execScopes,ctx.anchorBlockHeader,ctx.changeSetId),
             anchorBlockHeader:ctx.anchorBlockHeader,changeSetId:ctx.changeSetId,scopes,triggeredBy:undefined,
         })));
+    }
+    // Public API\n`);
+ source=replace(source,'    // Public API\n',`    prepareOrdinaryPostState({owner,board,privateFee}) {
+        // Detach the session's known deployed addresses before entering the queue.
+        const profile=${JSON.stringify(ORDINARY_POST_GAS_PROFILE)};
+        const targets=[{address:SyncAddress.fromStringUnsafe(owner.toString()),classId:profile.accountClassId},
+            {address:SyncAddress.fromStringUnsafe(privateFee.toString()),classId:profile.privateFeeClassId,selector:SyncSelector.fromString('0xc8772dde')},
+            {address:SyncAddress.fromStringUnsafe(board.toString()),classId:profile.boardClassId,selector:SyncSelector.fromString(profile.postSelector)}];
+        if(new Set(targets.map(target=>target.address.toString())).size!==3)throw new Error('Invalid ordinary sync targets');
+        const scopes=[targets[0].address];
+        return this.operationQueue.runSynced(async ctx=>{
+            await this.#syncOrdinaryPostTargets(targets,this.#getSimulatorForTx(),ctx,scopes);
+        });
     }
     // Public API\n`);
  source=replace(source,'return this.#proveTx(ctx, txRequest, privateExecutionResult);','return this.#proveTx(ctx, txRequest, privateExecutionResult, validatePublic);');
@@ -170,10 +187,11 @@ function instrumentPxePhases(source){
  source=replace(source,'() => publicInputs.forPublic ? this.#simulatePublicCalls(simulatedTx, false) : undefined,',"() => publicInputs.forPublic ? measureRollingProofPhase('public-execution',()=>this.#simulatePublicCalls(simulatedTx, false)) : undefined,");
  source=replace(source,'() => this.node.isValidTx(simulatedTx, {isSimulation: true, skipFeeEnforcement: false}),',"() => measureRollingProofPhase('admission-check',()=>this.node.isValidTx(simulatedTx, {isSimulation: true, skipFeeEnforcement: false})),");
  source=replace(source,"        const abi=new SyncAccountEntrypoint","        const finishBinding=beginRollingProofSpan('native.phase.sync-binding');\n        const abi=new SyncAccountEntrypoint");
+ source=replace(source,'        await this.#syncOrdinaryPostTargets(targets,simulator,ctx,scopes);',"        finishBinding();\n        await this.#syncOrdinaryPostTargets(targets,simulator,ctx,scopes);");
  // Binding is small; class resolution and discovery are independently awaited groups.
- source=replace(source,'        await allToCompletion(targets.map(async target=>check((await this.contractClassService.getCurrentClassId(target.address,ctx.anchorBlockHeader))?.toString()===target.classId)));',"        finishBinding();\n        await measureRollingProofPhase('sync-classes',()=>allToCompletion(targets.map(async target=>check((await this.contractClassService.getCurrentClassId(target.address,ctx.anchorBlockHeader))?.toString()===target.classId))));");
+ source=replace(source,'        await allToCompletion(targets.map(async target=>check((await this.contractClassService.getCurrentClassId(target.address,ctx.anchorBlockHeader))?.toString()===target.classId)));',"        await measureRollingProofPhase('sync-classes',()=>allToCompletion(targets.map(async target=>check((await this.contractClassService.getCurrentClassId(target.address,ctx.anchorBlockHeader))?.toString()===target.classId))));");
  source=replace(source,'        await allToCompletion(targets.map(target=>this.contractSyncService.ensureContractSynced({',"        await measureRollingProofPhase('sync-records',()=>allToCompletion(targets.map(target=>this.contractSyncService.ensureContractSynced({");
- source=replace(source,'        })));\n    }\n    // Public API','        }))));\n    }\n    // Public API');
+ source=replace(source,'anchorBlockHeader:ctx.anchorBlockHeader,changeSetId:ctx.changeSetId,scopes,triggeredBy:undefined,\n        })));','anchorBlockHeader:ctx.anchorBlockHeader,changeSetId:ctx.changeSetId,scopes,triggeredBy:undefined,\n        }))));');
  return source;
 }
 function instrumentKernelPhases(source){

@@ -40,18 +40,34 @@ export function parallelPxeAnchorSnapshot(source){
 
 function withAnchorRead(source){
  const replace=(before,after)=>{if(source.split(before).length!==2)throw Error('PXE anchor read layout mismatch');source=source.replace(before,after);};
- // Both validations read immutable identities captured by the native stream.
- // Drain both before any anchor/store update, preserving the old-header error
- // priority when both fail. This removes one serial RPC phase on advances.
- replace(`          await this.checkedHeader(currentId);
-          if (!this.sameAnchor(target.block, (await this.checkedSelectedAnchor()).block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`,
- `          const checks = await Promise.allSettled([
-            Promise.resolve().then(() => this.checkedHeader(currentId)),
-            Promise.resolve().then(() => this.checkedSelectedAnchor()),
-          ]);
-          const failed = checks.find(result => result.status === 'rejected');
-          if (failed) throw failed.reason;
-          if (!this.sameAnchor(target.block, checks[1].value.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`);
+ // Resolve both canonical headers together before changing the native anchor.
+ // The stream event already carries the selected immutable source identity;
+ // checking that same selected identity twice before the write adds an RPC
+ // phase, not an atomic snapshot. doSync still revalidates the completed plan.
+ replace(`        const target = await this.checkedSelectedAnchor();
+        if (!this.sameAnchor(target.block, event.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');
+        const current = await this.anchorBlockStore.getBlockHeader();
+        const currentId = { number: current.getBlockNumber(), hash: (await current.hash()).toString() };
+        if (!this.sameAnchor(currentId, target.block)) {
+          // Moving an orphan anchor without the preceding conservative rollback
+          // would retain private state from the old fork. Never do that, including
+          // contradictions at the stream's finalized walk-back floor.
+          if (currentId.number >= target.block.number) throw new Error('PXE_REORG_ANCHOR_CHANGED');
+          await this.checkedHeader(currentId);
+          if (!this.sameAnchor(target.block, (await this.checkedSelectedAnchor()).block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');
+        }`,
+ `        const current = await this.anchorBlockStore.getBlockHeader();
+        const currentId = { number: current.getBlockNumber(), hash: (await current.hash()).toString() };
+        const advancing = !this.sameAnchor(currentId, event.block);
+        if (advancing && currentId.number >= event.block.number) throw new Error('PXE_REORG_ANCHOR_CHANGED');
+        const checks = await Promise.allSettled([
+          Promise.resolve().then(() => advancing ? this.checkedHeader(currentId) : undefined),
+          Promise.resolve().then(() => this.checkedSelectedAnchor()),
+        ]);
+        const failed = checks.find(result => result.status === 'rejected');
+        if (failed) throw failed.reason;
+        const target = checks[1].value;
+        if (!this.sameAnchor(target.block, event.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`);
  replace('  syncPass = undefined;',`  syncPass = undefined;
 
   anchorRead = undefined;

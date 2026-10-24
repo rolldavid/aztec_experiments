@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { BarretenbergSync } from '@aztec-foundation/bb.js';
 import { BaseWallet } from '@aztec-labs/wallet-sdk/base-wallet';
+import { SerializableContractInstancePreimage } from '@aztec-labs/stdlib/contract';
 import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { ProtocolContractAddress } from '@aztec-labs/protocol-contracts';
 import { Gas,GasFees,GasSettings } from '@aztec-labs/stdlib/gas';
@@ -12,6 +13,7 @@ import { loadContractArtifact,FunctionSelector } from '@aztec-labs/stdlib/abi';
 import { poseidon2HashWithSeparator } from '@aztec-labs/foundation/crypto/poseidon';
 import { computeSecretHash } from '@aztec-labs/stdlib/hash';
 import { preparePrivateFeePayment,createPrivateFeeDeployment,derivePrivateFeeInstance,derivePrivateFeeAddress,derivePrivateFeeBridgeSecret,derivePrivateFeeBridgeSecretHash } from '../shared/private-fee-client.mjs';
+function nativePreimage(value){return SerializableContractInstancePreimage.fromBuffer(new SerializableContractInstancePreimage(value).toBuffer()).withAddress(value.address);}
 let artifact,instance;
 const owner=AztecAddress.fromFieldUnsafe(new Fr(42));
 before(async()=>{artifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../apps/src/billboard/private_fee_artifact.json',import.meta.url))));instance=await derivePrivateFeeInstance(artifact);});
@@ -158,7 +160,7 @@ test('independent fee metadata reads start together and drain before a failure r
 
 test('already registered native PXE avoids both class and instance rewrites, retaining fresh balances and public class checks',async()=>{
  const {input,state}=fixture();let localInstances=0,localArtifacts=0,published=0;
- input.wallet.pxe={getContractInstance:async()=>{localInstances++;return {...instance};},getContractArtifact:async()=>{localArtifacts++;return artifact;}};
+ input.wallet.pxe={getContractInstance:async()=>{localInstances++;return nativePreimage(instance);},getContractArtifact:async()=>{localArtifacts++;return artifact;}};
  input.node.getContract=async()=>{published++;return state.instance;};
  assert.equal((await preparePrivateFeePayment(input)).availableCredit,1300n);
  state.balance=72n;assert.equal((await preparePrivateFeePayment(input)).availableCredit,72n);
@@ -168,7 +170,7 @@ test('already registered native PXE avoids both class and instance rewrites, ret
  assert.equal(state.reads,2);assert.equal(state.registered,0);
 });
 for(const missing of ['instance','artifact','class','preimage'])test('native local '+missing+' mismatch still registers the verified canonical fee contract',async()=>{
- const {input,state}=fixture(),local={...instance};if(missing==='class')local.currentContractClassId=new Fr(9);if(missing==='preimage')local.salt=new Fr(9);
+ const {input,state}=fixture(),local=nativePreimage(instance);if(missing==='class')local.originalContractClassId=new Fr(9);if(missing==='preimage')local.salt=new Fr(9);
  input.wallet.pxe={getContractInstance:async()=>missing==='instance'?undefined:local,getContractArtifact:async()=>missing==='artifact'?undefined:artifact};
  await preparePrivateFeePayment(input);assert.equal(state.registered,1);assert.equal(state.reads,1);
 });
@@ -187,7 +189,8 @@ test('actual SDK BaseWallet registration path drops two redundant PXE writes for
  const pxe={registerContractClass:async()=>{classWrites++;},registerContract:async()=>{instanceWrites++;return instance.address;}};
  input.wallet.pxe=pxe;input.wallet.registerContract=BaseWallet.prototype.registerContract.bind(input.wallet);
  await preparePrivateFeePayment(input);assert.deepEqual([classWrites,instanceWrites],[1,1]);
- pxe.getContractInstance=async()=>({...instance});pxe.getContractArtifact=async()=>artifact;
+ pxe.getContractInstance=async()=>nativePreimage(instance);pxe.getContractArtifact=async()=>artifact;
+ assert.equal(Object.hasOwn(await pxe.getContractInstance(),'currentContractClassId'),false);
  await preparePrivateFeePayment(input);assert.deepEqual([classWrites,instanceWrites],[1,1]);assert.equal(state.reads,2);
 });
 
@@ -231,4 +234,14 @@ test('publication failure drains held metadata before failing without registrati
  const pending=preparePrivateFeePayment(input).finally(()=>finished=true);await entered.promise;
  await new Promise(r=>setImmediate(r));assert.equal(finished,false);gate.resolve();
  await assert.rejects(pending,{code:'PRIVATE_FEE_PREPARATION_FAILED'});assert.equal(state.registered,0);assert.equal(state.reads,0);
+});
+
+ test('ordinary posting uses native preimage without a registration queue while retaining upgrade rejection',async()=>{
+ const {input,state}=fixture();input.creditCheck='ordinary-post-proof';
+ const local=nativePreimage(instance);assert.equal(Object.hasOwn(local,'currentContractClassId'),false);
+ input.wallet.pxe={getContractInstance:async()=>local,getContractArtifact:async()=>artifact};
+ input.wallet.registerContract=async()=>assert.fail('Already registered native preimage must not enqueue a write');
+ const result=await preparePrivateFeePayment(input);assert.equal(result.creditCheck,'ordinary-post-proof');assert.equal(state.reads,0);
+ state.instance.currentContractClassId=new Fr(9);
+ await assert.rejects(preparePrivateFeePayment(input),{code:'PRIVATE_FEE_CLASS_MISMATCH'});assert.equal(state.reads,0);
 });
