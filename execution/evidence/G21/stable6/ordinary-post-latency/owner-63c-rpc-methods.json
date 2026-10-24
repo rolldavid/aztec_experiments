@@ -1,0 +1,135 @@
+[
+  {
+    "at": 116577.7802734375,
+    "methods": [
+      "aztec_getNodeInfo",
+      "aztec_getCurrentMinFees",
+      "aztec_getContract"
+    ]
+  },
+  {
+    "at": 116578.203125,
+    "methods": [
+      "aztec_getNodeInfo",
+      "aztec_getChainTips",
+      "aztec_getWorldStateSyncStatus",
+      "aztec_getSyncedL1Timestamp"
+    ]
+  },
+  {
+    "at": 116603.22314453125,
+    "methods": [
+      "aztec_getChainTips"
+    ]
+  },
+  {
+    "at": 116630.64624023438,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 116819.43603515625,
+    "methods": [
+      "aztec_getBlockData"
+    ]
+  },
+  {
+    "at": 116852.0400390625,
+    "methods": [
+      "aztec_getPublicStorageAt"
+    ]
+  },
+  {
+    "at": 116853.15209960938,
+    "methods": [
+      "aztec_getChainTips",
+      "aztec_getBlock"
+    ]
+  },
+  {
+    "at": 116953.88500976562,
+    "methods": [
+      "aztec_getBlock"
+    ]
+  },
+  {
+    "at": 117272.88818359375,
+    "methods": [
+      "aztec_getPublicDataWitness",
+      "aztec_getPublicDataWitness",
+      "aztec_getPublicDataWitness",
+      "aztec_getPublicDataWitness",
+      "aztec_getNoteHashMembershipWitness"
+    ]
+  },
+  {
+    "at": 117694.49194335938,
+    "methods": [
+      "aztec_getPublicDataWitness"
+    ]
+  },
+  {
+    "at": 118047.28125,
+    "methods": [
+      "aztec_getNoteHashMembershipWitness",
+      "aztec_getNoteHashMembershipWitness",
+      "aztec_getNullifierMembershipWitness",
+      "aztec_getNullifierMembershipWitness"
+    ]
+  },
+  {
+    "at": 124533.7900390625,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 125770.22900390625,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 127016.77514648438,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 128256.93603515625,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 129495.09204101562,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 130729.64794921875,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 131965.13916015625,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 133215.12133789062,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  },
+  {
+    "at": 134453.44018554688,
+    "methods": [
+      "aztec_getTxReceipt"
+    ]
+  }
+]

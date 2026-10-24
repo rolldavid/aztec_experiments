@@ -1,0 +1,55 @@
+{
+  "source": "63c5339e9eda68e029a42998c81ee8aa39b445a7",
+  "proverSource": "702c153c5c2e65099a66d7d8288d052f19aa51ad",
+  "characters": 233,
+  "realProofs": true,
+  "includedPostId": "12519770435853160898119887931424022932099514275341320188590982617531496537412",
+  "transactionHash": "0x1bac6a115d54de121fcdff45c3a186309b371f7121801ac5681c3e7ce296a3e9",
+  "totalMs": 27190.38,
+  "exclusivePartitionsMs": {
+    "preparation": 818.495,
+    "privateExecution": 653.71,
+    "kernelValidationAndRequestEncoding": 1267.1,
+    "uploadAcceptance": 790.96,
+    "proofCompletionVerificationAndJournal": 3903.155,
+    "submitToAztec": 525.44,
+    "inclusionAndDisplay": 19231.52
+  },
+  "combinedNativeWitnessMs": 1298.775,
+  "feeEstimateMs": 37.21000003814697,
+  "checkpointAutomatic": true,
+  "limitations": [
+    "15second total goal failed; combined native witness1.25s target failed.",
+    "Composer was opened before server timing deployment and remained open during it; no instant-click claim.",
+    "Public/local receipt observer started after inclusion; cannot determine propagation or producer latency from that observer.",
+    "UI63 ignores additional server702 native subcall timing fields; next SDK required for numeric capture."
+  ],
+  "capture": {
+    "timeOrigin": 1792878049486.89,
+    "events": [
+      {
+        "type": "click",
+        "at": 116573.08500003815,
+        "visibility": "visible"
+      },
+      {
+        "type": "included-dom",
+        "at": 143762.54499995708,
+        "status": "pending",
+        "id": "post-12519770435853160898119887931424022932099514275341320188590982617531496537412",
+        "composerOpen": false
+      },
+      {
+        "type": "unobstructed-frame",
+        "at": 143763.46500003338,
+        "status": "pending",
+        "id": "post-12519770435853160898119887931424022932099514275341320188590982617531496537412",
+        "visibility": "visible"
+      },
+      {
+        "type": "checkpointed-dom",
+        "at": 229211.85000002384
+      }
+    ]
+  }
+}

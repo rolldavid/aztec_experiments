@@ -1,0 +1,114 @@
+{
+  "activation": {
+    "activated": true,
+    "configSha256": "65928f53b3dcf8c06316592785f6c721bfec1f241b0f2a52633c2ce27a6b6cd2",
+    "files": {
+      "prover/native-call-timings.mjs": "411b9b5afd2c8a1c69d5d1ff1acdb7ac785315c37a2dd90a00573ed913df4741",
+      "prover/process-worker.mjs": "fc93fcc76e0e5d27f5311d7e17ac1c77006f2a3949e228e47ae33b54c4f469e5",
+      "prover/queue.mjs": "3fb0b8fa1b58f16cbce1cb261a0eb2f0c9e5ea2a9803d6bcb1d11501dd226752",
+      "prover/worker.mjs": "942cc7a0f2a56b93f7000c4a24abbc69a35e28fd7e7a2b712e51447ae8b162f6"
+    },
+    "health": {
+      "proofs": "real",
+      "query": {
+        "enabled": true,
+        "ready": true
+      },
+      "queue": {
+        "bytes": 0,
+        "completed": 0,
+        "failed": 0,
+        "jobs": 0,
+        "running": false,
+        "submitted": 0
+      },
+      "ready": true
+    },
+    "pid": "9142",
+    "source": "/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad",
+    "sourceCommit": "702c153c5c2e65099a66d7d8288d052f19aa51ad"
+  },
+  "healthNow": {
+    "proofs": "real",
+    "query": {
+      "enabled": true,
+      "ready": true
+    },
+    "queue": {
+      "bytes": 0,
+      "completed": 1,
+      "failed": 0,
+      "jobs": 0,
+      "running": false,
+      "submitted": 1
+    },
+    "ready": true
+  },
+  "units": {
+    "board-prover.service": {
+      "ActiveState": "active",
+      "MainPID": "9142",
+      "NRestarts": "0",
+      "SubState": "running"
+    },
+    "rolling-application-proxy.service": {
+      "ActiveState": "active",
+      "MainPID": "803",
+      "NRestarts": "0",
+      "SubState": "running"
+    },
+    "rolling-application.service": {
+      "ActiveState": "active",
+      "MainPID": "1534",
+      "NRestarts": "0",
+      "SubState": "running"
+    },
+    "rolling-moderator.service": {
+      "ActiveState": "active",
+      "MainPID": "2088",
+      "NRestarts": "3",
+      "SubState": "running"
+    },
+    "rolling-node.service": {
+      "ActiveState": "active",
+      "MainPID": "1522",
+      "NRestarts": "0",
+      "SubState": "running"
+    },
+    "rolling-query.service": {
+      "ActiveState": "active",
+      "MainPID": "1524",
+      "NRestarts": "0",
+      "SubState": "running"
+    }
+  },
+  "verified": true,
+  "packetEntries": [
+    {
+      "name": "activation.json",
+      "kind": "file",
+      "bytes": 959
+    },
+    {
+      "name": "publish.py",
+      "kind": "file",
+      "bytes": 7742
+    },
+    {
+      "name": "plan.json",
+      "kind": "file",
+      "bytes": 2848
+    },
+    {
+      "name": "stage.json",
+      "kind": "file",
+      "bytes": 2016
+    },
+    {
+      "name": "files",
+      "kind": "dir",
+      "bytes": null
+    }
+  ],
+  "protectedPidsUnchanged": true
+}

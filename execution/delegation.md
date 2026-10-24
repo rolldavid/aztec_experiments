@@ -1,13 +1,13 @@
 # Current posting performance work —25 October2026
 
-Goal: actual included unobstructed post under15s. Current fdf3a0ad measured24.654s; all observations retained. Preparation892ms, private application1115ms plus kernel965ms, upload866ms. Node block availability added13.579–14.586s; local node273ms ahead of public reference. Do not claim completion.
+Goal remains active: actual included unobstructed post under15s. Latest63c realpost27.190s; witness1299ms combined, upload791ms; actualsubmissionack todisplay19.232s. All observations retained.
 
-- pending_reply_ui: draft explicit scoped metadata for exactly two selected historical-post membership witnesses; reuse native hashes/cache and concurrent preparation drain. No global hooks or extra notes.
-- proposed_feed_design: independent review of that proposal and source-complete publication packet. Kernel diagnostic-work patch already approved87tests.
-- pending_feed_release: inspect actual submission/gossip/proposer delay without changing services or consensus controls.
-- Root: integrate, build once in retained tree, publish and test real posts, clean owned payloads. 729a7fb1 published, real13.859s; exact native kernel spans identify238ms membership batch. Proposed_feed_design drafts native settled-read prefetch alongsideinit; pending_reply_ui reviews, while drafting exact selected-history metadata. Incomplete stage rejected; corrected package activated.
+- pending_reply_ui: source-only draft priming exact maturity-gated witnesses during existing composer preparation; no new cache, notes or duplicate screening.
+- proposed_feed_design: investigate public transaction propagation/inclusion; bounded read-only observer recommendation.
+- pending_feed_release: verify702 prover activation, numeric timing availability and cleanup packet.
+- Root: integrate/review, one SDK build, publish, observe realpost and keep exact phase evidence.
 
-One dependency/build tree, existing IAB only. No new Chrome profiles. All services running. No migrations/recovery machinery.
+One retained build tree and existing IAB only. No Chrome or extra dependency copies. Allservices stayrunning.
 
 ## Historical delegation records
 

@@ -6,11 +6,11 @@ Current handover: 25 October 2026. Current owner scope takes precedence over his
 
 Ordinary post click → visible after actual Aztec inclusion must be ≤15 seconds. Fee preparation, complete pre-proof application preparation and browser-to-prover acceptance must each be <1 second; private witness construction ≤1.25 seconds.
 
-**UI source `729a7fb1` is published. Latest real141-character post:13.859s; preparation737ms, private application790ms, separate kernel952ms, upload809ms, fee estimate28ms. Automatic checkpoint promotion observed. This single passing total does not establish consistent latency.** Previous source `fdf3a0ad` The goal remains active.** Its real 136-character post took **24.654s** from click to unobstructed display after actual Aztec inclusion. Complete preparation took892ms, private application execution1115ms, separate kernel processing965ms, upload acceptance866ms. Kernel class-hint reads dropped to0.5ms after prefetch. Kernel witness work is nested in kernel processing; do not add it twice or describe application execution alone as the full witness pipeline.
+**UI source `63c5339e` is published. Latest real233-character post:27.190s.** Preparation818ms, private application654ms, kernel702ms, upload791ms, fee estimate37ms. Combined native application/kernel witness1299ms. Submission acknowledgement to included unobstructed display took19.232s; automatic checkpoint promotion observed. The15-second total and1.25-second combined witness targets remain unmet. Earlier729a13.859s, fdf24.654s and ef13.717s/28.189s are retained; no consistent-latency claim.
 
-Independent one-second observation found the included block at our node273ms before the public reference node. The block became available13.579–14.586s after submission acknowledgement; browser display followed its receipt by382ms. This establishes a network/proposer delay, not a checkpoint wait or a lagging local node. Gossip arrival vs proposer scheduling is not yet separated. Prior real ef779 runs13.717s and28.189s remain recorded; do not discard slow runs or claim a consistent15-second result.
+Native note/nullifier membership reads now overlap kernel initialization, and selected historical-post membership reads are prefetched using exact native metadata and cache. No new notes, scans, globals or skipped validation. Combined focused/native/application checks passed555tests. Next: prime maturity-gated history witnesses through the existing composer preparation and collect the prover's newly instrumented native subcall timings.
 
-Deployed: exact processed owner-log identities, shared native preparation, redundant registration/anchor-read removal, background selected-deposit screening, native kernel class witness prefetch. Production native tests preserve note counts, native authorization and empty-store restoration. Published729a7fb1 removes disabled kernel debug/test work and adds disjoint substage timings;87 focused checks pass. Publication validation rejected an incomplete source package; corrected package passed and was activated without restarting any service. Exact kernel instrumentation identifies238ms between circuits spent on native note/nullifier membership reads. Next patches overlap these reads and the late private historical-note read. No migrations, new private notes, skipped validation or fabricated confirmation.
+Independent prior one-second observation found the included block at our node273ms before the public reference node,13.579–14.586s after submission acknowledgement. This establishes delay beyond the browser send operation, not a checkpoint wait or a lagging local node; gossip arrival vs proposer scheduling remains unseparated. The latest observer started after inclusion, so it adds no propagation timing claim.
 
 Instrumentation requires actual included feed text visible at an animation frame with the composer closed and no obstruction. Previous2aac timings13.507s/13.836s and4a14.780s were DOM-insertion lower bounds, not complete click-to-visible results. The current exact-transaction feed callback closes the matching composer immediately while canonical confirmation and account locking continue independently. Both7a posts promoted to checkpointed automatically.
 
@@ -27,11 +27,11 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/ef77925c197de7f6946a75ccc9dbb30e3832c71a` |
-| Browser SDK SHA256 | `0b7c99a42b5be9a54508ad77ba2665bc20600ecf8827d80c6415011e78099e40` |
+| Browser UI | `/opt/rolling-ui/releases/63c5339e9eda68e029a42998c81ee8aa39b445a7` |
+| Browser SDK SHA256 | `1a534ee97729368744da00b2a8958d25f02ed24d802dfed5b9c28d83159db39a` |
 | Running app | `/opt/rolling-app/releases/ui-7a3ad91ffc14` |
-| Next-start app | `/opt/rolling-app/releases/ui-ef77925c197d` |
-| Prover | `/opt/board-prover/releases/upload-f4cd0f662e3e5253af47a5ff67eb907e72626dda` |
+| Next-start app | `/opt/rolling-app/releases/ui-63c5339e9eda` |
+| Prover | `/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad` |
 | Bok | `/opt/rolling-bok/releases/6cb76060aba07b2eae31284d0e949517dd240d48` |
 
 | Contract | Current address |
