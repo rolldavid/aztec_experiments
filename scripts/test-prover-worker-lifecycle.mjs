@@ -1,0 +1,43 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+// Actual harmless child processes use the production owner/IPC/cleanup code.
+// Only the worker entry is replaced; no native prover, browser or network runs.
+const module=new URL('../prover/process-worker.mjs',import.meta.url).href;
+function run(body){
+ const script=`import cp from 'node:child_process';import {syncBuiltinESMExports} from 'node:module';import fs from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import assert from 'node:assert/strict';
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'proof-worker-lifetime-')),entry=path.join(dir,'child.cjs'),original=cp.fork;let worker;const children=[],assignments=[];
+ const until=async predicate=>{while(!predicate())await new Promise(setImmediate);};
+ try{
+ await fs.writeFile(entry,'process.send({ready:true});process.once("message",value=>{process.send({mode:"real",pid:process.pid,file:value.file},()=>process.disconnect());});');
+ cp.fork=(_file,args,options)=>{assert.deepEqual(args,['--standby']);const child=original(entry,[],options);children.push(child);child.on('message',message=>{if(message.ready)child.ready=true;});const send=child.send.bind(child);child.send=(message,...rest)=>{assignments.push({pid:child.pid,message});return send(message,...rest);};return child;};syncBuiltinESMExports();
+ const {createProcessWorker}=await import(${JSON.stringify(module)});
+ ${body}
+ }finally{if(worker)await worker.close();cp.fork=original;syncBuiltinESMExports();await fs.rm(dir,{recursive:true,force:true});}
+ `;
+ const result=spawnSync(process.execPath,['--input-type=module','--eval',script],{encoding:'utf8',timeout:10000,maxBuffer:65536});assert.equal(result.error,undefined);assert.equal(result.status,0,result.stderr);assert.equal(result.signal,null);
+}
+test('one unused worker is initialized before job, each proof gets a different disposable process',()=>run(`
+ worker=createProcessWorker({proofsEnabled:false});await until(()=>children[0].ready);
+ assert.equal(assignments.length,0);const firstPid=children[0].pid;
+ const first=await worker.prove('/first-private-job');assert.equal(first.pid,firstPid);assert.equal(first.file,'/first-private-job');
+ assert.equal(children.length,2);await until(()=>children[1].ready);assert.equal(assignments.length,1);
+ assert.throws(()=>process.kill(firstPid,0),{code:'ESRCH'});
+ const second=await worker.prove('/second-private-job');assert.notEqual(second.pid,first.pid);assert.equal(second.file,'/second-private-job');
+ assert.deepEqual(assignments.map(x=>x.message),[{file:'/first-private-job'},{file:'/second-private-job'}]);
+ assert.equal(children.length,3);await worker.close();assert.equal(children.length,3);await assert.rejects(worker.prove('/after-close'),/Worker closed/);
+`));
+test('closing unused worker stops owned process without assigning any private job',()=>run(`
+ worker=createProcessWorker({proofsEnabled:false});await until(()=>children[0].ready);const pid=children[0].pid;
+ await worker.close();await worker.close();assert.equal(assignments.length,0);assert.equal(children.length,1);assert.throws(()=>process.kill(pid,0),{code:'ESRCH'});
+`));
+test('failed idle initialization cannot spin, replay or create an unhandled rejection',()=>run(`
+ await fs.writeFile(entry,'process.exit(1);');worker=createProcessWorker({proofsEnabled:false});await until(()=>children[0].exitCode!==null);
+ await new Promise(r=>setTimeout(r,20));assert.equal(children.length,1);assert.equal(assignments.length,0);
+ await assert.rejects(worker.prove('/only-attempt'),/Proof worker failed/);assert.equal(children.length,2);assert.equal(assignments.length,0);await worker.close();
+`));
+test('active worker rejects another assignment and close kills only its owned child',()=>run(`
+ await fs.writeFile(entry,'process.send({ready:true});process.once("message",()=>setInterval(()=>{},1000));');
+ worker=createProcessWorker({proofsEnabled:false});await until(()=>children[0].ready);const job=worker.prove('/held');job.catch(()=>{});
+ await assert.rejects(worker.prove('/second'),/Worker busy/);assert.equal(assignments.length,1);await worker.close();await assert.rejects(job,/Proof worker failed/);assert.equal(children.length,1);
+`));

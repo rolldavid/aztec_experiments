@@ -3,6 +3,7 @@ import {loadRollingArtifacts} from './rolling-artifacts.mjs';
 import {rollingSelectors,validateRollingJob} from './application-policy.mjs';
 import {pluginSelectors,validatePluginPayload} from './plugin-policy.mjs';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import {gunzipSync} from 'node:zlib';
 import {abiDecode} from '@aztec-foundation/noir-noirc_abi';
 import {Barretenberg,AztecClientBackend} from '@aztec-foundation/bb.js';
@@ -18,14 +19,28 @@ const send=value=>new Promise((resolve,reject)=>process.send(value,error=>error?
 let stage="read";
 const setStage=value=>{stage=value;process.send?.({progress:stage});};
 try{
- const {metadata,payload}=decodeJob(await fs.readFile(process.argv[2]));
- if(metadata.mode!==process.env.PROVER_PROOFS)throw Error('Mode mismatch');
+ const standby=process.argv[2]==='--standby';
+ let job=standby?undefined:decodeJob(await fs.readFile(process.argv[2]));
+ if(job&&job.metadata.mode!==process.env.PROVER_PROOFS)throw Error('Mode mismatch');
  setStage('native-init');
  const nativeProfile=workerNativeProfile();
  await initializeWorkerNative(nativeProfile);
  setStage("catalog");
  const applicationProfile=process.env.PROVER_APPLICATION_PROFILE??'legacy';
- const catalog=await loadCircuitCatalog({applicationProfile}),circuits=metadata.circuits.map(id=>{const c=catalog.get(id);if(!c)throw Error('Unknown circuit');return c;});
+ const catalog=await loadCircuitCatalog({applicationProfile});
+ if(standby){
+  // Only invariant public artifacts/native runtime are initialized while idle.
+  // The parent assigns exactly one queue-owned file after this readiness event.
+  const assigned=new Promise((resolve,reject)=>process.once('message',value=>{
+   if(!value||Object.keys(value).join()!=='file'||typeof value.file!=='string'||value.file.length>4096||!path.isAbsolute(value.file))reject(Error('Invalid job assignment'));
+   else resolve(value.file);
+  }));
+  await send({ready:true});
+  stage='read';job=decodeJob(await fs.readFile(await assigned));
+ }
+ const {metadata,payload}=job;
+ if(metadata.mode!==process.env.PROVER_PROOFS)throw Error('Mode mismatch');
+ const circuits=metadata.circuits.map(id=>{const c=catalog.get(id);if(!c)throw Error('Unknown circuit');return c;});
  setStage("decompress");
  const unpacked=gunzipSync(payload,{maxOutputLength:metadata.uncompressedBytes});
  if(unpacked.length!==metadata.uncompressedBytes)throw Error('Witness limit');

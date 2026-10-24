@@ -113,7 +113,7 @@ test('actual harmless child: production worker environment omits absent Bok desp
  const module=new URL('../prover/process-worker.mjs',import.meta.url).href;
  const script=`import cp from 'node:child_process';import {syncBuiltinESMExports} from 'node:module';import fs from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import assert from 'node:assert/strict';
  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'worker-env-')),file=path.join(dir,'harmless.cjs'),original=cp.fork;let worker;
- try{await fs.writeFile(file,'process.send({absent:!Object.hasOwn(process.env,"PROVER_PRIVATE_BOK"),fee:process.env.PROVER_PRIVATE_FEE},()=>process.disconnect());');
+ try{await fs.writeFile(file,'process.send({ready:true});process.once("message",()=>process.send({absent:!Object.hasOwn(process.env,"PROVER_PRIVATE_BOK"),fee:process.env.PROVER_PRIVATE_FEE},()=>process.disconnect()));');
  process.env.PROVER_PRIVATE_BOK='HOSTILE_PARENT_SENTINEL';
  cp.fork=(_file,args,options)=>{assert.equal(options.env.PROVER_PRIVATE_BOK,undefined);return original(file,[],options);};syncBuiltinESMExports();
  const {createProcessWorker}=await import(${JSON.stringify(module)});worker=createProcessWorker({applicationProfile:'rolling',privateBokAddress:undefined,privateFeeAddress:'BOUND_FEE',proofsEnabled:false,timeoutMs:3000});
