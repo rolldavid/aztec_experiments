@@ -45,7 +45,7 @@ async function initialRepositoryContext(session){
  const source=await Promise.all(selected.map(async path=>({path,result:await measureBokStage('tool.read_file',()=>session.call('read_file',{path}))})));
  for(const {path,result}of source){
   if(typeof result?.text!=='string'||!result.text.isWellFormed())throw Error('Invalid repository source');
-  const entry={path,text:result.text,...(path==='browser-tests.json'&&result.browserPlan?{browserPlan:result.browserPlan,...(result.parsedBrowserPlan?{parsedBrowserPlan:result.parsedBrowserPlan}:{})}:{})};
+  const entry={path,text:result.text,...(path==='browser-tests.json'&&result.browserPlan?{browserPlan:result.browserPlan}:{})};
   if(Buffer.byteLength(JSON.stringify({...context,source:[...context.source,entry]}))>23000)context.omitted.push(path);
   else context.source.push(entry);
  }
@@ -59,6 +59,14 @@ async function initialRepositoryContext(session){
  let messages=transcript();
  while(Buffer.byteLength(JSON.stringify(messages))>24576&&context.source.length){context.omitted.push(context.source.pop().path);messages=transcript();}
  if(Buffer.byteLength(JSON.stringify(messages))>24576)throw Error('Repository context bound');
+ // Parsed convenience data must never evict any exact source that fit before it.
+ const parsed=source.find(row=>row.path==='browser-tests.json')?.result.parsedBrowserPlan;
+ const browserEntry=context.source.find(row=>row.path==='browser-tests.json');
+ if(parsed&&browserEntry){
+  browserEntry.parsedBrowserPlan=parsed;const enriched=transcript();
+  if(Buffer.byteLength(JSON.stringify(context))<=23000&&Buffer.byteLength(JSON.stringify(enriched))<=24576)messages=enriched;
+  else delete browserEntry.parsedBrowserPlan;
+ }
  return messages;
 }
 

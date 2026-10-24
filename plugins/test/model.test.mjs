@@ -305,3 +305,15 @@ test('seeded browser plan keeps exact JSON source and parsed steps as distinct u
  assert.equal(result.text,text);assert.deepEqual(result.parsedBrowserPlan,plan);assert.equal(result.contentTrust,'untrusted repository data');
  assert(!input.messages[0].content.includes(text));
 });
+
+
+test('optional parsed plan never evicts exact files near the initial context limit',async()=>{
+ const plan={version:1,scenarios:[{name:'many steps',path:'index.html',steps:Array.from({length:70},()=>({action:'expectVisible',selector:'input[type="checkbox"]'}))}]};
+ const files={'index.html':'I'.repeat(11000),'package.json':'{}','browser-tests.json':JSON.stringify(plan),'test.js':'T'.repeat(3000)};let input;
+ const toolbox={open:async()=>({sourceRevision:'a'.repeat(40),definitions:['list_files','read_file','check_workspace'].map(name=>({function:{name}})),call:async(name,args)=>name==='list_files'?{files:Object.keys(files),truncated:false}:{text:files[args.path],...(args.path==='browser-tests.json'?{browserPlan:{steps:70},parsedBrowserPlan:plan}:{})},close:async()=>{}})};
+ await createAgent({toolbox,instructions:'Help',model:{complete:async value=>{input=value;return {message:{role:'assistant',content:'Done'}};}}}).run({id:'request',text:'Edit'});
+ const seed=input.messages.find(m=>m.tool_calls?.[0]?.id==='initial_repository_list');assert.equal(seed.tool_calls.length,5);
+ const results=input.messages.filter(m=>m.role==='tool').map(m=>JSON.parse(m.content));assert.deepEqual(results[0].omitted,[]);
+ assert.deepEqual(results.slice(1).map(r=>r.text),Object.values(files));assert.equal(results[3].parsedBrowserPlan,undefined);
+ assert(Buffer.byteLength(JSON.stringify([seed,...input.messages.filter(m=>m.role==='tool')]))<=24576);
+});
