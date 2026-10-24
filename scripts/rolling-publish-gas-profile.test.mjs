@@ -15,11 +15,33 @@ import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {ORDINARY_POST_GAS_PROFILE} from '../shared/ordinary-post-fees.mjs';
 
-// Independently measured maximum is 1,868,156 L2. Leave explicit headroom for the
+// The finite UTF-8 transition maximum is 1,868,273 L2. Leave explicit headroom for the
 // finite UTF-8 branches; this is not a dynamic estimate or a private-state quote.
 const publicBound={daGas:2368,l2Gas:2000000};
 const boardClassId='0x0593ff56fceb4afb79463d591a25a1078fd5860e18a5774ef6d6525b31dac58e';
 const artifactSha256='1d4b51ae08830c2bddf9625caebc30c76b006cf80933c76f1baadb5879ef9f8a';
+
+// In the pinned validate_text bytecode the outer loops always visit 32*31 bytes.
+// Accepted input takes one lead/ASCII transition, then 0..3 continuation
+// transitions. No other content-dependent loop exists. These native-qualified
+// costs include replacing the corresponding padding iterations. Every accepted
+// Unicode string decomposes into these four transitions, in any order.
+const codepointGas=[0,306,915,1905,2421];
+const worstBranchBase=1238591;
+function contentGas(bytes){
+ return [...bytes.toString('utf8')].reduce((sum,char)=>sum+codepointGas[Buffer.byteLength(char)],0);
+}
+function maximumContentGas(byteLimit){
+ const best=Array(byteLimit+1).fill(0);
+ for(let size=1;size<=byteLimit;size++)best[size]=Math.max(...[1,2,3,4].filter(width=>width<=size).map(width=>best[size-width]+codepointGas[width]));
+ return best;
+}
+
+test('finite UTF-8 transition bound covers every allowed byte length',()=>{
+ const maxima=maximumContentGas(992);
+ assert.equal(worstBranchBase+maxima[992],1868273);
+ assert(maxima.every(value=>worstBranchBase+value<=publicBound.l2Gas));
+});
 
 function pack(bytes){
  const padded=Buffer.alloc(992);bytes.copy(padded);
@@ -81,6 +103,7 @@ test('native RollingBoard publication gas covers combined post branches and UTF-
    assert.equal(processed[0].txEffect.publicLogs.length,1,label);
    const gas=processed[0].gasUsed.publicGas;
    assert(gas.daGas<=publicBound.daGas,label);assert(gas.l2Gas<=publicBound.l2Gas,label);
+   if(subboard&&named&&relation==='reply-quote')assert.equal(gas.l2Gas,worstBranchBase+contentGas(bytes)-(repost?66:0),label);
    measurements.push({label,daGas:gas.daGas,l2Gas:gas.l2Gas});
   }
   for(const subboard of [0n,81n])for(const named of [false,true])for(const relation of ['root','reply','quote','reply-quote','reply-quote-shared'])for(const [encoding,bytes]of textCases)await run({subboard,named,relation,encoding,bytes});
@@ -89,6 +112,25 @@ test('native RollingBoard publication gas covers combined post branches and UTF-
   for(const length of [1,30,31,32,991])await run({encoding:`padding-${length}`,bytes:Buffer.alloc(length,0x7f)});
   for(const subboard of [0n,81n])for(const named of [false,true])await run({subboard,named,encoding:'empty',bytes:Buffer.alloc(0),repost:true});
   await run({subboard:Fr.MODULUS-6n,encoding:'three-byte',bytes:textCases[2][1],extreme:true,tight:true});
+  // Exercise every successful UTF-8 state-machine branch at every position in a
+  // packed field, including codepoints that cross the 31-byte field boundary.
+  // E0/ED and F0/F4 have distinct continuation bounds; normal leads cover the
+  // remaining branches. Field values never change AVM opcode gas prices.
+  const boundaryChars=['\x01','\x7f','\u0080','\u07ff','\u0800','\u1000','\ud7ff','\ue000','\uffff','\u{10000}','\u{40000}','\u{fffff}','\u{10ffff}'];
+  for(const char of boundaryChars)for(let offset=0;offset<31;offset++){
+   const unit=Buffer.from(char),bytes=Buffer.concat([Buffer.alloc(offset,0x61),unit,Buffer.alloc(992-offset-unit.length,0x7f)]);
+   await run({encoding:`transition-${char.codePointAt(0).toString(16)}-offset-${offset}`,bytes});
+  }
+  // Mixed order, alternating widths and placement of the remainder in a maximal
+  // string must obey the same additive costs, not only homogeneous text.
+  const mixed=[...boundaryChars.join('')],ordered=[mixed,[...mixed].reverse(),mixed.filter((_,i)=>i%2).concat(mixed.filter((_,i)=>!(i%2)))];
+  for(let order=0;order<ordered.length;order++){
+   const chunks=[];let size=0,at=0;
+   while(size+Buffer.byteLength(ordered[order][at%mixed.length])<=992){const unit=Buffer.from(ordered[order][at++%mixed.length]);chunks.push(unit);size+=unit.length;}
+   chunks.push(Buffer.alloc(992-size,0x7f));await run({encoding:`mixed-order-${order}`,bytes:Buffer.concat(chunks)});
+  }
+  for(const location of [0,165,330])await run({encoding:`maximum-remainder-${location}`,bytes:Buffer.from('\uffff'.repeat(location)+'߿'+'\u1000'.repeat(330-location))});
+  for(const location of [0,164,328])await run({encoding:`dp-maximum-${location}`,bytes:Buffer.from('\uffff'.repeat(location)+'\u{10000}\u{10ffff}'+'\u1000'.repeat(328-location)),tight:true});
   t.diagnostic(JSON.stringify({classId:contractClass.id.toString(),artifactSha256:createHash('sha256').update(source).digest('hex'),publicBound,maximum:{daGas:Math.max(...measurements.map(x=>x.daGas)),l2Gas:Math.max(...measurements.map(x=>x.l2Gas))},measurements}));
  }finally{await env[Symbol.asyncDispose]();BarretenbergSync.destroySingleton();}
 });
