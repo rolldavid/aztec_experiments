@@ -69,7 +69,7 @@ function fixture(){
   const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
-    ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
+    prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
       if(['set_preference','mark_thread_read'].includes(input.interaction.name)&&state.preferenceError)throw state.preferenceError;
       if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
@@ -2224,4 +2224,13 @@ test('a late credit-labelled error cannot discard an already journalled transact
  await assert.rejects(app.submitPrepared(first.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
  assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);assert.equal(f.state.sends,0);
  f.receipts.set(f.state.signedHash,new PendingTxReceipt(TxHash.fromString(f.state.signedHash)));assert.notEqual((await app.reconcile(first.intentId)).status,'cancelled');
+});
+
+test('ordinary preparation binds witness prefetch to the selected board, route and hints',async()=>{
+ const f=fixture();await f.app.prepare({type:'post',deposit:'9',content:'Prefetch actual history'},{immediate:true});
+ assert.equal(f.state.witnessPrefetches.length,1);
+ const input=f.state.witnessPrefetches[0];
+ assert.equal(input.board,f.options.deployment.board.instance);assert.equal(input.artifact,f.options.deployment.board.artifact);
+ assert.equal(input.wallet,f.options.accountSession.wallet);assert.equal(input.node,f.options.accountSession.node);
+ assert.equal(input.hints.length,2);
 });

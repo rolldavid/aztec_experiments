@@ -513,9 +513,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     }
     await interaction(await selectedContract(record),record);await guard();
   }
-  async function screeningArguments(board,deposit){
+  async function screeningArguments(board,deposit,prefetch=false){
     const hints=await utility(board,'get_screen_hints',[session.owner,deposit]);
     check(Array.isArray(hints)&&hints.length===2&&!(!hints[0]&&hints[1]),'ROLLING_HISTORY_UNAVAILABLE');
+    if(prefetch){await measure('action.history-witnesses',()=>sdk.prefetchOrdinaryPostWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact,hints}));await localGuard();}
     return [deposit,...hints];
   }
   async function checkBokThread(action,board){
@@ -604,10 +605,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const subboard=field(action.subboard??'0'),kind=action.type==='quote'?2:action.type==='repost'?3:1;
         let policy,screening;
         if(subboard===zero){
-          const observations=await Promise.allSettled([measure('action.policy',()=>postingPolicy(board,subboard,postingAnchor)),screeningArguments(board,field(action.deposit,true))]);
+          const observations=await Promise.allSettled([measure('action.policy',()=>postingPolicy(board,subboard,postingAnchor)),screeningArguments(board,field(action.deposit,true),action.type!=='bok')]);
           const failure=observations.find(value=>value.status==='rejected');if(failure)throw failure.reason;
           [policy,screening]=observations.map(value=>value.value);
-        }else{policy=await postingPolicy(board,subboard);screening=await screeningArguments(board,field(action.deposit,true));}
+        }else{policy=await postingPolicy(board,subboard);screening=await screeningArguments(board,field(action.deposit,true),action.type!=='bok');}
         const [message,length]=text(action.content,32,kind!==3);
         const draft={subboard,parent:field(action.parent??'0',action.type==='reply'),root_reference:field(action.root??'0',action.type==='reply'),kind,
           name_id:field(action.name??'0'),reference:field(action.reference??'0',kind!==1),message,length,
