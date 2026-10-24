@@ -63,8 +63,8 @@ test('public rolling profile requires exact HTTPS query route and explicit nonze
 });
 test('native development PXE disables proof setup without preparing native runtime',async()=>{
  let calls=0;const factory=async()=>{calls++;return {backend:'labelled-native-options'};};
- assert.deepEqual(await rollingPxeOptions(true,factory),{proverEnabled:false});assert.equal(calls,0);
- assert.deepEqual(await rollingPxeOptions(false,factory),{proverEnabled:true,proverOrOptions:{backend:'labelled-native-options'}});assert.equal(calls,1);
+ const dev=await rollingPxeOptions(true,factory);assert.equal(dev.proverEnabled,false);assert.equal(typeof dev.simulator.executeUserCircuit,'function');assert.equal(dev.proverOrOptions,undefined);assert.equal(calls,0);
+ const live=await rollingPxeOptions(false,factory);assert.equal(live.proverEnabled,true);assert.deepEqual(live.proverOrOptions,{backend:'labelled-native-options'});assert.equal(typeof live.simulator.executeUserCircuit,'function');assert.equal(calls,1);
 });
 
 test('rolling intent is durable before preparation and exact signed bytes before sole send',async()=>{
@@ -286,7 +286,7 @@ test('actual SDK PrivateBok four-argument constructor derives identity without w
   const classId=(await getContractClassFromArtifact(artifact)).id.toString();assert.equal(instance.originalContractClassId.toString(),classId);assert.equal(instance.currentContractClassId.toString(),classId);assert.equal(instance.deployer.toString(),deployer.toString());
   await assert.rejects(Contract.deploy(wallet,artifact,[...args,deployer],'init',{deployer,salt}).getInstance(),/expects 4 argument/);
   const changed=await Contract.deploy(wallet,artifact,[args[0],AztecAddress.fromStringUnsafe(field(3)),...args.slice(2)],'init',{deployer,salt}).getInstance();assert.notEqual(changed.address.toString(),instance.address.toString());
-  assert.equal(walletReads,0);assert.equal(network,0);assert.deepEqual(await rollingPxeOptions(true,()=>assert.fail()),{proverEnabled:false});adapter.verify();
+  assert.equal(walletReads,0);assert.equal(network,0);assert.equal((await rollingPxeOptions(true,()=>assert.fail())).proverEnabled,false);adapter.verify();
  }finally{
   try{if(bb){await bb.Barretenberg.destroySingleton();bb.BarretenbergSync.destroySingleton();}}finally{globalThis.fetch=oldFetch;adapter.close();}
  }

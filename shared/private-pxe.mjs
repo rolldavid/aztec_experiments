@@ -1,3 +1,4 @@
+import {withOwnerEnvelopeOracles} from './owner-envelope.mjs';
 import {RoutedKernelProver} from './routed-kernel-prover.mjs';
 import {createRemoteProverClient} from './remote-prover-client.mjs';
 import {provingEnabledForNode} from './proving-policy.mjs';
@@ -106,18 +107,19 @@ export async function createPXE(node,config,options={}) {
     selected={...options};delete selected.proverOrOptions;delete selected.remoteProver;
   }else if(!readOnly && typeof window !== 'undefined') {
     const proverOrOptions=await initializeBrowserProver(options.proverOrOptions,{verifierOnly:Boolean(remote)});
-    const simulator=options.simulator??new WASMSimulator();
+    const simulator=options.simulator??withOwnerEnvelopeOracles(new WASMSimulator(privateLogger));
     selected={...options,simulator,proverOrOptions:new BrowserPrivateKernelProver(simulator,{...proverOrOptions,logger:privateLogger},{proofsEnabled,transport:transport(remote)})};
   }else if(!readOnly && remote){
-    const simulator=options.simulator??new WASMSimulator();selected={...options,simulator,proverOrOptions:route(simulator,options.proverOrOptions??{})};
+    const simulator=options.simulator??withOwnerEnvelopeOracles(new WASMSimulator(privateLogger));selected={...options,simulator,proverOrOptions:route(simulator,options.proverOrOptions??{})};
   }else if(!readOnly && config?.proverEnabled===true){
     if(['proverOrOptions','backend','threads','skipSrsInit','bbPath'].some(key=>options[key]!==undefined||config[key]!==undefined)||options.simulator!==undefined||!cliProverInitialization)throw cliFailure();
     const initialized=cliProverInitialization;
     const singleton=await Barretenberg.initSingleton({...initialized.options,logger:discard});
     if(singleton!==initialized.singleton) {cliProverInitialization=undefined;throw cliFailure();}
-    const simulator=new WASMSimulator();
+    const simulator=withOwnerEnvelopeOracles(new WASMSimulator(privateLogger));
     selected={...options,simulator,proverOrOptions:new BrowserPrivateKernelProver(simulator,{...initialized.options,logger:privateLogger},{proofsEnabled:true,transport:null})};
   }
+  selected={...selected,simulator:selected.simulator??withOwnerEnvelopeOracles(new WASMSimulator(privateLogger))};
   const pxe=await createSdkPXE(node,config,{...selected,loggers:{store:privateLogger,pxe:privateLogger,prover:privateLogger}});
   privatePXERoutes.set(pxe,{source:node,cached:pxe.node});
   if(readOnly)pxe.proveTx=async()=>{throw new Error('Read-only PXE cannot prove transactions');};

@@ -254,7 +254,9 @@ export async function reconcileRollingOperation({record,development,expected,rea
 
 export async function rollingPxeOptions(development,nativeOptions) {
  if(typeof development!=='boolean')throw rejected();
- return development?{proverEnabled:false}:{proverEnabled:true,proverOrOptions:await nativeOptions()};
+ const [{WASMSimulator},{withOwnerEnvelopeOracles}]=await Promise.all([import('@aztec-labs/simulator/client'),import('../shared/owner-envelope.mjs')]);
+ const simulator=withOwnerEnvelopeOracles(new WASMSimulator());
+ return development?{proverEnabled:false,simulator}:{proverEnabled:true,proverOrOptions:await nativeOptions(),simulator};
 }
 
 export async function bindRollingJournal(store,identity,newSalt) {

@@ -15,7 +15,7 @@ import {JsonRpcProvider,Wallet,Contract,Interface,keccak256} from 'ethers';
 import {derivePrivateFeeInstance,createPrivateFeeDeployment,preparePrivateFeePayment,requirePublishedPrivateFee} from '../../shared/private-fee-client.mjs';
 import {fundPrivateFees,recoverPrivateFeeFunding,recoverPrivateFeeClaim} from '../../shared/private-fee-funding.mjs';
 import {createFileJournalStorage} from '../../apps/src/billboard/user/transaction-journal-store.mjs';
-import {fileState,recordedTransaction} from '../operations.mjs';
+import {fileState,recordedTransaction,rollingPxeOptions} from '../operations.mjs';
 const [phase,configPath,directory]=process.argv.slice(2);
 if(!['publish','mint','bridge','recover-bridge','claim'].includes(phase)||!directory)throw Error('Usage: fees.mjs publish|mint|bridge|recover-bridge|claim CONFIG AUTHOR_DIRECTORY');
 const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
@@ -45,7 +45,7 @@ async function run(){try{
   }
   const operator=phase==='publish'?await read(config.operatorFile):actor;
   const recordedNode=new Proxy(node,{get(target,key){if(key!=='sendTx')return Reflect.get(target,key);return async tx=>{const hash=String(await tx.getTxHash());await store.write({...store.read(),operations:{...store.read().operations,[phase]:{hash,raw:tx.toBuffer().toString('hex')}}});return node.sendTx(tx);};}});
-  wallet=await EmbeddedWallet.create(recordedNode,{ephemeral:true,pxe:{proverEnabled:true,proverOrOptions:{backend:BackendType.NativeUnixSocket,threads:1}}});
+  wallet=await EmbeddedWallet.create(recordedNode,{ephemeral:true,pxe:await rollingPxeOptions(false,async()=>({backend:BackendType.NativeUnixSocket,threads:1}))});
   const account=await wallet.createSchnorrInitializerlessAccount(Fr.fromString(operator.secret),Fr.fromString(operator.salt),GrumpkinScalar.fromString(operator.signingKey));
   const wait={timeout:0,waitForStatus:TxStatus.CHECKPOINTED};
   const old=store.read().operations[phase];
