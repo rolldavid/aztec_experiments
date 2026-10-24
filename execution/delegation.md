@@ -1,14 +1,14 @@
 # Current delivery checkpoint — owner-only discovery
 
-Live performance release remains14e43947: short post33.171s and maximum992-byte
+Measured performance baseline14e43947: short post33.171s and maximum992-byte
 Unicode post18.075s from click to Aztec-included visible DOM. Latest goal15s is
 not met. Upload/acceptance609/656ms meets its target; preparation2125/1984ms and
 private witness2589/2588ms still exceed theirs. No checkpoint gate before display.
 
 Root integrated independently reviewed host encryption/oracle commits as
 f807827e and f57b1922. Actual compiled Noir/WASM plus affected wallet/operator
-checks pass134/134; CLI wrapper checks pass4/4. These are not yet deployed and
-are not evidence of complete owner-only contract integration or a speedup.
+checks pass134/134; CLI wrapper checks pass4/4. Browser host changes and journal read optimization are now deployed as a8ae686d;
+these checks are not evidence of complete owner-only contract integration or a speedup.
 
 - pending_reply_ui: zero-additional-note owner discovery and board/FPC integration;
   fresh-browser restoration and native partial-refund validation.
@@ -122,3 +122,11 @@ actual avoidable delay or an explicitly authorized network/policy change.
 Read `START_HERE.md`, `docs/BOK_LATENCY.md` and
 `execution/evidence/G21/stable6/bok-performance/typed-confirmation-audit.json`.
 Old test data is disposable; no migration or recovery project is authorized.
+
+## Next normal release integration
+
+Automatic withdrawal changes from the side conversation are uncommitted in this
+shared checkout and must be reviewed/integrated with the next normal release, not
+published separately. proposed_feed_design reviews wait/cancel, confirmed screening
+progress and no automatic resubmission. Root owns combined build and acceptance.
+Current static a8ae686d publication completed before this handoff arrived.
