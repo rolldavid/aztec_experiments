@@ -44,8 +44,9 @@ function dense(input,max=Infinity){assert(Array.isArray(input));const length=Obj
  */
 export function createRollingPreferenceReader(input){
  try{
-  const {sdk,pxe,node,owner,deployment,readHead,contextGuard,privateStore,walletSecret,walletSalt}=input;
-  assert(typeof readHead==='function'&&typeof contextGuard==='function');
+  const {sdk,pxe,node,owner,deployment,readHead,contextGuard,privateStore,walletSecret,walletSalt,measure=(_stage,read)=>read()}=input;
+  assert(typeof readHead==='function'&&typeof contextGuard==='function'&&typeof measure==='function');
+  const phase=(name,read)=>measure('preference.'+name,read);
   const trusted=sdk.isTrustedPrivateNode.bind(sdk),routed=sdk.isPrivatePXEForNode.bind(sdk),inspect=sdk.inspectTrustedNode.bind(sdk);
   const hashFunction=sdk.poseidon2HashWithSeparator.bind(sdk);
   const sync=pxe.sync.bind(pxe),header=pxe.getSyncedBlockHeader.bind(pxe),getEvents=pxe.getPrivateEvents.bind(pxe);
@@ -73,14 +74,15 @@ export function createRollingPreferenceReader(input){
   async function guard(){current();await contextGuard();current();}
   async function checked(fn){await guard();const value=await fn();await guard();return value;}
   const hash=async(fields,domain)=>{const result=await checked(()=>hashFunction(fields,domain));return result.toBigInt();};
-  async function canonical(height){
-   natural(height,true);const block=await checked(()=>getBlock(height));
-   assert(block&&Number(block.header?.globalVariables?.blockNumber)===height);return hex(block.blockHash);
+  async function canonical(height,{fresh=false}={}){
+   natural(height,true);if(!fresh&&active.headers.has(height))return active.headers.get(height);
+   const block=await checked(()=>getBlock(height));
+   assert(block&&Number(block.header?.globalVariables?.blockNumber)===height);const hash=hex(block.blockHash);if(!fresh)active.headers.set(height,hash);return hash;
   }
   async function captureAnchor(){
    const value=await checked(header),blockNumber=natural(Number(value?.globalVariables?.blockNumber));
    const typedHash=await checked(()=>value.hash()),blockHash=hex(typedHash);
-   assert(await canonical(blockNumber)===blockHash);
+   assert(await canonical(blockNumber,{fresh:true})===blockHash);
    const anchor=Object.freeze({blockNumber,blockHash});anchorHashes.set(anchor,typedHash);return anchor;
   }
   async function captureHead(){
@@ -92,9 +94,11 @@ export function createRollingPreferenceReader(input){
    const instance=await checked(()=>getContract(address,{hash:typedHash}));
    assert(instance&&hex(instance.address)===board&&hex(instance.currentContractClassId)===classId&&hex(instance.originalContractClassId)===classId);
   }
-  async function recheck(anchor,head){
-   await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled}));
-   assert(equal(await captureAnchor(),anchor)&&equal(await captureHead(),head));await checkClass(anchor);
+  async function recheck(anchor){
+   // One account lease and autoSync:false keep native state at this anchor.
+   // Its class and private head are immutable. Re-read the selected native
+   // header and canonical hash, never reuse those publication fences.
+   assert(equal(await captureAnchor(),anchor));
   }
   function cacheRecord(value){
    const c=exact(value,['schemaVersion','scope','epoch','checkpoint','prefix','markers']);
@@ -113,13 +117,16 @@ export function createRollingPreferenceReader(input){
     const settings=exact(options,keys);signal=settings.signal;deadlineAt=settings.deadlineAt;
     assert(signal===undefined||signal instanceof AbortSignal);assert((deadlineAt===undefined||Number.isSafeInteger(deadlineAt)));
    }catch{throw error('ROLLING_PREFERENCE_READER_INVALID');}
-   active={signal,deadlineAt};
+   active={signal,deadlineAt,headers:new Map()};
    try{
-    await guard();await checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled}));
+    await guard();await phase('readiness',()=>checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled})));
     if(!slot)slot=await checked(()=>createEncryptedJournalSlot({storage:{read:key=>checked(()=>storeRead(key)),compareAndSwap:(...args)=>checked(()=>storeCAS(...args))},walletSecret,walletSalt,scopeText,keyDomain:DOMAIN}));
     if(!decoder)decoder=await checked(()=>createPreferenceEventDecoder({sdk:decoderSdk,artifact}));
     const saved=await checked(()=>slot.read());const cache=saved.value===null?null:cacheRecord(saved.value);
-    await checked(sync);const anchor=await captureAnchor(),head=await captureHead();await checkClass(anchor);
+    await phase('sync',()=>checked(sync));const anchor=await phase('anchor',captureAnchor);
+    const reads=await Promise.allSettled([phase('head',captureHead),phase('class',()=>checkClass(anchor))]);
+    const failure=reads.find(read=>read.status==='rejected');if(failure)throw failure.reason;const head=reads[0].value;
+    active.headers.set(anchor.blockNumber,anchor.blockHash);
     let epoch=cache?.epoch??0,fromBlock=1,fold,markers=null;
     if(cache){
      const retained=cache.checkpoint.blockNumber<=anchor.blockNumber&&await canonical(cache.checkpoint.blockNumber)===cache.checkpoint.blockHash;
@@ -141,7 +148,7 @@ export function createRollingPreferenceReader(input){
      // own row/byte limits. Do not turn empty history into per-block RPC pages.
      for(;;){
       let capacity=false;
-      try{rows=await checked(()=>getEvents(decoder.selector,{contractAddress:address,scopes:[recipient],fromBlock,toBlock}));}
+      try{rows=await phase('events',()=>checked(()=>getEvents(decoder.selector,{contractAddress:address,scopes:[recipient],fromBlock,toBlock})));}
       catch(error){if(error?.message!=='PXE_PRIVATE_EVENT_QUERY_LIMIT')throw error;capacity=true;}
       if(!capacity){assert(Array.isArray(rows));if(rows.length<=PREFERENCE_READER_LIMITS.rows)break;}
       assert(toBlock-fromBlock>1);toBlock=fromBlock+Math.floor((toBlock-fromBlock)/2);
@@ -174,21 +181,21 @@ export function createRollingPreferenceReader(input){
       }
       markers.canonical.push(BigInt(checkedBlocks.get(marker.throughBlock))===BigInt(marker.blockHash));markers.nextIndex++;count++;
      }
-     await recheck(anchor,head);
+     await phase('canonical-fence',()=>recheck(anchor));
      const next={schemaVersion:1,scope:fullScope,epoch,checkpoint,prefix,markers};
-     await checked(()=>slot.write(saved,next));
+     await phase('persist',()=>checked(()=>slot.write(saved,next)));
      // A cache commit is not UI publication. If canonicality changes during
      // encryption/CAS, retain the record for checked recovery but publish nothing.
-     await recheck(anchor,head);
+     await phase('canonical-fence',()=>recheck(anchor));
      const progress=Object.freeze({scannedThrough,nextBlock:scannedThrough+1,anchorBlock:anchor.blockNumber,processedRevision:prefix.head.revision,targetRevision:head.revision,epoch,markersChecked:markers.nextIndex,markersTotal:completed.readMarkers.length});
      if(markers.nextIndex<completed.readMarkers.length)return Object.freeze({status:'recovering',complete:false,progress});
      const valid=Object.freeze(completed.readMarkers.filter((_,i)=>markers.canonical[i]));
      const orphaned=Object.freeze(completed.readMarkers.filter((_,i)=>!markers.canonical[i]));
      return Object.freeze({status:'complete',complete:true,anchor,preferences:Object.freeze({...completed,readMarkers:valid}),orphanedReadMarkers:orphaned,progress});
     }
-    await recheck(anchor,head);
-    await checked(()=>slot.write(saved,{schemaVersion:1,scope:fullScope,epoch,checkpoint,prefix,markers:null}));
-    await recheck(anchor,head);
+    await phase('canonical-fence',()=>recheck(anchor));
+    await phase('persist',()=>checked(()=>slot.write(saved,{schemaVersion:1,scope:fullScope,epoch,checkpoint,prefix,markers:null})));
+    await phase('canonical-fence',()=>recheck(anchor));
     return Object.freeze({status:'recovering',complete:false,progress:Object.freeze({scannedThrough,nextBlock:scannedThrough+1,anchorBlock:anchor.blockNumber,processedRevision:prefix.head.revision,targetRevision:head.revision,epoch,markersChecked:0,markersTotal:null})});
    }catch{throw error('ROLLING_PREFERENCE_READER_UNAVAILABLE');}
    finally{active=null;}

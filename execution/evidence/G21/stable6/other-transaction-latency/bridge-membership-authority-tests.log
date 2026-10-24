@@ -1,0 +1,18 @@
+✔ L2 delivery pending differs from reverted L1 (229.822208ms)
+✔ same operation cannot reuse a claim after l1-fork (17.063667ms)
+✔ same operation cannot reuse a claim after l2-fork (18.644041ms)
+✔ same operation cannot reuse a claim after root (17.669458ms)
+✔ same operation cannot reuse a claim after receipt-block (14.593666ms)
+✔ same operation cannot reuse a claim after receipt-revert (15.507ms)
+✔ same operation cannot reuse a claim after missing (15.86275ms)
+✔ same operation cannot reuse a claim after guard (12.695709ms)
+✔ native membership cache evicts rejected reads and never suppresses canonical reorg checks (23.881ms)
+✔ cached membership is still checked against exact leaf index and native anchor root (18.408375ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1290.8285

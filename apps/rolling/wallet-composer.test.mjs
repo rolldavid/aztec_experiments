@@ -24,7 +24,7 @@ function dom(t){
   }
   querySelectorAll(selector){return this.children.flatMap(n=>[...(selector.split(',').some(s=>n.matches(s))?[n]:[]),...n.querySelectorAll(selector)]);}querySelector(selector){return this.querySelectorAll(selector)[0]??null;}
   addEventListener(type,fn){const list=this.events.get(type)??[];list.push(fn);this.events.set(type,list);}fire(type){for(const fn of this.events.get(type)??[])fn({target:this,preventDefault(){}});}
-  focus(){document.activeElement=this;}getClientRects(){return this.hidden?[]:[{}];}scrollIntoView(){}showModal(){this.open=true;}close(){this.open=false;this.fire('close');}reportValidity(){return true;}
+  focus(){document.activeElement=this;}getClientRects(){return this.hidden?[]:[{}];}scrollIntoView(){this.scrollCount=(this.scrollCount??0)+1;}showModal(){this.open=true;}close(){this.open=false;this.fire('close');}reportValidity(){return true;}
  }
  document={createElement:t=>new Element(t),createTextNode:t=>new Element('#text',t),body:new Element('body')};document.activeElement=document.body;
  document.querySelector=s=>document.body.querySelector(s);document.querySelectorAll=s=>document.body.querySelectorAll(s);
@@ -788,11 +788,12 @@ test('same proposed head checkpoint promotion coalesces behind pending observati
  f.panel.observePublicPosts([],{checkpoint,confirmationCheckpoint:next});await new Promise(setImmediate);assert.equal(reads,2);
 });
 
-test('qualified like native credit shortage leaves no blocking action and permits an explicit retry',{timeout:3000},async t=>{
- let tries=0;const f=await fixture(t,{posting:{submit:async()=>{if(++tries===1)throw Object.assign(Error('PRIVATE_BALANCE_SENTINEL'),{code:'BB_LIKE_FEE_CREDIT_REQUIRED'});}}});
+for(const preference of [false,true])test(`qualified ${preference?'preference':'like'} native credit shortage leaves no blocking action and permits an explicit retry`,{timeout:3000},async t=>{
+ let tries=0;const f=await fixture(t,{posting:{submit:async()=>{if(++tries===1)throw Object.assign(Error('PRIVATE_BALANCE_SENTINEL'),{code:preference?'BB_PREFERENCE_FEE_CREDIT_REQUIRED':'BB_LIKE_FEE_CREDIT_REQUIRED'});}}});
  await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
- const first=await f.panel.act({type:'like',post:'42'});assert.equal(first.status,'failed');assert(first.message.includes('Add posting credit to cover this action'));assert(!first.message.includes('PRIVATE_BALANCE_SENTINEL'));
- assert.equal((await f.panel.act({type:'like',post:'42'})).status,'confirmed');assert.equal(tries,2);assert.equal(f.document.querySelector('dialog').open,false);
+ const action=preference?{type:'preference',kind:1,target:'42',enabled:true}:{type:'like',post:'42'};
+ const first=await f.panel.act(action);assert.equal(first.status,'failed');assert(first.message.includes('Add posting credit to cover this action'));assert(!first.message.includes('PRIVATE_BALANCE_SENTINEL'));
+ assert.equal((await f.panel.act(action)).status,'confirmed');assert.equal(tries,2);assert.equal(f.document.querySelector('dialog').open,false);
 });
 
 for(const completion of ['included','confirmed'])test(`new ${completion} name becomes selectable before unrelated account refresh completes`,{timeout:3000},async t=>{
@@ -807,4 +808,40 @@ for(const completion of ['included','confirmed'])test(`new ${completion} name be
  assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.equal(identity.querySelector('select').disabled,false);assert.equal(identity.querySelector('select').value,'7');
  identity.querySelector('select').value='0';identity.querySelector('select').fire('change');balance.resolve();await new Promise(setImmediate);
  assert.equal(identity.querySelector('select').value,'0','later balance refresh does not restore the old selection');assert.equal(f.core().names,1);assert.equal(f.core().status,2);
+});
+
+test('inline name completion reveals its verified selected identity once, not on later balance refresh', {timeout:3000},async t=>{
+ const balance=Promise.withResolvers(),balanceStarted=Promise.withResolvers();
+ const f=await fixture(t,{defaults:{},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{nameAvailability:{id:'7'},namesRead:async()=>({identities:['7'],records:[{id:'7',first:'River',last:'Moss'}],nextCursor:null}),balanceRefresh:()=>{balanceStarted.resolve();return balance.promise;}}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);f.panel.close();
+ const select=identity.querySelector('select');select.value='create';select.fire('change');await f.document.until(()=>f.document.querySelector('[data-action-review]')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');f.document.querySelector('[data-action-review]').fire('click');await balanceStarted.promise;
+ const selected=identity.querySelector('select');assert.equal(selected.value,'7');assert.equal(f.document.activeElement,selected);assert.equal(selected.scrollCount,1);assert.equal(f.document.querySelector('dialog').open,false);
+ selected.value='0';selected.fire('change');const changed=identity.querySelector('select'),scrolls=changed.scrollCount??0;balance.resolve();await new Promise(setImmediate);assert.equal(identity.querySelector('select').value,'0');assert.equal(selected.scrollCount,1);assert.equal(changed.scrollCount??0,scrolls);
+});
+
+async function bokAccountingActionFixture(t,posting){
+ const f=await fixture(t,{defaults:{},posting,balanceRead:async()=>({available:true,availableCredit:'10000000'})});
+ f.session.withdrawal={};f.session.application.readBalances=async()=>({fee:{available:'1000000000000000000'},bok:{available:'10000000'},collateral:{deposits:[],nextCursor:null}});
+ f.session.application.readBokAccounting=async()=>({complete:true,anchor:{blockNumber:108},available:'10000000',totals:{available:'60',reserved:'0',charged:'30',refunded:'10'},requests:[{requestId:'42',state:'2',available:'60',reserved:'0',charged:'30',refunded:'10'}]});
+ f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Balance and withdrawals').fire('click');
+ await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Check all Bok requests')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Check all Bok requests').fire('click');
+ await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Release unused credit')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ return f;
+}
+for(const [label,type] of [['Release unused credit','cancel-bok-request'],['Expire request','expire-bok-request']])test(`Bok ${type} submits once directly and releases UI at included completion`,{timeout:3000},async t=>{
+ const held=Promise.withResolvers(),entered=Promise.withResolvers();
+ const f=await bokAccountingActionFixture(t,{status:'included',txHash:includedPost().txHash,inclusion:includedPost(),submit:()=>{entered.resolve();return held.promise;}});
+ f.document.querySelectorAll('button').find(b=>b.textContent===label).fire('click');await entered.promise;
+ assert.deepEqual(f.prepared(),{type,requestId:'42'});assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.document.querySelector('[data-action-confirm]'),null);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('[data-action-confirm]'),null);assert(!f.document.body.textContent.includes('Review cost'));
+ await new Promise(setImmediate);
+});
+test('Bok cancellation with uncertain submit leaves saved unknown action and no duplicate confirm',{timeout:3000},async t=>{
+ const f=await bokAccountingActionFixture(t,{submit:async()=>{throw Error('transport unknown');}});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Release unused credit').fire('click');
+ await f.document.until(()=>f.document.querySelector('[role=alert]')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('[data-action-confirm]'),null);assert(f.document.body.textContent.includes('Check your action'));
 });

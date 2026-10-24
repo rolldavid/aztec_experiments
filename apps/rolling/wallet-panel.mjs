@@ -86,7 +86,7 @@ function nameFailure(failure){
 }
 function actionFailure(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure??{},'code')?.value;
-  if(code==='BB_LIKE_FEE_CREDIT_REQUIRED')return 'Add posting credit to cover this action’s maximum cost. No transaction was sent.';
+  if(['BB_LIKE_FEE_CREDIT_REQUIRED','BB_PREFERENCE_FEE_CREDIT_REQUIRED'].includes(code))return 'Add posting credit to cover this action’s maximum cost. No transaction was sent.';
   if(code==='BB_POST_FEE_CREDIT_REQUIRED')return 'Add posting credit to cover this post’s maximum cost. No transaction was sent.';
   if(code==='BB_POST_FEE_PROFILE_MISMATCH')return 'Posting costs need an application update. Reload the page. No transaction was sent.';
   if(code==='BB_FEE_RESERVATION_UNAFFORDABLE')return 'A fee estimate could not fit your posting credit. No transaction was sent. You can add posting credit and try again.';
@@ -204,7 +204,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  let postingInProgress=false,actionOperation=null,operationSettled=Promise.resolve();
  let bokHost=null,updateBokForm=()=>{},bokRefreshNeeded=false;
  const ownBokPosts=new Map();
- let identityHost=null,inlineCreation=false,accountSettingsOpen=false,selectedName='0',selectedLabel='Anonymous';
+ let identityHost=null,inlineCreation=false,accountSettingsOpen=false,selectedName='0',selectedLabel='Anonymous',createdNameFeedback=null;
  const actionFeedback=el('span',{class:'inline-action-feedback',role:'status','aria-live':'polite',hidden:''});
  const identityControls=el('div',{class:'posting-name-controls'}),inlineName=el('section',{class:'inline-name',hidden:''});
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
@@ -430,9 +430,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }).finally(()=>{finishRefresh();accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();}});
  }
  async function work(fn,failureMessage=actionFailure,{posting=false,action=false}={}){
-  if(busy)return;const finishTiming=posting?beginRollingMeasure('post.interaction'):action?beginRollingMeasure('action.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;actionOperation=null;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
+  if(busy)return;createdNameFeedback=null;const finishTiming=posting?beginRollingMeasure('post.interaction'):action?beginRollingMeasure('action.interaction'):()=>{};let finishOperation;operationSettled=new Promise(resolve=>{finishOperation=resolve;});const operationFocus=document.activeElement;busy=true;postingInProgress=posting;actionOperation=null;clearOperationFeedback();controlsBusy(true);if(posting){note('Posting…');for(const button of content.querySelectorAll('[data-action-review]'))button.textContent='Posting…';}
   try{if(initializationPending)await initializationPending;await composerPreparation;await accountRefreshPending;await bokBalance.settled();await topupQuotePending;await fn();}catch(failure){notice='';stopFunding();recoveryInspection=null;note('');error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure===rulesFailure?'Current board rules are unavailable, changed, or reject new posts. Review the rules below before continuing. Nothing was sent.':failure===connectionFailure?'Your account could not connect. Check your connection and try again.':failure===avatarFailure?'This image could not be prepared. Choose a smaller still PNG, JPEG or WebP image.':failureMessage(failure)??message;}finally{
    try{if(actionOperation?.included&&!postingInProgress&&(error||actionOperation.failed)){actionFeedback.textContent=error?(actionOperation.confirmed?'Confirmed. Account details could not refresh.':'The change could not be confirmed.'):actionOperation.resultStatus==='reverted'?'The change reverted.':'Confirmation is still pending.';actionFeedback.hidden=false;}if(setupMode){setupMode=null;note('');}if(actionOperation?.included&&actionOperation.modal&&actionOperation.epoch===accountEpoch&&unlocked()&&(error||intent||actionOperation.failed)&&!dialog.open)dialog.showModal();postingInProgress=false;actionOperation=null;if(invalidated||reloadRequired)clearPrivateView();busy=false;render(document.activeElement===document.body?operationFocus:document.activeElement);
+   const created=createdNameFeedback;createdNameFeedback=null;
+   if(created&&created.epoch===accountEpoch&&created.name===selectedName&&unlocked()){
+    const selector=identityControls.querySelector('select');if(selector?.isConnected){selector.focus({preventScroll:true});selector.scrollIntoView({block:'nearest'});}
+   }
    // Failed actions must expose their feedback even when the form was scrolled.
    if(error&&dialog.open){const alert=content.querySelector('[role=alert]');alert.focus({preventScroll:true});alert.scrollIntoView({block:'nearest'});}}finally{transactionTiming.complete();finishTiming();finishOperation();requestAccountRefresh();requestComposerPreparation();}
   }
@@ -713,8 +717,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     content.append(paragraph('Complete owned-request accounting at block '+bokAccounting.anchor.blockNumber+'. Allocated '+decimal(bokAccounting.totals.available,6)+', reserved '+decimal(bokAccounting.totals.reserved,6)+', charged '+decimal(bokAccounting.totals.charged,6)+', returned '+decimal(bokAccounting.totals.refunded,6)+' USDC. Returned credit is already part of your unallocated balance; it is not added again.'));
     for(const r of bokAccounting.requests){const area=el('section',{'aria-label':'Owned Bok request'});area.append(paragraph('Request '+r.requestId.slice(0,10)+'… — allocated '+decimal(r.available,6)+', reserved '+decimal(r.reserved,6)+', charged '+decimal(r.charged,6)+', returned '+decimal(r.refunded,6)+' USDC.'));
      if(['1','2'].includes(r.state)){
-      if(r.reserved==='0')area.append(button('Review release of unused credit',()=>void work(async()=>{intent=await session.application.prepare({type:'cancel-bok-request',requestId:r.requestId});})));
-      area.append(paragraph('Expiry is checked by the contract. After its deadline, only unreserved credit returns; any unresolved reservation stays fenced.'),button('Review request expiry',()=>void work(async()=>{intent=await session.application.prepare({type:'expire-bok-request',requestId:r.requestId});})));
+      if(r.reserved==='0')area.append(button('Release unused credit',()=>void work(()=>executeAction({type:'cancel-bok-request',requestId:r.requestId}),actionFailure,{action:true})));
+      area.append(paragraph('After expiry, unreserved credit returns to your balance.'),button('Expire request',()=>void work(()=>executeAction({type:'expire-bok-request',requestId:r.requestId}),actionFailure,{action:true})));
      }else area.append(paragraph(r.state==='4'?'This request is closed. Returned credit is already included in your unallocated balance.':'This request is fenced. Unreserved credit has returned; the reserved amount remains locked until the operator reconciles its actual charge.'));content.append(area);
     }
    }else content.append(paragraph('Complete request accounting is not yet available; unlisted reservations are not zero.'));
@@ -753,7 +757,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   content.append(button('Review Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.withdrawal.prepare({});checkAccount(epoch);refundQuote=value;}),true),button('Review saved Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking the saved Ethereum refund; waiting for network confirmation.');const value=await session.withdrawal.prepareSaved({});note('');checkAccount(epoch);if(value.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else refundQuote=value;}),true),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking existing Ethereum refund; waiting for network confirmation.');const result=await session.withdrawal.recover();note('');checkAccount(epoch);if(result.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else notice='Refund '+result.status+'. A new refund is never sent automatically.';})));
  }
  const postingTypes=new Set(['post','reply','quote','repost','bok']);
- const immediateTypes=new Set([...postingTypes,'like','unlike','preference','read-marker','name','bio','avatar','subboard',...MODERATOR_TYPES]),readerActionTypes=new Set(['like','unlike','preference','read-marker']);
+ const immediateTypes=new Set([...postingTypes,'like','unlike','preference','read-marker','name','bio','avatar','subboard','cancel-bok-request','expire-bok-request',...MODERATOR_TYPES]),readerActionTypes=new Set(['like','unlike','preference','read-marker']);
  const rulesId=action=>postingTypes.has(action?.type)&&field(action.subboard)?BigInt(action.subboard).toString():null;
  function rulesReady(action){return !postingTypes.has(action?.type)||postingRules?.id===rulesId(action)&&postingRules.status==='ready'&&!postingRules.value.rejected;}
  function validateRules(data,id){
@@ -944,7 +948,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     await measureRollingStage('action.required-account-refresh',()=>loadView({loadIdentity:true}));
     const registered=result.nameAvailability?.id;
     const owned=field(registered)?identityRecords.find(record=>BigInt(record.id)===BigInt(registered)):null;
-    if(owned){selectedName=owned.id;selectedLabel=ownedLabel(owned.id);if(inlineCreation){inlineCreation=false;restoreDialogContent();view='overview';notice='Name created. You’re posting as '+ownedLabel(selectedName)+'.';}}
+    if(owned){selectedName=owned.id;selectedLabel=ownedLabel(owned.id);if(inlineCreation){createdNameFeedback={epoch:accountEpoch,name:owned.id};inlineCreation=false;restoreDialogContent();view='overview';notice='Name created. You’re posting as '+ownedLabel(selectedName)+'.';}}
    }
    if(immediateTypes.has(result.action?.type)){
     // Confirmation finishes the interaction. Feed and affected balance reads
@@ -981,7 +985,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    let result;
    try{result=await session.application.executeAction(action,{...(expectedRules===undefined?{}:{postingRules:expectedRules}),onPrepared:prepared=>{checkAccount(epoch);includedObservation=null;intent=prepared;if(immediateTypes.has(prepared.action?.type)){actionFeedback.textContent='';actionFeedback.hidden=true;actionOperation={epoch,intentId:prepared.intentId,included:false,modal,onIncluded};}}});checkAccount(epoch);}catch(failure){
     if(['ROLLING_POSTING_RULES_CHANGED','ROLLING_SUBBOARD_REJECTED'].includes(failure?.code)){checkAccount(epoch);intent=null;actionOperation=null;await loadRules(rulesId(action),true).catch(()=>{});checkAccount(epoch);throw rulesFailure;}
-    if(['BB_POST_FEE_CREDIT_REQUIRED','BB_LIKE_FEE_CREDIT_REQUIRED'].includes(failure?.code)){checkAccount(epoch);intent=null;actionOperation=null;accountRefreshNeeded=true;}
+    if(['BB_POST_FEE_CREDIT_REQUIRED','BB_LIKE_FEE_CREDIT_REQUIRED','BB_PREFERENCE_FEE_CREDIT_REQUIRED'].includes(failure?.code)){checkAccount(epoch);intent=null;actionOperation=null;accountRefreshNeeded=true;}
     throw failure;
    }finally{blocked=false;}
    if(actionOperation?.included){actionOperation.failed=!['included','confirmed'].includes(result.status);actionOperation.resultStatus=result.status;}

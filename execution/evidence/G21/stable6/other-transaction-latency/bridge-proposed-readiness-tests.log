@@ -1,0 +1,19 @@
+✔ funding continuation uses installed SDK readiness for every exact saved key at checkpointed tip (3.5275ms)
+✔ funding pause drains concurrent SDK waits and fences submission (0.627459ms)
+✔ funding invalidate drains concurrent SDK waits and fences submission (0.260875ms)
+✔ funding continuation recovers a lost private submit response by exact hash without resubmitting (0.571709ms)
+✔ refund-only rejects prepared instead of manufacturing confirmation (392.847459ms)
+✔ deposit refund waits under its account lease then prepares immediate generic-fee cancellation without estimating (428.4485ms)
+✔ proposed funding continuation releases at exact included claim without weakening incoming bridge readiness (0.341291ms)
+✔ native message readiness recognizes actual proposed insertion before checkpoint without optimistic membership (0.175333ms)
+✔ explicit proposed bridge readiness still requires fresh claim preparation, reorg=false (0.370625ms)
+✔ explicit proposed bridge readiness still requires fresh claim preparation, reorg=true (0.217916ms)
+✔ bridge readiness tip requires explicit supported policy before starting any work (0.15025ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1982.836583

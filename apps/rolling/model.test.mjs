@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {allowance,safeURL,rankPosts,searchBoards,createInlineAction} from './model.mjs';
+import {allowance,safeURL,rankPosts,searchBoards,createInlineAction,createInlineActionRegistry} from './model.mjs';
 import {boards,posts,ownNames,profiles} from './fixtures.mjs';
 test('992-byte boundary rejects oversized input without truncating',()=>{
  assert.equal(allowance('a'.repeat(992)).valid,true);
@@ -67,4 +67,18 @@ test('included inline progress is nonterminal, deduplicated and cannot revive a 
  const run=createInlineAction({action:()=>({type:'like',post:'7'}),perform:async(action,onIncluded)=>{calls++;progress=onIncluded;await held.promise;return {status:'confirmed'};},onState:state=>states.push(state)});
  const pending=run();await Promise.resolve();progress();progress();assert.deepEqual(states,['pending','included']);assert.equal(run(),pending);assert.equal(calls,1);
  held.resolve();await pending;progress();assert.deepEqual(states,['pending','included','confirmed']);
+});
+
+test('in-flight reader action survives replacement controls and shares the captured target until actual completion',async()=>{
+ const held=Promise.withResolvers();let included,calls=0,enabled=true;const seen=[];
+ const registry=createInlineActionRegistry({perform:async(action,onIncluded)=>{calls++;included=onIncluded;assert.equal(action.enabled,true);await held.promise;return {status:'included'};},onState:(key,value)=>seen.push([key,value.state])});
+ const action=()=>({type:'preference',kind:1,target:'7',enabled});const pending=registry.run('bookmark:7',action);await Promise.resolve();
+ assert.equal(registry.snapshot('bookmark:7').state,'pending');enabled=false;
+ assert.equal(registry.run('bookmark:7',action),pending,'replacement control cannot send an inverse');assert.equal(calls,1);
+ included();assert.equal(registry.snapshot('bookmark:7').state,'included');assert.equal(registry.snapshot('bookmark:7').result,undefined,'inclusion progress is still busy');
+ held.resolve();assert.equal((await pending).status,'included');assert.equal(registry.snapshot('bookmark:7'),null);assert.deepEqual(seen.map(x=>x[1]),['pending','included','included']);
+});
+for(const status of ['unknown','reverted','failed','blocked'])test('reader registry retains exact terminal '+status+' and releases only after settled',async()=>{
+ const gate=Promise.withResolvers(),states=[];const registry=createInlineActionRegistry({perform:()=>gate.promise,onState:(_key,value)=>states.push(value)});
+ const pending=registry.run('like:1',()=>({type:'like',post:'1'}));assert.equal(registry.snapshot('like:2'),null);gate.resolve({status});assert.equal((await pending).status,status);assert.equal(states.at(-1).state,status);assert.equal(registry.snapshot('like:1'),null);
 });

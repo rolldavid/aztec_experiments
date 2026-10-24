@@ -1,0 +1,57 @@
+(node:2468) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("/private/tmp/preference-owned-read-draft/loader.mjs", pathToFileURL("./")); register("/private/tmp/preference-owned-read-draft/loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2468) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("/private/tmp/preference-owned-read-draft/loader.mjs", pathToFileURL("./")); register("/private/tmp/preference-owned-read-draft/loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ two bounded steps and actual encrypted prefix restart equal the expected complete result (85.485667ms)
+✔ absent head still scans canonical history; unavailable head never becomes empty (17.13225ms)
+✔ head advancement continues canonical prefix and includes multiple events in one transaction (22.79125ms)
+✔ canonical reorg discards orphaned prefix under a new epoch and rebuilds, not merges (18.204542ms)
+✔ actual AEAD mutation and CAS conflict preserve existing bytes and never publish partial preferences (28.008833ms)
+✔ foreign class/account/domain ciphertext cannot be replayed into the scoped slot (44.108583ms)
+✔ reject head mismatch before CAS publication (14.600292ms)
+✔ reject anchor mismatch before CAS publication (12.594625ms)
+✔ reject class mismatch before CAS publication (13.817666ms)
+✔ reject range mismatch before CAS publication (15.291625ms)
+✔ reject missing mismatch before CAS publication (20.490292ms)
+✔ reject duplicate mismatch before CAS publication (11.139375ms)
+✔ reject order mismatch before CAS publication (11.909958ms)
+✔ reject block-hash mismatch before CAS publication (13.153125ms)
+✔ reject selector mismatch before CAS publication (12.716542ms)
+✔ logout after awaited inspect stops the next personal operation and prevents publication (12.749125ms)
+✔ logout after awaited store-read stops the next personal operation and prevents publication (6.823083ms)
+✔ logout after awaited sync stops the next personal operation and prevents publication (7.624792ms)
+✔ logout after awaited header stops the next personal operation and prevents publication (7.615542ms)
+✔ logout after awaited block:4 stops the next personal operation and prevents publication (12.277875ms)
+✔ logout after awaited head stops the next personal operation and prevents publication (7.428792ms)
+✔ logout after awaited class stops the next personal operation and prevents publication (7.266333ms)
+✔ logout after awaited events stops the next personal operation and prevents publication (7.574208ms)
+✔ logout after awaited hash stops the next personal operation and prevents publication (7.336584ms)
+✔ captured node/PXE/storage capabilities cannot be replaced through retained options during an await (6.948666ms)
+✔ unabortable sync remains busy until it settles; abort suppresses publication without detached work (28.455792ms)
+✔ deadline expiry after a pending operation waits for settlement and never commits (137.39475ms)
+✔ read marker validation resumes across steps and orphaned hashes cannot suppress notifications (24.207625ms)
+✔ unknown marker canonical header is a failure, never an orphan/empty success (11.858709ms)
+✔ oversized returned page and forged authenticated prefix are rejected without checkpoint advancement (27.638875ms)
+✔ invalid options and throwing getters produce fixed diagnostics before private operations (6.641083ms)
+✔ canonical change during CAS suppresses publication; retained ciphertext is checked on explicit restart (16.805083ms)
+✔ failed tail verification preserves the prior authenticated checkpoint (18.957833ms)
+✔ unknown checkpoint block does not get classified as a canonical reorg or silently reset (14.551625ms)
+✔ trusted route replacement during an awaited operation prevents the next private query (6.137791ms)
+✔ logout during CAS/readback returns no preference result and preserves committed recovery bytes (13.346458ms)
+✔ marker continuation metadata is strictly bound and cannot skip beyond the authenticated prefix (13.405625ms)
+✔ native class lookup retains the exact SDK BlockHash while RPC parsing and persisted anchors stay compatible (17.01275ms)
+✔ cold sparse 3500-block history uses actual native indexed store once and preserves exact fold (61.520791ms)
+✔ event capacity splitting stays within one synchronization and commits only its validated prefix (14.1385ms)
+✔ more than512 valid events split without losing revisions and resume at the exact prefix (141.353541ms)
+✔ one owned step reads immutable head/class once but keeps both fresh canonical publication fences (9.84625ms)
+✔ owned read drains parallel class/head work on either failure before releasing reader (28.21025ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2853.215125

@@ -603,7 +603,7 @@ async function threadRefreshFixture(t,{total=32}={}){
   const url=new URL(req.url,'http://localhost');
   if(url.pathname==='/api/events'){res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-store'});res.flushHeaders();stream=res;connected.resolve();return;}
   if(url.pathname==='/wallet-panel.mjs'){
-   res.writeHead(200,{'content-type':'text/javascript'});res.end('export function mountRollingWalletPanel(options){window.refreshThread=options.onPublicEffect;return {initialize(){},attachIdentityControls(){},attachBokControls(){},open(){},close(){}}}');return;
+   res.writeHead(200,{'content-type':'text/javascript'});res.end('export function mountRollingWalletPanel(options){window.refreshThread=options.onPublicEffect;let saved=false;return {initialize(){},attachIdentityControls(){},attachBokControls(){},open(){},close(){},preferenceEnabled:()=>saved,act(action,{onIncluded}){window.inlineCalls=(window.inlineCalls??0)+1;window.includeInline=onIncluded;return new Promise(resolve=>window.finishInline=status=>{if(status==="included"||status==="confirmed")saved=action.enabled;options.onPrivateChange();resolve({status});});}}}');return;
   }
   if(url.pathname==='/api/thread'||url.pathname==='/api/home'){
    const offset=Number(url.searchParams.get('cursor')??0);state.calls.push(offset);
@@ -693,9 +693,10 @@ test('proposed Bok reply appears in a loaded conversation and checkpoint-only pr
  assert.equal(await reply.locator('.author').textContent(),'Bok');assert.equal(await reply.getAttribute('data-confirmation'),'pending');
  assert.equal(await reply.getByRole('link',{name:'https://example.com/app',exact:true}).getAttribute('href'),'https://example.com/app');
  assert.equal(await reply.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/1');
- for(const name of ['Reply','Like','Unlike','Quote','Repost','Mark thread read']){
-  const action=reply.getByRole('button',{name,exact:true,includeHidden:true});assert.equal(await action.isDisabled(),true,name);assert.equal(await action.getAttribute('title'),'Available after confirmation');
+ for(const name of ['Reply','Like','Unlike','Quote','Repost']){
+  const action=reply.getByRole('button',{name,exact:true,includeHidden:true});assert.equal(await action.isEnabled(),true,name);assert.equal(await action.getAttribute('title'),null);
  }
+ assert.equal(await reply.getByRole('button',{name:'Mark thread read',exact:true,includeHidden:true}).isDisabled(),true);
  assert.equal(await reply.getByRole('button',{name:'Bookmark',exact:true}).isEnabled(),true);
  assert.equal(await reply.getByRole('button',{name:'Subscribe to thread',exact:true,includeHidden:true}).isEnabled(),true);
  assert.equal(await page.getByRole('article').count(),33);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
@@ -741,4 +742,16 @@ test('public effect rebuilds a missing feed instead of waiting for an unavailabl
  const {page,state}=await threadRefreshFixture(t,{total:16});
  await page.evaluate(async()=>{document.querySelector('.public-content').remove();await refreshThread();});
  await page.locator('#post-16').waitFor();assert.deepEqual(state.calls,[0,0]);assert.equal(await page.getByRole('article').count(),16);
+});
+
+test('active bookmark feedback survives feed replacement through inclusion until native completion',async t=>{
+ const {page}=await threadRefreshFixture(t,{total:16});
+ const bookmark=()=>page.locator('#post-1 [data-private-setting="Bookmark"]');
+ await page.locator('#post-1 .post-more > summary').click();await bookmark().click();await page.waitForFunction(()=>window.inlineCalls===1);
+ assert.equal(await bookmark().textContent(),'Saving…');assert.equal(await bookmark().isDisabled(),true);
+ await page.evaluate(()=>refreshThread());assert.equal(await bookmark().textContent(),'Saving…');assert.equal(await bookmark().isDisabled(),true);assert.equal(await bookmark().getAttribute('aria-busy'),'true');
+ assert.equal(await page.locator('#post-2 [data-private-setting="Bookmark"]').isDisabled(),false);
+ await page.evaluate(()=>includeInline());await page.evaluate(()=>refreshThread());assert.equal(await bookmark().textContent(),'Confirmation pending');assert.equal(await bookmark().isDisabled(),true);
+ await page.evaluate(()=>finishInline('included'));await page.waitForFunction(()=>document.querySelector('#post-1 [data-private-setting="Bookmark"]').textContent==='Unbookmark');assert.equal(await bookmark().isDisabled(),false);assert.equal(await page.evaluate(()=>inlineCalls),1);
+ assert.equal(await page.locator('#announcement').textContent(),'Saved. Confirmation pending.');
 });

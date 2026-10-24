@@ -52,7 +52,8 @@ export async function verifyRollingFundingCredit({sdk,node,gasSettings,incomingA
  if(existing<maximum)throw Object.assign(fail('ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'),{minimumFeeCredit:maximum.toString()});
 }
 
-export function createFundingContinuation({application,funding,sdk,node,contextGuard,locked,onProgress,invalidateSnapshot=()=>{},confirmationTier='checkpointed'}){
+export function createFundingContinuation({application,funding,sdk,node,contextGuard,locked,onProgress,invalidateSnapshot=()=>{},confirmationTier='checkpointed',bridgeChainTip='checkpointed'}){
+ if(!['checkpointed','proposed'].includes(bridgeChainTip))throw fail('ROLLING_SESSION_CONFIG');
  let active=null;
  return Object.freeze({
   pauseClaim(){if(active){active.paused=true;}},
@@ -64,7 +65,7 @@ export function createFundingContinuation({application,funding,sdk,node,contextG
     async bridge(receipts){
      const legs=['receipt','feeReceipt','bokReceipt'].filter(key=>receipts[key]).map(key=>receipts[key]);
      await fence();
-     const results=await Promise.allSettled(legs.map(receipt=>Promise.resolve().then(()=>sdk.waitForL1ToL2MessageReady(node,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:0,chainTip:'checkpointed'}))));
+     const results=await Promise.allSettled(legs.map(receipt=>Promise.resolve().then(()=>sdk.waitForL1ToL2MessageReady(node,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:0,chainTip:bridgeChainTip}))));
      await fence();const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
      invalidateSnapshot();
      // Delivery changes the usable anchor; prepare synchronizes once here.
@@ -340,6 +341,7 @@ export async function createRollingRefundSession({sdk,ethers,config,boardArtifac
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,getBokArtifact,account,
  trustedQuery,remoteProver,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
+ const nativeChainTip='proposed';
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
@@ -416,7 +418,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    await guard();store=await sdk.openPXEStore({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
    begin('pxe-create');
-   await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:'proposed'},{store,remoteProver:remote});await guard();
+   await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:nativeChainTip},{store,remoteProver:remote});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
    // The first private operation selects the anchor once. Opening the engine
    // itself does not require a second, immediately discarded synchronization.
@@ -506,7 +508,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    readPreferences=async options=>{
     await initializeAccount();
     preferenceReader??=createRollingPreferenceReader({sdk,pxe,node,owner:instance.address,deployment,
-      readHead:app.readPreferenceHead.bind(app),contextGuard:guardRoute,privateStore,
+      readHead:app.readPreferenceHead.bind(app),contextGuard:guardRoute,privateStore,measure:measureRollingStage,
       walletSecret:captured.secretKey,walletSalt:captured.salt});
     return preferenceReader.read(options);
    };
@@ -560,7 +562,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   }));},
   readPreferences:options=>locked(()=>readPreferences(options))});
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
- const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress,confirmationTier:'proposed',invalidateSnapshot:()=>{operationScope={synchronized:false};}});
+ const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress,confirmationTier:'proposed',bridgeChainTip:nativeChainTip,invalidateSnapshot:()=>{operationScope={synchronized:false};}});
  const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({ethAvailable:kind==='bok'&&selected.bokTopup!==undefined,defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
  const refunds = Object.freeze({
   list: options => locked(() => depositRefunds.list(options)),
@@ -569,7 +571,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    const receipt = structuredClone(metadata);
    return locked(async () => {
     await guardRoute();
-    await sdk.waitForL1ToL2MessageReady(privateNode,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:0,chainTip:'checkpointed'});
+    await sdk.waitForL1ToL2MessageReady(privateNode,sdk.Fr.fromString(receipt.messageKey),{timeoutSeconds:0,chainTip:nativeChainTip});
     await guardRoute();
     return synchronized.prepare({type:'cancel-deposit',receipt},{immediate:true});
    });

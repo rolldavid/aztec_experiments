@@ -828,7 +828,7 @@ for(const mode of ['hidden-pending','interrupted-retry'])test(`saved refund ${mo
 });
 
 import {createFundingContinuation} from './wallet-session.mjs';
-import {waitForL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
+import {waitForL1ToL2MessageReady,isL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
 import {waitForTx} from '@aztec-labs/aztec.js/node';
 function continuationFixture(){
  const calls=[],receipts={receipt:{messageKey:hex(71),blockNumber:7},feeReceipt:{messageKey:hex(72),blockNumber:7},bokReceipt:{messageKey:hex(73),blockNumber:7}};
@@ -1357,7 +1357,7 @@ test('deposit refund waits under its account lease then prepares immediate gener
  const f=await sessionFixture(),entered=Promise.withResolvers(),release=Promise.withResolvers();let estimates=0;
  const receipt={txHash:hex(40),blockHash:hex(41),blockNumber:2,sender:'0x'+'33'.repeat(20),nonce:'1',amount:'100',leafIndex:'2',messageKey:hex(43),secretHash:hex(44),depositId:hex(45)};
  f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10},hash:async()=>hex(55),state:{l1ToL2MessageTree:{root:new Fr(1)}}});
- f.input.sdk.waitForL1ToL2MessageReady=async(node,key,options)=>{assert.equal(node,f.node);assert.equal(String(key),receipt.messageKey);assert.deepEqual(options,{timeoutSeconds:0,chainTip:'checkpointed'});assert.equal(f.state.active,true);entered.resolve();await release.promise;};
+ f.input.sdk.waitForL1ToL2MessageReady=async(node,key,options)=>{assert.equal(node,f.node);assert.equal(String(key),receipt.messageKey);assert.deepEqual(options,{timeoutSeconds:0,chainTip:'proposed'});assert.equal(f.state.active,true);entered.resolve();await release.promise;};
  f.input.sdk.prepareFundingClaim=async input=>{assert.equal(f.state.active,true);assert.equal(input.kind,'collateral-cancel');assert.deepEqual(input.receipt,receipt);return {status:'claim-ready',claim:{contract:String(f.board.address),method:'cancel_deposit',args:[receipt.sender,receipt.amount,receipt.depositId,receipt.leafIndex]}};};
  f.input.sdk.estimatePrivateFeeTransaction=async()=>{estimates++;throw Error('No review estimate');};
  const original=f.input.sdk.Contract.at;f.input.sdk.Contract.at=(...args)=>{const c=original(...args);c.methods.cancel_deposit=(...values)=>({args:values});return c;};
@@ -1451,4 +1451,24 @@ for(const staleHint of [false,true])test(`withdrawal cooldown observes proposed 
  f.input.sdk.estimatePrivateFeeTransaction=async()=>{assert(matured);assert.equal(f.state.syncs,2);prepared=true;throw stop;};
  const session=await createRollingWalletSession(f.input);opened=true;
  await assert.rejects(session.application.executeWithdrawal('9'),error=>error===stop);assert.equal(prepared,!staleHint);assert.equal(waits,staleHint?2:1);assert.equal(polls,2);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);await session.close();
+});
+
+test('native message readiness recognizes actual proposed insertion before checkpoint without optimistic membership',async()=>{
+ const key=new Fr(71);let index=5n,next=6n,blocks=0;
+ const node={getL1ToL2MessageIndex:async received=>{assert(received.equals(key));return index;},getBlockData:async tier=>{blocks++;return {header:{state:{l1ToL2MessageTree:{nextAvailableLeafIndex:tier==='proposed'?next:5n}}}};}};
+ assert.equal(await isL1ToL2MessageReady(node,key,'proposed'),true);assert.equal(await isL1ToL2MessageReady(node,key,'checkpointed'),false);
+ next=5n;assert.equal(await isL1ToL2MessageReady(node,key,'proposed'),false);
+ next=4n;assert.equal(await isL1ToL2MessageReady(node,key,'proposed'),false);
+ index=undefined;const before=blocks;assert.equal(await isL1ToL2MessageReady(node,key,'proposed'),false);assert.equal(blocks,before);
+});
+for(const reorg of [false,true])test(`explicit proposed bridge readiness still requires fresh claim preparation, reorg=${reorg}`,async()=>{
+ const f=continuationFixture();f.input.bridgeChainTip='proposed';let preparations=0,heads=0;
+ f.input.node.getBlockData=async tier=>{assert.equal(tier,'proposed');heads++;return {header:{state:{l1ToL2MessageTree:{nextAvailableLeafIndex:2}}}};};
+ f.input.application.prepare=async()=>{f.calls.push(['prepare']);if(++preparations===1)throw Object.assign(Error('not ready'),{code:'ROLLING_FUNDING_NOT_READY',reason:'l2-delivery'});if(reorg)throw Object.assign(Error('canonical membership changed'),{code:'ROLLING_FUNDING_REORG'});return f.prepared;};
+ const work=createFundingContinuation(f.input).advanceClaim();
+ if(reorg)await assert.rejects(work,{code:'ROLLING_FUNDING_REORG'});else assert.equal((await work).state,'complete');
+ assert.equal(preparations,2);assert.equal(heads,3);assert.equal(f.calls.filter(c=>c[0]==='submit').length,reorg?0:1);assert.equal(f.busy,false);
+});
+test('bridge readiness tip requires explicit supported policy before starting any work',()=>{
+ const f=continuationFixture();for(const bridgeChainTip of ['latest','pending',null,{}])assert.throws(()=>createFundingContinuation({...f.input,bridgeChainTip}),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.calls.length,0);
 });

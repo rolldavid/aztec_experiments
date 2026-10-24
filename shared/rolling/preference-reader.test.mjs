@@ -95,7 +95,7 @@ test('foreign class/account/domain ciphertext cannot be replayed into the scoped
 });
 for(const change of ['head','anchor','class','range','missing','duplicate','order','block-hash','selector'])test(`reject ${change} mismatch before CAS publication`,async()=>{
  const f=await fixture([changed(2),changed(3,3,'8')],4);
- if(change==='head'||change==='anchor')f.state.hook=async name=>{if(name==='events'){if(change==='head')f.state.head={...f.state.head,digest:'1'};else f.state.height=5;}};
+ if(change==='head'||change==='anchor')f.state.hook=async name=>{if(name==='events'){if(change==='head'){f.state.head={...f.state.head,digest:'1'};f.state.hashOverrides.set(4,h(999));}else f.state.height=5;}};
  if(change==='class')f.input.node.getContract=async()=>({address:f.input.deployment.board.address,currentContractClassId:new Fr(11),originalContractClassId:new Fr(10)});
  if(change==='range')f.input.pxe.getPrivateEvents=async()=>[{...f.state.rows[0],l2BlockNumber:40}];
  if(change==='missing')f.state.rows.pop();
@@ -203,7 +203,7 @@ test('native class lookup retains the exact SDK BlockHash while RPC parsing and 
   calls++;assert.equal(ref.hash,typed);assert.equal((await holdoff.getBlockData(normalizeBlockParameter(ref))).blockHash,typed);
   return {address:f.input.deployment.board.address,...f.input.deployment.board.instance};
  };
- const result=await f.restart().read();assert.equal(result.status,'complete');assert(calls>=3);
+ const result=await f.restart().read();assert.equal(result.status,'complete');assert.equal(calls,1);
  assert.deepEqual(result.anchor,{blockNumber:4,blockHash:typed.toString()});
  const cache=(await (await f.slot()).read()).value;
  assert.deepEqual(cache.checkpoint,{blockNumber:4,blockHash:typed.toString()});
@@ -219,15 +219,32 @@ test('cold sparse 3500-block history uses actual native indexed store once and p
  for(const [i,row]of f.state.rows.entries())await events.storePrivateEventLog(row.eventSelector,new Fr(i+1),row.packedEvent,new Fr(i+10),{contractAddress:f.input.deployment.board.address,scope:f.input.owner,txHash:row.txHash,l2BlockNumber:row.l2BlockNumber,l2BlockHash:row.l2BlockHash,txIndexInBlock:0,eventIndexInTx:i},'seed');
  await db.transactionAsync(()=>events.commitChangeSet('seed'));events.beginChangeSet('read');let queries=0;
  f.input.pxe.getPrivateEvents=(selector,filter)=>{queries++;assert.equal(filter.fromBlock,1);assert.equal(filter.toBlock,3501);return events.getPrivateEvents(selector,filter,'read');};
- const result=await f.restart().read();assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,['2']);assert.equal(result.preferences.head.revision,'1');assert.equal(queries,1);assert.equal(f.calls.filter(x=>x==='sync').length,1);assert.equal(f.calls.filter(x=>x==='inspect').length,3);assert.equal(f.calls.filter(x=>x==='CAS').length,1);
+ const result=await f.restart().read();assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,['2']);assert.equal(result.preferences.head.revision,'1');assert.equal(queries,1);assert.equal(f.calls.filter(x=>x==='sync').length,1);assert.equal(f.calls.filter(x=>x==='inspect').length,1);assert.equal(f.calls.filter(x=>x==='CAS').length,1);
 });
 test('event capacity splitting stays within one synchronization and commits only its validated prefix',async()=>{
  const f=await fixture([changed(2),changed(40,3,'8')],3500);f.state.rangeLimit=32;
- const result=await f.reader.read();assert.equal(result.status,'recovering');assert.equal(result.progress.processedRevision,'1');assert(result.progress.scannedThrough<=32);assert.equal(f.calls.filter(x=>x==='sync').length,1);assert.equal(f.calls.filter(x=>x==='inspect').length,3);assert(f.calls.filter(x=>x==='events').length<=8);assert.equal(f.calls.filter(x=>x==='CAS').length,1);
+ const result=await f.reader.read();assert.equal(result.status,'recovering');assert.equal(result.progress.processedRevision,'1');assert(result.progress.scannedThrough<=32);assert.equal(f.calls.filter(x=>x==='sync').length,1);assert.equal(f.calls.filter(x=>x==='inspect').length,1);assert(f.calls.filter(x=>x==='events').length<=8);assert.equal(f.calls.filter(x=>x==='CAS').length,1);
 });
 
 test('more than512 valid events split without losing revisions and resume at the exact prefix',async()=>{
  const f=await fixture(Array.from({length:513},(_,i)=>changed(i+1,1,'2',i%2===0)),513);
  const first=await f.reader.read();assert.equal(first.status,'recovering');assert.equal(first.progress.processedRevision,'256');assert.equal(first.progress.scannedThrough,256);assert.equal(f.calls.filter(x=>x==='sync').length,1);
  const second=await f.restart().read();assert.equal(second.status,'complete');assert.equal(second.preferences.head.revision,'513');assert.deepEqual(second.preferences.bookmarks,['2']);assert.equal(f.state.lastFilter.fromBlock,257);
+});
+
+test('one owned step reads immutable head/class once but keeps both fresh canonical publication fences',async()=>{
+ const f=await fixture([changed(4)],4);assert.equal((await f.reader.read()).status,'complete');
+ for(const name of ['inspect','sync','head','class'])assert.equal(f.calls.filter(x=>x===name).length,1,name);
+ assert.equal(f.calls.filter(x=>x==='block:4').length,3,'capture plus independent pre/post-CAS hash reads');
+ const first=f.calls.length;await f.reader.read();const second=f.calls.slice(first);
+ for(const name of ['inspect','sync','head','class'])assert.equal(second.filter(x=>x===name).length,1,'fresh operation '+name);
+ assert.equal(second.filter(x=>x==='block:4').length,3,'no canonical hash survives a read');
+});
+test('owned read drains parallel class/head work on either failure before releasing reader',async()=>{
+ for(const failing of ['head','class']){
+  const f=await fixture([changed(2)],4),started=Promise.withResolvers(),held=Promise.withResolvers();
+  f.input.readHead=async()=>{if(failing==='head')throw Error('head');started.resolve();await held.promise;return f.state.head;};
+  f.input.node.getContract=async()=>{if(failing==='class')throw Error('class');started.resolve();await held.promise;return {address:f.input.deployment.board.address,currentContractClassId:f.input.deployment.board.instance.currentContractClassId,originalContractClassId:f.input.deployment.board.instance.originalContractClassId};};
+  const reader=f.restart();let done=false;const pending=invalid(reader.read()).then(()=>done=true);await started.promise;await new Promise(setImmediate);assert.equal(done,false);assert(!f.calls.includes('CAS'));await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});held.resolve();await pending;
+ }
 });

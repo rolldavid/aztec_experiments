@@ -2,7 +2,7 @@ import {createReaderUpdates} from './reader-updates.mjs';
 import {beginRollingMeasure} from './performance.mjs';
 import {createPublicReader} from './reader-client.mjs';
 import {createPublicAvatar,createPublicProfile} from './profile-view.mjs';
-import {createMessageContent as richText,createInlineAction} from './model.mjs';
+import {createMessageContent as richText,createInlineActionRegistry} from './model.mjs';
 import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
@@ -63,27 +63,34 @@ function removalPolicy(value){
  const packed=BigInt(value);return policyLabel('Removal policy',String(packed&0xffffffffn),String(packed>>32n));
 }
 function preferenceLabel(label,kind,target){return privatePanel?.preferenceEnabled?.(kind,target)===true?({'Bookmark':'Unbookmark','Follow board':'Unfollow board','Follow name':'Unfollow name','Subscribe to thread':'Unsubscribe from thread'}[label]??'Remove '+label):label;}
+const inlineActions=createInlineActionRegistry({perform:async(captured,onIncluded)=>{
+ let panel;try{panel=await accountPanel();}catch{walletPanel=null;return {status:'failed',message:'Account tools could not load. Try again.'};}
+ return panel.act(captured,{onIncluded});
+},onState(key,snapshot){
+ for(const node of app.querySelectorAll('[data-inline-action]'))if(node.dataset.inlineAction===key)node.renderInlineAction(snapshot,true);
+}});
 function socialButton(label,action,attrs={}){
  let feedback;
- const node=button(label,()=>void run(),attrs);
- const run=createInlineAction({action,perform:async (captured,onIncluded)=>{
-  let panel;try{panel=await accountPanel();}catch{walletPanel=null;return {status:'failed',message:'Account tools could not load. Try again.'};}
-  return panel.act(captured,{onIncluded});
- },onState(state,captured,result){
+ // The target identity excludes the toggle value: a rerender must not offer
+ // its inverse while this exact target's previous operation still owns it.
+ const target=action(),key=JSON.stringify([target.type,target.post??null,target.kind??null,target.target??null,target.thread??null]);
+ const node=button(label,()=>void inlineActions.run(key,action),{...attrs,'data-inline-action':key});
+ node.renderInlineAction=({state,captured,result},notify=false)=>{
   feedback?.remove();feedback=null;
   node.disabled=['pending','unknown'].includes(state)||state==='included'&&!result;
   if(state==='pending'){node.setAttribute('aria-busy','true');node.textContent=({like:'Liking…',unlike:'Removing like…','read-marker':'Marking read…'})[captured.type]??'Saving…';return;}
+  if(state==='included'&&!result){node.setAttribute('aria-busy','true');node.textContent='Confirmation pending';if(notify)announce('Change included. Confirmation pending.');return;}
   node.removeAttribute('aria-busy');
-  if(state==='included'&&!result){node.textContent='Confirmation pending';announce('Change included. Confirmation pending.');return;}
   node.textContent=attrs['data-private-setting']?preferenceLabel(attrs['data-private-setting'],Number(attrs['data-kind']),attrs['data-target']):label;
   const message=state==='included'?'Saved. Confirmation pending.':state==='confirmed'?'Saved.':state==='unknown'?'Still waiting for confirmation.':state==='reverted'?'This change did not go through.':state==='failed'?(result.message||'This change could not be saved. Try again.'):state==='blocked'&&result.reason==='busy'?'Another action is still finishing.':'';
-  if(message)announce(message);
+  if(message&&notify)announce(message);
   if(['unknown','reverted','failed'].includes(state)&&node.isConnected){
    feedback=el('span',{class:'inline-action-feedback',role:'status'},message);
    if(state==='unknown')feedback.append(' ',button('Check action',()=>openWallet()));
    node.after(feedback);
   }
- }});
+ };
+ const retained=inlineActions.snapshot(key);if(retained)node.renderInlineAction(retained);
  return node;
 }
 function preferenceButton(label,kind,target){
@@ -108,7 +115,7 @@ function postCard(post,data){
  if(Array.isArray(data.policies)){const policy=data.policies.find(p=>p.version===post.mainVersion);if(policy&&policyVersion(policy.version))provenance.append(el('details',{},el('summary',{},'Parent rules at publication · v'+policy.version),richText(policy.text)));}
  if(field(r.parent)&&r.parent!=='0')article.append(el('p',{class:'reply-line'},'In reply to ',link('an earlier post','/thread/'+r.root+'/'+r.parent)));
  if(field(r.reference)&&r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
- const unlike=()=>afterConfirmation(socialButton('Unlike',()=>({type:'unlike',post:post.id})));
+ const unlike=()=>socialButton('Unlike',()=>({type:'unlike',post:post.id}));
  const more=(...actions)=>el('details',{class:'post-more'},el('summary',{class:'action'},'More'),el('div',{class:'post-secondary-actions'},actions));
  // Moderation removes content, not the ability to manage private notifications.
  const threadControls=()=>[preferenceButton('Subscribe to thread',4,r.root),
@@ -127,10 +134,10 @@ function postCard(post,data){
   article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),preferenceButton('Bookmark',1,post.id),more(unlike(),threadControls(),provenance)));return article;
  }
  article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
-  afterConfirmation(button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard}))),
-  afterConfirmation(socialButton('Like',()=>({type:'like',post:post.id}))),preferenceButton('Bookmark',1,post.id),
-  more(unlike(),afterConfirmation(button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard}))),
-   afterConfirmation(button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard}))),threadControls(),provenance)));
+  button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
+  socialButton('Like',()=>({type:'like',post:post.id})),preferenceButton('Bookmark',1,post.id),
+  more(unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
+   button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),threadControls(),provenance)));
  article.append(afterConfirmation(moderatorButton('Remove this post',{type:'moderate-post',post:post.id})));
  return article;
 }

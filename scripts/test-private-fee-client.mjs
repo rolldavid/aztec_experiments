@@ -268,3 +268,9 @@ for(const phase of ['before','during'])test(`qualified like credit rejects PXE r
  if(phase==='before')input.wallet.pxe={};else input.wallet.executeUtility=async(...args)=>{const result=await utility(...args);input.wallet.pxe={};return result;};
  await assert.rejects(prepared.withAvailableCredit(),{code:'PRIVATE_FEE_CONTEXT_CHANGED'});assert.equal(state.reads,phase==='before'?0:1);
 });
+
+test('preference metadata defers the exact native credit read and cannot authorize bridge claims',async()=>{
+ const {input,state}=fixture();input.creditCheck='qualified-preference-proof';input.wallet.pxe={};const prepared=await preparePrivateFeePayment(input);assert.equal(state.reads,0);assert(!Object.hasOwn(prepared,'availableCredit'));
+ const credited=await prepared.withAvailableCredit();assert.equal(credited.availableCredit,1300n);assert.equal(credited.creditCheck,'read-balance');assert.equal(state.reads,1);assert.equal(credited.paymentMethod,prepared.paymentMethod);
+ input.claim={amount:'5000',salt:new Fr(51),leafIndex:new Fr(9)};await assert.rejects(preparePrivateFeePayment(input),{code:'PRIVATE_FEE_CONFIGURATION_REQUIRED'});assert.equal(state.reads,1);
+});

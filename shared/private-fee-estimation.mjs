@@ -1,3 +1,4 @@
+import {preferenceFeeBudget,assertPreferencePayload} from './preference-fees.mjs';
 import {likeFeeBudget,assertLikePayload} from './like-fees.mjs';
 import {ordinaryPostFeeBudget,assertOrdinaryPostPayload} from './ordinary-post-fees.mjs';
 import {MAX_PROCESSABLE_L2_GAS,MAX_TX_DA_GAS} from '@aztec-labs/constants';
@@ -32,16 +33,18 @@ function allocate(budget,lower,caps,prices){
  for(let i=0;i<2;i++)if(rates[i]){const extra=min(BigInt(caps[dimensions[i]]-values[i]),remaining/rates[i]);values[i]+=Number(extra);remaining-=extra*rates[i];}
  return new Gas(...values);
 }
-export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,ordinaryPost,qualifiedLike,measure=(_stage,operation)=>operation(),simulator=createPrivateFeeSimulator(wallet,node)}){
+export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,ordinaryPost,qualifiedLike,qualifiedPreference,measure=(_stage,operation)=>operation(),simulator=createPrivateFeeSimulator(wallet,node)}){
  let qualifiedApplication;
- if(qualifiedLike!==undefined){
-  if(ordinaryPost!==undefined||!deferSimulation||typeof wallet.pxe?.proveTxWithPublicValidation!=='function')throw fail('BB_LIKE_FEE_PROFILE_MISMATCH');
-  await guard();const budget=likeFeeBudget({wallet,prepared,board:qualifiedLike});
-  const application=await interaction.request();assertLikePayload({wallet,from,application,board:qualifiedLike});
-  if(prepared.creditCheck==='qualified-like-proof'){
-   if(typeof prepared.withAvailableCredit!=='function')throw fail('BB_LIKE_FEE_PROFILE_MISMATCH');
+ if(qualifiedLike!==undefined||qualifiedPreference!==undefined){
+  const isLike=qualifiedLike!==undefined,mismatch=isLike?'BB_LIKE_FEE_PROFILE_MISMATCH':'BB_PREFERENCE_FEE_PROFILE_MISMATCH';
+  if(qualifiedLike!==undefined&&qualifiedPreference!==undefined||ordinaryPost!==undefined||!deferSimulation||typeof wallet.pxe?.proveTxWithPublicValidation!=='function')throw fail(mismatch);
+  await guard();const board=isLike?qualifiedLike:qualifiedPreference;
+  const budget=(isLike?likeFeeBudget:preferenceFeeBudget)({wallet,prepared,board});
+  const application=await interaction.request();(isLike?assertLikePayload:assertPreferencePayload)({wallet,from,application,board});
+  if(prepared.creditCheck===(isLike?'qualified-like-proof':'qualified-preference-proof')){
+   if(typeof prepared.withAvailableCredit!=='function')throw fail(mismatch);
    prepared=await prepared.withAvailableCredit();await guard();
-   if(prepared.creditCheck!=='read-balance')throw fail('BB_LIKE_FEE_PROFILE_MISMATCH');
+   if(prepared.creditCheck!=='read-balance')throw fail(mismatch);
   }
   // The class-qualified maximum is an upper bound, not the minimum credit
   // needed for this action. Low credit uses the existing measured estimator
@@ -59,6 +62,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
   const payload=mergeExecutionPayloads([await prepared.paymentMethod.withReservation(budget.reservation).getExecutionPayload(),application]);
   await guard();return {payload,...budget,passes:0,atomicSimulation:true};
  }
+ if(prepared.creditCheck==='qualified-preference-proof')throw fail('BB_PREFERENCE_FEE_PROFILE_MISMATCH');
  if(prepared.creditCheck==='qualified-like-proof')throw fail('BB_LIKE_FEE_PROFILE_MISMATCH');
  if(prepared.creditCheck==='ordinary-post-proof')throw fail('BB_POST_FEE_PROFILE_MISMATCH');
  // Payment preparation already captured the verified node limits for this

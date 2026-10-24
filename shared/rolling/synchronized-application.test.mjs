@@ -160,3 +160,11 @@ test('only held immediate likes start their qualified metadata alongside native 
   const work=app.prepare({type},immediate?{immediate:true}:undefined);await entered.promise;assert.equal(called,false);assert.equal(seen.likePayment,immediate&&['like','unlike'].includes(type)?true:undefined);gate.resolve();await work;assert.equal(called,true);
  }
 });
+
+test('only immediate preference mutations start qualified metadata alongside synchronization',async()=>{
+ for(const type of ['preference','read-marker','bio','screen'])for(const immediate of [false,true]){
+  const scope={preparationReads:[]},gate=Promise.withResolvers(),entered=Promise.withResolvers();let starts=0,seen,called=false;const arrive=async()=>{if(++starts===2)entered.resolve();await gate.promise;};
+  const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>{called=true;return{};}])),operationScope:()=>scope,contextGuard:()=>{},synchronize:arrive,prepareContext:async value=>{seen=value;await arrive();}});
+  const work=app.prepare({type},immediate?{immediate:true}:undefined);await entered.promise;assert.equal(called,false);assert.equal(seen.preferencePayment,immediate&&['preference','read-marker'].includes(type)?true:undefined);gate.resolve();await work;
+ }
+});

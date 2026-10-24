@@ -70,7 +70,7 @@ function fixture(){
   const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{throw Error('Unexpected fixture membership read');}},getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
-    prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
+    prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},preferenceFeeBudget:()=>({maximumFee:100n}),likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
       if(['set_preference','mark_thread_read'].includes(input.interaction.name)&&state.preferenceError)throw state.preferenceError;
       if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
@@ -2214,7 +2214,7 @@ test('ordinary submit binds its arithmetic quote to the verified board',async()=
 });
 
 
-for(const kind of ['post','like'])for(const predecessor of [false,true])test(`native ${kind} credit failure with predecessor=${predecessor} cancels only its unsigned attempt and allows a fresh post`,async()=>{
+for(const kind of ['post','like','preference'])for(const predecessor of [false,true])test(`native ${kind} credit failure with predecessor=${predecessor} cancels only its unsigned attempt and allows a fresh post`,async()=>{
  const f=await preproofFixture();
  if(predecessor){const first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);}f.options.sdk.isPrivateFeeCreditFailure=isPrivateFeeCreditFailure;
  const original=f.options.accountSession.preproofRecovery;let failNext=true;
@@ -2224,8 +2224,8 @@ for(const kind of ['post','like'])for(const predecessor of [false,true])test(`na
    assert.fail('Native shortage must reject before transaction creation');
   }return original.send(payload,opts,lifecycle);
  }});
- const app=f.restart(),action=kind==='like'?{type:'like',post:'5'}:{type:'post',subboard:'0',name:'0',deposit:'9',content:'Keep this draft'};
- const first=await app.prepare(action,{immediate:true});await assert.rejects(app.submitPrepared(first.intentId),{code:kind==='like'?'BB_LIKE_FEE_CREDIT_REQUIRED':'BB_POST_FEE_CREDIT_REQUIRED'});
+ const app=f.restart(),action=kind==='like'?{type:'like',post:'5'}:kind==='preference'?{type:'preference',expectedRevision:'0',kind:1,target:'42',enabled:true}:{type:'post',subboard:'0',name:'0',deposit:'9',content:'Keep this draft'};
+ const first=await app.prepare(action,{immediate:true});await assert.rejects(app.submitPrepared(first.intentId),{code:kind==='like'?'BB_LIKE_FEE_CREDIT_REQUIRED':kind==='preference'?'BB_PREFERENCE_FEE_CREDIT_REQUIRED':'BB_POST_FEE_CREDIT_REQUIRED'});
  assert.equal((await app.reconcile(first.intentId)).status,'cancelled');const previous=await f.options.accountSession.journal.inspect();assert.equal(!!previous,predecessor);assert.equal(f.state.sends,Number(predecessor));
  const next=await app.prepare(action,{immediate:true});assert.notEqual(next.intentId,first.intentId);assert.equal((await app.submitPrepared(next.intentId)).status,'confirmed');assert.equal(f.state.sends,Number(predecessor)+1);
 });
@@ -2700,4 +2700,64 @@ test('included screening synchronizes consecutive private note state before prep
  const application=createSynchronizedRollingApplication({application:f.app,operationScope:()=>scope,contextGuard:async()=>{},synchronize:async()=>{steps++;if(pendingNote){f.state.responses.get_deposit_info=pendingNote;pendingNote=null;}}});
  const result=await executeAutomaticWithdrawal({application,deposit:'9',guard:async()=>{},waitUntil:async()=>assert.fail('no cooldown')});
  assert.equal(result.status,'confirmed');assert.equal(steps,2);assert.equal(pendingNote,null);assert.deepEqual(f.state.calls.map(call=>call.name),['screen','withdraw']);
+});
+
+for(const type of ['preference','read-marker'])for(const immediate of [false,true])test(`exact ${type} fee profile only qualifies immediate submission, immediate=${immediate}`,async()=>{
+ const f=fixture(),scope={synchronized:true},seen=[];f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.preparePrivateFeePayment=async input=>{seen.push(input.creditCheck);return input.creditCheck?{creditCheck:input.creditCheck}:{availableCredit:100n};};
+ let requested;const estimate=f.options.sdk.estimatePrivateFeeTransaction;f.options.sdk.estimatePrivateFeeTransaction=async input=>{requested=input;return estimate(input);};
+ const app=f.restart(),action=type==='preference'?{type,expectedRevision:'0',kind:1,target:'42',enabled:true}:{type,expectedRevision:'0',thread:'42',throughBlock:'1'};
+ const prepared=await app.prepare(action,immediate?{immediate:true}:undefined);assert.equal(prepared.maximumFee,immediate?'100':'10');await app.submitPrepared(prepared.intentId);
+ if(immediate){assert.deepEqual(seen,['qualified-preference-proof']);assert.equal(requested.qualifiedPreference,f.options.deployment.board.instance);assert.equal(requested.qualifiedLike,undefined);assert.equal(requested.ordinaryPost,undefined);}
+ else{assert(seen.every(value=>value===undefined));assert.equal(requested.qualifiedPreference,undefined);}
+ assert.equal(f.state.sends,1);
+});
+test('preference fee profile mismatch fails before unsigned workflow creation',async()=>{
+ const f=fixture();f.options.sdk.preferenceFeeBudget=()=>{throw Object.assign(Error('mismatch'),{code:'BB_PREFERENCE_FEE_PROFILE_MISMATCH'});};
+ await assert.rejects(f.restart().prepare({type:'preference',expectedRevision:'0',kind:1,target:'42',enabled:true},{immediate:true}),{code:'BB_PREFERENCE_FEE_PROFILE_MISMATCH'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);
+});
+test('early preference metadata is consumed only in the same held operation and mode',async()=>{
+ const f=fixture(),scope={preparationReads:[]},seen=[];f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.preparePrivateFeePayment=async input=>{seen.push(input.creditCheck);return {creditCheck:input.creditCheck};};const app=f.restart();
+ await app.prefetchContext({preferencePayment:true});const prepared=await app.prepare({type:'preference',expectedRevision:'0',kind:1,target:'42',enabled:true},{immediate:true});await app.submitPrepared(prepared.intentId);
+ assert.deepEqual(seen,['qualified-preference-proof']);assert.equal(f.state.sends,1);
+});
+
+function proposedBokActionFixture(f=bokFixture()){
+ f.options.accountSession.proposedTransactions=true;let acknowledgements=0;
+ f.options.accountSession.journal.included=async receipt=>{assert.equal(receipt.status,'proposed');acknowledgements++;};
+ f.options.sdk.BatchCall=class {constructor(wallet,interactions){assert.equal(wallet,f.options.accountSession.wallet);this.name='batch';this.interactions=interactions;}};
+ const send=f.options.accountSession.wallet.sendTx;f.options.accountSession.wallet.sendTx=async(...args)=>{const result=await send(...args);f.state.outcome.receipt.status=args[1].confirmationTier==='proposed'?'proposed':'checkpointed';return result;};
+ f.app=f.restart();f.acknowledgements=()=>acknowledgements;return f;
+}
+test('atomic Bok publishes at included policy and permits a fresh native ordinary successor without checkpoint',async()=>{
+ const f=proposedBokActionFixture();const result=await executeRollingAction(f.app,bokAction());
+ assert.equal(result.status,'included');assert.equal(result.bok.phase,'atomic');assert.equal(f.state.sent.opts.confirmationTier,'proposed');assert.equal(f.state.sends,1);
+ assert.deepEqual(f.state.sent.payload.interactions.map(call=>call.name),['authorize_request','post_with_bok']);assert.equal((await f.app.readAccountStatus()).status,'fee-ready');
+ const next=await executeRollingAction(f.app,{type:'post',deposit:'9',content:'Next private note spend'});assert.equal(next.status,'included');assert.equal(f.state.sends,2);
+});
+test('split Bok authorization keeps its original checkpoint boundary',async()=>{
+ const f=proposedBokActionFixture(),prepared=await f.app.prepare(bokAction());const result=await f.app.submitPrepared(prepared.intentId);
+ assert.equal(result.status,'authorized');assert.equal(f.state.sent.opts.confirmationTier,'checkpointed');assert.equal(f.acknowledgements(),0);
+});
+test('orphaned atomic Bok inclusion blocks a successor without automatic resubmission',async()=>{
+ const f=proposedBokActionFixture();await executeRollingAction(f.app,bokAction());f.state.outcome={...f.state.outcome,outcome:'pending',receipt:null};
+ await assert.rejects(executeRollingAction(f.app,{type:'post',deposit:'9',content:'Must not spend orphan change'}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+for(const type of ['cancel-bok-request','expire-bok-request'])test(`immediate ${type} uses private-owned accounting at exact proposed anchor and one submission`,async()=>{
+ const f=proposedBokActionFixture(expiryFixture());if(type==='cancel-bok-request')Object.assign(f.pages[0].requests[0],{available:'60',reserved:'0'});
+ await finishBokAccounting(f);assert(f.trace.every(input=>JSON.stringify(input.snapshot)===JSON.stringify({number:1,hash:hex(42)})));assert(f.trace.every(input=>!Object.hasOwn(input,'requestId')));
+ const result=await executeRollingAction(f.app,{type,requestId:hex(11)});assert.equal(result.status,'included');assert.equal(f.state.sent.opts.confirmationTier,'proposed');assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+ assert.equal(f.state.sent.payload.name,type==='cancel-bok-request'?'cancel':'expire');assert.deepEqual(f.state.sent.payload.args,[hex(11)]);
+});
+for(const type of ['cancel-bok-request','expire-bok-request'])for(const changed of ['foreign','anchor','finalized','scope'])test(`immediate ${type} refuses ${changed} before send even with old accounting`,async()=>{
+ const f=proposedBokActionFixture(expiryFixture());if(type==='cancel-bok-request')Object.assign(f.pages[0].requests[0],{available:'60',reserved:'0'});await finishBokAccounting(f);
+ if(changed==='anchor')f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:101n},hash:async()=>hex(43)});
+ if(changed==='finalized'){const estimate=f.options.sdk.estimatePrivateFeeTransaction;f.options.sdk.estimatePrivateFeeTransaction=async input=>{if(['cancel','expire'].includes(input.interaction.name))throw Error('Request not cancellable or expirable');return estimate(input);};}
+ if(changed==='scope'){const prepare=f.app.prepare;f.app={...f.app,prepare:async(...args)=>{const result=await prepare(...args);f.options.deployment.bok.operator=hex(99);return result;}};}
+ await assert.rejects(executeRollingAction(f.app,{type,requestId:hex(changed==='foreign'?12:11)}));assert.equal(f.state.sends,0);
+});
+test('immediate cancellation still rejects an unresolved reservation before proof or send',async()=>{
+ const f=proposedBokActionFixture(expiryFixture());await finishBokAccounting(f);
+ await assert.rejects(executeRollingAction(f.app,{type:'cancel-bok-request',requestId:hex(11)}),{code:'ROLLING_BOK_ACCOUNTING_INCOMPLETE'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
 });

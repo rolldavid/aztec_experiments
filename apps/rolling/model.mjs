@@ -64,3 +64,19 @@ export function createInlineAction({action,perform,onState}) {
     return pending;
   };
 }
+
+// Only in-flight presentation survives renderer replacement. The wallet owns
+// transaction state; completing or rejecting an action removes this entry.
+export function createInlineActionRegistry({perform,onState}) {
+ const active=new Map();
+ return Object.freeze({
+  snapshot:key=>active.get(key)?.snapshot??null,
+  run(key,action){
+   if(active.has(key))return active.get(key).pending;
+   const entry={snapshot:null,pending:null};active.set(key,entry);
+   const run=createInlineAction({action,perform,onState(state,captured,result){entry.snapshot={state,captured,result};onState(key,entry.snapshot);}});
+   try{entry.pending=run().finally(()=>{if(active.get(key)===entry)active.delete(key);});return entry.pending;}
+   catch(error){active.delete(key);throw error;}
+  }
+ });
+}
