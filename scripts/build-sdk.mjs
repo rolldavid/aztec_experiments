@@ -1,3 +1,4 @@
+import {inspectOwnerDiscovery,OWNER_DISCOVERY_PINS} from './patch-pxe-owner-discovery.mjs';
 import {parallelPxeAnchorSnapshot} from './pxe-sync-snapshot.mjs';
 import {zeroWindowRpcMicrotasks} from './rpc-zero-window.mjs';
 import {preservePxeSimulationLogs} from './pxe-simulation-logs.mjs';
@@ -26,6 +27,7 @@ if(indexedDBAtomicity.state!=='patched')throw new Error('Run npm run bootstrap:d
 const preferencePage=await inspectPreferencePage(fileURLToPath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url)));
 if(preferencePage.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
 if(createHash('sha256').update(await fs.readFile(fileURLToPath(new URL('../'+PREFERENCE_PAGE_COMPACT_PIN.source,import.meta.url)))).digest('hex')!==PREFERENCE_PAGE_COMPACT_PIN.sha256)throw new Error('SDK preference compact source mismatch');
+if((await inspectOwnerDiscovery(fileURLToPath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url)))).state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
 const portalMetadata=buildPortalRuntime();
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -134,7 +136,7 @@ const assets = [
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js', 'sqlite3-opfs-async-proxy.js'],
 ];
 for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
-const inputs = [...new Set([...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
+const inputs = [...new Set(['scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
   ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-sync-snapshot.mjs', 'scripts/pxe-validated-prove.mjs', 'shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
@@ -147,13 +149,14 @@ const preferenceLiteralInputs = [
   ...[PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN].map(pin=>['node_modules/@aztec-labs/pxe/'+pin.generated,pin.sha256]),
   [PREFERENCE_PAGE_COMPACT_PIN.source,PREFERENCE_PAGE_COMPACT_PIN.sha256],
 ];
-const preferenceRequiredInputs=new Set(['scripts/patch-pxe-preference-page.mjs',...preferenceLiteralInputs.map(([name])=>name)]);
+const preferenceRequiredInputs=new Set(['scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),'scripts/patch-pxe-preference-page.mjs',...preferenceLiteralInputs.map(([name])=>name)]);
 const inputHashes = {};
 for (const filename of inputs) {
   try { inputHashes[filename] = sha(await fs.readFile(path.resolve(root, filename))); }
   catch (error) { if (error.code !== 'ENOENT'||preferenceRequiredInputs.has(filename)) throw error; }
 }
 for(const [name,expected] of preferenceLiteralInputs)if(inputHashes[name]!==expected)throw new Error('SDK preference page patch changed during build: '+name);
+for(const pin of OWNER_DISCOVERY_PINS)if(inputHashes['node_modules/@aztec-labs/pxe/'+pin.path]!==pin.after)throw new Error('SDK owner discovery patch changed during build: '+pin.path);
 const outputs = {};
 const emitted = [...new Set([...Object.keys(main.metafile.outputs), ...Object.keys(browser.metafile.outputs), ...Object.keys(workers.metafile.outputs)].map(filename => path.basename(filename)).concat(assets.map(([, dest]) => dest), [...lazyAssets.keys()]))].sort();
 for (const name of emitted) outputs[name] = sha(await fs.readFile(path.join(out, name)));

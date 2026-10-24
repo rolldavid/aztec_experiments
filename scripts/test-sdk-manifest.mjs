@@ -1,3 +1,4 @@
+import {OWNER_DISCOVERY_PINS,transformOwnerDiscovery} from './patch-pxe-owner-discovery.mjs';
 import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN,preferenceRecoverySource,transformPreferencePage} from './patch-pxe-preference-page.mjs';
 import {INDEXEDDB_ATOMICITY_PINS, transformIndexedDBAtomicity} from './patch-indexeddb-atomicity.mjs';
 import {PXE_REORG_ANCHOR_PINS,transformPxeReorgAnchor} from './patch-pxe-reorg-anchor.mjs';
@@ -26,6 +27,10 @@ function fixture(t) {
   };
   const read = name => fs.readFileSync(path.join(root, name));
   const inputs = {
+    'scripts/pxe-sync-snapshot.mjs':'// fixture sync transform',
+    'shared/owner-envelope.mjs':'// fixture envelope',
+    'shared/ordinary-post-fees.mjs':'// fixture fee profile',
+    'shared/ordinary-post-witnesses.mjs':'// fixture witness prefetch',
     'toolchain.json': '{"aztec":"5.0.0"}',
     'scripts/toolchain.mjs': '// synthetic toolchain',
     'scripts/rpc-zero-window.mjs': '// synthetic RPC transform',
@@ -39,6 +44,11 @@ function fixture(t) {
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3.wasm': 'synthetic sqlite asset',
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js': 'synthetic sqlite proxy',
   };
+  inputs['scripts/patch-pxe-owner-discovery.mjs']=fs.readFileSync(new URL('./patch-pxe-owner-discovery.mjs',import.meta.url),'utf8');
+  for(const pin of OWNER_DISCOVERY_PINS){
+    const source=fs.readFileSync(new URL('./testing/fixtures/pxe-owner-discovery-6.0.0/'+pin.path,import.meta.url),'utf8');
+    inputs['node_modules/@aztec-labs/pxe/'+pin.path]=transformOwnerDiscovery(source,pin.path);
+  }
   inputs['scripts/patch-private-event-query.mjs']=fs.readFileSync(new URL('./patch-private-event-query.mjs',import.meta.url),'utf8');
   for(const pin of PRIVATE_EVENT_QUERY_PINS){
     const source=fs.readFileSync(new URL('../node_modules/@aztec-labs/pxe/'+pin.path,import.meta.url),'utf8');
@@ -230,4 +240,11 @@ for(const name of preferenceRequiredInputs.filter(name=>name!=='scripts/patch-px
 test('preference installer source change requires an SDK rebuild',t=>{
   const f=fixture(t);f.write('scripts/patch-pxe-preference-page.mjs','changed installer');
   assert.throws(()=>checkSdk(f.root),/SDK input changed/);
+});
+
+for(const pin of OWNER_DISCOVERY_PINS)test('owner discovery literal SDK pin '+pin.path,t=>{
+ const f=fixture(t),name='node_modules/@aztec-labs/pxe/'+pin.path;
+ delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
+ f.write(name,'unpatched owner oracle');f.manifest.inputs[name]=hash('unpatched owner oracle');f.save();
+ assert.throws(()=>checkSdk(f.root),/owner discovery patch mismatch/);
 });
