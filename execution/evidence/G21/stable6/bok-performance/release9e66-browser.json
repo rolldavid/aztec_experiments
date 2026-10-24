@@ -1,0 +1,212 @@
+{
+  "clickAt": "2026-10-24T00:27:38.303Z",
+  "source": "9e66ca7a",
+  "workerSource": "392bee960c08086f234f631e8cf5c157cfe3e63b",
+  "workerType": "m8a.xlarge",
+  "timeOrigin": 1792801375813.41,
+  "entries": [
+    {
+      "name": "rolling.reader.load",
+      "start": 1338.0950000286102,
+      "duration": 1172.5
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 2505.2099999189377,
+      "duration": 5.355000019073486
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 40255.424999952316,
+      "duration": 4713.75
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 57122.860000014305,
+      "duration": 2011.6449999809265
+    },
+    {
+      "name": "rolling.action.sync",
+      "start": 283139.16499996185,
+      "duration": 4908.945000052452
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 290535.7049999237,
+      "duration": 3832.945000052452
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 283138.6749999523,
+      "duration": 11239.675000071526
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 294450.1699999571,
+      "duration": 3525.539999961853
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 297975.7300000191,
+      "duration": 311.1999999284744
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 294450.0749999285,
+      "duration": 3928.875
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 298378.9650000334,
+      "duration": 0.34999990463256836
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 298379.314999938,
+      "duration": 1024.2900000810623
+    },
+    {
+      "name": "rolling.proof.transport.serialize",
+      "start": 312242.5299999714,
+      "duration": 517.5199999809265
+    },
+    {
+      "name": "rolling.proof.transport.submit",
+      "start": 312760.1100000143,
+      "duration": 6643.704999923706
+    },
+    {
+      "name": "rolling.proof.transport.wait",
+      "start": 319403.9049999714,
+      "duration": 7264.735000014305
+    },
+    {
+      "name": "rolling.proof.local.decompress",
+      "start": 326669.7150000334,
+      "duration": 32.609999895095825
+    },
+    {
+      "name": "rolling.proof.local.verify",
+      "start": 326702.3600000143,
+      "duration": 210.75999999046326
+    },
+    {
+      "name": "rolling.proof.native.total",
+      "start": 299457.1449999809,
+      "duration": 27516.31499993801
+    },
+    {
+      "name": "rolling.proof.native.proof-transport",
+      "start": 312291.8249999285,
+      "duration": 14681.670000076294
+    },
+    {
+      "name": "rolling.proof.native.private-witness",
+      "start": 318459.67999994755,
+      "duration": 8513.800000071526
+    },
+    {
+      "name": "rolling.proof.native.public-validation",
+      "start": 324623.5500000715,
+      "duration": 2349.939999938011
+    },
+    {
+      "name": "rolling.proof.native.unaccounted",
+      "start": 325662.11500012875,
+      "duration": 1311.384999871254
+    },
+    {
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 326313.96000003815,
+      "duration": 659.5199999809265
+    },
+    {
+      "name": "rolling.proof.native.sync",
+      "start": 326973.4800000191,
+      "duration": 0
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 299403.62000000477,
+      "duration": 28782.110000014305
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 328185.74000000954,
+      "duration": 2102.5849999189377
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 366042.1699999571,
+      "duration": 853.2000000476837
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 366882.70999991894,
+      "duration": 12.625
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 282629.75999999046,
+      "duration": 85873.53499996662
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 294378.41499996185,
+      "duration": 74120.38499999046
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 330288.3550000191,
+      "duration": 38214.92999994755
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 368499.814999938,
+      "duration": 736.4450000524521
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 369233.5449999571,
+      "duration": 2.7050000429153442
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 368507.03999996185,
+      "duration": 4667.1900000572205
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 382729.30499994755,
+      "duration": 1846.3600000143051
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 437443.189999938,
+      "duration": 1131.210000038147
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 438224.75499999523,
+      "duration": 349.625
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 438607.564999938,
+      "duration": 4204.305000066757
+    }
+  ],
+  "postToReplyDomSeconds": 156.0847897529602,
+  "automaticBalanceBefore": "0.655901",
+  "automaticBalanceAfter": "0.641309",
+  "paginationCaveat": "Conversation exceeded initial32posts; Load more clicked while Bok ran, before final reply; final reply and refund rendered automatically without page reload.",
+  "manualAppCheck": {
+    "revision": "e135bea9536cddebe9312f6c60e6804210a32978",
+    "initialClearCompletedDisabled": true,
+    "completedRemoved": true,
+    "uncheckedKept": true,
+    "persistsAfterReload": true,
+    "clearCompletedDisabledAfterReload": true
+  },
+  "independentReview": "Approved exact source binding and numerical claims; seven of eight application-controlled categories exceed20%; preparation19.394%; final checkpoint65.636s exceeds30s."
+}

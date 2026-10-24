@@ -1,0 +1,39 @@
+{
+  "sourceEvidence": "execution/evidence/G21/stable6/bok-performance/confirmation-protocol.json",
+  "currentRead": {
+    "observedAt": "2026-10-24T00:20:28.268833+00:00",
+    "blockNumber": 1857,
+    "blockHash": "0x2ae3f3c228e4aa46585182dd15b571a035d7161e093bfa0f89cf97347769df6e",
+    "globalVariables": {
+      "blockNumber": 1857,
+      "slotNumber": "0x0000000000000000000000000000000000000000000000000000000000000722",
+      "timestamp": "1792799724",
+      "chainId": "0x0000000000000000000000000000000000000000000000000000000000aa36a7",
+      "version": "0x00000000000000000000000000000000000000000000000000000000287cb646"
+    },
+    "network": {
+      "l1ChainId": 11155111,
+      "rollupVersion": 679261766,
+      "nodeVersion": "6.0.0"
+    },
+    "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba"
+  },
+  "pinnedProtocolSourceHashesMatch": true,
+  "transactionHash": "0x20b3ef3b92aac1b2c1e6b726ad028577186d1a22951ddf644762b38c14d3122d",
+  "slot": 1826,
+  "slotStartsAt": "2026-10-23T23:55:24+00:00",
+  "sendCompletedAt": "2026-10-23T23:54:29.499549Z",
+  "nativeWaitEndedAt": "2026-10-23T23:55:26.944999Z",
+  "sendToAssignedSlotSeconds": 54.500451,
+  "assignedSlotToNativeWaitEndSeconds": 2.944999,
+  "waitSeconds": 57.381368,
+  "initialDelaySeconds": 0,
+  "pollSeconds": 1,
+  "timeoutSeconds": 0,
+  "waitForStatus": "checkpointed",
+  "independentNativeCheckpointObservedAt": "2026-10-23T23:55:27.964999Z",
+  "postWaitCanonicalChecksSeconds": 0.871271,
+  "postWaitVisibleReplySeconds": 0.167891,
+  "finding": "Given its assigned slot1826, this checkpoint could not publish on Ethereum before23:55:24. Native wait ended2.945s after that boundary; no query observation lag or stronger-than-required finality wait found. Latest exact L1 inclusion timestamp was not queried.",
+  "failureOnlyCaveat": "Worker inherits native5second dropped-receipt grace; browser overrides to0. Not used by successful checkpoint confirmation."
+}

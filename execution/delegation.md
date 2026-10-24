@@ -1,16 +1,16 @@
 # Active performance goal — 24 October 2026
 
-Root integrated and published browser9e66ca7a, worker392bee96 remains live on
-m8a.xlarge. All delegated implementation and independent reviews are complete.
-Latest comparable request:160.534s actual Post click to settled visible reply;
-all application-controlled categories improved33–95%. All174 generated-app browser
-checks and manual reload check passed; balance/refund updated automatically.
-Final low-credit duplication fix passed205 checks and is published; no additional
-live latency claim. Independent anchored-read change passed549 checks.
-No live benchmark, service mutation or paid job is active.
-Remaining unmet target:30-second public-network checkpoint confirmation. Evidence
-shows72-second slots/pipelining; do not remove canonical completion or relabel
-proposed inclusion as settled to claim success. See docs/BOK_LATENCY.md.
+Browser9e66ca7a and worker392bee96 on m8a are published. Exact-release real
+benchmark completed156.085s from Post click to settled visible reply,66.4% below
+baseline. Two model calls/22.523s;174 generated-app checks plus manual reload
+verification passed. Auto balance0.641309; earlier Load more click recorded.
+Seven of eight app categories exceeded20%; preparation19.4%. Final65.636s
+checkpoint target remains unmet. Independent evidence review approved these
+qualified claims. Root owns final documentation/push; no paid job or service
+mutation remains active. No repeated benchmark without a changed hypothesis.
+Simulation audit/fixes published;205 affected checks and549 parallel-read checks
+passed. Confirmation slot audit explains the preceding transaction, not an exact
+latest L1 inclusion measurement. Do not weaken canonical completion semantics.
 
 ## Live component ownership — 2026-10-19T12:48Z
 

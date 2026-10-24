@@ -1,0 +1,133 @@
+{
+  "requestId": "0x0c939a5f455b0941558a5d1695b472450373f5cd910ed3805c3c9a7da6bdc62f",
+  "sourceBinding": {
+    "browser": "9e66ca7a6aebfb0af5312f477dd79d77305f8522",
+    "worker": "392bee960c08086f234f631e8cf5c157cfe3e63b",
+    "hardware": "m8a,4physicalcores,4nativeproverthreads",
+    "baseline": "cd1c13e9f1c15d0f841942db03478ac7bc4de5b3",
+    "baselineTree": "a25ff3c2b161e73c2a40e59a73f25567d646bc92"
+  },
+  "clickAt": "2026-10-24T00:27:38.303000+00:00",
+  "admissionAt": "2026-10-24T00:28:30.845227+00:00",
+  "finishedAt": "2026-10-24T00:30:14.678350+00:00",
+  "clickToAdmissionSeconds": 52.542227,
+  "clickToFinishedSeconds": 156.37535,
+  "clickToVisibleReplySeconds": 156.08478979492187,
+  "workerSeconds": 103.83325,
+  "partitions": {
+    "provider.completion": 22.522685,
+    "tool.finish_workspace": 2.805807,
+    "publication.static": 0.03764,
+    "publication.mirror": 3.670514,
+    "escrow.prove": 3.477047,
+    "escrow.wait": 65.636432,
+    "board.readRequest": 0.392121,
+    "otherWorkerSeconds": 5.291004
+  },
+  "partitionNote": "Exclusive selected worker durations; residual includes edits/guards/admission/send. Nested spans not summed.",
+  "modelCalls": 2,
+  "summaryCalls": 0,
+  "toolMetadata": [
+    {
+      "id": 0,
+      "tools": [
+        {
+          "name": "edit_file",
+          "path": "index.html",
+          "editCount": 6,
+          "oldTextBytes": 734,
+          "newTextBytes": 1222
+        },
+        {
+          "name": "edit_file",
+          "path": "test.js",
+          "editCount": 1,
+          "oldTextBytes": 121,
+          "newTextBytes": 661
+        },
+        {
+          "name": "edit_browser_plan",
+          "appendCount": 1
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "tools": [
+        {
+          "name": "finish_workspace"
+        }
+      ]
+    }
+  ],
+  "toolErrors": [],
+  "firstPassValidation": true,
+  "boardReads": 6,
+  "proofProfile": {
+    "totalMs": 3475.086,
+    "syncMs": 0,
+    "provingMs": 2523.334,
+    "validationMs": 361.509,
+    "unaccountedMs": 47.209,
+    "witnessMs": 543.033,
+    "functionCount": 4,
+    "wallTimeUs": "1792801747675560"
+  },
+  "canonicalFinal": {
+    "status": "succeeded",
+    "canonical": true,
+    "txHash": "0x228ccda78bc34a1d6683164e057f30db92b22eb2301ecee449a9fdf3910b58b3",
+    "transactionFee": "4177053168328400000",
+    "blockNumber": 1885,
+    "blockHash": "0x116d858a195f0c42fa9ce703d2f70d1bc54df7f3fdba229401f7900c723a3c68"
+  },
+  "aggregateChargeMicroUSDC": "14592",
+  "reservedMicroUSDC": "250000",
+  "unusedBudgetMicroUSDC": "235408",
+  "acceptedRevision": "e135bea9536cddebe9312f6c60e6804210a32978",
+  "publicationReceipt": {
+    "producedRevision": "e135bea9536cddebe9312f6c60e6804210a32978",
+    "readRevision": "cd1c13e9f1c15d0f841942db03478ac7bc4de5b3",
+    "validation": {
+      "passed": true,
+      "testsPassed": true,
+      "buildPassed": true,
+      "testCount": 1,
+      "sourceDigest": "7ac288250929ac0506a6cfbc0cc9771ab1dccdc9be416dbbc1f2c4c42f371ab5",
+      "artifactSha256": "9a49c1335e69175a00c1dda2f41caa8806c0621f1e604c81c1172835b5a102ca"
+    },
+    "browser": {
+      "passed": true,
+      "checks": 174,
+      "browserVersion": "153.0.8010.12",
+      "planSha256": "963daa8e193d0a1c92cf2d78c7f149b9a9aa40b875d93a71ce966a41826c3d36",
+      "policyHash": "bf234b237bb7f3c9b80d4b2ff9fe5658722faa5f8b458646d79e2270b84d6b47",
+      "artifactSha256": "9a49c1335e69175a00c1dda2f41caa8806c0621f1e604c81c1172835b5a102ca"
+    },
+    "publication": {
+      "status": "complete"
+    }
+  },
+  "appUrl": "https://dy2q03rao3se7.cloudfront.net/t/5b889916416d6fe106a8eefbdd68d913ef089ea956638738305fe7c46d5fbcc0/r/e135bea9536cddebe9312f6c60e6804210a32978/files/index.html",
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "hasFailure": false
+  },
+  "sourceEvidence": [
+    "/tmp/bok-release9e66-observe03.json",
+    "/tmp/bok-release9e66-receipt01-result.json",
+    "/tmp/bok-release9e66-native-result.json",
+    "/tmp/bok-release9e66-proof-observe02-result.json",
+    "/private/tmp/rolling-release9e66-final-browser.txt"
+  ],
+  "observedUIBalance": {
+    "before": "0.655901",
+    "reserved": "0.405901",
+    "after": "0.641309",
+    "automaticRefresh": true,
+    "source": "parent actual retained Chrome observation"
+  },
+  "browserInteractionCaveat": "Conversation exceeded32posts; parent clicked existing Load more about00:29:46 to load newest request before reply. Final reply and balance updated automatically without page refresh.",
+  "nativeObservationCaveat": "Independent observer first sampled after checkpointing; exact proposed-to-checkpoint transition was not captured. Native application wait timing is recorded."
+}

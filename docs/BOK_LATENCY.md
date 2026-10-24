@@ -5,7 +5,53 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
-## Latest verified run — 2m40.5s, all application-controlled categories improved
+## Exact deployed release — 2m36.1s
+
+Browser9e66ca7a and worker392bee96 on m8a completed the identical267-character
+request from the original app tree in **156.085s**, **66.4% below464.264s**.
+Worker completion was156.375s. All174 browser checks passed on the first attempt;
+a separate manual check confirmed clearing completed habits keeps unchecked
+habits, survives reload and disables the button when no completed habits remain.
+
+| Stage | Original seconds | Exact deployed release seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| Browser preparation |13.944|11.240|19.4%|
+| Fee estimation |15.486|3.929|74.6%|
+| Browser proof including local work and transport |37.196|28.782|22.6%|
+| Model calls |192.671 (14)|22.523 (2)|88.3%|
+| Board reads |3.482|0.392|88.7%|
+| Validation, static publication and GitHub mirror |13.068|6.514|50.2%|
+| Worker proof |6.619|3.477|47.5%|
+| Other worker processing |15.960|5.291|66.8%|
+| Final canonical checkpoint wait |56.215|65.636|16.8% slower|
+
+Seven of eight application-controlled categories exceeded20% reduction in this
+sample. Preparation varied from4.186s in the preceding run to11.240s here;
+its19.4% reduction must not be rounded up to claim every category met20%.
+The final checkpoint still exceeds30seconds. These categories overlap; only
+the linked worker partition is disjoint. No new paid run is justified merely
+to obtain more favorable scheduling or model timings.
+
+The long test conversation crossed its32-post initial page. One **Load more**
+click exposed the request while Bok was working; the final reply and balance
+then rendered automatically without a page refresh. Charge0.014592USDC,
+refund0.235408USDC, balance0.655901→0.641309. Accepted app source is
+`e135bea9536cddebe9312f6c60e6804210a32978`; final transaction
+`0x228ccda78bc34a1d6683164e057f30db92b22eb2301ecee449a9fdf3910b58b3`
+succeeded canonically at block1885. Two model calls, no summary or repair loop.
+
+[Exact release browser timings](../execution/evidence/G21/stable6/bok-performance/release9e66-browser.json),
+[worker timings and publication receipt](../execution/evidence/G21/stable6/bok-performance/release9e66-profile.json).
+
+A separate source-and-live-block audit of the **preceding** transaction confirmed
+its assigned checkpoint slot could not publish before23:55:24UTC,54.500s after
+submission. The native waiter returned2.945s after that boundary, with no initial
+delay or stronger finality requirement. Its remaining post-wait canonical checks
+were0.871s. That explains the preceding57.381s wait; it is not a measurement of
+the latest transaction's exact L1 inclusion. No duplicate application wait was
+found. [Confirmation audit](../execution/evidence/G21/stable6/bok-performance/confirmation-slot-audit.json).
+
+## Preceding verified run — 2m40.5s, all application-controlled categories improved
 
 The same 267-character feature request, same parent and 0.25 USDC budget, starting
 from the exact original four-file app tree, completed in **160.534s** from the
