@@ -20,7 +20,7 @@ function fixture(){
   const state={registered:0,reads:0,balance:1300n,instance:{...instance},chain:1,version:2};
   const wallet={getChainInfo:async()=>({chainId:new Fr(1),version:new Fr(2)}),registerContract:async()=>{state.registered++;},
     executeUtility:async(call,options)=>{state.reads++;assert.equal(call.name,'balance_of');assert.deepEqual(call.args.map(String),[owner.toField().toString()]);assert.deepEqual(options.scopes,[owner]);return {result:[new Fr(state.balance)],offchainEffects:[],anchorBlockTimestamp:1n};}};
-  const node={getCurrentMinFees:async()=>new GasFees(3n,5n),getNodeInfo:async()=>({l1ChainId:state.chain,rollupVersion:state.version}),getContract:async()=>state.instance};
+  const node={getCurrentMinFees:async()=>new GasFees(3n,5n),getNodeInfo:async()=>({l1ChainId:state.chain,rollupVersion:state.version,txsLimits:{gas:{daGas:117624,l2Gas:6540000}}}),getContract:async()=>state.instance};
   const input={wallet,node,owner,privateFeeAddress:instance.address,privateFeeArtifact:artifact,expectedChainId:'1',expectedVersion:'2',
     gasSettings:new GasSettings(new Gas(100,200),new Gas(10,20),new GasFees(3n,5n),new GasFees(1n,2n))};
   return {state,input};

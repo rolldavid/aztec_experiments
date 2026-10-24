@@ -150,5 +150,5 @@ async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,e
   // Both refund branches and extreme field/u128 values are exercised by the profile test.
   check(canonical.currentContractClassId.toString()===PRIVATE_FEE_REFUND_PROFILE.classId,'PRIVATE_FEE_ARTIFACT_INVALID');
   const refundGasLimits=new Gas(PRIVATE_FEE_REFUND_PROFILE.daGas,PRIVATE_FEE_REFUND_PROFILE.l2Gas);
-  return {refundGasLimits,refundReservationError:PRIVATE_FEE_REFUND_PROFILE.reservationError,paymentMethod,availableCredit,refundSelector,gasSettings:fixed.gasSettings,metadata:{maximumFee:fixed.maximumFee.toString(),feePayer:payer.toString(),mode:claim===undefined?'private-balance':'bridge-claim',refundUnusedGas:true}};
+  return {networkGasLimits:{daGas:nodeInfo.txsLimits.gas.daGas,l2Gas:nodeInfo.txsLimits.gas.l2Gas},refundGasLimits,refundReservationError:PRIVATE_FEE_REFUND_PROFILE.reservationError,paymentMethod,availableCredit,refundSelector,gasSettings:fixed.gasSettings,metadata:{classId:canonical.currentContractClassId.toString(),maximumFee:fixed.maximumFee.toString(),feePayer:payer.toString(),mode:claim===undefined?'private-balance':'bridge-claim',refundUnusedGas:true}};
 }

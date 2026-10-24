@@ -187,6 +187,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     }
     await localGuard();return bok;
   }
+  const ordinaryPost=record=>{if(!['post','reply','quote','repost'].includes(record.action.type)||record.method!=='post'||record.bok)return undefined;check(deployment.board.instance,'BB_POST_FEE_PROFILE_MISMATCH');return deployment.board.instance;};
   const scope=session&&fixed&&{account:owner,chainId:String(fixed.network.chainId),version:String(fixed.network.version),
     rollup:fixed.network.rollup,board:fixed.board,portal:fixed.portal};
   const slot=()=>slotPromise??=createEncryptedJournalSlot({storage:privateStore,walletSecret:session.walletSecret,walletSalt:session.walletSalt,
@@ -961,7 +962,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         // Claim validation retains its exact bridge fee payload even when the
         // separate review simulation is omitted. Submission rechecks it.
         if(action.type==='claim-private-fee'||action.feeReceipt!==undefined)await payment(action,record);
-        record.maximumFee=sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee.toString();
+        record.maximumFee=(ordinaryPost(record)?sdk.ordinaryPostFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record),board:ordinaryPost(record)}).maximumFee:sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee).toString();
       }
       else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();const saved=await store.write(prior,record);
@@ -1100,7 +1101,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const preparedPayment=await measure('action.fee-prepare',()=>cachedPayment&&cachedPayment.encoded===saved.encoded&&
         cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node
         ?cachedPayment.payment:payment(saved.value.action,saved.value));
-      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true,measure}));
+      const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true,ordinaryPost:ordinaryPost(saved.value),measure}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
       let attempt=null,active;

@@ -40,6 +40,7 @@ import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
 import {nameRegistration,NAME_DOMAIN} from '../../shared/rolling/name-policy.mjs';
 import {computeArtifactHash,getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
+import {ordinaryPostFeeLimit} from '../../shared/ordinary-post-fees.mjs';
 import {derivePrivateFeeInstance,normalizePrivateFeeGasSettings} from '../../shared/private-fee-client.mjs';
 import {expectedPortalRuntime,verifyPortalRuntime} from '../../shared/portal-runtime.mjs';
 import {encodeConfigCommitment} from '../../shared/protocol-commitments.mjs';
@@ -64,7 +65,7 @@ async function deploymentFixture({chainId='31337'}={}){
   getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:eth(33),outboxAddress:eth(44)})};
  const provider={getNetwork:async()=>({chainId:BigInt(chainId)}),getBlock:async n=>({number:20,hash:hex(66)}),getCode:async(address,n)=>{state.ethReads.push(n);return expectedPortalRuntime(metadata,immutables);},destroy:()=>{state.destroyed++;}};
  const ethers={Interface,JsonRpcProvider:class{constructor(){return provider;}},Contract:class{constructor(){return {...Object.fromEntries(Object.keys(immutables).map(name=>[name,async opts=>{state.ethReads.push(opts.blockTag);return immutables[name];}])),depositsEnabled:async opts=>{state.ethReads.push(opts.blockTag);return state.enabled;}};}}};
- const sdk={Fr,AztecAddress,getContractClassFromArtifact,computeContractAddressFromInstance,derivePrivateFeeInstance,normalizePrivateFeeGasSettings,sha256ToField,verifyPortalRuntime,portalRuntimeMetadata:metadata,
+ const sdk={Fr,AztecAddress,getContractClassFromArtifact,computeContractAddressFromInstance,derivePrivateFeeInstance,normalizePrivateFeeGasSettings,ordinaryPostFeeLimit,sha256ToField,verifyPortalRuntime,portalRuntimeMetadata:metadata,
   isTrustedPrivateNode:n=>n===node,inspectTrustedNode:async(n,opts)=>{state.inspection++;assert.deepEqual(opts.expectedNetworkScope,{chainId,version:'1',rollup});assert.equal(opts.proofsEnabled,state.proofsEnabled??true);}};
  const options={sdk,node,ethers,config,boardArtifact:artifact,privateFeeArtifact:feeArtifact,contextGuard:async()=>{state.guards++;}};
  return {options,state,node,provider,board,fee,storage,immutables,configHash,economics};

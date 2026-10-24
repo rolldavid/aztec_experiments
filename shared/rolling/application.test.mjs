@@ -68,7 +68,7 @@ function fixture(){
   const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:height==='checkpointed'?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
-    normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
+    ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
       if(['set_preference','mark_thread_read'].includes(input.interaction.name)&&state.preferenceError)throw state.preferenceError;
       if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
@@ -76,7 +76,7 @@ function fixture(){
       if(input.interaction.name==='post')assert.equal(input.interaction.args[2].expected_main_policy_version,state.policy,'policy changed');
       return {maximumFee:state.fee,payload:input.interaction,gasSettings:{ceiling:state.fee}};
     }};
-  const deployment={board:{address:hex(1),artifact},network:{chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20)},
+  const deployment={board:{address:hex(1),artifact,instance:{address:hex(1),currentContractClassId:hex(12),originalContractClassId:hex(12)}},network:{chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20)},
     portal:'0x'+'22'.repeat(20),privateFee:{address:hex(2),artifact:{},gasSettings:{}}};
   const accountSession={owner,wallet,node,journal,walletSecret:hex(8),walletSalt:'0'};
   const options={sdk,deployment,accountSession,privateStore,publicReader:new Proxy({},{get(){throw Error('Private access to public reader');}}),contextGuard:async()=>{assert.ok(state.guard);}};
@@ -2176,4 +2176,16 @@ for(const replacement of ['scope','pxe'])test(`main-board anchor rejects ${repla
  const rejected=assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
  if(replacement==='scope')scope={};else f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};
  gate.resolve();await rejected;assert.equal(payments,0);assert.equal(f.state.privateReads.length,0);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+
+test('ordinary posting credit gate creates no workflow intent or L2 submission',async()=>{
+ const f=fixture();f.options.sdk.ordinaryPostFeeBudget=()=>{throw Object.assign(Error('credit gate'),{code:'BB_POST_FEE_CREDIT_REQUIRED'});};
+ const app=f.restart();await assert.rejects(app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'Keep this unsent draft'},{immediate:true}),{code:'BB_POST_FEE_CREDIT_REQUIRED'});
+ assert.equal(f.values.size,0);assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sent,undefined);
+});
+test('ordinary submit binds its arithmetic quote to the verified board',async()=>{
+ const f=fixture(),estimate=f.options.sdk.estimatePrivateFeeTransaction;let quoted;
+ f.options.sdk.estimatePrivateFeeTransaction=async input=>{quoted=input.ordinaryPost;return estimate(input);};
+ const app=f.restart(),prepared=await app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'Fixed profile'},{immediate:true});
+ await app.submitPrepared(prepared.intentId);assert.equal(quoted,f.options.deployment.board.instance);assert.equal(f.state.sends,1);
 });

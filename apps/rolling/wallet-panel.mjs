@@ -86,6 +86,8 @@ function nameFailure(failure){
 }
 function actionFailure(failure){
  try{const code=Object.getOwnPropertyDescriptor(failure??{},'code')?.value;
+  if(code==='BB_POST_FEE_CREDIT_REQUIRED')return 'Add posting credit to cover this post’s maximum cost. No transaction was sent.';
+  if(code==='BB_POST_FEE_PROFILE_MISMATCH')return 'Posting costs need an application update. Reload the page. No transaction was sent.';
   if(code==='BB_FEE_RESERVATION_UNAFFORDABLE')return 'A fee estimate could not fit your posting credit. No transaction was sent. You can add posting credit and try again.';
   if(code==='BB_FEE_ESTIMATION_UNSTABLE')return 'The posting fee could not be estimated. No transaction was sent.';
  }catch{return null;}
@@ -1052,7 +1054,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(kind==='preference')valid=valid&&field(draft.kind===5?'0':fields.get('target').value)&&(draft.kind===2||draft.kind===5||BigInt(fields.get('target').value||'0')!==0n);
    if(kind==='read-marker')valid=valid&&field(fields.get('thread').value)&&BigInt(fields.get('thread').value||'0')!==0n&&/^(0|[1-9][0-9]{0,9})$/.test(fields.get('throughBlock').value)&&BigInt(fields.get('throughBlock').value)<=0xffffffffn;
    if(kind==='subboard')valid=valid&&/^[a-z0-9](?:[a-z0-9]|-(?!-)){1,38}[a-z0-9]$/.test(fields.get('slug').value);
-   const maximum=typeof session?.postingFeeLimit==='string'?session.postingFeeLimit:null;cost.textContent=maximum?compactAmount(maximum,18,4,true):'—';if(maximum)cost.setAttribute('title',decimal(maximum,18));
+   const selectedLimit=['post','reply','quote','repost'].includes(draft.type)?session?.ordinaryPostingFeeLimit:session?.postingFeeLimit;const maximum=typeof selectedLimit==='string'?selectedLimit:null;cost.textContent=maximum?compactAmount(maximum,18,4,true):'—';if(maximum)cost.setAttribute('title',decimal(maximum,18));
    review.textContent=postingInProgress?'Posting…':reviewLabel(draft);review.dataset.unavailable=String(!valid);review.disabled=busy||!valid;return valid;
   }
   rulesView(draft,validate);

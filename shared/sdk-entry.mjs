@@ -78,3 +78,5 @@ export {consumePrivateFeeSimulationValidation} from './private-fee-validation.mj
 export {provingEnabledForNode} from './proving-policy.mjs';
 
 export {waitForL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
+
+export {ordinaryPostFeeBudget,ordinaryPostFeeLimit} from './ordinary-post-fees.mjs';

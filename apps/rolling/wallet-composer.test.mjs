@@ -32,9 +32,9 @@ function dom(t){
  const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}})});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null}={}){
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000'}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
- const session={postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
+ const session={ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
   readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
@@ -554,4 +554,13 @@ test('a bounded fee reservation failure explains the outcome without exposing pr
  await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert(f.document.body.textContent.includes('A fee estimate could not fit your posting credit. No transaction was sent.'));
  assert(!f.document.body.textContent.includes('PRIVATE_BALANCE_SENTINEL'));assert.deepEqual(f.submissions,[]);assert(f.document.body.textContent.includes('Keep my post'));
+});
+
+test('ordinary and Bok composers show their respective maximum posting costs',{timeout:3000},async t=>{
+ const f=await fixture(t,{ordinaryLimit:'200000000000000'});await f.started.promise;f.balance.resolve({available:true,availableCredit:'1000000'});
+ await f.document.until(()=>f.host.textContent.includes('1 USDC available'));
+ assert(f.document.querySelector('.composer-cost').textContent.includes('Max cost 0.0002'));
+ const editor=f.document.querySelector('textarea');editor.value='@bok help';editor.fire('input');
+ assert(f.document.querySelector('.composer-cost').textContent.includes('Max cost 0.001'));
+ editor.value='Ordinary post';editor.fire('input');assert(f.document.querySelector('.composer-cost').textContent.includes('Max cost 0.0002'));
 });

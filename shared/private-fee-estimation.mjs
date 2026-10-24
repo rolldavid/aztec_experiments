@@ -1,3 +1,4 @@
+import {ordinaryPostFeeBudget,assertOrdinaryPostPayload} from './ordinary-post-fees.mjs';
 import {MAX_PROCESSABLE_L2_GAS,MAX_TX_DA_GAS} from '@aztec-labs/constants';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
 import {mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
@@ -30,7 +31,14 @@ function allocate(budget,lower,caps,prices){
  for(let i=0;i<2;i++)if(rates[i]){const extra=min(BigInt(caps[dimensions[i]]-values[i]),remaining/rates[i]);values[i]+=Number(extra);remaining-=extra*rates[i];}
  return new Gas(...values);
 }
-export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,measure=(_stage,operation)=>operation(),simulator=createPrivateFeeSimulator(wallet,node)}){
+export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,ordinaryPost,measure=(_stage,operation)=>operation(),simulator=createPrivateFeeSimulator(wallet,node)}){
+ if(ordinaryPost!==undefined){
+  if(!deferSimulation||typeof wallet.pxe?.proveTxWithPublicValidation!=='function')throw fail('BB_POST_FEE_PROFILE_MISMATCH');
+  await guard();const budget=ordinaryPostFeeBudget({wallet,prepared,board:ordinaryPost});
+  const application=await interaction.request();assertOrdinaryPostPayload({wallet,from,application,board:ordinaryPost});
+  const payload=mergeExecutionPayloads([await prepared.paymentMethod.withReservation(budget.reservation).getExecutionPayload(),application]);
+  await guard();return {payload,...budget,passes:0,atomicSimulation:true};
+ }
  const ceiling=GasSettings.from(prepared.gasSettings),available=BigInt(prepared.availableCredit),network=(await node.getNodeInfo()).txsLimits.gas;
  const caps=new Gas(Math.min(ceiling.gasLimits.daGas,network.daGas,MAX_TX_DA_GAS),Math.min(ceiling.gasLimits.l2Gas,network.l2Gas,MAX_PROCESSABLE_L2_GAS));
  const settings=(gasLimits,teardownGasLimits)=>GasSettings.from({gasLimits,teardownGasLimits,maxFeesPerGas:ceiling.maxFeesPerGas,maxPriorityFeesPerGas:ceiling.maxPriorityFeesPerGas});
