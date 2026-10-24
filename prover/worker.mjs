@@ -1,6 +1,5 @@
 // Single disposable worker: never log witnesses or SDK exceptions.
-import {loadRollingArtifacts} from './rolling-artifacts.mjs';
-import {rollingSelectors,validateRollingJob} from './application-policy.mjs';
+import {validateRollingJob} from './application-policy.mjs';
 import {pluginSelectors,validatePluginPayload} from './plugin-policy.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -8,7 +7,7 @@ import {gunzipSync} from 'node:zlib';
 import {abiDecode} from '@aztec-foundation/noir-noirc_abi';
 import {Barretenberg,AztecClientBackend} from '@aztec-foundation/bb.js';
 import {workerNativeProfile,initializeWorkerNative,assertWorkerNativeProfile} from './worker-native-profile.mjs';
-import {loadCircuitCatalog} from './catalog.mjs';
+import {loadWorkerCatalog} from './catalog.mjs';
 import {decodeJob} from '../shared/remote-prover-wire.mjs';
 import {decodeWitnessDictionary} from '../shared/remote-witness-dictionary.mjs';
 import {nativeWitnessBytes,assertNativeWitnessFormat} from './native-witness-bytes.mjs';
@@ -32,7 +31,7 @@ try{
  await initializeWorkerNative(nativeProfile);
  setStage("catalog");
  const applicationProfile=process.env.PROVER_APPLICATION_PROFILE??'legacy';
- const catalog=await loadCircuitCatalog({applicationProfile});
+ const {catalog,selectors}=await loadWorkerCatalog({applicationProfile});
  if(standby){
   // Only invariant public artifacts/native runtime are initialized while idle.
   // The parent assigns exactly one queue-owned file after this readiness event.
@@ -56,7 +55,6 @@ try{
  if(applicationProfile==='rolling'){
   const options={metadata,privateBokAddress:process.env.PROVER_PRIVATE_BOK,privateFeeAddress:process.env.PROVER_PRIVATE_FEE};
   const decoded=circuits.map((c,i)=>/^(RollingBoard|PrivateBok|PrivateFPC|SchnorrInitializerlessAccount):/.test(c.functionName)?abiDecode(c.abi,witnesses[i]).inputs:undefined);
-  const selectors=await rollingSelectors(loadRollingArtifacts());
   validateRollingJob(circuits,decoded,{...options,selectors});
  }else{
  let boardCalls=0,feeClaims=0;

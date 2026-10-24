@@ -6,8 +6,13 @@ import {SchnorrInitializerlessAccountContractArtifact} from '@aztec-labs/account
 import {AuthRegistryArtifact,HandshakeRegistryArtifact,MultiCallEntrypointArtifact,PublicChecksArtifact} from '@aztec-labs/standard-contracts';
 import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {loadRollingArtifacts} from './rolling-artifacts.mjs';
+import {rollingSelectors} from './application-policy.mjs';
 import {circuitId} from '../shared/remote-prover-wire.mjs';
-export async function loadCircuitCatalog({applicationProfile='legacy'}={}){
+// Keep the public catalogue-only API for qualification and service startup.
+export async function loadCircuitCatalog(options={}){return (await prepareCatalog(options,false)).catalog;}
+// A disposable worker prepares release policy before accepting its sole job.
+export async function loadWorkerCatalog(options={}){return prepareCatalog(options,true);}
+async function prepareCatalog({applicationProfile='legacy'}={},preparePolicy){
  if(!['legacy','rolling'].includes(applicationProfile))throw Error('Invalid application profile');
  const rawApplications=applicationProfile==='rolling'?loadRollingArtifacts():[];
  const circuits=new Map(),provider=new BundleArtifactProvider();
@@ -25,5 +30,6 @@ export async function loadCircuitCatalog({applicationProfile='legacy'}={}){
  for(const raw of rawApplications)for(const circuit of circuits.values())if(circuit.functionName.startsWith(raw.name+':'))circuit.abi=raw.functions.find(f=>f.name===circuit.functionName.split(':')[1]).abi;
  const account=JSON.parse(await fs.readFile(new URL('../../artifacts/SchnorrInitializerlessAccount.json',import.meta.resolve('@aztec-labs/accounts/schnorr')),'utf8'));
  for(const circuit of circuits.values())if(circuit.functionName.startsWith(account.name+':'))circuit.abi=account.functions.find(f=>f.name===circuit.functionName.split(':')[1]).abi;
- return circuits;
+ const selectors=preparePolicy&&applicationProfile==='rolling'?await rollingSelectors(rawApplications):undefined;
+ return {catalog:circuits,selectors};
 }
