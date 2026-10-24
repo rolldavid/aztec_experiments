@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { nargoBinary } from './toolchain.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 // Regenerate this local dependency from authenticated native sources; never patch
 // the user's Nargo cache. Only the five qualified APIs below differ from v6.
@@ -113,7 +115,16 @@ export function checkOwnerNoir({root=ROOT,cacheRoot}={}) {
  for(const name of Object.keys(expected))if(actual[name]!==expected[name])throw Error(`Generated owner dependency changed: ${name}`);
  return {files:Object.keys(expected).length};
 }
+export function resolveOwnerNoirOriginals({root=ROOT,cacheRoot=path.join(os.homedir(),'nargo'),getCompiler=nargoBinary,run=execFileSync}={}) {
+ const source=path.join(cacheRoot,'github.com/aztec-labs-eng/aztec-nr/v6.0.0');
+ if(['aztec','balance-set','uint-note'].every(pkg=>fs.existsSync(path.join(source,pkg,'Nargo.toml'))))return false;
+ // Nargo owns fetching its cache. This does not repair mismatched existing
+ // bytes: the complete original inventory is authenticated immediately after.
+ run(getCompiler(),['check','--silence-warnings'],{cwd:path.join(root,'scripts/fixtures/owner-noir-bootstrap'),stdio:'inherit'});
+ return true;
+}
 export function prepareOwnerNoir({root=ROOT,cacheRoot}={}) {
+ if(cacheRoot===undefined)resolveOwnerNoirOriginals({root});
  const sources=ownerNoirSources({root,cacheRoot}); // Validate every input before any output mutation.
  const destination=path.join(root,OWNER_NOIR_DIRECTORY),temporary=destination+'.preparing';
  fs.rmSync(temporary,{recursive:true,force:true});

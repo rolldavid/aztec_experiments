@@ -59,6 +59,24 @@ def verify_repository(key, packages, download_dir):
             "archiveBytes": archive.stat().st_size, "packages": results}
 
 
+def packages_with_owner_sources(lock, root):
+    packages = dict(lock["packages"])
+    if "ownerDelivery" not in lock:
+        return packages, None
+    if lock["ownerDelivery"] != ".build/owner-delivery/aztec-nr":
+        raise ValueError("Unknown generated Noir dependency")
+    raw = (root / "scripts/owner-delivery-noir-sources.json").read_bytes()
+    originals = json.loads(raw)
+    if originals.get("version") != "v6.0.0" or set(originals.get("packages", {})) != {"aztec", "balance-set", "uint-note"}:
+        raise ValueError("Unexpected owner dependency original inventory")
+    for name, entry in originals["packages"].items():
+        key = "dependencies/github.com/aztec-labs-eng/aztec-nr/v6.0.0/" + name
+        if key in packages and packages[key] != entry:
+            raise ValueError("Conflicting owner dependency original inventory")
+        packages[key] = entry
+    return packages, digest(raw)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True)
@@ -69,7 +87,8 @@ def main():
     lock_bytes = (pathlib.Path(args.lock) if args.lock else root / "noir-dependencies.json").read_bytes()
     lock = json.loads(lock_bytes)
     repos = {}
-    for name, package in lock["packages"].items():
+    packages, owner_sources_sha = packages_with_owner_sources(lock, root)
+    for name, package in packages.items():
         pieces = name.split("/")
         if pieces[:2] != ["dependencies", "github.com"]:
             raise ValueError(f"Unsupported dependency origin: {name}")
@@ -88,7 +107,7 @@ def main():
                 errors.append({"repository": "/".join(futures[future]), "error": str(error)})
     passed = not errors and all(package["outcome"] == "pass" for repo in results for package in repo["packages"])
     report = {"schema": 1, "outcome": "pass" if passed else "fail", "recordedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-              "lockfileSha256": digest(lock_bytes), "method": "Fresh HTTPS downloads from official repository commit archives; compare every locked package manifest and source-directory file byte-for-byte by SHA-256. No developer cache used for downloaded comparison. Tags are resolved to commits at the recorded time. This establishes origin consistency, not an independent code audit.",
+              "lockfileSha256": digest(lock_bytes), "ownerDeliverySourcesSha256": owner_sources_sha, "method": "Fresh HTTPS downloads from official repository commit archives; compare every locked package manifest and source-directory file byte-for-byte by SHA-256. No developer cache used for downloaded comparison. Tags are resolved to commits at the recorded time. This establishes origin consistency, not an independent code audit.",
               "repositories": sorted(results, key=lambda value: value["repository"]), "errors": errors}
     output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

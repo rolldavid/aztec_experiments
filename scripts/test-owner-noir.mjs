@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {prepareOwnerNoir,checkOwnerNoir,ownerNoirSources,OWNER_NOIR_PATCH_PINS,OWNER_NOIR_DIRECTORY} from './prepare-owner-noir.mjs';
+import {resolveOwnerNoirOriginals,prepareOwnerNoir,checkOwnerNoir,ownerNoirSources,OWNER_NOIR_PATCH_PINS,OWNER_NOIR_DIRECTORY} from './prepare-owner-noir.mjs';
 import {checkNoirEmbeddedSources} from './check-noir-dependencies.mjs';
 import {createHash} from 'node:crypto';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
@@ -59,4 +59,24 @@ test('embedded generated sources require exact registration, full inventory and 
  assert.throws(()=>checkNoirEmbeddedSources({...artifact,file_map:{1:artifact.file_map[1]}},{...options,lock}),/Embedded Noir dependency sources/);
  artifact.file_map[0].source+='changed';assert.throws(()=>checkNoirEmbeddedSources(artifact,{...options,lock}),/differs from prepared tree/);
  artifact.file_map[0].source=source;delete lock.ownerDelivery;assert.throws(()=>checkNoirEmbeddedSources(artifact,{...options,lock}),/Unregistered generated/);
+});
+
+test('clean checkout resolves through native Nargo only when original packages are absent',t=>{
+ const options=fixture(t),cacheRoot=path.join(options.root,'cache');let calls=0;
+ const resolve={...options,cacheRoot,getCompiler:()=>'/pinned/nargo',run:(binary,args,config)=>{
+  calls++;assert.equal(binary,'/pinned/nargo');assert.deepEqual(args,['check','--silence-warnings']);
+  assert.equal(config.cwd,path.join(options.root,'scripts/fixtures/owner-noir-bootstrap'));
+  const base=path.join(cacheRoot,'github.com/aztec-labs-eng/aztec-nr/v6.0.0');
+  for(const pkg of ['aztec','balance-set','uint-note']){fs.mkdirSync(path.join(base,pkg),{recursive:true});fs.writeFileSync(path.join(base,pkg,'Nargo.toml'),'native resolver fixture');}
+ }};
+ assert.equal(resolveOwnerNoirOriginals(resolve),true);assert.equal(calls,1);
+ assert.equal(resolveOwnerNoirOriginals(resolve),false);assert.equal(calls,1);
+ // Resolution does not bless bytes: generation still checks the original inventory.
+ assert.throws(()=>prepareOwnerNoir({...options,cacheRoot}));
+ assert.equal(fs.existsSync(path.join(options.root,OWNER_NOIR_DIRECTORY)),false);
+});
+test('native dependency resolution failure is propagated before generation',t=>{
+ const options=fixture(t),failure=Error('native resolution failed');
+ assert.throws(()=>resolveOwnerNoirOriginals({...options,cacheRoot:path.join(options.root,'empty'),getCompiler:()=>'/pinned/nargo',run:()=>{throw failure;}}),error=>error===failure);
+ assert.equal(fs.existsSync(path.join(options.root,OWNER_NOIR_DIRECTORY)),false);
 });
