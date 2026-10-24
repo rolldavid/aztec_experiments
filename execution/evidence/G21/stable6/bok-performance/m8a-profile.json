@@ -1,0 +1,145 @@
+{
+  "requestId": "0x187d179bafd1c919a13b76ddadaaa798c5417892c1c01d17f11616af38cece32",
+  "clickAt": "2026-10-23T23:52:46.579000+00:00",
+  "admissionAt": "2026-10-23T23:53:24.603516+00:00",
+  "finishedAt": "2026-10-23T23:55:27.816270+00:00",
+  "clickToAdmissionSeconds": 38.024516,
+  "clickToFinishedSeconds": 161.23727,
+  "workerSeconds": 123.212872,
+  "partitions": {
+    "provider.completion": 48.972224,
+    "tool.check_workspace": 2.704024,
+    "tool.finish_workspace": 0.02406,
+    "publication.static": 0.035909,
+    "publication.mirror": 4.712383,
+    "escrow.prove": 3.469744,
+    "escrow.wait": 57.381368,
+    "board.readRequest": 0.38098,
+    "otherWorkerSeconds": 5.53218
+  },
+  "partitionNote": "Exclusive selected worker durations; residual includes edits/guards/admission/send. Nested spans not summed.",
+  "modelCalls": 3,
+  "summaryCalls": 0,
+  "toolMetadata": [
+    {
+      "id": 0,
+      "tools": [
+        {
+          "name": "edit_file",
+          "path": "index.html",
+          "editCount": 6,
+          "oldTextBytes": 736,
+          "newTextBytes": 1209
+        },
+        {
+          "name": "edit_file",
+          "path": "test.js",
+          "editCount": 1,
+          "oldTextBytes": 121,
+          "newTextBytes": 983
+        },
+        {
+          "name": "edit_browser_plan",
+          "appendCount": 1
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "tools": [
+        {
+          "name": "check_workspace"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "tools": [
+        {
+          "name": "finish_workspace"
+        }
+      ]
+    }
+  ],
+  "toolErrors": [],
+  "firstPassValidation": true,
+  "boardReads": 7,
+  "proofProfile": {
+    "totalMs": 3468.945,
+    "syncMs": 0,
+    "provingMs": 2483.388,
+    "validationMs": 381.895,
+    "unaccountedMs": 54.765,
+    "witnessMs": 548.896,
+    "functionCount": 4,
+    "wallTimeUs": "1792799668965522"
+  },
+  "canonicalFinal": {
+    "status": "succeeded",
+    "canonical": true,
+    "txHash": "0x20b3ef3b92aac1b2c1e6b726ad028577186d1a22951ddf644762b38c14d3122d",
+    "transactionFee": "4177053168328400000",
+    "blockNumber": 1857,
+    "blockHash": "0x2ae3f3c228e4aa46585182dd15b571a035d7161e093bfa0f89cf97347769df6e"
+  },
+  "aggregateChargeMicroUSDC": "18806",
+  "reservedMicroUSDC": "250000",
+  "unusedBudgetMicroUSDC": "231194",
+  "acceptedRevision": "6b11a8eec0334c7610f202c1d4c89f1fe16cad12",
+  "publicationReceipt": {
+    "producedRevision": "6b11a8eec0334c7610f202c1d4c89f1fe16cad12",
+    "readRevision": "a0bb1c25eaf35a2cff79fa167300ae4908ecc4d8",
+    "validation": {
+      "passed": true,
+      "testsPassed": true,
+      "buildPassed": true,
+      "testCount": 1,
+      "sourceDigest": "d694884b1727b0c0df68154286ef682c99d247426e127b4a201de9870d531383",
+      "artifactSha256": "873df1ac9f564f3d149d3b7a39e9b1edee7e90819a6930f80d1d92b541c4f8ea"
+    },
+    "browser": {
+      "passed": true,
+      "checks": 174,
+      "browserVersion": "153.0.8010.12",
+      "planSha256": "5958bdf58cf96767101f695bde8d9ad72b1678235ef8d98e495a39fe81bc99f4",
+      "policyHash": "bf234b237bb7f3c9b80d4b2ff9fe5658722faa5f8b458646d79e2270b84d6b47",
+      "artifactSha256": "873df1ac9f564f3d149d3b7a39e9b1edee7e90819a6930f80d1d92b541c4f8ea"
+    },
+    "publication": {
+      "status": "complete"
+    }
+  },
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "hasFailure": false
+  },
+  "sourceEvidence": [
+    "/tmp/bok-m8a-observe03.json",
+    "/tmp/bok-m8a-receipt01-result.json",
+    "/tmp/bok-m8a-native-result.json",
+    "/tmp/bok-m8a-proof-observe-result.json"
+  ],
+  "hardwareComparison": {
+    "previousEscrowProofSeconds": 6.509331,
+    "currentEscrowProofSeconds": 3.469744,
+    "reductionPercent": 46.696,
+    "previousValidationSeconds": 3.946164,
+    "currentValidationSeconds": 2.704024,
+    "validationReductionPercent": 31.477
+  },
+  "clickToVisibleReplySeconds": 160.53388989257812,
+  "observedUIBalance": {
+    "before": "0.674707",
+    "after": "0.655901",
+    "automaticRefresh": true,
+    "source": "parent actual retained Chrome observation"
+  },
+  "browserRenderEvidence": {
+    "timeOrigin": 1792799490107.375,
+    "startTime": 236995.25499999523,
+    "durationMs": 10.260000109672546,
+    "renderAt": "2026-10-23T23:55:27.112890+00:00"
+  },
+  "memoryNote": "Observer did not capture per-proof peak RSS; do not attribute service-wide memory peaks to this proof."
+}

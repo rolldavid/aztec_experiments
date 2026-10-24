@@ -1,0 +1,16 @@
+{
+  "source": "acbcf73f3e71a4775245cd942ad2751b974809eb",
+  "tests": 549,
+  "passed": 549,
+  "failed": 0,
+  "durationMs": 58001.314458,
+  "independentFocusedPassed": 18,
+  "changes": [
+    "Overlap final local-header and canonical-block observations after anchored storage reads",
+    "Overlap four first-use capability storage fields at one verified block"
+  ],
+  "failuresDrainSiblings": true,
+  "contextAndReorgChecksRetained": true,
+  "initialRegressionFailure": "Old unavailable-plugin test expected one attempted field read; updated to four parallel drained reads while keeping core reads at zero.",
+  "liveLatencyClaim": "Not separately measured; no new full-flow benchmark for this narrow ordering change."
+}

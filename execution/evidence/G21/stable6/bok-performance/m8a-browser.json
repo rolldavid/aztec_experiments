@@ -1,0 +1,209 @@
+{
+  "clickAt": "2026-10-23T23:52:46.579Z",
+  "source": "1310bb4e5ede7ee57eca85f463d2a024e2b65f67",
+  "workerSource": "392bee960c08086f234f631e8cf5c157cfe3e63b",
+  "workerType": "m8a.xlarge",
+  "timeOrigin": 1792799490107.375,
+  "entries": [
+    {
+      "name": "rolling.reader.load",
+      "start": 1245.695000052452,
+      "duration": 767.8250000476837
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 2009.2150000333786,
+      "duration": 4.269999980926514
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 38120.625,
+      "duration": 3681.280000090599
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 52019.020000100136,
+      "duration": 1087.5649999380112
+    },
+    {
+      "name": "rolling.action.sync",
+      "start": 76983.35000002384,
+      "duration": 1689.820000052452
+    },
+    {
+      "name": "rolling.action.arguments",
+      "start": 80554.5150001049,
+      "duration": 609.1149998903275
+    },
+    {
+      "name": "rolling.action.prepare",
+      "start": 76983.1400001049,
+      "duration": 4186.419999957085
+    },
+    {
+      "name": "rolling.action.fee-prepare",
+      "start": 81228.7800000906,
+      "duration": 516.4349999427795
+    },
+    {
+      "name": "rolling.action.fee-simulate",
+      "start": 81745.23000001907,
+      "duration": 244.75499999523163
+    },
+    {
+      "name": "rolling.transaction.estimating",
+      "start": 81228.69000005722,
+      "duration": 834.6499999761581
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 82063.35000002384,
+      "duration": 0.49000000953674316
+    },
+    {
+      "name": "rolling.transaction.preparing",
+      "start": 82063.84500002861,
+      "duration": 763.1599999666214
+    },
+    {
+      "name": "rolling.proof.transport.serialize",
+      "start": 90723.06000006199,
+      "duration": 511.0499999523163
+    },
+    {
+      "name": "rolling.proof.transport.submit",
+      "start": 91234.1550000906,
+      "duration": 7190.709999918938
+    },
+    {
+      "name": "rolling.proof.transport.wait",
+      "start": 98424.95500004292,
+      "duration": 8057.009999990463
+    },
+    {
+      "name": "rolling.proof.local.decompress",
+      "start": 106482.79000008106,
+      "duration": 30.209999918937683
+    },
+    {
+      "name": "rolling.proof.local.verify",
+      "start": 106513.07500004768,
+      "duration": 204.00499999523163
+    },
+    {
+      "name": "rolling.proof.native.total",
+      "start": 82854.27500009537,
+      "duration": 23894.074999928474
+    },
+    {
+      "name": "rolling.proof.native.proof-transport",
+      "start": 90745.91499996185,
+      "duration": 16002.455000042915
+    },
+    {
+      "name": "rolling.proof.native.private-witness",
+      "start": 102248.6100000143,
+      "duration": 4499.75
+    },
+    {
+      "name": "rolling.proof.native.public-validation",
+      "start": 104820.83500003815,
+      "duration": 1927.5349999666214
+    },
+    {
+      "name": "rolling.proof.native.unaccounted",
+      "start": 105932.96000015736,
+      "duration": 815.4099998474121
+    },
+    {
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 106099.43499994278,
+      "duration": 648.9250000715256
+    },
+    {
+      "name": "rolling.proof.native.sync",
+      "start": 106748.3600000143,
+      "duration": 0
+    },
+    {
+      "name": "rolling.transaction.proving",
+      "start": 82827.02500009537,
+      "duration": 24854.604999899864
+    },
+    {
+      "name": "rolling.transaction.submitting",
+      "start": 107681.64500010014,
+      "duration": 1590.804999947548
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 163968.35000002384,
+      "duration": 564.3300000429153
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 164526.19500005245,
+      "duration": 6.445000052452087
+    },
+    {
+      "name": "rolling.post.interaction",
+      "start": 76624.41500008106,
+      "duration": 88071.05499994755
+    },
+    {
+      "name": "rolling.action.submit",
+      "start": 81169.62999999523,
+      "duration": 83522.7350000143
+    },
+    {
+      "name": "rolling.transaction.confirming",
+      "start": 109272.47500002384,
+      "duration": 55422.985000014305
+    },
+    {
+      "name": "rolling.reader.load",
+      "start": 164693.0300000906,
+      "duration": 358.4249999523163
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 165048.24500000477,
+      "duration": 3.200000047683716
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 164699.46500003338,
+      "duration": 3490.310000061989
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 175581.25,
+      "duration": 1058.3700000047684
+    },
+    {
+      "name": "rolling.reader.update",
+      "start": 236433.87000000477,
+      "duration": 571.6800000667572
+    },
+    {
+      "name": "rolling.reader.dom",
+      "start": 236995.25499999523,
+      "duration": 10.260000109672546
+    },
+    {
+      "name": "rolling.account.sync",
+      "start": 237036.41000008583,
+      "duration": 3634.344999909401
+    }
+  ],
+  "automaticBalanceBefore": "0.674707",
+  "automaticBalanceAfter": "0.655901",
+  "manualAppCheck": {
+    "revision": "6b11a8eec0334c7610f202c1d4c89f1fe16cad12",
+    "initialClearCompletedDisabled": true,
+    "completedRemoved": true,
+    "uncheckedKept": true,
+    "persistsAfterReload": true,
+    "clearCompletedDisabledAfterReload": true
+  }
+}

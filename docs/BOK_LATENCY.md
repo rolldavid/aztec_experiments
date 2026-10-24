@@ -5,7 +5,59 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
-## Latest published result — 2m47s from Post to settled, visible reply
+## Latest verified run — 2m40.5s, all application-controlled categories improved
+
+The same 267-character feature request, same parent and 0.25 USDC budget, starting
+from the exact original four-file app tree, completed in **160.534s** from the
+actual Post click to the automatically rendered canonical reply. That is **65.4%
+less elapsed time** than 464.264s. Worker completion was 161.237s. All 174 browser
+checks passed on the first attempt; manual testing confirmed completed habits
+disappear, unchecked habits remain, and that state survives reload.
+
+| Stage | Original seconds | This run seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| Browser preparation |13.944|4.186|70.0%|
+| Fee estimation |15.486|0.835|94.6%|
+| Browser proof including local work and transport |37.196|24.855|33.2%|
+| Model calls |192.671 (14)|48.972 (3)|74.6%|
+| Board reads |3.482|0.381|89.1%|
+| Validation, static publication and GitHub mirror |13.068|7.476|42.8%|
+| Worker proof |6.619|3.470|47.6%|
+| Other worker processing |15.960|5.532|65.3%|
+| Final canonical checkpoint wait |56.215|57.381|2.1% slower|
+
+These categories overlap; do not sum them. The linked partition is disjoint for
+worker processing. All application-controlled categories exceeded 20% improvement
+in this run. This is a measured sample, not a latency guarantee: model work and
+public network scheduling vary. The final checkpoint wait still does not meet a
+20% reduction or a 30-second target.
+
+The same Bok server now has four physical AMD cores (`m8a.xlarge`) instead of two
+physical cores with SMT (`r7i.xlarge`). Native proof generation fell from 5.251s
+to 2.483s; the complete worker proof fell from 6.509s to 3.470s, **46.7% lower than
+the preceding run**. Native witness generation took 0.549s, public validation 0.382s,
+and synchronization 0s. Monthly hosting forecast fell from USD 1,462.94 to USD 1,444.05.
+No new server was created. All core services stayed online.
+
+Browser source 1310bb4e removes a duplicated predecessor receipt/block pair in the
+same immediate operation while retaining fresh pre-proof and post-proof checks.
+Bok source 392bee96 is unchanged. The model made 3 calls with grouped edits, one
+workspace check and finalization; no summaries, repairs or rejected tools.
+It spent 21.84s more than the previous run's model, while browser/worker improvements
+and network timing reduced total elapsed time by 6.50s.
+
+Final transaction `0x20b3ef3b92aac1b2c1e6b726ad028577186d1a22951ddf644762b38c14d3122d`
+succeeded canonically at block 1857. Generated revision
+`6b11a8eec0334c7610f202c1d4c89f1fe16cad12` is published. Charge 0.018806 USDC and
+unused budget 0.231194 USDC were settled in the same reply transaction; visible
+balance refreshed automatically from 0.674707 to 0.655901.
+
+[Measured browser flow](../execution/evidence/G21/stable6/bok-performance/m8a-browser.json),
+[worker partition and actual receipt](../execution/evidence/G21/stable6/bok-performance/m8a-profile.json),
+[hardware activation](../execution/evidence/G21/stable6/bok-performance/worker-m8a-activation.json),
+[published browser readback](../execution/evidence/G21/stable6/bok-performance/predecessor-static-readback.json).
+
+## Previous published result — 2m47s from Post to settled, visible reply
 
 The identical feature request from the same original app source now completes in
 **167.038 seconds**, down from464.264 seconds: **64.0% less elapsed time**. Worker
