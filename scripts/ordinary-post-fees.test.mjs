@@ -92,3 +92,19 @@ test('native synthetic kernel meters maximum private effects within the arithmet
  const result=await generateSimulatedProvingResult(execution,async()=> 'qualified profile',new Proxy({},{get(){assert.fail('No read witnesses in metering fixture');}}));
  assert.deepEqual(result.publicInputs.gasUsed.add(Gas.from(profile.publicGas)),budget.gasSettings.gasLimits);
 });
+
+for(const [da,l2]of [[0n,11n],[7n,0n],[7n,11n]])test(`ordinary maximum uses current supplied DA/L2 price caps without adding priority fees twice (${da}/${l2})`,async()=>{
+ const f=fixture(),prices=new GasFees(da,l2),priority=new GasFees(da?da-1n:0n,l2?l2-1n:0n);
+ f.prepared.gasSettings.maxFeesPerGas=prices;f.prepared.gasSettings.maxPriorityFeesPerGas=priority;
+ const expected=39648n*da+4815810n*l2;
+ const priced=await estimatePrivateFeeTransaction(f.input);
+ assert.equal(priced.maximumFee,expected);assert.equal(priced.reservation,expected);
+ assert.equal(ordinaryPostFeeLimit(f.prepared.gasSettings),expected);
+ assert(priced.gasSettings.maxFeesPerGas.equals(prices));assert(priced.gasSettings.maxPriorityFeesPerGas.equals(priority));
+ f.prepared.gasSettings.maxPriorityFeesPerGas=GasFees.empty();
+ const noPriority=await estimatePrivateFeeTransaction(f.input);assert.equal(noPriority.reservation,expected);
+ f.prepared.gasSettings.maxFeesPerGas=new GasFees(da+1n,l2+1n);
+ const changed=await estimatePrivateFeeTransaction(f.input);
+ assert.equal(changed.reservation,expected+39648n+4815810n);
+ assert.deepEqual(changed.gasSettings.gasLimits,priced.gasSettings.gasLimits);
+});
