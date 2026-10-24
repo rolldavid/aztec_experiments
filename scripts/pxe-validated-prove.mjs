@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {ORDINARY_POST_GAS_PROFILE} from '../shared/ordinary-post-fees.mjs';
 import {PREFERENCE_PAGE_PINS} from './patch-pxe-preference-page.mjs';
 const sha=value=>createHash('sha256').update(value).digest('hex');
 function replace(source,before,after){if(source.split(before).length!==2)throw Error('PXE validated proof boundary mismatch');return source.replace(before,after);}
@@ -7,7 +8,7 @@ function replace(source,before,after){if(source.split(before).length!==2)throw E
 // sync, anchor, staged writes, failure discard and final tagging persistence.
 export function validatedPxeProve(source){
  if(sha(source)!==PREFERENCE_PAGE_PINS.find(pin=>pin.path==='dest/pxe.js').after)throw Error('PXE validated proof source mismatch');
- source="import {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
+ source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
  source=replace(source,'}, txRequest, privateExecutionResult) {\n        const { publicInputs, chonkProof, executionSteps, timings: { proving } = {} } = await this.#prove',`}, txRequest, privateExecutionResult, validatePublic = false) {
         let validationTime;
         const beforeProof = validatePublic ? async publicInputs => {
@@ -60,8 +61,56 @@ export function validatedPxeProve(source){
     // Public API
 `);
  source=replace(source,'    // Public API\n',`    // Explicit capability: old SDKs must not silently ignore validation.\n    proveTxWithPublicValidation(txRequest, options) {\n        return this.proveTx(txRequest, {...options, validatePublic: true});\n    }\n    // Public API\n`);
- source=replace(source,'*/ proveTx(txRequest, { scopes, senderForTags }) {',`*/ proveTx(txRequest, { scopes, senderForTags, validatePublic = false }) {
-        if (typeof validatePublic !== 'boolean') throw new Error('Invalid public validation option');`);
+ source=replace(source,'*/ proveTx(txRequest, { scopes, senderForTags }) {',`*/ proveTx(txRequest, { scopes, senderForTags, validatePublic = false, preSyncCalls }) {
+        if (typeof validatePublic !== 'boolean') throw new Error('Invalid public validation option');
+        if (preSyncCalls !== undefined) {
+            if (!validatePublic || !Array.isArray(preSyncCalls) || preSyncCalls.length !== 2) throw new Error('Invalid ordinary sync payload');
+            // Detach the exact calls before the native operation queue can yield.
+            preSyncCalls = preSyncCalls.map(call => SyncFunctionCall.from({name:call.name,
+                to:SyncAddress.fromStringUnsafe(call.to.toString()),selector:SyncSelector.fromString(call.selector.toString()),
+                type:call.type,hideMsgSender:call.hideMsgSender,isStatic:call.isStatic,
+                args:call.args.map(value=>SyncFr.fromString(value.toString()))}));
+        }`);
+ source=replace(source,`            privateExecutionResult = await this.#executePrivate({
+                contractFunctionSimulator,
+                txRequest,
+                anchorBlockHeader: ctx.anchorBlockHeader,`, `            if (preSyncCalls) await this.#syncOrdinaryPostCalls(txRequest, preSyncCalls, contractFunctionSimulator, ctx, scopes);
+            privateExecutionResult = await this.#executePrivate({
+                contractFunctionSimulator,
+                txRequest,
+                anchorBlockHeader: ctx.anchorBlockHeader,`);
+ source=replace(source,'    // Public API\n',`    // Known ordinary calls enter the SAME native staged operation. They are
+    // bound to the actual account request before any contract state is touched.
+    // Native private execution and its normal sync checks still run once after.
+    async #syncOrdinaryPostCalls(txRequest, calls, simulator, ctx, scopes) {
+        const check=value=>{if(!value)throw new Error('Invalid ordinary sync payload');};
+        const profile=${JSON.stringify(ORDINARY_POST_GAS_PROFILE)};
+        check(calls[0].name==='pay_fee' && calls[1].name==='post' &&
+            calls[0].selector.toString()==='0xc8772dde' && calls[1].selector.toString()===profile.postSelector &&
+            calls.every(call=>call.type==='private' && call.hideMsgSender===false && call.isStatic===false));
+        const abi=new SyncAccountEntrypoint(txRequest.origin, undefined).getEntrypointAbi();
+        check(txRequest.functionSelector.equals(await SyncSelector.fromNameAndParameters(abi.name,abi.parameters)));
+        const entries=txRequest.argsOfCalls.filter(args=>args.hash.equals(txRequest.firstCallArgsHash));
+        check(entries.length===1);
+        const entry=entries[0],decoded=syncDecodeArguments(abi.parameters.map(parameter=>parameter.type),entry.values);
+        const encoded=await SyncEncodedCalls.create(calls,new SyncFr(decoded[0].tx_nonce));
+        const fields=syncEncodeArguments(abi,[encoded,decoded[1],decoded[2]]);
+        check(fields.length===entry.values.length && fields.every((value,index)=>value.equals(entry.values[index])) &&
+            (await SyncHashedValues.fromArgs(fields)).hash.equals(txRequest.firstCallArgsHash));
+        const targets=[{address:txRequest.origin,selector:txRequest.functionSelector,classId:profile.accountClassId},
+            {address:calls[0].to,selector:calls[0].selector,classId:profile.privateFeeClassId},
+            {address:calls[1].to,selector:calls[1].selector,classId:profile.boardClassId}];
+        check(new Set(targets.map(target=>target.address.toString())).size===3);
+        // Resolve current classes through the same native anchor-pinned cache
+        // used by syncScope. Unknown or upgraded contracts never get prefetched.
+        await allToCompletion(targets.map(async target=>check((await this.contractClassService.getCurrentClassId(target.address,ctx.anchorBlockHeader))?.toString()===target.classId)));
+        await allToCompletion(targets.map(target=>this.contractSyncService.ensureContractSynced({
+            contract:target.address,functionToInvokeAfterSync:target.selector,
+            utilityExecutor:(call,execScopes)=>this.#executeUtility(simulator,call,[],execScopes,ctx.anchorBlockHeader,ctx.changeSetId),
+            anchorBlockHeader:ctx.anchorBlockHeader,changeSetId:ctx.changeSetId,scopes,triggeredBy:undefined,
+        })));
+    }
+    // Public API\n`);
  source=replace(source,'return this.#proveTx(ctx, txRequest, privateExecutionResult);','return this.#proveTx(ctx, txRequest, privateExecutionResult, validatePublic);');
  return source;
 }

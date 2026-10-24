@@ -870,3 +870,11 @@ test('atomic proving failure callback runs before transaction conversion, journa
  await assert.rejects(wallet.sendTx({}, {from:owner,fee:{gasSettings:gas()},atomicSimulation:true,onProvingFailure:async error=>{assert.equal(error,native);calls.push('unsigned-failure');throw Object.assign(Error('Add credit'),{code:'BB_POST_FEE_CREDIT_REQUIRED'});}}),{code:'BB_POST_FEE_CREDIT_REQUIRED'});
  assert.deepEqual(calls,['private-validation','unsigned-failure']);
 });
+
+for(const ordinary of [true,false])test('only exact ordinary payload forwards known call pre-sync to native proof: '+ordinary,async()=>{
+ const c=context(),stop=Error('inspection complete'),calls=ordinary?[{name:'pay_fee'},{name:'post'}]:[{name:'pay_fee'},{name:'post_with_bok'}];
+ class BaseWallet{constructor(pxe){this.pxe=pxe;}async completeFeeOptions(options){return {gasSettings:options.gasSettings};}async createTxExecutionRequestFromPayloadAndFee(payload){assert.equal(payload.calls,calls);return {};}scopesFrom(){return [owner];}senderForTagsFrom(){return owner;}}
+ const pxe={async proveTxWithPublicValidation(_request,opts){assert.equal(opts.preSyncCalls,ordinary?calls:undefined);throw stop;}};
+ const wallet=c.BillboardPrivateFeeRouting.createAztecWallet({BaseWallet,GasSettings},pxe,{}, {},()=>{},Fr.ONE);
+ await assert.rejects(wallet.sendTx({calls}, {from:owner,fee:{gasSettings:gas()},atomicSimulation:true}),error=>error===stop);
+});

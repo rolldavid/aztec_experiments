@@ -57,7 +57,7 @@ function pxeHarness(failure,executionSteps=[],gates={}){
  const Class=vm.runInNewContext(`(class {
   operationQueue={runSynced:async work=>{calls.push('queue');try{const result=await work(ctx);calls.push('commit');return result;}catch(e){calls.push('discard');throw e;}}};
   log={debug(){}};senderTaggingStore={};node={isValidTx:async(tx,opts)=>{calls.push('validate');await gates.validate?.();assert.equal(opts.isSimulation,true);assert.equal(opts.skipFeeEnforcement,false);return {result:failure==='invalid'?'invalid':'valid'};}};
-  #getSimulatorForTx=()=>({});#executePrivate=async()=>{calls.push('private');return execution;};
+  #executeUtility=async()=>{};#getSimulatorForTx=()=>({});#executePrivate=async()=>{calls.push('private');return execution;};
   #simulatePublicCalls=async(tx,skipFee)=>{calls.push('public');await gates.public?.();assert.equal(skipFee,false);return {txEffect:{revertCode:{isOK:()=>failure!=='revert'}},gasUsed:{totalGas:failure==='gas'?new Gas(2**32-1,2**32-1):Gas.empty(),teardownGas:Gas.empty()}};};
   #prove=async(_request,_creator,_execution,_anchor,config)=>{calls.push('kernel');await config.beforeProof?.(publicInputs);calls.push('proof');return {publicInputs,chonkProof:{},executionSteps};};
   ${prove}
@@ -108,4 +108,89 @@ for(const failure of [null,'public','validate'])test(`public execution and admis
  gates[failure==='validate'?1:0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(!h.calls.includes('discard'));
  gates[0].resolve();gates[1].resolve();await observed;
  assert.equal(h.calls.includes('proof'),!failure);assert.equal(h.calls.includes('tags'),!failure);assert.equal(h.calls.at(-1),failure?'discard':'commit');
+});
+
+const syncBindings={};
+for(const line of pxe.split('\n').filter(line=>/^import .* as (Sync|sync)/.test(line))){
+ const match=line.match(/^import \{(.+)\} from '([^']+)';$/);assert(match);
+ const module=await import(match[2]);for(const item of match[1].split(',')){const [name,alias]=item.trim().split(' as ');syncBindings[alias??name]=module[name];}
+}
+const {DefaultAccountEntrypoint}=await import('@aztec-labs/entrypoints/account');
+const {FunctionCall,FunctionSelector}=await import('@aztec-labs/stdlib/abi');
+const {AuthWitness}=await import('@aztec-labs/stdlib/auth-witness');
+const {ExecutionPayload}=await import('@aztec-labs/stdlib/tx');
+const {allToCompletion}=await import('@aztec-labs/foundation/promise');
+const {ContractSyncService}=await import('../node_modules/@aztec-labs/pxe/dest/contract/contract_sync_service.js');
+const {ContractClassService}=await import('../node_modules/@aztec-labs/pxe/dest/contract/contract_class_service.js');
+const {withCache}=await import('../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js');
+const {BlockHash}=await import('@aztec-labs/stdlib/block');
+const {ORDINARY_POST_GAS_PROFILE:syncProfile}=await import('../shared/ordinary-post-fees.mjs');
+async function ordinarySyncFixture(){
+ const owner=AztecAddress.fromFieldUnsafe(new Fr(100)),fee=AztecAddress.fromFieldUnsafe(new Fr(200)),board=AztecAddress.fromFieldUnsafe(new Fr(300));
+ const calls=[FunctionCall.from({name:'pay_fee',to:fee,selector:FunctionSelector.fromString('0xc8772dde'),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(5)]}),FunctionCall.from({name:'post',to:board,selector:FunctionSelector.fromString(syncProfile.postSelector),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(6)]})];
+ const entrypoint=new DefaultAccountEntrypoint(owner,{createAuthWit:async hash=>new AuthWitness(hash,[])});
+ const request=await entrypoint.createTxExecutionRequest(new ExecutionPayload(calls,[],[],[],fee),GasSettings.empty(),{chainId:new Fr(31337),version:new Fr(1)},{txNonce:new Fr(7),cancellable:false,feePaymentMethodOptions:0});
+ const classes=new Map([[owner.toString(),syncProfile.accountClassId],[fee.toString(),syncProfile.privateFeeClassId],[board.toString(),syncProfile.boardClassId]]),events=[],pending=[];
+ let hold=false,failAddress=null;
+ const anchorBlockHeader={toBlockParameter:async()=>({number:3,hash:BlockHash.fromString('0x'+'3'.padStart(64,'0'))})};
+ const node=withCache({getContract:async(address,anchor)=>{events.push(['class',address.toString(),anchor]);return {currentContractClassId:Fr.fromString(classes.get(address.toString()))};}});
+ const store={getContractInstance:async()=>assert.fail('All classes served by canonical fixture'),getFunctionCall:async(name,args,address)=>({name,args,to:address,selector:FunctionSelector.fromString('0x418ef5da')})};
+ const classService=new ContractClassService(node,store);
+ const noteStore={getNotes:async(_filter,id)=>{assert.equal(id,42);return [];}};
+ const service=new ContractSyncService(node,store,classService,noteStore,{debug(){},warn(){}},{concurrentContractSyncEnabled:false});
+ const ctx={changeSetId:42,anchorBlockHeader},scopes=[owner],simulator={identity:'same'};
+ const utility=async(sim,call,auth,actualScopes,anchor,id)=>{
+  assert.equal(sim,simulator);assert.equal(anchor,anchorBlockHeader);assert.equal(id,42);assert.deepEqual(actualScopes,scopes);assert.equal(auth.length,0);
+  events.push(['sync-start',call.to.toString()]);if(hold)await new Promise((resolve,reject)=>pending.push({address:call.to.toString(),resolve,reject}));
+  if(call.to.toString()===failAddress)throw Error('native sync failed');events.push(['sync-finish',call.to.toString()]);
+ };
+ const text=method(pxe,'async #syncOrdinaryPostCalls(', '\n    // Public API');
+ const Class=vm.runInNewContext(`(class {contractClassService=classService;contractSyncService=service;#executeUtility=utility;${text}
+ async run(){try{await this.#syncOrdinaryPostCalls(request,calls,simulator,ctx,scopes);await service.settle(ctx.changeSetId);events.push(['private-ready']);service.onOperationEnd(ctx.changeSetId,'committed');}catch(error){await service.settle(ctx.changeSetId);service.onOperationEnd(ctx.changeSetId,'discarded');events.push(['discard']);throw error;}}
+ })`,{...syncBindings,classService,service,utility,request,calls,simulator,ctx,scopes,events,allToCompletion});
+ return {run:()=>new Class().run(),request,calls,events,pending,classes,hold:()=>{hold=true;},fail:address=>{failAddress=address;},owner,fee,board,service};
+}
+test('exact native account payload pre-syncs three known contracts concurrently in one change set without learned predictions',async()=>{
+ const f=await ordinarySyncFixture();f.hold();const work=f.run();
+ for(let i=0;i<50&&f.pending.length<3;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.pending.length,3);assert.equal(f.events.filter(e=>e[0]==='private-ready').length,0);
+ f.pending.splice(0).forEach(p=>p.resolve());await work;
+ assert.equal(f.events.filter(e=>e[0]==='class').length,3,'native cache serves syncScope class checks');
+ assert.equal(f.events.filter(e=>e[0]==='sync-start').length,3);await f.run();
+ assert.equal(f.events.filter(e=>e[0]==='sync-start').length,3,'normal repeated sync is deduplicated by native service');
+});
+test('a native contract sync failure drains peers before discarding staged writes and never proceeds to private execution',async()=>{
+ const f=await ordinarySyncFixture();f.hold();const work=f.run();let settled=false;void work.catch(()=>{settled=true;});
+ for(let i=0;i<50&&f.pending.length<3;i++)await new Promise(resolve=>setImmediate(resolve));
+ f.pending[0].reject(Error('native sync failed'));await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(!f.events.some(e=>e[0]==='discard'));
+ f.pending.slice(1).forEach(p=>p.resolve());await assert.rejects(work,/native sync failed/);assert.equal(f.events.at(-1)[0],'discard');assert(!f.events.some(e=>e[0]==='private-ready'));
+});
+for(const mismatch of ['address','selector','args','class','entrypoint','extra-call','hash'])test('ordinary pre-sync rejects '+mismatch+' before any contract sync',async()=>{
+ const f=await ordinarySyncFixture();
+ if(mismatch==='address')f.calls[1].to=AztecAddress.fromFieldUnsafe(new Fr(301));
+ if(mismatch==='selector')f.calls[1].selector=FunctionSelector.fromString('0x00000001');
+ if(mismatch==='args')f.calls[1].args[0]=new Fr(66);
+ if(mismatch==='class')f.classes.set(f.board.toString(),new Fr(99).toString());
+ if(mismatch==='entrypoint')f.request.functionSelector=FunctionSelector.fromString('0x00000001');
+ if(mismatch==='extra-call')f.calls.push(f.calls[1]);
+ if(mismatch==='hash')f.request.firstCallArgsHash=new Fr(99);
+ await assert.rejects(f.run());assert(!f.events.some(e=>e[0]==='sync-start'));assert(!f.events.some(e=>e[0]==='private-ready'));
+});
+
+test('queued prove request detaches known call fields before yielding and supplies the same native operation context',async()=>{
+ const f=await ordinarySyncFixture(),original=f.calls[1].args[0].toString(),seen=[];let release;
+ const wait=new Promise(resolve=>{release=resolve;}),context={anchorBlockHeader:{},changeSetId:81};
+ const text=method(pxe,'proveTx(txRequest, { scopes','\n    /**');
+ const Class=vm.runInNewContext(`(class {
+ operationQueue={runSynced:async work=>{await wait;return work(context);}};
+ #getSimulatorForTx=()=>({});#executePrivate=async value=>{seen.push(['private',value]);return {};};
+ #syncOrdinaryPostCalls=async(...values)=>{seen.push(['sync',...values]);};
+ #proveTx=async()=>{seen.push(['proof']);return 'done';};
+ ${text}
+ })`,{...syncBindings,seen,wait,context,inspect:()=>''});
+ const instance=new Class(),scopes=[f.owner],work=instance.proveTx(f.request,{scopes,validatePublic:true,preSyncCalls:f.calls});
+ f.calls[1].args[0]=new Fr(999);f.calls[1].to=AztecAddress.ZERO;release();assert.equal(await work,'done');
+ assert.equal(seen[0][0],'sync');assert.equal(seen[0][2][1].args[0].toString(),original);assert(seen[0][2][1].to.equals(f.board));assert.equal(seen[0][4],context);assert.equal(seen[0][5],scopes);
+ assert.deepEqual(seen.map(entry=>entry[0]),['sync','private','proof']);
+ assert.throws(()=>instance.proveTx(f.request,{scopes,preSyncCalls:f.calls}),/Invalid ordinary sync payload/);
 });
