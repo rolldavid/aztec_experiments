@@ -39,6 +39,7 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
   const payload=mergeExecutionPayloads([await prepared.paymentMethod.withReservation(budget.reservation).getExecutionPayload(),application]);
   await guard();return {payload,...budget,passes:0,atomicSimulation:true};
  }
+ if(prepared.creditCheck==='ordinary-post-proof')throw fail('BB_POST_FEE_PROFILE_MISMATCH');
  const ceiling=GasSettings.from(prepared.gasSettings),available=BigInt(prepared.availableCredit),network=(await node.getNodeInfo()).txsLimits.gas;
  const caps=new Gas(Math.min(ceiling.gasLimits.daGas,network.daGas,MAX_TX_DA_GAS),Math.min(ceiling.gasLimits.l2Gas,network.l2Gas,MAX_PROCESSABLE_L2_GAS));
  const settings=(gasLimits,teardownGasLimits)=>GasSettings.from({gasLimits,teardownGasLimits,maxFeesPerGas:ceiling.maxFeesPerGas,maxPriorityFeesPerGas:ceiling.maxPriorityFeesPerGas});

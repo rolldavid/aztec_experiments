@@ -269,7 +269,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:localGuard});
     await guard();if(verified.status!=='claim-ready')throw Object.assign(Error('Funding is not ready to claim.'),{code:'ROLLING_FUNDING_NOT_READY',reason:verified.reason});return verified.claim;
   }
-  async function payment(action,record){
+  async function payment(action,record,{ordinaryProof=false}={}){
     let claim;
     const receipt=action?.type==='claim-private-fee'?action.receipt:
       ['claim-deposit','claim-bok'].includes(action?.type)?action.feeReceipt:undefined;
@@ -284,7 +284,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     }
     return sdk.preparePrivateFeePayment({wallet:session.wallet,node:session.node,owner:session.owner,
       privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas,measure,
-      ...(claim?{claim}:{})});
+      ...(claim?{claim}:{}),...(ordinaryProof?{creditCheck:'ordinary-post-proof'}:{})});
   }
   async function collateralClaim(action){
     // Receipt metadata cannot replace the authenticated deployment or inject
@@ -922,7 +922,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         checkPaymentOwner();
         const values=await Promise.allSettled([
           ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor})),
-          ()=>measure('action.payment-prefetch',()=>payment(action)),
+          ()=>measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:action.type!=='bok'})),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkPaymentOwner();
@@ -962,7 +962,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         // Claim validation retains its exact bridge fee payload even when the
         // separate review simulation is omitted. Submission rechecks it.
         if(action.type==='claim-private-fee'||action.feeReceipt!==undefined)await payment(action,record);
-        record.maximumFee=(ordinaryPost(record)?sdk.ordinaryPostFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record),board:ordinaryPost(record)}).maximumFee:sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee).toString();
+        record.maximumFee=(ordinaryPost(record)?sdk.ordinaryPostFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{ordinaryProof:true}),board:ordinaryPost(record)}).maximumFee:sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee).toString();
       }
       else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
         prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();const saved=await store.write(prior,record);
@@ -1100,7 +1100,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(paymentScope)preparedPayments.delete(paymentScope);
       const preparedPayment=await measure('action.fee-prepare',()=>cachedPayment&&cachedPayment.encoded===saved.encoded&&
         cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node
-        ?cachedPayment.payment:payment(saved.value.action,saved.value));
+        ?cachedPayment.payment:payment(saved.value.action,saved.value,{ordinaryProof:!!ordinaryPost(saved.value)}));
       const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true,ordinaryPost:ordinaryPost(saved.value),measure}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();
@@ -1127,6 +1127,17 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           // action's context afterwards, not before that asynchronous window.
           await checkReplacementReview(saved.value,{synchronize:true});await guard();
         }}:{})};
+      if(!replacing&&ordinaryPost(saved.value))options.onProvingFailure=async error=>{
+        if(!sdk.isPrivateFeeCreditFailure(error,fixed.fee))return;
+        // This callback runs inside the built-in wallet before tx conversion,
+        // journal preparation or broadcast. Recheck ownership before discarding
+        // only this unsigned attempt; a different/signed attempt must survive.
+        await guard();const current=await savedIntent(id),tx=await session.journal.inspect();
+        check(current.encoded===active.encoded&&(!tx||tx.operation!==operation(id)),'ROLLING_RECOVERY_REQUIRED');
+        if(attempt)check(await privateStore.readRecoveryEpoch()===attempt.epoch&&await journalCommitment(true)===attempt.predecessor,'ROLLING_RECOVERY_REQUIRED');
+        await (await slot()).write(current,{...saved.value,status:'cancelled'});
+        throw fail('BB_POST_FEE_CREDIT_REQUIRED');
+      };
       if(attempt){
         const verify=async phase=>{
           await guard();check(await privateStore.readRecoveryEpoch()===attempt.epoch,'ROLLING_RECOVERY_REQUIRED');

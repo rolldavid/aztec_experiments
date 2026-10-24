@@ -17,7 +17,8 @@ import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {Tx,TxHash,MinedTxReceipt,PendingTxReceipt,DroppedTxReceipt,mergeExecutionPayloads} from '@aztec-labs/stdlib/tx';
 import {BatchCall,Contract} from '@aztec-labs/aztec.js/contracts';
 import {PrivateMintAndPayFeePaymentMethod} from '../private-fee-payment.mjs';
-import {derivePrivateFeeBridgeSecret} from '../private-fee-client.mjs';
+import {SimulationError} from '@aztec-labs/stdlib/errors';
+import {derivePrivateFeeBridgeSecret,isPrivateFeeCreditFailure} from '../private-fee-client.mjs';
 import {prepareFundingClaim as verifyFundingClaim} from './funding-receipts.mjs';
 import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
@@ -2188,4 +2189,39 @@ test('ordinary submit binds its arithmetic quote to the verified board',async()=
  f.options.sdk.estimatePrivateFeeTransaction=async input=>{quoted=input.ordinaryPost;return estimate(input);};
  const app=f.restart(),prepared=await app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'Fixed profile'},{immediate:true});
  await app.submitPrepared(prepared.intentId);assert.equal(quoted,f.options.deployment.board.instance);assert.equal(f.state.sends,1);
+});
+
+
+for(const predecessor of [false,true])test(`native ordinary credit failure with predecessor=${predecessor} cancels only its unsigned attempt and allows a fresh post`,async()=>{
+ const f=await preproofFixture();
+ if(predecessor){const first=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(first.intentId);}f.options.sdk.isPrivateFeeCreditFailure=isPrivateFeeCreditFailure;
+ const original=f.options.accountSession.preproofRecovery;let failNext=true;
+ f.options.accountSession.preproofRecovery=Object.freeze({...original,send:async(payload,opts,lifecycle)=>{
+  if(failNext){failNext=false;await lifecycle.guard('pre-proof');
+   await opts.onProvingFailure(new SimulationError('Assertion failed: Balance too low',[{contractAddress:AztecAddress.fromFieldUnsafe(new Fr(2)),functionName:'pay_fee'}]));
+   assert.fail('Native shortage must reject before transaction creation');
+  }return original.send(payload,opts,lifecycle);
+ }});
+ const app=f.restart(),action={type:'post',subboard:'0',name:'0',deposit:'9',content:'Keep this draft'};
+ const first=await app.prepare(action,{immediate:true});await assert.rejects(app.submitPrepared(first.intentId),{code:'BB_POST_FEE_CREDIT_REQUIRED'});
+ assert.equal((await app.reconcile(first.intentId)).status,'cancelled');const previous=await f.options.accountSession.journal.inspect();assert.equal(!!previous,predecessor);assert.equal(f.state.sends,Number(predecessor));
+ const next=await app.prepare(action,{immediate:true});assert.notEqual(next.intentId,first.intentId);assert.equal((await app.submitPrepared(next.intentId)).status,'confirmed');assert.equal(f.state.sends,Number(predecessor)+1);
+});
+for(const mismatch of ['other-contract','other-error','other-function','not-native'])test('credit error classification rejects '+mismatch,()=>{
+ const error=new SimulationError(mismatch==='other-error'?'Assertion failed: unrelated':'Assertion failed: Balance too low',[{contractAddress:AztecAddress.fromFieldUnsafe(new Fr(mismatch==='other-contract'?99:2)),functionName:mismatch==='other-function'?'mint':'pay_fee'}]);
+ assert.equal(isPrivateFeeCreditFailure(mismatch==='not-native'?{getOriginalMessage:()=>error.getOriginalMessage(),getCallStack:()=>error.getCallStack()}:error,hex(2)),false);
+});
+
+test('a late credit-labelled error cannot discard an already journalled transaction',async()=>{
+ const f=await preproofFixture();f.options.sdk.isPrivateFeeCreditFailure=isPrivateFeeCreditFailure;
+ const original=f.options.accountSession.preproofRecovery;f.state.interrupt='journal';
+ f.options.accountSession.preproofRecovery=Object.freeze({...original,send:async(payload,opts,lifecycle)=>{
+  try{return await original.send(payload,opts,lifecycle);}catch{
+   await opts.onProvingFailure(new SimulationError('Assertion failed: Balance too low',[{contractAddress:AztecAddress.fromFieldUnsafe(new Fr(2)),functionName:'pay_fee'}]));
+  }
+ }});
+ const app=f.restart(),first=await app.prepare({type:'post',subboard:'0',name:'0',deposit:'9',content:'Signed record must survive'},{immediate:true});
+ await assert.rejects(app.submitPrepared(first.intentId),{code:'ROLLING_RECOVERY_REQUIRED'});
+ assert.equal((await f.options.accountSession.journal.inspect()).txHash,f.state.signedHash);assert.equal(f.state.sends,0);
+ f.receipts.set(f.state.signedHash,new PendingTxReceipt(TxHash.fromString(f.state.signedHash)));assert.notEqual((await app.reconcile(first.intentId)).status,'cancelled');
 });

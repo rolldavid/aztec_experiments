@@ -861,3 +861,12 @@ for(const failure of [null,'revert','gas'])test('atomic private simulation and p
  if(failure){await assert.rejects(pending,{code:failure==='gas'?'BB_GAS_LIMIT_EXCEEDED':'BB_SIMULATION_FAILED'});assert.deepEqual(calls,['validate']);}
  else{await pending;assert.deepEqual(calls,['validate','prove','timings','send']);}
 });
+
+test('atomic proving failure callback runs before transaction conversion, journaling or submission',async()=>{
+ const c=context(),calls=[],native=Error('native private credit assertion');
+ class BaseWallet{constructor(pxe){this.pxe=pxe;}async completeFeeOptions(options){return {gasSettings:options.gasSettings};}async createTxExecutionRequestFromPayloadAndFee(){return {};}scopesFrom(){return [owner];}senderForTagsFrom(){return owner;}}
+ const pxe={async proveTxWithPublicValidation(){calls.push('private-validation');throw native;}},node={sendTx(){assert.fail('No broadcast');}};
+ const wallet=c.BillboardPrivateFeeRouting.createAztecWallet({BaseWallet,GasSettings},pxe,node,node,()=>{},Fr.ONE);
+ await assert.rejects(wallet.sendTx({}, {from:owner,fee:{gasSettings:gas()},atomicSimulation:true,onProvingFailure:async error=>{assert.equal(error,native);calls.push('unsigned-failure');throw Object.assign(Error('Add credit'),{code:'BB_POST_FEE_CREDIT_REQUIRED'});}}),{code:'BB_POST_FEE_CREDIT_REQUIRED'});
+ assert.deepEqual(calls,['private-validation','unsigned-failure']);
+});

@@ -879,7 +879,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);blocked=true;
   if(immediate){
    let result;
-   try{result=await session.application.executeAction(action,{onPrepared:prepared=>{checkAccount(epoch);intent=prepared;if(postingInProgress&&postingTypes.has(prepared.action?.type))postingOperation={epoch,intentId:prepared.intentId,included:false};}});checkAccount(epoch);}finally{blocked=false;}
+   try{result=await session.application.executeAction(action,{onPrepared:prepared=>{checkAccount(epoch);intent=prepared;if(postingInProgress&&postingTypes.has(prepared.action?.type))postingOperation={epoch,intentId:prepared.intentId,included:false};}});checkAccount(epoch);}catch(failure){
+    if(failure?.code==='BB_POST_FEE_CREDIT_REQUIRED'){checkAccount(epoch);intent=null;postingOperation=null;accountRefreshNeeded=true;}
+    throw failure;
+   }finally{blocked=false;}
    if(postingOperation?.included)postingOperation.failed=result.status!=='confirmed';
    onResult(result);await receive(result);return result;
   }

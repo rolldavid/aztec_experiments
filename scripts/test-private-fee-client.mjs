@@ -204,3 +204,13 @@ test('fee preparation diagnostics observe existing reads without repeating work'
     {stage:'action.fee-balance',options:{nativeUtility:true}},
   ]);
 });
+
+test('ordinary fixed-payment preparation performs canonical binding without reading a private balance',async()=>{
+ const {input,state}=fixture();state.balance=0n;input.creditCheck='ordinary-post-proof';input.wallet.executeUtility=()=>assert.fail('Ordinary preparation must not execute balance_of');
+ const result=await preparePrivateFeePayment(input);assert.equal(state.reads,0);assert.equal(result.creditCheck,'ordinary-post-proof');assert(!Object.hasOwn(result,'availableCredit'));
+ assert.equal(result.metadata.classId,instance.currentContractClassId.toString());assert.deepEqual((await result.paymentMethod.getExecutionPayload()).calls.map(c=>c.name),['pay_fee']);
+});
+test('a bridge claim cannot select ordinary native credit validation',async()=>{
+ const {input,state}=fixture();input.creditCheck='ordinary-post-proof';input.claim={amount:'5000',salt:new Fr(1),leafIndex:new Fr(2)};
+ await assert.rejects(preparePrivateFeePayment(input),{code:'PRIVATE_FEE_CONFIGURATION_REQUIRED'});assert.equal(state.reads,0);assert.equal(state.registered,0);
+});

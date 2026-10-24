@@ -273,9 +273,14 @@
         const {tx,applicationNullifier}=await (async()=>{
           const txRequest = await this.createTxExecutionRequestFromPayloadAndFee(executionPayload, opts.from, feeOpts2);
           const proveOpts={scopes:this.scopesFrom(opts.from,opts.additionalScopes??[],opts.sendMessagesAs),senderForTags:this.senderForTagsFrom(opts.from,opts.sendMessagesAs)};
-          const provenTx = atomicSimulation
+          let provenTx;
+          try { provenTx = atomicSimulation
             ? await measured('proveTxWithPublicValidation',()=>this.pxe.proveTxWithPublicValidation(txRequest,proveOpts))
             : await measured('proveTx',()=>this.pxe.proveTx(txRequest,proveOpts));
+          } catch(error) {
+            if(atomicSimulation&&typeof opts.onProvingFailure==='function')await opts.onProvingFailure(error);
+            throw error;
+          }
           try{a.recordProofTimings?.(provenTx.stats);}catch{/* Diagnostics cannot interrupt a completed proof. */}
           const tx = await measured('toTx',()=>provenTx.toTx());
           if (this._contextGuard) await this._contextGuard();

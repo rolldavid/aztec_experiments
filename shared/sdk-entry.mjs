@@ -80,3 +80,5 @@ export {provingEnabledForNode} from './proving-policy.mjs';
 export {waitForL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
 
 export {ordinaryPostFeeBudget,ordinaryPostFeeLimit} from './ordinary-post-fees.mjs';
+
+export {isPrivateFeeCreditFailure} from './private-fee-client.mjs';

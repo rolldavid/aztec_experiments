@@ -45,7 +45,8 @@ export function ordinaryPostFeeBudget({wallet,prepared,board}){
  for(const dimension of ['daGas','l2Gas'])check(Number.isSafeInteger(network?.[dimension])&&gasLimits[dimension]<=network[dimension]&&gasLimits[dimension]<=ceiling.gasLimits[dimension]&&p.teardownGas[dimension]<=ceiling.teardownGasLimits[dimension]);
  const gasSettings=GasSettings.from({gasLimits,teardownGasLimits:Gas.from(p.teardownGas),maxFeesPerGas:ceiling.maxFeesPerGas,maxPriorityFeesPerGas:ceiling.maxPriorityFeesPerGas});
  const maximumFee=gasSettings.getFeeLimit().toBigInt(),reservation=maximumFee||1n;
- check(reservation<=BigInt(prepared.availableCredit),'BB_POST_FEE_CREDIT_REQUIRED');
+ if(prepared.creditCheck==='ordinary-post-proof')check(!Object.hasOwn(prepared,'availableCredit'));
+ else {check(prepared.creditCheck===undefined||prepared.creditCheck==='read-balance');check(reservation<=BigInt(prepared.availableCredit),'BB_POST_FEE_CREDIT_REQUIRED');}
  return {gasSettings,maximumFee,reservation};
 }
 export function assertOrdinaryPostPayload({wallet,from,application,board}){

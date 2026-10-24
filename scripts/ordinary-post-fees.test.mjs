@@ -108,3 +108,9 @@ for(const [da,l2]of [[0n,11n],[7n,0n],[7n,11n]])test(`ordinary maximum uses curr
  assert.equal(changed.reservation,expected+39648n+4815810n);
  assert.deepEqual(changed.gasSettings.gasLimits,priced.gasSettings.gasLimits);
 });
+test('ordinary native-credit mode carries no balance and cannot enter a generic estimate',async()=>{
+ const f=fixture(0n);delete f.prepared.availableCredit;f.prepared.creditCheck='ordinary-post-proof';
+ const result=await estimatePrivateFeeTransaction(f.input);assert.equal(result.atomicSimulation,true);assert.equal(result.passes,0);
+ await assert.rejects(estimatePrivateFeeTransaction({...f.input,ordinaryPost:undefined}),{code:'BB_POST_FEE_PROFILE_MISMATCH'});
+ f.prepared.availableCredit=999999n;await assert.rejects(estimatePrivateFeeTransaction(f.input),{code:'BB_POST_FEE_PROFILE_MISMATCH'});
+});

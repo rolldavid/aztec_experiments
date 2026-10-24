@@ -372,7 +372,7 @@ test('fresh account action reloads the existing page with a client-side route',a
 
 test('confirmed post releases UI while balance refresh runs; typing survives its completion',{timeout:3000},async t=>{
  const pending=Promise.withResolvers(),started=Promise.withResolvers();const f=await fixture(t,{posting:{balanceRefresh:()=>{started.resolve();return pending.promise;}}});
- await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));const editor=f.document.querySelector('textarea');editor.value='First post';editor.fire('input');f.document.querySelector('[data-action-review]').fire('click');
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));const editor=f.document.querySelector('textarea');editor.value='First post';editor.fire('input');const first=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});first.fire('click');
  await started.promise;await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.document.querySelector('dialog').open,false);
  f.panel.open({type:'post'});const next=f.document.querySelector('textarea');next.value='Next draft while balance updates';next.fire('input');assert(f.document.body.textContent.includes('Balance (updating)'));
  pending.resolve();await f.document.until(()=>!f.document.body.textContent.includes('Balance (updating)'));
@@ -563,4 +563,13 @@ test('ordinary and Bok composers show their respective maximum posting costs',{t
  const editor=f.document.querySelector('textarea');editor.value='@bok help';editor.fire('input');
  assert(f.document.querySelector('.composer-cost').textContent.includes('Max cost 0.001'));
  editor.value='Ordinary post';editor.fire('input');assert(f.document.querySelector('.composer-cost').textContent.includes('Max cost 0.0002'));
+});
+
+test('native insufficient-credit failure keeps a usable composer and its draft',{timeout:3000},async t=>{
+ let tries=0;const f=await fixture(t,{posting:{submit:async()=>{if(++tries===1)throw Object.assign(Error('Add credit'),{code:'BB_POST_FEE_CREDIT_REQUIRED'});}}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'1000000'});
+ const editor=f.document.querySelector('textarea');editor.value='Keep my unsent post';editor.fire('input');const first=await f.document.until(()=>{const b=f.document.querySelector('[data-action-review]');return b&&!b.disabled&&b;});first.fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('Add posting credit to cover this post'));
+ assert(f.document.body.textContent.includes('Keep my unsent post'));const retry=f.document.querySelector('[data-action-review]');assert(retry&&!retry.disabled);assert.equal(retry.textContent,'Post');
+ retry.fire('click');await f.document.until(()=>f.submissions.length===2&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await new Promise(setImmediate);assert.equal(f.prepared().content,'Keep my unsent post');
 });
