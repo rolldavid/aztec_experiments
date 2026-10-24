@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Reclaim disposable inactive public build assets after root filesystem exhaustion",
+  "ssmCommandId": "4a1c143c-7527-4ceb-9d2f-29408b96f695",
+  "status": "Success",
+  "executedAt": "2026-10-24T21:01:15.811Z",
+  "finishedAt": "2026-10-24T21:01:47.811Z",
+  "approvedInactiveReleaseCandidates": 118,
+  "removedFiles": 7608,
+  "prunedReleases": 109,
+  "freeBytesBefore": 1380188160,
+  "freeBytesAfter": 4347432960,
+  "freeBytesGain": 2967244800,
+  "skippedHashMismatches": 2,
+  "preserved": {
+    "activeAndConfiguredReleases": true,
+    "newPublicationCandidates": true,
+    "credentialsAndConfigs": true,
+    "manifestsAndProvenance": true,
+    "dependencies": true,
+    "immutableByHashAssets": true,
+    "runningServices": true
+  },
+  "scope": "Only manifest-authenticated public SDK/runtime/artifact files within the explicit inactive-release allowlist. All affected releases carry runtimeUsable:false markers and must not be reused as runtime sources.",
+  "guards": [
+    "Fresh unit/config/process/current-pointer release references protected; rechecked unchanged after hash validation.",
+    "Only regular root-owned confined files matching retained SDK or wallet manifest hashes removed.",
+    "Public UI runtime.json, all configs, credentials, dependency trees and by-hash assets retained."
+  ],
+  "limitations": [
+    "Available-space delta includes concurrent filesystem activity; it is the observed before/after difference, not a theoretical sum.",
+    "Inactive source trees and metadata remain; this is public-asset reclamation, not complete release-directory removal."
+  ],
+  "followup": "Normal publication now preflights filesystem capacity and removes verified uploaded payload copies after success."
+}
