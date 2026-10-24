@@ -27,7 +27,7 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
   const origin=req.headers.origin;
   if(origin&&!origins.includes(origin)){reply(403,{error:'Origin rejected'});return;}
   if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');res.setHeader('Access-Control-Allow-Credentials','true');}
-  if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Methods','GET, POST, DELETE');res.setHeader('Access-Control-Allow-Headers','Content-Type');reply(204,{});return;}
+  if(req.method==='OPTIONS'){res.setHeader('Access-Control-Allow-Methods','GET, POST, DELETE');res.setHeader('Access-Control-Allow-Headers','Content-Type, Content-Encoding');reply(204,{});return;}
   const admit=(compact=false)=>{
    let client=req.socket.remoteAddress;
    if(trustedProxy&&client===trustedProxy){const forwarded=req.headers['x-real-ip'];if(typeof forwarded!=='string'||!isIP(forwarded)){reply(400,{error:'Proxy address required'});return;}client=forwarded;}

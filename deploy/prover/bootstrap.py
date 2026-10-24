@@ -999,7 +999,7 @@ STARTUP_SOURCES = {
     'prover/compact-node-transform.mjs': 'd7e7e95a1061342e7aaa301e826fbf4bd21cfb9ea2de605e2a2aa17452160545',
     'prover/compact-node-registration.mjs': '07316d9a6629dff67fbb8d033360a45b9a1492febdd18520e6ffe6c1023c546c',
     'prover/compact-block-native.mjs': '6fc4e562fea1a2d544d742b8e58a8941724cbd6b7d7e67d4231e02a586707888',
-    'shared/trusted-private-node.mjs': '8da768e70ad4dc0affc52762520d1378abbf775381f5db7cd2338dd870369f67',
+    'shared/trusted-private-node.mjs': 'a529ce1d5a1f69bb5cbccd8f3510b46dc6ba6edf2ace73d278dbb5ad026040e6',
     'shared/rolling/compact-client.mjs': '3be616f60d7267ccf71f537ddd117ac78ea4e85a29bfd37c487e06b8c257060e',
 }
 STARTUP_ADAPTER = 'publicnode-config-v1'

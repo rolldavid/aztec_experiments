@@ -1,4 +1,6 @@
 import {BlockHash} from '@aztec-labs/stdlib/block';
+import {gunzip as decompressGzip} from 'node:zlib';
+import {promisify} from 'node:util';
 import {getTrustedNodeFailureDiagnostic,getTrustedNodeCanonicalBlock} from '../shared/trusted-private-node.mjs';
 import {createSafeJsonRpcClient} from '@aztec-labs/foundation/json-rpc/client';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
@@ -8,6 +10,7 @@ import {getVersioningResponseHandler} from '@aztec-labs/stdlib/versioning';
 import {COMPACT_GATEWAY_ROUTE,COMPACT_NATIVE_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactTier,validateCompactRequest,readCompactResponse} from '../shared/rolling/compact-client.mjs';
 
 export const QUERY_LIMITS = Object.freeze({bodyBytes: 8 * 1024 ** 2, responseBytes: 32 * 1024 ** 2, batch: 8, concurrent: 8, timeoutMs: 10000});
+const gunzip=promisify(decompressGzip);
 // Fixed rc3 deployment/PXE surface. Schema additions are not automatically
 // exposed to an authenticated operator. sendTx is an effect, not a read.
 export const OPERATOR_NODE_METHODS = Object.freeze([
@@ -218,6 +221,8 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
   const handle = async (req, res) => {
     const reply = (status, body) => {res.writeHead(status, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(jsonStringify(body));};
     if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] ?? '')) {reply(415, errorResponse(null)); return;}
+    const encoding=req.headers['content-encoding'];
+    if(encoding!==undefined&&encoding!=='gzip'){reply(415,errorResponse(null));return;}
     if (active >= QUERY_LIMITS.concurrent) {reply(429, errorResponse(null)); return;}
     active++;
     try {
@@ -227,7 +232,10 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         if (size > QUERY_LIMITS.bodyBytes) {reply(413, errorResponse(null)); return;}
         chunks.push(chunk);
       }
-      let body; try {body = JSON.parse(Buffer.concat(chunks).toString('utf8'));} catch {reply(400, errorResponse(null, -32600)); return;}
+      let bytes=Buffer.concat(chunks);
+      if(encoding==='gzip')try{bytes=await gunzip(bytes,{maxOutputLength:QUERY_LIMITS.bodyBytes});}
+      catch(error){reply(error.code==='ERR_BUFFER_TOO_LARGE'?413:400,errorResponse(null,-32600));return;}
+      let body; try {body = JSON.parse(bytes.toString('utf8'));} catch {reply(400, errorResponse(null, -32600)); return;}
       const batch = Array.isArray(body), calls = batch ? body : [body];
       if (!calls.length || calls.length > QUERY_LIMITS.batch) {reply(400, errorResponse(null, -32600)); return;}
       const prepared = [];

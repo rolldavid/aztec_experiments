@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {gunzipSync} from 'node:zlib';
 import {inspectTrustedNode,createTrustedPrivateNode,isTrustedPrivateNode,getTrustedNodeFailureDiagnostic,getTrustedNodeCanonicalBlock} from './trusted-private-node.mjs';
 import {BlockHeader} from '@aztec-labs/stdlib/tx';
 import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
@@ -189,6 +190,30 @@ function responseFor(f,body) {
   }));
 }
 const create=extra=>createTrustedPrivateNode({url:'https://trusted.example/prover/v1/node',expectedNetworkScope:scope,...extra});
+for(const status of [200,504])test('large transaction JSON is losslessly compressed and submitted once on HTTP '+status,async()=>withFetch(async set=>{
+ const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));
+ set(async(_url,init)=>new Response(jsonStringify(await responseFor(f,JSON.parse(init.body)))));const node=await create();
+ const tx={fixture:'PRIVATE_SENTINEL'.repeat(16000)};let sends=0;
+ set(async(_url,init)=>{
+  sends++;assert.equal(init.headers['content-encoding'],'gzip');assert(init.body instanceof Uint8Array);
+  const decoded=gunzipSync(init.body).toString('utf8'),[request]=JSON.parse(decoded);
+  assert(init.body.length<decoded.length/10);assert.equal(request.method,'aztec_sendTx');assert.deepEqual(request.params,[tx]);
+  return status===200?Response.json([{jsonrpc:'2.0',id:request.id,result:null}]):new Response('',{status});
+ });
+ if(status===200)await node.sendTx(tx);else await rejects(()=>node.sendTx(tx),'UNAVAILABLE');assert.equal(sends,1);
+}));
+test('compressed large read retries reuse the exact encoded body and normal SDK output checks',async()=>withFetch(async set=>{
+ const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));
+ set(async(_url,init)=>new Response(jsonStringify(await responseFor(f,JSON.parse(init.body)))));const node=await create();
+ const tags=Array(512).fill(h(1));let calls=0,first;
+ set(async(_url,init)=>{
+  calls++;assert.equal(init.headers['content-encoding'],'gzip');
+  const [request]=JSON.parse(gunzipSync(init.body).toString('utf8'));assert.deepEqual(request.params,[tags]);
+  if(calls===1){first=init.body;return new Response('',{status:503});}
+  assert.equal(init.body,first);return Response.json([{jsonrpc:'2.0',id:request.id,result:[]}]);
+ });
+ assert.deepEqual(await node.getPrivateLogsByTags(tags),[]);assert.equal(calls,2);
+}));
 test('mock transport: rejects unapproved URL before any request',async()=>withFetch(async set=>{
   let calls=0;set(async()=>{calls++;throw Error('unexpected');});
   for(const url of ['http://trusted.example/','http://127.0.0.1/','https://u:p@trusted.example/','https://trusted.example/?key=PRIVATE_SENTINEL','https://trusted.example/#x','file:///tmp/x'])await rejects(()=>create({url}),'CONFIG');

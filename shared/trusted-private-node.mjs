@@ -202,9 +202,13 @@ async function privateFetch(host, body, extraHeaders={}) {
     // concrete transient gateway response permits the native bounded retry.
     const payload=jsonStringify(body),requests=JSON.parse(payload);
     const readOnly=Array.isArray(requests)&&requests.length>0&&requests.every(request=>retryableReads.has(request?.method));
+    // Compress large transaction/simulation JSON once, before the single effect
+    // attempt (or the existing identical-byte read retry). Small reads avoid it.
+    const compressed=payload.length>=16384;
+    const encoded=compressed?new Uint8Array(await new Response(new Blob([payload]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()):payload;
     const response=await retry(async()=>{
       let result;
-      try{result=await fetch(host,{method:'POST',body:payload,headers:{...extraHeaders,'content-type':'application/json'},
+      try{result=await fetch(host,{method:'POST',body:encoded,headers:{...extraHeaders,'content-type':'application/json',...(compressed?{'content-encoding':'gzip'}:{})},
         redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',signal:AbortSignal.timeout(30000)});}
       catch{throw new NoRetryError('Private node request unavailable.');}
       if(readOnly&&!result.redirected&&[502,503,504].includes(result.status)){

@@ -1,5 +1,6 @@
 // Development fakes/local HTTP only: these do not qualify node privacy or sync.
 import {createHash} from 'node:crypto';
+import {gzipSync} from 'node:zlib';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {BlockHeader,GlobalVariables} from '@aztec-labs/stdlib/tx';
@@ -39,6 +40,31 @@ test('query disabled by default; fixed loopback configuration only',async()=>{
   for (const url of ['https://127.0.0.1','http://localhost','http://example.org','http://127.0.0.1/path','http://u:p@127.0.0.1','http://127.0.0.1?x=1','http://127.0.0.1#x']) assert.throws(()=>validateQueryNode({url,rollupAddress}));
   for (const patch of [{maxLagSeconds:0},{maxLagSeconds:601},{rollupAddress:'0x'+'00'.repeat(20)},{admin:true}]) assert.throws(()=>validateQueryNode({url:'http://127.0.0.1',rollupAddress,...patch}));
   assert.equal(validateQueryNode({url:'http://[::1]:9999',rollupAddress}).maxLagSeconds,120);
+});
+test('gzip JSON preserves native RPC semantics and existing validation before upstream',async t=>{
+ const f=await fixture(t),body=[call()];
+ const response=await fetch(f.url+'/v1/node',{method:'POST',headers:{'content-type':'application/json','content-encoding':'gzip',origin:'https://app.example'},body:gzipSync(JSON.stringify(body))});
+ assert.equal(response.status,200);assert.deepEqual(await response.json(),[{jsonrpc:'2.0',id:1,result:7}]);
+ assert.equal(f.received[0].headers['content-encoding'],undefined);
+ // The installed SDK assigns its own upstream IDs and fills optional arguments.
+ // Compare compressed/uncompressed forwarding through that same real boundary.
+ assert.equal((await f.post(body)).status,200);
+ const semantic=batch=>batch.map(({method,params})=>({method,params}));
+ assert.deepEqual(semantic(f.received[0].body),semantic(f.received[1].body));
+ const preflight=await fetch(f.url+'/v1/node',{method:'OPTIONS',headers:{origin:'https://app.example'}});
+ assert.match(preflight.headers.get('access-control-allow-headers'),/Content-Encoding/);
+});
+test('compressed corruption, decoded-size bombs and forbidden batch members never reach inspector or node',async t=>{
+ let gates=0;const f=await fixture(t,{inspect:async()=>{gates++;return {ready:true};}});
+ const valid=gzipSync(JSON.stringify(call()));
+ for(const [body,encoding,status] of [
+  [Buffer.from('not gzip'),'gzip',400],[valid.subarray(0,valid.length-3),'gzip',400],
+  [gzipSync(Buffer.alloc(QUERY_LIMITS.bodyBytes+1,32)),'gzip',413],[valid,'br',415],
+  [gzipSync(JSON.stringify([call(),call('nodeAdmin_setConfig')])),'gzip',400],
+ ]){
+  const response=await fetch(f.url+'/v1/node',{method:'POST',headers:{'content-type':'application/json','content-encoding':encoding},body});
+  assert.equal(response.status,status);assert.equal(gates,0);assert.equal(f.received.length,0);
+ }
 });
 test('official SDK schema forwarding, fixed upstream, exact inspector scope and no client credentials',async t=>{
   let gates=0;
