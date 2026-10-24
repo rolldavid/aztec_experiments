@@ -1,3 +1,12 @@
+# Current preparation continuation — 24 October 2026
+
+Runtime371eee5d published;567 checks passed, independent review approved.
+Root owns integration/evidence. Reviewer implements isolated numeric-only
+checkedHeader simplification after identifying duplicated hash-addressed lookup.
+No global sync removal, canonical boundary removal, paid model job or transaction
+is active. Packaging agent completed runtime publication; SDKf8a unchanged.
+No measured wall-time claim for371eee yet. Prior measured release9e66 below.
+
 # Active performance goal — 24 October 2026
 
 Browser9e66ca7a and worker392bee96 on m8a are published. Exact-release real

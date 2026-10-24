@@ -5,7 +5,22 @@ canonical Bok reply, charge/refund, and automatic browser rendering. It uses the
 existing funded test identity and real proofs on stable Aztec testnet 6.0.0.
 There are no Ethereum transactions in an already-funded `@bok` request.
 
-## Exact deployed release — 2m36.1s
+## Subsequent preparation fix — published, no new wall-time claim
+
+Source371eee5d starts ordinary immediate post arguments and fee preparation
+together. Previously all screening/policy reads completed before fee metadata,
+contract binding and balance preparation began. Native PXE still serializes the
+two different private utilities. A single-use result binds the exact encrypted
+intent and original wallet/PXE/node within the same locked operation; separate
+submits, reviews and claims retain their normal preparation. Both reads drain
+before failure releases the account lock. All567 affected checks passed and
+independent review approved. The runtime is published; SDK/services are unchanged.
+Payment prefetch overlaps arguments, so its duration must not be added to them.
+No new wall-time percentage is claimed for this subsequent change.
+[Change evidence](../execution/evidence/G21/stable6/bok-performance/fee-preparation-overlap.json),
+[public readback](../execution/evidence/G21/stable6/bok-performance/fee-overlap-publication.json).
+
+## Verified release9e66 — 2m36.1s
 
 Browser9e66ca7a and worker392bee96 on m8a completed the identical267-character
 request from the original app tree in **156.085s**, **66.4% below464.264s**.

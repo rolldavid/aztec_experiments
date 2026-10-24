@@ -1,0 +1,14 @@
+{
+  "source": "371eee5d1656d0b77fa82b83a0ae79e74e37cb9b",
+  "change": "Immediate normal post arguments and fee preparation start concurrently. Native PXE serializes private utilities. Fee result binds exact encrypted intent and original wallet/PXE/node in one locked operation; consumed once.",
+  "verification": {
+    "tests": 567,
+    "passed": 567,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 58392.506833,
+    "independentReview": "approved after before-read identity capture and PXE/changed-record regression coverage"
+  },
+  "liveTimingClaim": null,
+  "timingCaveat": "Payment prefetch overlaps arguments; do not sum these spans or compare shifted fee-prepare alone. Final9e66 benchmark remains historical evidence, not a wall-time measurement of371eee."
+}
