@@ -541,12 +541,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   await guardRoute();await initializeAccount();
   await pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress});
   await guardRoute();
-  // Use the actual native utility to warm its hash-pinned nullifier reads.
-  // No hints cross into Post: its normal utility/proof rechecks the chosen
-  // deposit at the then-current anchor, including after a reorg or a spend.
-  const board=await sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(selected.board.contractAddress))),boardArtifact,privateWallet);
-  const owner=new sdk.AztecAddress(new sdk.Fr(BigInt(captured.address)));
-  await measureRollingStage('composer.screening',()=>board.methods.get_screen_hints(owner,new sdk.Fr(BigInt(deposit))).simulate({from:owner}),{nativeUtility:true});
+  // The same screening call also primes only its required native witnesses,
+  // including mature flags. Post still selects and verifies at its own anchor.
+  await measureRollingStage('composer.posting-witnesses',()=>app.prefetchPostingWitnesses(deposit));
   await guardRoute();
  });}
  return Object.freeze({application,preparePostingState,ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){

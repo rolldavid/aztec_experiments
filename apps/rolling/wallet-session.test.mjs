@@ -118,6 +118,7 @@ async function sessionFixture({chainId='31337'}={}){
   AccountManager:{create:async()=>{held('account-manager');return {address:accountInstance.address,getInstance:()=>accountInstance};}},
   ContractFunctionInteraction:class{async simulate(){held('signing-capsule');}},
   Contract:{at:()=>({methods:{get_screen_hints:(owner,deposit)=>({simulate:async options=>{held('screen-hints');assert.equal(owner.toString(),account.address);assert.equal(options.from.toString(),account.address);return {result:[null,null]};}}),preference_head:()=>({simulate:async()=>{held('preference-head');return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='preference_head')),[Fr.ZERO,Fr.ONE,Fr.ZERO,Fr.ZERO])};}}),register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
+  prefetchOrdinaryPostWitnesses:async input=>{held('posting-witnesses');(state.witnessPrefetches??=[]).push(input);},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
  const locks={request:async(name,options,run)=>{assert.equal(name,'billboard-wallet:'+account.address);assert.deepEqual(options,{ifAvailable:true});
   if(state.active||state.otherTab)return run(null);state.active=true;state.events.push('lock');try{return await run({});}finally{state.active=false;state.events.push('unlock');}}};
@@ -1246,7 +1247,7 @@ for(const mode of ['success','failure','account-change'])test(`background screen
  }})}};};
  const session=await createRollingWalletSession(f.input);let settled=false;
  const run=session.preparePostingState('9').finally(()=>settled=true);
- const observed=mode==='success'?run:assert.rejects(run,mode==='failure'?/screen failure/:{code:'ROLLING_PRIVATE_ROUTE'});
+ const observed=mode==='success'?run:assert.rejects(run,mode==='failure'?/screen failure/:{code:'ROLLING_CONTEXT_CHANGED'});
  try{await entered.promise;assert.equal(settled,false);assert(f.state.active);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
   if(mode==='account-change')f.state.wrongPXE=true;gate.resolve();assert.equal(await observed,undefined);assert.equal(f.state.active,false);assert.equal(f.state.sends,0);assert.equal(calls,1);
  }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
@@ -1288,4 +1289,19 @@ test('Post reexecutes screening for its own deposit after background preparation
   await assert.rejects(session.application.executeAction({type:'post',deposit:'10',content:'Fresh authoritative selection'},{onPrepared:()=>{throw stop;}}),e=>e===stop);
   assert.deepEqual(seen,[9n,10n]);assert.equal(f.state.syncs,syncs+1);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
  }finally{await session.close();}
+});
+
+for(const outcome of ['success','failure','account-change'])test(`composer native witness preparation drains under its existing lease: ${outcome}`,async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let calls=0;
+ f.input.sdk.prefetchOrdinaryPostWitnesses=async input=>{
+  calls++;assert(f.state.active);assert.equal(input.owner.toString(),f.input.account.address);assert.equal(input.wallet,f.wallet);assert.equal(input.node,f.node);
+  assert.equal(input.board.address.toString(),f.input.config.board.contractAddress);assert.equal(input.artifact.name,artifact.name);assert.equal(input.artifact.storageLayout.posts.slot.toString(),artifact.storageLayout.posts.slot.toString());assert.deepEqual(input.hints,[null,null]);
+  entered.resolve();await gate.promise;assert(f.state.active);if(outcome==='failure')throw Error('required witness failed');
+ };
+ const session=await createRollingWalletSession(f.input);let done=false;
+ const run=session.preparePostingState('9').finally(()=>{done=true;});const observed=outcome==='success'?run:assert.rejects(run,outcome==='failure'?/required witness failed/:{code:'ROLLING_CONTEXT_CHANGED'});
+ try{await entered.promise;assert.equal(done,false);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});await assert.rejects(session.application.ownedIdentities(),{code:'ROLLING_BUSY'});
+  if(outcome==='account-change')f.state.wrongPXE=true;gate.resolve();await observed;
+  assert.equal(calls,1);assert.equal(f.state.events.filter(x=>x==='screen-hints').length,1);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
+ }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
 });

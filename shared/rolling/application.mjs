@@ -799,6 +799,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   async function refundComplete(record){return !!verifyWithdrawal&&await verifyWithdrawal(clone(summary(record)))===true;}
   return Object.freeze({
+    // Warm the selected deposit's exact native history witnesses while editing.
+    // Nothing is retained as authority: Post selects and verifies again.
+    async prefetchPostingWitnesses(deposit){return exclusive(async()=>{
+      const id=new sdk.Fr(BigInt(field(deposit,true)));await localGuard();
+      await screeningArguments(await contract(),id,true);await localGuard();
+    });},
     // Readiness and the previous terminal transaction are independent of native
     // synchronization. The journal permit belongs only to this held operation
     // and its exact authenticated bytes; prepare still reauthenticates both.
