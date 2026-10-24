@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "chainId": "11155111",
+    "rollupVersion": "679261766",
+    "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+    "boardAddress": "0x122f9579999a8a25e47564f656182429fc3182d22d9229afb9310232de20aefc",
+    "classId": "0x0593ff56fceb4afb79463d591a25a1078fd5860e18a5774ef6d6525b31dac58e",
+    "bok": {
+      "address": "0x12329a549afe3657974572c699ae5f7fcf855fe5f36e558073e259d739639aa9",
+      "classId": "0x00a1d7347b3931e365c56dfd7a76317651afcaf8a8af09728dd818dc197fe277",
+      "operatorAddress": "0x119fa1d976f386eb0b3577a9661c923ce02ca500fbc1e68096718aa7f24948e5",
+      "deployer": "0x0233a0ebe93af15f273c200ce05a893ae2c7e87c0b24196eec705c1d09f6ceaa",
+      "salt": "0x24b0d6a500873a1b1c16307e9216b66164e4ce1b25c8ee8eda8f5ca356e86e22",
+      "deployment": {
+        "txHash": "0x0cd0008ed181ca8bb35c14bebbdd4dde7c38fa594dd121460faf585043a38ec6",
+        "blockNumber": 1496,
+        "blockHash": "0x07acaed6362154eafbb8a1eb35403992564cea8edbdc8eb8ebc71ba88a57094a"
+      }
+    }
+  },
+  "checkpoint": {
+    "number": 2478,
+    "hash": "0x12330b6c202dc97b97ec15184a0fd8107b2339f4afdcf3dc69664ad83e09d474"
+  },
+  "confirmationTier": "proposed",
+  "confirmationCheckpoint": {
+    "number": 2478,
+    "hash": "0x12330b6c202dc97b97ec15184a0fd8107b2339f4afdcf3dc69664ad83e09d474"
+  },
+  "complete": true,
+  "post": {
+    "id": "17724527442148899696130906597644382752186997052984378662555929647802956989050",
+    "record": {
+      "subboard": "0",
+      "parent": "0",
+      "root": "17724527442148899696130906597644382752186997052984378662555929647802956989050",
+      "kind": "1",
+      "name_id": "0",
+      "reference": "0",
+      "content_digest": "15249784402812990348934632596094046701305250531151425213810019978991785000992"
+    },
+    "text": "Maximum-length verification: streamed proof and compressed requests, 992 bytes. A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42A\u00e9\u0939\ud83d\ude42xx",
+    "timestamp": "1792839684",
+    "mainVersion": "1",
+    "localVersion": "0",
+    "position": {
+      "blockNumber": "2476",
+      "blockHash": "0x0e14e9d848520d15d87ab783aaf1f25bf79853fe026e6474aa437bc544ee86f1",
+      "txHash": "0x1abf940375b22fd1d2bc05dafae66fe88ffc41f94eed34b01745d707e4fb31c1",
+      "txIndexWithinBlock": "0",
+      "logIndexWithinTx": "0"
+    },
+    "order": "49",
+    "likes": "0",
+    "removal": null,
+    "invocation": null,
+    "bot": null,
+    "confirmation": "confirmed"
+  },
+  "names": {},
+  "boards": {},
+  "revision": "fcbae9a7-84d0-4643-8c5d-3e51558603fb:3:3726"
+}

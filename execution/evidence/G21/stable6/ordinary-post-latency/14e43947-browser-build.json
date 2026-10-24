@@ -1,0 +1,27 @@
+{
+  "commit": "14e43947c00b44c41f902fde04720c86ea691eac",
+  "sourceFiles": 2902,
+  "steps": [
+    {
+      "step": "sdk-build",
+      "exitCode": 0,
+      "seconds": 10.485,
+      "maximumChildRssBytes": 493125632,
+      "log": "/tmp/post-next-sdk-build.log"
+    },
+    {
+      "step": "sdk-check",
+      "exitCode": 0,
+      "seconds": 0.346,
+      "maximumChildRssBytes": 493125632,
+      "log": "/tmp/post-next-sdk-check.log"
+    },
+    {
+      "step": "wallet-build",
+      "exitCode": 0,
+      "seconds": 0.741,
+      "maximumChildRssBytes": 493125632,
+      "log": "/tmp/post-next-wallet-build.log"
+    }
+  ]
+}

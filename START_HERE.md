@@ -6,11 +6,25 @@ Current handover, 24 October 2026. Read this before historical execution records
 
 Ordinary post click → visible after actual Aztec inclusion must be ≤15 seconds; complete fee preparation <1 second; complete pre-proof application preparation <1 second; private witness construction ≤1.25 seconds; browser-to-prover submission/acceptance <1 second (owner added24October). Inspect actual prover CPU/topology and spot options within existing1500USD/month budget. **Goal remains active.**
 
-Live static+prover46805717, sixteen prover threads. Real short post41.051s to Aztec-included DOM (target15s unmet); complete fee458.63ms passes, encoding37.38ms. Preparation3760ms including sync1772ms and historyprefetch734ms; privatewitness3535ms; publicvalidation1533ms;185KBupload3827ms, serverbody3345ms/validate0.4ms/queue10.5ms. Proofwait6365ms. Actual submitack1356ms; ack toobservedinclusion16507ms; feedrender582ms. No checkpoint waitedfor display. Older measurements retained; no overallsuccessclaim.
+Live static+prover14e43947. Actual short post33.171s and maximum992-byte Unicode post18.075s click→Aztec-included DOM. Both pass prior36s target but miss latest15s target. Short/max preparation2125/1984ms, private witness2589/2588ms, publicvalidation797/627ms, uploadacceptance609/656ms, proofwait4521/4216ms. Short submitack14610ms fromclick; successfulproposedcallback32182ms and DOM33171ms. No checkpoint gate before display. Native1s receipt polling plusRPC adds observation latency; actualblockarrival timing unavailable from historical node logs. Fee bound remains exact-class-qualified, actualcharges vary withcontent. Evidence: execution/evidence/G21/stable6/ordinary-post-latency/14e43947-*.json. Goal remains active.
 
 Native507-case qualification and finite-state mixedUTF8 maximum check pass; worst observed publicL2gas1,868,273 against2,000,000 bound. The actual gas charge varies with content; unused reserved credit is refunded.
 
 The4.582s earlier private trace contained11 sequential HTTPrequests totaling3.900s. No background throttling was observed. Runtime2dece9d9 eliminates private/public fee-estimation executions but still executes the real private transaction once. The prover now uses16threads on the existing16physicalcores; isolated native tail improved4.36→3.38seconds with real proof. Other services were not restarted. ExistingIAB/disposable testprovider gives realproof/Aztec acceptance, not MetaMask acceptance; do not relaunch the memory-heavy CFT session.
+
+## Active owner-only record implementation
+
+Owner requires durable owner-only state discovery, automatic restoration using the
+same wallet in another browser, AES encryption unconstrained, no ECDH self-delivery,
+no sender-index scanning, no new trusted intermediary and no old-state migration.
+Prototype uses fixed-size authenticated AES256-GCM envelopes via native WebCrypto
+and a narrow simulator oracle, private per-contract journal head, native note and
+partial-refund validation. AES/native-ABI tests and first create/sync/replace TXE
+fixture pass; full cross-browser/refund/reorg integration is not yet qualified or
+published. Native capsules do not roll back; accepted cursors need origin-backed
+facts. Logs must survive transient-note squash; partial FPC setup reverts matter.
+Current signature-derived account root remains quantum-vulnerable as disclosed;
+this delivery change does not claim post-quantum confidentiality or change login.
 
 ## Current deployment
 
@@ -54,7 +68,7 @@ AWS account 052665140763, region us-east-1, existing profile `message-board-depl
 
 Core native release: `/opt/board-prover/releases/rolling-8fed2c764e5b62fc`, manifest `8fed2c764e5b62fc626e985e6b022ef3908605c7401200d4f8f09e9e07157097`. Real Linux qualification passed against this exact complete package. Official Aztec image: `azteclabs/aztec@sha256:59b10cc8e89bb9226db1f771a5abbe5d5f8d71483c00c7472187e6ddc7adab8d`.
 
-Running/next-start app source: `/opt/rolling-app/releases/6c2c64f033ab8d35ed66fe2de76066a64a9bbc37`. Moderator source remains `/opt/rolling-upgrade-6.0.0`. Bok source: `/opt/rolling-bok/releases/52ef5da01fccd811db416eef83eba02561a09726` (shared hosting contract and mandatory isolated Chromium validation before new generated-app publication). Public UI: `/opt/rolling-ui/releases/2dece9d932cfe67146b491e987e548107fe80caf-closurefix`, selected through `/opt/rolling-ui/current`. The latest static publication preserved all service PIDs and private configuration. Worker publication source pins are `6b78d99d29f25f22060df8ca3d1e26e4b2ab867b2ba673b95a38b0a24eb73704`; its configuration hash remains `fc3543d2f224104fe9c6b0a6fc0fdbe6a455030e8a4d0f2b997ba4ddd0a3e636`. The latest worker/proxy restart produced PIDs15179/15181. The core app/proxy are709116/709119. Final UI-only publication preserved every service PID. App runtime config is `/etc/rolling-app/wallet.json`; fresh state directories include `stable6-` and the board address. Core and Bok share pinned application Node24.21.0; the official Aztec container uses Node24.22.1. Native prover assets and CRS are6.0.0.
+Running/next-start app source: `/opt/rolling-app/releases/6c2c64f033ab8d35ed66fe2de76066a64a9bbc37`. Moderator source remains `/opt/rolling-upgrade-6.0.0`. Bok source: `/opt/rolling-bok/releases/52ef5da01fccd811db416eef83eba02561a09726` (shared hosting contract and mandatory isolated Chromium validation before new generated-app publication). Public UI: `/opt/rolling-ui/releases/14e43947c00b44c41f902fde04720c86ea691eac-closurefix`, selected through `/opt/rolling-ui/current`. The latest static publication preserved all service PIDs and private configuration. Worker publication source pins are `6b78d99d29f25f22060df8ca3d1e26e4b2ab867b2ba673b95a38b0a24eb73704`; its configuration hash remains `fc3543d2f224104fe9c6b0a6fc0fdbe6a455030e8a4d0f2b997ba4ddd0a3e636`. The latest worker/proxy restart produced PIDs15179/15181. The core app/proxy are709116/709119. Final UI-only publication preserved every service PID. App runtime config is `/etc/rolling-app/wallet.json`; fresh state directories include `stable6-` and the board address. Core and Bok share pinned application Node24.21.0; the official Aztec container uses Node24.22.1. Native prover assets and CRS are6.0.0.
 
 Fresh moderator/deployer identity: `0x0233a0ebe93af15f273c200ce05a893ae2c7e87c0b24196eec705c1d09f6ceaa`. Fresh Bok identity: `0x119fa1d976f386eb0b3577a9661c923ce02ca500fbc1e68096718aa7f24948e5`. Bok proves natively on its own host and uses authenticated node queries; generated code receives neither actor keys nor AWS access.
 

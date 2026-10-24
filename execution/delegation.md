@@ -1,3 +1,18 @@
+# Current delivery checkpoint — owner-only discovery
+
+Performance candidate14e43947 is integrated, not yet live. Root owns staged
+native proof and activation. proposed_feed_design prepares reviewed backend
+packet; pending_feed_release prepares coherent browser build/package.
+pending_reply_ui implements owner-only durable note discovery in isolation:
+AES unconstrained, same-wallet fresh-browser reconstruction, native commitment
+and nullifier validation, no shared sender-index scans or ECDH self-delivery.
+The current signature-derived key root has a separately disclosed quantum
+exposure; a different cipher alone does not remove it. No old-state migration.
+
+Previous research turn made progress: exact pinned source established custom
+synchronization and validated note processing; measured scan cost1.660s; no
+unsupported attribution of remaining private execution time to AES.
+
 # Active ordinary-post performance lanes — 24 October 2026
 
 Owner explicitly requested parallel subagents. All four available slots are active.

@@ -1,0 +1,206 @@
+{
+  "acceptance": {
+    "click": 356451.1900000572,
+    "confirmationPending": true,
+    "duration": 18074.60000002384,
+    "marker": "Maximum-length verification: streamed proof and compressed requests, 992 bytes. ",
+    "postId": "post-17724527442148899696130906597644382752186997052984378662555929647802956989050",
+    "render": 374525.79000008106,
+    "timeOrigin": 1792839279447.96,
+    "visibility": "visible"
+  },
+  "heap": 171976598,
+  "measures": [
+    {
+      "duration": 64188.75,
+      "name": "rolling.post.interaction",
+      "start": 0.3349999189376831
+    },
+    {
+      "duration": 1983.5950000286105,
+      "name": "rolling.action.prepare",
+      "start": 524.0649999380112
+    },
+    {
+      "duration": 733.1299999952316,
+      "name": "rolling.action.sync",
+      "start": 524.1050000190735
+    },
+    {
+      "duration": 734.6399999856949,
+      "name": "rolling.action.payment-prefetch",
+      "start": 524.2450000047684
+    },
+    {
+      "duration": 486.77500009536743,
+      "name": "rolling.action.arguments",
+      "start": 2015.0849999189377
+    },
+    {
+      "duration": 486.4399999380112,
+      "name": "rolling.action.policy",
+      "start": 2015.149999976158
+    },
+    {
+      "duration": 30.039999961853027,
+      "name": "rolling.action.screening",
+      "start": 2015.225000023842
+    },
+    {
+      "duration": 912.2300000190736,
+      "name": "rolling.action.history-witnesses",
+      "start": 2045.329999923706
+    },
+    {
+      "duration": 61679.354999899864,
+      "name": "rolling.action.submit",
+      "start": 2507.7300000190735
+    },
+    {
+      "duration": 111,
+      "name": "rolling.transaction.estimating",
+      "start": 2587.5449999570847
+    },
+    {
+      "duration": 0.1549999713897705,
+      "name": "rolling.action.fee-prepare",
+      "start": 2587.664999961853
+    },
+    {
+      "duration": 0.8350000381469727,
+      "name": "rolling.action.fee-simulate",
+      "start": 2587.8249999284744
+    },
+    {
+      "duration": 172.4650000333786,
+      "name": "rolling.transaction.preparing",
+      "start": 2698.819999933243
+    },
+    {
+      "duration": 10801.195000052452,
+      "name": "rolling.transaction.proving",
+      "start": 2871.2949999570847
+    },
+    {
+      "duration": 10372.400000095367,
+      "name": "rolling.proof.native.total",
+      "start": 2899.6549998521805
+    },
+    {
+      "duration": 40.25,
+      "name": "rolling.proof.transport.serialize",
+      "start": 8113.024999976158
+    },
+    {
+      "duration": 3.259999990463257,
+      "name": "rolling.proof.transport.circuit-ids",
+      "start": 8113.034999966621
+    },
+    {
+      "duration": 28.174999952316284,
+      "name": "rolling.proof.transport.dictionary",
+      "start": 8116.3550000190735
+    },
+    {
+      "duration": 5133.4800000190735,
+      "name": "rolling.proof.native.proof-transport",
+      "start": 8138.589999914169
+    },
+    {
+      "duration": 8.659999966621399,
+      "name": "rolling.proof.transport.compress",
+      "start": 8144.549999952316
+    },
+    {
+      "duration": 655.960000038147,
+      "name": "rolling.proof.transport.submit",
+      "start": 8153.284999966621
+    },
+    {
+      "duration": 4216.004999995232,
+      "name": "rolling.proof.transport.wait",
+      "start": 8809.314999938011
+    },
+    {
+      "duration": 2587.8450000286102,
+      "name": "rolling.proof.native.private-witness",
+      "start": 10684.2199999094
+    },
+    {
+      "duration": 1356.5699999332428,
+      "name": "rolling.proof.native.unaccounted",
+      "start": 11915.5
+    },
+    {
+      "duration": 667.0500000715256,
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 12605.014999866486
+    },
+    {
+      "duration": 627.4550000429153,
+      "name": "rolling.proof.native.public-validation",
+      "start": 12644.609999895096
+    },
+    {
+      "duration": 26.50499999523163,
+      "name": "rolling.proof.local.decompress",
+      "start": 13026.414999961851
+    },
+    {
+      "duration": 188.3400000333786,
+      "name": "rolling.proof.local.verify",
+      "start": 13052.949999928474
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.sync",
+      "start": 13272.05999994278
+    },
+    {
+      "duration": 728.2599999904633,
+      "name": "rolling.transaction.submitting",
+      "start": 13672.495000004768
+    },
+    {
+      "duration": 3679.049999952316,
+      "name": "rolling.transaction.aztec-inclusion",
+      "start": 14400.495000004768
+    },
+    {
+      "duration": 49788.30999994278,
+      "name": "rolling.transaction.confirming",
+      "start": 14400.769999980928
+    },
+    {
+      "duration": 836.4349999427795,
+      "name": "rolling.reader.update",
+      "start": 61913.49000000954
+    },
+    {
+      "duration": 11.924999952316284,
+      "name": "rolling.reader.dom",
+      "start": 62737.98000001907
+    },
+    {
+      "duration": 2535.4150000810623,
+      "name": "rolling.account.sync",
+      "start": 64191.18999993801
+    },
+    {
+      "duration": 518.6449999809265,
+      "name": "rolling.action.fee-metadata",
+      "start": 71517.50999999046
+    },
+    {
+      "duration": 2.625,
+      "name": "rolling.action.fee-binding",
+      "start": 72036.2199999094
+    },
+    {
+      "duration": 2979.2300000190735,
+      "name": "rolling.action.fee-balance",
+      "start": 72065.00999999046
+    }
+  ],
+  "resources": []
+}

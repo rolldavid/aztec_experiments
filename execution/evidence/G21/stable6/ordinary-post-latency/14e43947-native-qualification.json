@@ -1,0 +1,55 @@
+{
+  "result": {
+    "commit": "14e43947c00b44c41f902fde04720c86ea691eac",
+    "threads": 16,
+    "wallMs": 5592.702733,
+    "publicWarmupMs": 739.413632,
+    "assignmentAfterReadyMs": 0.0012500000000272848,
+    "jobWallMs": 4853.287851,
+    "phases": [
+      {
+        "stage": "native-init",
+        "atMs": 535.996903,
+        "sinceAssignmentMs": -203.41797900000006
+      },
+      {
+        "stage": "catalog",
+        "atMs": 612.154576,
+        "sinceAssignmentMs": -127.26030600000001
+      },
+      {
+        "stage": "decompress",
+        "atMs": 740.3470560000001,
+        "sinceAssignmentMs": 0.9321740000000318
+      },
+      {
+        "stage": "board-binding",
+        "atMs": 822.3375840000001,
+        "sinceAssignmentMs": 82.92270200000007
+      },
+      {
+        "stage": "prove",
+        "atMs": 1046.3112,
+        "sinceAssignmentMs": 306.89631800000006
+      },
+      {
+        "stage": "native-prove",
+        "atMs": 1118.912904,
+        "sinceAssignmentMs": 379.498022
+      }
+    ],
+    "proofBytes": 111552,
+    "verifiedByNativeSdk": true,
+    "transactionsSent": 0
+  },
+  "queueAfter": {
+    "jobs": 0,
+    "bytes": 0,
+    "running": false,
+    "submitted": 5,
+    "completed": 5,
+    "failed": 0
+  },
+  "pidPreserved": true,
+  "configPreserved": true
+}

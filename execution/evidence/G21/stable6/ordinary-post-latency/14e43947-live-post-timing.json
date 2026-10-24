@@ -1,0 +1,603 @@
+{
+  "acceptance": {
+    "click": 73344.20000004768,
+    "confirmationPending": true,
+    "duration": 33170.514999985695,
+    "marker": "Posting latency verification: streamed proof, warm worker and overlapping preparation.",
+    "postId": "post-18611673667871829140023981376866715679884147447278187092375323554020013085859",
+    "render": 106514.71500003338,
+    "timeOrigin": 1792839279447.96,
+    "visibility": "visible"
+  },
+  "heap": 129756583,
+  "measures": [
+    {
+      "duration": 2124.8150000572205,
+      "name": "rolling.action.prepare",
+      "start": 521.5849999189377
+    },
+    {
+      "duration": 1364.2350000143051,
+      "name": "rolling.action.sync",
+      "start": 521.664999961853
+    },
+    {
+      "duration": 1419.7700001001358,
+      "name": "rolling.action.payment-prefetch",
+      "start": 522.079999923706
+    },
+    {
+      "duration": 528.5900000333786,
+      "name": "rolling.action.fee-metadata",
+      "start": 522.2999999523163
+    },
+    {
+      "duration": 1.7450000047683716,
+      "name": "rolling.action.fee-binding",
+      "start": 1050.9399999380112
+    },
+    {
+      "duration": 484.7649999856949,
+      "name": "rolling.action.arguments",
+      "start": 2156.1599999666214
+    },
+    {
+      "duration": 484.3000000715256,
+      "name": "rolling.action.policy",
+      "start": 2156.439999938011
+    },
+    {
+      "duration": 29.020000100135803,
+      "name": "rolling.action.screening",
+      "start": 2156.5749999284744
+    },
+    {
+      "duration": 1086.414999961853,
+      "name": "rolling.action.history-witnesses",
+      "start": 2185.7200000286102
+    },
+    {
+      "duration": 62.21999990940094,
+      "name": "rolling.transaction.estimating",
+      "start": 2698.975000023842
+    },
+    {
+      "duration": 0.1499999761581421,
+      "name": "rolling.action.fee-prepare",
+      "start": 2699.125
+    },
+    {
+      "duration": 0.9049999713897704,
+      "name": "rolling.action.fee-simulate",
+      "start": 2699.2849999666214
+    },
+    {
+      "duration": 111.40500009059906,
+      "name": "rolling.transaction.preparing",
+      "start": 2761.9349999427795
+    },
+    {
+      "duration": 11045.579999923706,
+      "name": "rolling.transaction.proving",
+      "start": 2873.350000023842
+    },
+    {
+      "duration": 10707.360000014303,
+      "name": "rolling.proof.native.total",
+      "start": 2905.099999904633
+    },
+    {
+      "duration": 34.17999994754791,
+      "name": "rolling.proof.transport.serialize",
+      "start": 8116.649999976158
+    },
+    {
+      "duration": 2.5200001001358032,
+      "name": "rolling.proof.transport.circuit-ids",
+      "start": 8116.694999933243
+    },
+    {
+      "duration": 23.00499999523163,
+      "name": "rolling.proof.transport.dictionary",
+      "start": 8119.299999952316
+    },
+    {
+      "duration": 5471.955000042915,
+      "name": "rolling.proof.native.proof-transport",
+      "start": 8140.52999997139
+    },
+    {
+      "duration": 8.460000038146973,
+      "name": "rolling.proof.transport.compress",
+      "start": 8142.324999928474
+    },
+    {
+      "duration": 609.4349999427795,
+      "name": "rolling.proof.transport.submit",
+      "start": 8150.84500002861
+    },
+    {
+      "duration": 4520.685000061989,
+      "name": "rolling.proof.transport.wait",
+      "start": 8760.424999952316
+    },
+    {
+      "duration": 2589.060000061989,
+      "name": "rolling.proof.native.private-witness",
+      "start": 11023.414999961851
+    },
+    {
+      "duration": 1137.5149998664856,
+      "name": "rolling.proof.native.unaccounted",
+      "start": 12474.97000014782
+    },
+    {
+      "duration": 796.9750000238419,
+      "name": "rolling.proof.native.public-validation",
+      "start": 12815.504999995232
+    },
+    {
+      "duration": 711.8550000190735,
+      "name": "rolling.proof.native.kernel-witness",
+      "start": 12900.625
+    },
+    {
+      "duration": 22.320000052452087,
+      "name": "rolling.proof.local.decompress",
+      "start": 13284.049999952316
+    },
+    {
+      "duration": 276.3550000190735,
+      "name": "rolling.proof.local.verify",
+      "start": 13306.394999980928
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.sync",
+      "start": 13612.47000002861
+    },
+    {
+      "duration": 690.8100000619888,
+      "name": "rolling.transaction.submitting",
+      "start": 13918.939999938011
+    },
+    {
+      "duration": 17572.78499996662,
+      "name": "rolling.transaction.aztec-inclusion",
+      "start": 14609.365000009537
+    },
+    {
+      "duration": 765.1849999427795,
+      "name": "rolling.reader.update",
+      "start": 45249.77499997616
+    },
+    {
+      "duration": 10.174999952316284,
+      "name": "rolling.reader.dom",
+      "start": 46004.77999997139
+    }
+  ],
+  "resources": [
+    {
+      "duration": 525.8899999856949,
+      "encodedBodySize": 3007,
+      "path": "/prover/v1/node",
+      "requestStart": 73867.94500005245,
+      "responseStart": 74391.25,
+      "serverTiming": [],
+      "start": 522.8500000238419
+    },
+    {
+      "duration": 532.8550000190735,
+      "encodedBodySize": 2793,
+      "path": "/prover/v1/node",
+      "requestStart": 73868.71500003338,
+      "responseStart": 74400.38499999046,
+      "serverTiming": [],
+      "start": 523.6899999380112
+    },
+    {
+      "duration": 497.9800000190735,
+      "encodedBodySize": 799,
+      "path": "/prover/v1/node",
+      "requestStart": 73896.02999997139,
+      "responseStart": 74391.47500002384,
+      "serverTiming": [],
+      "start": 551.0449999570847
+    },
+    {
+      "duration": 496.6050000190735,
+      "encodedBodySize": 356,
+      "path": "/prover/v1/node",
+      "requestStart": 73952.94000005722,
+      "responseStart": 74448.09000003338,
+      "serverTiming": [],
+      "start": 607.5849999189377
+    },
+    {
+      "duration": 381.8049999475479,
+      "encodedBodySize": 1788,
+      "path": "/prover/v1/node",
+      "requestStart": 74421.64999997616,
+      "responseStart": 74801.91500008106,
+      "serverTiming": [],
+      "start": 1076.2300000190735
+    },
+    {
+      "duration": 740.9000000953674,
+      "encodedBodySize": 2595,
+      "path": "/prover/v1/node",
+      "requestStart": 74422.42500007153,
+      "responseStart": 75161.31000006199,
+      "serverTiming": [],
+      "start": 1077.4399999380112
+    },
+    {
+      "duration": 713.210000038147,
+      "encodedBodySize": 1797,
+      "path": "/prover/v1/node",
+      "requestStart": 74450.20500004292,
+      "responseStart": 75161.59500002861,
+      "serverTiming": [],
+      "start": 1105.3249999284744
+    },
+    {
+      "duration": 482.25999999046326,
+      "encodedBodySize": 106,
+      "path": "/prover/v1/node",
+      "requestStart": 75502.27999997139,
+      "responseStart": 75983.00999999046,
+      "serverTiming": [],
+      "start": 2156.8650000095367
+    },
+    {
+      "duration": 732.8250000476837,
+      "encodedBodySize": 6177,
+      "path": "/prover/v1/node",
+      "requestStart": 75532,
+      "responseStart": 76263.6399999857,
+      "serverTiming": [],
+      "start": 2186.9249999523163
+    },
+    {
+      "duration": 356.4499999284744,
+      "encodedBodySize": 42,
+      "path": "/prover/v1/node",
+      "requestStart": 76229.64999997616,
+      "responseStart": 76584.55000007153,
+      "serverTiming": [],
+      "start": 2884.6150000095367
+    },
+    {
+      "duration": 346.4100000858307,
+      "encodedBodySize": 2059,
+      "path": "/prover/v1/node",
+      "requestStart": 76266.92500007153,
+      "responseStart": 76612.13499999046,
+      "serverTiming": [],
+      "start": 2921.829999923706
+    },
+    {
+      "duration": 343.3199999332428,
+      "encodedBodySize": 159,
+      "path": "/prover/v1/node",
+      "requestStart": 76679.20000004768,
+      "responseStart": 77021.16500008106,
+      "serverTiming": [],
+      "start": 3334.0099999904633
+    },
+    {
+      "duration": 493.5,
+      "encodedBodySize": 3029,
+      "path": "/prover/v1/node",
+      "requestStart": 77038.74000000954,
+      "responseStart": 77529.66500008106,
+      "serverTiming": [],
+      "start": 3692.8550000190735
+    },
+    {
+      "duration": 353.4649999141693,
+      "encodedBodySize": 2059,
+      "path": "/prover/v1/node",
+      "requestStart": 77940.73000001907,
+      "responseStart": 78292.20000004768,
+      "serverTiming": [],
+      "start": 4595.6050000190735
+    },
+    {
+      "duration": 344.9499999284744,
+      "encodedBodySize": 1876,
+      "path": "/prover/v1/node",
+      "requestStart": 78305.65999996662,
+      "responseStart": 78648.52999997139,
+      "serverTiming": [],
+      "start": 4960.34500002861
+    },
+    {
+      "duration": 352.02999997138977,
+      "encodedBodySize": 3029,
+      "path": "/prover/v1/node",
+      "requestStart": 78703.33500003815,
+      "responseStart": 79053.2350000143,
+      "serverTiming": [],
+      "start": 5357.995000004768
+    },
+    {
+      "duration": 352.13499999046326,
+      "encodedBodySize": 6174,
+      "path": "/prover/v1/node",
+      "requestStart": 79187.18000006676,
+      "responseStart": 79537.97500002384,
+      "serverTiming": [],
+      "start": 5841.8949999809265
+    },
+    {
+      "duration": 354.40499997138977,
+      "encodedBodySize": 9980,
+      "path": "/prover/v1/node",
+      "requestStart": 79882.64499998093,
+      "responseStart": 80235.31000006199,
+      "serverTiming": [],
+      "start": 6537.3949999809265
+    },
+    {
+      "duration": 767.960000038147,
+      "encodedBodySize": 12198,
+      "path": "/prover/v1/node",
+      "requestStart": 80691.75999999046,
+      "responseStart": 81331.4850000143,
+      "serverTiming": [],
+      "start": 7345.959999918938
+    },
+    {
+      "duration": 605.6899999380112,
+      "encodedBodySize": 73,
+      "path": "/prover/v1/jobs",
+      "requestStart": 81497.84500002861,
+      "responseStart": 82101.65499997139,
+      "serverTiming": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "start": 8152.615000009537
+    },
+    {
+      "duration": 4518.870000004768,
+      "encodedBodySize": 148837,
+      "path": "/prover/v1/jobs/JOB/result",
+      "requestStart": 82107.44500005245,
+      "responseStart": 82316.98000001907,
+      "serverTiming": [],
+      "start": 8761.110000014305
+    },
+    {
+      "duration": 216.76499998569489,
+      "encodedBodySize": 21,
+      "path": "/prover/v1/jobs/JOB",
+      "requestStart": 86627.55000007153,
+      "responseStart": 86841.32000005245,
+      "serverTiming": [],
+      "start": 13280.71500003338
+    },
+    {
+      "duration": 625.5750000476837,
+      "encodedBodySize": 42,
+      "path": "/prover/v1/node",
+      "requestStart": 87329.97500002384,
+      "responseStart": 87951.3600000143,
+      "serverTiming": [],
+      "start": 13982.194999933245
+    },
+    {
+      "duration": 530.0249999761581,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 87956.45000004768,
+      "responseStart": 88484.44000005722,
+      "serverTiming": [],
+      "start": 14610.879999995232
+    },
+    {
+      "duration": 480.75,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 89490.31500005722,
+      "responseStart": 89969.52999997139,
+      "serverTiming": [],
+      "start": 16144.865000009537
+    },
+    {
+      "duration": 351.2850000858307,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 90976.12000000475,
+      "responseStart": 91323.58500003816,
+      "serverTiming": [],
+      "start": 17629.084999918938
+    },
+    {
+      "duration": 374.4850000143051,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 92330.58500003816,
+      "responseStart": 92703.18000006676,
+      "serverTiming": [],
+      "start": 18984.889999985695
+    },
+    {
+      "duration": 493.61500000953674,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 93707.09000003338,
+      "responseStart": 94199.33500003816,
+      "serverTiming": [],
+      "start": 20361.894999980927
+    },
+    {
+      "duration": 371.7700001001358,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 95204.32000005244,
+      "responseStart": 95573.97500002384,
+      "serverTiming": [],
+      "start": 21858.329999923702
+    },
+    {
+      "duration": 488.5700000524521,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 96580.21000003816,
+      "responseStart": 97065.10500001907,
+      "serverTiming": [],
+      "start": 23233.454999923702
+    },
+    {
+      "duration": 492.9500000476837,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 98073.57500004768,
+      "responseStart": 98562.4200000763,
+      "serverTiming": [],
+      "start": 24726.28499996662
+    },
+    {
+      "duration": 353.41999995708466,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 99569.74500000475,
+      "responseStart": 99921.13499999046,
+      "serverTiming": [],
+      "start": 26223.85000002384
+    },
+    {
+      "duration": 349.50999999046326,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 100925.02499997616,
+      "responseStart": 101273.21500003338,
+      "serverTiming": [],
+      "start": 27579.84000003338
+    },
+    {
+      "duration": 486.7549999952316,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 102278.49000000954,
+      "responseStart": 102762.04000008106,
+      "serverTiming": [],
+      "start": 28932.12000000477
+    },
+    {
+      "duration": 398.2099999189377,
+      "encodedBodySize": 136,
+      "path": "/prover/v1/node",
+      "requestStart": 103768.81500005722,
+      "responseStart": 104165.1399999857,
+      "serverTiming": [],
+      "start": 30423.12000000477
+    },
+    {
+      "duration": 354.13499999046326,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 105171.60500001907,
+      "responseStart": 105522.18000006676,
+      "serverTiming": [],
+      "start": 31824.93499994278
+    },
+    {
+      "duration": 351.4500000476837,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 106535.8450000286,
+      "responseStart": 106885.7200000286,
+      "serverTiming": [],
+      "start": 33190.76999998093
+    },
+    {
+      "duration": 493.1100000143051,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 107895.00499999525,
+      "responseStart": 108384.52499997616,
+      "serverTiming": [],
+      "start": 34547.63499999046
+    },
+    {
+      "duration": 357.98999989032745,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 109392.0299999714,
+      "responseStart": 109746.810000062,
+      "serverTiming": [],
+      "start": 36044.97000002861
+    },
+    {
+      "duration": 385.27999997138977,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 110752.99000000954,
+      "responseStart": 111134.75499999525,
+      "serverTiming": [],
+      "start": 37406.13499999046
+    },
+    {
+      "duration": 531.7799999713898,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 112142.87999999525,
+      "responseStart": 112671.060000062,
+      "serverTiming": [],
+      "start": 38795.84000003338
+    },
+    {
+      "duration": 351.02999997138977,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 113679.4049999714,
+      "responseStart": 114027.74000000954,
+      "serverTiming": [],
+      "start": 40332.91499996185
+    },
+    {
+      "duration": 491.6399999856949,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 115033.45500004292,
+      "responseStart": 115522.45000004768,
+      "serverTiming": [],
+      "start": 41687.54999995232
+    },
+    {
+      "duration": 357.4300000667572,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 116531.6100000143,
+      "responseStart": 116885.05000007153,
+      "serverTiming": [],
+      "start": 43184.18999993801
+    },
+    {
+      "duration": 371.55999994277954,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 117892.95000004768,
+      "responseStart": 118261.65999996662,
+      "serverTiming": [],
+      "start": 44546.39499998093
+    },
+    {
+      "duration": 494.8600000143051,
+      "encodedBodySize": 358,
+      "path": "/prover/v1/node",
+      "requestStart": 119266.0149999857,
+      "responseStart": 119758.76999998093,
+      "serverTiming": [],
+      "start": 45920.69499993324
+    }
+  ]
+}
