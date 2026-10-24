@@ -428,7 +428,7 @@ async function aggregateSessionFixture(){
  return {...f,b,scope:s,expected,captures:()=>captures};
 }
 test('aggregate configured session retains direct receipt recovery with an empty private aggregate slot and no funding wallet',async()=>{
- const f=await aggregateSessionFixture();f.input.sdk.prepareFundingClaim=async input=>{assert.equal(input.aggregateIntent,undefined);assert.equal(typeof await input.ethProvider.getCode(eth(22),20),'string');return {status:'waiting'};};
+ const f=await aggregateSessionFixture();f.pxe.node={getL1ToL2MessageMembershipWitness:async()=>{throw Error('waiting claim must not read a membership witness');}};f.input.sdk.prepareFundingClaim=async input=>{assert.equal(input.aggregateIntent,undefined);assert.equal(typeof await input.ethProvider.getCode(eth(22),20),'string');return {status:'waiting'};};
  f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10},hash:async()=>hex(55),state:{l1ToL2MessageTree:{root:new Fr(1)}}});
  const session=await createRollingWalletSession(f.input);try{
   const receipt={txHash:hex(40),blockHash:hex(41),blockNumber:2,sender:eth(33),nonce:'1',amount:'100',leafIndex:'2',messageKey:hex(43),secretHash:hex(44)};
