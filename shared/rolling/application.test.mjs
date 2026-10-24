@@ -1290,11 +1290,23 @@ test('RC22 full private ownership page requires a distinct empty page before any
  const first=page.nextCursor;f.state.responses.owned_requests=Array(8).fill(0n);page=await f.app.readBokAccounting({cursor:first});assert.equal(page.phase,'public-accounting');assert.equal(f.trace.length,0);
  assert.deepEqual(f.state.privateReads.filter(r=>r.name==='owned_requests').map(r=>r.args[1]),[0,8]);await assert.rejects(f.app.readBokAccounting({cursor:first}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});assert.equal(f.state.sends,0);
 });
-for(const defect of ['zero-tail','duplicate','empty-continuation','deployment','negative','noncanonical-cursor'])test('RC22 accounting rejects '+defect,async()=>{
+test('RC22 accounting advances an empty proposed-only public page without changing confirmed funds',async()=>{
+ const f=bokAccountingFixture([13n]);f.pages[0].requests=[];
+ const result=await finishBokAccounting(f);
+ assert.equal(f.trace.length,2);assert.equal(result.available,'1000');
+ assert.deepEqual(result.requests.map(r=>r.requestId),[hex(13)]);
+ assert.equal(result.totals.refunded,'10');assert.equal(f.state.sends,0);
+});
+test('RC22 accounting rejects a cycle across empty public pages',async()=>{
+ const f=bokAccountingFixture([]),a=f.pages[0].nextCursor,b='c'.repeat(32)+':'+hex(14).slice(2)+':'+'d'.repeat(16);
+ let reads=0;f.options.readBokAccountingPage=async()=>({...f.pages[0],requests:[],nextCursor:++reads===2?b:a});f.app=f.restart();
+ await assert.rejects(finishBokAccounting(f),{code:'ROLLING_INVALID_RESPONSE'});
+ assert.equal(reads,3);assert.equal(f.state.sends,0);
+});
+for(const defect of ['zero-tail','duplicate','deployment','negative','noncanonical-cursor'])test('RC22 accounting rejects '+defect,async()=>{
  const f=bokAccountingFixture();
  if(defect==='zero-tail')f.state.responses.owned_requests=[0n,11n,...Array(6).fill(0n)];
  if(defect==='duplicate')f.state.responses.owned_requests=[11n,11n,...Array(6).fill(0n)];
- if(defect==='empty-continuation')f.pages[0].requests=[];
  if(defect==='deployment')f.pages[0].bokScope.deployment.blockNumber=2;
  if(defect==='negative')f.pages[0].requests[0].available='-1';
  if(defect==='noncanonical-cursor')f.pages[0].nextCursor='';

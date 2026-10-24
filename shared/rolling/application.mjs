@@ -787,7 +787,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     async readBokAccounting({cursor=0}={}){return exclusive(async()=>{
       await ensureBok();check(bok&&readAccountingPage,'ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
       const anchor=await balanceAnchor();
-      if(cursor===0){accountingScan={token:crypto.randomUUID(),anchor,offset:0,owned:new Set(),phase:'owned-requests',publicCursor:null,revision:null,descriptor:null,lastId:0n,matched:new Map()};completedAccounting=null;}
+      if(cursor===0){accountingScan={token:crypto.randomUUID(),anchor,offset:0,owned:new Set(),phase:'owned-requests',publicCursor:null,publicCursors:new Set(),revision:null,descriptor:null,lastId:0n,matched:new Map()};completedAccounting=null;}
       else check(typeof cursor==='string'&&accountingScan?.token===cursor&&same(anchor,accountingScan.anchor),'ROLLING_BALANCE_CURSOR_INVALID');
       const scan=accountingScan;scan.token=null;
       try{
@@ -806,13 +806,16 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           check(b.deployment&&Number.isSafeInteger(b.deployment.blockNumber)&&b.deployment.blockNumber>0&&b.deployment.blockNumber<=anchor.blockNumber&&/^0x[0-9a-f]{64}$/.test(b.deployment.blockHash)&&/^0x[0-9a-f]{64}$/.test(b.deployment.txHash),'ROLLING_BOK_ACCOUNTING_INCOMPLETE');
           if(scan.revision===null){scan.revision=page.revision;scan.descriptor=clone(b);}else check(page.revision===scan.revision&&same(b,scan.descriptor),'ROLLING_BOK_ACCOUNTING_INCOMPLETE');
           check(Array.isArray(page.requests)&&page.requests.length<=50&&(page.nextCursor===null||typeof page.nextCursor==='string'&&/^[0-9a-f]{32}:[0-9a-f]{64}:[0-9a-f]{16}$/.test(page.nextCursor)&&page.nextCursor!==scan.publicCursor),'ROLLING_INVALID_RESPONSE');
+          if(page.nextCursor!==null){check(!scan.publicCursors.has(page.nextCursor),'ROLLING_INVALID_RESPONSE');scan.publicCursors.add(page.nextCursor);}
           for(const row of page.requests){
             const id=field(row.requestId,true);check(BigInt(id)>scan.lastId&&['1','2','3','4'].includes(row.state)&&typeof row.sequence==='string'&&/^(0|[1-9][0-9]*)$/.test(row.sequence)&&BigInt(row.sequence)<=0xffffffffn,'ROLLING_INVALID_RESPONSE');scan.lastId=BigInt(id);
             const amounts=['budget','available','reserved','charged','refunded'].map(k=>uint128(row[k]));check(amounts[0]===amounts.slice(1).reduce((a,b)=>a+b,0n),'ROLLING_INVALID_RESPONSE');
             const p=row.position;check(p&&typeof p.blockNumber==='string'&&/^[1-9][0-9]*$/.test(p.blockNumber)&&BigInt(p.blockNumber)<=BigInt(anchor.blockNumber)&&/^0x[0-9a-f]{64}$/.test(p.blockHash)&&/^0x[0-9a-f]{64}$/.test(p.txHash)&&['txIndexWithinBlock','logIndexWithinTx'].every(k=>typeof p[k]==='string'&&/^(0|[1-9][0-9]*)$/.test(p[k])),'ROLLING_INVALID_RESPONSE');
             if(scan.owned.has(id))scan.matched.set(id,{requestId:id,state:row.state,sequence:row.sequence,...Object.fromEntries(['budget','available','reserved','charged','refunded'].map(k=>[k,row[k]]))});
           }
-          check(page.nextCursor===null||page.requests.length>0,'ROLLING_INVALID_RESPONSE');scan.publicCursor=page.nextCursor;
+          // A bounded public page can contain only requests that are still
+          // proposed. Its cursor advances while checkpointed rows stay hidden.
+          scan.publicCursor=page.nextCursor;
           if(page.nextCursor===null){check(scan.matched.size===scan.owned.size,'ROLLING_BOK_ACCOUNTING_INCOMPLETE');scan.phase='complete';}
         }
         await checkBalanceAnchor(anchor);
