@@ -35,7 +35,7 @@ const application={
  async readColdPreferences(){state.preferenceReads++;if(state.preferenceResults?.length)return state.preferenceResults.shift();await boundary('preferences');return {status:'complete',complete:true,preferences:state.preferences};},
  async readProfile({name}){state.profileCalls++;await boundary('profile');return {name:'0x'+BigInt(name).toString(16).padStart(64,'0'),bioVersion:state.bioVersion,avatarVersion:state.avatarVersion};},
  async prepare(action){state.prepares++;if(action.type==='name'&&state.nameFailure)throw Object.assign(Error('PRIVATE_SENTINEL'),{code:state.nameFailure});if(['bio','avatar'].includes(action.type)&&action.expectedVersion!==state[action.type+'Version'])error();write({intentId:'42',action,maximumFee:'123',status:'prepared',...(action.type==='name'?{nameAvailability:{id:'55',anchor:{blockNumber:1,blockHash:'0x'+'1'.repeat(64),timestamp:'1'}}}:{}),...(['moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator'].includes(action.type)?{moderation:{mainVersion:3,...(action.type==='moderate-avatar'?{avatarVersion:2}:{})}}:{}),...(action.type==='withdraw'?{withdrawal:{amount:'100000000000000000',eligible:true,depositor:'0x'+'3'.repeat(40)}}:{}),...(action.type==='withdraw-bok'?{withdrawal:{kind:'bok',amount:action.amount,eligible:true,depositor:action.recipient}}:{}),...(action.type==='bok'?{bok:{phase:'authorize',budget:action.budget,availableCredit:state.bokCredit}}:{})});await boundary('prepare');return read();},
- async submitPrepared(id){state.submitCalls++;state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),status:state.submitOutcome??(read().bok?.phase==='authorize'?'authorized':'confirmed')};write(intent);return intent;},
+ async submitPrepared(id){state.submitCalls++;state.sends++;write({...read(),status:'submitting'});await boundary('submit');const intent={...read(),...(state.txHash?{txHash:state.txHash}:{}),status:state.submitOutcome??(read().bok?.phase==='authorize'?'authorized':'confirmed')};write(intent);return intent;},
  async cancelPrepared(){state.cancels++;write(read().releasePrior??{...read(),status:'cancelled'});return read();},
  async reconcile(){state.reconciles++;await boundary('reconcile');const intent=read();if(state.resolveOutcome){intent.status=state.resolveOutcome;write(intent);}return intent;}
 };
@@ -1614,4 +1614,36 @@ test('names remain explicitly loadable while writing without checking moderator 
  assert.equal(await page.evaluate(()=>test.moderatorReads??0),0);
  assert.deepEqual(await page.locator('#posting-names select option').allTextContents(),['Anonymous','River Lane','Ellis Moss','Create a name…']);
  assert.equal((await counts(page)).sends,0);
+});
+
+for(const homeOnly of [false,true])test(`Bok balance automatically updates only after ${homeOnly?'home reply snapshot':'conversation reply'} confirmation`,async t=>{
+ const {page}=await browserFixture(t);
+ await page.evaluate(()=>{
+  test.bokCredit='583128';test.submitOutcome='confirmed';test.txHash='0x'+'a'.repeat(64);
+  const host=document.createElement('section');host.id='bok-balance-host';document.body.append(host);panel.attachBokControls(host);
+ });
+ await open(page,{type:'post'});await page.locator('#bok-balance-host').getByText('0.583128 USDC available',{exact:true}).waitFor();
+ await page.getByLabel('Message',{exact:true}).fill('@bok make an app');
+ await page.locator('.bok-invitation input').fill('0.25');
+ await page.evaluate(()=>test.bokCredit='333128');
+ await page.getByRole('button',{name:'Post',exact:true}).click();
+ await page.waitForFunction(()=>!document.querySelector('dialog').open&&test.bokReads===2);
+ await page.locator('#bok-balance-host').getByText('0.333128 USDC available',{exact:true}).waitFor();
+ const before=await page.evaluate(()=>({sessions:test.sessions,status:test.statusReads,names:test.owned}));
+ await page.evaluate(homeOnly=>{
+  test.observeReply=(confirmation,number)=>panel.observePublicPosts([
+   {id:'20',confirmation:'confirmed',position:{txHash:test.txHash},invocation:{pluginId:'7',requestId:'91',reply:'21'}},
+   ...(homeOnly?[]:[{id:'21',confirmation,position:{blockNumber:108},bot:{pluginId:'7',requestId:'91'}}])
+  ],{checkpoint:{number:110},confirmationCheckpoint:{number}});
+  test.observeReply('pending',100);test.observeReply('pending',105);
+ },homeOnly);
+ assert.equal(await page.evaluate(()=>test.bokReads),2);
+ assert.equal(await page.locator('#bok-balance-host [data-bok-balance]').innerText(),'0.333128 USDC available');
+ await page.evaluate(homeOnly=>{test.bokCredit='572166';test.hold='bok';test.observeReply('confirmed',homeOnly?110:108);test.observeReply('confirmed',110);},homeOnly);
+ await page.waitForFunction(()=>test.bokReads===3&&typeof test.release==='function');
+ await page.evaluate(()=>{test.hold=null;test.release();});
+ await page.locator('#bok-balance-host').getByText('0.572166 USDC available',{exact:true}).waitFor();
+ await page.evaluate(()=>test.observeReply('confirmed',115));
+ assert.equal(await page.evaluate(()=>test.bokReads),3);
+ assert.deepEqual(await page.evaluate(()=>({sessions:test.sessions,status:test.statusReads,names:test.owned})),before);
 });

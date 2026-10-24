@@ -424,3 +424,31 @@ test('own settlement during an older balance read gets one fresh read after it s
  await f.document.until(()=>f.host.textContent.includes('0.790268 USDC available'));await Promise.resolve();assert.equal(f.reads(),3);
  f.panel.observePublicPosts([publicBokParent('21')]);await Promise.resolve();assert.equal(f.reads(),3);
 });
+
+for(const homeOnly of [false,true])test(`checkpointed own Bok refund refreshes once after ${homeOnly?'parent-only snapshot':'reply'} promotion`,{timeout:3000},async t=>{
+ const f=await postedBokFixture(t,{balanceRead:count=>Promise.resolve({available:true,availableCredit:count<=2?'582972':'790268'})});
+ await f.document.until(()=>f.reads()===2&&!f.host.textContent.includes('updating'));
+ const before=f.core(),snapshot=number=>({checkpoint:{number:110},confirmationCheckpoint:{number}});
+ const rows=confirmation=>[publicBokParent('21'),...(homeOnly?[]:[{id:'21',confirmation,position:{blockNumber:108},bot:{pluginId:'7',requestId:'91'}}])];
+ f.panel.observePublicPosts(rows('pending'),snapshot(100));
+ f.panel.observePublicPosts(rows('pending'),snapshot(105));
+ await Promise.resolve();assert.equal(f.reads(),2);assert(f.host.textContent.includes('0.582972 USDC available'));
+ f.panel.observePublicPosts(rows('confirmed'),snapshot(homeOnly?110:108));
+ f.panel.observePublicPosts(rows('confirmed'),snapshot(110));
+ await f.document.until(()=>f.host.textContent.includes('0.790268 USDC available'));
+ assert.equal(f.reads(),3);assert.deepEqual(f.core(),before);
+ f.panel.observePublicPosts(rows('confirmed'),snapshot(115));await Promise.resolve();assert.equal(f.reads(),3);
+});
+
+test('orphaned pending Bok reply cannot refresh refunded balance; replacement waits for its own confirmation',{timeout:3000},async t=>{
+ const f=await postedBokFixture(t);
+ await f.document.until(()=>f.reads()===2&&!f.host.textContent.includes('updating'));
+ const snapshot=(number,confirmed)=>({checkpoint:{number},confirmationCheckpoint:{number:confirmed}});
+ f.panel.observePublicPosts([publicBokParent('21')],snapshot(110,100));
+ f.panel.observePublicPosts([publicBokParent()],snapshot(112,110));
+ f.panel.observePublicPosts([publicBokParent('22')],snapshot(114,110));
+ await Promise.resolve();assert.equal(f.reads(),2);
+ f.panel.observePublicPosts([publicBokParent('22')],snapshot(115,112));await Promise.resolve();assert.equal(f.reads(),2);
+ f.panel.observePublicPosts([publicBokParent('22')],snapshot(116,114));
+ await f.document.until(()=>f.reads()===3&&!f.host.textContent.includes('updating'));
+});

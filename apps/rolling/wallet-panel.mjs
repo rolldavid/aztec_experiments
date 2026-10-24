@@ -223,22 +223,34 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    refresh=refresh||bokRefreshNeeded;bokRefreshNeeded=false;void bokBalance.load({refresh});
   }
  }
- // Follow only this session's confirmed Bok posts. An unrelated public update
- // must not start private account work. The parent remains useful on home feeds
- // where its reply is represented by invocation.reply rather than a reply row.
- function observePublicPosts(posts){
+ // Public inclusion can precede spendable refunds. Remember the snapshot that
+ // first contained a home-feed reply; its parent alone does not tell us the
+ // reply's block. Conversation rows provide the exact confirmation directly.
+ function observePublicPosts(posts,{checkpoint,confirmationCheckpoint}={}){
   if(!ownBokPosts.size||!Array.isArray(posts)||!unlocked())return;
-  let changed=false;
   for(const post of posts){
    const own=ownBokPosts.get(post?.position?.txHash),invocation=post?.invocation;
    if(own&&field(invocation?.requestId)&&field(invocation?.pluginId)){
     own.requestId=invocation.requestId;own.pluginId=invocation.pluginId;
     const reply=field(invocation.reply)?invocation.reply:null;
-    if(own.reply!==reply){own.reply=reply;changed=true;}
+    if(own.reply!==reply){own.reply=reply;own.replyBlock=checkpoint?.number??null;own.replyConfirmed=!!reply&&!confirmationCheckpoint;}
    }
-   if(post?.bot&&field(post.id))for(const request of ownBokPosts.values()){
-    if(request.requestId===post.bot.requestId&&request.pluginId===post.bot.pluginId&&request.reply!==post.id){request.reply=post.id;changed=true;}
+  }
+  for(const request of ownBokPosts.values()){
+   if(request.reply&&confirmationCheckpoint&&Number.isSafeInteger(request.replyBlock))request.replyConfirmed=request.replyBlock<=confirmationCheckpoint.number;
+  }
+  for(const post of posts)if(post?.bot&&field(post.id))for(const request of ownBokPosts.values()){
+   if(request.requestId===post.bot.requestId&&request.pluginId===post.bot.pluginId){
+    request.reply=post.id;
+    const block=Number(post.position?.blockNumber);
+    request.replyBlock=Number.isSafeInteger(block)&&block>=0?block:request.replyBlock;
+    request.replyConfirmed=post.confirmation==='confirmed'||post.confirmation===undefined&&!confirmationCheckpoint;
    }
+  }
+  let changed=false;
+  for(const request of ownBokPosts.values()){
+   const confirmedReply=request.replyConfirmed?request.reply:null;
+   if(request.confirmedReply!==confirmedReply){request.confirmedReply=confirmedReply;changed=true;}
   }
   if(changed){bokRefreshNeeded=true;requestBokBalance();}
  }
@@ -803,7 +815,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(['bok-post-reverted','bok-release-reverted'].includes(result.status)){note('');notice=(result.status==='bok-post-reverted'?'The Bok post reverted.':'The Bok release or expiry reverted.')+' A network fee may have been charged. The funded request remains saved; no action is retried automatically.';return;}
   if(result.status==='confirmed'){
    if(result.action?.type==='bok'&&typeof result.txHash==='string'&&/^0x[0-9a-f]{64}$/i.test(result.txHash)&&!ownBokPosts.has(result.txHash)){
-    ownBokPosts.set(result.txHash,{requestId:null,pluginId:null,reply:null});
+    ownBokPosts.set(result.txHash,{requestId:null,pluginId:null,reply:null,replyBlock:null,replyConfirmed:false,confirmedReply:null});
     if(ownBokPosts.size>128)ownBokPosts.delete(ownBokPosts.keys().next().value);
    }
    if(immediateTypes.has(result.action?.type)){if(postingTypes.has(result.action?.type)||['bio','avatar'].includes(result.action?.type)){draft={...draft,content:''};releasePreviews();}note('');if(dialog.open)dialog.close();}

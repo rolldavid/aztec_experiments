@@ -248,7 +248,7 @@ async function render({live=false}={}){
   const nodes=visible.map(item=>api==='directory'?boardCard(item):postCard(item,response));
   if(nodes.length)container.querySelector('.empty')?.remove();lastPosition=nextPosition;lastPositionHash=nextPositionHash;
   container.append(...nodes);for(const id of ids)seenIds.add(id);if(next)seenCursors.add(next);
-  if(api!=='directory')void walletPanel?.then(panel=>{if(current===sequence&&!signal.aborted)panel.observePublicPosts?.(items);}).catch(()=>{});
+  if(api!=='directory')void walletPanel?.then(panel=>{if(current===sequence&&!signal.aborted)panel.observePublicPosts?.(items,{checkpoint:response.checkpoint,confirmationCheckpoint:response.confirmationCheckpoint});}).catch(()=>{});
   return nodes;
  }
 
