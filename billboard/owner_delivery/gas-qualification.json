@@ -1,0 +1,40 @@
+{
+  "qualification": "native-v6-owner-only-delivery",
+  "sourceCommit": "8723d932",
+  "artifacts": {
+    "board": {
+      "classId": "0x13d9206337142962dd9b067c9eaa758bf8e5ea9876857a9073bc6396a9836f29",
+      "artifactSha256": "f8535c61ffb25febc019764bdfa180f419399c383fe8b5d9d9da2c8bc48ef26a",
+      "postSelector": "0xc3ff19cd"
+    },
+    "fpc": {
+      "classId": "0x1e74f64c7ddbab25de51eb7fc667064c0713ee67e04b8589871f214aacce4df0",
+      "artifactSha256": "ae8468c4e7c8a656629471fbc0c11e698f8b96cbf6ec6face4250498148810f1"
+    }
+  },
+  "publicCases": 507,
+  "publicMaximum": {
+    "daGas": 2368,
+    "l2Gas": 1868273
+  },
+  "publicBound": {
+    "daGas": 2368,
+    "l2Gas": 2000000
+  },
+  "teardown": {
+    "daGas": 192,
+    "l2Gas": 27510
+  },
+  "privateNoteBound": 4,
+  "totalGasBound": {
+    "daGas": 39648,
+    "l2Gas": 4815810
+  },
+  "tests": {
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0,
+    "command": "HARDWARE_CONCURRENCY=2 node --test --test-concurrency=1 scripts/ordinary-post-fees.test.mjs scripts/private-fee-refund-profile.test.mjs scripts/rolling-publish-gas-profile.test.mjs"
+  },
+  "scope": "Pinned native AVM public/teardown qualification and arithmetic-profile tests. No live transaction or real proof. Actual atomic Board/FPC fixture separately asserts four private note hashes and restores all self records."
+}

@@ -9,10 +9,10 @@ import {PrivateFeePaymentMethod} from './private-fee-payment.mjs';
 // Use protocol-wide limits for nullifiers and logs, including partial-refund
 // messages, so neither note fragmentation nor private balances enter the quote.
 export const ORDINARY_POST_GAS_PROFILE=Object.freeze({
- boardArtifactSha256:'1d4b51ae08830c2bddf9625caebc30c76b006cf80933c76f1baadb5879ef9f8a',
- boardClassId:'0x0593ff56fceb4afb79463d591a25a1078fd5860e18a5774ef6d6525b31dac58e',
+ boardArtifactSha256:'f8535c61ffb25febc019764bdfa180f419399c383fe8b5d9d9da2c8bc48ef26a',
+ boardClassId:'0x13d9206337142962dd9b067c9eaa758bf8e5ea9876857a9073bc6396a9836f29',
  accountClassId:'0x222287bfcd04411264393983dd8d01ca5ea9ae305d1a10a1e6d8deef7f17659b',
- privateFeeClassId:'0x271b2547d1ca3e762fdcc8cd08a6de55b7bb30d0f02ca8b4840b595f7d4aecbc',
+ privateFeeClassId:'0x1e74f64c7ddbab25de51eb7fc667064c0713ee67e04b8589871f214aacce4df0',
  postSelector:'0xc3ff19cd',
  publicGas:Object.freeze({daGas:2368,l2Gas:2000000}),
  teardownGas:Object.freeze({daGas:192,l2Gas:27510}),

@@ -18,8 +18,8 @@ import {ORDINARY_POST_GAS_PROFILE} from '../shared/ordinary-post-fees.mjs';
 // The finite UTF-8 transition maximum is 1,868,273 L2. Leave explicit headroom for the
 // finite UTF-8 branches; this is not a dynamic estimate or a private-state quote.
 const publicBound={daGas:2368,l2Gas:2000000};
-const boardClassId='0x0593ff56fceb4afb79463d591a25a1078fd5860e18a5774ef6d6525b31dac58e';
-const artifactSha256='1d4b51ae08830c2bddf9625caebc30c76b006cf80933c76f1baadb5879ef9f8a';
+const boardClassId='0x13d9206337142962dd9b067c9eaa758bf8e5ea9876857a9073bc6396a9836f29';
+const artifactSha256='f8535c61ffb25febc019764bdfa180f419399c383fe8b5d9d9da2c8bc48ef26a';
 
 // In the pinned validate_text bytecode the outer loops always visit 32*31 bytes.
 // Accepted input takes one lead/ASCII transition, then 0..3 continuation

@@ -30,7 +30,7 @@ function address(value) {
   check(typeof text==='string'&&/^0x[0-9a-f]{64}$/.test(text),'PRIVATE_FEE_INVALID_ADDRESS');
   const result=new AztecAddress(Fr.fromString(text));check(!result.isZero(),'PRIVATE_FEE_INVALID_ADDRESS');return result;
 }
-export const PRIVATE_FEE_REFUND_PROFILE=Object.freeze({classId:'0x271b2547d1ca3e762fdcc8cd08a6de55b7bb30d0f02ca8b4840b595f7d4aecbc',daGas:192,l2Gas:27510,reservationError:'13277422931216639996'});
+export const PRIVATE_FEE_REFUND_PROFILE=Object.freeze({classId:'0x1e74f64c7ddbab25de51eb7fc667064c0713ee67e04b8589871f214aacce4df0',daGas:192,l2Gas:27510,reservationError:'13277422931216639996'});
 const equal=(a,b)=>a?.toString()===b?.toString();
 function artifactOf(value) {
   const artifact=loadContractArtifact(value);
