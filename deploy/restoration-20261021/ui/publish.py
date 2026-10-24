@@ -54,9 +54,23 @@ def preserved(configured=SOURCE,unit_hash=None,current=None):
  check_current(current or m['expectedCurrentUi'])
 
 def safe_relative(name):
- p=pathlib.PurePosixPath(name);assert not p.is_absolute() and '..' not in p.parts and str(p)==name and 'node_modules' not in p.parts
- assert name.startswith(('apps/','shared/','scripts/','.build/sdk/','.build/rolling-wallet/')) or name in {'.build/contracts-manifest.json','billboard/portal/src/BokCreditRouter.sol','billboard/portal/test/BokCreditRouter.t.sol','billboard/portal/out/BokCreditRouter.sol/BokCreditRouter.json'}
+ p=pathlib.PurePosixPath(name);assert not p.is_absolute() and '..' not in p.parts and str(p)==name
+ native=name=='node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js'
+ assert 'node_modules' not in p.parts or native
+ assert native or name.startswith(('apps/','shared/','scripts/','.build/sdk/','.build/rolling-wallet/')) or name in {'.build/contracts-manifest.json','billboard/portal/src/BokCreditRouter.sol','billboard/portal/test/BokCreditRouter.t.sol','billboard/portal/out/BokCreditRouter.sol/BokCreditRouter.json'}
  return p
+
+
+def confined_payload_file(root,name):
+ relative=safe_relative(name)
+ assert root.is_dir() and not root.is_symlink() and root.resolve()==root
+ current=root
+ for part in relative.parts:
+  current=current/part
+  assert not current.is_symlink()
+  if current!=root/relative and current.exists():assert current.is_dir()
+ assert current.resolve().is_relative_to(root)
+ return current
 
 EXPORT=r'''import fs from 'node:fs/promises';import path from 'node:path';import {pathToFileURL} from 'node:url';
 const [source,walletFile,publicFile]=process.argv.slice(1);const {loadRollingWalletAssets}=await import(pathToFileURL(source+'/scripts/rolling-wallet-assets.mjs'));
@@ -143,7 +157,7 @@ def cleanup_packet_payload(result):
  assert P.parent==PACKET_ROOT and P.name=='ui-'+m['commit'][:12] and P.resolve()==P
  info=P.lstat();assert stat.S_ISDIR(info.st_mode) and info.st_uid==os.getuid() and not (info.st_mode & 0o022)
  for name,entry in m['files'].items():
-  safe_relative(name);assert not (NEXT/name).is_symlink() and digest(NEXT/name)==entry['sha256']
+  assert digest(confined_payload_file(NEXT,name))==entry['sha256']
  for name,want in result['files'].items():
   relative=pathlib.PurePosixPath(name);assert not relative.is_absolute() and '..' not in relative.parts
   assert not (UI/name).is_symlink() and digest(UI/name)==want
@@ -171,7 +185,7 @@ def activate():
   relative=pathlib.PurePosixPath(name);assert not relative.is_absolute() and '..' not in relative.parts
   assert not (UI/name).is_symlink() and digest(UI/name)==want
  for name,entry in m['files'].items():
-  safe_relative(name);assert not (NEXT/name).is_symlink() and digest(NEXT/name)==entry['sha256']
+  assert digest(confined_payload_file(NEXT,name))==entry['sha256']
  if r.get('walletConfigSha256') is not None:assert not (NEXT/'deploy/runtime-wallet.json').is_symlink() and digest(NEXT/'deploy/runtime-wallet.json')==r['walletConfigSha256']
  preserved()
  unit=pathlib.Path(m['appUnit']);info=unit.stat();original=unit.read_bytes()
@@ -215,13 +229,13 @@ preserved()
 if mode=='stage':
  assert digest(CADDY)==m['caddySha256'];assert not NEXT.exists() and not UI.exists()
  for name,entry in m['files'].items():
-  safe_relative(name);old=SOURCE/name;payload=P/'files'/name;assert not payload.is_symlink() and digest(payload)==entry['sha256']
+  old=confined_payload_file(SOURCE,name);payload=confined_payload_file(P/'files',name);assert digest(payload)==entry['sha256']
   assert (not old.exists() and not old.is_symlink()) if entry['previousSha256'] is None else (not old.is_symlink() and digest(old)==entry['previousSha256'])
  capacity_preflight()
  archive_hash=packet_archive_hash()
  run(['cp','-al',str(SOURCE),str(NEXT)])
  for name,entry in m['files'].items():
-  target=NEXT/name;reference=target if target.exists() else NEXT/'apps/rolling/wallet-panel.mjs';info=reference.stat();atomic(target,(P/'files'/name).read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
+  target=confined_payload_file(NEXT,name);reference=target if target.exists() else NEXT/'apps/rolling/wallet-panel.mjs';info=reference.stat();atomic(target,confined_payload_file(P/'files',name).read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
   assert digest(target)==entry['sha256'];assert not (SOURCE/name).exists() or target.stat().st_ino!=(SOURCE/name).stat().st_ino
  node=m['node'];assert re.fullmatch(r'/opt/board-prover/releases/rolling-[a-f0-9]+/node/bin/node',node) and digest(pathlib.Path(node))==m['nodeSha256']
  if 'bokTopup' in m:install_wallet_update(SOURCE,NEXT,m['bokTopup'])

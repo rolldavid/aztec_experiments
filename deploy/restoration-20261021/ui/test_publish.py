@@ -200,8 +200,7 @@ class RepeatPublication(unittest.TestCase):
                     getattr(self, name).write_bytes(original)
 
 
-    def payload_fixture(self):
-        name = 'apps/rolling/reader.mjs'
+    def payload_fixture(self, name='apps/rolling/reader.mjs'):
         for directory in (self.packet / 'files', self.new_source):
             target = directory / name
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -290,6 +289,51 @@ class RepeatPublication(unittest.TestCase):
         copy = next(i for i, value in enumerate(calls) if "['cp', '-al'" in value)
         export = next(i for i, value in enumerate(calls) if value.startswith('export_assets('))
         self.assertLess(check, copy); self.assertLess(check, export)
+
+
+    def test_native_overlay_allows_only_the_exact_owner_oracle(self):
+        native = 'node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js'
+        self.assertEqual(str(self.ns['safe_relative'](native)), native)
+        for name in ['node_modules/other.js', native + '.backup', 'apps/node_modules/other.js',
+                     '../' + native, '/' + native, native.replace('/oracle/', '/oracle/../oracle/'),
+                     native.replace('/oracle/', '/oracle//')]:
+            with self.subTest(name=name), self.assertRaises(AssertionError): self.ns['safe_relative'](name)
+
+    def test_native_overlay_rejects_symlinked_roots_parents_and_leaf(self):
+        native = 'node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js'
+        for count in [0, 1, 3, len(pathlib.PurePosixPath(native).parts)]:
+            with self.subTest(depth=count):
+                base = self.root / ('tree-' + str(count)); base.mkdir()
+                external = self.root / ('outside-' + str(count)); external.mkdir()
+                parts = pathlib.PurePosixPath(native).parts
+                link = base.joinpath(*parts[:count]) if count else base
+                if count: link.parent.mkdir(parents=True, exist_ok=True)
+                else: base.rmdir()
+                os.symlink(external, link)
+                with self.assertRaises(AssertionError): self.ns['confined_payload_file'](base, native)
+                self.assertEqual(list(external.iterdir()), [])
+
+    def test_native_overlay_atomic_write_breaks_old_release_hardlink(self):
+        native = 'node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js'
+        old = self.old_source / native; new = self.new_source / native
+        old.parent.mkdir(parents=True); new.parent.mkdir(parents=True)
+        old.write_bytes(b'old pinned SDK source'); os.link(old, new)
+        self.assertEqual(old.stat().st_ino, new.stat().st_ino)
+        target = self.ns['confined_payload_file'](self.new_source, native)
+        self.ns['atomic'](target, b'new pinned SDK source', 0o644)
+        self.assertEqual(old.read_bytes(), b'old pinned SDK source')
+        self.assertEqual(new.read_bytes(), b'new pinned SDK source')
+        self.assertNotEqual(old.stat().st_ino, new.stat().st_ino)
+
+    def test_native_overlay_passes_exact_activation_hash_and_payload_cleanup(self):
+        native = self.payload_fixture('node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js')
+        target = self.new_source / native
+        original = target.read_bytes(); target.write_bytes(b'wrong source')
+        with self.assertRaises(AssertionError): self.ns['activate']()
+        self.assertNotIn(['systemctl', 'daemon-reload'], self.calls)
+        target.write_bytes(original); self.ns['activate']()
+        self.assertEqual(target.read_bytes(), original)
+        self.assertFalse((self.packet / 'files').exists())
 
 
 if __name__ == '__main__':
