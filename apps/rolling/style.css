@@ -50,3 +50,5 @@ main h1,main h2,main h3,.post>p,.post-top>div{overflow-wrap:anywhere;min-width:0
 .credit-presets,.credit-total{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}.credit-total{justify-content:space-between}.credit-total strong{font-variant-numeric:tabular-nums}.credit-presets button{padding:8px 18px}
 
 .account-dialog .button[hidden]{display:none!important}
+
+.post-confirmation{display:inline-block;margin-left:8px;padding:1px 7px;border:1px solid #ddc89f;border-radius:4px;background:#fff4df;color:#71501d;font-size:12px;font-weight:600;vertical-align:middle}

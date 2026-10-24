@@ -595,7 +595,7 @@ test('public revision notification renders a Bok response without navigation or 
 });
 
 async function threadRefreshFixture(t,{total=32}={}){
- const state={total,revision:'1',calls:[],invalidPage:false,hold:false,pending:[]};
+ const state={total,revision:'1',calls:[],invalidPage:false,hold:false,pending:[],postMetadata:{}};
  const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
  const checkpoint={number:12,hash:'0x'+'a'.repeat(64)},scope={boardAddress:'public'};
  let stream;const connected=Promise.withResolvers();
@@ -608,7 +608,8 @@ async function threadRefreshFixture(t,{total=32}={}){
   if(url.pathname==='/api/thread'||url.pathname==='/api/home'){
    const offset=Number(url.searchParams.get('cursor')??0);state.calls.push(offset);
    const body={schemaVersion:1,scope,complete:true,checkpoint,revision:state.invalidPage&&offset?'changed':state.revision,
-    posts:Array.from({length:Math.min(16,state.total-offset)},(_,i)=>{const id=String(offset+i+1);return {id,record:{root:'1',parent:id==='1'?'0':'1',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Reply '+id,timestamp:'1',likes:'0'};}),
+    ...(state.confirmationCheckpoint?{confirmationCheckpoint:state.invalidConfirmationPage&&offset?{...state.confirmationCheckpoint,number:state.confirmationCheckpoint.number+1}:state.confirmationCheckpoint}:{}),
+    posts:Array.from({length:Math.min(16,state.total-offset)},(_,i)=>{const id=String(offset+i+1);return {id,record:{root:'1',parent:id==='1'?'0':'1',reference:'0',kind:'1',subboard:'0',name_id:'0'},text:'Reply '+id,timestamp:'1',likes:'0',...(state.confirmationCheckpoint?{confirmation:'confirmed'}:{}),...state.postMetadata[id]};}),
     nextCursor:offset+16<state.total?String(offset+16):null,names:{},boards:{}};
    if(state.hold&&offset||state.holdRoot&&url.searchParams.get('root')===state.holdRoot)await new Promise(resolve=>state.pending.push(resolve));
    res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(body));return;
@@ -677,4 +678,50 @@ test('an unrendered conversation never inherits another conversation’s loaded 
  await page.goBack();await page.getByRole('heading',{name:'Conversation',exact:true}).waitFor();await page.locator('#post-16').waitFor();
  assert.equal(await page.getByRole('article').count(),16);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),1);
  assert.deepEqual(state.calls,[0,16,0,0,0]);
+});
+
+
+// These labelled API snapshots exercise actual SSE transport and the production
+// renderer. Backend tests establish the chain evidence for their confirmation tier.
+test('proposed Bok reply appears in a loaded conversation and checkpoint-only progress confirms the same post',async t=>{
+ const {page,state,notify}=await threadRefreshFixture(t);
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-32').waitFor();
+ state.total=33;state.revision='2';state.confirmationCheckpoint={number:11,hash:'0x'+'b'.repeat(64)};
+ state.postMetadata['33']={confirmation:'pending',bot:{},position:{blockNumber:'12'},text:'Your app is ready: https://example.com/app'};
+ notify();const reply=page.locator('#post-33');await reply.locator('.post-confirmation').waitFor();
+ assert.equal(await reply.locator('.post-confirmation').textContent(),'Confirmation pending');
+ assert.equal(await reply.locator('.author').textContent(),'Bok');assert.equal(await reply.getAttribute('data-confirmation'),'pending');
+ assert.equal(await reply.getByRole('link',{name:'https://example.com/app',exact:true}).getAttribute('href'),'https://example.com/app');
+ assert.equal(await reply.getByRole('link',{name:'View conversation',exact:true}).getAttribute('href'),'#/thread/1');
+ for(const name of ['Reply','Like','Unlike','Quote','Repost','Mark thread read']){
+  const action=reply.getByRole('button',{name,exact:true,includeHidden:true});assert.equal(await action.isDisabled(),true,name);assert.equal(await action.getAttribute('title'),'Available after confirmation');
+ }
+ assert.equal(await reply.getByRole('button',{name:'Bookmark',exact:true}).isEnabled(),true);
+ assert.equal(await reply.getByRole('button',{name:'Subscribe to thread',exact:true,includeHidden:true}).isEnabled(),true);
+ assert.equal(await page.getByRole('article').count(),33);assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);
+ const url=page.url();state.revision='3';state.confirmationCheckpoint={number:12,hash:'0x'+'a'.repeat(64)};state.postMetadata['33'].confirmation='confirmed';notify();
+ await page.locator('#post-33[data-confirmation="confirmed"]').waitFor();
+ assert.equal(page.url(),url);assert.equal(await reply.count(),1);assert.equal(await reply.locator('.post-confirmation').count(),0);assert.equal(await page.getByRole('article').count(),33);
+ for(const name of ['Reply','Like','Unlike','Quote','Repost','Mark thread read'])assert.equal(await reply.getByRole('button',{name,exact:true,includeHidden:true}).isEnabled(),true,name);
+ assert.equal(await page.getByRole('button',{name:'Load more',exact:true}).count(),0);assert.deepEqual(state.calls,[0,16,0,16,32,0,16,32]);
+});
+
+test('proposed reply disappears on rollback and replacement inclusion never duplicates the old reply',async t=>{
+ const {page,state,notify}=await threadRefreshFixture(t,{total:16});
+ state.total=17;state.revision='2';state.confirmationCheckpoint={number:11,hash:'0x'+'b'.repeat(64)};state.postMetadata['17']={confirmation:'pending',bot:{}};
+ notify();await page.locator('#post-17 .post-confirmation').waitFor();assert.equal(await page.getByRole('article').count(),17);
+ state.total=16;state.revision='3';notify();await page.locator('#post-17').waitFor({state:'detached'});assert.equal(await page.getByRole('article').count(),16);
+ state.total=17;state.revision='4';state.postMetadata['17']={id:'18',confirmation:'pending',bot:{},text:'Replacement reply'};notify();await page.locator('#post-18 .post-confirmation').waitFor();
+ assert.equal(await page.locator('#post-17').count(),0);assert.equal(await page.locator('#post-18').count(),1);assert.equal(await page.getByRole('article').count(),17);
+});
+
+test('confirmation metadata cannot change inside a paginated snapshot or omit a post status',async t=>{
+ const {page,state}=await threadRefreshFixture(t);
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await page.locator('#post-32').waitFor();
+ state.revision='2';state.confirmationCheckpoint={number:11,hash:'0x'+'b'.repeat(64)};state.invalidConfirmationPage=true;
+ await page.evaluate(()=>refreshThread());assert.equal(await page.getByRole('article').count(),32);assert.equal(await page.locator('[data-confirmation]').count(),0);
+ assert.equal(await page.locator('#announcement').textContent(),'Conversations could not refresh.');
+ state.invalidConfirmationPage=false;state.postMetadata['32']={confirmation:undefined};await page.evaluate(()=>refreshThread());assert.equal(await page.locator('[data-confirmation]').count(),0);
+ state.postMetadata['32']={confirmation:'unexpected'};await page.evaluate(()=>refreshThread());assert.equal(await page.locator('[data-confirmation]').count(),0);
+ state.postMetadata['32']={confirmation:'confirmed'};await page.evaluate(()=>refreshThread());await page.locator('#post-32[data-confirmation="confirmed"]').waitFor();assert.equal(await page.getByRole('article').count(),32);
 });

@@ -95,20 +95,23 @@ function moderatorButton(label,defaults){
 }
 function postCard(post,data){
  if(!post||!field(post.id)||!post.record||!field(post.record.root))throw Error('Invalid public post');
+ if(post.confirmation!==undefined&&!['pending','confirmed'].includes(post.confirmation)||data.confirmationCheckpoint&&post.confirmation===undefined)throw Error('Invalid post confirmation');
+ const pending=post.confirmation==='pending';
+ const afterConfirmation=node=>{if(pending&&node){node.disabled=true;node.title='Available after confirmation';}return node;};
  const r=post.record,isBot=Boolean(post.bot),named=!isBot&&r.name_id!=='0'?data.names?.[r.name_id]:null,board=data.board?.id===r.subboard?data.board:data.boards?.[r.subboard];
  const author=isBot?'Bok':r.name_id==='0'?'Anonymous':named?`${text(named.first)} ${text(named.last)}`:'Registered name';
- const article=el('article',{class:'post',id:'post-'+post.id,'aria-label':'Post by '+author});
+ const article=el('article',{class:'post',id:'post-'+post.id,'aria-label':'Post by '+author,...(post.confirmation?{'data-confirmation':post.confirmation}:{})});
  const who=isBot||r.name_id==='0'?el('span',{class:'author'},author):link(author,'/profile/'+r.name_id,{class:'author'});
- article.append(el('div',{class:'post-top'},named?createPublicAvatar(named,{signal:controller.signal}):el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'AI assistant'):null,el('div',{class:'post-context'},field(r.subboard)?link(r.subboard==='0'?'Main board':board?text(board.name):'Subboard','/board/'+r.subboard):'Board unavailable',' · ',timestamp(post.timestamp)))));
+ article.append(el('div',{class:'post-top'},named?createPublicAvatar(named,{signal:controller.signal}):el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'AI assistant'):null,pending?el('span',{class:'post-confirmation',role:'status'},'Confirmation pending'):null,el('div',{class:'post-context'},field(r.subboard)?link(r.subboard==='0'?'Main board':board?text(board.name):'Subboard','/board/'+r.subboard):'Board unavailable',' · ',timestamp(post.timestamp)))));
  const provenance=el('details',{class:'post-provenance'},el('summary',{},'Post details'));const authoredPolicy=policyLabel('Published under policy',post.mainVersion,post.localVersion);if(authoredPolicy)provenance.append(authoredPolicy);
  if(Array.isArray(data.policies)){const policy=data.policies.find(p=>p.version===post.mainVersion);if(policy&&policyVersion(policy.version))provenance.append(el('details',{},el('summary',{},'Parent rules at publication · v'+policy.version),richText(policy.text)));}
  if(field(r.parent)&&r.parent!=='0')article.append(el('p',{class:'reply-line'},'In reply to ',link('an earlier post','/thread/'+r.root+'/'+r.parent)));
  if(field(r.reference)&&r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
- const unlike=()=>socialButton('Unlike',()=>({type:'unlike',post:post.id}));
+ const unlike=()=>afterConfirmation(socialButton('Unlike',()=>({type:'unlike',post:post.id})));
  const more=(...actions)=>el('details',{class:'post-more'},el('summary',{class:'action'},'More'),el('div',{class:'post-secondary-actions'},actions));
  // Moderation removes content, not the ability to manage private notifications.
  const threadControls=()=>[preferenceButton('Subscribe to thread',4,r.root),
-  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?socialButton('Mark thread read',()=>({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)})):null];
+  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?afterConfirmation(socialButton('Mark thread read',()=>({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)}))):null];
  if(post.text===null||post.removal||board?.rejected===true){
   article.append(el('p',{class:'removed'},'This post is unavailable under the board’s moderation policy.'));
   // A rejected subboard also redacts posts without an individual removal event.
@@ -123,11 +126,11 @@ function postCard(post,data){
   article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),preferenceButton('Bookmark',1,post.id),more(unlike(),threadControls(),provenance)));return article;
  }
  article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
-  button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
-  socialButton('Like',()=>({type:'like',post:post.id})),preferenceButton('Bookmark',1,post.id),
-  more(unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
-   button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),threadControls(),provenance)));
- article.append(moderatorButton('Remove this post',{type:'moderate-post',post:post.id}));
+  afterConfirmation(button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard}))),
+  afterConfirmation(socialButton('Like',()=>({type:'like',post:post.id}))),preferenceButton('Bookmark',1,post.id),
+  more(unlike(),afterConfirmation(button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard}))),
+   afterConfirmation(button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard}))),threadControls(),provenance)));
+ article.append(afterConfirmation(moderatorButton('Remove this post',{type:'moderate-post',post:post.id})));
  return article;
 }
 function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
@@ -221,8 +224,11 @@ async function render({live=false}={}){
  const position=p=>['blockNumber','txIndexWithinBlock','logIndexWithinTx'].map(key=>{const v=p?.position?.[key];if(typeof v!=='string'||!/^(0|[1-9][0-9]*)$/.test(v))throw Error('Invalid position');return BigInt(v);});
  const descending=(a,b)=>{for(let i=0;i<3;i++){if(a[i]!==b[i])return a[i]>b[i];}return false;};
  function append(response){
+  const confirmed=response.confirmationCheckpoint;
+  if(confirmed!==undefined&&(!Number.isSafeInteger(confirmed?.number)||confirmed.number<0||typeof confirmed.hash!=='string'||!/^0x[0-9a-f]{64}$/.test(confirmed.hash)))throw Error('Invalid confirmation checkpoint');
   if(typeof response.revision!=='string'||response.revision!==data.revision||response.scope.boardAddress!==data.scope.boardAddress||
-   response.checkpoint?.number!==data.checkpoint?.number||response.checkpoint?.hash!==data.checkpoint?.hash)throw Error('Changed public snapshot');
+   response.checkpoint?.number!==data.checkpoint?.number||response.checkpoint?.hash!==data.checkpoint?.hash||
+   confirmed?.number!==data.confirmationCheckpoint?.number||confirmed?.hash!==data.confirmationCheckpoint?.hash)throw Error('Changed public snapshot');
   const items=api==='directory'?response.boards:api==='post'?(response.post?[response.post]:[]):response.posts;
   if(!Array.isArray(items))throw Error('Invalid public page');
   if(api==='board'){
