@@ -154,7 +154,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   void publicReader; // Never route personalized requests through public readers.
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
   let busy=false,callScope=null,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
-  const networkChecks=new WeakMap();
+  const networkChecks=new WeakMap(),preparedPayments=new WeakMap();
   const session=accountSession;
   const getOperationScope=typeof session?.operationScope==='function'?session.operationScope.bind(session):()=>callScope;
   const chainInfoMethod=session?.wallet?.getChainInfo,accountsMethod=session?.wallet?.getAccounts;
@@ -898,7 +898,22 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(key=>key==='type'||allowed.includes(key)));
       if(['bok','claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type)||action.type==='claim-deposit'&&action.bokReceipt!==undefined){await ensureBok({bind:immediate&&action.type==='bok'});check(bok,'ROLLING_BOK_UNAVAILABLE');}
       const moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;
-      const args=moderation?moderation.args:plain(await measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:immediate&&action.type==='bok'})));
+      // Start independent fee metadata alongside posting reads. Both private
+      // utilities still run through the native PXE queue at this flow's anchor.
+      const paymentScope=immediate&&['post','reply','quote','repost','bok'].includes(action.type)
+        ?session.operationScope?.():null;
+      const paymentOwner=paymentScope&&{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
+      let args,preparedPayment;
+      if(paymentScope){
+        const values=await Promise.allSettled([
+          ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:action.type==='bok'})),
+          ()=>measure('action.payment-prefetch',()=>payment(action)),
+        ].map(read=>Promise.resolve().then(read)));
+        const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+        await guard();check(session.operationScope()===paymentScope&&session.wallet===paymentOwner.wallet&&
+          session.wallet.pxe===paymentOwner.pxe&&session.node===paymentOwner.node,'ROLLING_CONTEXT_CHANGED');
+        args=plain(values[0].value);preparedPayment=values[1].value;
+      }else args=moderation?moderation.args:plain(await measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:immediate&&action.type==='bok'})));
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(moderation?{moderation:moderation.review}:{})};
       if(action.type==='name')record.nameAvailability=await nameAvailability(action);
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
@@ -936,7 +951,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         record.maximumFee=sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee.toString();
       }
       else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
-        prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();await store.write(prior,record);return summary(record);
+        prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();const saved=await store.write(prior,record);
+      // No persistent cache: only the unchanged journal record in the same held
+      // operation may use this result. Separate submissions prepare afresh.
+      if(paymentScope&&session.operationScope()===paymentScope)preparedPayments.set(paymentScope,{encoded:saved.encoded,payment:preparedPayment,...paymentOwner});
+      return summary(record);
     });},
     async prepareBokRelease(id,input){return exclusive(async()=>{
       const {type}=exactData(input,['type']);check(['cancel-bok-request','expire-bok-request'].includes(type),'ROLLING_INVALID_ACTION');
@@ -1063,7 +1082,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await session.journal.assertCanStart(!replacing&&saved.value.predecessor?{predecessor:saved.value.predecessor}:undefined); // Before private simulation, not merely before send.
       await checkActionSubmission(saved.value);
       const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
-      const preparedPayment=await measure('action.fee-prepare',()=>payment(saved.value.action,saved.value));
+      const paymentScope=session.operationScope?.(),cachedPayment=paymentScope&&preparedPayments.get(paymentScope);
+      if(paymentScope)preparedPayments.delete(paymentScope);
+      const preparedPayment=await measure('action.fee-prepare',()=>cachedPayment&&cachedPayment.encoded===saved.encoded&&
+        cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node
+        ?cachedPayment.payment:payment(saved.value.action,saved.value));
       const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();

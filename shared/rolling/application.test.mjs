@@ -2067,3 +2067,62 @@ for(const changed of ['local-anchor','canonical-block','context'])test(`parallel
  await assert.rejects(f.app.prepare({type:'post',deposit:'9',content:'Changed anchor'},{immediate:true}),changed==='context'?undefined:{code:'ROLLING_CONTEXT_CHANGED'});
  assert.equal(f.values.size,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
 });
+
+for(const bok of [false,true])test(`immediate ${bok?'Bok':'post'} overlaps fee preparation with arguments and consumes it once`,async()=>{
+ const f=bok?bokFixture():fixture();let scope={};f.options.accountSession.operationScope=()=>scope;
+ if(bok)f.options.sdk.BatchCall=class {constructor(wallet,interactions){this.interactions=interactions;}};
+ const hints=Promise.withResolvers(),payment=Promise.withResolvers(),both=Promise.withResolvers();let entered=0,payments=0;
+ const arrive=()=>{if(++entered===2)both.resolve();};
+ f.state.beforeHintsRead=async()=>{arrive();await hints.promise;};
+ f.options.sdk.preparePrivateFeePayment=async()=>{payments++;arrive();await payment.promise;return {availableCredit:100n};};
+ const app=f.restart(),action=bok?bokAction():{type:'post',deposit:'9',content:'Overlapping independent reads'};
+ const pending=app.prepare(action,{immediate:true});await both.promise;
+ assert.equal(entered,2);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+ hints.resolve();payment.resolve();const intent=await pending;
+ assert.equal((await app.submitPrepared(intent.intentId)).status,'confirmed');
+ assert.equal(payments,1);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+});
+for(const failAt of ['arguments','payment'])test(`concurrent preparation drains its sibling after ${failAt} fails`,async()=>{
+ const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;
+ const started=Promise.withResolvers(),sibling=Promise.withResolvers();let entered=0,settled=false;
+ const arrive=()=>{if(++entered===2)started.resolve();};const failure=Error(failAt);
+ f.state.beforeHintsRead=async()=>{arrive();if(failAt==='arguments')throw failure;await sibling.promise;};
+ f.options.sdk.preparePrivateFeePayment=async()=>{arrive();if(failAt==='payment')throw failure;await sibling.promise;return {availableCredit:100n};};
+ const app=f.restart(),pending=app.prepare({type:'post',deposit:'9',content:'Drain failures'},{immediate:true});
+ const checked=assert.rejects(pending,error=>error===failure).then(()=>{settled=true;});
+ await started.promise;await Promise.resolve();assert.equal(settled,false);assert.equal(f.values.size,0);
+ sibling.resolve();await checked;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+for(const boundary of ['scope','application'])test(`prepared payment is not reused across a different ${boundary}`,async()=>{
+ const f=fixture();let scope={},payments=0;f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.preparePrivateFeePayment=async()=>{payments++;return {availableCredit:100n};};
+ let app=f.restart();const intent=await app.prepare({type:'post',deposit:'9',content:'Fresh boundary'},{immediate:true});
+ assert.equal(payments,1);if(boundary==='scope')scope={};else app=f.restart();
+ await app.submitPrepared(intent.intentId);assert.equal(payments,2);assert.equal(f.state.sends,1);
+});
+test('concurrent fee preparation rejects a replaced flow after draining reads',async()=>{
+ const f=fixture();let scope={};f.options.accountSession.operationScope=()=>scope;
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers();
+ f.options.sdk.preparePrivateFeePayment=async()=>{entered.resolve();await gate.promise;return {availableCredit:100n};};
+ const app=f.restart(),pending=app.prepare({type:'post',deposit:'9',content:'Flow identity'},{immediate:true});
+ await entered.promise;scope={};gate.resolve();await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});
+ assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+
+test('concurrent fee preparation cannot relabel an old PXE result after replacement',async()=>{
+ const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers();
+ f.options.sdk.preparePrivateFeePayment=async()=>{entered.resolve();await gate.promise;return {availableCredit:100n};};
+ const app=f.restart(),pending=app.prepare({type:'post',deposit:'9',content:'PXE identity'},{immediate:true});
+ await entered.promise;const old=f.options.accountSession.wallet.pxe;f.options.accountSession.wallet.pxe={...old};
+ gate.resolve();await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('a rewritten encrypted intent does not inherit its previous fee preparation',async()=>{
+ const f=fixture();const flow={};let payments=0;f.options.accountSession.operationScope=()=>flow;
+ f.options.sdk.preparePrivateFeePayment=async()=>{payments++;return {availableCredit:100n};};
+ const app=f.restart(),intent=await app.prepare({type:'post',deposit:'9',content:'Record identity'},{immediate:true});
+ const scope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
+ const slot=await createEncryptedJournalSlot({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+ const saved=await slot.read();await slot.write(saved,saved.value);
+ await app.submitPrepared(intent.intentId);assert.equal(payments,2);assert.equal(f.state.sends,1);
+});
