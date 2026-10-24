@@ -1,0 +1,8 @@
+[package]
+name = "owner_delivery"
+type = "lib"
+authors = [""]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+aztec = { path = "../../.build/owner-delivery/aztec-nr/aztec" }

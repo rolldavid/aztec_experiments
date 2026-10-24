@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 import { registerHooks } from 'node:module';
+import {OWNER_DISCOVERY_PINS,transformOwnerDiscovery} from '../../scripts/patch-pxe-owner-discovery.mjs';
 import { pathToFileURL } from 'node:url';
 import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { createLogger } from '@aztec-labs/foundation/log';
@@ -16,19 +17,11 @@ process.env.HARDWARE_CONCURRENCY ??= '2';
 // Supply only the Node-required JSON attribute for this pinned local artifact directory.
 const artifactRoots = ['accounts', 'protocol-contracts', 'standard-contracts'].map(name => pathToFileURL(path.join(ROOT, 'node_modules/@aztec-labs', name, 'artifacts/')).href);
 registerHooks({ load(url, context, nextLoad) {
-  const ownerPins = {
-    '/pxe/dest/logs/log_service.js':'550699709c5616e58abc56886e9a99e428345aa0d76a56d1fbe6ea65be225aba',
-    '/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js':'c74cd5039138e457018b44f1ff5c76c099a2921455edd3a8078c383adbde930c',
-    '/pxe/dest/contract_function_simulator/oracle/oracle_registry.js':'9f58bf12b859914a64d8f36830cdec037bba14a8d38ed8cfda5c2fe413e4e2a2',
-  };
-  const ownerPath=Object.keys(ownerPins).find(suffix=>url.endsWith(suffix));
-  if(ownerPath){
-    const result=nextLoad(url,context);let source=Buffer.from(result.source).toString();
-    assert.equal(createHash('sha256').update(source).digest('hex'),ownerPins[ownerPath]);
-    if(ownerPath.endsWith('/log_service.js')) source=source.replace('async fetchTaggedLogs(contractAddress, recipient, providedSecrets) {','async fetchTaggedLogs(contractAddress, recipient, providedSecrets, providedOnly=false) {').replace('...await this.#getPointDerivedSecrets(contractAddress, recipient),','...(providedOnly ? [] : await this.#getPointDerivedSecrets(contractAddress, recipient)),');
-    if(ownerPath.endsWith('/utility_execution_oracle.js')) source=source.replace('async getPendingTaggedLogsV2(scope, providedSecrets) {','async getPendingOwnerTaggedLogsV1(scope, providedSecrets) { return this.getPendingTaggedLogsV2(scope,providedSecrets,true); }\n    async getPendingTaggedLogsV2(scope, providedSecrets, providedOnly=false) {').replace('fetchTaggedLogs(this.contractAddress, scope, secrets)','fetchTaggedLogs(this.contractAddress, scope, secrets, providedOnly)');
-    if(ownerPath.endsWith('/oracle_registry.js')) source+='\nORACLE_REGISTRY.aztec_utl_getPendingOwnerTaggedLogsV1 = ORACLE_REGISTRY.aztec_utl_getPendingTaggedLogsV2;\n';
-    return {...result,source};
+  const ownerPin=OWNER_DISCOVERY_PINS.find(pin=>url.endsWith('/pxe/'+pin.path));
+  if(ownerPin){
+    const result=nextLoad(url,context),source=Buffer.from(result.source).toString();
+    const hash=createHash('sha256').update(source).digest('hex');
+    return {...result,source:hash===ownerPin.after?source:transformOwnerDiscovery(source,ownerPin.path)};
   }
   if (url.endsWith('/txe/dest/oracle/txe_oracle_top_level_context.js')) {
     const result = nextLoad(url, context);
@@ -38,7 +31,9 @@ registerHooks({ load(url, context, nextLoad) {
     // opt-in retains the actual PublicProcessor revert and mines its native effects.
     const marker = '} else if (!processedTx.revertCode.isOK()) {';
     assert.equal(source.split(marker).length,3);
-    return {...result,source:source.replace(marker, `} else if (!processedTx.revertCode.isOK() && !globalThis.__ownerDeliveryAcceptRevert?.(processedTx)) {`).replace('const minRevertibleSideEffectCounter = 1;','let minRevertibleSideEffectCounter = globalThis.__ownerDeliverySetup ? 0 : 1;').replace('await noteCache.setMinRevertibleSideEffectCounter(minRevertibleSideEffectCounter);','if (minRevertibleSideEffectCounter) await noteCache.setMinRevertibleSideEffectCounter(minRevertibleSideEffectCounter);').replace('sideEffectCounter: minRevertibleSideEffectCounter,','sideEffectCounter: 1,').replace('// We pass the non-zero minRevertibleSideEffectCounter to make sure the side effects are split correctly.','// Read the native end_setup boundary for explicitly armed setup tests.\n            if (globalThis.__ownerDeliverySetup) minRevertibleSideEffectCounter = noteCache.minRevertibleSideEffectCounter;')};
+    const nativeEffectsMarker = 'const { publicInputs } = await generateSimulatedProvingResult(result, (addr, sel)=>anchoredContractData.getDebugFunctionName(addr, sel), this.stateMachine.node, minRevertibleSideEffectCounter);';
+    assert.equal(source.split(nativeEffectsMarker).length,2);
+    return {...result,source:source.replace(nativeEffectsMarker,nativeEffectsMarker+'\n            globalThis.__ownerTestPrivateNoteCount = publicInputs.getNonEmptyNoteHashes().length;').replace(marker, `} else if (!processedTx.revertCode.isOK() && !globalThis.__ownerDeliveryAcceptRevert?.(processedTx)) {`).replace('const minRevertibleSideEffectCounter = 1;','let minRevertibleSideEffectCounter = globalThis.__ownerDeliverySetup ? 0 : 1;').replace('await noteCache.setMinRevertibleSideEffectCounter(minRevertibleSideEffectCounter);','if (minRevertibleSideEffectCounter) await noteCache.setMinRevertibleSideEffectCounter(minRevertibleSideEffectCounter);').replace('sideEffectCounter: minRevertibleSideEffectCounter,','sideEffectCounter: 1,').replace('// We pass the non-zero minRevertibleSideEffectCounter to make sure the side effects are split correctly.','// Read the native end_setup boundary for explicitly armed setup tests.\n            if (globalThis.__ownerDeliverySetup) minRevertibleSideEffectCounter = noteCache.minRevertibleSideEffectCounter;')};
   }
   if (artifactRoots.some(root => url.startsWith(root)) && url.endsWith('.json')) {
     return nextLoad(url, { ...context, importAttributes: { ...context.importAttributes, type: 'json' } });
@@ -90,12 +85,18 @@ TXESession.prototype.processFunction = async function(name,inputs) {
     assert.equal(count,Number(BigInt(Array.isArray(inputs[0])?inputs[0][0]:inputs[0])));
     return {values:[]};
   }
+  if(name==='rolling_test_assert_private_notes') {
+    assert.equal(globalThis.__ownerTestPrivateNoteCount,Number(BigInt(Array.isArray(inputs[0])?inputs[0][0]:inputs[0])));
+    return {values:[]};
+  }
   if(name==='rolling_test_assert_effects') {
     const effects=await this.handlerAsTxe().getLastTxEffects();
     assert.equal(effects.noteHashes.length,Number(BigInt(Array.isArray(inputs[0])?inputs[0][0]:inputs[0])));
     assert.equal(effects.privateLogs.length,Number(BigInt(Array.isArray(inputs[1])?inputs[1][0]:inputs[1])));
     return {values:[]};
   }
+  if(name==='rolling_test_begin_setup') { assert.equal(this.state.name,'TOP_LEVEL'); assert.equal(globalThis.__ownerDeliverySetup,undefined); globalThis.__ownerDeliverySetup=true; return {values:[]}; }
+  if(name==='rolling_test_end_setup') { assert.equal(globalThis.__ownerDeliverySetup,true); delete globalThis.__ownerDeliverySetup; return {values:[]}; }
   if(name==='rolling_test_allow_setup_revert') { globalThis.__ownerDeliverySetup=true; name='rolling_test_allow_mined_revert'; }
   if(name==='rolling_test_allow_mined_revert') {
     assert.equal(this.state.name,'TOP_LEVEL');

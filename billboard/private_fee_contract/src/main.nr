@@ -1,4 +1,5 @@
-use aztec::macros::aztec;
+use aztec::macros::{aztec, AztecConfig};
+use owner_delivery::delivery::sync_owner_state;
 mod gas;
 
 /// Private Fee Payment Contract
@@ -7,14 +8,14 @@ mod gas;
 /// Users bridge FeeJuice from L1 via FeeJuicePortal to this contract address,
 /// then call `mint` to convert the bridge claim into private FJ balance.
 /// The FJ balance can then be used to sponsor transactions via `pay_fee`.
-#[aztec]
+#[aztec(AztecConfig::new().custom_sync_state(sync_owner_state))]
 pub contract PrivateFPC {
+    use owner_delivery::delivery::{deliver_optional_note, deliver_message};
     use aztec::{
         hash::{
             compute_l1_to_l2_message_hash, compute_l1_to_l2_message_nullifier, compute_secret_hash,
         },
         macros::{functions::{allow_phase_change, external, internal, only_self}, storage::storage},
-        messages::delivery::MessageDelivery,
         nullifier::utils::compute_nullifier_existence_request,
         protocol::{
             address::{AztecAddress, EthAddress},
@@ -50,7 +51,8 @@ pub contract PrivateFPC {
     fn pay_fee(reservation: u128) {
         let sender = self.msg_sender();
         let max_gas_cost = self.internal._deduct_fee_reservation(sender, reservation);
-        let refund_note = UintNote::partial(sender, self.context, sender, self.address);
+        let (refund_note, message) = UintNote::partial_with_message(sender, self.context, self.address);
+        deliver_message(self.context, BoundedVec::from_array(message));
         self.set_as_teardown(PrivateFPC::at(self.address)._complete_refund(refund_note, max_gas_cost));
 
         // Set the FPC as the fee payer of the tx.
@@ -103,11 +105,11 @@ pub contract PrivateFPC {
         assert(reservation >= get_max_gas_cost(self.context), "Fee reservation below transaction maximum");
         let max_gas_cost = reservation;
         assert(amount >= max_gas_cost, "Amount too low to cover gas cost");
-        self.storage.balances.at(claimer).add(amount - max_gas_cost).deliver(
-            MessageDelivery::onchain_unconstrained(),
-        );
+        let created = self.storage.balances.at(claimer).add(amount - max_gas_cost).get_new_note();
+        deliver_optional_note(self.context, created);
 
-        let refund_note = UintNote::partial(claimer, self.context, claimer, self.address);
+        let (refund_note, message) = UintNote::partial_with_message(claimer, self.context, self.address);
+        deliver_message(self.context, BoundedVec::from_array(message));
         self.set_as_teardown(PrivateFPC::at(self.address)._complete_refund(refund_note, max_gas_cost));
         self.context.set_as_fee_payer();
         self.context.end_setup();
@@ -182,9 +184,8 @@ pub contract PrivateFPC {
         self.context.push_nullifier_unsafe(feejuice_nullifier);
 
         // Mint private internal balance to claimer.
-        self.storage.balances.at(claimer).add(amount).deliver(
-            MessageDelivery::onchain_unconstrained(),
-        );
+        let created = self.storage.balances.at(claimer).add(amount).get_new_note();
+        deliver_optional_note(self.context, created);
     }
 
     /// @notice Computes the max gas cost and deducts it from the account's balance.
@@ -198,9 +199,8 @@ pub contract PrivateFPC {
 
         let change =
             self.internal._subtract_balance(account, max_gas_cost, INITIAL_TRANSFER_CALL_MAX_NOTES);
-        self.storage.balances.at(account).add(change).deliver(
-            MessageDelivery::onchain_unconstrained(),
-        );
+        let created = self.storage.balances.at(account).add(change).get_new_note();
+        deliver_optional_note(self.context, created);
 
         max_gas_cost
     }

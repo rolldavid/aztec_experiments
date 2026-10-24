@@ -1,0 +1,9 @@
+[package]
+name = "owner_delivery_test"
+type = "contract"
+authors = [""]
+compiler_version = ">=1.0.0"
+[dependencies]
+aztec = { path = "../../.build/owner-delivery/aztec-nr/aztec" }
+rolling_contract = { path = "../rolling_contract" }
+private_fee_contract = { path = "../private_fee_contract" }

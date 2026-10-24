@@ -1,10 +1,10 @@
-use aztec::macros::aztec;
+use aztec::macros::{aztec, AztecConfig};
+use owner_delivery::delivery::sync_owner_state;
 pub mod encoding;
 pub mod admission;
 pub mod posting;
 pub mod profiles;
 pub mod preferences;
-pub mod preference_recovery;
 mod preferences_tests;
 mod profiles_tests;
 mod posting_tests;
@@ -12,7 +12,7 @@ mod tests;
 
 /// Private names, authentic policy and collateral-backed canonical publication.
 /// Real-proof, bridge, wallet and privacy qualification remain release gates.
-#[aztec]
+#[aztec(AztecConfig::new().custom_sync_state(sync_owner_state))]
 pub contract RollingBoard {
     use aztec::{
         hash::compute_secret_hash,
@@ -20,12 +20,12 @@ pub contract RollingBoard {
         keys::getters::{get_nhk_app, get_public_keys, try_get_public_keys},
         macros::{events::event, functions::{external, initializer, internal, only_self, view}, notes::note, storage::storage},
         event::event_interface::EventInterface,
-        messages::delivery::MessageDelivery,
-        note::{note_getter_options::{NoteGetterOptions, NoteStatus}, note_viewer_options::NoteViewerOptions, note_interface::{NoteProperties, NoteHash, NoteType}, HintedNote, ConfirmedNote, NoteMessage},
+        note::{note_getter_options::{NoteGetterOptions, NoteStatus}, note_viewer_options::NoteViewerOptions, note_interface::{NoteProperties, NoteHash, NoteType}, HintedNote, ConfirmedNote},
         protocol::{address::{AztecAddress, EthAddress}, abis::block_header::BlockHeader, hash::poseidon2_hash_with_separator, traits::{Deserialize, Hash, Packable, Serialize, ToField}},
         state_vars::{Map, Owned, PrivateMutable, PrivateSet, PublicImmutable, PublicMutable, StateVariable},
         utils::comparison::Comparator,
     };
+    use owner_delivery::delivery::{deliver_note, deliver_message};
     use crate::admission::{Config, SequenceState, compute_cooldown, checked_time_add, deposit_chain_id, deposit_decision_nullifier, post_id, post_link, get_ready_msg_hash, get_deposit_msg_hash, get_withdraw_msg_hash, get_cancel_msg_hash, get_refund_msg_hash};
     use crate::posting::{PostDraft, PostRecord, PluginRecord, validate_draft, invocation_target, InvocationRecord, invocation_key, bot_reply_id};
     use crate::profiles::{OwnedNameRecord, ProfileRecord, AvatarModerationRecord, next_version, bio_digest, avatar_digest};
@@ -118,10 +118,11 @@ pub contract RollingBoard {
                 kind, target, value, read_block, read_hash)
         });
         let next = message.get_note();
-        message.deliver(MessageDelivery::onchain_constrained());
-        self.emit(PreferenceChanged { schema: 1, revision: next.revision, kind, target, value,
-            read_block, read_hash, previous_digest: next.previous_digest })
-            .deliver_to(owner, MessageDelivery::onchain_constrained());
+        let created = message.get_new_note();
+        deliver_note(self.context, created);
+        let event = self.emit(PreferenceChanged { schema: 1, revision: next.revision, kind, target, value,
+            read_block, read_hash, previous_digest: next.previous_digest }).get_plaintext();
+        deliver_message(self.context, event);
     }
 
     #[external("private")]
@@ -140,21 +141,6 @@ pub contract RollingBoard {
         let read_hash = header.hash();
         assert(read_hash != 0, "Zero read marker hash");
         self.internal._write_preference(expected_revision, crate::preferences::THREAD_READ, thread, true, through_block, read_hash);
-    }
-
-    /// Experimental bounded page; never marks this contract completely synced.
-    /// Only the dedicated pinned PXE entry avoids normal full contract discovery.
-    #[external("utility")]
-    unconstrained fn recover_preference_page(owner: AztecAddress, tx_hash: Field,
-        block_number: u32, block_hash: Field, first_log: u8, log_count: u8) -> pub u8 {
-        // Key gate applies even when there is no recoverable head yet.
-        let _initialized = self.storage.preferences.at(owner).is_initialized();
-        std::static_assert(<PreferenceHeadNote as Packable>::N == 4, "Preference head packed layout");
-        std::static_assert(<PreferenceChanged as Serialize>::N == 8, "Preference event layout");
-        crate::preference_recovery::recover(self.address, owner,
-            self.storage.preferences.get_storage_slot(), PreferenceHeadNote::get_id(),
-            PreferenceChanged::get_event_type_id().to_field(), _compute_note_hash, _compute_note_nullifier,
-            tx_hash, block_number, block_hash, first_log, log_count)
     }
 
     /// Trusted scoped PXE only, never an ordinary public-reader endpoint.
@@ -366,12 +352,11 @@ pub contract RollingBoard {
     fn register_name(first: [u8; 32], first_length: u8, last: [u8; 32], last_length: u8) {
         let record = OwnedNameRecord::new(first, first_length, last, last_length);
         let owner = self.msg_sender();
-        self.storage.names.at(owner).insert(UsernameNote {
+        let created = self.storage.names.at(owner).insert(UsernameNote {
             name_id: record.name_id, schema: record.schema, first_length: record.first_length,
             first: record.first, last_length: record.last_length, last: record.last,
-        }).deliver(
-            MessageDelivery::onchain_constrained(),
-        );
+        }).get_new_note();
+        deliver_note(self.context, created);
         // Kernel links private mint to this public uniqueness gate. Rejection rolls
         // back the entire transaction, including its ownership note.
         self.enqueue_self._register_name(first, first_length, last, last_length);
@@ -400,7 +385,8 @@ pub contract RollingBoard {
         let note = notes.get_unchecked(0);
         assert((note.schema == 1) & (note.name_id == id), "Invalid ownership note");
         note.record().validate();
-        self.storage.names.at(owner).insert(note).deliver(MessageDelivery::onchain_constrained());
+        let created = self.storage.names.at(owner).insert(note).get_new_note();
+        deliver_note(self.context, created);
     }
 
     /// A private ownership exercise, not a posting or profile-update bypass.
@@ -709,7 +695,8 @@ pub contract RollingBoard {
             amount, l1_depositor: depositor, deposit_id, head_link: 0, screened_link: 0,
             sequences: SequenceState { head_sequence: 0, screened_sequence: 0, last_real_sequence: 0 },
             next_allowed_time: checked_time_add(now, cooldown) };
-        self.storage.deposits.at(sender).insert(note).deliver(MessageDelivery::onchain_constrained());
+        let created = self.storage.deposits.at(sender).insert(note).get_new_note();
+        deliver_note(self.context, created);
     }
 
     /// Anyone can finish the Ethereum owner's authenticated cancellation request.
@@ -885,7 +872,7 @@ pub contract RollingBoard {
         let new_link = post_link(context.this_address(), sender, deposit_chain_id, sequence, inner_hash, link_secret);
         assert(new_link != SENTINEL, "C02 invalid new head");
 
-        NoteMessage::new(new_note, context).deliver(MessageDelivery::onchain_constrained());
+        deliver_note(context, new_note);
 
         // --- Update last_real_sequence (only for non-dummy posts) ---
         let new_last_real = if is_dummy {
@@ -906,7 +893,8 @@ pub contract RollingBoard {
             screened_link: new_screened_link,
             next_allowed_time: new_next_allowed,
         };
-        storage.deposits.at(sender).insert(new_deposit).deliver(MessageDelivery::onchain_constrained());
+        let created = storage.deposits.at(sender).insert(new_deposit).get_new_note();
+        deliver_note(context, created);
         }
     }
     #[external("private")]
