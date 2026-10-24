@@ -36,5 +36,11 @@
     "skipped": 0,
     "command": "HARDWARE_CONCURRENCY=2 node --test --test-concurrency=1 scripts/ordinary-post-fees.test.mjs scripts/private-fee-refund-profile.test.mjs scripts/rolling-publish-gas-profile.test.mjs"
   },
-  "scope": "Pinned native AVM public/teardown qualification and arithmetic-profile tests. No live transaction or real proof. Actual atomic Board/FPC fixture separately asserts four private note hashes and restores all self records."
+  "scope": "Pinned native AVM public/teardown qualification and arithmetic-profile tests. No live transaction or real proof. Actual atomic Board/FPC fixture separately asserts four private note hashes and restores all self records.",
+  "metadataEquivalentBuild": {
+    "sourceCommit": "4b2004de1e75e661da5e972c10c02b5949476d2e",
+    "boardArtifactSha256": "d29a4ae05dae83222a5f3d37af0917c834b5068945f8e1ec2e87345de4fafe8b",
+    "fpcArtifactSha256": "bc1e0ced6cc8c49f2cde538265ada54e46c270a280f6d14703ee5e0d951577b1",
+    "difference": "Source-map IDs and debug symbols only; identical function bytecode, verification keys, ABIs, attributes, path-to-source map and class IDs. Independently reviewed."
+  }
 }

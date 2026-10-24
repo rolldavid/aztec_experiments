@@ -15,7 +15,7 @@ export const COMMON_INPUTS = ['apps/src/billboard/private_fee_artifact.json', 'n
   'billboard/owner_delivery/Nargo.toml', 'scripts/prepare-owner-noir.mjs', 'scripts/owner-delivery-noir-sources.json'];
 export const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 export function permittedInput(relative) {
-  return COMMON_INPUTS.includes(relative) || /^(billboard\/(rolling_contract|owner_delivery)|experiments\/private-bok\/escrow|\.build\/owner-delivery\/aztec-nr\/(aztec|uint-note))\/src\/[a-zA-Z0-9_/-]+\.nr$/.test(relative) && !relative.split('/').includes('..');
+  return COMMON_INPUTS.includes(relative) || /^(billboard\/(rolling_contract|owner_delivery)|experiments\/private-bok\/escrow|\.build\/owner-delivery\/aztec-nr\/(aztec|uint-note|balance-set))\/src\/[a-zA-Z0-9_/-]+\.nr$/.test(relative) && !relative.split('/').includes('..');
 }
 export function readRegular(root, relative) {
   if (typeof relative !== 'string' || path.isAbsolute(relative) || relative.includes('\\') || relative.split('/').includes('..')) throw Error('Invalid trusted artifact path');

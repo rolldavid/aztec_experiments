@@ -9,7 +9,7 @@ import {PrivateFeePaymentMethod} from './private-fee-payment.mjs';
 // Use protocol-wide limits for nullifiers and logs, including partial-refund
 // messages, so neither note fragmentation nor private balances enter the quote.
 export const ORDINARY_POST_GAS_PROFILE=Object.freeze({
- boardArtifactSha256:'f8535c61ffb25febc019764bdfa180f419399c383fe8b5d9d9da2c8bc48ef26a',
+ boardArtifactSha256:'d29a4ae05dae83222a5f3d37af0917c834b5068945f8e1ec2e87345de4fafe8b',
  boardClassId:'0x13d9206337142962dd9b067c9eaa758bf8e5ea9876857a9073bc6396a9836f29',
  accountClassId:'0x222287bfcd04411264393983dd8d01ca5ea9ae305d1a10a1e6d8deef7f17659b',
  privateFeeClassId:'0x1e74f64c7ddbab25de51eb7fc667064c0713ee67e04b8589871f214aacce4df0',

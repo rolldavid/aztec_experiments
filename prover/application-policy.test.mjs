@@ -92,7 +92,7 @@ function artifactFixture() {
 test('owner delivery catalog binds generated native sources without allowing unrelated build files', () => {
   const f=artifactFixture();try{
     const target=f.manifest.artifacts[0],raw=JSON.parse(fs.readFileSync(path.join(f.root,target.path)));
-    const paths=['billboard/owner_delivery/src/delivery.nr','.build/owner-delivery/aztec-nr/aztec/src/messages/discovery/mod.nr','.build/owner-delivery/aztec-nr/uint-note/src/uint_note.nr'];
+    const paths=['billboard/owner_delivery/src/delivery.nr','.build/owner-delivery/aztec-nr/aztec/src/messages/discovery/mod.nr','.build/owner-delivery/aztec-nr/uint-note/src/uint_note.nr','.build/owner-delivery/aztec-nr/balance-set/src/balance_set.nr'];
     for(const [index,source] of paths.entries()){
       assert(permittedInput(source));f.write(source,'owner fixture');f.manifest.inputs[source]=sha('owner fixture');
       raw.file_map[index+2]={path:source,source:'owner fixture'};
