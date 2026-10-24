@@ -19,6 +19,7 @@ import {L1_TO_L2_MSG_TREE_HEIGHT} from '@aztec-labs/constants';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
 import {NO_FROM} from '@aztec-labs/aztec.js/account';
+import {waitForL1ToL2MessageReady,isL1ToL2MessageReady} from '@aztec-labs/aztec.js/messaging';
 const source=await readFile(new URL('../apps/src/billboard/user/engine.js',import.meta.url),'utf8');
 const policySource=await readFile(new URL('../shared/moderation-policy.js',import.meta.url),'utf8');
 function context(){const c=vm.createContext({URL,performance,console,Buffer,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});vm.runInContext(policySource,c);vm.runInContext(source,c);return c;}
@@ -99,7 +100,7 @@ function mainHarness(action,isDummy=false) {
   const event=iface.encodeEventLog(iface.getEvent('Deposited'),[depositor,amount,secretHash.toString(),new Fr(77).toString(),42n]);
   const provider={getLogs:async()=>[],getCode:async()=> '0x01',getNetwork:async()=>({chainId:31337n}),destroy(){},getBlock:async()=>({number:1,hash:'canonical-eth'}),getTransactionReceipt:async hash=>({hash,status:1,blockNumber:1,blockHash:'canonical-eth',logs:[{index:0,address:portal,...event}]})};
   class Portal {L2_CONTRACT=async()=>board.toString();L1_CHAIN_ID=async()=>31337n;ROLLUP=async()=>rollup;VERSION=async()=>1n;async getDeposit(){return amount;}async getActiveDeposit(){return {amount,secretHash:secretHash.toString(),key:new Fr(77).toString(),index:42n};}}
-  const node={getL1ToL2MessageMembershipWitness:async()=>[42n,new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,Array.from({length:L1_TO_L2_MSG_TREE_HEIGHT},()=>Fr.ONE.toBuffer()))],getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1}),getL1ContractAddresses:async()=>({rollupAddress:rollup}),getBlockNumber:async()=>1,
+  const node={getL1ToL2MessageIndex:async key=>{assert.equal(key.toString(),new Fr(77).toString());return 42n;},getBlockData:async tip=>{assert.equal(tip,'checkpointed');return {header:{state:{l1ToL2MessageTree:{nextAvailableLeafIndex:43}}}};},getL1ToL2MessageMembershipWitness:async()=>[42n,new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,Array.from({length:L1_TO_L2_MSG_TREE_HEIGHT},()=>Fr.ONE.toBuffer()))],getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1}),getL1ContractAddresses:async()=>({rollupAddress:rollup}),getBlockNumber:async()=>1,
     getBlock:async number=>({number,hash:'block',header:{globalVariables:{timestamp:100n}},body:{txEffects:[]}}),getBlocks:async(from,count)=>Array.from({length:count},(_,i)=>({number:Number(from)+i,hash:'block',body:{txEffects:[]}})),getContract:async()=>({address:board}),getPublicStorageAt:async()=>{authorBalanceReads++;throw new Error('Author fee lookup forbidden');}};
   const note=()=>({schemaVersion:1n,depositChainId:5n,amount:missingNote||(action==='claim'&&!sent)?0n:amount,nextAllowedTime:0n,lastRealPostIndex:0n,lastScreenedIndex:0n,headSequence:0n,...noteOverrides});
   c.readBillboardDepositInfo=async()=>note();
@@ -108,7 +109,7 @@ function mainHarness(action,isDummy=false) {
     return ()=>({simulate:async()=>{if(readHook)await readHook(name);return readResults.has(name)?readResults.get(name):name==='get_censor'?(censorValue??addr.toField()):name==='get_post_exists'?postExists:name==='get_screen_hints'?[{note:{is_dummy:true}},null]:1n;}});
   }});
   class BaseWallet {constructor(pxe){this.pxe=pxe;}}
-  const a={provingEnabledForNode,estimatePrivateFeeTransaction:async()=>({}),normalizePrivateFeeGasSettings,...transactionOutcomes,NoteStatus,Fr,AztecAddress,EthAddress,NO_FROM,GasSettings,BaseWallet,sha256ToField,Buffer,
+  const a={provingEnabledForNode,waitForL1ToL2MessageReady,estimatePrivateFeeTransaction:async()=>({}),normalizePrivateFeeGasSettings,...transactionOutcomes,NoteStatus,Fr,AztecAddress,EthAddress,NO_FROM,GasSettings,BaseWallet,sha256ToField,Buffer,
     deriveBoardDepositSecret:async()=>({secret:secret.toString(),secretHash:secretHash.toString()}),
     deriveSigningKey:()=>Fr.ONE,deriveKeys:async()=>({publicKeys:{}}),
     SchnorrInitializerlessAccountContract:class{getContractArtifact=async()=>({functions:[]});getImmutablesHash=async()=>Fr.ZERO;getSigningPublicKey=async()=>({x:Fr.ONE,y:Fr.ONE});},
@@ -469,16 +470,29 @@ test('real preparer failures stop every routed action before proof/send/funding 
 test('actual claim readiness rejects absent, failed and wrong-index membership before fees or submission',async()=>{
  for(const mode of ['missing','rpc','wrong-index']){
   const h=mainHarness('claim');let sends=0;h.onAction(()=>sends++);
-  const read=h.node.getL1ToL2MessageMembershipWitness;let reads=0;
-  h.node.getL1ToL2MessageMembershipWitness=async()=>{reads++;if(mode==='rpc')throw Error('private RPC');if(mode==='missing'){if(reads===1)return undefined;return new Promise(()=>{});}const w=await read();return[43n,w[1]];};
-  await assert.rejects(h.run(),e=>e.code===(mode==='wrong-index'?'BB_DEPOSIT_MESSAGE_INVALID':'BB_DEPOSIT_MESSAGE_UNAVAILABLE'));
+  const read=h.node.getL1ToL2MessageMembershipWitness,error=Error('private RPC');
+  h.node.getL1ToL2MessageMembershipWitness=async()=>{if(mode==='rpc')throw error;if(mode==='missing')return undefined;const w=await read();return[43n,w[1]];};
+  await assert.rejects(h.run(),e=>mode==='rpc'?e===error:e.code==='BB_DEPOSIT_MESSAGE_INVALID');
   assert.equal(h.requests.length,0);assert.equal(h.operations.length,0);assert.equal(sends,0);
  }
 });
 test('actual claim waits for delayed exact receipt key then prepares fees and submits once',async()=>{
- const h=mainHarness('claim');let reads=0,sends=0;const read=h.node.getL1ToL2MessageMembershipWitness;
- h.node.getL1ToL2MessageMembershipWitness=async(hash,key)=>{assert.equal(hash.toString(),new Fr(78).toString());assert.equal(key.toString(),new Fr(77).toString());return ++reads===1?undefined:read();};
- h.onAction(()=>sends++);await h.run();assert.equal(reads,2);assert.equal(sends,1);assert.equal(h.requests.length,1);
+ const h=mainHarness('claim'),entered=Promise.withResolvers(),ready=Promise.withResolvers();let reads=0,sends=0,indexReads=0;
+ const read=h.node.getL1ToL2MessageMembershipWitness;
+ h.node.getL1ToL2MessageIndex=async key=>{assert.equal(key.toString(),new Fr(77).toString());indexReads++;entered.resolve();return ready.promise;};
+ h.node.getL1ToL2MessageMembershipWitness=async(hash,key)=>{assert.equal(hash.toString(),new Fr(78).toString());assert.equal(key.toString(),new Fr(77).toString());reads++;return read();};
+ h.onAction(()=>sends++);const pending=h.run();await entered.promise;
+ assert.equal(reads,0);assert.equal(sends,0);assert.equal(h.requests.length,0);assert.equal(h.operations.length,0);
+ ready.resolve(42n);await pending;assert.equal(indexReads,1);assert.equal(reads,1);assert.equal(sends,1);assert.equal(h.requests.length,1);
+});
+test('native message readiness rejects absent inbox entries and uninserted checkpoint leaves',async()=>{
+ const h=mainHarness('claim'),key=new Fr(77);let blockReads=0;
+ h.node.getBlockData=async tip=>{assert.equal(tip,'checkpointed');blockReads++;return {header:{state:{l1ToL2MessageTree:{nextAvailableLeafIndex:42}}}};};
+ h.node.getL1ToL2MessageIndex=async()=>undefined;
+ assert.equal(await isL1ToL2MessageReady(h.node,key,'checkpointed'),false);assert.equal(blockReads,0);
+ h.node.getL1ToL2MessageIndex=async()=>42n;
+ assert.equal(await isL1ToL2MessageReady(h.node,key,'checkpointed'),false);assert.equal(blockReads,1);
+ assert.equal(h.requests.length,0);assert.equal(h.operations.length,0);
 });
 
 test('node failures are surfaced after one request, before private fee work',async()=>{
