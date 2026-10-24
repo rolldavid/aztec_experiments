@@ -13,7 +13,7 @@ import {validateWorkerInput} from './private-bok-provider-worker.mjs';
 const ENTRY = path.join(ROOT, 'scripts/testing/private-bok-provider-worker.mjs');
 const SOURCES = ['scripts/testing/private-bok-provider-coordinator.mjs', 'scripts/testing/private-bok-provider-worker.mjs',
   'plugins/private-bok-escrow.mjs', 'plugins/private-bok-metering.mjs', 'plugins/venice.mjs', 'plugins/venice-metered.mjs',
-  'plugins/metering.mjs', 'plugins/operations.mjs', 'shared/aztec-node-client.mjs', 'shared/routed-kernel-prover.mjs',
+  'plugins/metering.mjs', 'plugins/operations.mjs', 'shared/aztec-node-client.mjs', 'shared/routed-kernel-prover.mjs','shared/owner-envelope.mjs',
   'scripts/testing/proof-policy.mjs', 'scripts/toolchain.mjs', 'toolchain.json', 'package-lock.json', 'noir-dependencies.json',
   'crs-manifest.json', 'experiments/private-bok/build.mjs'];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
