@@ -267,20 +267,25 @@
         this._progress('proving');
         log('  Proving tx (can take minutes)...', 'info');
 
-        const txRequest = await this.createTxExecutionRequestFromPayloadAndFee(executionPayload, opts.from, feeOpts2);
-        const proveOpts={scopes:this.scopesFrom(opts.from,opts.additionalScopes??[],opts.sendMessagesAs),senderForTags:this.senderForTagsFrom(opts.from,opts.sendMessagesAs)};
-        const provenTx = atomicSimulation
-          ? await measured('proveTxWithPublicValidation',()=>this.pxe.proveTxWithPublicValidation(txRequest,proveOpts))
-          : await measured('proveTx',()=>this.pxe.proveTx(txRequest,proveOpts));
-        try{a.recordProofTimings?.(provenTx.stats);}catch{/* Diagnostics cannot interrupt a completed proof. */}
-        const tx = await measured('toTx',()=>provenTx.toTx());
+        // Witness maps belong to proof preparation, not the confirmation wait.
+        // Return only broadcast data from this scope so completed native results
+        // are collectible while the transaction is still awaiting its receipt.
+        const {tx,applicationNullifier}=await (async()=>{
+          const txRequest = await this.createTxExecutionRequestFromPayloadAndFee(executionPayload, opts.from, feeOpts2);
+          const proveOpts={scopes:this.scopesFrom(opts.from,opts.additionalScopes??[],opts.sendMessagesAs),senderForTags:this.senderForTagsFrom(opts.from,opts.sendMessagesAs)};
+          const provenTx = atomicSimulation
+            ? await measured('proveTxWithPublicValidation',()=>this.pxe.proveTxWithPublicValidation(txRequest,proveOpts))
+            : await measured('proveTx',()=>this.pxe.proveTx(txRequest,proveOpts));
+          try{a.recordProofTimings?.(provenTx.stats);}catch{/* Diagnostics cannot interrupt a completed proof. */}
+          const tx = await measured('toTx',()=>provenTx.toTx());
+          if (this._contextGuard) await this._contextGuard();
+          const applicationNullifier = !opts.journalOperation && this._applicationNullifierBoard
+            ? (await a.extractApplicationNullifier(provenTx, tx, this._applicationNullifierBoard, this._applicationNoteNullifier)).toString() : undefined;
+          return {tx,applicationNullifier};
+        })();
         const txHash = tx.getTxHash();
         log('  Proving complete. Submitting to node...', 'success');
-
         log('  Transaction hash: ' + txHash.toString(), 'info');
-        if (this._contextGuard) await this._contextGuard();
-        const applicationNullifier = !opts.journalOperation && this._applicationNullifierBoard
-          ? (await a.extractApplicationNullifier(provenTx, tx, this._applicationNullifierBoard, this._applicationNoteNullifier)).toString() : undefined;
         // A suspended proof cannot cross a revoked attempt's durable boundary.
         if(lifecycle){lifecycle.check();await lifecycle.guard('pre-proof');}
         if (journal) await journal.prepare(tx, previousJournal, {applicationNullifier});
