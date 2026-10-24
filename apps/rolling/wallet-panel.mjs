@@ -385,11 +385,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  // or retaining an account lease while the user edits. Post still checks afresh.
  function requestComposerPreparation(){
   if(composerPreparation||busy||initializing||blocked||status?.status!=='fee-ready'||intent||!dialog.open||view!=='action'||!['post','reply','quote','repost'].includes(draft.type)||!session||session.busy||!unlocked()||typeof session.preparePostingState!=='function'||accountRefreshPending||bokBalance.pending||topupQuotePending)return;
-  const key=accountEpoch+':'+composerOpening+':'+composerCheckpoint;if(composerAttempt===key)return;
+  const deposit=draft.deposit;if(typeof deposit!=='string'||!deposit)return;
+  const key=accountEpoch+':'+composerOpening+':'+composerCheckpoint+':'+deposit;if(composerAttempt===key)return;
   composerAttempt=key;const epoch=accountEpoch,active=session;
   const pending=Promise.resolve().then(async()=>{
-   if(epoch!==accountEpoch||active!==session||busy||initializing||blocked||intent||status?.status!=='fee-ready'||view!=='action'||!['post','reply','quote','repost'].includes(draft.type)||!dialog.open||!unlocked())return;
-   const finish=beginRollingMeasure('composer.prepare');try{await active.preparePostingState();}finally{finish();}
+   if(epoch!==accountEpoch||active!==session||deposit!==draft.deposit||busy||initializing||blocked||intent||status?.status!=='fee-ready'||view!=='action'||!['post','reply','quote','repost'].includes(draft.type)||!dialog.open||!unlocked())return;
+   const finish=beginRollingMeasure('composer.prepare');try{await active.preparePostingState(deposit);}finally{finish();}
   }).catch(()=>{}).finally(()=>{if(composerPreparation===pending)composerPreparation=null;if(epoch===accountEpoch&&active===session){requestComposerPreparation();requestBokBalance();}});
   composerPreparation=pending;
  }
@@ -1045,7 +1046,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    for(const id of status?.depositIds??[])deposits.append(el('option',{value:id},`Deposit ${id}`));
    if(!deposits.options.length)deposits.append(el('option',{value:''},'No verified collateral found'));
    deposits.value=(status?.depositIds??[]).includes(draft.deposit)?draft.deposit:deposits.options[0].value;draft.deposit=deposits.value;
-   deposits.addEventListener('change',()=>{draft.deposit=deposits.value;validate();});if(deposits.options.length>1)content.append(el('details',{class:'account-details'},el('summary',{},'Choose a posting deposit'),label('Posting deposit',deposits)));else if(!draft.deposit)content.append(paragraph('Set up your posting balance before publishing.'));
+   deposits.addEventListener('change',()=>{draft.deposit=deposits.value;validate();requestComposerPreparation();});if(deposits.options.length>1)content.append(el('details',{class:'account-details'},el('summary',{},'Choose a posting deposit'),label('Posting deposit',deposits)));else if(!draft.deposit)content.append(paragraph('Set up your posting balance before publishing.'));
    if(kind==='reply'||kind==='bok'){
     if(kind==='bok'&&draft.parent===undefined&&draft.root===undefined)Object.assign(draft,{parent:'0',root:'0'});
     if(replyContext(draft)||kind==='bok'&&field(draft.subboard)&&draft.parent==='0'&&draft.root==='0')conversationContext(draft);

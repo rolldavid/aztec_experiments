@@ -32,10 +32,10 @@ function dom(t){
  const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>{document.ruleReads=(document.ruleReads??0)+1;return new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}});}});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null}={}){
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null,depositIds=['9']}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
- const session={...(warm?{preparePostingState:async()=>{session.busy=true;try{await warm();}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
-  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
+ const session={...(warm?{preparePostingState:async deposit=>{session.busy=true;try{await warm(deposit);}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
+  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{})};},
@@ -608,4 +608,13 @@ test('leaving the composer before a queued checkpoint preparation starts prevent
  await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,1);
  f.panel.observePublicPosts([],warmHead(90));f.panel.open({});
  await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,1);
+});
+
+test('background screening captures the selected deposit and coalesces a changed selection', {timeout:3000},async t=>{
+ const gate=Promise.withResolvers(),started=Promise.withResolvers(),seen=[];
+ const f=await fixture(t,{depositIds:['9','10'],balanceRead:async()=>({available:true,availableCredit:'0'}),warm:async deposit=>{seen.push(deposit);if(seen.length===1){started.resolve();await gate.promise;}}});
+ await started.promise;assert.deepEqual(seen,['9']);
+ const select=f.document.querySelectorAll('select').find(value=>value.options.some(option=>option.value==='10'));
+ assert(select);select.value='10';select.fire('change');assert.deepEqual(seen,['9']);gate.resolve();await new Promise(setImmediate);assert.deepEqual(seen,['9','10']);
+ f.panel.observePublicPosts([],warmHead(91));select.value='9';select.fire('change');await new Promise(setImmediate);assert.deepEqual(seen,['9','10','9'],'queued work reads only the final selection');
 });

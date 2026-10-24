@@ -532,12 +532,21 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    });
   },
  });
- async function preparePostingState(){return locked(async()=>{
+ async function preparePostingState(deposit){
+  if(typeof deposit!=='string'||!(/^(?:[1-9][0-9]{0,76}|0x[0-9a-f]{64})$/.test(deposit))||BigInt(deposit)===0n)throw fail('ROLLING_INVALID_ACTION');
+  return locked(async()=>{
   await guardRoute();
   const results=await Promise.allSettled([()=>pxe.sync(),()=>app.prefetchContext()].map(read=>Promise.resolve().then(read)));
   const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
   await guardRoute();await initializeAccount();
   await pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress});
+  await guardRoute();
+  // Use the actual native utility to warm its hash-pinned nullifier reads.
+  // No hints cross into Post: its normal utility/proof rechecks the chosen
+  // deposit at the then-current anchor, including after a reorg or a spend.
+  const board=await sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(selected.board.contractAddress))),boardArtifact,privateWallet);
+  const owner=new sdk.AztecAddress(new sdk.Fr(BigInt(captured.address)));
+  await measureRollingStage('composer.screening',()=>board.methods.get_screen_hints(owner,new sdk.Fr(BigInt(deposit))).simulate({from:owner}),{nativeUtility:true});
   await guardRoute();
  });}
  return Object.freeze({application,preparePostingState,ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){

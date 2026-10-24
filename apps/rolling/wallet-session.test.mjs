@@ -117,7 +117,7 @@ async function sessionFixture({chainId='31337'}={}){
   createBrowserJournalStorage:()=>privateStore,createL2Journal,
   AccountManager:{create:async()=>{held('account-manager');return {address:accountInstance.address,getInstance:()=>accountInstance};}},
   ContractFunctionInteraction:class{async simulate(){held('signing-capsule');}},
-  Contract:{at:()=>({methods:{preference_head:()=>({simulate:async()=>{held('preference-head');return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='preference_head')),[Fr.ZERO,Fr.ONE,Fr.ZERO,Fr.ZERO])};}}),register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
+  Contract:{at:()=>({methods:{get_screen_hints:(owner,deposit)=>({simulate:async options=>{held('screen-hints');assert.equal(owner.toString(),account.address);assert.equal(options.from.toString(),account.address);return {result:[null,null]};}}),preference_head:()=>({simulate:async()=>{held('preference-head');return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='preference_head')),[Fr.ZERO,Fr.ONE,Fr.ZERO,Fr.ZERO])};}}),register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
  const locks={request:async(name,options,run)=>{assert.equal(name,'billboard-wallet:'+account.address);assert.deepEqual(options,{ifAvailable:true});
   if(state.active||state.otherTab)return run(null);state.active=true;state.events.push('lock');try{return await run({});}finally{state.active=false;state.events.push('unlock');}}};
@@ -1216,7 +1216,7 @@ for(const outcome of ['success','discovery','context'])test(`background posting 
  f.input.sdk.createBrowserJournalStorage=()=>({...f.privateStore,compareAndSwap:(...args)=>{writes++;return f.privateStore.compareAndSwap(...args);}});
  const session=await createRollingWalletSession(f.input);
  const original=f.pxe.prepareOrdinaryPostState;f.pxe.prepareOrdinaryPostState=async targets=>{await original(targets);entered.resolve();await gate.promise;if(outcome==='discovery')throw Error('controlled discovery failure');};
- let settled=false;const run=session.preparePostingState().finally(()=>settled=true);
+ let settled=false;const run=session.preparePostingState('9').finally(()=>settled=true);
  const observed=outcome==='success'?run:assert.rejects(run,outcome==='discovery'?/controlled discovery failure/:{code:'ROLLING_PRIVATE_ROUTE'});
  try{
   await entered.promise;assert.equal(f.state.active,true);assert.equal(settled,false);assert.equal(f.state.sends,0);
@@ -1232,7 +1232,60 @@ test('background posting preparation drains readiness failure with held native s
  const session=await createRollingWalletSession(f.input);failing=true;
  const original=f.pxe.sync;f.pxe.sync=async()=>{entered.resolve();await gate.promise;return original();};
  let settled=false;
- const run=session.preparePostingState().finally(()=>settled=true),rejected=assert.rejects(run,/controlled readiness failure/);
+ const run=session.preparePostingState('9').finally(()=>settled=true),rejected=assert.rejects(run,/controlled readiness failure/);
  try{await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert.equal(f.state.active,true);gate.resolve();await rejected;assert.equal(f.state.active,false);assert(!f.state.events.includes('ordinary-state'));}
  finally{gate.resolve();await session.close();}
+});
+
+for(const mode of ['success','failure','account-change'])test(`background screening holds its lease and retains no result: ${mode}`,async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ const original=f.input.sdk.Contract.at;let calls=0;
+ f.input.sdk.Contract.at=(...args)=>{const board=original(...args);return {...board,methods:{...board.methods,get_screen_hints:(owner,deposit)=>({simulate:async options=>{
+  assert(f.state.active);assert(f.state.events.includes('ordinary-state'));assert.equal(deposit.toBigInt(),9n);calls++;entered.resolve();await gate.promise;
+  if(mode==='failure')throw Error('screen failure');return {result:[null,null]};
+ }})}};};
+ const session=await createRollingWalletSession(f.input);let settled=false;
+ const run=session.preparePostingState('9').finally(()=>settled=true);
+ const observed=mode==='success'?run:assert.rejects(run,mode==='failure'?/screen failure/:{code:'ROLLING_PRIVATE_ROUTE'});
+ try{await entered.promise;assert.equal(settled,false);assert(f.state.active);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
+  if(mode==='account-change')f.state.wrongPXE=true;gate.resolve();assert.equal(await observed,undefined);assert.equal(f.state.active,false);assert.equal(f.state.sends,0);assert.equal(calls,1);
+ }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
+});
+test('background screening uses the current native anchored cache for each selected deposit and does not retain hints',async()=>{
+ const {withCache}=await import('../../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js');
+ const f=await sessionFixture();let anchor={number:10,hash:BlockHash.fromString(hex(55))},requests=0,utilities=0;
+ const node=withCache({findLeavesIndexes:async(reference,tree,values)=>{requests++;assert.equal(reference.hash.toString(),anchor.hash.toString());return values.map(()=>undefined);}});
+ const original=f.input.sdk.Contract.at;
+ f.input.sdk.Contract.at=(...args)=>{const board=original(...args);return {...board,methods:{...board.methods,get_screen_hints:(owner,deposit)=>({simulate:async()=>{
+  utilities++;await node.findLeavesIndexes(anchor,1,[deposit]);return {result:[null,null]};
+ }})}};};
+ const session=await createRollingWalletSession(f.input);
+ try{
+  assert.equal(await session.preparePostingState('9'),undefined);await session.preparePostingState('9');assert.equal(utilities,2);assert.equal(requests,1);
+  await session.preparePostingState('10');assert.equal(requests,2);
+  anchor={number:11,hash:BlockHash.fromString(hex(56))};await session.preparePostingState('9');assert.equal(requests,3);
+  anchor={number:10,hash:BlockHash.fromString(hex(57))};node.wipeCache();await session.preparePostingState('9');assert.equal(requests,4);
+  assert.equal(f.state.syncs,5,'each warm still synchronizes natively');assert.equal(f.state.sends,0);
+ }finally{await session.close();}
+});
+test('invalid background screening selection fails before acquiring an operation or native access',async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input),before=f.state.events.length;
+ try{for(const deposit of [undefined,null,9,{},'0',hex(0),'09','-1','0x9'])await assert.rejects(session.preparePostingState(deposit),{code:'ROLLING_INVALID_ACTION'});
+  assert.equal(f.state.events.length,before);
+ }finally{await session.close();}
+});
+
+test('Post reexecutes screening for its own deposit after background preparation',async()=>{
+ const f=await sessionFixture(),seen=[],original=f.input.sdk.Contract.at;
+ f.input.sdk.Contract.at=(...args)=>{const board=original(...args);return {...board,methods:{...board.methods,post:(...args)=>({args}),get_screen_hints:(owner,deposit)=>({simulate:async()=>{
+  seen.push(BigInt(deposit.toString()));return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
+ }})}};};
+ const publicRead=f.node.getPublicStorageAt;f.node.getPublicStorageAt=async(reference,address,slot)=>slot.equals(artifact.storageLayout.main_version.slot)?Fr.ONE:publicRead(reference,address,slot);
+ f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10,timestamp:100n},hash:async()=>BlockHash.fromString(hex(55))});
+ f.input.sdk.ordinaryPostFeeBudget=()=>({maximumFee:100n});f.input.sdk.prefetchOrdinaryPostWitnesses=async()=>{};
+ const session=await createRollingWalletSession(f.input),stop=Error('stop before proof');
+ try{await session.preparePostingState('9');const syncs=f.state.syncs;
+  await assert.rejects(session.application.executeAction({type:'post',deposit:'10',content:'Fresh authoritative selection'},{onPrepared:()=>{throw stop;}}),e=>e===stop);
+  assert.deepEqual(seen,[9n,10n]);assert.equal(f.state.syncs,syncs+1);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
+ }finally{await session.close();}
 });
