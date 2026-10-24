@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 import { registerHooks } from 'node:module';
+import {reusePrivateLogEffects} from '../../scripts/pxe-log-projection.mjs';
 import {OWNER_DISCOVERY_PINS,transformOwnerDiscovery} from '../../scripts/patch-pxe-owner-discovery.mjs';
 import { pathToFileURL } from 'node:url';
 import { Fr } from '@aztec-labs/foundation/curves/bn254';
@@ -17,6 +18,7 @@ process.env.HARDWARE_CONCURRENCY ??= '2';
 // Supply only the Node-required JSON attribute for this pinned local artifact directory.
 const artifactRoots = ['accounts', 'protocol-contracts', 'standard-contracts'].map(name => pathToFileURL(path.join(ROOT, 'node_modules/@aztec-labs', name, 'artifacts/')).href);
 registerHooks({ load(url, context, nextLoad) {
+  if(process.env.OWNER_LOG_CACHE==='projected'&&url.endsWith('/pxe/dest/node/caching_aztec_node.js')) { const result=nextLoad(url,context); return {...result,source:reusePrivateLogEffects(Buffer.from(result.source).toString())}; }
   const ownerPin=OWNER_DISCOVERY_PINS.find(pin=>url.endsWith('/pxe/'+pin.path));
   if(ownerPin){
     const result=nextLoad(url,context),source=Buffer.from(result.source).toString();
@@ -52,6 +54,7 @@ WASMSimulator.prototype.executeUserCircuit = function(input, artifact, callback)
   return originalExecute.call(this,input,artifact,wrapOwnerEnvelopeCallbacks(callback,ownerOracles));
 };
 const {PrivateExecutionOracle} = await import('@aztec-labs/pxe/simulator');
+const {withCache}=await import('../../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js');
 const originalNextIndex=PrivateExecutionOracle.prototype.getNextTaggingIndex;
 PrivateExecutionOracle.prototype.getNextTaggingIndex=async function(...args){
   const nativeIndex=await originalNextIndex.apply(this,args);
@@ -69,6 +72,7 @@ TXEDispatcher.prototype.resolve_foreign_call = async function(call) {
 const {TXESession} = await import(pathToFileURL(path.join(base,'txe_session.js')).href);
 const originalSessionFunction = TXESession.prototype.processFunction;
 TXESession.prototype.processFunction = async function(name,inputs) {
+  if(name==='rolling_test_reset_query_counts') { this.stateMachine.resetOwnerQueryCounts(); return {values:[]}; }
   if(name==='rolling_test_report_counts') {
     console.log(JSON.stringify({ownerDiscoveryQueries:this.stateMachine.ownerQueryCounts}));
     return {values:[]};
@@ -145,12 +149,32 @@ TXEStateMachine.create = async function (...args) {
   assert.equal(await machine.node.getChainId(),1);
   assert.equal(await machine.node.getVersion(),1);
   const getLogs=machine.node.getPrivateLogsByTags.bind(machine.node);
-  machine.ownerQueryCounts={calls:0,tags:0,effectsCalls:0};
+  let richerQueries=new Set();
+  machine.resetOwnerQueryCounts=()=>{richerQueries=new Set();machine.ownerQueryCounts={calls:0,tags:0,effectsCalls:0,poorerCalls:0,exactRicherTagMatches:0,fullyRedundantPoorerCalls:0};};
+  machine.resetOwnerQueryCounts();
   machine.node.getPrivateLogsByTags=async request=>{
     machine.ownerQueryCounts.calls++; machine.ownerQueryCounts.tags+=request.tags.length;
+    const pinned=request.referenceBlock&&typeof request.referenceBlock==='object'&&request.referenceBlock.hash&&request.toBlock!==undefined;
+    // Exact native query fields, except effect projection. Keys stay in this
+    // test process; only counts are emitted, never tags/anchors/transaction IDs.
+    const keys=pinned?request.tags.map(tag=>createHash('sha256').update(JSON.stringify({referenceBlock:request.referenceBlock,fromBlock:request.fromBlock,toBlock:request.toBlock,txHash:request.txHash,limitPerTag:request.limitPerTag,tag})).digest('hex')):[];
     if(request.includeEffects) machine.ownerQueryCounts.effectsCalls++;
-    return getLogs(request);
+    else {
+      machine.ownerQueryCounts.poorerCalls++;
+      const hits=keys.filter(key=>richerQueries.has(key)).length;
+      machine.ownerQueryCounts.exactRicherTagMatches+=hits;
+      if(hits&&hits===request.tags.length)machine.ownerQueryCounts.fullyRedundantPoorerCalls++;
+    }
+    const result=await getLogs(request);
+    if(request.includeEffects)for(const key of keys)richerQueries.add(key);
+    return result;
   };
+  if(process.env.OWNER_LOG_CACHE) {
+    assert(['native','projected'].includes(process.env.OWNER_LOG_CACHE));
+    const observed=machine.node.getPrivateLogsByTags;
+    const cached=withCache({getPrivateLogsByTags:request=>observed(request)});
+    machine.node.getPrivateLogsByTags=request=>cached.getPrivateLogsByTags(request);
+  }
   return machine;
 };
 const originalBuild = TXEGlobalVariablesBuilder.prototype.buildCheckpointGlobalVariables;

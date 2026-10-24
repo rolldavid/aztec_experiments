@@ -1,0 +1,26 @@
+{
+  "scenario": "actual atomic named Board.post + FPC.pay_fee through native anchored withCache",
+  "counts": {
+    "before": {
+      "calls": 15,
+      "tags": 1019,
+      "effectsCalls": 11,
+      "poorerCalls": 4,
+      "exactRicherTagMatches": 173,
+      "fullyRedundantPoorerCalls": 4
+    },
+    "after": {
+      "calls": 11,
+      "tags": 846,
+      "effectsCalls": 11,
+      "poorerCalls": 0,
+      "exactRicherTagMatches": 0,
+      "fullyRedundantPoorerCalls": 0
+    }
+  },
+  "avoidedRequests": 4,
+  "avoidedTagPages": 173,
+  "authorityChecks": "Same actual native4 private notes,5 settled including refund,5000 restored balance,name/preferences cold restore and subsequent spends. No state-machine changes.",
+  "measurement": "Only during actual posting operation, after setup and initial private-store reset. Numeric counts only; no tags, owner IDs or query hashes in evidence.",
+  "scope": "Local native TXE functional case; counts are actual node-method requests, not measured browser network latency."
+}

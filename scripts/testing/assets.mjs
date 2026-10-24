@@ -15,6 +15,7 @@ export async function fingerprints() {
     'node_modules/@aztec-labs/pxe/dest/logs/log_service.js',
     'node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js',
     'node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/oracle_registry.js',
+    'scripts/pxe-log-projection.mjs',
     'scripts/patch-pxe-preference-page.mjs',
     'node_modules/@aztec-labs/pxe/src/operation_queue.ts',
     'node_modules/@aztec-labs/pxe/dest/operation_queue.js',

@@ -23,6 +23,10 @@ unconstrained fn forget_private_state() {}
 unconstrained fn assert_effects(notes: u32, logs: u32) {}
 #[oracle(rolling_test_assert_private_notes)]
 unconstrained fn assert_private_notes(notes: u32) {}
+#[oracle(rolling_test_report_counts)]
+unconstrained fn report_counts() {}
+#[oracle(rolling_test_reset_query_counts)]
+unconstrained fn reset_query_counts() {}
 #[oracle(rolling_test_begin_setup)]
 unconstrained fn begin_setup() {}
 #[oracle(rolling_test_end_setup)]
@@ -65,11 +69,13 @@ unconstrained fn actual_named_post_preserves_note_count_and_restores_every_self_
     env.mine_block_at(env.last_block_timestamp()+11);
     let draft=PostDraft{subboard:0,parent:0,root_reference:0,kind:1,name_id:name,reference:0,
         message:text("Hello"),length:5,expected_main_policy_version:1,expected_local_policy_version:0};
+    reset_query_counts();
     begin_setup();
     env.call_private(owner,OwnerPostingAccount::at(owner).post(board,fpc,deposit,201,draft));
     end_setup();
     // Four existing private notes: post, replacement deposit, name and FPC change.
     // The unchanged native public teardown completes a fifth (fee-refund) note.
+    report_counts();
     assert_private_notes(4);
     assert_effects(5,5);
     let (exists,record,_,_,_)=env.view_public(RollingBoard::at(board).get_post(post_id(board,201)));

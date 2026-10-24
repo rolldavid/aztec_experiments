@@ -27,6 +27,8 @@ function fixture(t) {
   };
   const read = name => fs.readFileSync(path.join(root, name));
   const inputs = {
+    'scripts/pxe-log-projection.mjs':fs.readFileSync(new URL('./pxe-log-projection.mjs',import.meta.url),'utf8'),
+    'node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js':fs.readFileSync(new URL('../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js',import.meta.url),'utf8'),
     'scripts/pxe-sync-snapshot.mjs':'// fixture sync transform',
     'shared/owner-envelope.mjs':'// fixture envelope',
     'shared/ordinary-post-fees.mjs':'// fixture fee profile',
@@ -247,4 +249,8 @@ for(const pin of OWNER_DISCOVERY_PINS)test('owner discovery literal SDK pin '+pi
  delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
  f.write(name,'unpatched owner oracle');f.manifest.inputs[name]=hash('unpatched owner oracle');f.save();
  assert.throws(()=>checkSdk(f.root),/owner discovery patch mismatch/);
+});
+
+for(const name of ['scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js'])test('private log projection SDK pin '+name,t=>{
+ const f=fixture(t);delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/SDK|source/);
 });
