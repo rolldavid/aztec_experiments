@@ -57,6 +57,32 @@ balance refreshed automatically from 0.674707 to 0.655901.
 [hardware activation](../execution/evidence/G21/stable6/bok-performance/worker-m8a-activation.json),
 [published browser readback](../execution/evidence/G21/stable6/bok-performance/predecessor-static-readback.json).
 
+### Simulation ownership and remaining exceptions
+
+The SDK defect changed in-memory log/public-input objects; simulation did not write
+canonical blockchain state. Native validation now receives a detached SDK value,
+leaving the private execution and witnesses unchanged. The measured copy costs
+0.894ms, not seconds. The normal funded main-board path has one private execution,
+one actual kernel witness pass, one public transaction simulation, one node
+transaction validation and one proof. There is no separate fee-estimation simulation.
+
+SDK method names alone do not determine cost. Unconstrained balance and screening
+reads call executeUtility. Static public views, including subboard policy, are
+dispatched straight to node.simulatePublicCalls and do not execute private kernels.
+Earlier source comments claiming a whole wallet transaction were corrected.
+
+The low-credit search is different: each fee reservation can select different
+notes and gas settings are private execution inputs. Source d2c9eba8 removes its
+unnecessary standalone final strict simulation for immediate sends. The exact final
+payload is validated inside native proving instead. A successful first search
+pass now has five private executions including proving, versus six previously;
+remaining candidate probes are not claimed to be one-pass. Explicit review
+behavior is unchanged, and no witness is cached across completed PXE operations.
+All 205 affected estimator, engine, native-validation and immutable-log tests passed.
+No separate low-credit wall-time speedup is claimed.
+
+[Final simulation audit](../execution/evidence/G21/stable6/bok-performance/final-simulation-audit.json).
+
 ## Previous published result — 2m47s from Post to settled, visible reply
 
 The identical feature request from the same original app source now completes in

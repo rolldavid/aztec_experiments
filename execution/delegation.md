@@ -1,12 +1,16 @@
-# Active performance continuation — 24 October 2026
+# Active performance goal — 24 October 2026
 
-Root owns integration and the next real browser comparison. Worker392bee96's
-previous result was167.038s; same host now m8a.xlarge with four physical cores,
-verified healthy. Network completed normal original-source fixture reset and
-owns read-only run observation. Packaging publishes browser1310bb4e, independently
-reviewed with405integrated tests. Fresh-account audits remaining argument-read
-serialization without changes. No concurrent service mutation during the benchmark.
-No migration or account reset is needed.
+Root integrated and published browser9e66ca7a, worker392bee96 remains live on
+m8a.xlarge. All delegated implementation and independent reviews are complete.
+Latest comparable request:160.534s actual Post click to settled visible reply;
+all application-controlled categories improved33–95%. All174 generated-app browser
+checks and manual reload check passed; balance/refund updated automatically.
+Final low-credit duplication fix passed205 checks and is published; no additional
+live latency claim. Independent anchored-read change passed549 checks.
+No live benchmark, service mutation or paid job is active.
+Remaining unmet target:30-second public-network checkpoint confirmation. Evidence
+shows72-second slots/pipelining; do not remove canonical completion or relabel
+proposed inclusion as settled to claim success. See docs/BOK_LATENCY.md.
 
 ## Live component ownership — 2026-10-19T12:48Z
 

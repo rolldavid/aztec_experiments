@@ -1,0 +1,41 @@
+{
+  "scope": "main-board funded immediate post and worker atomic finalization; separate low-credit investigation",
+  "normalCounts": {
+    "privateExecution": 1,
+    "kernelWitnessPass": 1,
+    "publicTransactionSimulation": 1,
+    "nodeTransactionValidation": 1,
+    "proof": 1,
+    "feeEstimationSimulation": 0
+  },
+  "logMutation": {
+    "affected": "in-memory simulated log/public-input objects, not canonical chain state",
+    "fix": "validate detached native public inputs; retain original execution and witnesses",
+    "copyMedianMs": 0.8938299999999981,
+    "regression": "scripts/pxe-simulation-logs.test.mjs exercises original native objects and witnesses; scripts/pxe-validated-prove.test.mjs exercises actual native kernel callback sequencing"
+  },
+  "sdkDispatch": {
+    "utility": "executeUtility, no account transaction/kernel/proof",
+    "publicStaticView": "BaseWallet extracts static calls and invokes node.simulatePublicCalls; no private execution/kernel/proof",
+    "subboardPolicy": "one additional public-only static simulation; not included in main-board count"
+  },
+  "lowCreditFix": {
+    "source": "d2c9eba8",
+    "immediate": "After candidate selection, exact final payload/gas is validated inside native proving; skip prior standalone strict simulation",
+    "firstSuccessfulSearchPassPrivateExecutionsIncludingProofBefore": 6,
+    "firstSuccessfulSearchPassPrivateExecutionsIncludingProofAfter": 5,
+    "reviewBehavior": "unchanged strict validation",
+    "remainingSearch": "different reservation values alter selected notes/recursive subtraction; gas settings are private context inputs; no across-operation witness cache",
+    "latencyClaim": "One duplicate execution removed; no separate live low-credit timing claim"
+  },
+  "verification": {
+    "integratedSource": "9e66ca7a",
+    "tests": 205,
+    "passed": 205,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 3026.816792,
+    "review": "independent runtime and test-fixture reviews approved",
+    "earlierFailure": "Broader engine fixtures lacked actual native bridge-waiter API; repaired test-only fixture, retaining negative/delayed-readiness checks"
+  }
+}

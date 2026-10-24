@@ -1,0 +1,50 @@
+{
+  "commit": "9e66ca7a6aebfb0af5312f477dd79d77305f8522",
+  "observedAt": "2026-10-24T00:16:26.129767+00:00",
+  "files": [
+    {
+      "path": "/wallet/aztec_bundle.js",
+      "sha256": "f8a2508f7b31e361a355685052cc9e52c5edd60571138e93832e76182b89e541",
+      "bytes": 16542670,
+      "cacheControl": "no-store"
+    },
+    {
+      "path": "/wallet/runtime.mjs",
+      "sha256": "3e706cb39f04c932501480503540ed92a1533c509d9f454525076e6008d81089",
+      "bytes": 367008,
+      "cacheControl": "no-store"
+    },
+    {
+      "path": "/reader.mjs",
+      "sha256": "f57a6d99c54ee654872185c6d07fed30d53819893f39e3ea40456022c6c2b8b9",
+      "bytes": 32125,
+      "cacheControl": "no-store"
+    },
+    {
+      "path": "/wallet-panel.mjs",
+      "sha256": "715b6e447c75d5392a2f1f8576ae1497a977042da1999415454f3b80d1d97e48",
+      "bytes": 139474,
+      "cacheControl": "no-store"
+    },
+    {
+      "path": "/wallet/account.js",
+      "sha256": "974b1d344a7b05aeae49fdbd4741979c3ab30b3259c4ce3fb3f0aa1de1980bb2",
+      "bytes": 17338,
+      "cacheControl": "no-store"
+    }
+  ],
+  "root": {
+    "status": 200,
+    "cacheControl": "no-store"
+  },
+  "runtime": {
+    "cacheControl": "no-store",
+    "sdk": {
+      "url": "/wallet/aztec_bundle.js",
+      "bytes": 16542670,
+      "sha256": "f8a2508f7b31e361a355685052cc9e52c5edd60571138e93832e76182b89e541"
+    }
+  },
+  "invalidationId": "I6I0B7VMX04H15BZI7GQEL97WP",
+  "invalidationStatus": "Completed"
+}
