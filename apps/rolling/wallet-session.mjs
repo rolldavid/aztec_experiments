@@ -532,7 +532,15 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    });
   },
  });
- return Object.freeze({application,ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ async function preparePostingState(){return locked(async()=>{
+  await guardRoute();
+  const results=await Promise.allSettled([()=>pxe.sync(),()=>app.prefetchContext()].map(read=>Promise.resolve().then(read)));
+  const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+  await guardRoute();await initializeAccount();
+  await pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress});
+  await guardRoute();
+ });}
+ return Object.freeze({application,preparePostingState,ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze(Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,(...args)=>locked(()=>withdrawal[name](...args))]))),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

@@ -1210,3 +1210,29 @@ for(const failure of ['discovery','context'])test(`ordinary preparation holds ac
   gate.resolve();await rejected;assert.equal(f.state.active,false);assert.equal(f.state.sends,0);
  }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
 });
+
+for(const outcome of ['success','discovery','context'])test(`background posting preparation owns one native lease and releases without a journal: ${outcome}`,async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let writes=0;
+ f.input.sdk.createBrowserJournalStorage=()=>({...f.privateStore,compareAndSwap:(...args)=>{writes++;return f.privateStore.compareAndSwap(...args);}});
+ const session=await createRollingWalletSession(f.input);
+ const original=f.pxe.prepareOrdinaryPostState;f.pxe.prepareOrdinaryPostState=async targets=>{await original(targets);entered.resolve();await gate.promise;if(outcome==='discovery')throw Error('controlled discovery failure');};
+ let settled=false;const run=session.preparePostingState().finally(()=>settled=true);
+ const observed=outcome==='success'?run:assert.rejects(run,outcome==='discovery'?/controlled discovery failure/:{code:'ROLLING_PRIVATE_ROUTE'});
+ try{
+  await entered.promise;assert.equal(f.state.active,true);assert.equal(settled,false);assert.equal(f.state.sends,0);
+  await assert.rejects(session.application.readAccountStatus(),{code:'ROLLING_BUSY'});
+  if(outcome==='context')f.state.wrongPXE=true;gate.resolve();await observed;assert.equal(f.state.active,false);assert.equal(f.state.sends,0);assert.equal(writes,0);
+  f.state.wrongPXE=false;const syncs=f.state.syncs;await session.application.ownedIdentities();assert.equal(f.state.syncs,syncs+1);
+ }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
+});
+
+test('background posting preparation drains readiness failure with held native synchronization',async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let failing=false;
+ const inspect=f.input.sdk.inspectTrustedNode;f.input.sdk.inspectTrustedNode=async(...args)=>{if(failing)throw Error('controlled readiness failure');return inspect(...args);};
+ const session=await createRollingWalletSession(f.input);failing=true;
+ const original=f.pxe.sync;f.pxe.sync=async()=>{entered.resolve();await gate.promise;return original();};
+ let settled=false;
+ const run=session.preparePostingState().finally(()=>settled=true),rejected=assert.rejects(run,/controlled readiness failure/);
+ try{await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert.equal(f.state.active,true);gate.resolve();await rejected;assert.equal(f.state.active,false);assert(!f.state.events.includes('ordinary-state'));}
+ finally{gate.resolve();await session.close();}
+});

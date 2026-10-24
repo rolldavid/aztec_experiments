@@ -32,9 +32,9 @@ function dom(t){
  const old={document:globalThis.document,Node:globalThis.Node,fetch:globalThis.fetch};Object.assign(globalThis,{document,Node:Element,fetch:async()=>{document.ruleReads=(document.ruleReads??0)+1;return new Response(JSON.stringify({schemaVersion:1,complete:true,scope:{chainId:'31337',rollupVersion:'1',boardAddress:'0x'+'1'.repeat(64)},boardId:'0',board:null,mainPolicy:document.rules??{version:'1',text:''}}),{headers:{'content-type':'application/json'}});}});
  t.after(()=>Object.assign(globalThis,old));return document;
 }
-async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000'}={}){
+async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
- const session={ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
+ const session={...(warm?{preparePostingState:async()=>{session.busy=true;try{await warm();}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
   readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds:['9']};},ownedIdentities:async()=>{core.names++;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;return {authorized:false};},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
@@ -572,4 +572,40 @@ for(const outcome of ['confirmed','unknown'])test(`rendered exact submitted post
  f.progress(inclusion);await Promise.resolve();assert.equal(effects,0);
  canonical.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.equal(f.document.querySelector('dialog').open,outcome!=='confirmed');
+});
+
+ test('composer native preparation is nonblocking, checkpoint-coalesced, and Post joins it',{timeout:3000},async t=>{
+ const gates=[Promise.withResolvers(),Promise.withResolvers()],started=Promise.withResolvers();let warms=0;
+ const f=await fixture(t,{warm:async()=>{const index=warms++;started.resolve();await gates[index]?.promise;},posting:{}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await started.promise;
+ const editor=f.document.querySelector('textarea');editor.value='Native preparation keeps typing free';editor.fire('input');
+ assert.equal(editor.disabled,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
+ f.panel.observePublicPosts([],warmHead(80));f.panel.observePublicPosts([],warmHead(81));assert.equal(warms,1);
+ gates[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,2);
+ f.panel.observePublicPosts([],warmHead(81));assert.equal(warms,2);
+ f.document.querySelector('[data-action-review]').fire('click');await Promise.resolve();assert.equal(f.prepared(),null);
+ gates[1].resolve();await f.document.until(()=>!f.document.querySelector('dialog').open);assert.equal(f.prepared().content,editor.value);assert.equal(warms,2);
+ });
+ test('closing composer stops follow-up preparation and background failure stays invisible',{timeout:3000},async t=>{
+ const gate=Promise.withResolvers(),started=Promise.withResolvers();let warms=0;
+ const f=await fixture(t,{warm:async()=>{warms++;started.resolve();await gate.promise;throw Error('PRIVATE_WARM_FAILURE');},posting:{}});
+ await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await started.promise;
+ assert.equal(f.panel.close(),true);f.panel.observePublicPosts([],warmHead(82));gate.resolve();await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(warms,1);assert.equal(f.document.querySelector('dialog').open,false);assert(!f.document.body.textContent.includes('PRIVATE_WARM_FAILURE'));
+ f.panel.open({type:'post',content:'Retry through fresh authoritative checks'});await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,2);
+ f.document.querySelector('[data-action-review]').fire('click');await f.document.until(()=>!f.document.querySelector('dialog').open);assert.equal(f.submissions.length,1);
+ });
+
+test('opening the composer from the account page starts native preparation only for the composer',{timeout:3000},async t=>{
+ let warms=0;const f=await fixture(t,{defaults:{},balanceRead:async()=>({available:true,availableCredit:'0'}),warm:async()=>{warms++;}});
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,0);
+ f.document.querySelectorAll('button').find(button=>button.textContent==='Write a post').fire('click');
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,1);assert.equal(f.document.querySelector('textarea').disabled,false);
+});
+
+test('leaving the composer before a queued checkpoint preparation starts prevents native work',{timeout:3000},async t=>{
+ let warms=0;const f=await fixture(t,{balanceRead:async()=>({available:true,availableCredit:'0'}),warm:async()=>{warms++;}});
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,1);
+ f.panel.observePublicPosts([],warmHead(90));f.panel.open({});
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,1);
 });
