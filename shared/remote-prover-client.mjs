@@ -42,7 +42,7 @@ export function createRemoteProverClient({url,board,chainId,rollupVersion,proofs
      if(!['complete','failed'].includes(job?.state))throw failure('BB_REMOTE_PROVER_RESPONSE');
      if(job.state==='complete'&&job.result?.mode!==metadata.mode)throw failure('BB_REMOTE_PROVER_RESPONSE');
      // Server phases are remote aggregates, never chronological browser spans.
-     for(const key of ['persistMs','queueWaitMs','resultReadyMs','workerMs','cleanupMs','readMs','decompressMs','bindingMs','backendMs','nativeProveMs','resultEncodeMs','childTotalMs','readyWaitMs','dispatchToResultMs','resultToExitMs','warmReplacementMs','resultReadyToSnapshotMs']){
+     for(const key of ['persistMs','queueWaitMs','resultReadyMs','workerMs','cleanupMs','readMs','decompressMs','bindingMs','backendMs','nativeProveMs','bbStartMs','bbLoadMs','bbAccumulateMs','bbProveMs','bbVerifyMs','bbCompressMs','resultEncodeMs','childTotalMs','readyWaitMs','dispatchToResultMs','resultToExitMs','warmReplacementMs','resultReadyToSnapshotMs']){
       const value=job.timings?.[key];if(typeof value==='number'&&Number.isFinite(value)&&value>=0)recordProofAggregate('server.'+key.replace(/Ms$/,'').replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value);
      }
      // Terminal acknowledgement cannot delay or cancel a completed proof.

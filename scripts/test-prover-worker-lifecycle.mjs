@@ -43,10 +43,10 @@ test('active worker rejects another assignment and close kills only its owned ch
 `));
 
 test('numeric worker timing cannot alter result or throw through proof completion',()=>run(`
- await fs.writeFile(entry,'process.send({ready:true});process.once("message",()=>{process.send({mode:"real",compressedProof:"proof",timings:{read:1,decompress:2,"board-binding":3,prove:4,"native-prove":5,"result-encode":6,totalMs:21,secret:"hidden"}},()=>setTimeout(()=>process.disconnect(),15));});');
+ await fs.writeFile(entry,'process.send({ready:true});process.once("message",()=>{process.send({mode:"real",compressedProof:"proof",timings:{read:1,decompress:2,"board-binding":3,prove:4,"native-prove":5,"bb-load":1,"bb-accumulate":2,"bb-prove":1,"bb-verify":0.5,"bb-compress":0.25,"bb-start":0.25,"bb-secret":99,"result-encode":6,totalMs:21,secret:"hidden"}},()=>setTimeout(()=>process.disconnect(),15));});');
  worker=createProcessWorker({proofsEnabled:false});await until(()=>children[0].ready);let timing;
  assert.deepEqual(await worker.prove('/numeric',{onTimings:value=>{timing=value;throw Error('diagnostic failed');}}),{mode:'real',compressedProof:'proof'});
- assert.equal(timing.nativeProveMs,5);assert.equal(timing.childTotalMs,21);assert.equal(timing.resultEncodeMs,6);
+ assert.equal(timing.nativeProveMs,5);assert.equal(timing.bbLoadMs,1);assert.equal(timing.bbAccumulateMs,2);assert.equal(timing.bbProveMs,1);assert.equal(timing.bbVerifyMs,0.5);assert.equal(timing.bbCompressMs,0.25);assert.equal(timing.bbStartMs,0.25);assert(!Object.hasOwn(timing,"bbSecretMs"));assert.equal(timing.childTotalMs,21);assert.equal(timing.resultEncodeMs,6);
  assert(timing.readyWaitMs>=0);assert(timing.resultToExitMs>=0);assert(!Object.hasOwn(timing,'secret'));
 `));
 

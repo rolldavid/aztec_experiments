@@ -1,4 +1,5 @@
 // Single disposable worker: never log witnesses or SDK exceptions.
+import {instrumentNativeCalls} from './native-call-timings.mjs';
 import {validateRollingJob} from './application-policy.mjs';
 import {pluginSelectors,validatePluginPayload} from './plugin-policy.mjs';
 import fs from 'node:fs/promises';
@@ -87,6 +88,7 @@ try{
  }else{
   if(process.env.PROVER_PROOFS!=='real')throw Error('Mode mismatch');
   const api=assertWorkerNativeProfile(nativeProfile);
+  instrumentNativeCalls(api,timings);
   // The SDK pipelines these calls without awaiting their promises. Observe
   // rejected calls so one invalid job cannot crash before the final error handler.
   let firstFailure;

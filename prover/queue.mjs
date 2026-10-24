@@ -20,7 +20,7 @@ export async function createProofQueue({directory,worker,maxJobs=1000,maxBytes=2
     if(state==='complete')completed++;else failed++;notify(job);
    };
    try{job.result=await worker.prove(job.file,{onResult:result=>publish(result),onTimings:values=>{
-    for(const key of ['readMs','decompressMs','bindingMs','backendMs','nativeProveMs','resultEncodeMs','childTotalMs','readyWaitMs','dispatchToResultMs','resultToExitMs','warmReplacementMs']){
+    for(const key of ['readMs','decompressMs','bindingMs','backendMs','nativeProveMs','bbStartMs','bbLoadMs','bbAccumulateMs','bbProveMs','bbVerifyMs','bbCompressMs','resultEncodeMs','childTotalMs','readyWaitMs','dispatchToResultMs','resultToExitMs','warmReplacementMs']){
      const value=values?.[key];if(typeof value==='number'&&Number.isFinite(value)&&value>=0)job.timings[key]=value;
     }
    }});}catch(error){if(job.state!=='complete'){state='failed';job.code=['read','catalog','decompress','board-binding','prove','native-init','native-prove','native-srs','native-constraint','native-verification','native-process'].includes(error.code)?error.code:'worker';}}

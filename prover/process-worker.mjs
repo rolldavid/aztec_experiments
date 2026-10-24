@@ -44,7 +44,7 @@ export function createProcessWorker({applicationProfile='legacy',privateBokAddre
    // Each duration is calculated within one process clock. These aggregates
    // overlap the queue's workerMs and must not be added to that enclosing total.
    try{
-    for(const [key,label] of [['read','readMs'],['decompress','decompressMs'],['board-binding','bindingMs'],['prove','backendMs'],['native-prove','nativeProveMs'],['result-encode','resultEncodeMs'],['totalMs','childTotalMs']]){
+    for(const [key,label] of [['read','readMs'],['decompress','decompressMs'],['board-binding','bindingMs'],['prove','backendMs'],['native-prove','nativeProveMs'],['bb-start','bbStartMs'],['bb-load','bbLoadMs'],['bb-accumulate','bbAccumulateMs'],['bb-prove','bbProveMs'],['bb-verify','bbVerifyMs'],['bb-compress','bbCompressMs'],['result-encode','resultEncodeMs'],['totalMs','childTotalMs']]){
      const value=result?.timings?.[key];if(typeof value==='number'&&Number.isFinite(value)&&value>=0)timings[label]=value;
     }
     for(const [key,start,end] of [['readyWaitMs',state.claimedAt,state.dispatchedAt],['dispatchToResultMs',state.dispatchedAt,state.resultAt],['resultToExitMs',state.resultAt,state.endedAt]])if(Number.isFinite(start)&&Number.isFinite(end)&&end>=start)timings[key]=end-start;
