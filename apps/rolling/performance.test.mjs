@@ -150,3 +150,11 @@ test('proof upload reports exact body bytes and bounded numeric server arrival o
  assert(!Object.hasOwn(result,'[object Object]'));assert(!Object.keys(result).some(k=>k.includes('function')));assert.equal(result.serverBodyFirst,4);assert.equal(result.serverBodyGap,19);assert.equal(result.serverBodyChunks,8);assert.equal(result.serverBodyBytes,195894);
  assert(!JSON.stringify(result).includes('private'));assert.equal(rollingResourceTiming(resource('/api/home',{serverTiming}),origin).serverBodyBytes,undefined);
 });
+
+test('proof result stream records numeric delivery phases without job capabilities or query data',()=>{
+ const job='a'.repeat(64),result=rollingResourceTiming(resource('/prover/v1/jobs/'+job+'/result?token=PRIVATE_TOKEN#PRIVATE_FRAGMENT',{responseStart:20,responseEnd:30,encodedBodySize:41000,decodedBodySize:42000}),origin);
+ assert.equal(result.endpoint,'prover-result');assert.equal(result.responseStart,20);assert.equal(result.responseEnd,30);assert.equal(result.encodedBodySize,41000);assert.equal(result.decodedBodySize,42000);
+ const serialized=JSON.stringify(result);for(const secret of [job,'PRIVATE_TOKEN','PRIVATE_FRAGMENT','/result'])assert(!serialized.includes(secret));
+ for(const path of ['/prover/v1/jobs/not-a-job/result','/prover/v1/jobs/'+job+'/result/extra','/prover/v1/jobs/'+job+'/result/'])assert.equal(rollingResourceTiming(resource(path),origin),null);
+ assert.equal(rollingResourceTiming(resource('/prover/v1/jobs/'+job+'/result',{name:'https://other.example/prover/v1/jobs/'+job+'/result'}),origin),null);
+});

@@ -42,6 +42,7 @@ export function rollingResourceTiming(entry,origin){
   if(!(asset?['fetch','xmlhttprequest','script']:['fetch','xmlhttprequest']).includes(entry.initiatorType))return null;
   const endpoint=asset??(url.pathname==='/prover/v1/node'?'node':url.pathname==='/prover/v1/jobs'?'prover-submit':
    /^\/prover\/v1\/jobs\/[a-f0-9]{64}$/.test(url.pathname)?'prover-job':
+   /^\/prover\/v1\/jobs\/[a-f0-9]{64}\/result$/.test(url.pathname)?'prover-result':
    /^\/api\/(?:status|home|feed|board|directory|thread|profile|post|bok-accounting)$/.test(url.pathname)?'public-read':null);
   if(!endpoint)return null;
   const result={kind:'resource',endpoint};
