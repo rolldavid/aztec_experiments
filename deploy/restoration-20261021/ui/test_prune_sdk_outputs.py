@@ -63,4 +63,23 @@ class Tests(unittest.TestCase):
  def test_symlink_parent(self):
   self.sdk.rename(self.release/'real');self.sdk.symlink_to(self.release/'real')
   with self.assertRaises(AssertionError):self.run_prune()
+ def native_outputs(self):
+  names=['native-contract-'+name+'.json' for name in ('AuthRegistry','ContractClassRegistry','ContractInstanceRegistry','FeeJuice','HandshakeRegistry','MultiCallEntrypoint')]
+  for name in names:(self.sdk/name).write_text('{}')
+  outputs=json.loads(self.manifest.read_text())['outputs'];outputs.update({name:hashlib.sha256(b'{}').hexdigest() for name in names});self.manifest.write_text(json.dumps({'outputs':outputs}));return names
+ def test_six_native_artifacts_are_generated_outputs_only(self):
+  names=self.native_outputs();extra=self.sdk/'config.json';extra.write_text('protected')
+  result=self.run_prune();self.assertEqual(result['files'],7)
+  self.assertTrue(all(not (self.sdk/name).exists() for name in names));self.assertTrue(extra.exists());self.assertTrue(self.manifest.exists())
+ def test_unrelated_json_rejects_before_any_unlink(self):
+  names=self.native_outputs()
+  for name in ['config.json','native-contract-Other.json','../native-contract-FeeJuice.json']:
+   outputs=json.loads(self.manifest.read_text())['outputs'];outputs[name]='a'*64;self.manifest.write_text(json.dumps({'outputs':outputs}))
+   with self.assertRaises(AssertionError):self.run_prune()
+   self.assertTrue(self.file.exists());self.assertTrue(all((self.sdk/n).exists() for n in names))
+   del outputs[name];self.manifest.write_text(json.dumps({'outputs':outputs}))
+ def test_native_artifacts_remain_when_explicitly_protected_or_referenced(self):
+  names=self.native_outputs();self.plan['protected'].append(str(self.release));self.assertEqual(self.run_prune()['files'],0)
+  self.plan['protected'].remove(str(self.release));self.assertEqual(self.run_prune(refs=lambda:{self.release})['files'],0)
+  self.assertTrue(all((self.sdk/name).exists() for name in names));self.assertTrue(self.file.exists())
 if __name__=='__main__':unittest.main()

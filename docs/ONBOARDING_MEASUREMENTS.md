@@ -1,3 +1,11 @@
+## Live3b032339 measurements
+
+Published and pushed `3b0323399e39767a7c4f9ea11372cce85088b535`; no app/proxy restart. Normal account opening used the same funded test identity5, immediate wallet selection, and automatic sign-in approval included. First changed-SDK visit6.544245s; cached repeat3.502170s. Account-button intervals7.643835s/4.592940s. Neither reaches2s. Do not compare changed-SDK download with cached initialization as the same condition.
+
+Cached private session652ms (Board class178ms, total registration247ms); original cached a75 private session1541ms/Board1177ms. Overall improvement is smaller because public deployment completion and native state synchronization vary. Latest sync1203ms includes source snapshot341ms, prewrite advance235ms and postwrite check240ms; subsequent discovery405ms, fee metadata248ms and FPC private-log scan378ms. Nested spans overlap and must not be summed as sequential work. Full raw timings are retained.
+
+Real name creation on3b took16.385465s from Create name to actual native inclusion plus selected owned name Clear Finch. Required ownership refresh1693ms. Receipt tx0x0e0187bc9965896bf52d22643615220fced919e541be71831b222c84b8e25894, block5269/hash0x10781dc148553ba832414d75f2c9f18975b37a0cbaffaede0bfcd4812d3022d6; initially proposed. Prior a7517.543705s/historical106.844s retain different network/account-state limitations. No new full signup payment measured.
+
 ## Reviewed serialization source change
 
 Native artifact serialization no longer expands each byte Buffer into numeric JSON data and reconstructs it just to emit base64. The native JSON serializer, field serialization, full initial/final byte snapshots, SHA binding and persisted-byte comparisons remain. Fixed Board/FPC subspan names retain per-contract registration attribution. Unknown custom serialization uses the unchanged native path.

@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Live f986;992f pushed name/status overlap. Exact-byte native artifact serializer integrated and independent approved;29 checks pass (initial stale test fixture SHA failure retained/corrected). SDK build passes; wallet actual6-script gate running. Bundle all3 improvements for static publication, then measure normal opening/name. Prioropening3.271–5.224s/2s unmet; Post13.993s,Unlike13.909s includedvisible. All-flow50% incomplete; onebuild/IAB, no service restarts.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Live3b032339 native serializer/name/status batch;29+411+626checks and actual6browser-script gate pass. Actual opening6.544245s firstSDK/3.502170s cached,2s unmet. Name16.385465s includedselectedblock5269; a75Post13.992905s/f986Unlike13.909s. Allflow50% incomplete. UTF8revieweddraft queued, not integrated; sync snapshotwaves investigationactive. SDK inactive-retention narrow6JSON fix17pass reviewed; root cleanup pending. No service restarts; exact transfer deleted; onebuild/IAB.
 
 ## Ready internal work
 
