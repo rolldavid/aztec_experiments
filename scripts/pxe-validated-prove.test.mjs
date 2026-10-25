@@ -161,7 +161,7 @@ async function ordinarySyncFixture({written=false,initializationFailure=false}={
  };
  const queue=new PreparationOperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{sync:()=>assert.fail('Preparation must use already selected native anchor')},anchorBlockStore:{getBlockHeader:async()=>anchorBlockHeader},contributors:[service],stagedWriteCoordinator:{begin:()=>{events.push(['prepare-start']);return 42;},commit:async()=>events.push(['prepare-committed']),abort:()=>events.push(['prepare-discarded'])},log:{debug(){},verbose(){},warn(){},error(){}}});queue.start();preparationQueues.push(queue);
  const text=method(pxe,'async #syncOrdinaryPostCalls(', '\n    // Public API');
- const Class=vm.runInNewContext(`(class {node=node;contractStore=store;keyStore={};contractClassService=classService;contractSyncService=service;#executeUtility=utility;#getSimulatorForTx=()=>simulator;
+ const Class=vm.runInNewContext(`(class {node=node;contractStore=store;keyStore={accountHasKey:async()=>true,getKeyValidationRequest:async()=>({skApp:new SyncFr(55)})};addressStore={getCompleteAddress:async()=>({publicKeys:{npkMHash:new SyncFr(9)}})};contractClassService=classService;contractSyncService=service;#executeUtility=utility;#getSimulatorForTx=()=>simulator;
  operationQueue=queue;${text}
  ${method(pxe,'prepareBoardActionState(', '\n    // Public API')}
  async run(){try{await this.#syncOrdinaryPostCalls(request,calls,simulator,ctx,scopes);await service.settle(ctx.changeSetId);events.push(['private-ready']);service.onOperationEnd(ctx.changeSetId,'committed');}catch(error){await service.settle(ctx.changeSetId);service.onOperationEnd(ctx.changeSetId,'discarded');events.push(['discard']);throw error;}}
@@ -365,7 +365,7 @@ test('preference initialization selector is the exact compiled utility and only 
  assert.equal((await FunctionSelector.fromNameAndParameters(abi.name,abi.parameters)).toString(),'0xe9554592');
  for(const method of ['set_preference','mark_thread_read','set_like','register_name']){
   const f=await ordinarySyncFixture();await f.prepareGeneric(method);const rows=f.events.filter(e=>e[0]==='initialization');
-  assert.equal(rows.length,['set_preference','mark_thread_read'].includes(method)?1:0);
+  assert.equal(rows.length,['set_preference','mark_thread_read'].includes(method)?2:0);
   if(rows.length)assert.equal(rows[0][1][0],(await computeSiloedPrivateInitializationNullifier(f.board,new Fr(77))).toString());
  }
 });
@@ -400,4 +400,69 @@ for(const failure of [false,true])test('preference write preparation primes duri
  assert.equal(f.pending.length,3);assert.equal(f.events.filter(e=>e[0]==='initialization').length,1);assert.equal(settled,false);
  assert(!f.events.some(e=>['prepare-committed','prepare-discarded'].includes(e[0])));
  f.pending.forEach(p=>p.resolve());await observed;assert.equal(f.events.at(-1)[0],failure?'prepare-discarded':'prepare-committed');
+});
+
+// Run the actual qualified Noir utility against the same native oracle/cache.
+// This protects the private Noir domain separator and Owned<PrivateMutable>
+// slot formula, rather than merely comparing two JavaScript implementations.
+import {createHash} from 'node:crypto';
+import {abiEncode,abiDecode} from '@aztec-foundation/noir-noirc_abi';
+import {buildACIRCallback} from '@aztec-labs/pxe/simulator';
+import {WASMSimulator} from '@aztec-labs/simulator/client';
+import {BlockHeader,CallContext} from '@aztec-labs/stdlib/tx';
+import {SerializableContractInstance,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
+import {deriveKeys} from '@aztec-labs/stdlib/keys';
+import {KeyStore} from '@aztec-labs/key-store';
+const preferenceRaw=JSON.parse(await fs.readFile(process.env.ROLLING_TEST_ARTIFACT??new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8'));
+const preferenceNoir=preferenceRaw.functions.find(fn=>fn.name==='preference_head');
+async function ownerInitializationFixture({present=false,seed=42}={}){
+ const values=new Map(),map={set:async(k,v)=>values.set(k,v),getAsync:async k=>values.get(k),entriesAsync:()=>values.entries(),keysAsync:()=>values.keys()};
+ const keyStore=new KeyStore({openMap:()=>map,transactionAsync:fn=>fn()});
+ const complete=await keyStore.addAccount(await deriveKeys(new Fr(seed)),new Fr(43));
+ const instance=new SerializableContractInstance({version:2,salt:new Fr(1),deployer:AztecAddress.ZERO,currentContractClassId:Fr.fromString(syncProfile.boardClassId),originalContractClassId:Fr.fromString(syncProfile.boardClassId),initializationHash:new Fr(77),immutablesHash:Fr.ZERO,publicKeys:complete.publicKeys});
+ const address=await computeContractAddressFromInstance(instance),header=BlockHeader.empty();header.globalVariables.blockNumber=3;
+ const contractNullifier=await computeSiloedPrivateInitializationNullifier(address,instance.initializationHash);
+ let accountFound=true,keyAllowed=true,classId=syncProfile.boardClassId,readFailure=false,held;const reads=[];
+ const node=withCache({findLeavesIndexes:async(anchor,tree,items)=>{reads.push({anchor,tree,items});if(held)await held.promise;if(readFailure)throw Error('owner init lookup failed');return items.map(value=>value.equals(contractNullifier)||present?{data:1n,l2BlockNumber:1,l2BlockHash:BlockHash.fromString('0x'+'1'.padStart(64,'0'))}:undefined);}});
+ const addressStore={getCompleteAddress:async owner=>accountFound&&owner.equals(complete.address)?complete:undefined};
+ const realHasKey=keyStore.accountHasKey.bind(keyStore);keyStore.accountHasKey=async(...args)=>keyAllowed&&realHasKey(...args);
+ const store={getContractInstance:async()=>instance};
+ const Helper=vm.runInNewContext(`(class{node=node;contractStore=store;keyStore=keyStore;addressStore=addressStore;contractClassService={getCurrentClassId:async()=>SyncFr.fromString(currentClass())};
+ ${method(pxe,'async #prefetchPreferenceInitialization(', '\n    prepareOrdinaryPostState(')}
+ run(owner,artifact){return this.#prefetchPreferenceInitialization(address,header,owner,artifact);}
+ })`,{...syncBindings,allToCompletion,node,store,keyStore,addressStore,address,header,currentClass:()=>classId});
+ const helper=new Helper(),callContext=CallContext.empty();callContext.contractAddress=address;
+ const handler=new UtilityExecutionOracle({anchorBlockHeader:header,callContext,scopes:[complete.address],addressStore,keyStore,aztecNode:node,anchoredContractData:store});
+ const noteError=Error('native selected initialized note');handler.getNotes=async()=>{throw noteError;};
+ const runUtility=()=>new WASMSimulator({module:'preference-owner-initialization-test'}).executeUserCircuit(abiEncode(preferenceNoir.abi,{owner:{inner:complete.address.toField().toString()}}),{...preferenceNoir,bytecode:Buffer.from(preferenceNoir.bytecode,'base64'),contractName:'RollingBoard'},buildACIRCallback(handler));
+ return {prepare:()=>helper.run(complete.address,actualBoardArtifact),runUtility,reads,header,handler,complete,address,keyStore,node,noteError,contractNullifier,
+ wrongClass:()=>{classId=new Fr(999).toString();},missingAccount:()=>{accountFound=false;},denyKey:()=>{keyAllowed=false;},wrongLayout:()=>helper.run(complete.address,{storageLayout:{preferences:{slot:new Fr(37)}}}),
+ hold:()=>held=Promise.withResolvers(),fail:()=>{readFailure=true;},advance:()=>{header.globalVariables.blockNumber++;}};
+}
+test('owner initialization lookup formula is bound to exact native Noir sources and compiled storage',()=>{
+ const pins={'/state_vars/private_mutable.nr':'58d93dd8b3fb98509c7573948eff6f2d7f76de40d2b4c503287dc6f1c6e226aa','/macros/functions/initialization_utils.nr':'945322b1ce762831642c010b366ca6a450c8bcbda2febce8363470f25f3353b4'};
+ for(const [suffix,expected]of Object.entries(pins)){const source=Object.values(preferenceRaw.file_map).find(file=>file.path.endsWith(suffix))?.source;assert(source);assert.equal(createHash('sha256').update(source).digest('hex'),expected);}
+ assert.equal(actualBoardArtifact.storageLayout.preferences.slot.toBigInt(),36n);
+});
+for(const present of [false,true])test(`actual compiled preference_head reuses exact native keyed lookup initialized=${present}`,async()=>{
+ const f=await ownerInitializationFixture({present,seed:present?44:42});await f.prepare();assert.equal(f.reads.length,2);
+ assert(f.reads.every(read=>read.tree===MerkleTreeId.NULLIFIER_TREE));
+ const before=f.reads.length;
+ if(present)await assert.rejects(f.runUtility(),error=>error.cause===f.noteError||error.message.includes(f.noteError.message));
+ else{const result=await f.runUtility();assert.equal(abiDecode(preferenceNoir.abi,result.partialWitness).return_value.initialized,false);}
+ assert.equal(f.reads.length,before,'real compiled utility generates identical contract and owner nullifiers and reuses the native cache');
+ f.advance();if(present)await assert.rejects(f.runUtility());else await f.runUtility();
+ assert.equal(f.reads.length,before+2,'a different native anchor must read both statuses afresh');
+});
+for(const change of ['wrongClass','missingAccount','denyKey'])test(`owner prefetch cannot access an unqualified owner key: ${change}`,async()=>{
+ const f=await ownerInitializationFixture();f[change]();await f.prepare();assert.equal(f.reads.length,change==='wrongClass'?0:1);
+ if(change==='denyKey')await assert.rejects(f.runUtility(),/foreign_call_handler/);
+});
+test('invalid preference layout drains started native contract lookup before rejecting',async()=>{
+ const f=await ownerInitializationFixture(),held=f.hold();let settled=false;const result=f.wrongLayout().finally(()=>settled=true);const rejected=assert.rejects(result,/Invalid preference storage layout/);
+ for(let i=0;i<100&&!f.reads.length;i++)await new Promise(setImmediate);assert.equal(f.reads.length,1);assert.equal(settled,false);held.resolve();await rejected;
+});
+test('both owner initialization requests drain before native preparation can settle',async()=>{
+ const f=await ownerInitializationFixture(),held=f.hold();f.fail();let settled=false;const result=f.prepare().finally(()=>settled=true);const rejected=assert.rejects(result,/owner init lookup failed/);
+ for(let i=0;i<100&&f.reads.length<2;i++)await new Promise(setImmediate);assert.equal(f.reads.length,2);assert.equal(settled,false);held.resolve();await rejected;
 });

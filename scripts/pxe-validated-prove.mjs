@@ -9,7 +9,7 @@ function replace(source,before,after){if(source.split(before).length!==2)throw E
 // sync, anchor, staged writes, failure discard and final tagging persistence.
 export function validatedPxeProve(source){
  if(sha(source)!==PREFERENCE_PAGE_PINS.find(pin=>pin.path==='dest/pxe.js').after)throw Error('PXE validated proof source mismatch');
- source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {computeSiloedPrivateInitializationNullifier as syncPrivateInitNullifier} from '@aztec-labs/stdlib/hash';\nimport {MerkleTreeId as SyncTreeId} from '@aztec-labs/stdlib/trees';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
+ source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {computeSiloedPrivateInitializationNullifier as syncPrivateInitNullifier,siloNullifier as syncSiloNullifier} from '@aztec-labs/stdlib/hash';\nimport {poseidon2HashWithSeparator as syncPoseidon} from '@aztec-labs/foundation/crypto/poseidon';\nimport {MerkleTreeId as SyncTreeId} from '@aztec-labs/stdlib/trees';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
  source=replace(source,'}, txRequest, privateExecutionResult) {\n        const { publicInputs, chonkProof, executionSteps, timings: { proving } = {} } = await this.#prove',`}, txRequest, privateExecutionResult, validatePublic = false) {
         let validationTime;
         const beforeProof = validatePublic ? async publicInputs => {
@@ -118,13 +118,31 @@ export function validatedPxeProve(source){
     // The qualified preference utility's native initialization assertion stays
     // authoritative. Only start its exact immutable lookup during discovery;
     // the ordinary node cache serves the later unchanged oracle request.
-    async #prefetchPreferenceInitialization(address, anchorBlockHeader) {
+    async #prefetchPreferenceInitialization(address, anchorBlockHeader, owner, artifact) {
         const expected='${ORDINARY_POST_GAS_PROFILE.boardClassId}';
         if((await this.contractClassService.getCurrentClassId(address,anchorBlockHeader))?.toString()!==expected)return;
-        const instance=await this.contractStore.getContractInstance(address);
-        if(!instance)return; // normal execution owns missing-instance failure
-        const nullifier=await syncPrivateInitNullifier(address,instance.initializationHash);
-        await this.node.findLeavesIndexes(await anchorBlockHeader.toBlockParameter(),SyncTreeId.NULLIFIER_TREE,[nullifier]);
+        await allToCompletion([
+            async()=>{
+                const instance=await this.contractStore.getContractInstance(address);
+                if(!instance)return; // normal execution owns missing-instance failure
+                const nullifier=await syncPrivateInitNullifier(address,instance.initializationHash);
+                await this.node.findLeavesIndexes(await anchorBlockHeader.toBlockParameter(),SyncTreeId.NULLIFIER_TREE,[nullifier]);
+            },
+            async()=>{
+                if(!owner)return; // only the two qualified preference writes supply an owner
+                const slot=artifact?.storageLayout?.preferences?.slot;
+                if(!slot?.equals(new SyncFr(36)))throw new Error('Invalid preference storage layout');
+                const account=await this.addressStore.getCompleteAddress(owner);
+                if(!account || !await this.keyStore.accountHasKey(owner,account.publicKeys.npkMHash))return;
+                // Exact pinned PrivateMutable::compute_initialization_nullifier;
+                // its Noir-private separator has no JS export. The actual compiled
+                // preference_head parity test protects this lookup-only formula.
+                const key=await this.keyStore.getKeyValidationRequest(account.publicKeys.npkMHash,address);
+                const inner=await syncPoseidon([slot,owner.toField(),key.skApp],1653084894);
+                const nullifier=await syncSiloNullifier(address,inner);
+                await this.node.findLeavesIndexes(await anchorBlockHeader.toBlockParameter(),SyncTreeId.NULLIFIER_TREE,[nullifier]);
+            },
+        ].map(read=>Promise.resolve().then(read)));
     }
     // Public API\n`);
  source=replace(source,'    // Public API\n',`    prepareOrdinaryPostState({owner,board,privateFee}) {
@@ -172,7 +190,7 @@ export function validatedPxeProve(source){
             await allToCompletion([
                 this.#syncOrdinaryPostTargets(targets,this.#getSimulatorForTx(),ctx,scopes),
                 allToCompletion(privateTargets.map(target=>oracle.getUpdatedClassIdHints(target.address))),
-                ...(['set_preference','mark_thread_read'].includes(method)?[this.#prefetchPreferenceInitialization(targets[2].address,ctx.anchorBlockHeader)]:[]),
+                ...(['set_preference','mark_thread_read'].includes(method)?[this.#prefetchPreferenceInitialization(targets[2].address,ctx.anchorBlockHeader,targets[0].address,artifact)]:[]),
             ]);
         });
     }
