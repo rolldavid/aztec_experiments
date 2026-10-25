@@ -19,17 +19,22 @@ contract PluginPortal is ReentrancyGuard {
     bytes32 public immutable escrow;
     uint256 public immutable version;
     uint256 public immutable chainId;
+    address public immutable deploymentOperator;
     bool public active;
     event Deposited(bytes32 indexed account,uint128 amount,bytes32 key,uint256 index);
     event Withdrawn(address indexed recipient,uint128 amount,bytes32 nonce);
     constructor(address rollup,bytes32 escrow_,uint256 version_,address token_) {
         require(rollup.code.length>0 && token_.code.length>0 && uint256(escrow_)>0 && uint256(escrow_)<Constants.P && version_>0,"Invalid configuration");
-        token=IERC20(token_);escrow=escrow_;version=version_;chainId=block.chainid;
+        token=IERC20(token_);escrow=escrow_;version=version_;chainId=block.chainid;deploymentOperator=msg.sender;
         inbox=IRollup(rollup).getInbox();outbox=IRollup(rollup).getOutbox();
     }
-    function activate(uint256 epoch,uint256 checkpoints,uint256 index,bytes32[] calldata path) external nonReentrant {
+    // Testnet deployment assertion only. User withdrawals remain Outbox-authorized.
+    // Retain the existing ABI; activation no longer consumes an L2 message.
+    function activate(uint256,uint256,uint256,bytes32[] calldata) external nonReentrant {
+        require(block.chainid==11155111 || block.chainid==31337,"Testnet activation only");
+        require(msg.sender==deploymentOperator,"Deployment operator only");
+        require(block.chainid==chainId,"Wrong chain");
         require(!active,"Already active");
-        consume(Hash.sha256ToField(abi.encode(bytes32("PLUGIN_READY_V1"),chainId,address(this),escrow,version)),epoch,checkpoints,index,path);
         active=true;
     }
     function deposit(bytes32 account,uint128 amount,bytes32 secretHash) external nonReentrant returns(bytes32 key,uint256 index) {

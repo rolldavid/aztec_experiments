@@ -311,7 +311,7 @@ export function rollingOperatorCommandScope(command,config) {
 }
 /** Compare every executable byte, allowing only compiler-declared immutable
  * words. Exact getter values at the same canonical block are checked by caller. */
-export function verifyPluginPortalRuntime(actual,deployed,immutableCount=6) {
+export function verifyPluginPortalRuntime(actual,deployed,immutableCount=7) {
  if(typeof actual!=='string'||!/^0x(?:[0-9a-f]{2})+$/.test(actual)||typeof deployed?.object!=='string'||actual.length!==deployed.object.length)throw rejected();
  const template=Buffer.from(deployed.object.slice(2),'hex'),observed=Buffer.from(actual.slice(2),'hex'),seen=new Set();
  const groups=Object.values(deployed.immutableReferences??{});if(groups.length!==immutableCount)throw rejected();

@@ -20,9 +20,8 @@ import {Tx,TxHash,TxStatus} from '@aztec-labs/stdlib/tx';
 import {JsonRpcProvider,FetchRequest,Wallet,Transaction,Contract as EthereumContract,ContractFactory,getCreateAddress,keccak256,parseUnits,formatUnits,sha256,toUtf8Bytes,Interface} from 'ethers';
 import {API_VERSION,packText,handleField,validateDescriptor} from './protocol.mjs';
 import {provingEnabledForNode} from '../shared/proving-policy.mjs';
-import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,requireRollingReadyEffect,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage,captureSepoliaSeedResolution,captureSepoliaSeedSuccessor,runSepoliaLiquiditySuccessor,runSepoliaLiquidityCancellation,runSepoliaLiquidityContinuation,resolveSepoliaSeedNonce,captureSepoliaSeedContinuationPlan,captureSepoliaExactDispatch,exactCancellationFiles,requireAuthorizedExactCancellation,runSepoliaExactCancellation,broadcastExactSepoliaCancellation,captureSepoliaNonceIntent,runSepoliaNonceCancellation,createSepoliaScopeCheck,captureSepoliaSeedTransport,captureSepoliaApprovalDispatch,runSepoliaExactApproval,captureSepoliaSeedForward,runSepoliaLiquidityForward,captureTestnetRouterPlan,runTestnetRouterDeployment,matchTestnetRouterSigned,captureTestnetBootstrapPlan,runTestnetBootstrap} from './operations.mjs';
-import {deriveStorageSlotInMap,computeL2ToL1MessageHash,computeSecretHash,siloNullifier} from '@aztec-labs/stdlib/hash';
-import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
+import {fileState,recordedTransaction,outboxArguments,operatorApplicationProfile,rollingOperatorConfig,operatorNodeFetch,onceAztecOperation,reconcileRollingOperation,rollingPxeOptions,bindRollingJournal,readOperatorActor,projectRollingReceipt,rollingLifecycleConfig,rollingOperatorCommandScope,verifyPluginPortalRuntime,reconcileRollingEthereum,operatorEthereumRequest,matchRollingEthereumSigned,readHostedPrivateFile,captureSepoliaLiquidityPlan,sepoliaLiquidityContracts,sepoliaLiquidityTransactions,sepoliaLiquidityDeadline,runSepoliaLiquidityStage,captureSepoliaSeedResolution,captureSepoliaSeedSuccessor,runSepoliaLiquiditySuccessor,runSepoliaLiquidityCancellation,runSepoliaLiquidityContinuation,resolveSepoliaSeedNonce,captureSepoliaSeedContinuationPlan,captureSepoliaExactDispatch,exactCancellationFiles,requireAuthorizedExactCancellation,runSepoliaExactCancellation,broadcastExactSepoliaCancellation,captureSepoliaNonceIntent,runSepoliaNonceCancellation,createSepoliaScopeCheck,captureSepoliaSeedTransport,captureSepoliaApprovalDispatch,runSepoliaExactApproval,captureSepoliaSeedForward,runSepoliaLiquidityForward,captureTestnetRouterPlan,runTestnetRouterDeployment,matchTestnetRouterSigned,captureTestnetBootstrapPlan,runTestnetBootstrap} from './operations.mjs';
+import {deriveStorageSlotInMap,computeSecretHash,siloNullifier} from '@aztec-labs/stdlib/hash';
 import {contractInputs,sha as artifactSha} from '../scripts/artifact-provenance.mjs';
 import {loadRollingArtifacts} from '../prover/rolling-artifacts.mjs';
 import {derivePrivateFeeInstance,createPrivateFeeDeployment,requirePublishedPrivateFee} from '../shared/private-fee-client.mjs';
@@ -208,9 +207,9 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
     const contract=new EthereumContract(address,portalArtifact.abi,provider),tag={blockTag:blockNumber};
     verifyPluginPortalRuntime((await provider.getCode(address,blockNumber)).toLowerCase(),portalArtifact.deployedBytecode);
     const rollup=new EthereumContract(config.rollupAddress,['function getInbox() view returns(address)','function getOutbox() view returns(address)'],provider);
-    const [token,escrow,version,chain,inbox,outbox,actualActive,expectedInbox,expectedOutbox]=await Promise.all([
-     contract.token(tag),contract.escrow(tag),contract.version(tag),contract.chainId(tag),contract.inbox(tag),contract.outbox(tag),contract.active(tag),rollup.getInbox(tag),rollup.getOutbox(tag)]);
-    if(token.toLowerCase()!==lifecycle.tokenAddress||escrow!==expected.address||String(version)!==config.rollupVersion||String(chain)!==config.chainId||inbox.toLowerCase()!==expectedInbox.toLowerCase()||outbox.toLowerCase()!==expectedOutbox.toLowerCase()||(active!==undefined&&actualActive!==active))throw Error('Portal scope mismatch');
+    const [token,escrow,version,chain,inbox,outbox,actualActive,deploymentOperator,expectedInbox,expectedOutbox]=await Promise.all([
+     contract.token(tag),contract.escrow(tag),contract.version(tag),contract.chainId(tag),contract.inbox(tag),contract.outbox(tag),contract.active(tag),contract.deploymentOperator(tag),rollup.getInbox(tag),rollup.getOutbox(tag)]);
+    if(deploymentOperator.toLowerCase()!==portalRecord().deployment.from||token.toLowerCase()!==lifecycle.tokenAddress||escrow!==expected.address||String(version)!==config.rollupVersion||String(chain)!==config.chainId||inbox.toLowerCase()!==expectedInbox.toLowerCase()||outbox.toLowerCase()!==expectedOutbox.toLowerCase()||(active!==undefined&&actualActive!==active))throw Error('Portal scope mismatch');
     const tokenContract=new EthereumContract(token,['function decimals() view returns(uint8)'],provider);
     if(Number(await tokenContract.decimals(tag))!==6)throw Error('Six decimal token required');
     return true;
@@ -237,26 +236,22 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
     if(String((await node.getBlock(h.number))?.hash)!==String(h.hash))throw Error('L2 anchor changed');
     return {anchor,board,current};
    };
-   const checkReady=async()=>{
-    const bound=requireSuccess(await reconcile(lifecycleRecord('bind')??{},false));
+   const checkBound=async()=>{
+    // Fresh checkpointed native constructor/owner/portal binding is the
+    // deployment operator's assertion. No proven L2_READY message is required.
+    requireSuccess(await reconcile(lifecycleRecord('bind')??{},false));
     await checkBok({portal:portalAddress()});
-    const raw=Buffer.alloc(160);raw.write('PLUGIN_READY_V1','ascii');
-    [BigInt(config.chainId),BigInt(portalAddress()),BigInt(expected.address),BigInt(config.rollupVersion)].forEach((v,i)=>Buffer.from(v.toString(16).padStart(64,'0'),'hex').copy(raw,32*(i+1)));
-    const leaf=computeL2ToL1MessageHash({l2Sender:instance.address,l1Recipient:EthAddress.fromString(portalAddress()),content:sha256ToField([raw]),rollupVersion:new Fr(BigInt(config.rollupVersion)),chainId:new Fr(BigInt(config.chainId))});
-    const effect=await node.getTxEffect(TxHash.fromString(lifecycleRecord('bind').hash));
-    requireRollingReadyEffect(effect,bound,leaf);
-    if(String((await node.getBlock(bound.blockNumber))?.hash)!==bound.blockHash)throw Error('Ready anchor changed');
    };
    const ethereumReconcile=async(record,name)=>reconcileRollingEthereum({record,development:config.development,reads:{
     signed:async r=>{
      const expectedTo=name==='deploy-portal'?null:portalAddress(),data=name==='deploy-portal'?creation:r.deployment?.data;
      if(!matchRollingEthereumSigned({parse:raw=>Transaction.from(raw),record:r,chainId:config.chainId,to:expectedTo,data,from:r.deployment?.from,nonce:r.deployment?.nonce}))return false;
      if(name==='deploy-portal')return !!addressOf(r);
-     return factory.interface.parseTransaction({data})?.name==='activate';
+     return r.deployment?.from===portalRecord().deployment.from&&factory.interface.parseTransaction({data})?.name==='activate';
     },receipt:h=>provider.getTransactionReceipt(h),block:n=>provider.getBlock(n),head:tag=>provider.getBlock(tag),
     effect:async(r,anchor,receipt)=>{
      if(name==='deploy-portal')return receipt.contractAddress?.toLowerCase()===addressOf(r)&&await verifyPortal(addressOf(r),anchor.number);
-     await checkReady();return verifyPortal(portalAddress(),anchor.number,true);
+     await checkBound();return verifyPortal(portalAddress(),anchor.number,true);
     },
    }});
    const ethereumSend=async(name,prepare)=>{
@@ -271,7 +266,7 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
     }
     return onceAztecOperation({store,observeBroadcast:true,name,identity:lifecycleIdentity,journalIdentity:identity,scope,reconcile:r=>ethereumReconcile(r,name),execute:async({submit,bindDeployment})=>{
      await bindDeployment(metadata);const raw=await signer.signTransaction(populated),hash=keccak256(raw);
-     await checkNetwork();if(name==='activate'){await verifyCurrentPortal(false);await checkReady();}
+     await checkNetwork();if(name==='activate'){await verifyCurrentPortal(false);await checkBound();}
      await submit({hash,raw:raw.slice(2)},()=>provider.broadcastTransaction(raw));
     }});
    };
@@ -287,19 +282,20 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
    requireSuccess(await ethereumReconcile(portalRecord()??{},'deploy-portal'));
    if(command==='activate'){
     const result=await ethereumSend(command,async signer=>{
-     await verifyCurrentPortal(false);await checkReady();
-     const args=await outboxArguments(node,TxHash.fromString(lifecycleRecord('bind').hash));
+     await verifyCurrentPortal(false);await checkBound();
+     if(signer.address.toLowerCase()!==portalRecord().deployment.from)throw Error('Portal deployment operator required');
+     const args=[0n,0n,0n,[]];
      const data=factory.interface.encodeFunctionData('activate',args);return {transaction:{to:portalAddress(),data,value:0n},metadata:{from:signer.address.toLowerCase(),data:data.toLowerCase()}};
     });return {...result,portalReady:result.status==='succeeded',hostedServiceReady:false};
    }
    if(command==='status'){
-    await checkReady();requireSuccess(await ethereumReconcile(lifecycleRecord('activate')??{},'activate'));await verifyCurrentPortal(true);
+    await checkBound();requireSuccess(await ethereumReconcile(lifecycleRecord('activate')??{},'activate'));await verifyCurrentPortal(true);
     requireSuccess(await reconcile(lifecycleRecord('register')??{},false));await checkBok({portal:portalAddress(),registered:true});
     return {status:'succeeded',scope,canonical:true,escrow:expected.address,portal:portalAddress(),pluginId:lifecycle.pluginId,portalReady:true,registrationReady:true,hostedServiceReady:false};
    }
    const preflightL2=async()=>{
     if(command==='bind')await verifyCurrentPortal(false);
-    else{await checkReady();requireSuccess(await ethereumReconcile(lifecycleRecord('activate')??{},'activate'));await verifyCurrentPortal(true);}
+    else{await checkBound();requireSuccess(await ethereumReconcile(lifecycleRecord('activate')??{},'activate'));await verifyCurrentPortal(true);}
     const checked=await checkBok(command==='bind'?{unbound:true}:{portal:portalAddress()});
     if(await getFeeJuiceBalance(from,node)===0n)throw Error('Public Fee Juice required');
     if(command==='register'){
@@ -312,7 +308,7 @@ async function rollingOperatorCommand({command,config:input,statePath,actor,ethe
    if(!lifecycleRecord(command))await preflightL2();
    const result=await onceAztecOperation({store,observeBroadcast:true,name:command,identity:lifecycleIdentity,journalIdentity:identity,scope,reconcile:async record=>{
     const r=await reconcile(record,false);if(r.status==='succeeded'){
-     try{await checkBok({portal:portalAddress(),registered:command==='register'});if(command==='bind')await checkReady();else await verifyCurrentPortal(true);}catch{return {status:'unresolved',scope,canonical:false};}
+     try{await checkBok({portal:portalAddress(),registered:command==='register'});if(command==='bind')await checkBound();else await verifyCurrentPortal(true);}catch{return {status:'unresolved',scope,canonical:false};}
     }return {...r,scope,hostedServiceReady:false};
    },execute:async({submit})=>{
     const {board,current}=await preflightL2();
