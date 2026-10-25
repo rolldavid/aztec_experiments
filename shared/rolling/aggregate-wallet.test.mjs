@@ -85,9 +85,9 @@ for(const mode of ['expired','account','signature','pending-state'])test('aggreg
  await assert.rejects(app.confirm());assert.equal(f.state.sends,0);if(mode==='expired')assert.equal(f.state.signatures,0);
 });
 test('unrelated tx hash cannot load retained secret context',async()=>{const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();assert.equal(await app.loadAggregate(h(21)),null);});
-test('gas increase stops before the original payment intent is written',async()=>{
+test('gas increase rolls back the unsent original payment intent before wallet invocation',async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);f.options.provider.getFeeData=async()=>({maxFeePerGas:10000n});
- await assert.rejects(app.confirm(),{code:'ROLLING_FUNDING_GAS_CHANGED'});assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);
+ await assert.rejects(app.confirm(),{code:'BB_ETH_PREFLIGHT_FAILED',ethereumStage:'preflight'});assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);
 });
 test('private claim attempt survives encrypted reopen and cannot change its identity or erase attempted state',async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();
@@ -729,12 +729,12 @@ test('switching an unfinished USDC approval to ETH creates an atomic purchase wi
  assert.deepEqual([...f.transactions.values()].map(tx=>tx.to),[f.scope.token,f.options.topupScope.router]);
 });
 
-test('ETH confirmation estimates exact encoded calldata then simulates it once before journal intent/broadcast',async()=>{
+test('ETH confirmation simulates once then the real journal estimates the exact signed calldata once',async()=>{
  const f=fixture(),app=await f.open(),seen=[],original=f.options.provider.send,estimate=f.options.provider.estimateGas;
  f.options.provider.send=async(method,params)=>{if(method==='eth_call'&&params[1]==='pending'){seen.push({phase:'simulate',request:params[0]});assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);}return original(method,params);};
  f.options.provider.estimateGas=async request=>{seen.push({phase:'estimate',request:{...request}});return estimate(request);};
  await app.prepare(f.allocation);await app.confirm();
- assert.deepEqual(seen.map(value=>value.phase),['estimate','simulate','estimate']);
+ assert.deepEqual(seen.map(value=>value.phase),['simulate','estimate']);
  for(const key of ['from','to','data'])assert.equal(seen[0].request[key],seen[1].request[key]);
  assert.equal(BigInt(seen[0].request.value),BigInt(seen[1].request.value));assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);
 });
@@ -742,7 +742,7 @@ for(const change of ['pending-state','expiry','encoded-request'])test(`ETH final
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);
  const original=f.options.provider.estimateGas;
  f.options.provider.estimateGas=async request=>{
-  if(change==='pending-state')f.state.simulationFails=true;
+  if(change==='pending-state')throw Object.assign(Error('pending EVM execution reverted'),{code:'CALL_EXCEPTION'});
   if(change==='expiry')f.state.pendingTime=1901;
   return original(request);
  };
@@ -857,18 +857,19 @@ for(const kind of ['private-fee','bok'])test(`direct ${kind} forwards durable pa
 });
 
 
-for(const mode of ['success','gas-failure','fee-failure','changed-account'])test('aggregate ETH confirm drains independent gas and fee reads: '+mode,{timeout:5000},async()=>{
+for(const mode of ['success','gas-failure','fee-failure','changed-account'])test('aggregate ETH journal owns the only final gas and fee boundary: '+mode,{timeout:3000},async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);
- const gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),error=Error('read failed');let started=0,settled=false,feeCalls=0;
- const run=async i=>{if(++started===2)entered.resolve();await gates[i].promise;return i===0?100n:{maxFeePerGas:2n,maxPriorityFeePerGas:1n};};
- f.options.provider.estimateGas=()=>{const pending=run(0);if(mode==='gas-failure'){gates[0].resolve();throw error;}return pending;};
- f.options.provider.getFeeData=()=>{feeCalls++;if(feeCalls>1)return {maxFeePerGas:2n,maxPriorityFeePerGas:1n};const pending=run(1);if(mode==='fee-failure'){gates[1].resolve();throw error;}return pending;};
- const result=app.confirm().finally(()=>settled=true),observed=mode==='success'?result:assert.rejects(result,mode==='changed-account'?/Context changed/:e=>e===error);
- await entered.promise;assert.equal(started,2);assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);
- if(mode==='changed-account')f.state.invalid=true;
- gates[mode==='fee-failure'?1:0].resolve();await new Promise(setImmediate);assert.equal(settled,false,'sibling read still owns the flow');
- gates[0].resolve();gates[1].resolve();await observed;assert.equal(f.state.sends,mode==='success'?1:0);
- if(mode==='success')assert(feeCalls>=2,'fresh final fee validation remains');
+ const gas=Promise.withResolvers(),fees=Promise.withResolvers(),gasStarted=Promise.withResolvers(),feesStarted=Promise.withResolvers();let settled=false,gasCalls=0,feeCalls=0;
+ f.options.provider.estimateGas=()=>{gasCalls++;gasStarted.resolve();if(mode==='gas-failure')throw Error('gas unavailable');return gas.promise.then(()=>100n);};
+ f.options.provider.getFeeData=()=>{feeCalls++;feesStarted.resolve();if(mode==='fee-failure')throw Error('fees unavailable');return fees.promise.then(()=>({maxFeePerGas:2n,maxPriorityFeePerGas:1n}));};
+ const result=app.confirm().finally(()=>settled=true),observed=mode==='success'?result:assert.rejects(result);
+ await gasStarted.promise;assert.equal(gasCalls,1);assert.equal(feeCalls,0);assert.equal(f.state.sends,0);
+ if(mode==='gas-failure'){await observed;assert.equal(feeCalls,0);assert.equal((await app.inspect()).paymentSaved,false);return;}
+ assert.equal(settled,false);gas.resolve();await feesStarted.promise;assert.equal(feeCalls,1);assert.equal(f.state.sends,0);
+ if(mode==='changed-account')f.state.connected=false;
+ if(mode!=='fee-failure'){await new Promise(setImmediate);assert.equal(settled,false,'final fee read still owns the flow');}
+ fees.resolve();await observed;assert.equal(f.state.sends,mode==='success'?1:0);assert.equal(gasCalls,1);assert.equal(feeCalls,1);
+ if(mode!=='success')assert.equal((await app.inspect()).paymentSaved,false);
 });
 
 
@@ -996,4 +997,29 @@ for(const kind of ['private-fee','bok'])test(`direct ${kind} completion binds th
  await assert.rejects(funding.recordClaimCompletion({...done,action:{...done.action,receipt:{...done.action.receipt,amount:'999'}}}),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal((await funding.inspect()).completed,false);
  hold=true;const pending=funding.recordClaimCompletion(done);await entered.promise;assert.equal((await funding.inspect()).completed,false);
  workflow.state.outcome={...workflow.state.outcome,outcome:'reverted'};const rejected=assert.rejects(pending,{code:'ROLLING_FUNDING_MISMATCH'});gate.resolve();await rejected;assert.equal((await funding.inspect()).completed,false);
+});
+
+test('aggregate ETH uses exactly one native journal gas estimate and fresh fee read before its sole send',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);let estimates=0,fees=0,sent;
+ f.options.provider.estimateGas=async request=>{estimates++;assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,true);assert.equal(request.nonce,7);assert.equal(request.chainId,31337n);return 123n;};
+ f.options.provider.getFeeData=async()=>{fees++;return {maxFeePerGas:3n,maxPriorityFeePerGas:1n};};
+ const original=f.wallet.signer.sendTransaction;f.wallet.signer.sendTransaction=async request=>{sent={...request};return original(request);};
+ await app.confirm();assert.equal(estimates,1);assert.equal(fees,1);assert.equal(f.state.sends,1);assert.equal(sent.gasLimit,246n);assert.equal(sent.maxFeePerGas,3n);assert.equal(sent.maxPriorityFeePerGas,1n);
+});
+for(const mutation of ['budget','estimate-reject','account','context','chain','expiry'])test(`aggregate ETH native final gas boundary rejects ${mutation} without sending or crossing changed context`,{timeout:3000},async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);const entered=Promise.withResolvers(),held=Promise.withResolvers();let settled=false,estimateCount=0,feeCount=0;
+ f.options.provider.estimateGas=async()=>{estimateCount++;entered.resolve();await held.promise;if(mutation==='estimate-reject')throw Object.assign(Error('EVM reverted'),{code:'CALL_EXCEPTION'});return 100n;};
+ f.options.provider.getFeeData=async()=>{feeCount++;return {maxFeePerGas:mutation==='budget'?10000n:2n,maxPriorityFeePerGas:1n};};
+ const confirming=app.confirm().finally(()=>settled=true),rejected=assert.rejects(confirming);await entered.promise;assert.equal(settled,false);assert.equal(f.state.sends,0);
+ if(mutation==='account')f.state.connected=false;
+ if(mutation==='context')f.state.invalid=true;
+ if(mutation==='chain'){const send=f.options.provider.send;f.options.provider.send=(method,params)=>method==='eth_chainId'?'0x1':send(method,params);}
+ if(mutation==='expiry')f.state.pendingTime=1901;
+ held.resolve();await rejected;assert.equal(estimateCount,1);assert.equal(f.state.sends,0);f.state.invalid=false;
+ assert.equal((await app.inspect()).paymentSaved,mutation==='context','ordinary failures roll back; a changed native owner forbids even cleanup writes');
+ // The actual encrypted Ethereum journal also must be empty; no orphaned unsent
+ // request may prevent a fresh, explicitly reviewed payment.
+ const journal=await createEthereumJournal({storage:f.options.storage,walletSecret:f.options.walletSecret,walletSalt:f.options.walletSalt,scope:{account:f.options.owner,...f.options.network,board:f.options.board,portal:f.options.scope.router,depositor:f.wallet.address},provider:f.options.provider,signer:f.wallet.signer,contextGuard:f.options.contextGuard});
+ assert.equal(await journal.inspectSummary(),null);
+ assert.equal(feeCount,['estimate-reject','account','context'].includes(mutation)?0:1);
 });

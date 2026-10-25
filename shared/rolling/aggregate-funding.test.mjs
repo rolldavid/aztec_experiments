@@ -211,3 +211,44 @@ for(const failure of [false,true])test(`USDC post-plan authority wave shares num
  assert.equal(done,false);assert.equal(lateFence,false);assert.deepEqual(names,['nonce','authorizationState','balanceOf','relay']);held.resolve();
  if(failure)await assert.rejects(preparing,{code:'AGGREGATE_PUBLIC_READ_FAILED'});else{await preparing;assert.equal(lateFence,true);}
 });
+
+for(const [asset,make,simulate]of [['ETH',fixture,q=>aggregateFundingTransaction(q,'0x12')],['USDC',usdcFixture,q=>aggregateUsdcFundingTransaction(q,'0x12','0x34')]]){
+ for(const failure of [null,'validation','simulation'])test(`${asset} exact pending simulation overlaps initial quote reads and drains ${failure??'success'}`,{timeout:3000},async()=>{
+  const f=make(),quote=await f.prepare(),original=f.provider.request,validation=deferred(),simulation=deferred(),entered=deferred();let initial=0,simulations=0,settled=false,totalReads=0;
+  f.provider.request=call=>{
+   const isSimulation=call.method==='eth_call';totalReads++;
+   if(isSimulation){simulations++;if(initial===3)entered.resolve();return simulation.promise.then(()=>{if(failure==='simulation')throw Error('private provider error');return original(call);});}
+   if(++initial<=3){if(initial===3&&simulations)entered.resolve();return validation.promise.then(()=>{if(failure==='validation'&&call.method==='eth_chainId')throw Error('private validation error');return original(call);});}
+   return original(call);
+  };
+  const result=simulate(quote).finally(()=>settled=true),observed=failure?assert.rejects(result,{code:'AGGREGATE_PUBLIC_READ_FAILED'}):result;
+  await entered.promise;assert.equal(totalReads,4);assert.equal(simulations,1);assert.equal(settled,false);
+  (failure==='simulation'?simulation:validation).resolve();await new Promise(setImmediate);assert.equal(settled,false);assert.equal(totalReads,4,'no final fence until every initial read settles');
+  validation.resolve();simulation.resolve();await observed;
+  assert.equal(totalReads,failure?4:7,'successful execution still takes the fresh final chain/canonical/pending wave');assert.equal(simulations,1);
+ });
+ for(const mutation of ['fork','chain','expiry'])test(`${asset} simulation cannot reuse initial validation after ${mutation}`,{timeout:3000},async()=>{
+  const options={},f=make(options),quote=await f.prepare(),original=f.provider.request,held=deferred(),entered=deferred();let simulationStarted=false,initialReads=0,settled=false,changed=false;
+  f.provider.request=async call=>{
+   if(call.method==='eth_call'){simulationStarted=true;if(initialReads===3)entered.resolve();await held.promise;return original(call);}
+   if(!changed){initialReads++;if(initialReads===3&&simulationStarted)entered.resolve();return original(call);}
+   if(mutation==='chain'&&call.method==='eth_chainId')return '0x1';
+   if(mutation==='fork'&&call.method==='eth_getBlockByNumber'&&call.params[0]===quote.quoteAnchor.number)return {...await original(call),hash:field(999)};
+   return original(call);
+  };
+  const result=simulate(quote).finally(()=>settled=true),rejected=assert.rejects(result,{code:'AGGREGATE_'+({fork:'QUOTE_REORG',chain:'CHAIN',expiry:'STALE_QUOTE'}[mutation])});
+  await entered.promise;await new Promise(setImmediate);assert.equal(settled,false);changed=true;if(mutation==='expiry')options.pendingTime=1901;held.resolve();await rejected;
+ });
+}
+
+for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])for(const fork of [false,true])test(`${asset} quote has one final canonical anchor read and refuses a late fork=${fork}`,{timeout:3000},async()=>{
+ const f=make(),original=f.provider.request,held=deferred(),entered=deferred();let anchorReads=0,settled=false;
+ f.provider.request=async call=>{
+  if(call.method==='eth_getBlockByNumber'&&call.params[0]==='0x10'){
+   anchorReads++;entered.resolve();await held.promise;const value=await original(call);return fork?{...value,hash:field(999)}:value;
+  }
+  return original(call);
+ };
+ const preparation=f.prepare().finally(()=>settled=true),observed=fork?assert.rejects(preparation,{code:'AGGREGATE_QUOTE_REORG'}):preparation;
+ await entered.promise;assert.equal(anchorReads,1);assert.equal(settled,false,'no quote published before fresh canonical check');held.resolve();await observed;assert.equal(anchorReads,1);
+});

@@ -252,11 +252,10 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    await read(current.recheckScope);
    const tx=await read(()=>sdk.encodeAggregateFundingTransaction(quote,consent));
    const expected={kind:'aggregate-funding',routerCodeHash:s.routerCodeHash,collateralPortal:s.collateralPortal,feePortal:s.feePortal,bokPortal:s.bokPortal,privateFpc:s.privateFpc,planHash:tx.planHash};
-   const gasRequest={from:tx.from,to:tx.to,data:tx.data,value:BigInt(tx.value),nonce,chainId:BigInt(tx.chainId)};
-   const estimates=await Promise.allSettled([()=>read(()=>provider.estimateGas(gasRequest)),()=>read(()=>provider.getFeeData())].map(task=>Promise.resolve().then(task)));
-   const failed=estimates.find(result=>result.status==='rejected');if(failed)throw failed.reason;
-   const [gas,fees]=estimates.map(result=>result.value),price=fees.maxFeePerGas??fees.gasPrice;
-   check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(quote.breakdown.gasBudgetWei),'GAS_CHANGED');await read(wallet.guard);
+   // The original journal estimates this exact signed request and doubles its
+   // gas allowance. Its prepareRequest checks fresh fees and the reviewed budget
+   // immediately before the sole broadcast; no earlier duplicate estimate.
+   await read(wallet.guard);
    const j=await sdk.createEthereumJournal({storage,walletSecret,walletSalt,scope:{account:owner,...n,board,portal:s.router,depositor:wallet.address},provider,
     acknowledgeTx:current.saved.value.previousTxHash,signer:wallet.signer,onSubmitted,prepareRequest:async request=>{
      await wallet.guard();const fees=await read(()=>provider.getFeeData());await wallet.guard();

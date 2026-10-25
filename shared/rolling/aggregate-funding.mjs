@@ -42,6 +42,8 @@ async function pendingTime(request,anchor){
 }
 async function validState(request,preparation,strict){
  const anchor=preparation.quoteAnchor;
+ // Preparation publishes its quote only after this final canonical check; an
+ // earlier duplicate read of this same numbered block adds no authority.
  // Each signature/simulation/send boundary still checks fresh state. Its
  // independent reads share one drained wave, not a cross-boundary cache.
  const [chain,current,time]=await together([
@@ -55,11 +57,17 @@ async function validState(request,preparation,strict){
  check(strict?time>BigInt(preparation.plan.validAfter)&&time<deadline:time<=deadline,'STALE_QUOTE');
 }
 async function simulate(request,preparation,transaction,strict){
- await validState(request,preparation,strict);
- // Execute the exact signed amounts and custody on pending state. Contract
- // checks retain nonce, deadline and slippage protection through inclusion.
- const result=await request('eth_call',[{from:transaction.from,to:transaction.to,data:transaction.data,value:'0x'+BigInt(transaction.value).toString(16)},'pending']);
- check(result==='0x','PUBLIC_READ_FAILED');
+ // Both branches only read. Drain exact pending simulation and the initial
+ // quote-state checks together; neither authorizes signing or a broadcast.
+ await together([
+  ()=>validState(request,preparation,strict),
+  async()=>{
+   const result=await request('eth_call',[{from:transaction.from,to:transaction.to,data:transaction.data,value:'0x'+BigInt(transaction.value).toString(16)},'pending']);
+   check(result==='0x','PUBLIC_READ_FAILED');
+  },
+ ]);
+ // Fresh after both reads, including a fork, chain change or deadline crossing
+ // during simulation. The EVM still enforces nonce/deadline/slippage at inclusion.
  await validState(request,preparation,strict);
  return freeze(transaction);
 }
@@ -114,7 +122,6 @@ export async function prepareAggregateFunding(input,{provider}={}) {
     check(q>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxEth:((q*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedEth:q.toString()};
   };
   const [fee,credit]=await together([()=>quote(s.feeToken,a.feeAmount,a.feePoolFee),()=>hasBok?quote(s.bokToken,a.bokAmount,a.bokPoolFee):{amount:'0',maxEth:'0',poolFee:0,quotedEth:'0'}]);
-  const current=blockSnapshot(await request('eth_getBlockByNumber',[tag,false]));check(current.hash===block.hash && current.timestamp===block.timestamp,'QUOTE_REORG');
   const deadline=((await pendingTime(request,block))+FUNDING_AUTHORIZATION_SECONDS).toString();
   const plan={beneficiary:w.address,collateral:a.collateralWei,collateralSecretHash:a.collateralSecretHash,
     fee:{amount:fee.amount,maxEth:fee.maxEth,poolFee:fee.poolFee},feeSecretHash:a.feeSecretHash,
@@ -207,7 +214,6 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
    async()=>check((await call(s.bokToken,usdcAbi,'balanceOf',[w.address]))[0]>=BigInt(maximumUsdc),'INSUFFICIENT_USER_FUNDS'),
    async()=>check(quantity(await request('eth_getBalance',[relay.address,'latest']))>=BigInt(relay.gasBudgetWei),'RELAY_GAS_REQUIRED'),
   ]);
-  const current=blockSnapshot(await request('eth_getBlockByNumber',[tag,false]));check(current.hash===block.hash&&current.timestamp===block.timestamp,'QUOTE_REORG');
   const consent={domain:{name:'RollingCollateral',version:'1',chainId:s.chainId,verifyingContract:s.collateralPortal},types:collateralConsentTypes,value:{beneficiary:w.address,executor:s.router,amount:a.collateralWei,secretHash:a.collateralSecretHash,nonce,deadline}};
   const authorization={domain,types:usdcAuthorizationTypes,value:{from:w.address,to:s.router,value:maximumUsdc,validAfter,validBefore:deadline,nonce:authorizationNonce}};
   const result=freeze({kind:'rolling-aggregate-usdc-v1',scope:s,plan,planHash,value:'0',maximumUsdc,authorizationNonce,quoteAnchor:{number:tag,hash:block.hash,timestamp:block.timestamp},consent,authorization,
