@@ -1,3 +1,10 @@
+# Current continuation checkpoint —26 October2026
+
+- Root: published/pushed3b032339 and measured opening6.544/3.502s, native-included selected name16.385s. Cleanup helper committed/pushed and applied;71inactivealiases unlinked, no physical reclaim from shared inodes. One retained build/IAB, no service restarts.
+- pending_reply_ui: investigating repeated native source/prewrite/postwrite snapshot waves on held opening operation; source-only, no shared edits.
+- private_tips: reviewed UTF8 draft `/private/tmp/artifact-utf8-draft/utf8.patch`,3focused parity checks; queued, NOT integrated or built. FullBoard parity and actual browser measurements remain.
+- pending_feed_release: independent source reviews complete. No pending server/browser mutations.
+
 # Active continuation —26 October2026
 
 - Root: f986 static publication, exact normal-opening and real Post/Unlike measurements; one retained build and IAB. Source integration and live writes serialized.

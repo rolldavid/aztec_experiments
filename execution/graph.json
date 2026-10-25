@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Live3b032339 native serializer/name/status batch;29+411+626checks and actual6browser-script gate pass. Actual opening6.544245s firstSDK/3.502170s cached,2s unmet. Name16.385465s includedselectedblock5269; a75Post13.992905s/f986Unlike13.909s. Allflow50% incomplete. UTF8revieweddraft queued, not integrated; sync snapshotwaves investigationactive. SDK inactive-retention narrow6JSON fix17pass reviewed; root cleanup pending. No service restarts; exact transfer deleted; onebuild/IAB.",
+      "checkpoint": "Live3b032339 native serializer/name/status batch;29+411+626checks and actual6browser-script gate pass. Actual opening6.544245s firstSDK/3.502170s cached,2s unmet. Name16.385465s includedselectedblock5269; a75Post13.992905s/f986Unlike13.909s. Allflow50% incomplete. UTF8revieweddraft queued, not integrated; sync snapshotwaves investigationactive. SDK inactive-retention narrow6JSON fix17pass reviewed/applied71aliases; no physical reclaim(sharedinodes),12.24GBfree. No service restarts; exact transfer deleted; onebuild/IAB.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",

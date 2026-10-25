@@ -1,0 +1,4 @@
+Success
+{"applied": true, "files": 71, "logicalBytes": 129897812, "reclaimableAllocatedBytes": 0, "freeBefore": 12237553664, "freeAfter": 12237553664}
+
+
