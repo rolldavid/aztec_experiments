@@ -1,0 +1,17 @@
+✔ aggregate scope wave drains initial success (8.645833ms)
+✔ aggregate scope wave drains initial l2-failure (1.782458ms)
+✔ aggregate scope wave drains initial l1-failure (0.545ms)
+✔ aggregate scope wave drains initial context (0.513583ms)
+✔ aggregate scope wave drains initial inspection-failure (1.266ms)
+✔ aggregate scope wave drains recheck success (1.668666ms)
+✔ aggregate scope wave drains recheck l2-failure (1.341459ms)
+✔ aggregate scope wave drains recheck l1-failure (0.884417ms)
+✔ aggregate scope wave drains recheck context (0.9255ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1400.935

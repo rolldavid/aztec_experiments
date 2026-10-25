@@ -1579,3 +1579,18 @@ for(const change of ['l1-anchor','context'])test(`top-up bindings reject ${chang
  input.contextGuard=async()=>{if(changed&&change==='context')throw Error('labelled account changed');};input.provider.getBlock=async tag=>{const block=await getBlock(tag);return changed&&tag!=='latest'&&change==='l1-anchor'?{...block,hash:hex(11)}:block;};
  const result=assert.rejects(verifyRollingTopupScope(input),change==='l1-anchor'?{code:'ROLLING_SESSION_CONFIG'}:/account changed/);await entered.promise;changed=true;held.resolve();await result;
 });
+
+
+for(const phase of ['initial','recheck'])for(const mode of ['success','l2-failure','l1-failure','context',...(phase==='initial'?['inspection-failure']:[])])test('aggregate scope wave drains '+phase+' '+mode,{timeout:3000},async()=>{
+ const scope={feePortal:eth(1),bokPortal:eth(2),feeToken:eth(3),bokToken:eth(4)},abi=new Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)']);
+ const gates=[Promise.withResolvers(),Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),error=Error('scope failure');let active=phase==='initial',started=0,settled=false,changed=false,inspections=0,canonicalReads=0;const l1Tags=[];
+ const wave=i=>{if(!active)return Promise.resolve();if(++started===(phase==='initial'?3:2))entered.resolve();if(mode===(i===0?'l2-failure':i===1?'l1-failure':'inspection-failure')){gates[i].resolve();throw error;}return gates[i].promise;};
+ const node={getL1ContractAddresses:async()=>({feeJuicePortalAddress:scope.feePortal}),getBlockData:async tag=>{if(tag!== 'checkpointed'){canonicalReads++;await wave(0);}return {header:{globalVariables:{blockNumber:10}},blockHash:hex(10)};},getPublicStorageAt:async()=>new Fr(BigInt(scope.bokPortal))};
+ const provider={getBlock:async tag=>{if(tag==='latest')await wave(1);return {number:20,hash:hex(20)};},call:async request=>{l1Tags.push(request.blockTag);const name=abi.parseTransaction(request).name;return abi.encodeFunctionResult(name,[name==='UNDERLYING'?scope.feeToken:name==='token'?scope.bokToken:request.to===scope.feeToken?18:6]);}};
+ const options={sdk:{Fr,inspectTrustedNode:async()=>{inspections++;await wave(2);}},ethers:{Interface},node,provider,scope,bok:{address:hex(3)},bokArtifact:{storageLayout:{portal:{slot:1}}},network:{},proofsEnabled:false,contextGuard:async()=>{if(changed)throw error;}};
+ let invoke=()=>verifyRollingAggregateScope(options);if(phase==='recheck'){invoke=await invoke();active=true;}
+ const pending=invoke().finally(()=>settled=true),observed=mode==='success'?pending:assert.rejects(pending,e=>e===error);
+ await entered.promise;assert.equal(started,phase==='initial'?3:2);if(mode==='context')changed=true;
+ gates[mode==='l1-failure'?1:0].resolve();await new Promise(setImmediate);assert.equal(settled,false,'all other authorities must drain');
+ gates.forEach(g=>g.resolve());await observed;assert.equal(inspections,1);assert.equal(canonicalReads,phase==='initial'?1:2);assert(l1Tags.every(tag=>tag===20));
+});

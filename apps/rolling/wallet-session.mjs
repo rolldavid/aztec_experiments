@@ -666,8 +666,11 @@ export async function verifyRollingAggregateScope({sdk,ethers,node,provider,scop
   if((includeBok||asset==='USDC')&&BigInt(optional.shift())!==6n)throw fail('ROLLING_SESSION_CONFIG');
   if((await read(()=>provider.getBlock(l1.number)))?.hash!==l1.hash)throw fail('ROLLING_CONTEXT_CHANGED');
  };
- await canonical();await l1Scope();await read(()=>sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled}));
- return async()=>{await canonical();await l1Scope();};
+ // Independent authorities use their existing anchors and fresh final checks.
+ // Drain every started read before releasing the owning account operation.
+ const together=async tasks=>{const results=await Promise.allSettled(tasks.map(task=>Promise.resolve().then(task)));const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;};
+ await together([canonical,l1Scope,()=>read(()=>sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled}))]);
+ return ()=>together([canonical,l1Scope]);
 }
 
 /** Discover direct funding endpoints from the authenticated node and Bok

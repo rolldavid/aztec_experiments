@@ -1020,6 +1020,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         collateral:{deposits,complete:empty,nextCursor:balanceContinuation?.token??null}};
     });},
     async readModeratorStatus(){return exclusive(moderatorStatus);},
+    // Display only: the next action still verifies payment readiness itself.
+    async readPrivateFeeCredit(){return exclusive(async()=>{
+      const anchor=await balanceAnchor();
+      const payer=await sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.fee))),deployment.privateFee.artifact,session.wallet);
+      const available=chainValue(await utility(payer,'balance_of',[session.owner],deployment.privateFee.artifact));
+      check(available<(1n<<128n),'ROLLING_INVALID_RESPONSE');await checkBalanceAnchor(anchor);
+      return {availableCredit:String(available),anchor};
+    });},
     async readBokStatus(){return exclusive(async()=>{await ensureBok();if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
     async readFundingState(){if(!session)return {status:'locked'};return exclusive(fundingWorkflowState);},
     async readAccountStatus(){

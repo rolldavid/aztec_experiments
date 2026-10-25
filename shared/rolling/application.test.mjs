@@ -2840,3 +2840,21 @@ test('funding workflow holds its read lease and rejects an owner replacement whi
  f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);held.resolve();
  await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.length,0);
 });
+
+for(const amount of [0n,17n,(1n<<128n)-1n])test(`standalone fee credit reads only anchored native balance: ${amount}`,async()=>{
+ const f=collateralFixture();f.state.bokCredit=amount;
+ const result=await f.app.readPrivateFeeCredit();
+ assert.equal(result.availableCredit,String(amount));assert.equal(result.anchor.blockNumber,1);assert.equal(result.anchor.blockHash,hex(42));
+ assert.deepEqual(f.state.privateReads.map(x=>x.name),['balance_of']);assert.equal(f.state.privateReads[0].args[0],f.options.accountSession.owner);
+ assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+for(const change of ['overflow','canonical','anchor','owner'])test(`standalone fee credit rejects ${change} before presenting a balance`,async()=>{
+ const f=collateralFixture(),native=f.options.sdk.Contract.at;const entered=Promise.withResolvers(),held=Promise.withResolvers();
+ f.options.sdk.Contract.at=async()=>{const contract=await native();return {methods:{balance_of:(...args)=>({simulate:async()=>{entered.resolve();await held.promise;return contract.methods.balance_of(...args).simulate();}})}};};f.app=f.restart();
+ const pending=f.app.readPrivateFeeCredit();await entered.promise;
+ if(change==='overflow')f.state.bokCredit=1n<<128n;
+ if(change==='canonical')f.options.accountSession.node.getBlockData=async()=>({header:{globalVariables:{blockNumber:1}},blockHash:hex(43)});
+ if(change==='anchor')f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:100n},hash:async()=>hex(43)});
+ if(change==='owner')f.state.guard=false;
+ held.resolve();await assert.rejects(pending);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});

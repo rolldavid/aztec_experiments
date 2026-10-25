@@ -1015,3 +1015,43 @@ test('foreground read clears only its own progress when it settles',{timeout:300
  f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Balance and withdrawals').fire('click');await entered.promise;assert(f.document.body.textContent.includes('Loading your account…'));
  held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert(!f.document.body.textContent.includes('Loading your account…'));await new Promise(setImmediate);
 });
+
+for(const mode of ['success','native-failure','account-change'])test(`standalone posting-credit completion waits only for fresh native credit: ${mode}`,{timeout:3000},async t=>{
+ const native=Promise.withResolvers(),nativeStarted=Promise.withResolvers(),account=Promise.withResolvers(),accountStarted=Promise.withResolvers();let claims=0,reads=0;
+ const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){return {...input,phase:'deposit',maximumSwapWei:'1000'};},async confirm(){return {};},async inspect(){return null;},async advanceClaim(){claims++;return {state:'included',intent:{intentId:'claim',txHash:'0x'+'8'.repeat(64),inclusion:{blockNumber:3,blockHash:'0x'+'7'.repeat(64)},action:{type:'claim-private-fee'}}};}};
+ const f=await fixture(t,{fee:'fee-needed',balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{balanceRefresh:async()=>{accountStarted.resolve();await account.promise;}}});
+ f.session.topup['private-fee']=cap;f.session.application.readPrivateFeeCredit=async()=>{reads++;nativeStarted.resolve();return native.promise;};
+ f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Add posting credit').fire('click');
+ const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pay'&&!b.disabled));pay.fire('click');await nativeStarted.promise;
+ assert.equal(f.core().status,1);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ if(mode==='account-change')f.runtime.getAccount=()=>null;
+ if(mode==='native-failure')native.reject(Error('native unavailable'));else native.resolve({availableCredit:'2000000000000000000'});
+ if(mode==='success'){
+  await accountStarted.promise;await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+  assert.match(f.document.body.textContent,/Posting credit added/);
+  f.document.querySelectorAll('button').find(b=>b.textContent==='Add posting credit').fire('click');assert(f.document.querySelectorAll('strong').some(n=>n.textContent==='2'));
+  assert(f.document.body.textContent.includes('Add posting credit'),'stale deposit data does not relabel account ready');
+ }else{
+  await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert(!f.document.body.textContent.includes('Posting credit added'));assert.equal(f.core().status,1);
+ }
+ assert.equal(claims,1);assert.equal(reads,1);account.resolve();await new Promise(setImmediate);
+});
+
+test('withdrawal interaction timing includes private submission and separates Ethereum settlement from account refresh',{timeout:3000},async t=>{
+ const original=globalThis.performance,measures=new Map();let now=10;
+ globalThis.performance={now:()=>now,clearMeasures:name=>measures.delete(name),measure:(name,entry)=>measures.set(name,{...entry})};t.after(()=>{globalThis.performance=original;});
+ const f=await exitFixture(t,'withdraw-bok','included'),submit=f.session.application.submitPrepared,held=Promise.withResolvers(),started=Promise.withResolvers();
+ f.session.application.submitPrepared=async id=>{f.progress({stage:'proving'});started.resolve();await held.promise;return submit(id);};
+ const amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1.5';amount.fire('input');now=100;f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');await started.promise;
+ assert(f.document.body.textContent.includes('Creating the proof…'));assert(!f.document.body.textContent.includes('Loading your account…'));
+ now=200;held.resolve();await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(measures.get('rolling.action.interaction'),{start:100,end:200});
+ f.session.withdrawal.observe=async()=>({status:'ready',intentId:'post-1',txHash:'0x'+'7'.repeat(64)});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Check refund readiness').fire('click');await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw to Ethereum')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const payment=Promise.withResolvers(),paymentStarted=Promise.withResolvers(),refresh=Promise.withResolvers(),refreshStarted=Promise.withResolvers();
+ f.session.withdrawal.prepare=async()=>({amount:'1500000',recipient:f.recipient});f.session.withdrawal.confirm=async()=>{paymentStarted.resolve();await payment.promise;return {status:'refunded',amount:'1500000',txHash:'0x'+'a'.repeat(64)};};
+ const status=f.session.application.readAccountStatus;f.session.application.readAccountStatus=async()=>{refreshStarted.resolve();await refresh.promise;return status();};
+ now=300;f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw to Ethereum').fire('click');await paymentStarted.promise;
+ now=500;payment.resolve();await refreshStarted.promise;assert.deepEqual(measures.get('rolling.withdrawal.ethereum'),{start:300,end:500});
+ now=900;refresh.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.deepEqual(measures.get('rolling.action.interaction'),{start:300,end:900});
+});
