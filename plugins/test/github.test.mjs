@@ -243,3 +243,10 @@ test('raw browser file rejects object selectors unchanged while edit_browser_pla
   await s.call('write_file',{path:'browser-tests.json',content:result.text});assert.equal((await s.call('read_file',{path:'browser-tests.json'})).text,result.text);
  }finally{await s.close();}
 });
+
+test('failed workspace check gives model bounded execution location without widening result authority',async()=>{
+ const failure={scenarioIndex:2,stepIndex:4,viewportWidth:390,action:'expectVisible',category:'timeout'};
+ const tool=githubToolbox({repository:'owner/project',api:()=>assert.fail('No API'),runCommand:async(_cmd,args)=>({stdout:args[0]==='rev-parse'?'a'.repeat(40):''}),repositories:{open:async()=>({work:'/unused-work',startEmpty:true,check:async()=>{throw Object.assign(Error('Private failure'),{code:'STATIC_FAILED',result:{passed:false,phase:'browser',browserFailure:{...failure,selector:'PRIVATE_SELECTOR'},log:'existing private log'}});},close:async()=>{}})}});
+ const s=await tool.open({id:'a',threadId:'b',postId:'c'});
+ try{const result=await s.call('finish_workspace',{});assert.equal(result.passed,false);assert.deepEqual(result.browserFailure,failure);assert.equal(result.phase,'browser');assert(!JSON.stringify(result.browserFailure).includes('PRIVATE_SELECTOR'));}finally{await s.close();}
+});

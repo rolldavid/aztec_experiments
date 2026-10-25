@@ -326,3 +326,11 @@ test('agent distinguishes structured browser tool selectors from raw browser-tes
  assert.match(system,/writing or editing browser-tests\.json directly, every selector MUST be a CSS string/);
  assert.match(system,/selector objects are invalid in that file/);
 });
+
+test('known browser repairs and final mandatory check finish in one response without another model call',async()=>{
+ let calls=0,accepts=0;const order=[];
+ const toolbox={open:async()=>({definitions:['edit_browser_plan','finish_workspace'].map(name=>({function:{name}})),call:async name=>{order.push(name);return name==='finish_workspace'?{passed:true}:{edited:'browser-tests.json'};},accept:async()=>{accepts++;},close:async()=>{}})};
+ const model={complete:async({messages})=>{calls++;assert.match(messages[0].content,/SAME response/);assert.match(messages[0].content,/do not delete failing coverage/);return {message:{role:'assistant',tool_calls:[{id:'repair',function:{name:'edit_browser_plan',arguments:'{}'}},{id:'finish',function:{name:'finish_workspace',arguments:'{}'}}]}};}};
+ await createAgent({model,toolbox,instructions:'Help'}).run({text:'Repair exact browser failure',id:'a',postId:'b'});
+ assert.equal(calls,1);assert.equal(accepts,1);assert.deepEqual(order,['edit_browser_plan','finish_workspace']);
+});

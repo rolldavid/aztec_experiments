@@ -5,7 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawn} from 'node:child_process';
-import {BROWSER_PLAN_MAX_STEPS,browserPlanDiagnostic,validateBrowserPlan,browserDriverSource,browserInput,browserReceipt,validateBrowserReceipt,artifactIdentity} from './browser-validation.mjs';
+import {BROWSER_PLAN_MAX_STEPS,browserPlanDiagnostic,browserFailureDiagnostic,validateBrowserPlan,browserDriverSource,browserInput,browserReceipt,validateBrowserReceipt,artifactIdentity} from './browser-validation.mjs';
 
 // Existing authenticated public image, never pulled by the execution capability.
 export const STATIC_IMAGE='sha256:3d3169b41e9cc39b6db208b733f3f9339fd8ecbc7260612a420b663c3cf77222';
@@ -128,7 +128,7 @@ async function main(){
   const tested=await run(['--disable-sigusr1','-e',${JSON.stringify(browserDriverSource())}],deadline,JSON.stringify(browserInput));await drain();
   let browser;try{browser=JSON.parse(tested.output);}catch{}
   if(tested.code===0&&!tested.limited&&browser?.passed===true)result.browser=browser;
-  else{const message=typeof browser?.error==='string'?browser.error:'Browser validation did not complete';const chunk=Buffer.from('Browser validation: '+message+'\n');if(logBytes+chunk.length<=limits.logBytes){logs.push(chunk);logBytes+=chunk.length;}}
+  else{result.browser={passed:false,failure:browser?.failure};const message=typeof browser?.error==='string'?browser.error:'Browser validation did not complete';const chunk=Buffer.from('Browser validation: '+message+'\n');if(logBytes+chunk.length<=limits.logBytes){logs.push(chunk);logBytes+=chunk.length;}}
   result.logs=Buffer.concat(logs).toString('base64');
  }
  process.stdout.write(JSON.stringify(result));
@@ -221,6 +221,7 @@ export function createIsolatedExecution({workspaceRoot,outputRoot,docker='/usr/l
    const state=(await inspect(cid)).State;let driver;try{driver=JSON.parse(ran.stdout);}catch{}
    const stage=x=>x&&Number.isInteger(x.code)&&x.code>=0&&x.code<=255&&typeof x.limited==='boolean'?{code:x.code,limited:x.limited}:x&&x.code===null&&typeof x.limited==='boolean'?{code:null,limited:x.limited}:null;
    const observed={containerExitCode:state.ExitCode,oomKilled:state.OOMKilled,test:stage(driver?.test),build:stage(driver?.build),guestError:['input','path','deadline','descendants','test count','artifact directory','artifact path','artifact link','artifact file','artifact bound','empty artifacts','guest-failed'].includes(driver?.error)?driver.error:null};
+   if(driver?.browser?.passed===false){const diagnostic=browserFailureDiagnostic(driver.browser.failure);if(diagnostic)failureResult.browserFailure=diagnostic;}
    failureResult.outcome=observed;failureResult.phase=observed.build?.code===0&&!observed.build?.limited?'browser':observed.test?.code===0&&!observed.test?.limited?'build':'test';
    if(typeof driver?.logs==='string'&&driver.logs.length<=Math.ceil(STATIC_LIMITS.logBytes/3)*4){const log=Buffer.from(driver.logs,'base64');if(log.length<=STATIC_LIMITS.logBytes&&log.toString('base64')===driver.logs)failureResult.log=log.toString('utf8');}
    await fs.writeFile(path.join(output,'outcome.json'),JSON.stringify(observed),{flag:'wx',mode:0o600});

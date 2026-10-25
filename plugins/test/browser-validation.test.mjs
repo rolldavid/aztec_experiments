@@ -184,3 +184,24 @@ test('raw browser selector objects receive a precise schema repair without expos
   });
  }
 });
+
+test('browser execution diagnostic rejects hostile labels and strips private values',async()=>{
+ const {browserFailureDiagnostic}=await import('../browser-validation.mjs');
+ const expected={scenarioIndex:1,stepIndex:2,viewportWidth:1280,action:'expectText',category:'timeout'};
+ assert.deepEqual(browserFailureDiagnostic({...expected,selector:'PRIVATE_SOURCE',text:'PRIVATE_VALUE',message:'PRIVATE_ERROR'}),expected);
+ for(const patch of [{scenarioIndex:-1},{scenarioIndex:8},{stepIndex:256},{viewportWidth:999},{action:'PRIVATE_SOURCE'},{category:'PRIVATE_ERROR'}])assert.equal(browserFailureDiagnostic({...expected,...patch}),undefined);
+});
+for(const timedOut of [false,true])test('serialized browser driver reports exact failing step and drains contexts '+timedOut,async()=>{
+ const {browserDriverSource}=await import('../browser-validation.mjs'),{runInNewContext}=await import('node:vm');
+ let closed=0,browserClosed=0,assertions=0;
+ const chromium={launch:async()=>({newContext:async()=>{
+  const page={on(){},setDefaultTimeout(){},goto:async()=>{},reload:async()=>{},locator:selector=>selector==='body'?{innerText:async()=>'Ready',nth(){return this;}}:{evaluateAll:async()=>[],nth(){return this;}},waitForFunction:async()=>{assertions++;throw Object.assign(Error('PRIVATE_SELECTOR PRIVATE_EXPECTED'),{name:timedOut?'TimeoutError':'Error'});}};
+  return {setDefaultTimeout(){},setDefaultNavigationTimeout(){},route:async()=>{},exposeBinding:async()=>{},addInitScript:async()=>{},newPage:async()=>page,close:async()=>{closed++;}};
+ },close:async()=>{browserClosed++;}})};
+ const input=browserInput({artifacts:[{path:'index.html',data:Buffer.from('<p>Ready</p>').toString('base64')}],plan:{version:1,scenarios:[{name:'PRIVATE_NAME',path:'index.html',steps:[{action:'reload'},{action:'expectText',selector:'PRIVATE_SELECTOR',text:'PRIVATE_EXPECTED'}]}]},origin:'https://artifacts.example',boardOrigin:'https://board.example',deadline:Date.now()+30000});
+ let output='';const process={stdin:{async *[Symbol.asyncIterator](){yield JSON.stringify(input);}},stdout:{write:v=>{output+=v;}},exitCode:0};
+ await runInNewContext(browserDriverSource(),{require:()=>({chromium}),process,Buffer,URL});
+ const result=JSON.parse(output);assert.equal(result.passed,false);assert.equal(process.exitCode,1);
+ assert.deepEqual(result.failure,{scenarioIndex:0,stepIndex:1,viewportWidth:1280,action:'expectText',category:timedOut?'timeout':'step-failed'});
+ assert.equal(closed,2);assert.equal(browserClosed,1);assert.equal(assertions,2);assert(!JSON.stringify(result.failure).includes('PRIVATE_'));
+});

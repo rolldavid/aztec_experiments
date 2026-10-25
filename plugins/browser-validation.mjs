@@ -69,6 +69,17 @@ export function validateBrowserReceipt(value,{artifactSha256,policyHash}={}){
 }
 
 // Self-contained trusted function: serialized into the credential-free executor.
+// Fixed execution locations supplement the private failure log; never include
+// scenario names, selectors, expected values, DOM text or raw error messages.
+export function browserFailureDiagnostic(value){
+ const actions=['fill','click','check','select','press','reload','expectText','expectCount','expectChecked','expectVisible'];
+ if(!value||!Number.isInteger(value.scenarioIndex)||value.scenarioIndex<0||value.scenarioIndex>=8||
+  !Number.isInteger(value.stepIndex)||value.stepIndex<0||value.stepIndex>=256||
+  ![390,1280].includes(value.viewportWidth)||!actions.includes(value.action)||
+  !['timeout','step-failed'].includes(value.category))return undefined;
+ return {scenarioIndex:value.scenarioIndex,stepIndex:value.stepIndex,viewportWidth:value.viewportWidth,action:value.action,category:value.category};
+}
+
 // Only declarative data reaches the browser; no model-supplied test code runs in Node.
 export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadline},chromium){
  const errors=[],encountered=new Set(),exercised=new Set();let checks=0;
@@ -168,7 +179,7 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
      await page.goto(base+scenario.path,{waitUntil:'load',timeout:remaining()});
      if(!(await page.locator('body').innerText()).trim()&&!(await page.locator('canvas,svg,img').count()))throw Error('Published page is empty: '+scenario.path);
      checks++;await discover(page,scope);
-     for(const step of scenario.steps){
+     for(const [stepIndex,step] of scenario.steps.entries()){
       try{
       page.setDefaultTimeout(remaining());const locator=step.selector===undefined?null:page.locator(step.selector).nth(step.index??0);
       if(['fill','click','check','select','press'].includes(step.action)){
@@ -207,12 +218,14 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
       checks++;await discover(page,scope);
       if(errors.length)throw Error(errors.join('\n'));
       }catch(error){
-       if(typeof step.selector==='string'&&/\\["']/.test(step.selector))throw Error('The parsed selector contains a literal backslash before a quote. If that quote delimits an attribute value, use plain CSS such as input[type=checkbox] or input[type="checkbox"], without a second layer of JSON escaping. Correct the selector and keep the intended coverage. '+error.message);
-       throw error;
+       const browserFailure={scenarioIndex:plan.scenarios.indexOf(scenario),stepIndex,viewportWidth:viewport.width,action:step.action,category:error?.name==='TimeoutError'?'timeout':'step-failed'};
+       const failed=message=>Object.assign(Error(message),{browserFailure});
+       if(typeof step.selector==='string'&&/\\["']/.test(step.selector))throw failed('The parsed selector contains a literal backslash before a quote. If that quote delimits an attribute value, use plain CSS such as input[type=checkbox] or input[type="checkbox"], without a second layer of JSON escaping. Correct the selector and keep the intended coverage. '+error.message);
+       throw Object.assign(error,{browserFailure});
       }
      }
      if(errors.length)throw Error(errors.join('\n'));
-    }catch(error){throw Error(viewport.width+'px / '+scenario.name+': '+error.message);}
+    }catch(error){throw Object.assign(Error(viewport.width+'px / '+scenario.name+': '+error.message),{browserFailure:error.browserFailure});}
     finally{await context.close();}
    }
   }));
@@ -224,7 +237,7 @@ export async function exerciseBrowser({artifacts,plan,origin,headers,types,deadl
 }
 
 export function browserDriverSource(){
- return `const {chromium}=require('/opt/bok-browser/node_modules/playwright-core');\nconst exerciseBrowser=${exerciseBrowser.toString()};\n(async()=>{let input='';for await(const chunk of process.stdin){input+=chunk;if(input.length>3*1024*1024)throw Error('browser input bound');}try{const value=await exerciseBrowser(JSON.parse(input),chromium);process.stdout.write(JSON.stringify({passed:true,...value}));}catch(error){process.stdout.write(JSON.stringify({passed:false,error:String(error.message).slice(0,12000)}));process.exitCode=1;}})().catch(()=>process.exitCode=1);`;
+ return `const {chromium}=require('/opt/bok-browser/node_modules/playwright-core');\nconst exerciseBrowser=${exerciseBrowser.toString()};\nconst browserFailureDiagnostic=${browserFailureDiagnostic.toString()};\n(async()=>{let input='';for await(const chunk of process.stdin){input+=chunk;if(input.length>3*1024*1024)throw Error('browser input bound');}try{const value=await exerciseBrowser(JSON.parse(input),chromium);process.stdout.write(JSON.stringify({passed:true,...value}));}catch(error){process.stdout.write(JSON.stringify({passed:false,error:String(error.message).slice(0,12000),failure:browserFailureDiagnostic(error.browserFailure)}));process.exitCode=1;}})().catch(()=>process.exitCode=1);`;
 }
 export function browserInput({artifacts,plan,origin,boardOrigin,deadline}){return {artifacts,plan,origin,headers:hostingHeaders(origin,boardOrigin),types:HOSTING_TYPES,deadline};}
 export function browserReceipt(result,{artifacts,plan,origin,boardOrigin}){
