@@ -1023,3 +1023,27 @@ for(const mutation of ['budget','estimate-reject','account','context','chain','e
  assert.equal(await journal.inspectSummary(),null);
  assert.equal(feeCount,['estimate-reject','account','context'].includes(mutation)?0:1);
 });
+
+
+test('aggregate custody performs one fresh native journal verification per load',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);const payment=await app.confirm();
+ const counts={};for(const method of ['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode']){
+  const original=f.options.provider[method];f.options.provider[method]=async(...args)=>{counts[method]=(counts[method]??0)+1;return original(...args);};
+ }
+ for(let call=1;call<=2;call++){
+  const custody=await (await f.open()).loadAggregate(payment.receipt.txHash);assert.equal(custody.intent.nonce,7);assert(custody.bridgeSecret&&custody.recipientSalt);
+  assert.equal(counts.getTransactionReceipt,call);assert.equal(counts.getTransaction,call);assert.equal(counts.getCode,call);assert.equal(counts.getBlock,2*call);assert.equal(counts.getNetwork,call);
+ }
+ assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);
+});
+for(const failure of ['initial-fork','final-fork','effects','request','network','owner'])test('aggregate custody still rejects fresh '+failure+' without another send',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);const payment=await app.confirm();
+ let blockReads=0;const getBlock=f.options.provider.getBlock,getReceipt=f.options.provider.getTransactionReceipt,getTransaction=f.options.provider.getTransaction;
+ if(failure.endsWith('fork'))f.options.provider.getBlock=async(...args)=>{const block=await getBlock(...args);blockReads++;return {...block,hash:blockReads===(failure==='initial-fork'?1:2)?h(999):block.hash};};
+ if(failure==='effects')f.options.provider.getTransactionReceipt=async(...args)=>({...await getReceipt(...args),logs:[]});
+ if(failure==='request')f.options.provider.getTransaction=async(...args)=>({...await getTransaction(...args),data:'0x'});
+ if(failure==='network')f.options.provider.getNetwork=async()=>({chainId:1n});
+ if(failure==='owner')f.options.provider.getTransactionReceipt=async(...args)=>{const receipt=await getReceipt(...args);f.state.invalid=true;return receipt;};
+ await assert.rejects((await f.open()).loadAggregate(payment.receipt.txHash));assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);
+ if(failure==='final-fork')assert.equal(blockReads,2);
+});

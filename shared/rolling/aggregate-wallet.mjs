@@ -363,9 +363,11 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     if(matches){const outcome=await reconcileUsdc(saved,undefined,txHash);if(outcome)result=outcome.result;}
    }else if(value?.intent){
     sdk.validateAggregateFundingIntent(value.intent);
-    const summary=await read(async()=> (await journal(value.depositor)).inspectSummary());
-    let matches=summary?.txHash===txHash;
-    if(summary?.txHash===null){
+    // The authenticated request identifies custody; reconcile below performs the
+    // fresh receipt/effect/canonical validation before any secrets are returned.
+    const request=await read(async()=> (await journal(value.depositor)).inspectRequest());
+    let matches=request?.txHash===txHash;
+    if(request?.txHash===null){
      const tx=await read(()=>provider.getTransaction(txHash));
      matches=!!tx&&tx.hash?.toLowerCase()===txHash&&tx.from?.toLowerCase()===value.intent.from&&Number(tx.nonce)===value.intent.nonce;
     }

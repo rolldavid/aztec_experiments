@@ -1119,6 +1119,13 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     async readAccountStatus(){
       if(!session)return {status:'locked'};
       return exclusive(async()=>{const workflow=await fundingWorkflowState();if(workflow.status==='recovering')return {...workflow,pendingWithdrawal:await pendingExitSummary()};
+        const operation=getOperationScope();
+        if(operation?.synchronized===true){
+          const wallet=session.wallet,pxe=wallet.pxe,node=session.node;
+          await localGuard();
+          await pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'});
+          await localGuard();check(getOperationScope()===operation&&operation.synchronized===true&&session.wallet===wallet&&wallet.pxe===pxe&&session.node===node,'ROLLING_CONTEXT_CHANGED');
+        }
         // These reads share this owned operation. Native utilities retain their
         // queue; public fee qualification can overlap collateral discovery.
         const reads=await Promise.allSettled([

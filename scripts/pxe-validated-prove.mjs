@@ -202,7 +202,7 @@ export function validatedPxeProve(source){
  source=replace(source,'    // Public API\n',`    prepareBoardActionState({owner,board,privateFee,method}) {
         // No posting gas/history assumptions. Resolve the actual named ABI from
         // the registered, class-pinned Board; these are state preparation only.
-        const allowed=['set_like','set_preference','mark_thread_read','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
+        const allowed=['get_deposit_ids','set_like','set_preference','mark_thread_read','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
         if(!allowed.includes(method))throw new Error('Invalid Board state method');
         const profile=${JSON.stringify(ORDINARY_POST_GAS_PROFILE)};
         const targets=[{address:SyncAddress.fromStringUnsafe(owner.toString()),classId:profile.accountClassId},
@@ -213,8 +213,17 @@ export function validatedPxeProve(source){
         return this.operationQueue.runSynced(async ctx=>{
             const artifact=await this.contractStore.getContractArtifact(SyncFr.fromString(profile.boardClassId));
             const matches=artifact&&syncFunctionAbis(artifact).filter(fn=>fn.name===method);
-            if(matches?.length!==1 || !['private','public'].includes(matches[0].functionType))throw new Error('Invalid Board state ABI');
-            const fn=matches[0],accountAbi=new SyncAccountEntrypoint(targets[0].address,undefined).getEntrypointAbi();
+            if(matches?.length!==1 || !(method==='get_deposit_ids'?matches[0].functionType==='utility':['private','public'].includes(matches[0].functionType)))throw new Error('Invalid Board state ABI');
+            const fn=matches[0];
+            if(method==='get_deposit_ids') {
+                // Account readiness needs only these two contracts. Discover
+                // their notes together in the native changeset; subsequent
+                // unchanged utilities consume the normal anchor-scoped cache.
+                targets[2].selector=await SyncSelector.fromNameAndParameters(fn.name,fn.parameters);
+                await this.#syncOrdinaryPostTargets(targets.slice(1),this.#getSimulatorForTx(),ctx,scopes);
+                return;
+            }
+            const accountAbi=new SyncAccountEntrypoint(targets[0].address,undefined).getEntrypointAbi();
             targets[0].selector=await SyncSelector.fromNameAndParameters(accountAbi.name,accountAbi.parameters);
             targets[2].selector=await SyncSelector.fromNameAndParameters(fn.name,fn.parameters);
             const oracle=new PrivateKernelOracle(this.contractStore,this.contractClassService,this.keyStore,this.node,ctx.anchorBlockHeader);

@@ -466,3 +466,32 @@ test('both owner initialization requests drain before native preparation can set
  const f=await ownerInitializationFixture(),held=f.hold();f.fail();let settled=false;const result=f.prepare().finally(()=>settled=true);const rejected=assert.rejects(result,/owner init lookup failed/);
  for(let i=0;i<100&&f.reads.length<2;i++)await new Promise(setImmediate);assert.equal(f.reads.length,2);assert.equal(settled,false);held.resolve();await rejected;
 });
+
+test('account readiness discovers only Board and FPC together without kernel hints or a second sync',async()=>{
+ const f=await ordinarySyncFixture();f.hold();let settled=false;
+ const work=f.prepareGeneric('get_deposit_ids').finally(()=>settled=true);
+ for(let i=0;i<100&&f.pending.length<2;i++)await new Promise(setImmediate);
+ assert.equal(f.pending.length,2);assert.deepEqual(new Set(f.pending.map(x=>x.address)),new Set([f.board.toString(),f.fee.toString()]));
+ assert.equal(f.events.filter(x=>x[0]==='class').length,2);assert.equal(f.events.filter(x=>x[0]==='witness').length,0);
+ const abi=getAllFunctionAbis(actualBoardArtifact).find(fn=>fn.name==='get_deposit_ids');assert.equal(abi.functionType,'utility');
+ const selector=await FunctionSelector.fromNameAndParameters(abi.name,abi.parameters);assert.equal(f.events.find(x=>x[0]==='invoke-selector'&&x[1]===f.board.toString())[2],selector.toString());
+ f.pending[0].resolve();await new Promise(setImmediate);assert.equal(settled,false);f.pending[1].resolve();await work;
+ await f.prepareGeneric('get_deposit_ids');assert.equal(f.events.filter(x=>x[0]==='sync-start').length,2,'native cache owns same-anchor reuse');
+ assert.equal(f.events.filter(x=>x[0]==='class').length,2);
+});
+for(const target of ['fee','board'])test('account readiness rejects upgraded '+target+' before discovery',async()=>{
+ const f=await ordinarySyncFixture();f.classes.set(f[target].toString(),new Fr(999).toString());
+ await assert.rejects(f.prepareGeneric('get_deposit_ids'),/Invalid ordinary sync class/);assert.equal(f.events.filter(x=>x[0]==='sync-start').length,0);
+});
+test('account readiness native failure drains the other contract and aborts cache publication',async()=>{
+ const f=await ordinarySyncFixture();f.hold();let settled=false;
+ const work=f.prepareGeneric('get_deposit_ids').finally(()=>settled=true),rejected=assert.rejects(work,/readiness discovery failed/);
+ for(let i=0;i<100&&f.pending.length<2;i++)await new Promise(setImmediate);
+ assert.equal(f.pending.length,2);f.pending[0].reject(Error('readiness discovery failed'));await new Promise(setImmediate);assert.equal(settled,false);
+ f.pending[1].resolve();await rejected;assert.equal(f.events.at(-1)[0],'prepare-discarded');assert.equal(f.service.syncedContracts.size,0);
+});
+test('account readiness native anchor change requires both contracts again',async()=>{
+ const f=await ordinarySyncFixture();await f.prepareGeneric('get_deposit_ids');f.service.wipe();f.advance();await f.prepareGeneric('get_deposit_ids');
+ assert.equal(f.events.filter(x=>x[0]==='sync-start').length,4);assert.equal(f.events.filter(x=>x[0]==='class').length,4);
+ assert.equal(f.events.filter(x=>x[0]==='witness').length,0);
+});
