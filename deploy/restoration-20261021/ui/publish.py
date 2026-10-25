@@ -6,9 +6,11 @@ appStartTime(/proc/PID/stat field22), configHashes{absolute:sha256}, unitFiles
 protectedPids{unit:pid} (including the application proxy), node, nodeSha256,
 appUnit (base unit in unitFiles), notifySha256, expectedCurrentUi (exact absolute
 current symlink target). Caddy routing and its notify drop-in must already exist.
-Payload at packet/files/<relative>. No private values leave host.
+Payload at packet/files/<relative>. sdkRetention: {helperSha256, stagedSources[]}
+binds the sibling prune-inactive-sdk-outputs.py and every other staged source.
+No private values leave host.
 """
-import hashlib,json,os,pathlib,re,shlex,shutil,stat,subprocess,sys,urllib.request
+import hashlib,importlib.util,json,os,pathlib,re,shlex,shutil,stat,subprocess,sys,urllib.request
 PACKET_ROOT=pathlib.Path('/var/lib/rolling-bootstrap-private')
 P=pathlib.Path(sys.argv[1]).resolve();mode=sys.argv[2];assert mode in ('stage','activate')
 m=json.loads((P/'plan.json').read_text());assert re.fullmatch('[0-9a-f]{40}',m['commit'])
@@ -175,7 +177,31 @@ def cleanup_packet_payload(result):
  if archive.exists():archive.unlink()
  atomic(P/'payload-cleanup-result.json',json.dumps({'commit':m['commit'],'filesRemoved':len(found),'archiveRemoved':result.get('payloadArchiveSha256') is not None}).encode(),0o600)
 
+def retention_helper():
+ spec=m['sdkRetention'];assert set(spec)=={'helperSha256','stagedSources'}
+ assert re.fullmatch('[0-9a-f]{64}',spec['helperSha256']) and isinstance(spec['stagedSources'],list)
+ for name in spec['stagedSources']:assert re.fullmatch(r'/opt/(?:rolling-app|rolling-bok|rolling-moderator|board-prover)/releases/[A-Za-z0-9._-]+',name)
+ helper=P/'prune-inactive-sdk-outputs.py';info=helper.lstat()
+ assert stat.S_ISREG(info.st_mode) and info.st_uid==os.getuid() and not info.st_mode&0o022 and helper.resolve()==helper and digest(helper)==spec['helperSha256']
+ module_spec=importlib.util.spec_from_file_location('publication_sdk_retention',helper)
+ module=importlib.util.module_from_spec(module_spec);module_spec.loader.exec_module(module)
+ return module
+
+def cleanup_inactive_sdk_outputs():
+ # Activation is already committed. Retention failure never rolls back a good UI
+ # or masks its successful receipt; retain a separate fixed diagnostic for retry.
+ try:
+  helper=retention_helper()
+  candidates=[str(path) for root in helper.ROOTS if root.is_dir() for path in root.iterdir() if path.is_dir() and not path.is_symlink()]
+  protected=set(m['sdkRetention']['stagedSources'])|set(map(str,(SOURCE,RUNNING,NEXT,UI)))|{m['expectedCurrentUi']}
+  result=helper.prune({'candidates':candidates,'protected':sorted(protected)},apply=True)
+ except Exception as error:
+  result={'applied':False,'errorType':type(error).__name__}
+ atomic(P/'sdk-retention-result.json',json.dumps(result).encode(),0o600)
+ return result.get('applied') is True
+
 def activate():
+ retention_helper() # Qualify shipped code before any pointer/unit change.
  r=json.loads((P/'stage-result.json').read_text())
  assert r['schemaVersion']==1 and r['commit']==m['commit'] and r['source']==str(NEXT) and r['ui']==str(UI)
  assert r['planSha256']==digest(P/'plan.json') and r['publisherSha256']==digest(pathlib.Path(__file__))
@@ -218,7 +244,8 @@ def activate():
   raise
  atomic(P/'activation-result.json',json.dumps({'commit':m['commit'],'appPid':m['appPid'],'runningSource':str(RUNNING),'nextSource':str(NEXT),'ui':str(UI),'previousUi':m['expectedCurrentUi'],'protectedPids':m['protectedPids'],'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256']}).encode(),0o600)
  cleanup_packet_payload(r)
- print('{"activated":true,"appRestarted":false,"proxyRestarted":false,"payloadCleaned":true}')
+ retained=cleanup_inactive_sdk_outputs()
+ print(json.dumps({'activated':True,'appRestarted':False,'proxyRestarted':False,'payloadCleaned':True,'sdkRetentionCleaned':retained}))
 
 assert os.getuid()==0
 assert re.fullmatch(r'/opt/rolling-ui/releases/[0-9a-f]{40}',m['expectedCurrentUi'])
@@ -227,6 +254,7 @@ assert str(NOTIFY) not in m['unitFiles'] or m['unitFiles'][str(NOTIFY)]==m['noti
 proxy_unit=run(['systemctl','show','rolling-application-proxy.service','-p','FragmentPath','--value']);assert proxy_unit in m['unitFiles']
 preserved()
 if mode=='stage':
+ retention_helper()
  assert digest(CADDY)==m['caddySha256'];assert not NEXT.exists() and not UI.exists()
  for name,entry in m['files'].items():
   old=confined_payload_file(SOURCE,name);payload=confined_payload_file(P/'files',name);assert digest(payload)==entry['sha256']

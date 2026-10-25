@@ -2,6 +2,7 @@
 import ast
 import hashlib
 import io
+import importlib.util
 import json
 import os
 import pathlib
@@ -57,17 +58,20 @@ class RepeatPublication(unittest.TestCase):
             text = str(value)
             return self.root / text.lstrip('/') if text.startswith('/proc/') else pathlib.Path(value)
 
-        self.ns = {'hashlib': hashlib, 'json': json, 'os': os, 'pathlib': types.SimpleNamespace(Path=path, PurePosixPath=pathlib.PurePosixPath),
+        self.ns = {'hashlib': hashlib, 'importlib':importlib, 'json': json, 'os': os, 'pathlib': types.SimpleNamespace(Path=path, PurePosixPath=pathlib.PurePosixPath),
                    're': re, 'stat': stat, 'shutil': shutil, 'PACKET_ROOT': self.root, 'SOURCE': self.old_source, 'RUNNING': self.old_source, 'NEXT': self.new_source,
                    'UI': self.new_ui, 'BASE': self.base, 'P': self.packet, 'CADDY': self.caddy, 'NOTIFY': self.notify,
                    '__file__': str(SOURCE_FILE), 'sha': lambda data: hashlib.sha256(data).hexdigest(),
                    'urllib': types.SimpleNamespace(request=types.SimpleNamespace(urlopen=self.urlopen))}
         exec(compile(FUNCTIONS, str(SOURCE_FILE), 'exec'), self.ns)
         self.ns['run'] = self.run_command
+        self.native_retention_helper=self.ns['retention_helper']
+        self.retention_calls=[]
+        self.ns['retention_helper']=lambda:types.SimpleNamespace(ROOTS=(),prune=lambda plan,apply:self.retention_calls.append(plan) or {'applied':True})
         original_atomic = self.ns['atomic']
         self.ns['atomic'] = lambda p, data, mode=0o644, uid=None, gid=None: original_atomic(p, data, mode, os.getuid() if uid is None else uid, os.getgid() if gid is None else gid)
         digest = self.ns['digest']
-        self.plan = {'commit': 'b' * 40, 'appPid': 101, 'appStartTime': '987', 'appUnit': str(self.unit),
+        self.plan = {'sdkRetention':{'helperSha256':'0'*64,'stagedSources':[]},'commit': 'b' * 40, 'appPid': 101, 'appStartTime': '987', 'appUnit': str(self.unit),
                      'unitFiles': {str(self.unit): digest(self.unit)}, 'configHashes': {}, 'files': {},
                      'protectedPids': {unit: pid for unit, pid in self.pids.items() if unit != 'rolling-application.service'},
                      'expectedCurrentUi': str(self.old_ui), 'caddySha256': digest(self.caddy), 'notifySha256': digest(self.notify)}
@@ -115,6 +119,49 @@ class RepeatPublication(unittest.TestCase):
         self.assertEqual((self.packet / 'application.service.before').read_bytes(), self.original_unit)
         self.assert_unchanged_controls()
 
+    def test_retention_helper_exact_hash_and_regular_sibling_required(self):
+        helper=self.packet/'prune-inactive-sdk-outputs.py'
+        helper.write_bytes(SOURCE_FILE.with_name(helper.name).read_bytes());helper.chmod(0o600)
+        self.plan['sdkRetention']['helperSha256']=self.ns['digest'](helper)
+        self.assertTrue(callable(self.native_retention_helper().prune))
+        helper.write_bytes(helper.read_bytes()+b'\n# changed\n')
+        with self.assertRaises(AssertionError):self.native_retention_helper()
+        helper.unlink();helper.symlink_to(SOURCE_FILE.with_name(helper.name))
+        with self.assertRaises(AssertionError):self.native_retention_helper()
+
+    def test_retention_after_success_preserves_sources_and_explicit_candidate(self):
+        staged=str(self.root/'staged-source')
+        self.plan['sdkRetention']['stagedSources']=[staged]
+        # Existing stage plan hash authenticates every retention option too.
+        (self.packet/'plan.json').write_text(json.dumps(self.plan))
+        self.result['planSha256']=self.ns['digest'](self.packet/'plan.json')
+        (self.packet/'stage-result.json').write_text(json.dumps(self.result))
+        def prune(plan,apply):
+            self.assertTrue((self.packet/'activation-result.json').exists())
+            self.assertTrue((self.packet/'payload-cleanup-result.json').exists())
+            self.assertEqual(os.readlink(self.base/'current'),str(self.new_ui))
+            self.assertTrue(apply)
+            self.assertEqual(set(plan['protected']),{str(self.old_source),str(self.new_source),str(self.old_ui),str(self.new_ui),staged})
+            return {'applied':True}
+        self.ns['retention_helper']=lambda:types.SimpleNamespace(ROOTS=(),prune=prune)
+        self.ns['activate']()
+        self.assertTrue(json.loads((self.packet/'sdk-retention-result.json').read_text())['applied'])
+
+    def test_retention_failure_records_cleanup_failure_without_reverting_activation(self):
+        def prune(*args,**kwargs):raise AssertionError('private diagnostic must not be serialized')
+        self.ns['retention_helper']=lambda:types.SimpleNamespace(ROOTS=(),prune=prune)
+        self.ns['activate']()
+        self.assertEqual(os.readlink(self.base/'current'),str(self.new_ui))
+        self.assertEqual(json.loads((self.packet/'sdk-retention-result.json').read_text()),{'applied':False,'errorType':'AssertionError'})
+        self.assertTrue((self.packet/'activation-result.json').exists())
+
+    def test_bad_retention_helper_fails_before_activation(self):
+        def invalid():raise AssertionError('helper hash changed')
+        self.ns['retention_helper']=invalid
+        with self.assertRaises(AssertionError):self.ns['activate']()
+        self.assertEqual(os.readlink(self.base/'current'),str(self.old_ui))
+        self.assertFalse((self.packet/'activation-result.json').exists())
+
     def test_readback_failure_restores_exact_pointer_and_unit(self):
         self.fail_readback = True
         with self.assertRaises(OSError):
@@ -123,6 +170,7 @@ class RepeatPublication(unittest.TestCase):
         self.assertEqual(self.unit.read_bytes(), self.original_unit)
         self.assertEqual(self.configured, self.old_source)
         self.assertTrue((self.new_ui / 'wallet/runtime.json').exists())
+        self.assertEqual(self.retention_calls,[])
         self.assert_unchanged_controls()
 
     def test_daemon_reload_response_failure_restores_unit_without_switching_ui(self):
