@@ -312,7 +312,20 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const shared=callScope?.aggregateClaim;
     if(shared&&shared.anchor===null)shared.anchor=clone(anchor);
     const sameAggregate=!cancellation&&shared&&same(shared.anchor,anchor)&&shared.txHash===receipt.txHash&&shared.blockHash===receipt.blockHash&&shared.blockNumber===receipt.blockNumber&&shared.sender===receipt.sender&&shared.nonce===receipt.nonce;
-    const aggregate=!cancellation&&loadAggregate?await (sameAggregate?shared.read(kind):loadAggregate(receipt.txHash,kind)):null;await localGuard();
+    const readAggregate=()=>!cancellation&&loadAggregate?(sameAggregate?shared.read(kind):loadAggregate(receipt.txHash,kind)):null;
+    let aggregate,feeInfo;
+    if(kind==='private-fee'){
+      // Custody and fee portal metadata are independent reads. Drain both before
+      // receipt validation, preserving custody failure priority and node identity.
+      const node=session.node;
+      const values=await Promise.allSettled([
+        async()=>{const value=await readAggregate();await localGuard();return value;},
+        async()=>{const value=await node.getNodeInfo();await localGuard();return value;},
+      ].map(read=>Promise.resolve().then(read)));
+      const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+      check(session.node===node,'ROLLING_CONTEXT_CHANGED');
+      [aggregate,feeInfo]=values.map(value=>value.value);
+    }else{aggregate=await readAggregate();await localGuard();}
     let claimScope={...fixed.network,portal:fixed.portal,recipient:fixed.board};
     let secrets=cancellation ? undefined : {walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})};
     if(kind==='bok'){
@@ -322,9 +335,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       secrets={recipientSalt:field(aggregate.recipientSalt,true),bridgeSecret:field(aggregate.bridgeSecret,true)};
     }
     if(kind==='private-fee'){
-      const info=await session.node.getNodeInfo();await localGuard();
-      claimScope={...fixed.network,portal:info.l1ContractAddresses.feeJuicePortalAddress.toString().toLowerCase(),
-        token:info.l1ContractAddresses.feeJuiceAddress.toString().toLowerCase(),recipient:fixed.fee};
+      claimScope={...fixed.network,portal:feeInfo.l1ContractAddresses.feeJuicePortalAddress.toString().toLowerCase(),
+        token:feeInfo.l1ContractAddresses.feeJuiceAddress.toString().toLowerCase(),recipient:fixed.fee};
     }
     // Full network/account attestation brackets verification. Per-read fences
     // check local session identity without multiplying those network queries.

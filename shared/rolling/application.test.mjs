@@ -3262,3 +3262,58 @@ test('account readiness recovering saved work does not discover unrelated contra
  const scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.options.accountSession.wallet.pxe.prepareBoardActionState=()=>assert.fail('Unrelated discovery');f.app=f.restart();
  const result=await f.app.readAccountStatus();assert.equal(result.status,'recovering');assert.equal(result.intent.intentId,saved.intentId);
 });
+
+for(const mode of ['standalone','ETH','USDC','ETH+Bok'])test(`fee custody wave overlaps independent requests and stays fresh: ${mode}`,async()=>{
+ const f=mode==='standalone'?topUpFixture():aggregateClaimFixture(mode==='USDC'),scope={synchronized:true};
+ if(mode!=='standalone'&&mode!=='ETH+Bok')delete f.action.bokReceipt;
+ f.options.accountSession.operationScope=()=>scope;
+ const load=f.options.funding.loadAggregate,info=f.options.accountSession.node.getNodeInfo;
+ let phase,loads=0,infos=0;
+ f.options.funding.loadAggregate=async(...args)=>{loads++;phase.starts[0]=performance.now();phase.entered[0].resolve();await phase.gates[0].promise;phase.ends[0]=performance.now();return load(...args);};
+ f.options.accountSession.node.getNodeInfo=async(...args)=>{infos++;phase.starts[1]=performance.now();phase.entered[1].resolve();await phase.gates[1].promise;phase.ends[1]=performance.now();return info(...args);};
+ const app=f.restart();let prepared;
+ for(const boundary of ['prepare','submit']){
+  phase={gates:[Promise.withResolvers(),Promise.withResolvers()],entered:[Promise.withResolvers(),Promise.withResolvers()],starts:[],ends:[]};
+  const current=phase;let settled=false;
+  const work=(boundary==='prepare'?app.prepare(f.action,{immediate:true}):app.submitPrepared(prepared.intentId)).finally(()=>settled=true);
+  if(boundary==='prepare'||mode==='standalone'){
+   await Promise.all(current.entered.map(value=>value.promise));
+   assert.equal(f.state.claimReads.filter(value=>value.kind==='private-fee').length,boundary==='prepare'?0:1);
+   assert.equal(settled,false);assert.equal(f.state.sends,0);
+   current.gates[0].resolve();await new Promise(setImmediate);assert.equal(settled,false);
+   current.gates[1].resolve();
+  }else{
+   // Submit still checks collateral first. Its freshly recovered custody is
+   // shared with the fee leg; this patch does not change that authority order.
+   await current.entered[0].promise;current.gates[0].resolve();await current.entered[1].promise;current.gates[1].resolve();
+  }
+  const result=await work;if(boundary==='prepare')prepared=result;else assert.equal(result.status,'confirmed');
+  if(boundary==='prepare'||mode==='standalone')assert(current.starts[0]<=current.ends[1]&&current.starts[1]<=current.ends[0],'both actual request intervals overlap');
+ }
+ assert.equal(loads,2);assert.equal(infos,2);assert.equal(f.state.sends,1);
+});
+for(const branch of ['custody','metadata'])for(const synchronous of [false,true])test(`fee custody wave drains ${branch} ${synchronous?'synchronous':'asynchronous'} rejection`,async()=>{
+ const f=topUpFixture(),entered=[Promise.withResolvers(),Promise.withResolvers()],gate=Promise.withResolvers(),error=Error(branch);let settled=false;
+ const failure=()=>{if(synchronous)throw error;return Promise.reject(error);};
+ f.options.funding.loadAggregate=()=>{entered[0].resolve();return branch==='custody'?failure():gate.promise.then(()=>null);};
+ const info=f.options.accountSession.node.getNodeInfo;f.options.accountSession.node.getNodeInfo=()=>{entered[1].resolve();return branch==='metadata'?failure():gate.promise.then(()=>info());};
+ const app=f.restart(),work=app.prepare(f.action,{immediate:true}).finally(()=>settled=true),rejected=assert.rejects(work,value=>value===error);
+ await Promise.all(entered.map(value=>value.promise));await new Promise(setImmediate);assert.equal(settled,false);
+ await assert.rejects(app.prepare(f.action,{immediate:true}),{code:'ROLLING_BUSY'});
+ gate.resolve();await rejected;assert.equal(f.state.claimReads.length,0);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('fee custody wave retains custody error priority when both reads fail',async()=>{
+ const f=topUpFixture(),first=Error('custody'),second=Error('metadata');
+ f.options.funding.loadAggregate=()=>{throw first;};f.options.accountSession.node.getNodeInfo=()=>{throw second;};
+ await assert.rejects(f.restart().prepare(f.action,{immediate:true}),value=>value===first);assert.equal(f.state.claimReads.length,0);assert.equal(f.values.size,0);
+});
+for(const mutation of ['owner','node','portal'])test(`fee custody wave fences changed ${mutation} before claim authority`,async()=>{
+ const f=topUpFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),info=f.options.accountSession.node.getNodeInfo;
+ f.options.funding.loadAggregate=async()=>{entered.resolve();await gate.promise;return null;};
+ f.options.accountSession.node.getNodeInfo=async()=>{await gate.promise;return info();};
+ const app=f.restart(),work=app.prepare(f.action,{immediate:true});work.catch(()=>{});await entered.promise;
+ if(mutation==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
+ if(mutation==='node'){const node={...f.options.accountSession.node};f.options.accountSession.node=node;f.options.accountSession.wallet.aztecNode=node;}
+ if(mutation==='portal')f.options.deployment.portal='0x'+'ff'.repeat(20);
+ gate.resolve();await assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.claimReads.length,0);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
