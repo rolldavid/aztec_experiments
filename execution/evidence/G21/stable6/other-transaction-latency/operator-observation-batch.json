@@ -16,6 +16,77 @@
     "plugins/private-bok-escrow.mjs": "5bc2406260ad61a814eff2ce489a210c6348b49cc4ee0b0476d23b0bee003c5b",
     "censor-daemon/rolling-adapter.mjs": "bcf55e771cab101511076e2c6b3e8cc169249d6cd28d1ea0ab62604683206b60"
   },
-  "published": false,
-  "liveTiming": null
+  "published": true,
+  "liveTiming": null,
+  "runtimeCommit": "bff92b326bb112b08931cc4d750c805abecb2c52",
+  "baseNativeRuntime": "bbf76d92c0520f3e2192887b555b3a62d2fa4dcc",
+  "services": {
+    "core": {
+      "activated": true,
+      "attestorSha256": "b7adee89e0c71d0af06c12f9717b8096f247a0fca2365b9b9066081c9d7bd9a0",
+      "commit": "bff92b326bb112b08931cc4d750c805abecb2c52",
+      "configSha256": "602cbcb37571bb86d39dae4a14ae0b0fad441935bfdf3c1e9c4d656afe7ce716",
+      "controlSha256": "073fcbec23e4966c774e3e92332c099bcab25e0a81cbc228b184c70f597ce42a",
+      "health": {
+        "alerts": [
+          {
+            "action": "Review durable work locally; preserve its evidence and uncertainty fences.",
+            "code": "MANUAL_ATTENTION"
+          }
+        ],
+        "checkpointHeight": 5360,
+        "counts": {
+          "awaitingFinality": 0,
+          "expiredObligations": 0,
+          "manualAttention": 2,
+          "manualSigningFences": 0,
+          "retryableErrors": 0,
+          "unresolvedSigning": 0,
+          "unsignedPending": 0
+        },
+        "lastSuccessfulIngestAgeMs": 9,
+        "severity": "critical",
+        "stateCounts": {
+          "confirmed-flag": 0,
+          "evaluated-ok": 5,
+          "expired": 0,
+          "leased": 0,
+          "manual-review": 2,
+          "queued": 0,
+          "reconciling": 0,
+          "retryable-error": 0,
+          "submit-intent": 0,
+          "submitted": 0
+        },
+        "type": "billboard-moderation-health-v1"
+      },
+      "otherServicesUnchanged": true,
+      "pid": "188661",
+      "planSha256": "710b6efe2a84d5bf4d1d7e2f4ec40542b68771012f24877a0ee464ecd8347357",
+      "source": "/opt/rolling-app/releases/operator-bff92b326bb112b08931cc4d750c805abecb2c52",
+      "sourceInventorySha256": "fb0419d70dd5c8207e43d1e30f3bba1f3df36c9e0e68e4e5b2f0f424ffbf5f06",
+      "payloadCleaned": true,
+      "restartPolicy": "always"
+    },
+    "bok": {
+      "activated": true,
+      "attestorSha256": "561ab85a9418474cc1416d672728c522d96e83ecc21776f7279f10eaa5dcc61e",
+      "commit": "bff92b326bb112b08931cc4d750c805abecb2c52",
+      "configSha256": "266c5f7baf88ea478b784d9d1179635ecbcc09727ab489d4086d18cc128c1397",
+      "controlSha256": "475ec726af446708826098d06be0770d41a007d480ff173ae3e716bdbfe97a38",
+      "health": {
+        "active": 0,
+        "status": "ready"
+      },
+      "otherServicesUnchanged": true,
+      "pid": "96885",
+      "planSha256": "19704785265ad0ea869dea2fc52c51a4fb26fda84988da07dfdbbcd111ed3a34",
+      "source": "/opt/rolling-bok/releases/operator-bff92b326bb112b08931cc4d750c805abecb2c52",
+      "sourceInventorySha256": "f7ae6457b27f0f36b785044285161ab6cc08c22a2d5ab0f44c7ce0c1aa06ef2f",
+      "payloadCleaned": true,
+      "restartPolicy": "always"
+    }
+  },
+  "transfersDeleted": true,
+  "healthLimitation": "Moderator ingests current blocks but has two manual-review items; diagnosis pending. Bok ready active0."
 }

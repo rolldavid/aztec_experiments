@@ -8,6 +8,16 @@
     "action.claim-witnesses",
     "action.bok-claim-witnesses"
   ],
-  "published": false,
-  "liveTiming": null
+  "published": true,
+  "liveTiming": null,
+  "commit": "ab6658f203a8832a3856a9a62f622f67a8ca0dbd",
+  "activationSsm": "a3059c44-7c02-4f9b-ae55-44666af3b1a3",
+  "serviceRestart": false,
+  "transferDeleted": true,
+  "publicWorker": {
+    "commit": "ab6658f203a8832a3856a9a62f622f67a8ca0dbd",
+    "path": "/wallet/native-worker.js",
+    "sha256": "0b13b384c2e778bc053ff707dcfdfc87d62f3e1b69bd623bb1cf9d05fc7fbab0",
+    "bytes": 422697
+  }
 }

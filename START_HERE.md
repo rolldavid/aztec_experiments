@@ -2,6 +2,12 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Current live update — ab6658f2 / operator bff92
+
+Static `ab6658f203a8832a3856a9a62f622f67a8ca0dbd` is live/pushed. Combined account funding with Bok now prefetches both Board and Bok native witnesses through the existing guarded cache;695 application checks and actual six-script build pass. Public worker hash verified; static updates did not restart services. Earlier570d/2fd read optimizations remain live.
+
+Hosted Bok and moderator now run the three-file `bff92b32` operator overlay on their existingbbf76 native dependencies.235 integrated checks pass. BokPID96885 is ready/active0; moderatorPID188661 ingests current blocks but reports two manual-review items, being inspected before calling it fully healthy. Other services were unchanged. All exact transfer versions/localarchives/remote payloads and completed agent source drafts were removed. The corrected publishers are committed under deploy/updates/20261026-operator: failed drains restore original restart policy without force-killing or duplicating work;20 focused failure subcases pass. Browser control still reports disabled; no new end-to-end latency measurements.2s opening/all-flow50% goals remain active and unverified.
+
 ## Current live update — 2fdcda49
 
 Live and pushed `2fdcda49df6b881e250b0d524a15c77742281967` adds removal of one duplicate canonical read on direct successful Bok purchase custody loading. Recovery after journal writes, confirmation and archived paths retain their final checks.226 aggregate checks and actual six-script browser build pass; peer approved the narrowed path. Static activation succeeded without app/proxy restart, public worker SHA matches, transfer/archive removed. Hosted operator queue/read changes are committed/pushed as `bff92b32` and235 checks pass, but server publication is still pending exact control/source binding adaptation. Browser remains disabled; no new live timing claim.
