@@ -78,7 +78,7 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     if(scope)scope.synchronized=true;
    }
    await contextGuard();
-   const overlapMethod=ordinaryPost?'post':scope&&captured[1]?.immediate===true&&['like','unlike','name'].includes(captured[0]?.type)?stateMethod:undefined;
+   const overlapMethod=ordinaryPost?'post':scope&&captured[1]?.immediate===true&&['like','unlike','name','bio','avatar','subboard'].includes(captured[0]?.type)?stateMethod:undefined;
    if(scope&&stateMethod&&prepareContractState&&!overlapMethod){
     await prepareContractState({method:stateMethod});
     if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});

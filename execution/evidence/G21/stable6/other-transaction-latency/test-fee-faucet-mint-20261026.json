@@ -1,0 +1,15 @@
+{
+  "purpose": "free Sepolia fixture tokens for actual posting-credit and Bok flow tests",
+  "chainId": 11155111,
+  "owner": "0x8d83fed116a7542934ca2e968055555317f91ca4",
+  "stage": "complete",
+  "feeToken": "0x762C132040fdA6183066Fa3B14d985ee55aA3C18",
+  "before": "0",
+  "amount": "1000000000000000000000",
+  "nonce": 57,
+  "txHash": "0x2f7344d521a20ce8d50b6b5b129ba10d462b0371d7f840ad1f5b51273429d27c",
+  "after": "1000000000000000000000",
+  "blockNumber": 11993266,
+  "blockHash": "0xb331eb926454d5eb01eda9324ffbe2c3cb6d7bd60281b5e658a16dbda80b19be",
+  "gasWei": "22794336290"
+}

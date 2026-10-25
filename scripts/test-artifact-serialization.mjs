@@ -6,6 +6,8 @@ import {Buffer} from 'node:buffer';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {loadContractArtifact,contractArtifactToBuffer} from '@aztec-labs/stdlib/abi';
 import {createStartupArtifactSerializer} from '../shared/pxe-startup-cache.mjs';
+import {efficientPxeStartup} from './pxe-startup.mjs';
+import {assertTransformBindings} from './check-transform-bindings.mjs';
 const serialize=createStartupArtifactSerializer(contractArtifactToBuffer,Buffer,Fr);
 const hash=value=>createHash('sha256').update(value).digest('hex');
 for(const [name,path] of [['Board','../billboard/target/rolling_contract-RollingBoard.json'],['FPC','../apps/src/billboard/private_fee_artifact.json']])test('actual native '+name+' serialized bytes remain exact, with bytecode and metadata mutation detection',async()=>{
@@ -49,7 +51,10 @@ test('actual browser Buffer and native serializer source preserve Board bytes wi
  const project=value=>Buffer.isBuffer(value)?BrowserBuffer.from(value):Array.isArray(value)?value.map(project):value&&Object.getPrototypeOf(value)===Object.prototype?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,project(v)])):value;
  const nativeArtifact=loadContractArtifact(JSON.parse(await readFile(new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8')));
  const artifact=project(nativeArtifact);
- const fast=createStartupArtifactSerializer(native,BrowserBuffer,Fr),start=performance.now(),expected=native(artifact),nativeMs=performance.now()-start;
+ const transformed=efficientPxeStartup(contract,'node_modules/@aztec-labs/stdlib/dest/abi/contract_artifact.js');
+ assertTransformBindings(contract,transformed,'contract_artifact.js');
+ const encoded=Function('Buffer','jsonStringify','return ('+extract(transformed,'contractArtifactToBuffer')+');')(BrowserBuffer,jsonStringify);
+ const fast=createStartupArtifactSerializer(encoded,BrowserBuffer,Fr),start=performance.now(),expected=native(artifact),nativeMs=performance.now()-start;
  const next=performance.now(),actual=fast(artifact),fastMs=performance.now()-next;
  assert.deepEqual(actual,expected);assert.equal(hash(actual),hash(contractArtifactToBuffer(nativeArtifact)));
  console.log(JSON.stringify({artifact:'Board-browser-Buffer',bytes:expected.length,sha256:hash(expected),nativeMs,fastMs}));
@@ -70,4 +75,45 @@ test('Buffer subclass and custom prototype serialization use the unchanged nativ
  assert.deepEqual(serialize({bytes}),contractArtifactToBuffer({bytes}));
  Object.defineProperty(SpecializedBuffer.prototype,'toJSON',{value(){return {special:'value'};}});
  assert.deepEqual(serialize({bytes}),contractArtifactToBuffer({bytes}));
+});
+
+async function browserUtf8Fixture(){
+ const {Buffer:BrowserBuffer}=await import('buffer/index.js');
+ const convert=await readFile(new URL('../node_modules/@aztec-labs/foundation/dest/json-rpc/convert.js',import.meta.url),'utf8');
+ const source=await readFile(new URL('../node_modules/@aztec-labs/stdlib/dest/abi/contract_artifact.js',import.meta.url),'utf8');
+ const transformed=efficientPxeStartup(source,'node_modules/@aztec-labs/stdlib/dest/abi/contract_artifact.js');
+ assertTransformBindings(source,transformed,'contract_artifact.js');
+ assert.throws(()=>efficientPxeStartup(source+'\n','node_modules/@aztec-labs/stdlib/dest/abi/contract_artifact.js'),/source mismatch/);
+ const extract=(text,name)=>{const from=text.indexOf('export function '+name+'('),end=text.indexOf('\n}',from);assert(from>=0&&end>from);return text.slice(from+7,end+2);};
+ const jsonStringify=Function('Buffer','return ('+extract(convert,'jsonStringify')+');')(BrowserBuffer);
+ const make=(text,json=jsonStringify)=>Function('Buffer','jsonStringify','return ('+extract(text,'contractArtifactToBuffer')+');')(BrowserBuffer,json);
+ return {BrowserBuffer,native:make(source),encoded:make(transformed),raw:json=>[make(source,()=>json),make(transformed,()=>json)]};
+}
+test('native UTF-8 boundary preserves browser bytes for Unicode, lone surrogates and native JSON values',async()=>{
+ const {BrowserBuffer,native,encoded,raw}=await browserUtf8Fixture();
+ const text=['ASCII','हिन्दी','中文','é','e\u0301','\u0000','\u07ff','\u0800','\uffff','😀','\ud800','\udfff','\ud800\ud800','\udc00\ud800','x\ud800y','\ud800\udc00','\u2028\u2029'];
+ for(const value of text){
+  assert.deepEqual(encoded({[value]:value,buffer:BrowserBuffer.from([0,255]),field:new Fr(7),list:[undefined,1n]}),native({[value]:value,buffer:BrowserBuffer.from([0,255]),field:new Fr(7),list:[undefined,1n]}));
+  // Direct final-string parity also covers unpaired surrogates that native JSON
+  // normally escapes before this boundary; these retain the native fallback.
+  const [before,after]=raw(value);assert.deepEqual(after(null),before(null));
+ }
+ const first=encoded({value:'independent'}),second=encoded({value:'independent'});first[0]=0;assert.notEqual(first[0],second[0]);assert(BrowserBuffer.isBuffer(second));
+});
+test('native UTF-8 boundary retains one JSON evaluation and existing rejection semantics',async()=>{
+ const {native,encoded}=await browserUtf8Fixture();
+ for(const serialize of [native,encoded]){
+  let calls=0;assert.equal(serialize({toJSON(){calls++;return 'value';}}).toString(),'"value"');assert.equal(calls,1);
+  for(const value of [undefined,()=>{},Symbol('unsupported'),{toJSON(){return undefined;}}])assert.throws(()=>serialize(value),TypeError);
+  const cyclic={};cyclic.self=cyclic;assert.throws(()=>serialize(cyclic),TypeError);
+  const failure=Error('custom JSON failure');assert.throws(()=>serialize({toJSON(){throw failure;}}),error=>error===failure);
+ }
+});
+test('native UTF-8 bounded browser conversion microbench keeps exact bytes',async()=>{
+ const {native,encoded}=await browserUtf8Fixture();
+ const value={metadata:'Aztec-é-😀-\ud800-'.repeat(4096)},rounds=8;
+ const expected=native(value);assert.deepEqual(encoded(value),expected);
+ const before=performance.now();for(let i=0;i<rounds;i++)native(value);const nativeMs=performance.now()-before;
+ const start=performance.now();for(let i=0;i<rounds;i++)encoded(value);const encodedMs=performance.now()-start;
+ console.log(JSON.stringify({case:'UTF-8-only-browser-Buffer',bytes:expected.length,rounds,nativeMs,encodedMs}));
 });

@@ -1205,3 +1205,21 @@ test('mature funding mutable and null or pending observations never reuse stale 
  for(const count of Object.values(counts))assert.equal(count,2);
  owner.scope=null;await read.getCode(a(1),17);await read.getCode(a(1),17);assert.equal(counts.getCode,4);
 });
+
+for(const asset of ['ETH','token'])test('standalone Bok custody verifies one exact fresh receipt per load: '+asset,async()=>{
+ const f=asset==='ETH'?ethTopupFixture():topupFixture();f.state.allowance=1000n;
+ const cap=await f.open();await cap.prepare({...f.allocation,...(asset==='ETH'?{asset:'ETH'}:{})});const payment=await cap.confirm();
+ const counts={};for(const method of ['getTransactionReceipt','getTransaction','getBlock','getCode']){const original=f.options.provider[method];f.options.provider[method]=async(...args)=>{counts[method]=(counts[method]??0)+1;return original(...args);};}
+ for(let n=1;n<=2;n++){const custody=await cap.loadAggregate(payment.receipt.txHash);assert(custody.bridgeSecret&&custody.recipientSalt);assert.equal(counts.getTransactionReceipt,n);assert.equal(counts.getTransaction,n);assert.equal(counts.getCode??0,asset==='ETH'?n:0);assert.equal(counts.getBlock,(asset==='ETH'?3:2)*n);}
+ assert.equal(f.state.sends,1);
+});
+for(const failure of ['initial-fork','verifier-final-fork','final-fork','effects','request','network','owner'])test('standalone Bok custody retains exact authority on '+failure,async()=>{
+ const f=ethTopupFixture(),cap=await f.open();await cap.prepare({...f.allocation,asset:'ETH'});const payment=await cap.confirm();
+ const getBlock=f.options.provider.getBlock,getReceipt=f.options.provider.getTransactionReceipt,getTransaction=f.options.provider.getTransaction;let blockReads=0;
+ if(failure.endsWith('fork'))f.options.provider.getBlock=async(...args)=>{const block=await getBlock(...args);return {...block,hash:++blockReads===(failure==='initial-fork'?1:failure==='verifier-final-fork'?2:3)?h(999):block.hash};};
+ if(failure==='effects')f.options.provider.getTransactionReceipt=async(...args)=>({...await getReceipt(...args),logs:[]});
+ if(failure==='request')f.options.provider.getTransaction=async(...args)=>({...await getTransaction(...args),data:'0x'});
+ if(failure==='network')f.options.provider.getNetwork=async()=>({chainId:1n});
+ if(failure==='owner')f.options.provider.getTransactionReceipt=async(...args)=>{const value=await getReceipt(...args);f.state.invalid=true;return value;};
+ await assert.rejects(cap.loadAggregate(payment.receipt.txHash));assert.equal(f.state.sends,1);if(failure==='final-fork')assert.equal(blockReads,3);
+});

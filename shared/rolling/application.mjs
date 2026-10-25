@@ -1044,11 +1044,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           await localGuard();
           check(getOperationScope()===operation&&session.wallet===context.wallet&&context.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
         };
-        const readIds=async(collateralOnly=false)=>{
+        const prepareReadiness=async(collateralOnly=false)=>{
           if(operation?.synchronized===true){
             await measure('account.status.discovery-queued',()=>context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids',...(collateralOnly?{collateralOnly:true}:{})}));
             await checkContext();check(operation.synchronized===true,'ROLLING_CONTEXT_CHANGED');
           }
+        };
+        const readIds=async(collateralOnly=false)=>{
+          await prepareReadiness(collateralOnly);
           const ids=await measure('account.status.deposit-ids-queued',async()=>utility(await contract(),'get_deposit_ids',[session.owner,0]));check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;
         };
         let openingIds,openingExit;
@@ -1063,10 +1066,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           }
         }
         // Ordinary status keeps its existing parallel Board/FPC discovery.
-        // After a nonempty opening read, the fee utility discovers FPC normally
-        // at this same native anchor; Board IDs are not read a second time.
+        // Once opening finds real collateral, enqueue native FPC discovery
+        // alongside public fee metadata. Native same-anchor state reuses Board
+        // discovery; the IDs and the private balance are each read only once.
         const reads=await Promise.allSettled([
-          ()=>openingIds??readIds(),
+          async()=>{if(!openingIds)return readIds();await prepareReadiness();return openingIds;},
           ()=>openingExit===undefined?pendingExitSummary():openingExit,()=>payment(),
         ].map(read=>Promise.resolve().then(read)));
         // Keep collateral, pending-exit, then fee failure priority after draining.
@@ -1155,7 +1159,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         checkPolicyOwner();[history,earlyPolicy]=reads.map(value=>value.value);
       }else history=await measure('action.predecessor',readPredecessor);
-      if(immediate&&['post','reply','quote','repost','like','unlike','name'].includes(action.type)){
+      if(immediate&&['post','reply','quote','repost','like','unlike','name','bio','avatar','subboard'].includes(action.type)){
         if(stateReady)await stateReady;
         await localGuard();check(getOperationScope()===stateOwner&&stateOwner?.contractStateReady===stateReady,'ROLLING_CONTEXT_CHANGED');
       }

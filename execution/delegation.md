@@ -1,3 +1,10 @@
+# Active next batch —26 October2026
+
+- Root: integrate reviewed native UTF8 encoding, build/publish, actual profile/board flow measurements; sole shared writer/browser/operator.
+- private_tips: profile/avatar/subboard unnecessary serial preparation/completion, isolated draft.
+- pending_reply_ui: held-pass sync wave redundancy or account-status native balance overlap, isolated draft.
+- pending_feed_release: current funding/claim duplicate work and independent review.
+
 # Current continuation checkpoint —26 October2026
 
 - Root: published/pushed3b032339 and measured opening6.544/3.502s, native-included selected name16.385s. Cleanup helper committed/pushed and applied;71inactivealiases unlinked, no physical reclaim from shared inodes. One retained build/IAB, no service restarts.

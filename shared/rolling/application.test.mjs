@@ -3172,7 +3172,7 @@ for(const failure of [false,true])test('ordinary arguments wait for owned discov
  assert.equal(f.state.sends,0);if(failure)assert.equal(f.values.size,0);else assert(f.state.privateReads.length>0);
 });
 
-for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'name',first:'Fresh',last:'Willow'}])test(action.type+' predecessor cannot enter arguments or write an intent before native discovery',async()=>{
+for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'name',first:'Fresh',last:'Willow'},{type:'bio',name:'5',expectedVersion:'0',content:'Exact bio'},{type:'avatar',name:'5',expectedVersion:'0',width:100,height:100,data:'AA=='},{type:'subboard',slug:'new-board',name:'New',description:'Description',rules:''}])test(action.type+' predecessor cannot enter arguments or write an intent before native discovery',async()=>{
  const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),scope={synchronized:true,contractStateReady:gate.promise};
  f.options.accountSession.operationScope=()=>scope;f.options.accountSession.journal.assertCanStart=async()=>{entered.resolve();};f.app=f.restart();
  let settled=false;const work=f.app.prepare(action,{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=assert.rejects(work,/native discovery failed/);
@@ -3180,7 +3180,7 @@ for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'na
  gate.reject(Error('native discovery failed'));await result;assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
 
-for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'name',first:'Fresh',last:'Willow'}])for(const change of ['scope','barrier'])test(action.type+' captures discovery owner before held predecessor: '+change,async()=>{
+for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'name',first:'Fresh',last:'Willow'},{type:'bio',name:'5',expectedVersion:'0',content:'Exact bio'},{type:'avatar',name:'5',expectedVersion:'0',width:100,height:100,data:'AA=='},{type:'subboard',slug:'new-board',name:'New',description:'Description',rules:''}])for(const change of ['scope','barrier'])test(action.type+' captures discovery owner before held predecessor: '+change,async()=>{
  const f=fixture(),predecessor=Promise.withResolvers(),entered=Promise.withResolvers(),discovery=Promise.withResolvers();
  let scope={synchronized:true,contractStateReady:discovery.promise};const owner=scope;
  f.options.accountSession.operationScope=()=>scope;f.options.accountSession.journal.assertCanStart=async()=>{entered.resolve();await predecessor.promise;};f.app=f.restart();
@@ -3199,4 +3199,58 @@ for(const nativeState of ['missing-collateral','missing-credit'])test('included 
  const current=f.restart(),before=[...f.values],status=await current.readAccountStatus();
  assert.equal(status.status,nativeState==='missing-collateral'?'collateral-pending':'fee-needed');assert.equal(inspections,0);assert.deepEqual([...f.values],before);
  await assert.rejects(current.prepare({type:'like',post:'6'}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(inspections,1);assert.equal(f.state.sends,1);
+});
+
+for(const action of [
+ {type:'bio',name:'5',expectedVersion:'0',content:'Exact bio é'},
+ {type:'bio',name:'5',expectedVersion:'0',content:''},
+ {type:'avatar',name:'5',expectedVersion:'0',width:100,height:100,data:'AA=='},
+ {type:'avatar',name:'5',expectedVersion:'0',width:0,height:0,data:''},
+ {type:'subboard',slug:'new-board',name:'New',description:'Description',rules:'Exact rules'},
+])test(action.type+' actual immediate overlap retains exact ABI and generic fee checks '+JSON.stringify(action),async()=>{
+ const baseline=fixture();await baseline.app.prepare(action);const expected=baseline.state.calls.at(-1);
+ const f=fixture(),discovery=Promise.withResolvers(),predecessor=Promise.withResolvers(),scope={synchronized:false,preparationReads:[]};let fees=0;
+ f.options.accountSession.operationScope=()=>scope;f.options.accountSession.journal.assertCanStart=async()=>{predecessor.resolve();};
+ const payment=f.options.sdk.preparePrivateFeePayment;f.options.sdk.preparePrivateFeePayment=async input=>{fees++;assert.equal(input.creditCheck,undefined,'profile and board content retain generic fee qualification');return payment(input);};
+ const raw=f.restart(),application=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContractState:async({method})=>{assert.equal(method,{bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard'}[action.type]);await discovery.promise;}});
+ const pending=application.prepare(action,{immediate:true});await predecessor.promise;await new Promise(setImmediate);
+ assert.equal(f.values.size,0);assert.equal(fees,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);
+ discovery.resolve();const prepared=await pending;assert.equal(fees,1);assert.equal(scope.contractStateReady,undefined);assert.equal(prepared.status,'prepared');
+ assert.equal((await raw.submitPrepared(prepared.intentId)).status,'confirmed');
+ const actual=f.state.calls.at(-1);assert.equal(actual.name,expected.name);assert.deepEqual(actual.args,expected.args);
+ const abi=artifact.functions.find(fn=>fn.name===actual.name);assert.deepEqual(encodeArguments(abi,actual.args),encodeArguments(abi,expected.args));assert.equal(f.state.sends,1);
+});
+
+for(const failure of ['none','discovery','fee','both'])test('funded opening overlaps fee discovery and metadata with drained ownership: '+failure,async()=>{
+ const f=fixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ const discovery=Promise.withResolvers(),fee=Promise.withResolvers(),entered=Promise.withResolvers();
+ let discoveries=0,fees=0,settled=false;
+ const started=()=>{if(discoveries===2&&fees===1)entered.resolve();};
+ f.options.accountSession.wallet.pxe.prepareBoardActionState=async input=>{
+  discoveries++;if(discoveries===1){assert.equal(input.collateralOnly,true);return;}
+  assert.equal(input.collateralOnly,undefined);started();await discovery.promise;
+  if(failure==='discovery'||failure==='both')throw Error('FPC discovery failed');
+ };
+ f.options.sdk.preparePrivateFeePayment=async()=>{fees++;started();await fee.promise;if(failure==='fee'||failure==='both')throw Error('fee metadata failed');return {availableCredit:77n};};
+ const app=f.restart(),before=[...f.values],work=app.readAccountStatus({opening:true});work.then(()=>settled=true,()=>settled=true);
+ const outcome=failure==='none'?work:assert.rejects(work,failure==='fee'?/fee metadata failed/:/FPC discovery failed/);
+ await entered.promise;assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,1);
+ await assert.rejects(app.readAccountStatus(),{code:'ROLLING_BUSY'});
+ if(failure==='fee')fee.resolve();else discovery.resolve();
+ await new Promise(setImmediate);assert.equal(settled,false,'account operation stays held until both reads settle');
+ discovery.resolve();fee.resolve();const result=await outcome;
+ if(failure==='none'){assert.equal(result.status,'fee-ready');assert.equal(result.privateFeeCredit,'77');assert.deepEqual(result.depositIds,[hex(9)]);}
+ assert.equal(discoveries,2);assert.equal(fees,1);assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,1);
+ assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);
+});
+for(const change of ['scope','wallet','pxe','owner','synchronized'])test('funded opening fee wave rejects held '+change,async()=>{
+ const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ f.options.accountSession.wallet.pxe.prepareBoardActionState=async input=>{if(!input.collateralOnly){entered.resolve();await gate.promise;}};
+ f.options.sdk.preparePrivateFeePayment=async()=>({availableCredit:77n});
+ const app=f.restart(),work=app.readAccountStatus({opening:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});
+ await entered.promise;
+ if(change==='scope')scope={synchronized:true};if(change==='wallet')f.options.accountSession.wallet={...f.options.accountSession.wallet};
+ if(change==='pxe')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};if(change==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
+ if(change==='synchronized')scope.synchronized=false;
+ gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });

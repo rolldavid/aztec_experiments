@@ -1,0 +1,45 @@
+{"artifact":"Board","bytes":8060278,"sha256":"b2d9119f31d81b7eb221dd1a0ccadea9b52fcbd2dae1ef2e445613128b0a234f","nativeMs":37.72904199999999,"fastMs":26.403208000000006}
+✔ actual native Board serialized bytes remain exact, with bytecode and metadata mutation detection (256.845ms)
+{"artifact":"FPC","bytes":1775356,"sha256":"aaa52972e39c36492ba173876c35deebdc98e9e1d5d88ea4092c42f068222091","nativeMs":5.344166000000087,"fastMs":7.84170800000004}
+✔ actual native FPC serialized bytes remain exact, with bytecode and metadata mutation detection (49.820791ms)
+✔ native Fr mutation, nested buffers, missing values and shared references retain exact bytes (0.291041ms)
+✔ custom serialization and accessors retain unmodified native execution semantics (0.245959ms)
+✔ unknown object/prototype and cycles do not become an accepted immutable shortcut (0.243167ms)
+{"artifact":"Board-browser-Buffer","bytes":8060278,"sha256":"b2d9119f31d81b7eb221dd1a0ccadea9b52fcbd2dae1ef2e445613128b0a234f","nativeMs":288.48916600000007,"fastMs":54.265625}
+✔ actual browser Buffer and native serializer source preserve Board bytes without numeric-array expansion (415.177916ms)
+✔ non-enumerable array indices, holes and accessors retain native array semantics (0.255625ms)
+✔ Buffer subclass and custom prototype serialization use the unchanged native path (0.115ms)
+✔ native UTF-8 boundary preserves browser bytes for Unicode, lone surrogates and native JSON values (6.163542ms)
+✔ native UTF-8 boundary retains one JSON evaluation and existing rejection semantics (4.857458ms)
+{"case":"UTF-8-only-browser-Buffer","bytes":86031,"rounds":8,"nativeMs":10.026333000000022,"encodedMs":2.095291999999972}
+✔ native UTF-8 bounded browser conversion microbench keeps exact bytes (18.453292ms)
+✔ one construction shares one exact-node snapshot and revokes it afterward (0.632375ms)
+✔ native class memo binds complete artifact bytes and detaches every result (3.187875ms)
+✔ six pinned native built-ins seed the memo; changed artifact or class bytes reject (66.619458ms)
+✔ actual native Fr, selector, bytes and full artifact serializer survive detached memo reuse (0.615917ms)
+✔ mutation during asynchronous digest never installs a class record (0.205292ms)
+✔ persisted registration requires both exact full blobs, never just matching class ID (0.106625ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/stdlib/dest/abi/contract_artifact.js (13.297875ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/entrypoints/client/lazy/utils.js (2.399959ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/pxe.js (23.73775ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/storage/contract_store/contract_store.js (5.380291ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/stdlib/dest/contract/contract_class.js (1.281416ms)
+✔ actual transformed ContractStore reuses authenticated persisted blobs and repairs changed bytes (2.583084ms)
+✔ failed native registration does not publish an in-memory success cache (8.342667ms)
+✔ actual transformed ContractStore reuses authenticated selectors but validates caller-supplied classes (0.86025ms)
+✔ actual trusted readiness snapshot supplies construction metadata without a second node-info RPC (0.724625ms)
+✔ native prewarm hands identical built-ins and genesis to construction without account/store work (79.092167ms)
+✔ prewarmed built-in mutation rejects and failed preparation drains genesis (61.483041ms)
+✔ actual native genesis expression skips only an authenticated construction prewarm (55.887375ms)
+✔ immutable preparation starts without a node and node binding does not serialize genesis behind it (82.306625ms)
+✔ authenticated registration uses two full serializations and fixed numeric subspans (0.928917ms)
+✔ mutation during stored reads rejects without poisoning the authenticated persisted snapshot (0.599ms)
+✔ fixed Board and fee registration subspans survive sequential registration (0.872292ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1421.511

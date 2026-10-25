@@ -1,0 +1,36 @@
+{
+  "chainId": 11155111,
+  "owner": "0x8d83fed116a7542934ca2e968055555317f91ca4",
+  "feeToken": "0x762c132040fda6183066fa3b14d985ee55aa3c18",
+  "weth": "0xfff9976782d46cc05630d1f6ebab18b2324d6b14",
+  "router": "0x3bfa4769fb09eefc5a80d6e87c3b9c650f7ae48e",
+  "amountIn": "500000000000000000000",
+  "quotedOutput": "286985593182275",
+  "minimumOutput": "284115737250452",
+  "maximumTotalGasWei": "1000000000000",
+  "transactions": [
+    {
+      "stage": "approve-exact-fee",
+      "hash": "0x931d5fb2f6f6b3ff1d35c5888954b16835edb51be2704da40cfe7ff676fc86d1",
+      "maximumGasWei": "23857503296",
+      "actualGasWei": "19711517131"
+    },
+    {
+      "stage": "swap-existing-fee",
+      "hash": "0xcc5cf0569bddf68cc46a3235c5047a9efb724275182d2d490efb4bb569468c3b",
+      "maximumGasWei": "53486274534",
+      "actualGasWei": "41086641392"
+    },
+    {
+      "stage": "unwrap-exact-received",
+      "hash": "0xced3f563e52a5dc307678629c202959846ab9ef1d5be20613c02756adb21f13f",
+      "maximumGasWei": "7311675844",
+      "actualGasWei": "4757793503"
+    }
+  ],
+  "started": true,
+  "stage": "unwrap-exact-received",
+  "receivedWeth": "286985593182275",
+  "complete": true,
+  "ethBalance": "478127271250505"
+}

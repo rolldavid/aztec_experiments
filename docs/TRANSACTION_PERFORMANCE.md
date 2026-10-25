@@ -40,6 +40,14 @@ An earlier pending display does not establish faster canonical settlement or spe
 
 Owned-name refresh warms the existing exact-anchor Board class/initialization reads during its fresh native synchronization; actual ownership discovery remains unchanged. Account-status presentation skips the historical receipt reread for included ordinary actions, as it already did for included signup claims. Fresh native balances determine the display. Actual prepare/submit and funding authority still validate predecessor state; rollback and missing-credit cases do not obtain new send authority. Independent source review approved both changes; integrated411 session/native/wrapper checks and626 application checks pass. Published in3b032339. Real name completion16.385465s, required ownership refresh1693ms. Earlier a7517.543705s/refresh1954ms are single observations with different native state; tests alone establish no speedup.
 
+## Reviewed follow-on transaction batch
+
+Current3b bio baseline:34ASCII characters, Save bio→native inclusion and editor closed14.560285s. Public profile subsequently displayed the exact text. Receipt0x21d2a26a85332dbd4d47256dc628e05762273ddb488aa26f0f40eec1324365b0, block5275/hash0x3025a09d811ceff1608b17129161262f677cfd8c9ae709fb86949453afab61b3. This gives a current complete-action observation; public-profile visibility was checked afterward, not timed from Save.
+
+Next integrated source removes browser Buffer UTF8 hand-loop (native JSON and malformed-string behavior preserved), overlaps bio/avatar/subboard discovery with existing predecessor checks, overlaps funded-opening FPC discovery with metadata, and removes standalone Bok custody's duplicate Ethereum receipt verification. Actual full receipt/effect/intent/canonical verification still runs before any custody disclosure. Independent source reviews approved.33 encoding/native startup checks,925 other affected checks and49 combined opening/native checks pass. The full built six browser scripts evaluate successfully. No live speedup claim yet.
+
+To enable real funding tests, the known Sepolia fixture minted1000free FEE through the pinned faucet and swapped500test FEE for0.000286985593182275ETH, leaving500FEE and0.000478127271250505ETH. All mined receipts retained; no real/mainnet funds and no application balances fabricated. These fixture transactions are not included in application-flow timings.
+
 ## Live flow coverage
 
 | Family | Branches to qualify | Transactions and required endpoint |

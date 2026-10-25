@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {validatedPxeProve} from './pxe-validated-prove.mjs';
 import {beginProofSpan} from '../shared/proof-timings.mjs';
 export const PXE_STARTUP_PINS={
+  "node_modules/@aztec-labs/stdlib/dest/abi/contract_artifact.js": "99f6f158fb5ae0eb0f3cc1b6834cc884e2cc0af7f7ce66b3e253fb34ddf00553",
   "node_modules/@aztec-labs/pxe/dest/entrypoints/client/lazy/utils.js": "de2efadead22a3c7110375cfcafe39530cd40b6784625fa02cd97f54260216de",
   "node_modules/@aztec-labs/pxe/dest/pxe.js": "02dbb8da2a09982cf678a014e8438f5b17f2310af5691b94743a4dfa38cd9375",
   "node_modules/@aztec-labs/pxe/dest/storage/contract_store/contract_store.js": "576e84a81a19536b803d9a7af45ebd81191fb1017fc4ed54155ad1fd4341b75c",
@@ -12,7 +13,18 @@ function replace(source,before,after){if(source.split(before).length!==2)throw E
 export function efficientPxeStartup(original,name){
  if(sha(original)!==PXE_STARTUP_PINS[name])throw Error('PXE startup source mismatch');
  let source=original;
- if(name.endsWith('/entrypoints/client/lazy/utils.js')){
+ if(name.endsWith('/abi/contract_artifact.js')){
+  // Preserve native JSON/replacer execution exactly once. Browser Buffer's
+  // string path builds JS byte arrays; native TextEncoder returns the same
+  // UTF-8 bytes directly, owned by this result (no shared output storage).
+  source=replace(source,"return Buffer.from(jsonStringify(artifact), 'utf-8');",`const json = jsonStringify(artifact);
+    // Preserve undefined's native TypeError and the browser Buffer polyfill's
+    // malformed-surrogate behavior. Ordinary native JSON is well formed; raw
+    // JSON extensions or older hosts retain the original conversion path.
+    if (typeof json !== 'string' || typeof json.isWellFormed !== 'function' || !json.isWellFormed()) return Buffer.from(json, 'utf-8');
+    const bytes = new globalThis.TextEncoder().encode(json);
+    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);`);
+ }else if(name.endsWith('/entrypoints/client/lazy/utils.js')){
   source="import {readPXEConstruction as rollingCreationInfo,readPXEStartup as rollingCreationStartup,startupProtocolProvider as rollingProtocolProvider,startupPreloadedContracts as rollingPreloadedContracts} from 'rolling:pxe-startup';\nimport {contractArtifactToBuffer as rollingArtifactBytes} from '@aztec-labs/stdlib/abi';\n"+source;
   source=replace(source,'const { l1ChainId, l1ContractAddresses, rollupVersion } = await aztecNode.getNodeInfo();','const { l1ChainId, l1ContractAddresses, rollupVersion } = options.rollingConstruction ? rollingCreationInfo(options.rollingConstruction, aztecNode) : await aztecNode.getNodeInfo();');
   source=replace(source,'const protocolContractsProvider = new LazyProtocolContractsProvider();',`const rollingStartup=options.rollingConstruction?rollingCreationStartup(options.rollingConstruction,aztecNode):undefined;
