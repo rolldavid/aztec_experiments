@@ -1051,7 +1051,8 @@ def archive_node_startup(base):
 
 
 def retire_stopped_node(args,base):
-    # Never remove a container or its persistent data. Docker errors fail closed.
+    # Discard only the exact stopped container; its mounted data is retained.
+    # Docker errors fail closed, including a concurrent restart before removal.
     if args.count('--name')!=1 or args[args.index('--name')+1]!='rolling-node':raise ValueError('Node container name')
     def docker(*arguments):
         return subprocess.run(['/usr/bin/docker',*arguments],check=True,capture_output=True,text=True,timeout=30).stdout.strip()
@@ -1069,7 +1070,7 @@ def retire_stopped_node(args,base):
         or sorted(value.get('HostConfig',{}).get('Binds') or [])!=sorted(expected_binds)
         or value.get('State',{}).get('Status') not in ('exited','created') or value.get('State',{}).get('Running') is not False):
         raise ValueError('Refusing unrelated or live node container')
-    docker('container','rename',identifier,'rolling-node-retired-'+identifier)
+    docker('container','rm',identifier) # Deliberately no force or volume-removal flag.
 
 
 def instrument_node_args(args,base):

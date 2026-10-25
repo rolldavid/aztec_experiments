@@ -1381,7 +1381,7 @@ raise SystemExit(code)
             self.assertTrue((base/'startup-code').is_symlink())
         self.assertEqual(hashlib.sha256((pathlib.Path(b.__file__).parent/'startup-stages.mjs').read_bytes()).hexdigest(),b.STARTUP_HELPER_SHA)
 
-    def test_restart_retires_only_exact_stopped_container_and_serializes_writer(self):
+    def test_restart_discards_only_exact_stopped_container_without_volumes_and_serializes_writer(self):
         import copy,fcntl
         with tempfile.TemporaryDirectory() as t:
             base=pathlib.Path(t);identifier='a'*64
@@ -1391,24 +1391,26 @@ raise SystemExit(code)
                 'HostConfig':{'Binds':['/var/lib/rolling-node/data:/var/lib/data','/etc/rolling-node/network.json:/etc/aztec/network.json:ro',
                     str(base/'startup-code')+':/usr/src/yarn-project/rolling:ro',str(base/'startup-stages')+':/rolling-startup']},
                 'State':{'Status':'exited','Running':False}}
-            for variant in ('absent','stopped','running','wrong-image','wrong-data','wrong-command','docker-error'):
+            for variant in ('absent','stopped','created','running','paused','dead','wrong-image','wrong-data','wrong-command','docker-error','started-before-remove'):
                 with self.subTest(variant=variant):
                     value=copy.deepcopy(record);calls=[]
-                    if variant=='running':value['State'].update(Status='running',Running=True)
+                    if variant in ('running','paused'):value['State'].update(Status=variant,Running=True)
+                    if variant in ('created','dead'):value['State'].update(Status=variant,Running=False)
                     if variant=='wrong-image':value['Config']['Image']='unrelated'
                     if variant=='wrong-data':value['HostConfig']['Binds'][0]='/unrelated:/var/lib/data'
                     if variant=='wrong-command':value['Config']['Cmd']=['unrelated']
                     def docker(command,**kw):
                         calls.append(command)
-                        if variant=='docker-error':raise subprocess.CalledProcessError(1,command)
+                        if variant=='docker-error' or variant=='started-before-remove' and command[2]=='rm':raise subprocess.CalledProcessError(1,command)
                         output=('' if variant=='absent' else identifier) if command[2]=='ls' else json.dumps([value]) if command[2]=='inspect' else ''
                         return subprocess.CompletedProcess(command,0,output,'')
                     with patch.object(b.subprocess,'run',side_effect=docker):
-                        if variant in ('absent','stopped'):b.retire_stopped_node(args,base)
+                        if variant in ('absent','stopped','created'):b.retire_stopped_node(args,base)
                         else:
                             with self.assertRaises((ValueError,subprocess.CalledProcessError)):b.retire_stopped_node(args,base)
-                    renames=[command for command in calls if command[2]=='rename']
-                    self.assertEqual(renames, [['/usr/bin/docker','container','rename',identifier,'rolling-node-retired-'+identifier]] if variant=='stopped' else [])
+                    removals=[command for command in calls if command[2]=='rm']
+                    self.assertEqual(removals,[['/usr/bin/docker','container','rm',identifier]] if variant in ('stopped','created','started-before-remove') else [])
+                    self.assertFalse(any(command[2]=='rename' for command in calls))
             # No contender can rotate observations or touch Docker while this writer lives.
             fd=os.open(base/'node-wrapper.lock',os.O_RDWR|os.O_CREAT,0o600)
             try:
