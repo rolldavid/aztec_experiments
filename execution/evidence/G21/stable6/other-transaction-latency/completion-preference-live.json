@@ -1,0 +1,28 @@
+{
+  "activation": {
+    "commit": "589b5f2f308024ac1b127efe8a0a4c1c98c9225c",
+    "appPid": 56084,
+    "runningSource": "/opt/rolling-app/releases/93954017009d4d9b53529d09956347682a1069ea",
+    "nextSource": "/opt/rolling-app/releases/ui-589b5f2f3080",
+    "ui": "/opt/rolling-ui/releases/589b5f2f308024ac1b127efe8a0a4c1c98c9225c",
+    "previousUi": "/opt/rolling-ui/releases/f0dcf539c525188f6123ca1f14e9661a002c1ec0",
+    "protectedPids": {
+      "rolling-application.service": 56084,
+      "rolling-application-proxy.service": 803,
+      "rolling-node.service": 1522,
+      "rolling-query.service": 1524,
+      "rolling-moderator.service": 2088,
+      "board-prover.service": 55793,
+      "board-prover-proxy.service": 739
+    },
+    "caddySha256": "d1bf263bf2245f9350c78a3dd738eaedd375f859e062c5d2e879e28f877e016e",
+    "notifySha256": "aa8f21c2b5ff13c58983a4b1cbf6482cfb303db74566198102f8b051d46a53ae"
+  },
+  "publicHashes": {
+    "wallet-panel.mjs": "a4f4ed886b5191b7b7c9f0cd0566850a250435152c17c64ae0cb2db874c7b95f",
+    "wallet/runtime.json": "221a55e27b42a63f8e3ac2be9c671043bbba0474860bb1742518f59f796d05d0",
+    "wallet/runtime.mjs": "9e3ba6a20207ffa38e7ec4522a7ca77942d30ce071cec6fc93fbb30482a195a2"
+  },
+  "cloudfrontInvalidation": "IF3XMBHTYXJ4WK7G2Z053SVZVK",
+  "publicRuntimeVerifiedSha256": "9e3ba6a20207ffa38e7ec4522a7ca77942d30ce071cec6fc93fbb30482a195a2"
+}

@@ -18,7 +18,7 @@ Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build`
 
 ## Other transaction performance — active
 
-Owner target: at least50% end-to-end reduction across all other flows; still active. Published f0dc includes shared read waves, native included completion and the completed-payment regression fix. Fresh fee topup succeeded. ETH-to-Bok took39.223s from Pay click to usable credit after native inclusion, versus the historical165.094s run (unmeasured baseline wallet dwell limits that comparison). A real funded @bok request published a working updated app and its reply automatically appeared in the conversation. Remaining matched coverage and browser kernel/proof-verification latency are under investigation. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
+Owner target: at least50% end-to-end reduction across all other flows; still active. Published589b5f2f includes shared read waves, native included completion and the completed-payment regression fix. Fresh fee topup succeeded. ETH-to-Bok took39.223s from Pay click to usable credit after native inclusion, versus the historical165.094s run (unmeasured baseline wallet dwell limits that comparison). A real funded @bok request published a working updated app and its reply automatically appeared in the conversation. Remaining matched coverage and browser kernel/proof-verification latency are under investigation. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
 
 ## Current deployment
 
@@ -29,12 +29,12 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/f0dcf539c525188f6123ca1f14e9661a002c1ec0` |
-| Browser SDK | Verified9395 artifact; wallet runtime updated in f0dc |
+| Browser UI | `/opt/rolling-ui/releases/79af02f26c81be81273c398fda9be5b7d6b71247` |
+| Browser SDK | Verified9395 artifact; wallet runtime updated in79af |
 | Running app | `/opt/rolling-app/releases/93954017009d4d9b53529d09956347682a1069ea` |
-| Next-start app | `/opt/rolling-app/releases/ui-f0dcf539c525` |
+| Next-start app | `/opt/rolling-app/releases/ui-79af02f26c81` |
 | Prover | `/opt/board-prover/releases/bok-owner-93954017009d4d9b53529d09956347682a1069ea` |
-| Bok | `/opt/rolling-bok/releases/93954017009d4d9b53529d09956347682a1069ea` |
+| Bok | `/opt/rolling-bok/releases/repair-30fbdee60ddc4a094d9f5b7c87d6f1255d4fd753` |
 
 | Contract | Current address |
 | --- | --- |

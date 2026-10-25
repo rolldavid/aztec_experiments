@@ -174,3 +174,10 @@ Root owns reviewed funding-terminal integration, candidate9395 publication and a
 ##25October completion and preference follow-up
 
 Root integrates/publishes the completion and preference read-wave changes, owns the single IAB test account and retained build. pending_reply_ui reviews completion authority and incremental static publication; pending_feed_release supplies preference concurrency/failure tests and cleanup; proposed_feed_design measures the real funded Bok job and investigates browser kernel/verifier delays. No dependency copies or service restart.163 aggregate checks,5 targeted updated completion checks,4 actual-journal checks and389 preference/session checks pass. Overall per-flow50% acceptance remains active.
+
+## Current parallel work after79af UI publication
+
+- Root: published79af observer correction and30fb Bok repair loop; real unsubscribe24.797s automatically checkpointed, real Bok app update published. Integrates reviewed patches, measures visible completion, publishes and cleans exact owned transfers.
+- pending_reply_ui: exact authenticated included preference projection removing4–6s completion rescan; retains native next-action validation and durable cross-browser reader.
+- pending_feed_release: moderator startup full-history replay diagnosis and existing owned-store resume; no remote mutations.
+- proposed_feed_design: numeric opt-in BB worker timing to distinguish actual WASM execution from message delay; main CPU profile alone cannot attribute worker slowness.

@@ -1,0 +1,12 @@
+{
+  "source": "79af02f26c81be81273c398fda9be5b7d6b71247",
+  "clickToUsableFrameMs": 24796.769999980927,
+  "visible": true,
+  "txHash": "0x19fcf9b91b0bc7fcc13e775cff315d191e2917b1228ab4b191d960d0eea42804",
+  "status": "checkpointed",
+  "executionResult": "success",
+  "blockNumber": 3536,
+  "blockHash": "0x0bde49ab5408e7e5f62446436c87afdfbe9c8f0950e6e54c618429b51fab2ffa",
+  "automaticCheckpointUi": "Unfollow conversation: confirmed.",
+  "speedupClaim": false
+}

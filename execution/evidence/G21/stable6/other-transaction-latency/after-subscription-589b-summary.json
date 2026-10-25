@@ -1,0 +1,15 @@
+{
+  "source": "589b5f2f308024ac1b127efe8a0a4c1c98c9225c",
+  "clickToUsableFrameMs": 33326.299999952316,
+  "visible": true,
+  "txHash": "0x1dc85fd638a3d968f68b8aeb0f03112e26859152e4c746027aca8e8c53bf5491",
+  "followup": {
+    "receiptStatus": "checkpointed",
+    "executionResult": "success",
+    "blockNumber": 3522,
+    "blockHash": "0x0933468016f3eb34a40e66bb9e9b29ca760e7094dcfd25cb9f14f5e82f2fe173",
+    "nativePreferencesContainSubscription": true,
+    "displayDefect": "Later observer incorrectly reported no longer included and cleared UI preference state. Native effect persisted; investigating unavailable/orphan conflation."
+  },
+  "speedupClaim": false
+}
