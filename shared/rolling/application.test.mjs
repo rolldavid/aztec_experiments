@@ -2970,3 +2970,33 @@ test('withdrawal observation cannot survive operation replacement while predeces
  const preparing=f.app.prepare({type:'withdraw',deposit:'9'},{immediate:true});await entered.promise;scope={synchronized:true};release.resolve();
  await assert.rejects(preparing,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });
+
+for(const type of ['withdraw-bok','cancel-bok-request','expire-bok-request'])for(const changeScope of [false,true])test(`Bok fee wave: ${type} ${changeScope?'new operation refreshes':'same operation reuses'} metadata`,async()=>{
+ const f=bokAccountingFixture();let scope={synchronized:true},payments=0;f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.preparePrivateFeePayment=async()=>{payments++;return {availableCredit:100n};};f.app=f.restart();
+ if(type!=='withdraw-bok'){f.pages[0].requests[0].available='60';f.pages[0].requests[0].reserved='0';await finishBokAccounting(f);}
+ const action=type==='withdraw-bok'?{type,amount:'500',recipient:'0x'+'33'.repeat(20)}:{type,requestId:hex(11)};
+ const intent=await f.app.prepare(action,{immediate:true});assert.equal(payments,1);assert.equal(f.state.estimates,0);
+ if(changeScope)scope={synchronized:true};await f.app.submitPrepared(intent.intentId);assert.equal(payments,changeScope?2:1);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
+});
+for(const failure of [null,'balance','portal','payment','owner'])test(`Bok fee wave: withdrawal ${failure??'success'} drains actual credit, portal and fee reads`,async()=>{
+ const f=bokAccountingFixture(),held=Promise.withResolvers(),entered=Promise.withResolvers(),seen=new Set(),error=Error('wave failed');let scope={synchronized:true},done=false;
+ f.options.accountSession.operationScope=()=>scope;
+ const wait=async name=>{seen.add(name);if(seen.size===3)entered.resolve();if(name===failure)throw error;await held.promise;};
+ const native=f.options.sdk.Contract.at,resolve=f.options.funding.resolveBokWithdrawal;
+ f.options.sdk.Contract.at=async(...args)=>{const contract=await native(...args);if(String(args[0])!==hex(5))return contract;return {methods:new Proxy(contract.methods,{get:(methods,key)=>key!=='balance_of'?methods[key]:(...values)=>({simulate:async()=>{await wait('balance');return methods.balance_of(...values).simulate();}})})};};
+ f.options.funding.resolveBokWithdrawal=async()=>{await wait('portal');return resolve();};f.options.sdk.preparePrivateFeePayment=async()=>{await wait('payment');return {availableCredit:100n};};f.app=f.restart();
+ const pending=f.app.prepare({type:'withdraw-bok',amount:'500',recipient:'0x'+'33'.repeat(20)},{immediate:true}).finally(()=>done=true),result=failure?assert.rejects(pending,failure==='owner'?{code:'ROLLING_CONTEXT_CHANGED'}:e=>e===error):pending;
+ await entered.promise;await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);if(failure==='owner')scope={synchronized:true};held.resolve();await result;if(failure)assert.equal(f.values.size,0);
+});
+
+for(const type of ['cancel-bok-request','expire-bok-request'])for(const failure of ['anchor','payment'])test(`Bok fee wave: ${type} drains ${failure} failure with its held sibling`,async()=>{
+ const f=bokAccountingFixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ f.pages[0].requests[0].available='60';f.pages[0].requests[0].reserved='0';await finishBokAccounting(f);
+ const before=new Map(f.values),gate=Promise.withResolvers(),entered=Promise.withResolvers(),seen=new Set(),error=Error('release wave failed');let done=false;
+ const wait=async name=>{seen.add(name);if(seen.size===2)entered.resolve();if(name===failure)throw error;await gate.promise;};
+ const block=f.options.accountSession.node.getBlockData;f.options.accountSession.node.getBlockData=async(...args)=>{await wait('anchor');return block(...args);};
+ f.options.sdk.preparePrivateFeePayment=async()=>{await wait('payment');return {availableCredit:100n};};
+ const pending=f.app.prepare({type,requestId:hex(11)},{immediate:true}).finally(()=>done=true),rejected=assert.rejects(pending);
+ await entered.promise;await new Promise(setImmediate);assert.equal(done,false);assert.deepEqual(f.values,before);assert.equal(f.state.sends,0);gate.resolve();await rejected;assert.deepEqual(f.values,before);
+});

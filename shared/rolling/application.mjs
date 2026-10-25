@@ -1150,16 +1150,16 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(['bok','claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type)||action.type==='claim-deposit'&&action.bokReceipt!==undefined){await ensureBok({bind:immediate&&action.type==='bok'});check(bok,'ROLLING_BOK_UNAVAILABLE');}
       let moderation=null;
       const ordinaryPreparation=['post','reply','quote','repost'].includes(action.type);
-      const genericPreparation=['like','unlike','preference','read-marker','name','bio','avatar','subboard','screen','withdraw',...moderationTypes].includes(action.type);
+      const genericPreparation=['like','unlike','preference','read-marker','name','bio','avatar','subboard','screen','withdraw','withdraw-bok','cancel-bok-request','expire-bok-request',...moderationTypes].includes(action.type);
       // Start independent fee metadata alongside posting reads. Both private
       // utilities still run through the native PXE queue at this flow's anchor.
       const paymentScope=immediate&&(ordinaryPreparation||genericPreparation||action.type==='bok')
         ?session.operationScope?.():null;
       const paymentOwner=paymentScope&&{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
       let args,preparedPayment;
-      if(paymentScope){
-        const checkPaymentOwner=()=>check(session.operationScope()===paymentScope&&session.wallet===paymentOwner.wallet&&
-          session.wallet.pxe===paymentOwner.pxe&&session.node===paymentOwner.node,'ROLLING_CONTEXT_CHANGED');
+      const checkPaymentOwner=()=>check(session.operationScope()===paymentScope&&session.wallet===paymentOwner.wallet&&
+        session.wallet.pxe===paymentOwner.pxe&&session.node===paymentOwner.node,'ROLLING_CONTEXT_CHANGED');
+      if(paymentScope&&action.type!=='withdraw-bok'){
         // Capture this operation's local anchor before either private utility
         // enters the native PXE queue. The public policy read can then overlap
         // screening and fee-note work; its final canonical/local fences remain.
@@ -1188,13 +1188,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       if(action.type==='withdraw-bok'){
         check(resolveBokWithdrawal,'ROLLING_BOK_UNAVAILABLE');const anchor=await balanceAnchor();
-        // Native credit and immutable portal bindings are independent. Drain both
-        // under this owned anchor before recording an exit or releasing its lease.
+        // Fee metadata joins the existing native-credit/portal wave, rather
+        // than delaying that wave. All reads drain inside this owned anchor.
         const reads=await Promise.allSettled([
           async()=>chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact)),()=>resolveBokWithdrawal(),
+          ...(paymentScope?[()=>measure('action.payment-prefetch',()=>payment(action))]:[]),
         ].map(read=>Promise.resolve().then(read)));
         const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
-        const [available,scope]=reads.map(value=>value.value);
+        const [available,scope,fee]=reads.map(value=>value.value);
+        if(paymentScope){checkPaymentOwner();preparedPayment=fee;}
         check(available>=uint128(action.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');check(scope.recipient===bok.address,'ROLLING_CONTEXT_CHANGED');
         record.withdrawal={kind:'bok',amount:action.amount,depositor:action.recipient,nonce,eligible:true,bokScope:clone(scope)};await checkBalanceAnchor(anchor);
       }
@@ -1229,6 +1231,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const currentAnchor=await balanceAnchor(),observed=withdrawalObservation;
         check(session.operationScope()===observed.operation&&observed.operation.synchronized===true&&session.wallet===observed.wallet&&session.wallet.pxe===observed.pxe&&session.node===observed.node&&session.wallet.pxe.node===observed.cachedNode&&same(currentAnchor,observed.anchor),'ROLLING_CONTEXT_CHANGED');
       }
+      if(paymentScope&&['withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type))checkPaymentOwner();
       const saved=await store.write(prior,record);
       // No persistent cache: only the unchanged journal record in the same held
       // operation may use this result. Separate submissions prepare afresh.

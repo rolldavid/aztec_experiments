@@ -949,3 +949,31 @@ test('USDC confirmation retains all five fresh state boundaries and exact signed
  const simulations=calls.filter(x=>x.method==='eth_call'&&x.params[1]==='pending');assert.equal(simulations.length,1);assert.equal(simulations[0].signatures,2);
  assert.equal(simulations[0].params[0].data,f.state.usdcTx.data);assert.equal(f.state.posts,1);
 });
+
+for(const kind of ['private-fee','bok'])for(const phase of ['approval','deposit'])test(`terminal reuse: ${kind} ${phase} projects only its successful current send without recovery`,async()=>{
+ const f=topupFixture(kind);if(phase==='deposit')f.state.allowance=1000n;
+ let recoveries=0,receiptReads=0,txReads=0;const native=f.options.sdk.createEthereumJournal,receipt=f.options.provider.getTransactionReceipt,transaction=f.options.provider.getTransaction;
+ f.options.sdk.createEthereumJournal=async options=>{const j=await native(options);return {...j,recover:async(...args)=>{recoveries++;return j.recover(...args);}};};
+ f.options.provider.getTransactionReceipt=async hash=>{receiptReads++;return receipt(hash);};f.options.provider.getTransaction=async hash=>{txReads++;return transaction(hash);};
+ const cap=await f.open();await cap.prepare(f.allocation);recoveries=receiptReads=txReads=0;
+ const result=await cap.confirm();assert.equal(recoveries,0);assert.equal(receiptReads,1);assert.equal(txReads,1);assert.equal(f.state.sends,1);
+ if(phase==='approval')assert.deepEqual(result,{approved:true});else assert.equal(result.receipt.amount,'300');
+ await cap.recover();assert.equal(recoveries,1);assert.equal(receiptReads,2);assert.equal(txReads,2);
+});
+for(const change of ['request','outcome','canonical','owner','custody'])test(`terminal reuse: ${change} change after authenticated send prevents effect projection`,async()=>{
+ const f=topupFixture();f.state.allowance=1000n;const native=f.options.sdk.createEthereumJournal;
+ f.options.sdk.createEthereumJournal=async options=>{const j=await native(options);return {...j,send:async(...args)=>{const result=await j.send(...args);
+  if(change==='request')result.request={...result.request,nonce:result.request.nonce+1};
+  if(change==='outcome')result.outcome='reverted';
+  if(change==='canonical'){const block=f.options.provider.getBlock;f.options.provider.getBlock=async n=>({...await block(n),hash:h(999)});}
+  if(change==='owner')f.state.invalid=true;
+  if(change==='custody'){for(const key of f.records.keys())f.records.set(key,'changed ciphertext');}
+  return result;
+ }};};
+ const cap=await f.open();await cap.prepare(f.allocation);await assert.rejects(cap.confirm());assert.equal(f.state.sends,1);
+});
+test('terminal reuse: final canonical read stays held before returning deposit receipt',async()=>{
+ const f=topupFixture();f.state.allowance=1000n;const native=f.options.sdk.createEthereumJournal,held=Promise.withResolvers(),entered=Promise.withResolvers();
+ f.options.sdk.createEthereumJournal=async options=>{const j=await native(options);return {...j,send:async(...args)=>{const result=await j.send(...args),block=f.options.provider.getBlock;f.options.provider.getBlock=async n=>{entered.resolve();await held.promise;return block(n);};return result;}};};
+ const cap=await f.open();await cap.prepare(f.allocation);let done=false;const work=cap.confirm().finally(()=>{done=true;});await entered.promise;assert.equal(done,false);held.resolve();assert.equal((await work).receipt.amount,'300');
+});

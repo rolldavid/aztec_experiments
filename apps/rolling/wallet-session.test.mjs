@@ -1541,12 +1541,27 @@ test('preference readiness and raw head share only the held account operation at
  }
  await session.close();
 });
-test('preference readiness handoff rejects account mutation before native discovery',async()=>{
- const f=await sessionFixture(),inspect=f.input.sdk.inspectTrustedNode;let mutate=false;
- f.input.sdk.inspectTrustedNode=async(...args)=>{const value=await inspect(...args);if(mutate)f.input.account.salt='99';return value;};
- const session=await createRollingWalletSession(f.input);mutate=true;const syncs=f.state.syncs;
- await assert.rejects(session.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
- assert.equal(f.state.syncs,syncs);assert(!f.state.events.includes('preference-events'));assert.equal(session.busy,false);await session.close();
+for(const when of ['before','during'])test('preference readiness account mutation '+when+' parallel synchronization cannot publish state',async()=>{
+ const f=await sessionFixture(),inspect=f.input.sdk.inspectTrustedNode,entered=Promise.withResolvers(),mutated=Promise.withResolvers(),held=Promise.withResolvers();let mutate=false;
+ f.input.sdk.inspectTrustedNode=async(...args)=>{const value=await inspect(...args);if(mutate){await entered.promise;f.input.account.salt='99';mutated.resolve();}return value;};
+ const session=await createRollingWalletSession(f.input),sync=f.pxe.sync,syncs=f.state.syncs;
+ f.pxe.sync=async()=>{entered.resolve();await sync();};
+ if(when==='before')f.input.account.salt='99';else{mutate=true;f.state.waitSync=held.promise;}
+ let done=false;const pending=session.application.readPreferences().finally(()=>done=true);
+ const observed=assert.rejects(pending,when==='before'?{code:'ROLLING_CONTEXT_CHANGED'}:{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
+ try{
+  if(when==='during'){
+   await mutated.promise;await new Promise(setImmediate);
+   assert.equal(f.state.syncs,syncs+1,'only the already-started synchronization is allowed');
+   assert.equal(done,false);assert.equal(session.busy,true);assert.equal(f.state.active,true);
+   await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
+   assert(!f.state.events.includes('preference-head'));assert(!f.state.events.includes('preference-events'));
+   held.resolve();
+  }
+  await observed;assert.equal(f.state.syncs,syncs+(when==='during'?1:0));
+  assert(!f.state.events.includes('preference-head'));assert(!f.state.events.includes('preference-events'));assert.equal(f.state.sends,0);
+  assert.equal(session.busy,false);assert.equal(f.state.active,false);
+ }finally{held.resolve();await observed;await session.close();}
 });
 
 import {waitForTx as nativeWaitForTx} from '@aztec-labs/aztec.js/node';
@@ -1593,4 +1608,49 @@ for(const phase of ['initial','recheck'])for(const mode of ['success','l2-failur
  await entered.promise;assert.equal(started,phase==='initial'?3:2);if(mode==='context')changed=true;
  gates[mode==='l1-failure'?1:0].resolve();await new Promise(setImmediate);assert.equal(settled,false,'all other authorities must drain');
  gates.forEach(g=>g.resolve());await observed;assert.equal(inspections,1);assert.equal(canonicalReads,phase==='initial'?1:2);assert(l1Tags.every(tag=>tag===20));
+});
+
+async function revertedExitFixture(options){
+ const f=await withdrawalFixture(options),capture=f.opts.captureWallet;
+ f.opts.captureWallet=async()=>{const wallet=await capture(),send=wallet.signer.sendTransaction;return {...wallet,signer:{...wallet.signer,sendTransaction:async request=>{const result=await send(request);f.state.receipt.status=0;f.state.receipt.logs=[];return result;}}};};
+ const cap=f.restart();await cap.prepare();await assert.rejects(cap.confirm(),{code:'BB_ETH_TRANSACTION_FAILED'});return f;
+}
+for(const options of [{},{bok:true},{cancellation:true}])test(`exit preparation reuse: saved reverted ${JSON.stringify(options)} authenticates receipt and membership once`,async()=>{
+ const f=await revertedExitFixture(options),receipt=f.opts.provider.getTransactionReceipt,transaction=f.opts.provider.getTransaction,witness=f.opts.node.getL2ToL1MembershipWitness;let receipts=0,transactions=0,witnesses=0;
+ f.opts.provider.getTransactionReceipt=async h=>{receipts++;return receipt(h);};f.opts.provider.getTransaction=async h=>{transactions++;return transaction(h);};f.opts.node.getL2ToL1MembershipWitness=async(...args)=>{witnesses++;return witness(...args);};
+ const result=await f.restart().prepare();assert.equal(result.amount,'100');assert.equal(receipts,1);assert.equal(transactions,1);assert.equal(witnesses,1);assert.equal(f.state.sends,1);
+});
+for(const change of ['l1-fork','l2-fork','request','owner','paid'])test(`exit preparation reuse: ${change} cannot produce another refund quote`,async()=>{
+ const f=await revertedExitFixture({});
+ if(change==='l1-fork')f.state.fork=true;
+ if(change==='l2-fork')f.state.l2Fork=true;
+ if(change==='request')f.state.tx.nonce=99;
+ if(change==='owner')f.state.guard=false;
+ if(change==='paid'){f.state.receipt.status=1;const abi=new Interface(['event Withdrawn(address indexed depositor,uint128 amount,bytes32 indexed depositId)']);f.state.receipt.logs=[{address:f.opts.scope.portal,...abi.encodeEventLog('Withdrawn',[eth(33),100n,hex(56)])}];}
+ await assert.rejects(f.restart().prepare());assert.equal(f.state.sends,1);
+});
+test('exit preparation reuse: saved receipt read completes before membership and quote',async()=>{
+ const f=await revertedExitFixture({}),held=Promise.withResolvers(),entered=Promise.withResolvers(),receipt=f.opts.provider.getTransactionReceipt,witness=f.opts.node.getL2ToL1MembershipWitness;let witnesses=0,done=false;
+ f.opts.provider.getTransactionReceipt=async h=>{entered.resolve();await held.promise;return receipt(h);};f.opts.node.getL2ToL1MembershipWitness=async(...args)=>{witnesses++;return witness(...args);};
+ const work=f.restart().prepare().finally(()=>{done=true;});await entered.promise;assert.equal(witnesses,0);assert.equal(done,false);held.resolve();assert.equal((await work).amount,'100');assert.equal(witnesses,1);
+});
+
+for(const kind of ['private-fee','bok'])for(const failure of [null,'addresses','l1',...(kind==='bok'?['l2']:[])])test(`topup discovery wave: ${kind} ${failure??'success'} drains all initial reads`,async()=>{
+ const {input}=topupScopeFixture(kind),names=['addresses','l1',...(kind==='bok'?['l2']:[])],held=Promise.withResolvers(),entered=Promise.withResolvers(),started=[],error=Error('discovery failed');
+ const wrap=(name,fn)=>async(...args)=>{started.push(name);if(started.length===names.length)entered.resolve();if(name===failure)throw error;await held.promise;return fn(...args);};
+ input.node.getL1ContractAddresses=wrap('addresses',input.node.getL1ContractAddresses);
+ const getBlock=input.provider.getBlock;input.provider.getBlock=(tag,...args)=>tag==='latest'?wrap('l1',getBlock)(tag,...args):getBlock(tag,...args);
+ const getData=input.node.getBlockData;input.node.getBlockData=(tag,...args)=>tag==='checkpointed'?wrap('l2',getData)(tag,...args):getData(tag,...args);
+ let calls=0,done=false;const call=input.provider.call;input.provider.call=async(...args)=>{calls++;return call(...args);};
+ const pending=verifyRollingTopupScope(input).finally(()=>done=true),result=failure?assert.rejects(pending,e=>e===error):pending;
+ await entered.promise;assert.deepEqual(started,names);await new Promise(setImmediate);assert.equal(done,false);assert.equal(calls,0);held.resolve();await result;if(failure)assert.equal(calls,0);
+});
+for(const changed of ['context','l1','l2'])test(`topup discovery wave: ${changed} change before publication fails`,async()=>{
+ const {input}=topupScopeFixture('bok'),held=Promise.withResolvers(),entered=Promise.withResolvers(),addresses=input.node.getL1ContractAddresses;let replace=false;
+ input.node.getL1ContractAddresses=async()=>{entered.resolve();await held.promise;return addresses();};
+ const block=input.provider.getBlock,data=input.node.getBlockData;
+ input.contextGuard=async()=>{if(replace&&changed==='context')throw Error('owner changed');};
+ input.provider.getBlock=async tag=>{const value=await block(tag);return replace&&changed==='l1'&&tag!=='latest'?{...value,hash:hex(99)}:value;};
+ input.node.getBlockData=async tag=>{const value=await data(tag);return replace&&changed==='l2'&&tag!=='checkpointed'?{...value,blockHash:hex(99)}:value;};
+ const result=assert.rejects(verifyRollingTopupScope(input));await entered.promise;replace=true;held.resolve();await result;
 });

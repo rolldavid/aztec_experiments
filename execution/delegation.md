@@ -166,3 +166,7 @@ Current integration671/671: pending_feed_release independently approved paid-ref
 ## Resumed all-flow performance integration
 
 Root integrates initial preference preparation overlap and owns core staging/live qualification. pending_reply_ui proposes independent readiness/sync overlap after inclusion; pending_feed_release independently reviews source and stage boundaries; proposed_feed_design prepares incremental publication from the already staged e0 source without dependency copies. Current8b source is pushed but not published. Native bind proof waiter is read-only; no resubmission.
+
+## Continuing all-flow performance publication
+
+Root owns reviewed funding-terminal integration, candidate9395 publication and actual browser measurements. proposed_feed_design diagnoses the sampled native hashing IPC stall in the read-only deployment check. pending_reply_ui independently approved the config transfer and terminal-reuse changes. pending_feed_release audits remaining same-operation Bok metadata and portal read overlap. No dependency copies or new browser profiles; all services remain running.

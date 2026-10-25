@@ -475,10 +475,17 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
  async function verified(value,wait=false){
   check(value?.intent,'RECOVERY_REQUIRED');const j=await sdk.createEthereumJournal(journalOptions(value));let result;
   result=await read(()=>j.recover({retry:false,wait}));
+  return verifiedResult(value,result);
+ }
+ async function verifiedResult(value,result){
   for(const key of ['from','to','chainId','nonce','data','value'])check(result.request[key]===value.intent[key],'MISMATCH');
   check(JSON.stringify(result.request.expected)===JSON.stringify(value.intent.expected),'MISMATCH');
   check(['success','reverted'].includes(result.outcome),'RECOVERY_REQUIRED');
   const block=await read(()=>provider.getBlock(result.receipt.blockNumber));check(block?.hash?.toLowerCase()===result.receipt.blockHash.toLowerCase(),'MISMATCH');return result;
+ }
+ function receiptResult(value,result){
+  check(result.outcome==='success','REVERTED');if(value.phase==='approval')return {approved:true};if(value.phase==='swap')return {swapped:true};const e=result.event;
+  return {receipt:{txHash:result.txHash,blockHash:result.receipt.blockHash.toLowerCase(),blockNumber:result.receipt.blockNumber,sender:result.request.from,nonce:String(result.request.nonce),amount:result.request.expected.amount,secretHash:result.request.expected.secretHash,messageKey:e.key,leafIndex:String(e.index)}};
  }
  async function completedClaim(value){
   check(value.claim?.attempted,'RECOVERY_REQUIRED');
@@ -563,14 +570,16 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
     await read(wallet.guard);return {gasLimit,...(fees.maxFeePerGas!==undefined&&fees.maxFeePerGas!==null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})};
    };
    const j=await sdk.createEthereumJournal({...journalOptions(current.value),signer:wallet.signer,prepareRequest,onSubmitted,acknowledgeTx:current.journalPriorHash,contextGuard:async()=>{await contextGuard();await wallet.guard();}});
-   try{await read(()=>j.send(async nonce=>{check(nonce===request.nonce,'NONCE_CHANGED');saved=await read(()=>current.store.write(saved,{...saved.value,intent:request}));return {data:request.data,value:request.value,expected:request.expected};}));}
+   let result;try{result=await read(()=>j.send(async nonce=>{check(nonce===request.nonce,'NONCE_CHANGED');saved=await read(()=>current.store.write(saved,{...saved.value,intent:request}));return {data:request.data,value:request.value,expected:request.expected};}));}
    catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value'in d&&['BB_ETH_REQUEST_CANCELLED','BB_ETH_INSUFFICIENT_FUNDS','BB_ETH_PREFLIGHT_FAILED'].includes(d.value)){try{await read(()=>current.store.write(saved,current.saved.value));}catch(cleanup){throw new AggregateError([error,cleanup],'Top-up cancellation could not be saved.');}}throw error;}
-   return cap.recover();
+   // Only this exact successful send result may skip another journal recovery.
+   // Reopen authenticated custody and retain the final fresh canonical check.
+   const {saved:currentSaved}=await stored();
+   check(currentSaved.encoded===saved.encoded,'MISMATCH');
+   return receiptResult(currentSaved.value,await verifiedResult(currentSaved.value,result));
   },
   async inspect(){const {saved}=await stored();return saved.value?freeze({paymentSaved:!!saved.value.intent,completed:!!saved.value.claimCompletion,amount:saved.value.amount,asset:saved.value.asset??'USDC',privateFeeCap:saved.value.privateFeeCap,claim:clone(saved.value.claim),claimAction:kind==='bok'?'claim-bok':'claim-private-fee',explicitClaimReview:saved.value.explicitClaimReview===true,phase:saved.value.phase}):null;},
-  async recover({wait=false}={}){const {saved}=await stored(),result=await verified(saved.value,wait);check(result.outcome==='success','REVERTED');if(saved.value.phase==='approval')return {approved:true};if(saved.value.phase==='swap')return {swapped:true};const e=result.event;
-   return {receipt:{txHash:result.txHash,blockHash:result.receipt.blockHash.toLowerCase(),blockNumber:result.receipt.blockNumber,sender:result.request.from,nonce:String(result.request.nonce),amount:result.request.expected.amount,secretHash:result.request.expected.secretHash,messageKey:e.key,leafIndex:String(e.index)}};
-  },
+  async recover({wait=false}={}){const {saved}=await stored();return receiptResult(saved.value,await verified(saved.value,wait));},
   async checkpointClaim(value){check(value&&Object.keys(value).sort().join()==='attempted,intentId'&&/^0x[0-9a-f]{64}$/.test(value.intentId)&&typeof value.attempted==='boolean');const {store,saved}=await stored();check(saved.value?.phase==='deposit'&&saved.value.intent,'RECOVERY_REQUIRED');if(saved.value.claim)check(saved.value.claim.intentId===value.intentId&&(!saved.value.claim.attempted||value.attempted),'RECOVERY_REQUIRED');await read(()=>store.write(saved,{...saved.value,claim:clone(value)}));},
   async checkpointSubmission(intentId,receipt){
    const {saved}=await stored();if(saved.value?.claim?.intentId!==intentId)return;

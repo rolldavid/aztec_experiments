@@ -269,10 +269,11 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   async prepare({maximumGasWei}={}){
    quote=null;check(maximumGasWei===undefined||typeof maximumGasWei==='string'&&/^[1-9][0-9]{0,25}$/.test(maximumGasWei));
    const r=await original(),wallet=await captureWallet();await read(wallet.guard);check(wallet.address.toLowerCase()===r.withdrawal.depositor&&String(wallet.chainId)===fixed.chainId);
-   const j=await journal(r),saved=await read(()=>j.inspectSummary());let previous=null;
-   if(saved){const old=await read(()=>j.recover({retry:false}));check(['success','reverted'].includes(old.outcome));await canonicalReceipt(old);
-    if(old.request.expected.kind===journalKind(r)&&old.request.data===await membership(r))check(old.outcome==='reverted');previous=old.txHash;}
-   const data=await membership(r),request={from:r.withdrawal.depositor,to:exitScope(r).portal,data,value:0n};
+   const j=await journal(r),saved=await read(()=>j.inspectRequest());let previous=null,old=null;
+   if(saved){old=await read(()=>j.recover({retry:false}));check(['success','reverted'].includes(old.outcome));await canonicalReceipt(old);previous=old.txHash;}
+   const data=await membership(r);
+   if(old&&old.request.expected.kind===journalKind(r)&&old.request.data===data)check(old.outcome==='reverted');
+   const request={from:r.withdrawal.depositor,to:exitScope(r).portal,data,value:0n};
    // Real portal eth_call checks settled Outbox membership and the original
    // depositor receipt, including when the board has since been rejected.
    await read(()=>provider.call(request));const [gas,fees]=await gasAndFees(request),price=fees.maxFeePerGas??fees.gasPrice;
@@ -678,9 +679,14 @@ export async function verifyRollingAggregateScope({sdk,ethers,node,provider,scop
 export async function verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee,bok,kind,contextGuard}){
  const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;},check=ok=>{if(!ok)throw fail('ROLLING_SESSION_CONFIG');};
  const together=async tasks=>{const settled=await Promise.allSettled(tasks.map(task=>Promise.resolve().then(task)));const failed=settled.find(value=>value.status==='rejected');if(failed)throw failed.reason;return settled.map(value=>value.value);};
- const addresses=await read(()=>node.getL1ContractAddresses());check(addresses.rollupAddress?.toString().toLowerCase()===network.rollup);
+ check(kind==='private-fee'||kind==='bok'&&bok);
+ const [addresses,l1,bokHead]=await together([
+  ()=>read(()=>node.getL1ContractAddresses()),()=>read(()=>provider.getBlock('latest')),
+  ...(kind==='bok'?[()=>read(()=>node.getBlockData('checkpointed'))]:[]),
+ ]);
+ check(addresses.rollupAddress?.toString().toLowerCase()===network.rollup);
  const abi=new ethers.Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)','function token() view returns(address)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function active() view returns(bool)','function decimals() view returns(uint8)']);
- const l1=await read(()=>provider.getBlock('latest'));check(Number.isSafeInteger(l1?.number)&&/^0x[0-9a-f]{64}$/.test(l1?.hash));
+ check(Number.isSafeInteger(l1?.number)&&/^0x[0-9a-f]{64}$/.test(l1?.hash));
  const call=async(address,name)=>abi.decodeFunctionResult(name,await read(()=>provider.call({to:address,data:abi.encodeFunctionData(name),blockTag:l1.number})))[0];
  let portal,token,recipient;
  if(kind==='private-fee'){
@@ -688,7 +694,7 @@ export async function verifyRollingTopupScope({sdk,ethers,node,provider,network,
   const [rollup,underlying,version,l2Token]=await together(['ROLLUP','UNDERLYING','VERSION','L2_TOKEN_ADDRESS'].map(name=>()=>call(portal,name)));
   check(String(rollup).toLowerCase()===network.rollup&&String(underlying).toLowerCase()===token&&String(version)===network.version&&BigInt(l2Token)===BigInt(sdk.ProtocolContractAddress.FeeJuice.toString()));
  }else{
-  check(kind==='bok'&&bok);recipient=bok.address.toString();const head=await read(()=>node.getBlockData('checkpointed')),number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bok.artifact.storageLayout?.portal?.slot;
+  check(kind==='bok'&&bok);recipient=bok.address.toString();const head=bokHead,number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bok.artifact.storageLayout?.portal?.slot;
   check(Number.isSafeInteger(number)&&number>0&&/^0x[0-9a-f]{64}$/.test(hash)&&slot!==undefined);
   const value=await read(()=>node.getPublicStorageAt({hash},bok.address,new sdk.Fr(BigInt(slot))));check(BigInt(value.toString())>0n&&BigInt(value.toString())<1n<<160n);portal='0x'+BigInt(value.toString()).toString(16).padStart(40,'0');
   const again=await read(()=>node.getBlockData(number));check(again?.blockHash?.toString()===hash&&Number(again?.header?.globalVariables?.blockNumber)===number);
