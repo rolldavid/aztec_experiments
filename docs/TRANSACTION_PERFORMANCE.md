@@ -42,6 +42,14 @@ Removed the application-added postcommit remote synchronization sweep. It was a 
 
 751 integrated native-sync/compiled-claim/application checks and actual six-script build pass. Publication and measured end-to-end savings are separate evidence. At resumption browser control reported disabled, so no new browser result is asserted. Prior c790 first changed-SDK opening6.322200s is retained; its cached run was interrupted before evidence capture.
 
+## Opening quote overlap — 26 October 2026
+
+`af0aea9c` removes the worker dependency that delayed public funding quote construction until private session initialization completed. The existing allocation, ETH quote and USD reads now start while the session initializes. Actual native account status still decides whether signup is needed; installation remains inside the account operation with the existing wallet, nonce, quote and custody checks. USDC only overlaps its public allocation/rate preparation. No early payment or duplicate quote is introduced.
+
+The worker reserves the opening operation before starting these reads, avoids waiting on its own completion promise and drains outstanding reads on failure. Closing and competing funding calls remain blocked until the operation finishes. The preparation is local, one-use and bound to the funding context and asset; it is not a cache or a renderer capability.
+
+The actual worker build passed. The affected integration suite passed601 checks, and the final focused opening file passed18 tests including the child VM lifecycle cases. Independent review approved the runtime and tests. These checks establish overlap and failure/authority behavior, not elapsed-time savings. Browser control still reports disabled; no new2-second or50% acceptance measurement is claimed.
+
 ## Remaining qualification work
 
 Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.

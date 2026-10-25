@@ -4,7 +4,7 @@ Current handover: 26 October 2026. The owner's current request takes precedence 
 
 ## Live work and next action
 
-Static `ab6658f203a8832a3856a9a62f622f67a8ca0dbd` is live and pushed. It includes combined Board/Bok claim witness prefetch, removal of unrelated post-action account reloads, concurrent withdrawal checks, same-operation mined Ethereum receipt reuse and removal of the duplicate direct Bok custody check. Actual six-script browser builds and affected integration suites passed; public assets match their manifests. Static updates did not restart services.
+Static `af0aea9c64eb3abefbb79156240b96e41424bdbf` is live and pushed. It starts existing read-only signup quote work during private wallet initialization, then installs it inside the existing account operation after native eligibility.601 affected checks,18 final opening checks and the actual worker build passed; independent review approved. No new browser timing is available. It includes combined Board/Bok claim witness prefetch, removal of unrelated post-action account reloads, concurrent withdrawal checks, same-operation mined Ethereum receipt reuse and removal of the duplicate direct Bok custody check. Actual six-script browser builds and affected integration suites passed; public assets match their manifests. Static updates did not restart services.
 
 Bok runs the three-file `bff92b32` operator overlay with the existing bbf76 native dependencies. Public observations from different requests can proceed independently of the shared signing queue; same-request journal ordering and signing serialization remain. Moderator received the corresponding public-read overlap.235 integrated checks passed. BokPID96885 was ready/active0. Moderator now runs `a0c2c10c` on PID191841, with healthy current ingestion and zero manual-attention or unresolved-signing items. It corrects the false critical classification of two strictly unsigned canonical orphan posts. It preserves signed/uncertain work and requeues reobserved posts.158 affected checks passed.
 
@@ -14,7 +14,7 @@ Both operator publishers retain the existing dependencies, credentials, security
 
 ## Performance targets and evidence
 
-- Every nonordinary transaction flow: at least50% end-to-end reduction against a comparable recorded baseline. This goal remains active and unverified across all flows.
+- Every nonordinary transaction flow: at least50% end-to-end reduction against a comparable recorded baseline. This goal remains unachieved; further live timing is blocked by the browser capability refusing access.
 - Normal account opening: wallet selection→correctly priced enabled payment button within2s. Report immediate/cold and warm cases separately, with wallet approval dwell. The old1.729s warm explicit-new-account shortcut was NOT normal onboarding acceptance.
 - Ordinary posting: click Post→visible feed text after actual native Aztec inclusion within15s. Historical74c cases228/600characters measured11.095/11.894s. Latest recorded a75 case was13.993s. These are observed cases, not guarantees about network inclusion.
 - Do not replace actual usable completion with early DOM insertion, wallet acknowledgement or prover acknowledgement. Included is not checkpointed; background status must update automatically.
@@ -48,7 +48,7 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/ab6658f203a8832a3856a9a62f622f67a8ca0dbd` |
+| Browser UI | `/opt/rolling-ui/releases/af0aea9c64eb3abefbb79156240b96e41424bdbf` |
 | Running application | `/opt/rolling-app/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Prover | `/opt/board-prover/releases/fresh-board-bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Bok | `/opt/rolling-bok/releases/operator-bff92b326bb112b08931cc4d750c805abecb2c52` |

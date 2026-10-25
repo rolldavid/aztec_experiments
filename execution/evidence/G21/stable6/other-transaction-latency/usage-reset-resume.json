@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-10-25T22:33:03.703519+00:00",
+  "source": "ad3efe6974f07b8c3749111ce594b6619b173bb8",
+  "remoteBranches": [
+    "master",
+    "codex/rolling-chat-draft3",
+    "codex/rolling-chat-account-ux"
+  ],
+  "remoteBranchesMatch": true,
+  "publicHttp200": [
+    "/",
+    "/wallet/runtime.json",
+    "/prover/healthz"
+  ],
+  "coreHealthCommandId": "0ef5d903-933b-4197-865d-a7e6dd43779f",
+  "bokHealthCommandId": "a153c62c-db08-4b15-9e4f-5912f9613cdd",
+  "running": [
+    "application",
+    "application-proxy",
+    "node",
+    "query",
+    "moderator",
+    "prover",
+    "prover-proxy",
+    "bok",
+    "bok-artifact-proxy"
+  ],
+  "bokHealth": {
+    "status": "ready",
+    "active": 0,
+    "lastFailure": null
+  },
+  "disk": {
+    "core": "70% used; 12G available",
+    "bok": "17% used; 103G available"
+  },
+  "browserAccessError": "Local browser use is disabled in Work settings",
+  "newBrowserTiming": null
+}

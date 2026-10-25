@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Allverifiedchanges published/pushed: staticab6658, Bokbff92overlay readyPID96885, moderatora0c2c10c PID191841 healthok/checkpoint5382/manualAttention0/unresolvedSigning0. Source/asset/servicechecks andaffectedtestspass; archives/transfers/ownedagentdrafts removed. Condensedhandover removescontradictoryoldcurrentreleaseclaims. Browsertoolstilldisabled; no newendtoendtimings and2s/all50%goalsactive.",
+      "checkpoint": "Published and pushed af0aea9c opening quote overlap. Public runtime and worker hash match; no service restarts, contract changes or dependency copies.601 affected checks,18 final opening tests, actual worker build and independent review passed. All services running; temporary transfer and owned draft removed. Browser access still refused after repeated goal turns; no new timing and no2s/50% completion claim.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
@@ -9843,10 +9843,10 @@
   },
   "current_operating_request": {
     "request": "Owner25October: apply all proven posting optimizations across ALL other application transaction flows; new goal at least50% end-to-end reduction for every flow against currentpublished74c baseline. Cover Ethereum/Aztec user and operator paths, preservevalidation and genuine usable completion.",
-    "status": "active",
+    "status": "blocked",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
-    "checkpoint": "Allverifiedchanges published/pushed: staticab6658, Bokbff92overlay readyPID96885, moderatora0c2c10c PID191841 healthok/checkpoint5382/manualAttention0/unresolvedSigning0. Source/asset/servicechecks andaffectedtestspass; archives/transfers/ownedagentdrafts removed. Condensedhandover removescontradictoryoldcurrentreleaseclaims. Browsertoolstilldisabled; no newendtoendtimings and2s/all50%goalsactive.",
-    "next_action": "Obtain real browser opening, combined funding, Bok funding and other-flow timings on published code with full bounded oracle snapshot and comparable endpoints. Browser tool currently refuses access as disabled; do not bypass. No further speculative caching or repeated broad tests without new evidence.",
+    "checkpoint": "Published and pushed af0aea9c opening quote overlap. Public runtime and worker hash match; no service restarts, contract changes or dependency copies.601 affected checks,18 final opening tests, actual worker build and independent review passed. All services running; temporary transfer and owned draft removed. Browser access still refused after repeated goal turns; no new timing and no2s/50% completion claim.",
+    "next_action": "Capture actual normal opening and transaction timings once permitted browser access returns. Do not bypass the reported disabled browser capability or invent latency results; current changes are already live and pushed.",
     "account_opening_target": {
       "maximum_seconds": 2,
       "start": "Wallet selection click",
@@ -9854,7 +9854,8 @@
       "wallet_approval": "Report total wall time and human wallet approval dwell separately; never hide application work in approval time.",
       "coverage": "Fresh account, returning account, warm page and cold page; report page startup separately and immediate-click results.",
       "requirement": "Remove private engine startup, private synchronization, constructor simulation and private balance discovery from funding quote dependencies. No placeholder payment readiness or costs moved blindly after Pay."
-    }
+    },
+    "blocker": "Live browser measurement is required for the2s and50% targets. Browser tool repeatedly returns Local browser use is disabled in Work settings; code and deployment work in this batch is complete. Resume actual timing when permitted browser access is available."
   },
   "completed_operating_requests": [
     {

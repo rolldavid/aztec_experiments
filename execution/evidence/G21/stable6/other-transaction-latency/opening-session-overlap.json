@@ -1,0 +1,46 @@
+{
+  "observedAt": "2026-10-25T22:39:33.047083+00:00",
+  "source": "af0aea9c64eb3abefbb79156240b96e41424bdbf",
+  "change": "Start existing read-only funding quote work before private session initialization finishes; consume within existing account operation after native status.",
+  "review": "pending_reply_ui approved exact runtime and final test cleanup",
+  "checks": {
+    "affectedExistingSuite": {
+      "passed": 601,
+      "failed": 0
+    },
+    "finalOpeningFile": {
+      "passed": 18,
+      "failed": 0,
+      "includes": "Seven actual worker/context VM lifecycle cases in child process"
+    },
+    "actualWalletBuild": {
+      "files": 90,
+      "inputs": 107
+    }
+  },
+  "stageCommandId": "d86956c3-f742-4360-891f-935aed0eb279",
+  "activationCommandId": "3a71c6c4-2348-4d54-9ca8-9bb51def39cc",
+  "activation": {
+    "activated": true,
+    "appRestarted": false,
+    "proxyRestarted": false,
+    "payloadCleaned": true,
+    "sdkRetentionCleaned": true
+  },
+  "public": {
+    "commit": "af0aea9c64eb3abefbb79156240b96e41424bdbf",
+    "path": "/wallet/native-worker.js",
+    "sha256": "76493751b9af6cfd6ceba49e9c7fac9c82777b656577293dd7380986e297f529",
+    "bytes": 425080,
+    "runtimeReferencesWorker": true
+  },
+  "cleanup": {
+    "commit": "af0aea9c64eb3abefbb79156240b96e41424bdbf",
+    "uploadedVersionDeleted": true,
+    "localArchiveRemoved": true,
+    "signedLauncherRemoved": true,
+    "agentDraftRemoved": true
+  },
+  "liveLatencySeconds": null,
+  "qualification": "No speedup or target completion claimed: browser tool returns Local browser use is disabled in Work settings."
+}

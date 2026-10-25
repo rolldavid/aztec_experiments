@@ -266,3 +266,9 @@ Root integrates/publishes one retained build. private_tips reviewed native artif
 ## 26 October — nonordinary flow continuation
 
 Root integrates and publishes public-action completion, final withdrawal read overlap and funding bridge read reuse in one static batch. pending_reply_ui and private_tips independently approved the first two patches; private_tips reviews funding invalidation and caught a numbered-block cache identity issue, now being corrected by pending_feed_release before integration. pending_reply_ui audits remaining server Bok/moderator duplication separately. One retained build; no agent live changes or dependency copies. Browser control currently reports disabled; no new end-to-end timing claim.
+
+## 26 October — usage-reset continuation
+
+Root owns integration, live operations and one retained build. pending_feed_release audits and drafts early read-only opening quote overlap; private_tips prepares the existing static publisher successor against ab6658, without remote actions. pending_reply_ui will independently review. Browser tool still reports disabled; no alternative automation bypass and no new timing claim.
+
+Usage-reset result: af0aea9c reviewed, built, pushed and published. pending_feed_release draft integrated; pending_reply_ui approved runtime and final test cleanup; private_tips publisher successor used after fresh read-only inspection. All agents completed, owned source draft/upload archives removed. Root verified public worker hash; browser timing remains unavailable.

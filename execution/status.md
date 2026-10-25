@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Allverifiedchanges published/pushed: staticab6658, Bokbff92overlay readyPID96885, moderatora0c2c10c PID191841 healthok/checkpoint5382/manualAttention0/unresolvedSigning0. Source/asset/servicechecks andaffectedtestspass; archives/transfers/ownedagentdrafts removed. Condensedhandover removescontradictoryoldcurrentreleaseclaims. Browsertoolstilldisabled; no newendtoendtimings and2s/all50%goalsactive.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Published and pushed af0aea9c opening quote overlap. Public runtime and worker hash match; no service restarts, contract changes or dependency copies.601 affected checks,18 final opening tests, actual worker build and independent review passed. All services running; temporary transfer and owned draft removed. Browser access still refused after repeated goal turns; no new timing and no2s/50% completion claim.
 
 ## Ready internal work
 
