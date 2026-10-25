@@ -1675,3 +1675,16 @@ for(const changed of ['context','l1','l2'])test(`topup discovery wave: ${changed
  input.node.getBlockData=async tag=>{const value=await data(tag);return replace&&changed==='l2'&&tag!=='checkpointed'?{...value,blockHash:hex(99)}:value;};
  const result=assert.rejects(verifyRollingTopupScope(input));await entered.promise;replace=true;held.resolve();await result;
 });
+
+for(const mode of ['success','failure','account-change','anchor-change'])test(`composer fee display shares existing native preparation lease: ${mode}`,async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let calls=0;
+ const at=f.input.sdk.Contract.at;f.input.sdk.Contract.at=(...args)=>{const contract=at(...args);return {...contract,methods:{...contract.methods,balance_of:()=>({simulate:async()=>{assert(f.state.active);assert(f.state.events.includes('posting-witnesses'));calls++;entered.resolve();await gate.promise;if(mode==='failure')throw Error('fee display read failed');return {result:700n};}})}};};
+ f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10,timestamp:100},hash:async()=>BlockHash.fromString(hex(55))});
+ const session=await createRollingWalletSession(f.input);const syncs=f.state.syncs;let done=false;
+ const run=session.preparePostingState('9',{refreshFeeCredit:true}).finally(()=>done=true);
+ const observed=mode==='success'?run:assert.rejects(run,mode==='failure'?/fee display read failed/:mode==='account-change'?{code:'ROLLING_CONTEXT_CHANGED'}:{code:'ROLLING_CONTEXT_CHANGED'});
+ try{await entered.promise;assert(!done);assert(f.state.active);assert.equal(f.state.syncs,syncs+1);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
+  if(mode==='account-change')f.state.wrongPXE=true;if(mode==='anchor-change')f.node.getBlockData=async()=>({blockHash:Fr.fromString(hex(56)),header:{globalVariables:{blockNumber:10}}});gate.resolve();const result=await observed;
+  if(mode==='success')assert.equal(result.availableCredit,'700');assert.equal(calls,1);assert.equal(f.state.syncs,syncs+1);assert.equal(f.state.sends,0);assert(!f.state.active);
+ }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
+});

@@ -35,7 +35,7 @@ function dom(t){
 }
 async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null,depositIds=['9'],moderator=false,moderatorRead=null}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
- const session={...(warm?{preparePostingState:async deposit=>{session.busy=true;try{await warm(deposit);}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
+ const session={...(warm?{preparePostingState:async(deposit,options)=>{session.busy=true;try{return await warm(deposit,options);}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
   readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async options=>{if(session.busy)throw Object.assign(Error('busy'),{code:'ROLLING_BUSY'});core.names++;const names=await posting?.namesRead?.(core.names,options);if(names)return names;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;if(!moderatorRead)return {authorized:moderator};session.busy=true;try{return await moderatorRead();}finally{session.busy=false;}},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>await posting?.profileRead?.(name)??({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
@@ -1215,4 +1215,34 @@ test('account replacement while an included preference send is held cannot publi
  const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:localTransition(base,action),submit:async()=>{entered.resolve();await gate.promise;}}});
  f.runtime.selectPrivateViews=()=>({});f.session.application.readPreferences=async()=>({status:'complete',complete:true,preferences:base});await f.panel.loadSavedItems();
  const sending=f.panel.act(action);await entered.promise;f.runtime.getAccount=()=>({});gate.resolve();assert.equal((await sending).status,'failed');assert.equal(f.panel.privateStatus(),'locked');assert.equal(f.panel.preferenceEnabled(4,'42'),null);
+});
+
+test('consecutive included preferences do not start or wait for an unrelated full account refresh',{timeout:3000},async t=>{
+ const base=nativePreferenceBase(),action={type:'preference',kind:4,target:'42',enabled:true};
+ const posting={status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:localTransition(base,action),balanceRefresh:async()=>{throw Error('unrelated full account read');}};
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting});let heads=0,shown,privateReads=0;
+ f.runtime.selectPrivateViews=({preferences})=>{shown=preferences;return {notifications:preferences};};f.session.application.readPreferences=async()=>{privateReads++;return {status:'complete',complete:true,preferences:base};};f.session.application.readPreferenceHead=async()=>({revision:String(7+heads++)});
+ await f.panel.loadSavedItems();const before=f.core().status;
+ await f.panel.act(action);await new Promise(setImmediate);assert.equal(f.core().status,before);
+ f.panel.filterPrivatePage('notifications',{});posting.preferenceTransition=localTransition(shown,{...action,enabled:false},'90');await f.panel.act({...action,enabled:false});await new Promise(setImmediate);
+ assert.equal(f.core().status,before);assert.equal(privateReads,1);assert.equal(heads,2);assert.equal(f.submissions.length,2);assert.equal(f.panel.preferenceEnabled(4,'42'),false);
+ f.panel.close();f.panel.open({type:'post'});assert(f.document.querySelector('.composer-cost').textContent.includes('Balance —'));assert(!f.document.body.textContent.includes('Balance (updating)'));assert.equal(f.document.querySelector('.composer-cost').querySelectorAll('strong')[0].getAttribute('title'),null);await new Promise(setImmediate);
+});
+test('explicit balance view replaces invalidated preference fee display only after its native read',{timeout:3000},async t=>{
+ const base=nativePreferenceBase(),action={type:'preference',kind:1,target:'42',enabled:true},gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:localTransition(base,action)}});
+ f.runtime.selectPrivateViews=()=>({});f.session.application.readPreferences=async()=>({status:'complete',complete:true,preferences:base});await f.panel.loadSavedItems();await f.panel.act(action);
+ let reads=0;f.session.application.readBalances=async()=>{reads++;entered.resolve();await gate.promise;return {fee:{available:'700000000000000000'},collateral:{deposits:[],nextCursor:null}};};
+ f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Balance and withdrawals').fire('click');await entered.promise;
+ assert(!f.document.body.textContent.includes('Posting balance: 1'));assert.equal(reads,1);gate.resolve();await f.document.until(()=>f.document.body.textContent.includes('Posting balance: 0.7'));
+ f.panel.close();f.panel.open({type:'post'});assert(f.document.querySelector('.composer-cost').textContent.includes('Balance 0.7'));assert.equal(f.core().status,1);await new Promise(setImmediate);
+});
+
+for(const outcome of ['success','failure','account-change'])test(`opening composer refreshes only invalidated native fee display: ${outcome}`,{timeout:3000},async t=>{
+ const base=nativePreferenceBase(),action={type:'preference',kind:4,target:'42',enabled:true},gate=Promise.withResolvers(),entered=Promise.withResolvers();let feeReads=0,warms=0;
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),warm:async(deposit,options)=>{warms++;if(!options.refreshFeeCredit)return;feeReads++;entered.resolve();await gate.promise;if(outcome==='failure')throw Error('unavailable fee display');return {availableCredit:'700000000000000000'};},posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:localTransition(base,action)}});
+ f.runtime.selectPrivateViews=()=>({});f.session.application.readPreferences=async()=>({status:'complete',complete:true,preferences:base});await new Promise(setImmediate);await f.panel.loadSavedItems();await f.panel.act(action);await new Promise(setImmediate);assert.equal(feeReads,0,'no completion-tail credit read');
+ f.panel.close();f.panel.open({type:'post'});await entered.promise;assert.equal(f.core().status,1);assert.equal(feeReads,1);const editor=f.document.querySelector('textarea');editor.value='A new post';editor.fire('input');assert.equal(editor.disabled,false);assert.equal(f.document.querySelector('[data-action-review]').disabled,false);assert(f.document.querySelector('.composer-cost').textContent.includes('Balance —'));
+ if(outcome==='account-change')f.runtime.getAccount=()=>({});gate.resolve();await new Promise(setImmediate);await new Promise(setImmediate);
+ assert.equal(f.core().status,1);assert.equal(feeReads,1);assert.equal(f.submissions.length,1);assert.equal(f.document.querySelector('.composer-cost')?.textContent.includes('Balance 0.7')??false,outcome==='success');
 });

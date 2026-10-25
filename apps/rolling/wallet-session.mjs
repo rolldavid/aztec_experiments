@@ -624,7 +624,8 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    });
   },
  });
- async function preparePostingState(deposit){
+ async function preparePostingState(deposit,{refreshFeeCredit=false}={}){
+  if(typeof refreshFeeCredit!=='boolean')throw fail('ROLLING_INVALID_ACTION');
   if(typeof deposit!=='string'||!(/^(?:[1-9][0-9]{0,76}|0x[0-9a-f]{64})$/.test(deposit))||BigInt(deposit)===0n)throw fail('ROLLING_INVALID_ACTION');
   return locked(async()=>{
   await guardRoute();
@@ -637,6 +638,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   // including mature flags. Post still selects and verifies at its own anchor.
   await measureRollingStage('composer.posting-witnesses',()=>app.prefetchPostingWitnesses(deposit));
   await guardRoute();
+  // Optional display refresh shares this exact native sync and account lease.
+  // It never changes payment readiness; Post still validates its own payment.
+  if(refreshFeeCredit){const credit=await app.readPrivateFeeCredit();await guardRoute();return credit;}
  });}
  return Object.freeze({application,preparePostingState,observeIncluded:input=>observeIncludedTransaction({sdk,node:privateNode,contextGuard:guardRoute},input),ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze({observe:()=>withdrawal.observe(),waitUntilReady:options=>withdrawal.waitUntilReady(options),...Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,async(...args)=>{const captured=structuredClone(args);return locked(()=>withdrawal[name](...captured));}]))}),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;

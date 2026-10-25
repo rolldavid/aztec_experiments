@@ -435,7 +435,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   actionsLoaded=true;note('');
  }
  function viewReady(){return rollingViewReady({view,type:draft.type,identityAttached:!!identityHost,namesLoaded,cursor,moderatorStatus,actionsLoaded});}
- function selectView(next){if(busy)return;clearOperationFeedback();view=next;if(next==='balances'&&!balances){void work(async()=>{const epoch=accountEpoch;balances=await session.application.readBalances({cursor:0});checkAccount(epoch);});return;}if(next==='preferences'&&!preferences)void work(recoverPreferences);else if(viewReady())render();else void work(loadView);}
+ function rememberBalances(value){balances=value;if(status&&typeof value?.fee?.available==='string'&&/^(0|[1-9][0-9]*)$/.test(value.fee.available))status={...status,privateFeeCredit:value.fee.available};}
+ function selectView(next){if(busy)return;clearOperationFeedback();view=next;if(next==='balances'&&!balances){void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0});checkAccount(epoch);rememberBalances(value);});return;}if(next==='preferences'&&!preferences)void work(recoverPreferences);else if(viewReady())render();else void work(loadView);}
  let composerPreparation=null,composerCheckpoint='open',composerAttempt=null,composerOpening=0;
  // Commit native private-state discovery before Post, without scanning balances
  // or retaining an account lease while the user edits. Post still checks afresh.
@@ -443,10 +444,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(composerPreparation||busy||initializing||blocked||status?.status!=='fee-ready'||intent||!dialog.open||view!=='action'||!['post','reply','quote','repost'].includes(draft.type)||!session||session.busy||!unlocked()||typeof session.preparePostingState!=='function'||accountRefreshPending||bokBalance.pending||topupQuotePending)return;
   const deposit=draft.deposit;if(typeof deposit!=='string'||!deposit)return;
   const key=accountEpoch+':'+composerOpening+':'+composerCheckpoint+':'+deposit;if(composerAttempt===key)return;
-  composerAttempt=key;const epoch=accountEpoch,active=session;
+  composerAttempt=key;const epoch=accountEpoch,active=session,opening=composerOpening;
   const pending=Promise.resolve().then(async()=>{
    if(epoch!==accountEpoch||active!==session||deposit!==draft.deposit||busy||initializing||blocked||intent||status?.status!=='fee-ready'||view!=='action'||!['post','reply','quote','repost'].includes(draft.type)||!dialog.open||!unlocked())return;
-   const finish=beginRollingMeasure('composer.prepare');try{await active.preparePostingState(deposit);}finally{finish();}
+   const finish=beginRollingMeasure('composer.prepare');try{
+    const credit=await active.preparePostingState(deposit,{refreshFeeCredit:typeof status?.privateFeeCredit!=='string'});
+    if(epoch===accountEpoch&&active===session&&opening===composerOpening&&deposit===draft.deposit&&dialog.open&&view==='action'&&['post','reply','quote','repost'].includes(draft.type)&&unlocked()&&typeof credit?.availableCredit==='string'&&/^(0|[1-9][0-9]*)$/.test(credit.availableCredit)){status={...status,privateFeeCredit:credit.availableCredit};updatePostingBalance();}
+   }finally{finish();}
   }).catch(()=>{}).finally(()=>{if(composerPreparation===pending)composerPreparation=null;if(epoch===accountEpoch&&active===session){requestComposerPreparation();requestBokBalance();}});
   composerPreparation=pending;
  }
@@ -777,10 +781,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   content.append(el('h3',{},'Balances and withdrawals'),paragraph('Your deposit is refundable. Your posting balance pays network fees and cannot be withdrawn. Unused Bok credit can be withdrawn separately.'));
   if(pendingWithdrawal)content.append(button('Pending Ethereum refund',openPendingRefund,true));
   unfinishedDepositsView();
-  if(!balances){content.append(button('Check private balances',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0});checkAccount(epoch);balances=value;}),true));return;}
+  if(!balances){content.append(button('Check private balances',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0});checkAccount(epoch);rememberBalances(value);}),true));return;}
   content.append(paragraph('Posting balance: '+decimal(balances.fee.available,18)+' credits (FEE).'));
   if(balances.fee.pendingReservation)content.append(paragraph('A saved transaction has an unresolved fee reservation, up to '+decimal(balances.fee.pendingReservation.maximumFee,18)+' FEE. It is not subtracted again from the balance above.'));
-  if(!balances.bok&&session.bokConfigured===true)content.append(button('Show Bok balance',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0,includeBok:true});checkAccount(epoch);balances=value;})));
+  if(!balances.bok&&session.bokConfigured===true)content.append(button('Show Bok balance',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0,includeBok:true});checkAccount(epoch);rememberBalances(value);})));
   if(balances.bok){content.append(paragraph('Available Bok credit: '+decimal(balances.bok.available,6)+' USDC.'));
    if(bokAccounting?.complete){
     content.append(paragraph('Complete owned-request accounting at block '+bokAccounting.anchor.blockNumber+'. Allocated '+decimal(bokAccounting.totals.available,6)+', reserved '+decimal(bokAccounting.totals.reserved,6)+', charged '+decimal(bokAccounting.totals.charged,6)+', returned '+decimal(bokAccounting.totals.refunded,6)+' USDC. Returned credit is already part of your unallocated balance; it is not added again.'));
@@ -1075,7 +1079,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(immediateTypes.has(result.action?.type)){
     // Confirmation finishes the interaction. Feed and affected balance reads
     // update independently, without holding the composer open or its busy state.
-    intent=null;accountRefreshNeeded=true;onPrivateChange();
+    intent=null;
+    if(['preference','read-marker'].includes(result.action.type)){
+     // Only posting credit changed outside the private preference projection.
+     // Do not queue unrelated collateral/account reads before the next action.
+     // Hide the old amount; an explicit balance view reads native credit again.
+     if(status){status={...status};delete status.privateFeeCredit;}balances=null;
+    }else accountRefreshNeeded=true;
+    onPrivateChange();
     if(!actionOperation?.included&&!['preference','read-marker'].includes(result.action.type))void Promise.resolve().then(()=>onPublicEffect()).catch(()=>{notice='Confirmed. The feed could not refresh; reload it to see the change.';if(!busy)render();});
     return;
    }
@@ -1275,7 +1286,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const cost=el('strong'),balance=el('strong');
   if(immediateTypes.has(draft.type)){
    const balanceLabel=el('span');
-   updatePostingBalance=()=>{balanceLabel.textContent=accountRefreshNeeded||accountRefreshPending?'Balance (updating) ':'Balance ';balance.textContent=typeof status?.privateFeeCredit==='string'?compactAmount(status.privateFeeCredit,18,4):status?.status==='fee-needed'?'0':'—';if(typeof status?.privateFeeCredit==='string')balance.setAttribute('title',decimal(status.privateFeeCredit,18));validate();};
+   updatePostingBalance=()=>{balanceLabel.textContent=accountRefreshNeeded||accountRefreshPending?'Balance (updating) ':'Balance ';balance.textContent=typeof status?.privateFeeCredit==='string'?compactAmount(status.privateFeeCredit,18,4):status?.status==='fee-needed'?'0':'—';if(typeof status?.privateFeeCredit==='string')balance.setAttribute('title',decimal(status.privateFeeCredit,18));else balance.removeAttribute('title');validate();};
    content.append(el('div',{class:'composer-cost'},el('span',{},balanceLabel,balance),el('span',{},'Max cost ',cost),el('small',{},'posting credits')));
   }
   const review=button(reviewLabel(draft),prepareReview,true);
