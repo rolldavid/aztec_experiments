@@ -377,10 +377,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const terminalHistory=record=>usableStatus(record.status)&&
     !(record.status==='confirmed'&&record.bok?.phase==='authorize')&&
     !(record.status==='reverted'&&(record.bok?.phase==='post'||record.bokReleaseSource));
-  async function outcome(saved,{history=false}={}){
+  async function outcome(saved,{history=false,completion=false}={}){
     const historical=history&&terminalHistory(saved.value);
     if(!historical)await checkBokRecord(saved.value);
-    const found=await session.journal.inspectOutcome({reuse:historical});
+    const found=await session.journal.inspectOutcome({reuse:historical,completion});
     if(!found||found.operation!==operation(saved.value.id))return {...summary(saved.value),status:'unknown'};
     if(!['success','reverted'].includes(found.outcome))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
     if(found.receipt?.status==='proposed'&&!includedAction(saved.value))return {...summary(saved.value),status:'unknown',txHash:found.txHash};
@@ -1473,7 +1473,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           await (await slot()).write(active,{...active.value,status:'submitting',txHash});active=await savedIntent(id);
         }});
       }else await session.wallet.sendTx(estimated.payload,options);
-      return outcome(await savedIntent(id));
+      return outcome(await savedIntent(id),{completion:true});
     });},
     async cancelPrepared(id){return exclusive(async()=>{await guard();const saved=await savedIntent(id);
       check(saved.value.status==='prepared'&&saved.value.bok?.phase!=='post','ROLLING_RECOVERY_REQUIRED');

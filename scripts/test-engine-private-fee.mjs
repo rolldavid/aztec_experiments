@@ -328,7 +328,7 @@ test('actual wallet passes attributed application spend to the durable journal b
  }
  const proven={toTx:async()=>tx},pxe={proveTx:async()=>proven};
  const node={sendTx:async()=>calls.push('submit'),getTxReceipt:async()=>receipt,getBlock:async()=>({hash:canonicalBlockHash})};
- const journal={assertCanStart:async()=>null,prepare:async(value,previous,binding)=>{assert.equal(value,tx);assert.equal(binding.applicationNullifier,appNullifier.toString());calls.push('saved');},confirmed:()=>{}};
+ const journal={assertCanStart:async()=>null,prepare:async(value,previous,binding)=>{assert.equal(value,tx);assert.equal(binding.applicationNullifier,appNullifier.toString());calls.push('saved');},waitForCompletion:async()=>transactionOutcomes.waitForSuccessfulReceipt(node,tx),confirmed:()=>{}};
  const a={provingEnabledForNode,...transactionOutcomes,BaseWallet,GasSettings,extractApplicationNullifier:async(result,value,board)=>{assert.equal(result,proven);assert.equal(value,tx);assert.equal(board,'board');calls.push('attributed');return appNullifier;}};
  const wallet=c.BillboardPrivateFeeRouting.createAztecWallet(a,pxe,node,node,()=>{},Fr.ONE,{transactionJournal:journal});wallet._applicationNullifierBoard='board';
  await wallet.sendTx({}, {from:owner,fee:{gasSettings:gas()}});
@@ -804,7 +804,7 @@ test('plugin metadata persists after the proof journal and context changes stop 
  const c=context(),calls=[],hash=TxHash.fromBigInt(90n),tx={getTxHash:()=>hash},receipt=minedReceipt(hash);let changed=false;
  class BaseWallet {constructor(pxe){this.pxe=pxe;}async completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}async simulateViaEntrypoint(){return {publicInputs:{forPublic:{}},publicOutput:{txEffect:{revertCode:{isOK:()=>true}}},gasUsed:{totalGas:new Gas(1,1),teardownGas:new Gas(0,0)}};}async createTxExecutionRequestFromPayloadAndFee(){return 'request';}scopesFrom(){return [];}senderForTagsFrom(){return owner;}}
  const a={...transactionOutcomes,BaseWallet,GasSettings},pxe={proveTx:async()=>({toTx:async()=>tx})},node={sendTx:async()=>calls.push('send'),getTxReceipt:async()=>receipt,getBlock:async()=>({hash:canonicalBlockHash})};
- const journal={setOperation:()=>calls.push('intent'),assertCanStart:async()=>null,prepare:async()=>calls.push('proof-saved'),confirmed:()=>calls.push('confirmed')};
+ const journal={setOperation:()=>calls.push('intent'),assertCanStart:async()=>null,prepare:async()=>calls.push('proof-saved'),waitForCompletion:async()=>transactionOutcomes.waitForSuccessfulReceipt(node,tx),confirmed:()=>calls.push('confirmed')};
  const wallet=c.BillboardPrivateFeeRouting.createAztecWallet(a,pxe,node,node,()=>{},Fr.ONE,{contextGuard:async()=>{if(changed)throw {code:'BB_WALLET_NOT_READY'};}});
  const opts={from:owner,fee:{gasSettings:gas()},transactionJournal:journal,journalOperation:JSON.stringify({kind:'extension'}),beforeSubmit:async()=>calls.push('plugin-saved')};
  await wallet.sendTx({},opts);assert.deepEqual(calls,['intent','proof-saved','plugin-saved','send','confirmed']);
@@ -877,4 +877,17 @@ for(const ordinary of [true,false])test('only exact ordinary payload forwards kn
  const pxe={async proveTxWithPublicValidation(_request,opts){assert.equal(opts.preSyncCalls,ordinary?calls:undefined);throw stop;}};
  const wallet=c.BillboardPrivateFeeRouting.createAztecWallet({BaseWallet,GasSettings},pxe,{}, {},()=>{},Fr.ONE);
  await assert.rejects(wallet.sendTx({calls}, {from:owner,fee:{gasSettings:gas()},atomicSimulation:true}),error=>error===stop);
+});
+
+for(const tier of ['proposed','checkpointed'])test('actual wallet delegates '+tier+' completion to exact encrypted journal native waiter',async()=>{
+ const c=context(),tx=Tx.random({randomProof:true}),receipt=MinedTxReceipt.from({...minedReceipt(tx.getTxHash()),status:tier}),records=new Map(),scope={};let receipts=0,blocks=0,sends=0,included=0;
+ class BaseWallet{constructor(pxe){this.pxe=pxe;}async completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}async simulateViaEntrypoint(){return {publicInputs:{forPublic:{}},publicOutput:{txEffect:{revertCode:{isOK:()=>true}}},gasUsed:{totalGas:new Gas(1,1),teardownGas:new Gas(0,0)}};}async createTxExecutionRequestFromPayloadAndFee(){return 'request';}scopesFrom(){return [];}senderForTagsFrom(){return owner;}}
+ const node={sendTx:async()=>sends++,getTxReceipt:async()=>{receipts++;return receipt;},getBlock:async()=>{blocks++;return {hash:canonicalBlockHash};}},pxe={proveTx:async()=>({toTx:async()=>tx})};
+ const journal=await createL2Journal({storage:{read:async k=>records.get(k)??null,compareAndSwap:async(k,p,n)=>{assert.equal(records.get(k)??null,p);records.set(k,n);}},walletSecret:Fr.ONE.toString(),walletSalt:Fr.ZERO.toString(),Tx,node,operationScope:()=>scope,confirmationTier:tier,...(tier==='proposed'?{predecessorAnchor:()=>assert.fail('not a successor proof')}:{}),scope:{account:Fr.ONE.toString(),chainId:'31337',rollup:'0x'+'01'.repeat(20),version:'5',board:new Fr(2).toString(),portal:'0x'+'02'.repeat(20)}});
+ const a={...transactionOutcomes,BaseWallet,GasSettings,waitForSuccessfulReceipt:()=>assert.fail('must not start a second wallet waiter')};
+ const wallet=c.BillboardPrivateFeeRouting.createAztecWallet(a,pxe,node,node,()=>{},Fr.ONE,{transactionJournal:journal,progress:stage=>{if(stage==='included')included++;}});
+ const result=await wallet.sendTx({}, {from:owner,fee:{gasSettings:gas()},journalOperation:'exact-completion',confirmationTier:tier});assert.equal(result.receipt,receipt);
+ assert.deepEqual({receipts,blocks,sends,included},{receipts:1,blocks:1,sends:1,included:1});
+ const found=await journal.inspectOutcome({completion:true});assert.equal(found.operation,'exact-completion');assert.equal(found.outcome,'success');assert.equal(found.receipt.status,tier);assert.deepEqual({receipts,blocks},{receipts:1,blocks:1});
+ await journal.inspectOutcome();assert.deepEqual({receipts,blocks},{receipts:2,blocks:2});
 });

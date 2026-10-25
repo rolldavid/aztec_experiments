@@ -3124,3 +3124,17 @@ test('claim verification wave preserves original error priority and detached inp
  f.options.sdk.prepareFundingClaim=async input=>{if(++calls===3)started.resolve();await gate.promise;assert.equal(input.receipt.amount,input.kind==='collateral'?'100':input.kind==='bok'?'300':'200');throw Error(input.kind);};
  const work=f.restart().prepare(action,{immediate:true}),rejected=assert.rejects(work,/collateral/);await started.promise;action.receipt.amount='999';action.feeReceipt.amount='999';action.bokReceipt.amount='999';gate.resolve();await rejected;assert.equal(f.values.size,0);
 });
+
+test('submit consumes only journal-owned completion and reconcile still freshly authenticates receipt',async()=>{
+ const owner={},base=fixture();base.options.accountSession.operationScope=()=>owner;
+ const f=await realJournalFixture(base),journal=f.options.accountSession.journal,node=f.options.accountSession.node;
+ let reads=0,completionReads;const read=node.getTxReceipt;node.getTxReceipt=async hash=>{reads++;return read(hash);};
+ f.options.accountSession.wallet.sendTx=async(_,opts)=>{
+  f.state.sends++;const receipt=await f.install(opts.journalOperation);
+  await journal.waitForCompletion(receipt.txHash.toString());completionReads=reads;journal.confirmed(receipt);return {receipt};
+ };
+ const app=f.restart(),p=await app.prepare({type:'like',post:'5'}),result=await app.submitPrepared(p.intentId);
+ assert.equal(result.status,'confirmed');assert.equal(result.txHash,[...f.receipts.keys()][0]);assert.equal(reads,completionReads,'no second post-wallet receipt read');assert.equal(f.state.sends,1);
+ f.receipts.set(result.txHash,new PendingTxReceipt(TxHash.fromString(result.txHash)));
+ assert.equal((await app.reconcile(p.intentId)).status,'unknown');assert.equal(reads,completionReads+1,'external reconciliation remains fresh');
+});

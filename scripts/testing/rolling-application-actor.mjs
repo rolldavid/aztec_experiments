@@ -47,9 +47,9 @@ export async function bindRollingRootSubmission(args,capability,contextGuard) {
   const d=hook&&Object.getOwnPropertyDescriptor(hook,key);assert(d&&Object.hasOwn(d,'value')&&typeof d.value==='function');callbacks[key]=d.value;
  }
  const original=Object.getOwnPropertyDescriptor(opts,'transactionJournal')?.value;assert(original);
- for(const key of ['setOperation','assertCanStart','prepare','confirmed','inspect'])assert(typeof original[key]==='function');
+ for(const key of ['setOperation','assertCanStart','prepare','confirmed','waitForCompletion','inspect'])assert(typeof original[key]==='function');
  let prepared;
- const facade={};for(const key of ['setOperation','assertCanStart','confirmed'])facade[key]=(...values)=>Reflect.apply(original[key],original,values);
+ const facade={};for(const key of ['setOperation','assertCanStart','confirmed','waitForCompletion'])facade[key]=(...values)=>Reflect.apply(original[key],original,values);
  facade.prepare=async(...values)=>{
   contextGuard();assert(!prepared,'Duplicate root journal preparation');
   const tx=values[0],bytes=Buffer.from(tx.toBuffer()),txHash=String(tx.getTxHash());

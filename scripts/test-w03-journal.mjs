@@ -62,6 +62,42 @@ for(const backend of ['file','indexeddb']) {
   change=true;await assert.rejects(j.inspect(),{code:'BB_RECOVERY_REQUIRED'});change=false;await j.inspect();
   valid=false;await assert.rejects(j.inspect(),/account changed/);valid=true;assert.equal((await j.inspect()).txHash,String(f.tx.getTxHash()));assert.equal(f.sent.length,0);
  }));
+ for(const mode of ['checkpointed','proposed'])test(`${backend}: native ${mode} completion is consumed once without duplicate receipt RPC`,()=>withStorage(async f=>{
+  const owner={},extra=mode==='proposed'?{confirmationTier:'proposed',predecessorAnchor:()=>assert.fail('completion does not prove a successor')}:{};
+  let receipts=0,blocks=0,inclusions=0;const read=f.node.getTxReceipt,block=f.node.getBlock;
+  f.node.getTxReceipt=async(...a)=>{receipts++;return read(...a);};f.node.getBlock=async(...a)=>{blocks++;return block(...a);};
+  const j=await f.newSession({...extra,operationScope:()=>owner});j.setOperation('completion',{confirmationTier:mode});await j.prepare(f.tx,await j.assertCanStart());f.setStatus(mode);
+  const result=await j.waitForCompletion(String(f.tx.getTxHash()),{confirmationTier:mode,onIncluded:()=>inclusions++});
+  const before={receipts,blocks};assert.deepEqual(before,{receipts:1,blocks:1});
+  result.blockNumber=999;result.executionResult='reverted';result.transactionFee=999n;
+  const found=await j.inspectOutcome({completion:true});assert.equal(found.operation,'completion');assert.equal(found.outcome,'success');assert.equal(found.receipt.blockNumber,3);assert.equal(found.receipt.transactionFee,0n);
+  assert.deepEqual({receipts,blocks},before);assert.equal(inclusions,0,'fixture uses noncanonical-format display hash, never fabricates inclusion');
+  await j.inspectOutcome({completion:true});assert.deepEqual({receipts,blocks},{receipts:2,blocks:2},'completion permit is one-use');
+  f.reorg();await assert.rejects(j.inspectOutcome(),{code:'BB_SUBMISSION_UNKNOWN'});assert.equal(receipts,3,'explicit observation remains fresh');
+ }));
+ for(const change of ['owner','unowned','acknowledgment'])test(`${backend}: ${change} cannot authorize completion reuse`,()=>withStorage(async f=>{
+  let owner=change==='unowned'?null:{},receipts=0;const read=f.node.getTxReceipt;f.node.getTxReceipt=async(...a)=>{receipts++;return read(...a);};
+  const j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  if(change==='acknowledgment')j.confirmed(await read());else await j.waitForCompletion(String(f.tx.getTxHash()));
+  if(change==='owner')owner={};receipts=0;f.reorg();await assert.rejects(j.inspectOutcome({completion:true}),{code:'BB_SUBMISSION_UNKNOWN'});assert.equal(receipts,1);
+ }));
+ for(const change of ['owner','ciphertext','fork','revert'])test(`${backend}: completion wait rejects ${change} and leaves no reusable success`,()=>withStorage(async(f,{storage})=>{
+  let owner={},entered=Promise.withResolvers(),release=Promise.withResolvers();const read=f.node.getTxReceipt;
+  const j=await f.newSession({operationScope:()=>owner});await j.prepare(f.tx,await j.assertCanStart());f.setStatus('checkpointed');
+  if(change==='revert')f.setExecution('reverted');
+  f.node.getTxReceipt=async()=>{entered.resolve();await release.promise;return read();};
+  const work=assert.rejects(j.waitForCompletion(String(f.tx.getTxHash())));await entered.promise;
+  if(change==='owner')owner={};if(change==='fork')f.reorg();
+  if(change==='ciphertext'){const key=createHash('sha256').update(l2JournalScopeText(f.opts.scope)).digest('hex'),prior=await storage.read(key);await storage.compareAndSwap(key,prior,prior+' ');}
+  release.resolve();await work;assert.equal(f.sent.length,0);
+ }));
+ test(`${backend}: completion wait requires exact saved hash and tier before native wait`,()=>withStorage(async f=>{
+  // Use a stable held operation; changing scopes are separately rejected above.
+  const owner={},stable=await f.newSession({operationScope:()=>owner});await stable.prepare(f.tx,await stable.assertCanStart());
+  f.node.getTxReceipt=()=>assert.fail('invalid binding must fail before RPC');
+  await assert.rejects(stable.waitForCompletion(field()),{code:'BB_RECOVERY_REQUIRED'});
+  await assert.rejects(stable.waitForCompletion(String(f.tx.getTxHash()),{confirmationTier:'proposed'}),{code:'BB_JOURNAL_INVALID'});
+ }));
  test(`${backend}: outcome authenticates and decodes once while both freshness reads remain live`,()=>withStorage(async (f,{storage})=>{
   let reads=0,decodes=0,decrypts=0;const read=storage.read.bind(storage),subtle=globalThis.crypto.subtle;
   storage.read=async(...args)=>{reads++;return read(...args);};

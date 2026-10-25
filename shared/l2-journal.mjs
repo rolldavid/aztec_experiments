@@ -1,4 +1,4 @@
-import { readCanonicalReceipt, transactionError, boundedTransactionRead, classifyDroppedTransaction, submitOnceWithReconciliation, waitForCanonicalReceipt } from './transaction-outcomes.mjs';
+import { readCanonicalReceipt, transactionError, boundedTransactionRead, classifyDroppedTransaction, submitOnceWithReconciliation, waitForCanonicalReceipt, waitForSuccessfulReceipt } from './transaction-outcomes.mjs';
 import {createEncryptedJournalSlot} from './journal-record.mjs';
 const fail=()=>transactionError('BB_RECOVERY_REQUIRED','Recover the saved transaction before starting another operation.');
 const invalid=()=>transactionError('BB_JOURNAL_INVALID','Transaction recovery storage could not be authenticated. Preserve it before continuing.');
@@ -74,7 +74,7 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   // Only the owning account lock supplies this identity. A canonical permit is
   // local to that operation and exact authenticated journal bytes; it is never
   // carried across actions; every use reauthenticates the journal and owner.
-  let canonicalPermit=null,inspectionPermit=null;
+  let canonicalPermit=null,inspectionPermit=null,completionPermit=null;
   const ownedScope=()=>{try{const value=operationScope?.();if(value!=null&&typeof value!=='object')throw invalid();return value??null;}catch(error){canonicalPermit=null;throw error;}};
   async function checkedScope(expected){try{if(expected&&contextGuard)await contextGuard();if(ownedScope()!==expected)throw fail();}catch(error){canonicalPermit=null;throw error;}}
   async function rememberCanonical(saved,receipt,owner){
@@ -285,6 +285,24 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
   }
   return {
     assertCanStart,prepare,confirmed,included,
+    // Own the native wait rather than accepting an externally supplied receipt.
+    // The one-use completion observation never survives its exact account lease.
+    async waitForCompletion(txHash,options={}){
+      const selectedOptions={...options},owner=ownedScope(),selectedOperation=operation;
+      completionPermit=null;
+      await checkedScope(owner);const saved=await read();await checkedScope(owner);
+      if(typeof txHash!=='string'||!saved.tx||saved.value.txHash!==txHash)throw fail();
+      if(selectedOptions.confirmationTier!==undefined&&selectedOptions.confirmationTier!==receiptOptions(saved).confirmationTier)throw invalid();
+      const receipt=await waitForSuccessfulReceipt(node,saved.tx,{...waitOptions,...selectedOptions,confirmationTier:receiptOptions(saved).confirmationTier});
+      // Capture primitive receipt fields before returning the mutable SDK object.
+      const observed=Object.freeze({txHash:receipt.txHash.toString(),status:receipt.status,executionResult:receipt.executionResult,
+        blockNumber:receipt.blockNumber,blockHash:receipt.blockHash.toString(),transactionFee:receipt.transactionFee});
+      await checkedScope(owner);
+      if(operation!==selectedOperation||!await slot.isCurrent(saved.encoded))throw fail();
+      await checkedScope(owner);
+      if(owner)completionPermit={owner,encoded:saved.encoded,hash:txHash,receipt:observed};
+      return receipt;
+    },
     async inspect(){
       // Metadata only: no mutable Tx or plaintext record escapes into this permit.
       // Fresh storage and account checks remain mandatory on every reuse.
@@ -301,12 +319,15 @@ export async function createL2Journal({storage,walletSecret,walletSalt,scope,Tx,
         return metadata;
       }catch(error){inspectionPermit=null;throw error;}
     },
-    async inspectOutcome({reuse=false}={}){
+    async inspectOutcome({reuse=false,completion=false}={}){
+      if(typeof completion!=='boolean')throw invalid();
+      const completed=completionPermit;completionPermit=null;
       if(typeof reuse!=='boolean')throw invalid();
       const owner=ownedScope();await checkedScope(owner);
       const saved=await read();await checkedScope(owner);if(!saved.tx)return null;
       const permitted=reuse&&owner&&canonicalPermit?.owner===owner&&canonicalPermit.encoded===saved.encoded&&canonicalPermit.hash===saved.tx.getTxHash().toString();
-      const cached=permitted?canonicalPermit.receipt:null;
+      const finished=completion&&owner&&completed?.owner===owner&&completed.encoded===saved.encoded&&completed.hash===saved.value.txHash;
+      const cached=finished?completed.receipt:permitted?canonicalPermit.receipt:null;
       if(!permitted)canonicalPermit=null;
       let receipt=cached??await readCanonicalReceipt(node,saved.tx.getTxHash(),receiptOptions(saved));
       if(receipt?.status==='proposed'&&receipt.executionResult!=='success')receipt=null;

@@ -313,7 +313,8 @@
         let acknowledgedAt=null,inclusionObserved=false;try{acknowledgedAt=performance.now();}catch{/* Optional timing. */}
         this._progress('confirming');
         const waitOpts=typeof opts.wait==='object'?opts.wait:{};
-        const receipt=await a.waitForSuccessfulReceipt(rawNode,tx,{
+        const waitForReceipt=journal?options=>journal.waitForCompletion(txHash.toString(),options):options=>a.waitForSuccessfulReceipt(rawNode,tx,options);
+        const receipt=await waitForReceipt({
           confirmationTier,timeoutMs:(waitOpts.timeout ?? 0)*1000,...(waitOpts.interval===undefined?{}:{intervalMs:waitOpts.interval*1000}),
           onIncluded:inclusion=>{
             if(!inclusionObserved){inclusionObserved=true;try{

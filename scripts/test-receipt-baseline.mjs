@@ -24,6 +24,7 @@ function fixture(consumer,{receipts=[mined()],submitError,proofError,simulationE
  const node={sendTx:async()=>{calls.submit++;if(submitError)throw submitError;},
   getTxReceipt:async()=>{const value=receipts[Math.min(calls.receipt++,receipts.length-1)];if(value instanceof Error)throw value;return value;},
   getBlock:async()=>({hash:blockHash}),isValidTx:async()=>validation};
+ if(transactionJournal)transactionJournal.waitForCompletion=async(txHash,options)=>{assert.equal(txHash,String(hash));return outcomes.waitForSuccessfulReceipt(node,{getTxHash:()=>hash},options);};
  class Clock extends Date {static now(){return now;}}
  const log=(message,level)=>logs.push({message,level});
  const c=vm.createContext({window:{__aztec:sdk},performance,Date:Clock,log,toAztec:String,setTimeout:(fn,ms)=>{now+=ms;queueMicrotask(fn);},clearTimeout(){}});
