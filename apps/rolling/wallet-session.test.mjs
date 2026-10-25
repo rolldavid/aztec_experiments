@@ -1743,3 +1743,51 @@ for(const changed of [false,true])test('owned names use exact Board public sync 
  if(changed){assert.equal(out.error.code,'ROLLING_PRIVATE_ROUTE');assert.equal(discovered,0);f.state.wrongPXE=false;}else{assert.equal(out.error,undefined);assert.equal(discovered,1);assert(Array.isArray(out.value.identities));}
  await session.close();
 });
+
+// Actual exit capability and Ethereum journal; only remote replies are doubles.
+async function finalExitWave(options={}, {failure,change}={}){
+ const f=await withdrawalFixture(options),gate=Promise.withResolvers(),entered=Promise.withResolvers(),started=[];
+ let active=false;
+ for(const [target,name]of [[f.opts.provider,'getNetwork'],[f.opts.node,'getTxReceipt'],[f.opts.node,'getBlockData']]){
+  const original=target[name];target[name]=(...args)=>{
+   if(!active)return original(...args);
+   started.push(name);if(started.length===3)entered.resolve();
+   if(name==='getTxReceipt')assert.equal(args[0].toString(),f.record.txHash);
+   if(name==='getBlockData')assert.equal(args[0],1);
+   if(failure===name)throw Error('final read failed');
+   return gate.promise.then(async()=>{
+    const value=await original(...args);
+    if(change==='network'&&name==='getNetwork')return {chainId:1n};
+    if(name==='getTxReceipt'){
+     if(change==='tx')return {...value,txHash:hex(99)};
+     if(change==='status')return {...value,status:'proposed'};
+     if(change==='reverted')return {...value,executionResult:'reverted'};
+     if(change==='receipt-number')return {...value,blockNumber:2};
+     if(change==='receipt-hash')return {...value,blockHash:hex(99)};
+    }
+    if(name==='getBlockData'){
+     if(change==='canonical-hash')return {...value,blockHash:hex(99)};
+     if(change==='canonical-number')return {...value,header:{globalVariables:{blockNumber:2}}};
+    }
+    return value;
+   });
+  };
+ }
+ const cap=f.restart();await cap.prepare({maximumGasWei:'1000'});
+ f.state.onFees=()=>{active=true;};
+ return {...f,cap,gate,entered,started};
+}
+for(const kind of ['collateral','bok','cancellation'])test('exit final canonical wave overlaps exact proof queries for '+kind,{timeout:3000},async()=>{
+ const f=await finalExitWave({bok:kind==='bok',cancellation:kind==='cancellation'});let done=false;
+ const work=f.cap.confirm().finally(()=>done=true);
+ await f.entered.promise;assert.equal(done,false);assert.equal(f.state.sends,0);assert.deepEqual([...f.started].sort(),['getBlockData','getNetwork','getTxReceipt']);
+ f.gate.resolve();assert.equal((await work).status,'refunded');assert.equal(f.state.sends,1);
+});
+for(const failure of ['getNetwork','getTxReceipt','getBlockData'])test('exit final canonical wave drains synchronous '+failure+' failure',{timeout:3000},async()=>{
+ const f=await finalExitWave({}, {failure});let done=false;const work=assert.rejects(f.cap.confirm()).finally(()=>done=true);
+ await f.entered.promise;await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.state.sends,0);f.gate.resolve();await work;assert.equal(f.state.sends,0);
+});
+for(const change of ['network','tx','status','reverted','receipt-number','receipt-hash','canonical-hash','canonical-number','context'])test('exit final canonical wave rejects changed '+change,{timeout:3000},async()=>{
+ const f=await finalExitWave({}, {change});const work=assert.rejects(f.cap.confirm());
+ await f.entered.promise;if(change==='context')f.state.guard=false;assert.equal(f.state.sends,0);f.gate.resolve();await work;assert.equal(f.state.sends,0);
+});

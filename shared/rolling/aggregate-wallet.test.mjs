@@ -1223,3 +1223,59 @@ for(const failure of ['initial-fork','verifier-final-fork','final-fork','effects
  if(failure==='owner')f.options.provider.getTransactionReceipt=async(...args)=>{const value=await getReceipt(...args);f.state.invalid=true;return value;};
  await assert.rejects(cap.loadAggregate(payment.receipt.txHash));assert.equal(f.state.sends,1);if(failure==='final-fork')assert.equal(blockReads,3);
 });
+
+import {invalidateRollingFundingNativeSnapshot} from './funding-session.mjs';
+import {createFundingContinuation} from '../../apps/rolling/wallet-session.mjs';
+for(const failure of [null,'fork','network','owner'])test('Bok bridge keeps exact Ethereum reads but fresh authority rejects '+failure,async()=>{
+ const f=ethTopupFixture(),initial=await f.open();await initial.prepare({...f.allocation,asset:'ETH'});const payment=await initial.confirm();
+ const raw=f.options.provider,counts={},owner={scope:null};let bridged=false,invalid=false,prepared=0;
+ for(const name of ['getNetwork','getTransactionReceipt','getTransaction','getCode','getBlock','call']){
+  const call=raw[name];raw[name]=async(...args)=>{
+   counts[name]=(counts[name]??0)+1;const value=await call(...args);
+   if(bridged&&failure==='network'&&name==='getNetwork')return {chainId:1n};
+   if(bridged&&failure==='fork'&&name==='getBlock'&&Number.isSafeInteger(args[0]))return {...value,hash:h(999)};
+   return name==='getTransaction'&&value?{...value,blockHash:h(value.blockNumber)}:value;
+  };
+ }
+ f.options.provider=operationFundingReader(raw,owner);f.options.operationScope=()=>owner.scope;
+ f.options.contextGuard=async()=>{if(invalid)throw Error('owner changed');};const funding=await f.open();
+ const stop=Error('stop after authentic custody, before proof');let replacements=0;
+ const continuation=createFundingContinuation({funding,application:{readFundingState:async()=>({status:'ready'}),prepare:async()=>{
+  prepared++;assert.equal(owner.scope.synchronized,false);assert.equal(owner.scope.nativeSentinel,undefined);
+  const custody=await funding.loadAggregate(payment.receipt.txHash);assert(custody.bridgeSecret&&custody.recipientSalt);throw stop;
+ }},sdk:{Fr,waitForL1ToL2MessageReady:async()=>{bridged=true;if(failure==='owner')invalid=true;}},node:{},
+ contextGuard:f.options.contextGuard,onProgress:()=>{},locked:async work=>{assert.equal(owner.scope,null);owner.scope={synchronized:false,nativeSentinel:{}};try{return await work();}finally{owner.scope=null;}},
+ invalidateSnapshot:()=>{owner.scope=invalidateRollingFundingNativeSnapshot(owner.scope);replacements++;}});
+ const before=[...f.records];await assert.rejects(continuation.advanceClaim(),error=>failure?error!==stop:error===stop);
+ assert.equal(f.state.sends,1);assert.deepEqual([...f.records],before);assert.equal(owner.scope,null);
+ assert.equal(counts.getTransactionReceipt,1);assert.equal(counts.getTransaction,1);assert.equal(counts.getCode,!failure?2:1);
+ if(failure==='owner'){assert.equal(prepared,0);assert.equal(replacements,0);}else{assert.equal(prepared,1);assert.equal(replacements,1);assert.equal(counts.getNetwork,2);}
+ if(!failure){assert.equal(counts.getBlock,6,'all original numbered canonical fences remain');
+  const receipts=counts.getTransactionReceipt;bridged=false;await assert.rejects(continuation.advanceClaim(),error=>error===stop);assert.equal(counts.getTransactionReceipt,receipts+1,'next outer lease obtains a fresh receipt');}
+});
+test('native reset retains only completed positive Ethereum identities, not pending, negative or network reads',async()=>{
+ const owner={scope:{}},gates=Promise.withResolvers(),counts={};
+ const raw={getNetwork:async()=>{counts.network=(counts.network??0)+1;return {chainId:1n};},
+  getTransactionReceipt:async hash=>{counts[hash]=(counts[hash]??0)+1;
+   if(hash===h(1))return {hash,blockHash:h(8),blockNumber:8};
+   if(hash===h(2))return null;if(hash===h(3))return {hash,blockHash:null,blockNumber:null};
+   if(hash===h(4))return {hash:h(999),blockHash:h(8),blockNumber:8};
+   if(hash===h(5))throw Error('unavailable');await gates.promise;return {hash,blockHash:h(8),blockNumber:8};}};
+ const read=operationFundingReader(raw,owner);
+ await read.getNetwork();for(let n=1;n<=4;n++)await read.getTransactionReceipt(h(n));await assert.rejects(read.getTransactionReceipt(h(5)));
+ const pending=read.getTransactionReceipt(h(6)),rejected=assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});await Promise.resolve();
+ owner.scope=invalidateRollingFundingNativeSnapshot(owner.scope);gates.resolve();await rejected;
+ await read.getNetwork();for(let n=1;n<=4;n++)await read.getTransactionReceipt(h(n));await assert.rejects(read.getTransactionReceipt(h(5)));await read.getTransactionReceipt(h(6));
+ assert.equal(counts.network,2);assert.equal(counts[h(1)],1);for(let n=2;n<=6;n++)assert.equal(counts[h(n)],2);
+});
+
+test('native reset rereads same-height Ethereum code and bindings under the new canonical hash',async()=>{
+ const owner={scope:{}},counts={code:0,call:0};let fork=false;
+ const raw={getBlock:async()=>({number:8,hash:fork?h(9):h(8)}),getCode:async()=>{counts.code++;return fork?'0x02':'0x01';},call:async()=>{counts.call++;return fork?'0x04':'0x03';}};
+ const read=operationFundingReader(raw,owner),request={to:a(1),data:'0x1234',blockTag:8};
+ const first=await read.getBlock(8);assert.equal(await read.getCode(a(1),8),'0x01');assert.equal(await read.call(request),'0x03');
+ fork=true;owner.scope=invalidateRollingFundingNativeSnapshot(owner.scope);
+ const next=await read.getBlock(8);assert.notEqual(next.hash,first.hash);
+ assert.equal(await read.getCode(a(1),8),'0x02');assert.equal(await read.call(request),'0x04');assert.equal((await read.getBlock(8)).hash,next.hash);
+ assert.deepEqual(counts,{code:2,call:2});
+});

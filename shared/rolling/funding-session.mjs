@@ -152,11 +152,34 @@ export async function readRollingFundingOperation({provider,operationScope,name,
  if(!entry||entry.method!==method){
   entry={method,pending:Promise.resolve().then(()=>method.apply(provider,args))};cache.set(key,entry);
   const discard=()=>{if(cache.get(key)===entry)cache.delete(key);};
-  entry.pending.then(value=>{if(value==null||name==='getTransaction'&&value.blockHash==null)discard();},discard);
+  entry.pending.then(value=>{
+   if(value==null||name==='getTransaction'&&value.blockHash==null)discard();
+   // Only completed positive identities survive a native-anchor invalidation.
+   // Number-only code/call entries are not hash-bound across a reorg. Network
+   // identity, pending/negative observations and in-flight reads do not survive.
+   entry.nativeAnchorIndependent=['getTransaction','getTransactionReceipt'].includes(name)&&typeof value?.hash==='string'&&value.hash.toLowerCase()===args[0]&&
+    /^0x[0-9a-f]{64}$/.test(value?.blockHash)&&Number.isSafeInteger(value?.blockNumber)&&value.blockNumber>=0;
+  },discard);
  }
  const value=await entry.pending;
  if(operationScope()!==scope)throw fail('ROLLING_CONTEXT_CHANGED');
  return value;
+}
+
+// The outer account lease still owns this operation. Replace every native
+// snapshot-dependent cache, retaining only finished exact Ethereum observations.
+// Their consumers must still read the numbered canonical block afresh.
+export function invalidateRollingFundingNativeSnapshot(scope){
+ const next={synchronized:false};
+ if(scope?.ethereumReads){
+  const reads=new Map();
+  for(const [provider,cache]of scope.ethereumReads){
+   const retained=new Map([...cache].filter(([,entry])=>entry.nativeAnchorIndependent===true));
+   if(retained.size)reads.set(provider,retained);
+  }
+  if(reads.size)next.ethereumReads=reads;
+ }
+ return next;
 }
 
 // Owns the existing payment capability before PXE construction. The caller owns

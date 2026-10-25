@@ -262,3 +262,7 @@ Live8ae immediate funded opening10.753s cold/6.322s warm; delayedpost18.178s. Ro
 ## 26 October — active performance continuation
 
 Root integrates/publishes one retained build. private_tips reviewed native artifact/cache split and drafted Like/Unlike/Name overlap; pending_reply_ui reviewed exact owner/barrier capture and drafted public inclusion-anchor evidence; pending_feed_release reviewed anchors and independently confirmed L1 PrunedPending plus two-node receipt absence. All reviewed patches now integrated;80 startup/cache/deployment checks,27 anchor checks,676 application/wrapper checks and actual worker bundle evaluation pass. Earlier failed fixture/race tests were corrected before publication. No agent owns live browser or signing. No new server/build/dependency copies.
+
+## 26 October — nonordinary flow continuation
+
+Root integrates and publishes public-action completion, final withdrawal read overlap and funding bridge read reuse in one static batch. pending_reply_ui and private_tips independently approved the first two patches; private_tips reviews funding invalidation and caught a numbered-block cache identity issue, now being corrected by pending_feed_release before integration. pending_reply_ui audits remaining server Bok/moderator duplication separately. One retained build; no agent live changes or dependency copies. Browser control currently reports disabled; no new end-to-end timing claim.

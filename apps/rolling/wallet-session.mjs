@@ -1,5 +1,5 @@
 import {consumeRollingAccountPreparation} from '../../shared/rolling/account-preparation.mjs';
-import {createRollingFundingSession,verifyRollingTopupClaim,readRollingFundingOperation} from '../../shared/rolling/funding-session.mjs';
+import {createRollingFundingSession,verifyRollingTopupClaim,readRollingFundingOperation,invalidateRollingFundingNativeSnapshot} from '../../shared/rolling/funding-session.mjs';
 export {createRollingFundingSession,verifyRollingFundingCredit,verifyRollingAggregateScope,verifyRollingTopupClaim,fundingUsdEstimate} from '../../shared/rolling/funding-session.mjs';
 import {executeRollingAction} from './wallet-action.mjs';
 import {executeAutomaticWithdrawal} from './automatic-withdrawal.mjs';
@@ -212,14 +212,17 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
   // The effect and path belong to this exact successful transaction/block.
   // Recheck its live canonical authority, not the immutable proof bytes, after
   // wallet/journal preparation. The portal call still checks current Outbox state.
+  // The retained proof already fixes both queries. Drain fresh receipt and
+  // canonical block reads together, then bind both to that exact proof.
   const reads=await Promise.allSettled([
    ()=>read(()=>provider.getNetwork()),()=>read(()=>node.getTxReceipt(sdk.TxHash.fromString(proof.txHash))),
+   ()=>read(()=>node.getBlockData(proof.blockNumber)),
   ].map(fn=>Promise.resolve().then(fn)));
   const failure=reads.find(result=>result.status==='rejected');if(failure)throw failure.reason;
-  const [network,receipt]=reads.map(result=>result.value);
+  const [network,receipt,block]=reads.map(result=>result.value);
   check(String(network.chainId)===fixed.chainId);
   check(['checkpointed','proven','finalized'].includes(receipt?.status)&&receipt.executionResult==='success'&&hash(receipt.txHash)===proof.txHash&&receipt.blockNumber===proof.blockNumber&&hash(receipt.blockHash)===proof.blockHash);
-  const block=await read(()=>node.getBlockData(proof.blockNumber));check(hash(block?.blockHash)===proof.blockHash&&Number(block.header?.globalVariables?.blockNumber)===proof.blockNumber);
+  check(hash(block?.blockHash)===proof.blockHash&&Number(block.header?.globalVariables?.blockNumber)===proof.blockNumber);
  }
  const cost=result=>{const r=result.receipt,price=r?.gasPrice??r?.effectiveGasPrice;return typeof r?.gasUsed==='bigint'&&r.gasUsed>=0n&&typeof price==='bigint'&&price>=0n?String(r.gasUsed*price):null;};
  async function canonicalReceipt(result){
@@ -596,7 +599,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   }));},
 });
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
- const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress,confirmationTier:'proposed',bridgeChainTip:nativeChainTip,invalidateSnapshot:()=>{operationScope={synchronized:false};}});
+ const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress,confirmationTier:'proposed',bridgeChainTip:nativeChainTip,invalidateSnapshot:()=>{operationScope=invalidateRollingFundingNativeSnapshot(operationScope);}});
  const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({ethAvailable:kind==='bok'&&selected.bokTopup!==undefined,defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;
  const refunds = Object.freeze({
   list: options => locked(() => depositRefunds.list(options)),

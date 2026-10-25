@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — b6f7554d committed/pushed/live,751 integratedchecks+actual6scriptbuild; approved Bokimmutableprefetch + redundantpostcommitpollremoval. c790claimworkflow/feecachereuse also live. Staticactivate noapp/proxyrestart; remote retentioncleaned. Browsertoolreportsdisabled so no b6endtoend measurementclaim. Next actualcachedopening+ETHBok fullboundedtrace;2s/all50%goal active. Integrateddraftscleaned,onebuildretained.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Reviewed public-action completion, withdrawal read overlap and mined Ethereum receipt reuse integrated.537 session/composer and221 aggregate checks pass; actual six-script browser build pass. Commit/push and static publication next; no browser timing because tool reports disabled.2s opening/all-flow50% goals remain active.
 
 ## Ready internal work
 

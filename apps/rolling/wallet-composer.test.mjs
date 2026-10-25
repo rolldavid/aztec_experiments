@@ -1253,3 +1253,29 @@ for(const failQuote of [false,true])test(`normal sign-in uses checked opening st
  if(failQuote)assert(f.document.body.textContent.includes('The exchange cannot currently quote this amount. No payment was sent.'));
  else{const pay=f.document.querySelectorAll('button').find(b=>b.textContent==='Confirm payment');assert(pay);assert.equal(pay.disabled,false);}
 });
+
+
+for(const [type,values] of [
+ ['subboard',{slug:'new-board',name:'New board',description:'A new community',rules:'Be civil'}],
+ ['moderate-post',{post:'8',reason:'Spam'}],['moderate-avatar',{name:'7',reason:'Unsafe image'}],
+ ['reject-subboard',{subboard:'9',reason:'Spam'}],['set-main-policy',{rules:'Be civil'}],
+ ['transfer-moderator',{successor:'0x'+'4'.repeat(64)}],
+])for(const completion of ['included','confirmed'])test(`${completion} ${type} completion refreshes public effects without queuing private inventory`,{timeout:3000},async t=>{
+ let effects=0,feeReads=0;const feeEntered=Promise.withResolvers(),feeHeld=Promise.withResolvers();
+ const f=await fixture(t,{defaults:{type},moderator:true,balanceRead:async()=>({available:true,availableCredit:'0'}),
+  warm:async(_deposit,options)=>{assert.equal(options.refreshFeeCredit,true);feeReads++;feeEntered.resolve();await feeHeld.promise;return {availableCredit:'700000000000000000'};},
+  posting:{status:completion,txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},effect:()=>effects++,balanceRefresh:async()=>assert.fail('Public Board actions do not need full private account inventory')}});
+ const controls=f.document.querySelectorAll('input,textarea').filter(n=>n.getAttribute('type')!=='hidden'&&n.getAttribute('type')!=='checkbox');
+ for(const [i,value]of Object.values(values).entries()){controls[i].value=value;controls[i].fire('input');}
+ if(type==='transfer-moderator'){const consent=f.document.querySelector('input[type=checkbox]');consent.checked=true;consent.fire('change');}
+ const action=f.document.querySelector('[data-action-review]');assert.equal(action.disabled,false);action.fire('click');
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await new Promise(setImmediate);
+ assert.deepEqual(f.prepared(),{type,...values});assert.equal(f.submissions.length,1);assert.equal(effects,1);assert.equal(f.core().status,1);
+ if(type==='transfer-moderator')assert.equal(f.panel.moderatorAuthorized(),false,'transfer discards prior menu authority');
+ assert.equal((await f.panel.act({type:'like',post:'42'})).status,completion);assert.equal(f.submissions.length,2);assert.equal(f.core().status,1);assert.equal(effects,2);
+ f.panel.open({type:'post'});await feeEntered.promise;
+ assert(f.document.querySelector('.composer-cost').textContent.includes('Balance —'),'spent fee is not displayed as a known balance');
+ assert.equal(f.document.querySelector('textarea').disabled,false);assert.equal(f.core().status,1);
+ feeHeld.resolve();await f.document.until(()=>f.document.querySelector('.composer-cost')?.textContent.includes('Balance 0.7'));
+ assert.equal(feeReads,1);assert.equal(f.core().status,1);
+});

@@ -1063,10 +1063,12 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     // Confirmation finishes the interaction. Feed and affected balance reads
     // update independently, without holding the composer open or its busy state.
     intent=null;
-    if(['like','unlike','name','bio','avatar'].includes(result.action.type)){
+    if(['like','unlike','name','bio','avatar','subboard',...MODERATOR_TYPES].includes(result.action.type)){
      // Name completion already loaded native ownership above. Profile edits
-     // retain their fresh-version/public refresh path; none changes collateral
-     // or Bok credit. Only the displayed posting-credit amount needs invalidation.
+     // retain their fresh-version/public refresh path. Subboard/moderator changes
+     // update public Board state; native action checks still enforce policy,
+     // eligibility and authority. None creates or spends collateral/Bok notes.
+     // Only the displayed posting-credit amount needs invalidation.
      // Do not queue unrelated collateral/account reads before the next action.
      // Composer preparation or an explicit balance view reads native credit again.
      if(status){status={...status};delete status.privateFeeCredit;}balances=null;

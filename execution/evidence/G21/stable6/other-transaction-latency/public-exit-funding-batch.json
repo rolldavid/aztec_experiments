@@ -1,0 +1,26 @@
+{
+  "changes": [
+    "Skip unrelated full account refresh after successful subboard and moderator actions",
+    "Overlap fresh network, transaction receipt and canonical block reads before withdrawal signing",
+    "Retain exact mined Ethereum receipt and transaction within the same operation after native bridge reset; reread numbered code/call and network"
+  ],
+  "tests": {
+    "sessionComposer": 537,
+    "aggregateWallet": 221,
+    "failures": 0,
+    "browserBundle": "six scripts evaluated; 90 files / 107 inputs"
+  },
+  "review": {
+    "publicActionTail": "private_tips approved",
+    "exitReadWave": "pending_reply_ui approved",
+    "fundingBridge": "private_tips approved after excluding number-only code/call carryover"
+  },
+  "sourceSha256": {
+    "apps/rolling/wallet-panel.mjs": "f441037ece5ec1c75708681852d05a4455c15211158c4e89829fb8b5db2923b6",
+    "apps/rolling/wallet-session.mjs": "257f7b9afedd1c51e32c257c6cef62982b800a4302c09501bfe5dec3d1e7a041",
+    "shared/rolling/funding-session.mjs": "fb2fcbe2e4c1d39a8b54d7b00d54baef6064a5a1d17a591ac1f7bcf1c2364be3"
+  },
+  "liveTiming": null,
+  "timingBlocker": "Browser tool reports Local browser use is disabled in Work settings",
+  "goalStatus": "active; no 50 percent or 2 second completion claim"
+}
