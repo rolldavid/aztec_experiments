@@ -10,6 +10,16 @@
   "browserBuild": "six scripts evaluated;90 files107inputs",
   "review": "private_tips approved narrowed patch; root rejected earlier generic recovery shortcut",
   "sourceSha256": "9adbe150b2350e2110de6f6b2ca56e450ed278fa2a6662f22c834423fc5c40ce",
-  "published": false,
-  "liveTiming": null
+  "published": true,
+  "liveTiming": null,
+  "commit": "2fdcda49df6b881e250b0d524a15c77742281967",
+  "activationSsm": "6660eed1-c802-474b-8720-01c9b96f1e60",
+  "serviceRestart": false,
+  "transferDeleted": true,
+  "publicWorker": {
+    "commit": "2fdcda49df6b881e250b0d524a15c77742281967",
+    "path": "/wallet/native-worker.js",
+    "sha256": "323b6c5539c6567317815c60c9f451418d8d448c840db979150fc7b5d2e2ae95",
+    "bytes": 422541
+  }
 }

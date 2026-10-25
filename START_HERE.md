@@ -2,6 +2,10 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Current live update — 2fdcda49
+
+Live and pushed `2fdcda49df6b881e250b0d524a15c77742281967` adds removal of one duplicate canonical read on direct successful Bok purchase custody loading. Recovery after journal writes, confirmation and archived paths retain their final checks.226 aggregate checks and actual six-script browser build pass; peer approved the narrowed path. Static activation succeeded without app/proxy restart, public worker SHA matches, transfer/archive removed. Hosted operator queue/read changes are committed/pushed as `bff92b32` and235 checks pass, but server publication is still pending exact control/source binding adaptation. Browser remains disabled; no new live timing claim.
+
 ## Current live update — 570d7851
 
 Live and pushed `570d7851701602d6d669fcb994da366ee87f1abb`: subboard/moderator completion no longer reloads unrelated private account state; withdrawal final checks run concurrently; funding bridge reset retains only exact mined Ethereum transaction/receipt reads within the same operation. Numbered code/call and network reads remain fresh, canonical checks remain enforced.537 session/composer plus221 aggregate checks and actual six-script browser build pass. Independent review caught and corrected number-only cache carryover before integration. Publication succeeded without app/proxy restart, public worker/SDK/panel hashes match, exact transfer version/archive removed. Browser tool still reports disabled; no new live end-to-end timing,2s opening/all-flow50% targets remain open. Next: finish reviewed terminal Bok read reduction and hosted operator queue/read audit, then measure actual flows when browser access is available.

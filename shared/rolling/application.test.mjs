@@ -3366,3 +3366,38 @@ test('private-fee standalone claim never prefetches unrelated Bok immutables',as
  const f=topUpFixture('private-fee'),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
  f.options.sdk.prefetchBokClaimWitnesses=()=>assert.fail('unrelated Bok');await f.restart().prepare(f.action,{immediate:true});
 });
+
+for(const usdc of [false,true])for(const withBok of [false,true])test(`combined immutable preparation matches actual batch: USDC=${usdc}, Bok=${withBok}`,async()=>{
+ const f=aggregateClaimFixture(usdc),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;if(!withBok)delete f.action.bokReceipt;
+ f.options.deployment.bok.instance={address:AztecAddress.fromBigIntUnsafe(5n)};
+ const measured=[];f.options.measure=(name,run)=>{measured.push(name);return run();};
+ const app=f.restart(),prepared=await app.prepare(f.action,{immediate:true});
+ assert.equal(f.state.claimWitnessPrefetches.length,1);assert.equal(f.state.bokClaimWitnessPrefetches?.length??0,withBok?1:0);
+ assert.deepEqual(measured.filter(name=>name.endsWith('claim-witnesses')).sort(),withBok?['action.bok-claim-witnesses','action.claim-witnesses']:['action.claim-witnesses']);
+ if(withBok){const input=f.state.bokClaimWitnessPrefetches[0];assert.equal(input.bok,f.options.deployment.bok.instance);assert.equal(input.artifact,f.options.deployment.bok.artifact);assert.equal(input.wallet,f.options.accountSession.wallet);assert.equal(input.node,f.options.accountSession.node);}
+ await app.submitPrepared(prepared.intentId);assert.equal(f.state.sends,1);assert.equal(f.state.claimReads.length,withBok?6:4);
+ assert.deepEqual(withBok?f.state.sent.payload.interactions.map(call=>call.name):[f.state.sent.payload.name],withBok?['claim_deposit','claim']:['claim_deposit']);
+ assert.equal(f.state.claimWitnessPrefetches.length,1);assert.equal(f.state.bokClaimWitnessPrefetches?.length??0,withBok?1:0);
+});
+for(const failure of ['board','bok','bok-sync','receipt','both'])test('combined immutable branches drain before failure: '+failure,async()=>{
+ const f=aggregateClaimFixture(),scope={synchronized:true},gates=[Promise.withResolvers(),Promise.withResolvers()],allStarted=Promise.withResolvers(),seen=new Set();let settled=false;
+ f.options.accountSession.operationScope=()=>scope;const verify=f.options.sdk.prepareFundingClaim;
+ const errors={board:Error('Board witness failed'),bok:Error('Bok witness failed'),receipt:Error('receipt failed')};
+ function entered(name){seen.add(name);if(seen.size===5)allStarted.resolve();}
+ f.options.sdk.prepareFundingClaim=async input=>{entered(input.kind);if(failure==='receipt'&&input.kind==='collateral')throw errors.receipt;return verify(input);};
+ f.options.sdk.prefetchBoardClaimWitnesses=async()=>{entered('board');if(['board','both'].includes(failure))throw errors.board;await gates[0].promise;};
+ f.options.sdk.prefetchBokClaimWitnesses=()=>{entered('bok-witness');if(failure==='bok-sync')throw errors.bok;return (async()=>{if(['bok','both'].includes(failure))throw errors.bok;await gates[1].promise;})();};
+ // Keep a receipt sibling held even when both native witness branches fail.
+ const wrapped=f.options.sdk.prepareFundingClaim;f.options.sdk.prepareFundingClaim=async input=>{const result=await wrapped(input);if(input.kind==='private-fee')await gates[0].promise;return result;};
+ const work=f.restart().prepare(f.action,{immediate:true}).finally(()=>settled=true),expected=failure==='receipt'?errors.receipt:['board','both'].includes(failure)?errors.board:errors.bok,rejected=assert.rejects(work,error=>error===expected);
+ await allStarted.promise;await new Promise(setImmediate);assert.equal(settled,false);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+ gates[0].resolve();if(['board','receipt'].includes(failure)){await new Promise(setImmediate);assert.equal(settled,false,'Bok sibling still holds operation');}gates[1].resolve();await rejected;
+ assert.equal(f.values.size,0);assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);
+});
+for(const changed of ['scope','owner','wallet','pxe'])test('combined immutable preparation retains final '+changed+' fence',async()=>{
+ const f=aggregateClaimFixture(),entered=Promise.withResolvers(),held=Promise.withResolvers();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.prefetchBokClaimWitnesses=async()=>{entered.resolve();await held.promise;};
+ const work=f.restart().prepare(f.action,{immediate:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ if(changed==='scope')scope={synchronized:true};if(changed==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);if(changed==='wallet')f.options.accountSession.wallet={...f.options.accountSession.wallet};if(changed==='pxe')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};
+ held.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});

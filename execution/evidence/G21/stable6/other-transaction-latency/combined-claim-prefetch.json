@@ -1,0 +1,13 @@
+{
+  "change": "Combined claim-deposit with bokReceipt prefetches both Board and Bok witnesses in existing drained preparation wave",
+  "rootTests": 695,
+  "failures": 0,
+  "review": "pending_reply_ui approved24 focused cases and exact runtime delta",
+  "sourceSha256": "bb9a250f0b113b2ed353577a2dc54ac77f9f6358f723b0bc34c52137f714783d",
+  "timingLabels": [
+    "action.claim-witnesses",
+    "action.bok-claim-witnesses"
+  ],
+  "published": false,
+  "liveTiming": null
+}

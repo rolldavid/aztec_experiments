@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 570d7851live/pushed and public hashes verified. Next integrate reviewed hosted operator queue/read-wave patch (104 peer checks), run affected suites, prepare minimal server source publication. Funding terminal shortcut narrowed pending review to direct custody only; recover journal boundary retained. Browserdisabled;2s/all50% measured targets remain open.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 2fdcda49static live/pushed, public worker hash verified and transfer removed. Operator queue/read-wave bff92pushed235checks; minimal hosted publication adaptation pending. Combined claim Board+Bok prefetch omission integrated,695application checks pass; build/publication next. Browserdisabled,no newtimings;2s/all50%targetsactive.
 
 ## Ready internal work
 
