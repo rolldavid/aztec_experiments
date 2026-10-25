@@ -241,6 +241,17 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   if(verified.outcome==='success'&&!allowReverted&&(!value.intent||value.relay.transactionHash!==hash))await read(()=>slot.write(saved,{...value,intent,relay:{...value.relay,transactionHash:hash}}));
   return {saved,result:{...verified,request:intent}};
  }
+ function unsignedQuote(value){
+  if(value===null)return true;
+  // Only the exact current-format unsigned ETH draft may be replaced here.
+  // Signed/submitted, inherited payments and uncertain records keep the normal
+  // explicit reconciliation path. Ethereum journal emptiness is checked again
+  // under the common funding lease immediately before the exact custody CAS.
+  return value&&Object.keys(value).sort().join()==='bokScope,bridgeSecret,claim,depositor,intent,nonce,previousTxHash,privateFeeCap,recipientSalt,schemaVersion'&&
+   value.schemaVersion===1&&/^0x[0-9a-f]{40}$/.test(value.depositor)&&Number.isSafeInteger(value.nonce)&&value.nonce>=0&&
+   typeof value.privateFeeCap==='string'&&/^[1-9][0-9]{0,76}$/.test(value.privateFeeCap)&&
+   ['bokScope','bridgeSecret','claim','intent','previousTxHash','recipientSalt'].every(key=>value[key]===null);
+ }
  async function qualify(values){
    check(typeof verifyFeeCredit==='function','UNAVAILABLE');check(typeof values.bokAmount==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(values.bokAmount),'INVALID');
    return timeFundingPreparation(onProgress,'qualification',async()=>{
@@ -290,24 +301,25 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    return installEth(await constructEth(values,recheckScope,previous,priorPayment));
   },
   // Internal opening capability, never a renderer quote or payment authority.
-  // Existing custody always takes the ordinary post-status preparation path.
+  // Sent or uncertain custody takes the ordinary post-status preparation path.
   async prepareReadOnly(allocation){
    const values=clone(allocation);check(values.asset==='ETH'&&values.bokAmount==='0','INVALID');
-   const previous=await stored();if(previous.value!==null)return null;
+   const previous=await stored();if(!unsignedQuote(previous.value))return null;
    const recheckScope=await qualify(values);
    const candidate=await constructEth(values,recheckScope,previous,null,true);
    const token=Object.freeze({});readOnlyQuotes.set(token,candidate);return token;
   },
   async installPreparedQuote(token){
    const candidate=readOnlyQuotes.get(token);check(candidate,'QUOTE_REQUIRED');readOnlyQuotes.delete(token);
-   const previous=await stored();check(previous.encoded===candidate.previous.encoded&&previous.value===null,'MISMATCH');
+   const previous=await stored();check(previous.encoded===candidate.previous.encoded&&unsignedQuote(previous.value),'MISMATCH');
    // Waiting for native status grants no Ethereum freshness. Recheck the exact
    // wallet, derivation nonce and quote anchor/deadline before the custody CAS.
    const checks=await Promise.allSettled([
     ()=>read(candidate.wallet.guard),
     async()=>check(await read(()=>provider.getTransactionCount(candidate.depositor,'pending'))===candidate.nonce,'NONCE_CHANGED'),
     ()=>read(()=>sdk.validateAggregateFundingQuote(candidate.quote)),
-    async()=>check(await read(async()=>(await journal(candidate.depositor)).inspectSummary())===null,'RECOVERY_REQUIRED'),
+    ...[...new Set([candidate.depositor,candidate.previous.value?.depositor].filter(Boolean))].map(depositor=>
+     async()=>check(await read(async()=>(await journal(depositor)).inspectSummary())===null,'RECOVERY_REQUIRED')),
    ].map(check=>Promise.resolve().then(check)));
    for(const result of checks)if(result.status==='rejected')throw result.reason;
    await contextGuard();return installEth(candidate);
@@ -383,7 +395,9 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const reported=freeze(clone(result));
    const saved=await stored();if(saved.value?.claim?.intentId!==reported.intentId)return;
    check(saved.value.claim.attempted&&typeof reconcileClaim==='function'&&typeof verifyClaim==='function','RECOVERY_REQUIRED');
-   const payment=await reconcile();await terminalPayment(payment.result);
+   // Successful aggregate reconciliation already checks the canonical L1 block
+   // after every effect read. No async work intervenes before this result.
+   const payment=await reconcile();
    // The trusted application reopens the exact signed journal and checks its
    // receipt canonically without reuse. Keep this L2 fence after payment reads.
    const original=await read(async()=>freeze(clone(await reconcileClaim(reported.intentId))));

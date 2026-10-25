@@ -65,7 +65,8 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     // failure may release the account lease while its sibling is still running.
     const ordinaryPost=Boolean(scope)&&name==='prepare'&&captured[1]?.immediate===true&&['post','reply','quote','repost'].includes(captured[0]?.type);
     const ordinaryPolicy=ordinaryPost&&(captured[0].subboard===undefined||/^(0|0x0{64})$/.test(captured[0].subboard));
-    const reads=[()=>synchronize({ordinaryPolicy,ordinaryPost})];if(scope&&prepareContext)reads.push(()=>prepareContext({predecessor:name==='prepare',
+    const accountStatus=Boolean(scope)&&name==='readAccountStatus'&&captured[0]?.opening===true;
+    const reads=[()=>synchronize({ordinaryPolicy,ordinaryPost,...(accountStatus?{accountStatus:true}:{})})];if(scope&&prepareContext)reads.push(()=>prepareContext({predecessor:name==='prepare',
       ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['post','reply','quote','repost'].includes(captured[0]?.type)?{ordinaryPayment:true}:{}),
       ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['like','unlike'].includes(captured[0]?.type)?{likePayment:true}:{})}));
     const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));

@@ -374,7 +374,7 @@ export async function createRollingRefundSession({sdk,ethers,config,boardArtifac
 }
 
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,getBokArtifact,account,accountPreparation,
- trustedQuery,remoteProver,fundingContext,proverReady,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
+ trustedQuery,remoteProver,fundingContext,proverReady,pxePreparation,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const ownsFundingContext=fundingContext==null;
  const nativeChainTip='proposed';
@@ -465,7 +465,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    begin('pxe-create');
    // Immutable verifier preparation is independent of local account/store setup.
    // It must still finish before the real PXE consumes its manifest and prover.
-   await proverReady;await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:nativeChainTip},{store,remoteProver:remote,nodeSnapshot});await guard();
+   const preparation=await pxePreparation;await proverReady;await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:nativeChainTip},{store,remoteProver:remote,nodeSnapshot,preparation});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
    // The first private operation selects the anchor once. Opening the engine
    // itself does not require a second, immediately discarded synchronization.
@@ -487,9 +487,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    const partialAddress=await sdk.computePartialAddress(instance);await guard();
    await pxe.registerAccount(keys,partialAddress);
    begin('contracts-register');
-   for(const [contractArtifact,contractInstance]of [[artifact,instance],[boardArtifact,deployment.board.instance],[privateFeeArtifact,deployment.privateFee.instance]]){
-    await guard();await pxe.registerContractClass(contractArtifact);
-    await guard();await pxe.registerContract(contractInstance);
+   for(const [role,contractArtifact,contractInstance]of [['account',artifact,instance],['board',boardArtifact,deployment.board.instance],['fee',privateFeeArtifact,deployment.privateFee.instance]]){
+    await guard();await measureRollingStage('session-init.contracts-'+role+'-class',()=>pxe.registerContractClass(contractArtifact));
+    await guard();await measureRollingStage('session-init.contracts-'+role+'-instance',()=>pxe.registerContract(contractInstance));
    }
    // Initialize the signing capsule lazily under the account lease before an ordinary operation.
    let initialized=false;
@@ -551,7 +551,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
  let refreshPhase=null,refreshSyncStage='account.sync';
- const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?refreshSyncStage:'action.sync',()=>ordinaryPolicy&&typeof pxe.syncWithAnchorRead==='function'?app.prefetchPostingPolicy(read=>pxe.syncWithAnchorRead(read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
+ const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false,accountStatus=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?refreshSyncStage:'action.sync',()=>accountStatus?pxe.syncForAccountStatus(selected.board.contractAddress):ordinaryPolicy&&typeof pxe.syncWithAnchorRead==='function'?app.prefetchPostingPolicy(read=>pxe.syncWithAnchorRead(read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
   if(ordinaryPost){await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress}));await guardRoute();}
  },prepareContractState:async({method})=>{await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareBoardActionState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress,method}));await guardRoute();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
  async function observedRead(name,call,args){

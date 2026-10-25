@@ -3133,3 +3133,31 @@ test('opening collateral classification rejects failed native discovery without 
  f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};
  await assert.rejects(f.restart().readAccountStatus({opening:true}),/native discovery failed/);assert.equal(fees,0);assert.equal(f.state.privateReads.length,0);
 });
+
+for(const phase of ['included','confirmed'])test('native claim readiness omits only presentation receipt reread for '+phase,async()=>{
+ const f=fundingFixture();
+ if(phase==='included'){
+  f.options.accountSession.proposedTransactions=true;f.options.accountSession.journal.included=async()=>{};
+  const send=f.options.accountSession.wallet.sendTx;f.options.accountSession.wallet.sendTx=async(...args)=>{const result=await send(...args);f.state.outcome.receipt.status='proposed';return result;};
+ }
+ const app=f.restart(),intent=await app.prepare({type:'claim-deposit',receipt:f.receipt});assert.equal((await app.submitPrepared(intent.intentId)).status,phase);
+ const scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ let inspections=0,fees=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
+ f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};
+ const current=f.restart(),before=[...f.values],reads=f.state.privateReads.length,status=await current.readAccountStatus();
+ assert.equal(status.status,'fee-ready');assert.equal(status.privateFeeCredit,'77');assert.equal(inspections,0);assert.equal(fees,1);
+ assert(f.state.privateReads.slice(reads).some(row=>row.name==='get_deposit_ids'));assert.deepEqual([...f.values],before);
+ assert.equal((await current.readFundingState()).status,'recovering');assert.equal(inspections,1);
+ await assert.rejects(current.prepare({type:'like',post:'5'}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(inspections,2);
+});
+for(const mode of ['unsynchronized','missing-native-notes','fee-failure'])test('native claim readiness still requires '+mode,async()=>{
+ const f=fundingFixture(),intent=await f.app.prepare({type:'claim-deposit',receipt:f.receipt});await f.app.submitPrepared(intent.intentId);
+ f.options.accountSession.operationScope=()=>({synchronized:mode!=='unsynchronized'});
+ // Keep one exact operation object across every asynchronous fence.
+ const scope=f.options.accountSession.operationScope();f.options.accountSession.operationScope=()=>scope;
+ let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
+ if(mode==='missing-native-notes')f.state.responses={get_deposit_ids:Array(10).fill(0n)};
+ if(mode==='fee-failure')f.options.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('no actual credit'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
+ const status=await f.restart().readAccountStatus();assert.equal(status.status,mode==='unsynchronized'?'recovering':mode==='missing-native-notes'?'collateral-pending':'fee-needed');
+ assert.equal(inspections,mode==='unsynchronized'?1:0);
+});

@@ -260,3 +260,18 @@ test('opening account status captures exact option before held synchronization',
  for(const invalid of [{opening:false},{opening:true,extra:true},null])await assert.rejects(app.readAccountStatus(invalid),{code:'ROLLING_INVALID_ACTION'});
  assert.equal(calls,1);
 });
+
+test('only captured opening status requests the public Board sync warmup under its held scope',async()=>{
+ for(const kind of ['opening','normal','other','unowned']){
+  let scope=kind==='unowned'?null:{},calls=0;const seen=[],held=Promise.withResolvers();
+  const raw=Object.fromEntries(names.map(name=>[name,()=>{calls++;}]));
+  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:async options=>{seen.push(options);await held.promise;}});
+  const option={opening:true},work=kind==='other'?app.ownedIdentities():kind==='normal'?app.readAccountStatus():app.readAccountStatus(option);option.opening=false;
+  await new Promise(r=>setImmediate(r));assert.equal(calls,0);assert.equal(seen[0].accountStatus,kind==='opening'?true:undefined);held.resolve();await work;assert.equal(calls,1);
+ }
+});
+test('opening public sync completion cannot authorize a replaced operation',async()=>{
+ let scope={},calls=0;const held=Promise.withResolvers(),raw=Object.fromEntries(names.map(name=>[name,()=>{calls++;}]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>held.promise});
+ const work=app.readAccountStatus({opening:true});await new Promise(r=>setImmediate(r));scope={};held.resolve();await assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(calls,0);
+});

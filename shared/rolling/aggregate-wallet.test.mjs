@@ -1099,7 +1099,7 @@ test('opening readonly quote refuses replaced custody and leaves saved bytes int
  const f=fixture(),app=await f.open(),token=await app.prepareReadOnly(openingAllocation(f)),other=await f.open();
  await other.prepare(openingAllocation(f));const saved=[...f.records.entries()];
  await assert.rejects(app.installPreparedQuote(token),{code:'ROLLING_FUNDING_MISMATCH'});assert.deepEqual([...f.records.entries()],saved);
- assert.equal(await app.prepareReadOnly(openingAllocation(f)),null);assert.deepEqual([...f.records.entries()],saved);
+ assert(await app.prepareReadOnly(openingAllocation(f)));assert.deepEqual([...f.records.entries()],saved,'new construction remains read-only even for the newer unsigned draft');
 });
 test('opening readonly quote installation drains failed validity and held wallet before releasing',async()=>{
  const f=fixture(),app=await f.open(),token=await app.prepareReadOnly(openingAllocation(f)),held=Promise.withResolvers(),entered=Promise.withResolvers(),failure=Error('quote invalid');
@@ -1115,4 +1115,42 @@ test('opening readonly quote capability preserves issuing identity across the co
  const app=withRollingFundingLease(raw,{owner:f.options.owner,locks,contextGuard:f.options.contextGuard});
  const token=await app.prepareReadOnly(openingAllocation(f));assert.equal(held,false);assert.equal(f.records.size,0);
  await app.installPreparedQuote(token);assert.equal(held,false);assert.equal(new Set(names).size,1);assert.equal(f.records.size,1);
+});
+
+for(const fork of [false,true])test('claim completion uses native final Ethereum canonical fence without duplicate, fork='+fork,async()=>{
+ const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();const workflow=durableClaimApplication(f,funding);
+ const complete=await advanceAggregateClaim({application:workflow.open(),funding});assert.equal(complete.state,'complete');
+ const getBlock=f.options.provider.getBlock;let blocks=0;
+ f.options.provider.getBlock=async number=>{const block=await getBlock(number);if(number===17){blocks++;if(fork&&blocks===2)return {...block,hash:h(999)};}return block;};
+ const before=[...f.records];
+ if(fork){await assert.rejects(funding.recordClaimCompletion(complete.intent));assert.deepEqual([...f.records],before);}
+ else await funding.recordClaimCompletion(complete.intent);
+ assert.equal(blocks,2,'original receipt block plus native verifier final block; no third duplicate');assert.equal(f.state.sends,1);assert.equal(workflow.state.sends,1);
+});
+
+test('unsigned saved opening quote constructs readonly after reopen and replaces exact draft once',async()=>{
+ const f=fixture(),first=await f.open(),allocation=openingAllocation(f);await first.prepare(allocation);const before=[...f.records];
+ const reopened=await f.open(),token=await reopened.prepareReadOnly({...allocation,feeAmount:'250'});assert(token);assert.deepEqual([...f.records],before);assert.equal(f.state.signatures,0);assert.equal(f.state.sends,0);
+ const result=await reopened.installPreparedQuote(token);assert.equal(result.breakdown.fee.amount,'250');assert.notDeepEqual([...f.records],before);
+ await assert.rejects(reopened.installPreparedQuote(token),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});const paid=await reopened.confirm();assert.equal(paid.feeReceipt.amount,'250');assert.equal(f.state.sends,1);
+});
+test('unsigned saved opening quote replacement rejects a newer unsigned custody draft',async()=>{
+ const f=fixture(),first=await f.open(),allocation=openingAllocation(f);await first.prepare(allocation);
+ const reopened=await f.open(),token=await reopened.prepareReadOnly(allocation),other=await f.open();await other.prepare({...allocation,feeAmount:'300'});const before=[...f.records];
+ await assert.rejects(reopened.installPreparedQuote(token),{code:'ROLLING_FUNDING_MISMATCH'});assert.deepEqual([...f.records],before);assert.equal(f.state.sends,0);
+});
+for(const mode of ['submitted','unknown'])test('unsigned saved opening quote excludes '+mode+' original payment',async()=>{
+ const f=fixture(),first=await f.open(),allocation=openingAllocation(f);await first.prepare(allocation);
+ if(mode==='unknown'){f.state.unknown=true;await assert.rejects(first.confirm());}else await first.confirm();
+ const before=[...f.records],reopened=await f.open();assert.equal(await reopened.prepareReadOnly(allocation),null);assert.deepEqual([...f.records],before);assert.equal(f.state.sends,1);
+});
+for(const changedWallet of [false,true])test('unsigned saved opening quote cannot replace hidden Ethereum intent, changedWallet='+changedWallet,async()=>{
+ const f=fixture(),app=await f.open(),allocation=openingAllocation(f);await app.prepare(allocation);const unsigned=[...f.records];
+ f.state.unknown=true;await assert.rejects(app.confirm());assert.equal(f.state.sends,1);
+ // Model an aggregate draft restored beside its still-authenticated unknown ETH
+ // journal. The final native journal inspection must veto custody replacement.
+ for(const [key,value]of unsigned)f.records.set(key,value);
+ if(changedWallet)f.wallet.address=new ethers.Wallet(h(98)).address.toLowerCase();
+ const before=[...f.records],reopened=await f.open(),token=await reopened.prepareReadOnly(allocation);assert(token);assert.deepEqual([...f.records],before);
+ await assert.rejects(reopened.installPreparedQuote(token),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});assert.deepEqual([...f.records],before);assert.equal(f.state.sends,1);
 });

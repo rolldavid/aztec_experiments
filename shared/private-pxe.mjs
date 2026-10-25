@@ -1,4 +1,10 @@
-import {beginPXEConstruction,readPXEConstruction,endPXEConstruction} from './pxe-startup-cache.mjs';
+import {LazyProtocolContractsProvider} from '@aztec-labs/protocol-contracts/providers/lazy';
+import {getStandardMultiCallEntrypoint} from '@aztec-labs/standard-contracts/multi-call-entrypoint/lazy';
+import {getStandardAuthRegistry} from '@aztec-labs/standard-contracts/auth-registry/lazy';
+import {getStandardHandshakeRegistry} from '@aztec-labs/standard-contracts/handshake-registry/lazy';
+import {contractArtifactToBuffer} from '@aztec-labs/stdlib/abi';
+import {GENESIS_BLOCK_HEADER_HASH} from '@aztec-labs/stdlib/block';
+import {beginPXEConstruction,readPXEConstruction,endPXEConstruction,preparePXEStartup,preparePXEArtifacts} from './pxe-startup-cache.mjs';
 import {withOwnerEnvelopeOracles} from './owner-envelope.mjs';
 import {RoutedKernelProver} from './routed-kernel-prover.mjs';
 import {createRemoteProverClient} from './remote-prover-client.mjs';
@@ -100,11 +106,22 @@ class BrowserPrivateKernelProver extends RoutedKernelProver {
 // account, private inputs, PXE store or node, and executes no circuit.
 export async function initializePrivateExecution(){await new WASMSimulator(privateLogger).init();}
 
+// Public immutable preparation in the existing SDK realm. The opaque result
+// cannot supply an account or waive registration, synchronization or auth.
+export function preparePrivatePXEArtifacts(){
+ return preparePXEArtifacts({protocolProvider:new LazyProtocolContractsProvider(),
+  preloaded:[getStandardMultiCallEntrypoint,getStandardAuthRegistry,getStandardHandshakeRegistry],
+  serialize:contractArtifactToBuffer});
+}
+export function preparePrivatePXE(node,{nodeSnapshot,artifacts}={}){
+ return preparePXEStartup(node,{nodeSnapshot,artifacts:artifacts??preparePrivatePXEArtifacts(),genesisFallback:GENESIS_BLOCK_HEADER_HASH});
+}
+
 export async function createPXE(node,config,options={}) {
   let selected=options;
   const readOnly=options.readOnly===true;
   let remote=options.remoteProver;
-  const construction=await beginPXEConstruction(node,{nodeSnapshot:options.nodeSnapshot}),info=readPXEConstruction(construction,node);
+  const construction=await beginPXEConstruction(node,{nodeSnapshot:options.nodeSnapshot,preparation:options.preparation}),info=readPXEConstruction(construction,node);
   const proofsEnabled=provingEnabledForNode(info);
   if(info.realProofs===false && Number(info.l1ChainId)!==31337)throw Error('Disabled proofs require local devnet');
   const transport=value=>value?createRemoteProverClient({...value,chainId:info.l1ChainId,rollupVersion:info.rollupVersion,proofsEnabled:true}):null;

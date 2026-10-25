@@ -414,10 +414,13 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     // Authorization callers still inspect every saved record normally.
     if(emptyOnly)return saved.value===null?{status:'ready'}:null;
     // Status presentation still reads fresh native balances below. Completed
-    // ordinary history grants no authority to claim, prepare, prove or send.
+    // ordinary/claim history grants no authority to claim, prepare, prove or send.
+    // Included claims remain provisional; only fresh native balances below
+    // determine current usability, never the saved completion label.
     const record=saved.value,owner=statusView?getOperationScope():null;
-    if(owner?.synchronized===true&&record?.status==='confirmed'&&
-      ['post','reply','quote','repost','like','unlike','name','bio','avatar','subboard'].includes(record.action?.type)&&
+    const nativeClaimStatus=record?.action?.type==='claim-deposit'&&['included','confirmed'].includes(record.status);
+    if(owner?.synchronized===true&&(nativeClaimStatus||record?.status==='confirmed'&&
+      ['post','reply','quote','repost','like','unlike','name','bio','avatar','subboard'].includes(record.action?.type))&&
       !record.bok&&!record.fundingBok&&!record.bokReleaseSource&&!record.bokRequestScope&&!record.withdrawal&&!record.replacementReview&&
       !await pendingExitSummary()){
       await localGuard();check(getOperationScope()===owner&&owner.synchronized===true,'ROLLING_CONTEXT_CHANGED');return {status:'ready'};

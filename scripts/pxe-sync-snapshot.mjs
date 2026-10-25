@@ -68,14 +68,19 @@ function withAnchorRead(source){
         if (failed) throw failed.reason;
         const target = checks[1].value;
         if (!this.sameAnchor(target.block, event.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`);
+ // Hash-pinned native node reads are immutable. Bound memory before this
+ // explicitly owned prefetch instead of erasing it at the later anchor write.
+ // Contract synchronization and private rollback still occur in their old order.
+ replace('        this.node.wipeCache();','        if (!this.anchorRead?.warmNodeCache) this.node.wipeCache();');
  replace('  syncPass = undefined;',`  syncPass = undefined;
 
   anchorRead = undefined;
-  async syncWithAnchorRead(read) {
-    if (typeof read !== 'function' || this.anchorRead || this.isSyncing) throw new Error('PXE_ANCHOR_READ_BUSY');
-    const state = { read, reads: new Map(), selected: undefined };
+  async syncWithAnchorRead(read, {warmNodeCache=false} = {}) {
+    if (typeof read !== 'function' || typeof warmNodeCache !== 'boolean' || this.anchorRead || this.isSyncing) throw new Error('PXE_ANCHOR_READ_BUSY');
+    const state = { read, reads: new Map(), selected: undefined, warmNodeCache };
     this.anchorRead = state;
     try {
+      if (warmNodeCache) this.node.wipeCache();
       await this.sync();
       const results = await Promise.allSettled([...state.reads.values()]);
       const failed = results.find(result => result.status === 'rejected');

@@ -1664,3 +1664,14 @@ for(const rejectReady of [false,true])test(`opening local store precedes held pr
  else{ready.resolve();const session=await pending;assert(f.state.events.includes('create-pxe'));await session.close();}
  assert.equal(f.state.active,false);
 });
+
+for(const changed of [false,true])test('opening status owns public Board sync through the actual session, changed='+changed,async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input),entered=Promise.withResolvers(),held=Promise.withResolvers();let warmed=0,discovered=0;
+ f.pxe.syncForAccountStatus=async board=>{assert.equal(f.state.active,true);assert.equal(String(board),f.input.config.board.contractAddress);warmed++;entered.resolve();await held.promise;};
+ f.pxe.prepareBoardActionState=async options=>{assert.equal(options.method,'get_deposit_ids');assert.equal(options.collateralOnly,true);discovered++;};
+ const run=session.application.readAccountStatus({opening:true});const result=run.then(value=>({value}),error=>({error}));await entered.promise;
+ assert.equal(session.busy,true);assert.equal(discovered,0);if(changed)f.state.wrongPXE=true;held.resolve();const outcome=await result;
+ assert.equal(warmed,1);assert.equal(f.state.syncs,0,'opening invokes only the native owned sync capability');
+ if(changed){assert.equal(outcome.error.code,'ROLLING_PRIVATE_ROUTE');assert.equal(discovered,0);f.state.wrongPXE=false;}else{assert.equal(outcome.error,undefined);assert(discovered>0);}
+ await session.close();
+});

@@ -6,7 +6,7 @@ import {createRollingFundingSession,verifyRollingAggregateScope} from '../../sha
 import {APPLICATION_METHODS,FUNDING_METHODS,TOPUP_METHODS,WITHDRAWAL_METHODS,DEPOSIT_METHODS,CALLBACKS,errorRecord,restoreError,workerFailure} from './wallet-worker-protocol.mjs';
 
 const sdk=globalThis.__aztec,ethers=globalThis.ethers,routing=globalThis.BillboardPrivateFeeRouting;
-let closed=false,closing=false,settings,warming,cryptoReady,proverReady,publicState,account,accountPreparation,funding,opening,session,creating,refundSession,fundingBusy=false,fundingCompletion=Promise.resolve();
+let closed=false,closing=false,settings,warming,cryptoReady,proverReady,pxeArtifactsReady,publicState,account,accountPreparation,funding,opening,session,creating,refundSession,fundingBusy=false,fundingCompletion=Promise.resolve();
 let stopPerformance=()=>{};
 let nextCallback=0;const pendingCallbacks=new Map(),operations=new Map();
 const send=value=>globalThis.postMessage(value);
@@ -48,9 +48,9 @@ async function preparePublic(){
  const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
  if(config.refundOnly){publicState={boardArtifact,privateFeeArtifact};return publicState;}
  const deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled,onProgress:progress});
- const {node}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:localGuard,onProgress:progress});localGuard();
+ const {node,nodeSnapshot}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:localGuard,onProgress:progress});localGuard();
  // No account, notes or proof operation is created by public preparation.
- publicState={node,deploymentPreparation,boardArtifact,privateFeeArtifact};
+ publicState={node,deploymentPreparation,boardArtifact,privateFeeArtifact,pxePreparation:background('pxe-native',sdk.preparePrivatePXE(node,{nodeSnapshot,artifacts:pxeArtifactsReady}))};
  if(config.aggregateFunding){
   const provider=new ethers.JsonRpcProvider(config.network.ethRpcUrl);
   const network={chainId:String(config.network.chainId),version:String(config.network.rollupVersion),rollup:config.network.rollupAddress};
@@ -72,6 +72,8 @@ function initialize(value){
  globalThis._getPublicConfig=()=>structuredClone(settings.config);
  // Same native singleton used by Poseidon, Schnorr and account derivation.
  cryptoReady=background('cryptography',sdk.BarretenbergSync.initSingleton());
+ // Built-in artifacts/classes are independent of deployment RPCs and accounts.
+ pxeArtifactsReady=background('pxe-artifacts',cryptoReady.then(()=>sdk.preparePrivatePXEArtifacts()));
  // Verifier/SRS preparation is independent of the public deployment and quote.
  proverReady=background('prover',(async()=>{const manifest=await jsonAsset(settings.crs,65536);globalThis.BILLBOARD_CRS_MANIFEST=manifest;globalThis.BillboardCRS.validateManifest(manifest);if(settings.proofsEnabled&&!settings.config.refundOnly)await sdk.initializeBrowserProver(undefined,{verifierOnly:!!settings.remoteProver});})());
  warming=background('deployment',preparePublic());
@@ -110,7 +112,7 @@ async function openAccount(raw){
 }
 function startSession(){
  if(!account||settings.config.refundOnly)throw workerFailure('ROLLING_SESSION_CONFIG');if(session)return session;if(creating)return creating;
- creating=background('private-session',createRollingWalletSession({proverReady,sdk,routing,ethers,config:settings.config,boardArtifact:publicState.boardArtifact,privateFeeArtifact:publicState.privateFeeArtifact,getBokArtifact,account,accountPreparation,trustedQuery:settings.trustedQuery,remoteProver:settings.remoteProver,contextGuard:guard,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),captureFundingWallet:captureWallet,fundingRelay:relay(),fundingContext:funding,onProgress:progress,proofsEnabled:settings.proofsEnabled}).then(value=>(session=value)));return creating;
+ creating=background('private-session',createRollingWalletSession({proverReady,pxePreparation:publicState.pxePreparation,sdk,routing,ethers,config:settings.config,boardArtifact:publicState.boardArtifact,privateFeeArtifact:publicState.privateFeeArtifact,getBokArtifact,account,accountPreparation,trustedQuery:settings.trustedQuery,remoteProver:settings.remoteProver,contextGuard:guard,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),captureFundingWallet:captureWallet,fundingRelay:relay(),fundingContext:funding,onProgress:progress,proofsEnabled:settings.proofsEnabled}).then(value=>(session=value)));return creating;
 }
 async function ensureSession(){await opening;const result=await startSession();await fundingCompletion;return result;}
 async function ensureRefundSession(){
@@ -128,7 +130,7 @@ async function earlyFunding(name,args){
 }
 async function invoke(method,args){
  if(method==='initialize')return initialize(args[0]);if(method==='deriveAccount')return deriveAccount(args[0]);if(method==='openAccount')return openAccount(args[0]);
- if(method==='close'){if(fundingBusy||session?.busy)throw workerFailure('ROLLING_BUSY');closing=true;stopPerformance();await Promise.allSettled([warming,opening].filter(Boolean));await Promise.allSettled([creating].filter(Boolean));await Promise.allSettled([publicState?.scopePreparation?.result].filter(Boolean));for(const controller of operations.values())controller.abort();if(session)await session.close();funding?.close();publicState?.fundingProvider?.destroy();if(refundSession)await refundSession.close();derivedIdentity=undefined;accountPreparation=undefined;account=undefined;closed=true;return true;}
+ if(method==='close'){if(fundingBusy||session?.busy)throw workerFailure('ROLLING_BUSY');closing=true;stopPerformance();await Promise.allSettled([warming,opening,pxeArtifactsReady].filter(Boolean));await Promise.allSettled([creating].filter(Boolean));await Promise.allSettled([publicState?.scopePreparation?.result,publicState?.pxePreparation].filter(Boolean));for(const controller of operations.values())controller.abort();if(session)await session.close();funding?.close();publicState?.fundingProvider?.destroy();if(refundSession)await refundSession.close();derivedIdentity=undefined;accountPreparation=undefined;account=undefined;closed=true;return true;}
  if(!account)throw workerFailure('ROLLING_LOCKED');await guard();
  if(method==='ensureSession'){await ensureSession();return metadata();}
  if(method==='ensureRefundSession'){await ensureRefundSession();return metadata();}

@@ -254,3 +254,24 @@ test('proposed private state remains usable across note spends while checkpoint 
  f.state.tip=12;await f.sync.sync();assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);assert.equal(await f.balance(),100n,'native rollback removes both descendant change and spends');
  assert.deepEqual(f.state.prunes,[12]);assert.equal((await f.tips.getL2Tips()).checkpointed.block.number,10);
 });
+
+for(const destination of ['advance','rollback'])test(`owned public prefetch survives ${destination} cache maintenance without moving private writes`,async t=>{
+ const f=await fixture(t,{tier:'proposed',cached:true});await f.seed(true);
+ f.state.tip=destination==='advance'?16:12;
+ let calls=0;f.node.findLeavesIndexes=async(anchor,tree,values)=>{calls++;assert(anchor.hash instanceof BlockHash);return values.map(()=>undefined);};
+ const leaf=new Fr(717),before=f.state.wipes;
+ const read=async selected=>{assert.equal(f.state.wipes,before,'prefetch starts before private anchor/cache mutation');const anchor={number:selected.number,hash:BlockHash.fromString(selected.hash)};return f.sync.node.findLeavesIndexes(anchor,0,[leaf]);};
+ const result=await f.sync.syncWithAnchorRead(read,{warmNodeCache:true});
+ const header=await f.anchor.getBlockHeader();assert.equal(header.getBlockNumber(),f.state.tip);assert(f.state.wipes>before,'normal contract sync invalidation retained');
+ await f.sync.node.findLeavesIndexes(await header.toBlockParameter(),0,[leaf]);assert.equal(calls,1,'same typed native cache key survives anchor update');
+ assert.equal(await f.balance(),destination==='rollback'?100n:90n);assert.deepEqual(result.anchor,f.id(f.state.tip));
+ await f.sync.syncWithAnchorRead(async selected=>f.sync.node.findLeavesIndexes({number:selected.number,hash:BlockHash.fromString(selected.hash)},0,[leaf]),{warmNodeCache:true});assert.equal(calls,2,'next owned sync still bounds cache memory');
+});
+test('warm public sync keeps canonical fork rejection and drains the held sibling',async t=>{
+ const f=await fixture(t,{tier:'proposed',cached:true});await f.advance(10);f.state.tip=12;
+ const gate=Promise.withResolvers(),started=Promise.withResolvers();let settled=false;
+ const pending=f.sync.syncWithAnchorRead(async()=>{started.resolve();await gate.promise;},{warmNodeCache:true});
+ const rejected=assert.rejects(pending,/PXE_REORG_ANCHOR_/).finally(()=>settled=true);
+ await started.promise;f.state.onRead=async q=>typeof q==='number'&&q===12?{handled:true,value:undefined}:undefined;
+ await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),10);
+});

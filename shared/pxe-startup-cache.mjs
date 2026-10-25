@@ -1,6 +1,6 @@
 import {getTrustedNodeSnapshotInfo} from './trusted-node-snapshot.mjs';
 // Owned by one SDK realm. Construction metadata is never a node-wide cache.
-const constructions=new WeakMap(),classes=new WeakMap();
+const constructions=new WeakMap(),classes=new WeakMap(),preparations=new WeakMap(),preparedArtifacts=new WeakMap();
 const invalid=()=>Error('PXE startup provenance mismatch');
 const BUILTIN_CLASS_PINS={
   "644ccbc1f171fc2f05af79d65f028816afcf8f4c09f036c7106893c59e71ca13": "dcdb621da0ee77521c128fc3b9a0c34321ecb21233e2d5fed44c44108631c411",
@@ -13,14 +13,58 @@ const BUILTIN_CLASS_PINS={
 const equal=(a,b)=>a.length===b.length&&(typeof a.equals==='function'?a.equals(b):a.every((value,i)=>value===b[i]));
 export function forgetContractClass(artifact){classes.delete(artifact);}
 export function nativeClassBytes(value){return new TextEncoder().encode(JSON.stringify({version:value.version,id:value.id.toString(),artifactHash:value.artifactHash.toString(),privateFunctionsRoot:value.privateFunctionsRoot.toString(),publicBytecodeCommitment:value.publicBytecodeCommitment.toString(),privateFunctions:value.privateFunctions.map(fn=>({selector:fn.selector.toString(),vkHash:fn.vkHash.toString()})),packedBytecode:Array.from(value.packedBytecode)}));}
-export async function beginPXEConstruction(node,{nodeSnapshot}={}){
+export async function beginPXEConstruction(node,{nodeSnapshot,preparation}={}){
  const info=nodeSnapshot===undefined?await node.getNodeInfo():getTrustedNodeSnapshotInfo(nodeSnapshot,node),handle=Object.freeze({});
- constructions.set(handle,{node,info});return handle;
+ const startup=preparation===undefined?undefined:preparations.get(preparation);
+ if(preparation!==undefined&&(!startup||startup.node!==node||networkIdentity(info)!==startup.network))throw invalid();
+ constructions.set(handle,{node,info,startup});return handle;
 }
 export function readPXEConstruction(handle,node){
  const value=constructions.get(handle);if(!value||value.node!==node)throw invalid();return value.info;
 }
 export function endPXEConstruction(handle){constructions.delete(handle);}
+export function readPXEStartup(handle,node){
+ const value=constructions.get(handle);if(!value||value.node!==node)throw invalid();
+ const ready=value.startup;return ready&&{initialBlockHash:copy(ready.initialBlockHash),protocolContractsProvider:ready.protocolContractsProvider,preloadedContractsProvider:ready.preloadedContractsProvider};
+}
+const networkIdentity=info=>JSON.stringify([String(info.l1ChainId),String(info.rollupVersion),info.l1ContractAddresses.rollupAddress.toString().toLowerCase(),info.realProofs]);
+// Native immutable providers need no node, account or database.
+const collect=async pending=>{const results=await Promise.allSettled(pending),failed=results.find(value=>value.status==='rejected');if(failed)throw failed.reason;return results.map(value=>value.value);};
+export async function preparePXEArtifacts({protocolProvider,preloaded,serialize}){
+ const names=['ContractInstanceRegistry','ContractClassRegistry','FeeJuice'];
+ const retain=async value=>{
+  const bytes=serialize(value.artifact),instance=copy(value.instance),address=copy(value.address),contractClass=copy(value.contractClass),classBytes=nativeClassBytes(contractClass);
+  await rememberBuiltinContract(value,serialize);
+  if(!equal(serialize(value.artifact),bytes)||!equal(nativeClassBytes(value.contractClass),classBytes))throw invalid();
+  return ()=>{
+   if(!equal(serialize(value.artifact),bytes))throw invalid();
+   return {artifact:value.artifact,instance:copy(instance),address:copy(address),contractClass:copy(contractClass)};
+  };
+ };
+ const results=await collect([
+  ...names.map(name=>Promise.resolve().then(()=>protocolProvider.getProtocolContractArtifact(name)).then(retain)),
+  collect(preloaded.map(load=>Promise.resolve().then(load).then(retain))),
+ ]);
+ const protocol=Object.fromEntries(names.map((name,i)=>[name,results[i]])),standards=results[3],handle=Object.freeze({});
+ preparedArtifacts.set(handle,{
+  protocolContractsProvider:Object.freeze({async getProtocolContractArtifact(name){if(!Object.hasOwn(protocol,name))throw invalid();return protocol[name]();}}),
+  preloadedContractsProvider:Object.freeze({async getPreloadedContracts(){return standards.map(read=>read());}}),
+ });
+ return handle;
+}
+
+// Bind already-running immutable work only to this verified node. Genesis is
+// read concurrently, so slow artifact loading cannot delay the public RPC.
+export async function preparePXEStartup(node,{nodeSnapshot,artifacts,genesisFallback}){
+ const info=getTrustedNodeSnapshotInfo(nodeSnapshot,node);
+ const [ready,genesis]=await collect([
+  Promise.resolve(artifacts).then(handle=>{const value=preparedArtifacts.get(handle);if(!value)throw invalid();return value;}),
+  Promise.resolve().then(()=>node.getBlock(0)),
+ ]);
+ const handle=Object.freeze({});
+ preparations.set(handle,{node,network:networkIdentity(info),initialBlockHash:copy(genesis?.hash??genesisFallback),...ready});
+ return handle;
+}
 
 async function digest(bytes){
  return Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),value=>value.toString(16).padStart(2,'0')).join('');
