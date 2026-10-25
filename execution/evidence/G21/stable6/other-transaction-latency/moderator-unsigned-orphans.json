@@ -16,5 +16,50 @@
     "lease": false,
     "receipt": false
   },
-  "published": false
+  "published": true,
+  "commit": "a0c2c10c199c3057b99da9b7941f54b2951f1cc1",
+  "activationSsm": "e89f4222-b80a-4479-ba60-48cfa9774f59",
+  "liveVerification": {
+    "activated": true,
+    "attestorSha256": "b7adee89e0c71d0af06c12f9717b8096f247a0fca2365b9b9066081c9d7bd9a0",
+    "commit": "a0c2c10c199c3057b99da9b7941f54b2951f1cc1",
+    "configSha256": "602cbcb37571bb86d39dae4a14ae0b0fad441935bfdf3c1e9c4d656afe7ce716",
+    "controlSha256": "073fcbec23e4966c774e3e92332c099bcab25e0a81cbc228b184c70f597ce42a",
+    "health": {
+      "alerts": [],
+      "checkpointHeight": 5382,
+      "counts": {
+        "awaitingFinality": 0,
+        "expiredObligations": 0,
+        "manualAttention": 0,
+        "manualSigningFences": 0,
+        "retryableErrors": 0,
+        "unresolvedSigning": 0,
+        "unsignedPending": 0
+      },
+      "lastSuccessfulIngestAgeMs": 8,
+      "severity": "ok",
+      "stateCounts": {
+        "confirmed-flag": 0,
+        "evaluated-ok": 5,
+        "expired": 0,
+        "leased": 0,
+        "manual-review": 2,
+        "queued": 0,
+        "reconciling": 0,
+        "retryable-error": 0,
+        "submit-intent": 0,
+        "submitted": 0
+      },
+      "type": "billboard-moderation-health-v1"
+    },
+    "otherServicesUnchanged": true,
+    "pid": "191841",
+    "planSha256": "6e6292d697b6644002776a10f478e8bbc78bad5f527490d025044548bdda8c3e",
+    "source": "/opt/rolling-app/releases/operator-a0c2c10c199c3057b99da9b7941f54b2951f1cc1",
+    "sourceInventorySha256": "ebe5d875cc6571f579b2c32523dd4e70233cbb5c9fd63d489cd45f2af7fa53bd",
+    "payloadCleaned": true,
+    "restartPolicy": "always"
+  },
+  "transferDeleted": true
 }

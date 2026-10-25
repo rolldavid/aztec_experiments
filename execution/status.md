@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — All performance releases live/pushed; Bokready and moderatoringests. Both manualalerts are exactunsigned POST_ORPHANED with nointent/hash/lease/receipt; reviewed narrow worker+health classification patch integration next, preserve signed/uncertain fences.17focusedpeerchecks; root affectedchecks then moderator-only publication. Browserstilldisabled,latencytargetsnotverified.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Allverifiedchanges published/pushed: staticab6658, Bokbff92overlay readyPID96885, moderatora0c2c10c PID191841 healthok/checkpoint5382/manualAttention0/unresolvedSigning0. Source/asset/servicechecks andaffectedtestspass; archives/transfers/ownedagentdrafts removed. Condensedhandover removescontradictoryoldcurrentreleaseclaims. Browsertoolstilldisabled; no newendtoendtimings and2s/all50%goalsactive.
 
 ## Ready internal work
 

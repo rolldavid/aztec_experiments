@@ -88,5 +88,5 @@
     }
   },
   "transfersDeleted": true,
-  "healthLimitation": "Moderator ingests current blocks but has two manual-review items; diagnosis pending. Bok ready active0."
+  "healthLimitation": "At first activation moderator reported two unsigned canonical orphan rows. Resolved by a0c2c10c classification fix; subsequent PID191841 severity ok, no manual attention or unresolved signing."
 }
