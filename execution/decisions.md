@@ -627,3 +627,6 @@ The G03 targets paragraph beginning “Reading first page” applies its eight-r
 
 ## 25 October: operator-trusted testnet portal activation
 The owner explicitly authorizes trusting the deployment operator to assert the Ethereum/Aztec portal binding, rather than waiting for an epoch proof. Implement activation authority restricted to the immutable deployment operator on Sepolia. This changes deployment readiness only; withdrawal messages still require canonical Outbox proofs. Existing contracts are immutable, so replace the unfinished Bok escrow/portal while retaining the already active fresh Board. No production trust claim is implied.
+
+## 25 October: consolidate routers at the next contract deployment
+Owner explicitly requires one funding router for signup and Bok top-ups at the next deployment after the current already-deployed bbf76d92 contracts. Delete standalone BokCreditRouter and its deployment/configuration path. This is a prerequisite for the pending tips contract release; current publication and timing measurements continue.

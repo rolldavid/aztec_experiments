@@ -158,3 +158,13 @@ Do not add discovery counters or journal-head UTXOs. Encryption must remain
 unconstrained, owner-only records must restore from another browser using the same
 wallet, and native note authorization/nullification must remain intact. The
 counter-note prototype was rejected and is not an approved production design.
+
+## Owner requirement — next deployment: one funding router (25 October 2026)
+
+After the in-progress bbf76d92 release (whose contracts are already deployed),
+the next contract deployment must consolidate signup funding and Bok-only top-ups
+into one funding router. Remove the standalone BokCreditRouter contract and its
+separate deployment/configuration paths. Preserve one Ethereum payment per action,
+correct swaps/refunds and existing authorization. Do not redeploy the current
+release again merely to perform this consolidation; implement it before the next
+contract deployment, including the pending private-tips release.
