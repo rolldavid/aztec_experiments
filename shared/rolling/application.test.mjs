@@ -3161,3 +3161,13 @@ for(const mode of ['unsynchronized','missing-native-notes','fee-failure'])test('
  const status=await f.restart().readAccountStatus();assert.equal(status.status,mode==='unsynchronized'?'recovering':mode==='missing-native-notes'?'collateral-pending':'fee-needed');
  assert.equal(inspections,mode==='unsynchronized'?1:0);
 });
+
+for(const failure of [false,true])test('ordinary arguments wait for owned discovery while predecessor proceeds: '+failure,async()=>{
+ const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),scope={synchronized:true,ordinaryStateReady:gate.promise};
+ f.options.accountSession.operationScope=()=>scope;f.options.accountSession.journal.assertCanStart=async()=>{entered.resolve();};f.app=f.restart();
+ let settled=false;const work=f.app.prepare({type:'post',deposit:'9',content:'Wait safely for fresh notes'},{immediate:true});work.then(()=>settled=true,()=>settled=true);
+ const result=failure?assert.rejects(work,/native discovery failed/):work;
+ await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(f.state.privateReads.length,0);assert.equal(f.values.size,0);assert.equal(settled,false);
+ if(failure)gate.reject(Error('native discovery failed'));else gate.resolve();await result;
+ assert.equal(f.state.sends,0);if(failure)assert.equal(f.values.size,0);else assert(f.state.privateReads.length>0);
+});

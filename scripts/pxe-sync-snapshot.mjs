@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {beginProofSpan} from '../shared/proof-timings.mjs';
 import {PXE_REORG_ANCHOR_PINS} from './patch-pxe-reorg-anchor.mjs';
 const pin=PXE_REORG_ANCHOR_PINS.find(pin=>pin.path==='dest/block_synchronizer/block_synchronizer.js');
 // The native stream already owns a detached source plan. Check its selected
@@ -8,9 +9,10 @@ export function parallelPxeAnchorSnapshot(source){
  if(createHash('sha256').update(source).digest('hex')!==pin.after)throw Error('PXE sync snapshot source mismatch');
  const begin=source.indexOf('  async checkedSelectedAnchor() {'),end=source.indexOf('  async checkAcknowledgedSnapshot()',begin);
  if(begin<0||end<0)throw Error('PXE sync snapshot layout mismatch');
- source=source.slice(0,begin)+`  async checkedSelectedAnchor() {
+ source=source.slice(0,begin)+`  async checkedSelectedAnchor(phase) {
+    const label=phase==='prewrite'?'prewrite':phase==='postwrite'?'postwrite':'selected';
     const block = await this.selectedAnchor();
-    const results = await Promise.allSettled([
+    const results = await rollingSyncPhase('native.phase.sync-'+label+'-snapshot',()=>Promise.allSettled([
       Promise.resolve().then(async () => {
         const tips = await this.node.getChainTips();
         const tier = this.config.syncChainTip ?? 'proposed';
@@ -18,7 +20,7 @@ export function parallelPxeAnchorSnapshot(source){
         return { number: live.number, hash: live.hash.toString() };
       }),
       Promise.resolve().then(() => this.checkedHeader(block)),
-    ]);
+    ]));
     const failed = results.find(result => result.status === 'rejected');
     if (failed) throw failed.reason;
     const live = results[0].value, header = results[1].value;
@@ -30,11 +32,16 @@ export function parallelPxeAnchorSnapshot(source){
     // A moving selected tier can cross a fork between the concurrent responses.
     // Authenticate that newer observation, then re-read the captured anchor
     // last. The stable case needs neither duplicated round trip.
-    await this.checkedHeader(live);
-    return { block, header: await this.checkedHeader(block) };
+    await rollingSyncPhase('native.phase.sync-'+label+'-moving-head',()=>this.checkedHeader(live));
+    return { block, header: await rollingSyncPhase('native.phase.sync-'+label+'-recheck',()=>this.checkedHeader(block)) };
   }
 
 `+source.slice(end);
+ source+=`\nconst rollingSyncSpan=${beginProofSpan.toString()};
+async function rollingSyncPhase(stage,operation){
+ if(globalThis[Symbol.for('rolling.proof.profile')]!==true)return operation();
+ const finish=rollingSyncSpan(stage);try{return await operation();}finally{finish();}
+}\n`;
  return withAnchorRead(source);
 }
 
@@ -60,14 +67,16 @@ function withAnchorRead(source){
         const currentId = { number: current.getBlockNumber(), hash: (await current.hash()).toString() };
         const advancing = !this.sameAnchor(currentId, event.block);
         if (advancing && currentId.number >= event.block.number) throw new Error('PXE_REORG_ANCHOR_CHANGED');
-        const checks = await Promise.allSettled([
+        const checks = await rollingSyncPhase(advancing?'native.phase.sync-prewrite-advance':'native.phase.sync-prewrite-same',()=>Promise.allSettled([
           Promise.resolve().then(() => advancing ? this.checkedHeader(currentId) : undefined),
-          Promise.resolve().then(() => this.checkedSelectedAnchor()),
-        ]);
+          Promise.resolve().then(() => this.checkedSelectedAnchor('prewrite')),
+        ]));
         const failed = checks.find(result => result.status === 'rejected');
         if (failed) throw failed.reason;
         const target = checks[1].value;
         if (!this.sameAnchor(target.block, event.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`);
+ replace('      await this.blockStream.sync();',"      await rollingSyncPhase('native.phase.sync-stream',()=>this.blockStream.sync());");
+ replace('      const selected = await this.checkedSelectedAnchor();',"      const selected = await rollingSyncPhase('native.phase.sync-postwrite-check',()=>this.checkedSelectedAnchor('postwrite'));");
  // Hash-pinned native node reads are immutable. Bound memory before this
  // explicitly owned prefetch instead of erasing it at the later anchor write.
  // Contract synchronization and private rollback still occur in their old order.
@@ -92,7 +101,7 @@ function withAnchorRead(source){
       this.anchorRead = undefined;
     }
   }`);
- replace('      this.syncTips = structuredClone(await tips());',`      this.syncTips = structuredClone(await tips());
+ replace('      this.syncTips = structuredClone(await tips());',`      this.syncTips = structuredClone(await rollingSyncPhase('native.phase.sync-source-snapshot',()=>tips()));
       const read = this.anchorRead;
       if (read) {
         const tier = this.config.syncChainTip ?? 'proposed';

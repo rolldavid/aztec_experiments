@@ -1,5 +1,33 @@
 # Measured onboarding, 25 October 2026
 
+## Published measurement — 26 October, fb61925c
+
+UI/source `fb61925ce5d926c551f710c3ed0914ee4e4db3af`, actual existing IAB tab, Sepolia11155111/stable6, same Ethereum disposable test wallet. Automatic signature/payment approvals included; human MetaMask dwell is not measured. Normal signed-out account opening; no new-test shortcut in either timed opening. A fresh unfunded identity was selected before those runs. No mainnet funds.
+
+| Measured interval | Actual time | Prior comparable observation |
+| --- | ---: | ---: |
+| Wallet selection → rendered enabled payment; first visit to this new asset version | 7.879700s | No matching cold-asset baseline |
+| Wallet selection → rendered enabled payment; repeat visit | 3.256300s | 6.623745–6.832120s on0d23 |
+| Confirm payment → rendered enabled Write a post | 58.075380s | 52.501800s on0d23 |
+| Post click → actual Aztec inclusion and rendered feed text, composer closed | 19.919695s | 15.703535s on0d23 |
+
+The2s opening/15s posting/all-flow50% goals remain unmet. Do not call a faster subsection a completed end-to-end result. Cold and repeat visits are distinct: SDK resource download was7.076455s on first load and50.465ms on repeat, both before wallet selection; their effect on remaining background preparation differs. Worker execution-engine initialization was3.667860s first load and649.200ms repeat. The current instrumentation retains only the final resource per endpoint, so it cannot establish individual WASM transfer timings; the next reviewed diagnostics change preserves bounded individual records.
+
+Repeat opening: wallet identity/handoff261.585ms; private session916.100ms; native synchronization1436.970ms; signing capsule5.855ms; status400.285ms; other handoffs/render235.505ms. Quote work overlaps synchronization. This is a working enabled payment, not the earlier94f insufficient-test-funds refusal. The latter is retained only as failed-fixture evidence. A same-wallet sale of existing public test FEE restored sufficient test ETH before timed successful runs; no application quote/balance guard was bypassed.
+
+Signup sequential breakdown: payment preparation/automated approvals/submission8.080580s; Ethereum receipt/effect observation9.923415s; account status0.631050s; bridge readiness4.074190s; claim preparation6.819185s; claim submission/completion23.151280s; subsequent claim completion2.256065s; final account readiness3.122495s; small handoffs0.017120s. The23.151280s stage includes10.192545s witness/proof/public validation,0.468180s Aztec submission and9.807800s inclusion, plus fee preparation/completion. Do not add nested values twice. The stage named `checkpoint` is application claim completion; its label alone does not establish protocol checkpoint waiting. Automatic payment approvals total1.418255s. One Ethereum payment and one combined Aztec claim succeeded.
+
+Post sequential breakdown: preparation3.295275s; witness/proof/public validation8.638275s; submission0.481755s; actual inclusion6.894695s; other handoffs/render0.609695s. Preparation includes1.666760s synchronization,0.864630s contract-state discovery,0.410345s predecessor check and0.346845s arguments/screening. Private witness519.765ms, kernel witness1553.250ms, public validation472.875ms; remote native proving3036.734ms and browser proof verification1022.180ms are nested within proof work. Composer preparation→Post dwell was~14.9s, versus~1.5s in0d23; a changed anchor required fresh discovery/public reads. This is a real user-path cost, not yet a proven source regression or a reason to use stale notes.
+
+Additional actual inline-like run: click→inclusion42.712230s; click→visible count1 at43.075745s. Preparation3.287285s, witness/proof/validation7.109750s, submission0.474820s, Aztec inclusion wait31.721330s. This observation does not satisfy50% reduction against56.933s historical like baseline. Count observer was installed before completion, and required the actual native inclusion timing before recording the visible count. Raw evidence `like-fb619.json`.
+
+Actual inline name registration: Create name→included19.763115s, →new owned name selected in main-page dropdown23.029425s. This is below half the historical100.169/106.844s name-registration observations, with different network timing and account fixtures. It does not establish the all-flow goal. Raw evidence `name-fb619.json`.
+
+Ethereum payment `0x26be905fc85dc3fbc5e9454a63f4a6f89efb7570e3c261edc4b6ea4e6434b77d`. First-post Aztec transaction `0x146f2bd0f01d5793722a6bb2012305e31496f5542562e99c08f1b754ebf3c1de`; post12989333108932377010284770371603363687366455205055702651248492234388637844523. The feed displayed the actual included post with confirmation pending; it was not an optimistic local insertion.
+
+Raw numeric evidence: `execution/evidence/G21/stable6/other-transaction-latency/{normal-unfunded-fb619-run1,normal-unfunded-fb619-run2,signup-fb619,fresh-post-fb619}.json`.
+
+
 Published UI/source0d23da655729212fa2fa3821ce729b943f28c33c. Real existing IAB tab, normal signed-out path, selected disposable unfunded Aztec identity, automated Sepolia wallet. Timers capture clicks and first animation-frame render; later tool inspection does not extend the result. No explicit new-test shortcut during the measured opens. Prior unsigned quote state retained, so speculative construction for an entirely empty local journal was not exercised.
 
 | Actual interval | Run1 | Run2 |

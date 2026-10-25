@@ -1,5 +1,10 @@
 # Transaction performance beyond ordinary posting
 
+## Actual live observations — 26 October, fb61925c
+
+Fresh ETH signup58.075380s Pay→readyWrite; ordinary first135char post19.919695s Post→included+rendered; inline Like43.075745s click→included+visiblecount1 (31.721330s inclusion wait); inline name registration23.029425s Create→included+ownedname selected. Normal account opening3.256300s repeat/7.879700s first-new-asset visit. All used the published source and existing IAB, automatic test-wallet approvals where needed. [Exact stages and raw evidence](ONBOARDING_MEASUREMENTS.md). These results do not meet the all-flow50% or2s/15s targets. The name result is below half the historical100.169/106.844s observations; network/account fixtures differ. No claim that old faster results describe this current run.
+
+
 Active owner goal, 25 October 2026: reduce end-to-end time by at least 50% for every other application transaction flow. This is an acceptance target, not a completed result.
 
 ## Measurement contract

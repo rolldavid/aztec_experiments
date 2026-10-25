@@ -1,0 +1,1166 @@
+{
+  "measures": [
+    {
+      "detail": null,
+      "duration": 23002.30000007153,
+      "name": "rolling.action.interaction",
+      "start": 783655.0499999523
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 5979.120000004768,
+      "name": "rolling.action.prepare",
+      "start": 783658.7449707985
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2995.899999976158,
+      "name": "rolling.action.sync",
+      "start": 783659.069970727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1517.4950000047684,
+      "name": "rolling.action.contract-state",
+      "start": 786655.0649707317
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 319.9849998950958,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "start": 786657.2299708128
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1162.5199999809265,
+      "name": "rolling.proof.native.phase.sync-records",
+      "start": 786977.2299708128
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.06500005722045898,
+      "name": "rolling.proof.native.phase.oracle-record-fact",
+      "start": 787689.944970727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 360.6399999856949,
+      "name": "rolling.action.predecessor",
+      "start": 788172.6399707794
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 145.54499995708466,
+      "name": "rolling.action.arguments",
+      "start": 788533.9199707508
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 461.65499997138977,
+      "name": "rolling.action.payment-prefetch",
+      "start": 788535.2249708176
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 446.5149999856949,
+      "name": "rolling.action.fee-metadata",
+      "start": 788535.8849707842
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 5.224999904632568,
+      "name": "rolling.action.fee-binding",
+      "start": 788982.609970808
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 8.694999933242798,
+      "name": "rolling.action.fee-balance",
+      "start": 788987.8899707794
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 14174.41000008583,
+      "name": "rolling.action.submit",
+      "start": 789639.1899707317
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.04999995231628418,
+      "name": "rolling.action.fee-prepare",
+      "start": 789671.3549708128
+    },
+    {
+      "detail": null,
+      "duration": 30.914999961853027,
+      "name": "rolling.transaction.estimating",
+      "start": 789671.3899999857
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.5800000429153442,
+      "name": "rolling.action.fee-simulate",
+      "start": 789671.4149707556
+    },
+    {
+      "detail": null,
+      "duration": 47.544999957084656,
+      "name": "rolling.transaction.preparing",
+      "start": 789702.6000000238
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2.740000009536743,
+      "name": "rolling.proof.wallet.phase.account-request",
+      "start": 789750.0349707603
+    },
+    {
+      "detail": null,
+      "duration": 6330.419999957085,
+      "name": "rolling.transaction.proving",
+      "start": 789750.1599999666
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 6207.115000009537,
+      "name": "rolling.proof.wallet.phase.prove-tx-with-public-validation",
+      "start": 789752.8399707079
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.680000066757202,
+      "name": "rolling.proof.native.phase.queue-and-anchor",
+      "start": 789752.924970746
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 111.66499996185304,
+      "name": "rolling.proof.native.phase.private-execution",
+      "start": 789754.6499707699
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.5399999618530273,
+      "name": "rolling.proof.native.phase.oracle-get-capsule",
+      "start": 789770.9899708033
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.08000004291534424,
+      "name": "rolling.proof.native.phase.oracle-get-auth-witness",
+      "start": 789772.799970746
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.0700000524520874,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "start": 789799.6699707508
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.0700000524520874,
+      "name": "rolling.proof.native.phase.oracle-notify-created-nullifier",
+      "start": 789815.5949707031
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.16499996185302734,
+      "name": "rolling.proof.native.phase.oracle-notify-revertible-phase-start",
+      "start": 789820.7899707556
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 34.735000014305115,
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "start": 789826.4699707031
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.09000003337860107,
+      "name": "rolling.proof.native.phase.oracle-is-nullifier-pending",
+      "start": 789838.6499707699
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "start": 789841.7949707508
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 9.389999985694883,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "start": 789845.6249707937
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.12000000476837158,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "start": 789855.2399708033
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.125,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "start": 789856.379970789
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "start": 789856.5149707794
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "start": 789856.5299707651
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.7850000858306885,
+      "name": "rolling.proof.native.phase.kernel-class-hints",
+      "start": 789866.5749707222
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1080.8249999284744,
+      "name": "rolling.proof.native.phase.kernel-body",
+      "start": 789867.3699707985
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.11500000953674316,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "start": 790919.674970746
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 7.5,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "start": 790919.7949707508
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 11.519999980926514,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "start": 790927.3149707317
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 8.289999961853027,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "start": 790938.8499708176
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.38999998569488525,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "start": 790947.1449707747
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.3849999904632568,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "start": 790947.5349707603
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 395.99000000953674,
+      "name": "rolling.proof.native.phase.validation",
+      "start": 790948.2049707174
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 18.875,
+      "name": "rolling.proof.native.phase.validation-transaction",
+      "start": 790951.1049708128
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 374.0199999809265,
+      "name": "rolling.proof.native.phase.public-execution",
+      "start": 790970.0349707603
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 372.4850000143051,
+      "name": "rolling.proof.native.phase.admission-check",
+      "start": 790971.5299707651
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 4523.395000100136,
+      "name": "rolling.proof.native.phase.remote-proof",
+      "start": 791344.2149707079
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 25.019999980926514,
+      "name": "rolling.proof.transport.serialize",
+      "start": 791344.2449707985
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.7699999809265137,
+      "name": "rolling.proof.transport.circuit-ids",
+      "start": 791344.2699707747
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 14.759999990463257,
+      "name": "rolling.proof.transport.dictionary",
+      "start": 791346.0849707127
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 8.329999923706055,
+      "name": "rolling.proof.transport.compress",
+      "start": 791360.8699707985
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 587.6699999570847,
+      "name": "rolling.proof.transport.submit",
+      "start": 791369.2749707699
+    },
+    {
+      "detail": {
+        "connectEnd": 791369.8249707222,
+        "connectStart": 791369.8249707222,
+        "decodedBodySize": 73,
+        "domainLookupEnd": 791369.8249707222,
+        "domainLookupStart": 791369.8249707222,
+        "duration": 586.9900000095367,
+        "encodedBodySize": 73,
+        "endpoint": "prover-submit",
+        "fetchStart": 791369.8249707222,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 791370.569970727,
+        "responseEnd": 791956.4149707556,
+        "responseStart": 791956.0449707508,
+        "secureConnectionStart": 791369.8249707222,
+        "serverBody": 300.528,
+        "serverBodyBytes": 125016,
+        "serverBodyChunks": 46,
+        "serverBodyFirst": 8.874,
+        "serverBodyGap": 95.704,
+        "serverQueue": 0.432,
+        "serverValidate": 0.143,
+        "start": 791369.424970746,
+        "transferSize": 373
+      },
+      "duration": 586.9900000095367,
+      "name": "rolling.worker.resource.prover-submit",
+      "start": 791369.424970746
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3134.7450000047684,
+      "name": "rolling.proof.transport.wait",
+      "start": 791957.0299707651
+    },
+    {
+      "detail": {
+        "connectEnd": 791957.3049707413,
+        "connectStart": 791957.3049707413,
+        "decodedBodySize": 149486,
+        "domainLookupEnd": 791957.3049707413,
+        "domainLookupStart": 791957.3049707413,
+        "duration": 3133.025000095367,
+        "encodedBodySize": 149486,
+        "endpoint": "prover-result",
+        "fetchStart": 791957.3049707413,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 791957.8949707747,
+        "responseEnd": 795090.1199707985,
+        "responseStart": 792253.8149707317,
+        "secureConnectionStart": 791957.3049707413,
+        "start": 791957.0949707031,
+        "transferSize": 149786
+      },
+      "duration": 3133.025000095367,
+      "name": "rolling.worker.resource.prover-result",
+      "start": 791957.0949707031
+    },
+    {
+      "detail": {
+        "durationMs": 0.2644309997558594,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.persist",
+      "start": 795090.9199707508
+    },
+    {
+      "detail": {
+        "durationMs": 0.022050999104976658,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.queue-wait",
+      "start": 795090.9749708176
+    },
+    {
+      "detail": {
+        "durationMs": 2679.414673000574,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready",
+      "start": 795090.984970808
+    },
+    {
+      "detail": {
+        "durationMs": 0.5883840000024065,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.read",
+      "start": 795090.9949707985
+    },
+    {
+      "detail": {
+        "durationMs": 66.29211099998793,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.decompress",
+      "start": 795091.004970789
+    },
+    {
+      "detail": {
+        "durationMs": 31.589054999989457,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.binding",
+      "start": 795091.004970789
+    },
+    {
+      "detail": {
+        "durationMs": 29.374138999992283,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.backend",
+      "start": 795091.0149707794
+    },
+    {
+      "detail": {
+        "durationMs": 2549.674761000002,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.native-prove",
+      "start": 795091.0199707747
+    },
+    {
+      "detail": {
+        "durationMs": 0.6302039999864064,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-start",
+      "start": 795091.0249707699
+    },
+    {
+      "detail": {
+        "durationMs": 258.0831659999676,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-load",
+      "start": 795091.0249707699
+    },
+    {
+      "detail": {
+        "durationMs": 1096.857531000016,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-accumulate",
+      "start": 795091.0299707651
+    },
+    {
+      "detail": {
+        "durationMs": 1145.613825999986,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-prove",
+      "start": 795091.0399707556
+    },
+    {
+      "detail": {
+        "durationMs": 43.89085199998226,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-verify",
+      "start": 795091.0449707508
+    },
+    {
+      "detail": {
+        "durationMs": 2.165804999996908,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-compress",
+      "start": 795091.0549707413
+    },
+    {
+      "detail": {
+        "durationMs": 0.2243210000160616,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-encode",
+      "start": 795091.0599707365
+    },
+    {
+      "detail": {
+        "durationMs": 2677.778361000004,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.child-total",
+      "start": 795091.0599707365
+    },
+    {
+      "detail": {
+        "durationMs": 0.016839999705553055,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.ready-wait",
+      "start": 795091.0649707317
+    },
+    {
+      "detail": {
+        "durationMs": 2679.2682320028543,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.dispatch-to-result",
+      "start": 795091.069970727
+    },
+    {
+      "detail": {
+        "durationMs": 0.05651000142097473,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready-to-snapshot",
+      "start": 795091.0949707031
+    },
+    {
+      "detail": {
+        "connectEnd": 795092.109970808,
+        "connectStart": 795092.109970808,
+        "decodedBodySize": 21,
+        "domainLookupEnd": 795092.109970808,
+        "domainLookupStart": 795092.109970808,
+        "duration": 288.4500000476837,
+        "encodedBodySize": 21,
+        "endpoint": "prover-job",
+        "fetchStart": 795092.109970808,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 795093.9199707508,
+        "responseEnd": 795379.8699707985,
+        "responseStart": 795379.1899707317,
+        "secureConnectionStart": 795092.109970808,
+        "start": 795091.4199707508,
+        "transferSize": 321
+      },
+      "duration": 288.4500000476837,
+      "name": "rolling.worker.resource.prover-job",
+      "start": 795091.4199707508
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 52.6949999332428,
+      "name": "rolling.proof.local.decompress",
+      "start": 795093.629970789
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 701.2050000429153,
+      "name": "rolling.proof.local.verify",
+      "start": 795146.694970727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 32.62499022483826,
+      "name": "rolling.proof.native.phase.worker-verify-before-entry",
+      "start": 795146.8099707365
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 668.1750000715256,
+      "name": "rolling.proof.native.phase.worker-verify-cbind",
+      "start": 795179.4349609613
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 667.9800000190735,
+      "name": "rolling.proof.native.phase.worker-verify-wasm",
+      "start": 795179.574960947
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.14500975608825684,
+      "name": "rolling.proof.native.phase.worker-verify-after-exit",
+      "start": 795847.6099610329
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.875,
+      "name": "rolling.proof.native.phase.proof-public-inputs",
+      "start": 795867.6549707651
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 87.86500000953674,
+      "name": "rolling.proof.native.phase.result-and-tag-persistence",
+      "start": 795869.7199707031
+    },
+    {
+      "detail": {
+        "durationMs": 6116.670000076294,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.total",
+      "start": 795960.0399707556
+    },
+    {
+      "detail": {
+        "durationMs": 0,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.sync",
+      "start": 795960.0549707413
+    },
+    {
+      "detail": {
+        "durationMs": 108.79000008106232,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.private-witness",
+      "start": 795960.0599707365
+    },
+    {
+      "detail": {
+        "durationMs": 1034.579999923706,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.kernel-witness",
+      "start": 795960.0649707317
+    },
+    {
+      "detail": {
+        "durationMs": 393.0849999189377,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.public-validation",
+      "start": 795960.069970727
+    },
+    {
+      "detail": {
+        "durationMs": 4523.445000052452,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.proof-transport",
+      "start": 795960.0749707222
+    },
+    {
+      "detail": {
+        "durationMs": 56.7700001001358,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.unaccounted",
+      "start": 795960.0799707174
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 25.015000104904175,
+      "name": "rolling.proof.wallet.phase.to-tx",
+      "start": 795960.0899707079
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 23.984999895095825,
+      "name": "rolling.proof.wallet.phase.guard-before-journal",
+      "start": 795985.234970808
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 38.639999985694885,
+      "name": "rolling.proof.wallet.phase.journal-prepare",
+      "start": 796009.2399708033
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 32.485000014305115,
+      "name": "rolling.proof.wallet.phase.journal-signed",
+      "start": 796047.9199707508
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "start": 796080.4649707079
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2.1549999713897705,
+      "name": "rolling.proof.wallet.phase.signed-guard",
+      "start": 796080.4949707985
+    },
+    {
+      "detail": null,
+      "duration": 478.6450001001358,
+      "name": "rolling.transaction.submitting",
+      "start": 796080.5899999142
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 476.3799999952316,
+      "name": "rolling.proof.wallet.phase.submit-to-aztec",
+      "start": 796082.6649707556
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 6858.715000033379,
+      "name": "rolling.transaction.aztec-inclusion",
+      "start": 796559.0799707174
+    },
+    {
+      "detail": null,
+      "duration": 7254.504999995232,
+      "name": "rolling.transaction.confirming",
+      "start": 796559.2649999857
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "start": 802107.1699707508
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 308.7000000476837,
+      "name": "rolling.proof.receipt.phase.read",
+      "start": 803108.7799707651
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.proposed",
+      "start": 803417.5349707603
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.31499993801116943,
+      "name": "rolling.proof.receipt.phase.display-callback",
+      "start": 803417.6549707651
+    },
+    {
+      "detail": null,
+      "duration": 0.05500006675720215,
+      "name": "rolling.action.included",
+      "start": 803418.7949999571
+    },
+    {
+      "detail": null,
+      "duration": 473.8049999475479,
+      "name": "rolling.reader.update",
+      "start": 803419.1299999952
+    },
+    {
+      "detail": null,
+      "duration": 2840.9049999713898,
+      "name": "rolling.action.required-account-refresh",
+      "start": 803814.125
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1248.4349999427795,
+      "name": "rolling.account.sync",
+      "start": 803814.734970808
+    },
+    {
+      "detail": null,
+      "duration": 3.965000033378601,
+      "name": "rolling.reader.dom",
+      "start": 803888.9449999332
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 476.1850000619888,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 805506.9399707317
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.2199999094009399,
+      "name": "rolling.proof.native.phase.oracle-openv",
+      "start": 805983.9899708033
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2.309999942779541,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 805985.7799707651
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2.3899999856948853,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 805988.2299708128
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.295000076293945,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 805997.319970727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.09500002861022948,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 805998.9499707222
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.0700000524520874,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 805999.0799707174
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 805999.254970789
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 309.24000000953674,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 805999.2749707699
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 806308.8399707079
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 316.0550000667572,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 806312.7149707079
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.04500007629394531,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 806314.0799707174
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.1799999475479126,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 806314.1599707603
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.875,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 806314.4299707413
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.039999961853027344,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 806316.174970746
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.04999995231628418,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 806316.2449707985
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 306.9250000715256,
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "start": 806316.3099707365
+    },
+    {
+      "detail": {
+        "connectEnd": 806317.1649707556,
+        "connectStart": 806317.1649707556,
+        "decodedBodySize": 160,
+        "domainLookupEnd": 806317.1649707556,
+        "domainLookupStart": 806317.1649707556,
+        "duration": 304.81500005722046,
+        "encodedBodySize": 160,
+        "endpoint": "node",
+        "fetchStart": 806317.1649707556,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 806318.0399707556,
+        "responseEnd": 806621.484970808,
+        "responseStart": 806620.2099707127,
+        "secureConnectionStart": 806317.1649707556,
+        "start": 806316.6699707508,
+        "transferSize": 460
+      },
+      "duration": 304.81500005722046,
+      "name": "rolling.worker.resource.node",
+      "start": 806316.6699707508
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.11000001430511476,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 806623.4299707413
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 4.389999985694885,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 806623.7049707174
+    }
+  ],
+  "observation": {
+    "click": 783654.6799999475,
+    "inclusionEnd": 803417.7949707508,
+    "ready": 806684.1050000191
+  },
+  "scenario": "Create name click to actual inclusion and owned name selected in main page",
+  "source": "fb61925ce5d926c551f710c3ed0914ee4e4db3af"
+}

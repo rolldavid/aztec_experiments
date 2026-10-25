@@ -198,3 +198,18 @@ test('public asset timing distinguishes service-worker hit and miss without assu
   const value=rollingResourceTiming(entry,'https://board.test');assert.equal(value.assetCacheHit,hit?1:0);assert.equal(value.assetReadyDuration,1.25);assert(!JSON.stringify(value).includes('sha256'));
  }
 });
+
+test('individual worker resource timings survive repeated endpoints with a bounded lifetime',()=>{
+ const entries=new Map(),timing={timeOrigin:1000,now:()=>10000,clearMeasures:name=>entries.delete(name),measure:(name,value)=>entries.set(name,{name,startTime:value.start,duration:value.end-value.start,detail:value.detail})};
+ const send=(i,enabled=true)=>receiveRollingWorkerPerformance({type:'performance',timeOrigin:1000,entries:[{kind:'resource',endpoint:i%2?'node':'wallet-asset',protocol:'h2',start:i+.125,duration:.5}]},{enabled,timing});
+ send(0,false);assert.equal(entries.size,0);
+ for(let i=0;i<1000;i++)send(i);
+ assert.equal(entries.size,128);const kept=[...entries.values()].sort((a,b)=>a.startTime-b.startTime);
+ assert.deepEqual(kept.map(x=>x.startTime),Array.from({length:128},(_,i)=>872+i+.125));
+ assert(kept.every(x=>x.duration===.5&&/^rolling\.worker\.resource\.(node|wallet-asset)\.[a-z]{2}$/.test(x.name)));
+ let latest;const h=observers({onEntries:entries=>latest=entries});h.emit('measure',kept);
+ assert.equal(latest.length,128);assert(latest.every(x=>x.kind==='resource'&&['node','wallet-asset'].includes(x.endpoint)));h.stop();
+ // Ordinary operation spans retain their existing name and replacement rules.
+ receiveRollingWorkerPerformance({type:'performance',timeOrigin:1000,entries:[{kind:'measure',name:'rolling.action.sync',start:2000,duration:3}]},{enabled:true,timing});
+ assert.equal(entries.size,129);assert.equal(entries.get('rolling.action.sync').duration,3);
+});

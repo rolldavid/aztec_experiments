@@ -137,6 +137,28 @@ export function withRollingFundingLease(aggregate,{owner,locks,contextGuard}){
  })));
 }
 
+// The existing native-operation cache, shared by the session's readers and its
+// adopted worker funding provider. Provider and method identity remain part of
+// each entry; numbered canonical block reads and mutable reads are never cached.
+export async function readRollingFundingOperation({provider,operationScope,name,args}){
+ const scope=operationScope(),method=provider[name];
+ const anchored=(name==='getCode'&&Number.isSafeInteger(args[1]))||(name==='call'&&Number.isSafeInteger(args[0]?.blockTag));
+ const immutable=anchored||['getNetwork','getTransaction','getTransactionReceipt'].includes(name);
+ if(!scope||!immutable)return method.apply(provider,args);
+ const reads=scope.ethereumReads??=new Map();
+ let cache=reads.get(provider);if(!cache){cache=new Map();reads.set(provider,cache);}
+ const key=JSON.stringify([name,args],(_key,value)=>typeof value==='bigint'?value.toString():value);
+ let entry=cache.get(key);
+ if(!entry||entry.method!==method){
+  entry={method,pending:Promise.resolve().then(()=>method.apply(provider,args))};cache.set(key,entry);
+  const discard=()=>{if(cache.get(key)===entry)cache.delete(key);};
+  entry.pending.then(value=>{if(value==null||name==='getTransaction'&&value.blockHash==null)discard();},discard);
+ }
+ const value=await entry.pending;
+ if(operationScope()!==scope)throw fail('ROLLING_CONTEXT_CHANGED');
+ return value;
+}
+
 // Owns the existing payment capability before PXE construction. The caller owns
 // native operation serialization; native callbacks are bound once the private session
 // is ready, never initialized recursively while a funding lease is held.
@@ -158,7 +180,7 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
   check();await contextGuard();check();
  };
  const fundingProvider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','send','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{
-  await guard();const currentProvider=provider??(ownedProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl));const value=await currentProvider[name](...args);await guard();return value;
+  await guard();const currentProvider=provider??(ownedProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl));const read=privateContext?.readFunding;const value=await(read?read(currentProvider,name,args):currentProvider[name](...args));await guard();return value;
  }]));
  const requirePrivate=()=>{if(!privateContext)throw fail('ROLLING_FUNDING_PRIVATE_SESSION_REQUIRED');return privateContext;};
  const defaultPrivateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
@@ -188,7 +210,7 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
  };
  return Object.freeze({aggregate,node,defaultPrivateFeeCap,usdcAvailable:scope.usdcRelayAddress!==undefined,assertContext,
   async registrationDeployment(options){await guard();const result=await readRollingDeploymentRegistration(deploymentPreparation,options);await guard();return result;},
-  async bindPrivateContext(context){await guard();if(privateContext||!context||['readExistingCredit','ensureBok','reconcileClaim'].some(key=>typeof context[key]!=='function'))throw fail('ROLLING_SESSION_CONFIG');privateContext=Object.freeze({...context});},
+  async bindPrivateContext(context){await guard();if(privateContext||!context||['readExistingCredit','ensureBok','reconcileClaim'].some(key=>typeof context[key]!=='function')||(context.readFunding!==undefined&&typeof context.readFunding!=='function'))throw fail('ROLLING_SESSION_CONFIG');privateContext=Object.freeze({...context});},
   prepareOpening(readStatus,{asset='ETH'}={}){
    return prepareRollingFundingOpening({asset,readStatus,guard,
     readAllocation:()=>timeFundingPreparation(onProgress,'allocation',()=>starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap:defaultPrivateFeeCap,provider:fundingProvider})),

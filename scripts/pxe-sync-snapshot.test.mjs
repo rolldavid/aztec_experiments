@@ -275,3 +275,17 @@ test('warm public sync keeps canonical fork rejection and drains the held siblin
  await started.promise;f.state.onRead=async q=>typeof q==='number'&&q===12?{handled:true,value:undefined}:undefined;
  await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),10);
 });
+
+test('native sync diagnostics are opt-in and distinguish prewrite, postwrite and advancing live-tier reads',async t=>{
+ const key=Symbol.for('rolling.proof.profile'),prior=globalThis[key];t.after(()=>{if(prior===undefined)delete globalThis[key];else globalThis[key]=prior;});
+ const clear=()=>{for(const x of performance.getEntriesByType('measure'))if(x.name.startsWith('rolling.proof.native.phase.sync-'))performance.clearMeasures(x.name);};
+ const names=()=>performance.getEntriesByType('measure').filter(x=>x.name.startsWith('rolling.proof.native.phase.sync-'));
+ const f=await fixture(t,{tier:'proposed'});clear();globalThis[key]=false;await f.advance(10);assert.equal(names().length,0);
+ globalThis[key]=true;f.state.tip=12;await f.sync.sync();
+ for(const name of ['source-snapshot','stream','prewrite-advance','prewrite-snapshot','postwrite-check','postwrite-snapshot'])assert(names().some(x=>x.name==='rolling.proof.native.phase.sync-'+name),name);
+ assert(names().every(x=>Number.isFinite(x.duration)&&x.duration>=0&&x.detail===null));
+ clear();const get=f.node.getChainTips;let reads=0;f.node.getChainTips=async()=>{if(++reads===2)f.state.tip=14;return get();};
+ await f.sync.sync();
+ for(const name of ['postwrite-moving-head','postwrite-recheck'])assert(names().some(x=>x.name==='rolling.proof.native.phase.sync-'+name),name);
+ assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12,'diagnostics do not change the source-plan anchor');
+});

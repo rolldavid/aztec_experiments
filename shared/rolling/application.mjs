@@ -1148,6 +1148,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         checkPolicyOwner();[history,earlyPolicy]=reads.map(value=>value.value);
       }else history=await measure('action.predecessor',readPredecessor);
+      if(immediate&&['post','reply','quote','repost'].includes(action.type)){
+        const stateOwner=getOperationScope(),ready=stateOwner?.ordinaryStateReady;
+        if(ready){await ready;await localGuard();check(getOperationScope()===stateOwner&&stateOwner.ordinaryStateReady===ready,'ROLLING_CONTEXT_CHANGED');}
+      }
       const {store,prior,predecessor}=history;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=earlyPolicy?.board??await contract();
       const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(key=>key==='type'||allowed.includes(key)));

@@ -275,3 +275,11 @@ test('opening public sync completion cannot authorize a replaced operation',asyn
  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>held.promise});
  const work=app.readAccountStatus({opening:true});await new Promise(r=>setImmediate(r));scope={};held.resolve();await assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(calls,0);
 });
+
+for(const failure of ['none','predecessor','discovery','both'])test('ordinary discovery overlaps predecessor and drains both before return: '+failure,async()=>{
+ const scope={synchronized:false},gate=Promise.withResolvers(),started=Promise.withResolvers();let appStarted=false,settled=false;
+ const raw=Object.fromEntries(names.map(name=>[name,async()=>{}]));raw.prepare=async()=>{appStarted=true;started.resolve();if(failure==='predecessor'||failure==='both')throw Error('predecessor failed');await scope.ordinaryStateReady;return 'prepared';};
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContractState:async({method})=>{assert.equal(method,'post');assert.equal(scope.synchronized,true);await gate.promise;if(failure==='discovery'||failure==='both')throw Error('discovery failed');}});
+ const work=app.prepare({type:'post'},{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=failure==='none'?work:assert.rejects(work,failure==='predecessor'?/predecessor failed/:/discovery failed/);
+ await started.promise;assert.equal(appStarted,true);await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await result;assert.equal(scope.ordinaryStateReady,undefined);
+});

@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Progress: live/pushed UI0d23da655729212fa2fa3821ce729b943f28c33c; normal unfunded wallet→enabledPay6832.120/6623.745ms, realETHsignupPay→Write52501.800ms incl1312.565ms walletapproval, freshPost→AztecIncludedRendered15703.535ms. Targets2s/15s/allflows50% NOT complete. deacc worker dependency-cycle regression fixed with dependency-free snapshot store; realbadbundle fails and corrected actualbundle passes permanent evaluationgate. Next: nativePXEprewarm(private_tips), sync/discoverycriticalpath(pending_reply_ui), signupcompletiontail(pending_feed_release). Root solepublisher,onebuild/IABtab; transferarchives/S3versionscleaned.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Progress: live/pushed UI fb61925ce5d926c551f710c3ed0914ee4e4db3af. Actual normal unfunded wallet-to-enabledPay cold-new-asset7879.700ms, repeat3256.300ms; fresh ETH signup Pay-to-readyWrite58075.380ms; first135char post click-to-Aztec-included-visible19919.695ms. Targets2s/15s/all-flow50% NOT complete.94f prewarm/anchor reads/quote overlap and fb619 exact-native-WASM cache published; actual worker build evaluation passed, services unchanged. Reviewed operation-owned funding-read reuse and bounded individual RPC/sync diagnostics integrated locally9+51checks, awaiting next batch build/publication. Agents investigate fresh-anchor post discovery overlap and claim read wave. One retained build/IABtab; completed94f transfer removed, fb619 cleanup next. Read docs/ONBOARDING_MEASUREMENTS.md.
 
 ## Ready internal work
 

@@ -1,5 +1,5 @@
 import {consumeRollingAccountPreparation} from '../../shared/rolling/account-preparation.mjs';
-import {createRollingFundingSession,verifyRollingTopupClaim} from '../../shared/rolling/funding-session.mjs';
+import {createRollingFundingSession,verifyRollingTopupClaim,readRollingFundingOperation} from '../../shared/rolling/funding-session.mjs';
 export {createRollingFundingSession,verifyRollingFundingCredit,verifyRollingAggregateScope,verifyRollingTopupClaim,fundingUsdEstimate} from '../../shared/rolling/funding-session.mjs';
 import {executeRollingAction} from './wallet-action.mjs';
 import {executeAutomaticWithdrawal} from './automatic-withdrawal.mjs';
@@ -397,19 +397,11 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   });}
   finally{busy=false;operationScope=null;}
  };
- async function fundingRead(name,args){
-  fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
-  const anchored=(name==='getCode'&&Number.isSafeInteger(args[1]))||(name==='call'&&Number.isSafeInteger(args[0]?.blockTag));
-  const immutable=anchored||['getNetwork','getTransaction','getTransactionReceipt'].includes(name);
-  const scope=operationScope;
-  if(!scope||!immutable)return fundingProvider[name](...args);
-  const key=JSON.stringify([name,args],(_key,value)=>typeof value==='bigint'?value.toString():value);
-  const cache=scope.ethereumReads??=new Map();
-  if(!cache.has(key)){
-   const pending=Promise.resolve().then(()=>fundingProvider[name](...args));cache.set(key,pending);
-   pending.then(value=>{if(value==null||name==='getTransaction'&&value.blockHash==null)cache.delete(key);},()=>cache.delete(key));
-  }
-  return cache.get(key);
+ async function fundingRead(name,args,adoptedProvider){
+  const provider=adoptedProvider??(fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl));
+  // Early worker funding may overlap native construction. It can borrow this
+  // cache only after an actual synchronized private operation owns the scope.
+  return readRollingFundingOperation({provider,name,args,operationScope:()=>adoptedProvider&&operationScope?.synchronized!==true?null:operationScope});
  }
  async function dispose(){
   try{if(pxe){try{await pxe.stop();pxe=undefined;store=undefined;}
@@ -514,7 +506,19 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     }]));
     fundingContext??=await createRollingFundingSession({sdk,ethers,config:selected,account,deploymentPreparation,boardArtifact,privateFeeArtifact,node,contextGuard:guardRoute,captureWallet:captureFundingWallet,claimStore,relay:fundingRelay,storage:privateStore,provider,locks,proofsEnabled});
     await fundingContext.assertContext({config:selected,account,node,proofsEnabled});
-    await fundingContext.bindPrivateContext({ensureBok,reconcileClaim:id=>app.reconcile(id),readExistingCredit:async()=>{
+    await fundingContext.bindPrivateContext({ensureBok,reconcileClaim:id=>app.reconcile(id),
+     // A session-created context already calls its native provider facade.
+     // Only an adopted worker provider needs this handoff; keep its identity.
+     ...(!ownsFundingContext?{readFunding:async(provider,name,args)=>{
+      const owner=operationScope;
+      // Background construction or a failed native session must not take over
+      // an independent early payment's Ethereum reads.
+      if(owner?.synchronized!==true)return provider[name](...args);
+      await guardRoute();if(operationScope!==owner)throw fail('ROLLING_CONTEXT_CHANGED');
+      const value=await fundingRead(name,args,provider);await guardRoute();
+      if(operationScope!==owner)throw fail('ROLLING_CONTEXT_CHANGED');return value;
+     }}:{}),
+     readExistingCredit:async()=>{
      await pxe.sync();await initializeAccount();await guardRoute();
      try{return (await sdk.preparePrivateFeePayment({wallet,node,owner:instance.address,privateFeeAddress:deployment.privateFee.address.toString(),privateFeeArtifact,expectedChainId:network.chainId,expectedVersion:network.version,gasSettings:selected.privateFee.gasSettings})).availableCredit;}
      catch(error){if(error?.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return 0n;throw error;}
@@ -551,9 +555,8 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
  let refreshPhase=null,refreshSyncStage='account.sync';
- const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false,accountStatus=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?refreshSyncStage:'action.sync',()=>accountStatus?pxe.syncForAccountStatus(selected.board.contractAddress):ordinaryPolicy&&typeof pxe.syncWithAnchorRead==='function'?app.prefetchPostingPolicy(read=>pxe.syncWithAnchorRead(read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
-  if(ordinaryPost){await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress}));await guardRoute();}
- },prepareContractState:async({method})=>{await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareBoardActionState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress,method}));await guardRoute();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
+ const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false,accountStatus=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?refreshSyncStage:'action.sync',()=>accountStatus?pxe.syncForAccountStatus(selected.board.contractAddress):ordinaryPolicy&&typeof pxe.syncForOrdinaryPost==='function'?app.prefetchPostingPolicy(read=>pxe.syncForOrdinaryPost({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress},read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
+ },prepareContractState:async({method})=>{await guardRoute();await measureRollingStage('action.contract-state',()=>method==='post'?pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress}):pxe.prepareBoardActionState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress,method}));await guardRoute();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
  async function observedRead(name,call,args){
   const method=refreshMethods[name];if(!method)return locked(()=>call(...args));
   let step=method+'/lock',contextChecks=0;

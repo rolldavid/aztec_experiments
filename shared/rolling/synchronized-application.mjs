@@ -50,7 +50,7 @@ export function createSynchronizedRollingApplication({application,synchronize,co
    const captured=name==='readAccountStatus'?accountStatusArguments(args):name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args,name==='readBalances'):args;
    const stateMethod=name==='prepare'&&Object.hasOwn(boardStateMethods,captured[0]?.type)?boardStateMethods[captured[0].type]:undefined;
    await contextGuard();
-   const scope=operationScope();
+   const scope=operationScope();let ordinaryPost=false;
    if(name==='readFundingState'&&(!scope||!scope.synchronized)){
     const empty=await call({emptyOnly:true});
     await contextGuard();
@@ -63,7 +63,7 @@ export function createSynchronizedRollingApplication({application,synchronize,co
    if(name!=='readModeratorStatus'&&(!scope||!scope.synchronized)){
     // The native sync and public readiness reads are independent. Neither
     // failure may release the account lease while its sibling is still running.
-    const ordinaryPost=Boolean(scope)&&name==='prepare'&&captured[1]?.immediate===true&&['post','reply','quote','repost'].includes(captured[0]?.type);
+    ordinaryPost=Boolean(scope)&&name==='prepare'&&captured[1]?.immediate===true&&['post','reply','quote','repost'].includes(captured[0]?.type);
     const ordinaryPolicy=ordinaryPost&&(captured[0].subboard===undefined||/^(0|0x0{64})$/.test(captured[0].subboard));
     const accountStatus=Boolean(scope)&&name==='readAccountStatus'&&captured[0]?.opening===true;
     const reads=[()=>synchronize({ordinaryPolicy,ordinaryPost,...(accountStatus?{accountStatus:true}:{})})];if(scope&&prepareContext)reads.push(()=>prepareContext({predecessor:name==='prepare',
@@ -80,7 +80,19 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
     await contextGuard();
    }
-   const result=await call(...captured);
+   let result;
+   if(ordinaryPost&&prepareContractState){
+    const ready=Promise.resolve().then(()=>prepareContractState({method:'post'}));
+    scope.ordinaryStateReady=ready;
+    // Predecessor authority can run during native discovery. The application
+    // awaits this exact owned barrier before arguments or a new intent write.
+    try{
+     const results=await Promise.allSettled([ready,Promise.resolve().then(()=>call(...captured))]);
+     const failed=results.find(value=>value.status==='rejected');if(failed)throw failed.reason;
+     await contextGuard();if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
+     result=results[1].value;
+    }finally{if(scope.ordinaryStateReady===ready)delete scope.ordinaryStateReady;}
+   }else result=await call(...captured);
    if(scope&&['submitPrepared','resumeSaved'].includes(name)&&['included','confirmed','authorized','reverted','bok-post-reverted','bok-release-reverted'].includes(result?.status))scope.synchronized=false;
    return result;
   }];

@@ -215,3 +215,7 @@ Root owns b992 publication, real browser opening measurements and focused fixes.
 Resume: pending_feed_release completed109-cache cleanup, verifiednine services, and proposed claim/read overlap; pending_reply_ui independently approved/installed current-prover monitor and reviews account/claim changes; private_tips prepared authenticated shared dependency publication and account derivation reuse. Root integrates and owns builds/browser measurements.
 
 Current continuation: root integrates normal-opening gates; private_tips investigates native PXE/registration; pending_reply_ui investigates public preparation/account sync; pending_feed_release audits full flow baselines and adapts33b publisher. Source-only drafts, one retained build, no extra browsers/dependencies.
+
+## 26 October live measurement continuation
+
+Root measured published fb619 normal opening3.256s repeat/7.880s cold-asset, freshsignup58.075s and includedvisiblepost19.920s; no target completion. Root owns retained build, publication and existing IAB. private_tips investigates changed-anchor post preparation and drafts safe overlap; pending_feed_release investigates combined claim read wave. pending_reply_ui independently reviews both. Reviewed mature funding cache and bounded sync diagnostics integrated with9+51checks; source publication pending. No extra browser/profile/dependency copy.

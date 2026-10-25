@@ -2,7 +2,13 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
-## Latest measured release — 25 October, 0d23da65
+## Latest measured release — 26 October, fb61925c
+
+Live UI/source `fb61925ce5d926c551f710c3ed0914ee4e4db3af`, pushed to master and both application branches. All7core service PIDs unchanged. Normal unfunded wallet→enabledPay first-new-asset visit7.879700s; repeat visit3.256300s. Full realETHsignup Pay→readyWrite58.075380s, new account first135-character post click→actualAztecIncludedVisible19.919695s. Goals2s/15s/allflows50% remain incomplete. Repeat opening improves from0d23 6.623745–6.832120s; fullsignup/post did not improve in these observations. Raw traces and stage definitions: [onboarding measurements](docs/ONBOARDING_MEASUREMENTS.md).
+
+Published94f prewarms native immutable initialization, overlaps exact-anchor opening reads and unsigned quotes, removes repeated completed-claim receipt work. Publishedfb619 content-addresses native ACVM/ABI WASM with Fetch integrity and existing bounded persistent cache. Integrated checks108+57 for94f,93forWASM; actual six-script worker evaluation gate passed both builds. Native packages/contracts unchanged. Latest per-endpoint timing overwrites individual requests; reviewed bounded diagnostics and operation-owned funding-read reuse are integrated locally for the next batch. Root solepublisher; one retained build/IABtab. Further work: actual post fresh-anchor discovery overlap and signup claimread criticalpath; do not reuse old matched-speedup claims.
+
+## Previous measured release — 25 October, 0d23da65
 
 Published UI: `0d23da655729212fa2fa3821ce729b943f28c33c`; app/Bok/prover processes unchanged. Normal unfunded account opening measured **6832.120/6623.745ms** from wallet selection to the first rendered enabled payment button. Automatic test-signature approval6.425/6.015ms included. No explicit fresh-account shortcut was used in measured runs. Selected disposable identity had previous unsigned quotes; the new empty-slot speculative quote branch was therefore not exercised. Do not label these first-ever-user or human MetaMask timings.
 
@@ -68,7 +74,7 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/33b55824e18eebf578f93a9c6f2935effa832c1c` |
+| Browser UI | `/opt/rolling-ui/releases/fb61925ce5d926c551f710c3ed0914ee4e4db3af` |
 | Running application | `/opt/rolling-app/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Prover | `/opt/board-prover/releases/fresh-board-bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Bok | `/opt/rolling-bok/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |

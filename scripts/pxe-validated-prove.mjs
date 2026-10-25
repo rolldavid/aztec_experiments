@@ -215,6 +215,32 @@ export function validatedPxeProve(source){
         });
     }
     // Public API\n`);
+ source=replace(source,'    // Public API\n',`    syncForOrdinaryPost({owner,board,privateFee},readPolicy) {
+        const profile=${JSON.stringify(ORDINARY_POST_GAS_PROFILE)};
+        const targets=[{address:SyncAddress.fromStringUnsafe(owner.toString()),classId:profile.accountClassId},
+            {address:SyncAddress.fromStringUnsafe(privateFee.toString()),classId:profile.privateFeeClassId},
+            {address:SyncAddress.fromStringUnsafe(board.toString()),classId:profile.boardClassId}];
+        if(typeof readPolicy!=='function'||new Set(targets.map(target=>target.address.toString())).size!==3)throw new Error('Invalid ordinary sync targets');
+        return this.operationQueue.run(async()=>{
+            const instances=await allToCompletion(targets.map(async target=>{
+                const instance=await this.contractStore.getContractInstance(target.address);
+                if(!instance||instance.originalContractClassId.toString()!==target.classId||
+                    !(await computeContractAddressFromInstance(instance)).equals(target.address))throw new Error('Invalid ordinary sync preimage');
+                return instance;
+            }));
+            const nullifier=await syncInitializationNullifier(targets[2].address,instances[2].initializationHash);
+            return this.blockStateSynchronizer.syncWithAnchorRead(async selected=>{
+                const anchor={number:selected.number,hash:SyncBlockHash.fromString(selected.hash)};
+                const results=await allToCompletion([
+                    ...targets.map(target=>()=>this.node.getContract(target.address,anchor)),
+                    ()=>this.node.findLeavesIndexes(anchor,SyncTreeId.NULLIFIER_TREE,[nullifier]),
+                    ()=>readPolicy(selected),
+                ].map(read=>Promise.resolve().then(read)));
+                return results[4];
+            },{warmNodeCache:true});
+        });
+    }
+    // Public API\n`);
  source=replace(source,'    // Public API\n',`    prepareBoardActionState({owner,board,privateFee,method,collateralOnly=false}) {
         // No posting gas/history assumptions. Resolve the actual named ABI from
         // the registered, class-pinned Board; these are state preparation only.

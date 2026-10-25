@@ -204,8 +204,7 @@ export async function prepareFundingClaim(input) {
         ...[['inbox','getInbox'],['outbox','getOutbox']].map(([name,rollupName])=>async()=>{const [actual,expected]=await together([()=>call(s.portal,bokAbi,name),()=>call(s.rollup,rollupAbi,rollupName)]);requireThat(equal(actual,expected));}),
       ]);}
     };
-    await together([initialL1,()=>measure('action.claim-bindings',checkBindings)]);
-    const {claim,canonicalFee,content,message}=await measure('action.claim-effects',async()=>{
+    const effects=()=>measure('action.claim-effects',async()=>{
       let aggregate;
       if(aggregateIntent){
         const portalKey={collateral:'collateralPortal','private-fee':'feePortal',bok:'bokPortal'}[kind];
@@ -314,16 +313,25 @@ export async function prepareFundingClaim(input) {
       requireThat(message.hash().toString()===r.messageKey);
       return {claim,canonicalFee,content,message};
     });
-    const delivered=await measure('action.claim-membership',async()=>{
-      const [,witness]=await together([checkL2,()=>read(()=>membershipRead({number:a.number,hash:BlockHash.fromString(a.hash)},message.hash()))]);
+    const membership=()=>measure('action.claim-membership',async()=>{
+      // Read the captured key at the captured native anchor. Effects independently
+      // reconstruct this exact key before the joined result can authorize a claim.
+      const messageKey=Fr.fromString(r.messageKey);
+      const [,witness]=await together([checkL2,()=>read(()=>membershipRead({number:a.number,hash:BlockHash.fromString(a.hash)},messageKey))]);
       if(!witness)return false;
       requireThat(Array.isArray(witness) && witness.length===2 && witness[0]===BigInt(r.leafIndex) && witness[1].pathSize===L1_TO_L2_MSG_TREE_HEIGHT);
       const path=witness[1].toFields();requireThat(Array.isArray(path) && path.length===L1_TO_L2_MSG_TREE_HEIGHT);
-      let root=message.hash(),index=witness[0];
+      let root=messageKey,index=witness[0];
       for(const sibling of path){root=await poseidon2HashWithSeparator(index&1n?[sibling,root]:[root,sibling],DomainSeparator.MERKLE_HASH);index>>=1n;}
       requireThat(index===0n && root.toString()===a.root);
       return true;
     });
+    // Each branch is read-only and bound to the same captured receipt/anchor.
+    // Preserve canonical, binding, effects, then membership failure priority and
+    // drain all branches before returning or publishing verified evidence.
+    const [, , {claim,canonicalFee,content},delivered]=await together([
+      initialL1,()=>measure('action.claim-bindings',checkBindings),effects,membership,
+    ]);
     await measure('action.claim-final-canonical',()=>together([checkL1,checkL2]));
     if(!delivered)return frozen({status:'waiting',reason:'l2-delivery'});
     await read(()=>Promise.resolve());

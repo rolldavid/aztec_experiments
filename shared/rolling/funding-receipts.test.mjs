@@ -132,12 +132,17 @@ test('Bok binds recipient commitment, token and exact hidden-secret calldata',as
  for(const mutate of [f=>{f.input.owner=h(25);},f=>{f.state.bindings.token=addr(99);},f=>{f.state.tx.data=f.abi.encodeFunctionData('deposit',[f.eventArgs[0],'5000',h(9)]);}]){const f=await fixture('bok');mutate(f);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});}
 });
 for(const mode of ['portal-sender','wrong-content'])test(`FPC rejects self-consistent ${mode} message despite canonical payment`,async()=>{
- const f=await fixture('private-fee',null,mode);await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(!f.state.reads.includes('witness'));
+ const f=await fixture('private-fee',null,mode);await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');
 });
 test('FPC recovery rejects foreign owner, token and altered public amount',async()=>{
  for(const mutate of [f=>{f.input.owner=h(25);},f=>{f.state.bindings.UNDERLYING=addr(99);},f=>{f.input.receipt.amount='5001';}]){const f=await fixture('private-fee');mutate(f);await assert.rejects(()=>prepareFundingClaim(f.input));}
 });
-test('reorg after witness invalidates ready result',async()=>{const f=await fixture();const original=f.backend.getL1ToL2MessageMembershipWitness;f.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const result=await original(...args);f.state.blockHash=h(999);return result;};await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_REORG'});});
+test('reorg after effects and witness invalidates ready result at final fence',async()=>{
+ const f=await fixture(),effects=Promise.withResolvers(),original=f.backend.getL1ToL2MessageMembershipWitness;
+ f.input.measure=async(stage,operation)=>{const value=await operation();if(stage==='action.claim-effects')effects.resolve();return value;};
+ f.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const result=await original(...args);await effects.promise;f.state.blockHash=h(999);return result;};
+ await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_REORG'});
+});
 test('input descriptors reject accessors and snapshots resist changes during awaits',async()=>{const f=await fixture();Object.defineProperty(f.input.receipt,'amount',{get:()=>{throw Error('PRIVATE_SENTINEL');},enumerable:true});await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});
  const g=await fixture();const old=g.input.ethProvider.getNetwork;g.input.ethProvider.getNetwork=async()=>{g.input.receipt.amount='1';g.input.secrets.walletSecret=h(99);return old();};assert.equal((await prepareFundingClaim(g.input)).claim.args[1],'5000');});
 test('canonical mined block changing during verification is not accepted',async()=>{const f=await fixture();const original=f.input.ethProvider.getBlock;let reads=0;f.input.ethProvider.getBlock=async n=>n===6&&++reads>1?{number:6,hash:h(400)}:original(n);await assert.rejects(()=>prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});});
@@ -230,7 +235,7 @@ for(const [label,mutate] of [
  ['wrong scoped portal',f=>{f.input.aggregateIntent.expected.collateralPortal=addr(99);}],
  ['duplicate event',f=>f.state.receipt.logs.push(f.state.receipt.logs[3])],
  ['wrong total accounting',f=>{f.state.receipt.logs[0]={address:addr(63),...f.routerAbi.encodeEventLog(f.routerAbi.getEvent('Funded'),[f.input.receipt.sender,f.input.aggregateIntent.expected.planHash,5000,5000,5000,50,100,151])};}],
-])test(`aggregate rejects ${label} before claim`,async()=>{const f=await aggregateFixture();mutate(f);await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(!f.state.reads.includes('witness'));});
+])test(`aggregate rejects ${label} before claim`,async()=>{const f=await aggregateFixture();mutate(f);await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');});
 test('aggregate context cannot be imported through public receipt',async()=>{const f=await aggregateFixture('bok');f.input.receipt.aggregateIntent=f.input.aggregateIntent;delete f.input.aggregateIntent;await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_INVALID'});});
 test('aggregate expected getters are not invoked and captured intent survives await mutation',async()=>{
  const f=await aggregateFixture();let touched=0;Object.defineProperty(f.input.aggregateIntent.expected,'routerCodeHash',{get(){touched++;return keccak256('0x6000');}});await assert.rejects(prepareFundingClaim(f.input));assert.equal(touched,0);
@@ -280,7 +285,7 @@ for(const [label,kind,mutate] of [
  ['wrong Bok owner','bok',f=>{f.input.owner=h(999);}],
  ['fake user transaction sender','collateral',f=>{f.input.receipt.sender=f.plan.beneficiary;}],
  ['missing third allocation','private-fee',f=>f.state.receipt.logs.pop()],
-])test(`USDC aggregate rejects ${label} before witness`,async()=>{const f=await usdcAggregateFixture(kind);mutate(f);await assert.rejects(prepareFundingClaim(f.input));assert(!f.state.reads.includes('witness'));});
+])test(`USDC aggregate rejects ${label} before claim publication`,async()=>{const f=await usdcAggregateFixture(kind);mutate(f);await assert.rejects(prepareFundingClaim(f.input));assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');});
 test('USDC custody rejects getters/imported public context and snapshots before awaits',async()=>{
  const f=await usdcAggregateFixture();let calls=0;Object.defineProperty(f.input.aggregateCustody,'privateFeeSalt',{get(){calls++;throw Error('PRIVATE_SENTINEL');}});await assert.rejects(prepareFundingClaim(f.input));assert.equal(calls,0);
  const g=await usdcAggregateFixture('private-fee');g.input.contextGuard=async()=>{g.input.aggregateCustody.privateFeeSalt=h(999);g.input.aggregateCustody.beneficiary=addr(99);};assert.equal((await prepareFundingClaim(g.input)).status,'claim-ready');
@@ -288,7 +293,9 @@ test('USDC custody rejects getters/imported public context and snapshots before 
 });
 test('USDC claims use native consumability and post-witness canonical checks',async()=>{
  const f=await usdcAggregateFixture('private-fee');f.state.finalized.number=5;assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
- const g=await usdcAggregateFixture('bok'),original=g.backend.getL1ToL2MessageMembershipWitness;g.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const value=await original(...args);g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});
+ const g=await usdcAggregateFixture('bok'),effects=Promise.withResolvers(),original=g.backend.getL1ToL2MessageMembershipWitness;
+ g.input.measure=async(stage,operation)=>{const value=await operation();if(stage==='action.claim-effects')effects.resolve();return value;};
+ g.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const value=await original(...args);await effects.promise;g.state.blockHash=h(999);return value;};await assert.rejects(prepareFundingClaim(g.input),{code:'ROLLING_FUNDING_REORG'});
 });
 
 for(const kind of ['collateral','private-fee','bok'])test('aggregate '+kind+' shares immutable reads but keeps canonical rechecks fresh',async()=>{
@@ -341,7 +348,7 @@ for(const kind of ['collateral','private-fee','bok'])test(`zero Bok aggregate ${
  const data=abi.encodeFunctionData('fund',[f.plan,'0x1234']).toLowerCase();
  Object.assign(f.state.tx,{data,value:5100n});Object.assign(f.input.aggregateIntent,{data,value:'5100'});f.input.aggregateIntent.expected.planHash=planHash;
  f.state.receipt.logs.pop();f.state.receipt.logs[0]={address:addr(63),...abi.encodeEventLog(abi.getEvent('Funded'),[r.sender,planHash,5000,5000,0,50,0,50])};
- if(kind==='bok'){await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(!f.state.reads.includes('witness'));}
+ if(kind==='bok'){await assert.rejects(prepareFundingClaim(f.input),{code:'ROLLING_FUNDING_MISMATCH'});assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');}
  else assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
 });
 
@@ -369,14 +376,14 @@ test('independent portal bindings run together and failed groups drain before re
  };
  let settled=false;const pending=prepareFundingClaim(f.input).finally(()=>{settled=true;});const rejected=assert.rejects(pending,{code:'ROLLING_FUNDING_UNKNOWN'});
  await entered.promise;assert.equal(settled,false);assert.deepEqual(new Set(names),new Set(['ROLLUP','L2_CONTRACT','VERSION','L1_CHAIN_ID']));
- release.resolve();await rejected;assert(!f.state.reads.includes('witness'));
+ release.resolve();await rejected;assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');
 });
 test('fee verification binds the published FPC and node portal/token without nested recovery',async()=>{
  for(const mutate of [
   f=>{const original=f.backend.getNodeInfo;f.backend.getNodeInfo=async()=>{const info=await original();info.l1ContractAddresses.feeJuicePortalAddress=addr(99);return info;};},
   f=>{const original=f.backend.getNodeInfo;f.backend.getNodeInfo=async()=>{const info=await original();info.l1ContractAddresses.feeJuiceAddress=addr(99);return info;};},
   f=>{f.backend.getContract=async()=>undefined;},
- ]){const f=await aggregateFixture('private-fee');mutate(f);await assert.rejects(prepareFundingClaim(f.input));assert(!f.state.reads.includes('witness'));}
+ ]){const f=await aggregateFixture('private-fee');mutate(f);await assert.rejects(prepareFundingClaim(f.input));assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');}
 });
 
 import {bokCreditPurchaseAbi} from './bok-credit-purchase.mjs';
@@ -395,14 +402,14 @@ test('atomic ETH purchase authenticates router then prepares the actual private 
  const f=await atomicBokFixture(),result=await prepareFundingClaim(f.input);assert.equal(result.status,'claim-ready');
  assert.deepEqual(result.claim.args,['5000',f.input.secrets.recipientSalt,f.secret,'9']);assert(f.state.reads.includes('witness'));
 });
-for(const mutation of ['runtime','recipient','secret','index','payer','value'])test('atomic Bok claim rejects changed '+mutation+' before witness',async()=>{
+for(const mutation of ['runtime','recipient','secret','index','payer','value'])test('atomic Bok claim rejects changed '+mutation+' before claim publication',async()=>{
  const f=await atomicBokFixture(),p=f.purchaseAbi.parseTransaction({data:f.state.tx.data}).args[0],r=f.input.receipt;
  if(mutation==='runtime')f.input.ethProvider.getCode=async()=> '0x6002';
  if(mutation==='recipient')f.state.tx.data=f.purchaseAbi.encodeFunctionData('buyCredit',[[h(99),p.amount,p.secretHash,p.poolFee,p.deadline]]);
  if(mutation==='secret')f.state.tx.data=f.purchaseAbi.encodeFunctionData('buyCredit',[[p.commitment,p.amount,h(99),p.poolFee,p.deadline]]);
  if(mutation==='value')f.state.tx.value=101n;
  if(mutation==='index'||mutation==='payer')f.state.receipt.logs[1]={address:f.topup.router,...f.purchaseAbi.encodeEventLog('CreditPurchased',[mutation==='payer'?addr(99):r.sender,p.commitment,r.amount,r.secretHash,r.messageKey,mutation==='index'?10:r.leafIndex,90,10])};
- await assert.rejects(prepareFundingClaim(f.input));assert(!f.state.reads.includes('witness'));
+ await assert.rejects(prepareFundingClaim(f.input));assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');
 });
 
 
@@ -498,8 +505,8 @@ for(const kind of ['collateral','collateral-cancel','private-fee','bok'])test(`c
  provider.getBlock=async(...args)=>{if(++blockCalls===1){canonicalStarted.resolve();await canonical.promise;}return block(...args);};
  provider.call=async(...args)=>{bindingsStarted.resolve();await bindings.promise;return call(...args);};
  const work=prepareFundingClaim(f.input).finally(()=>{settled=true;});
- await Promise.all([canonicalStarted.promise,bindingsStarted.promise]);assert.equal(settled,false);assert(!f.state.reads.includes('witness'));
- canonical.resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(!f.state.reads.includes('witness'));
+ await Promise.all([canonicalStarted.promise,bindingsStarted.promise]);assert.equal(settled,false);assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');
+ canonical.resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');
  bindings.resolve();assert.equal((await work).status,'claim-ready');assert(blockCalls>=2);assert.equal(f.state.reads.filter(x=>x==='witness').length,1);assert.equal(f.state.reads.filter(x=>x==='l2').length,2);
 });
 for(const failure of ['canonical','binding-sync','binding-async','context'])test(`claim binding overlap drains the held sibling on ${failure}`,async()=>{
@@ -510,7 +517,7 @@ for(const failure of ['canonical','binding-sync','binding-async','context'])test
   if(failure==='binding-sync'){failed.resolve();throw Error('PRIVATE failed binding');}
   return(async()=>{await entered.promise;failed.resolve();throw Error('PRIVATE failed binding');})();};
  const work=prepareFundingClaim(f.input).finally(()=>{settled=true;}),rejected=assert.rejects(work,{code:'ROLLING_FUNDING_UNKNOWN'});
- await failed.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(!f.state.reads.includes('witness'));held.resolve();await rejected;
+ await failed.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert(f.state.reads.filter(value=>value==='witness').length<=1,'independent membership read is bounded; no claim is returned');held.resolve();await rejected;
 });
 test('claim stage instrumentation uses only fixed labels and measures the actual overlapping operations',async()=>{
  const f=await fixture('bok'),events=[],active=new Set(),provider=f.input.ethProvider,call=provider.call;let observedOverlap=false;
@@ -584,13 +591,62 @@ for(const changed of ['anchor','intent','transaction','custody'])test(`aggregate
 test('common aggregate verification rejection drains both consumers and is not retained',async()=>{
  const {f,inputs}=await combinedAggregateFixture(),entered=Promise.withResolvers(),held=Promise.withResolvers();let calls=0,settled=false,fail=true;
  f.input.ethProvider.getCode=async()=>{calls++;entered.resolve();await held.promise;if(fail)throw Error('PRIVATE transport');return '0x6000';};
- const work=Promise.allSettled(inputs.map(prepareFundingClaim)).finally(()=>settled=true);await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(calls,1);assert.equal(settled,false);assert.equal(f.state.reads.filter(v=>v==='witness').length,0);
- held.resolve();const failed=await work;assert(failed.every(v=>v.status==='rejected'&&v.reason.code==='ROLLING_FUNDING_UNKNOWN'));fail=false;
+ const work=Promise.allSettled(inputs.map(prepareFundingClaim)).finally(()=>settled=true);await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(calls,1);assert.equal(settled,false);assert(f.state.reads.filter(v=>v==='witness').length<=2);
+ held.resolve();const failed=await work;assert.equal(f.state.reads.filter(v=>v==='witness').length,2);assert(failed.every(v=>v.status==='rejected'&&v.reason.code==='ROLLING_FUNDING_UNKNOWN'));fail=false;
  assert((await Promise.all(inputs.map(prepareFundingClaim))).every(v=>v.status==='claim-ready'));assert.equal(calls,2,'failed shared verification is evicted');
 });
 test('held shared aggregate work drains before revoked owners settle and emits no native claim',async()=>{
  const {f,inputs}=await combinedAggregateFixture(),entered=Promise.withResolvers(),held=Promise.withResolvers();let settled=false;
  f.input.ethProvider.getCode=async()=>{entered.resolve();await held.promise;return '0x6000';};
  inputs[1].contextGuard=inputs[0].contextGuard;
- const work=Promise.allSettled(inputs.map(prepareFundingClaim)).finally(()=>settled=true);await entered.promise;f.state.guardError=true;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);held.resolve();assert((await work).every(v=>v.status==='rejected'));assert.equal(f.state.reads.filter(v=>v==='witness').length,0);
+ const work=Promise.allSettled(inputs.map(prepareFundingClaim)).finally(()=>settled=true);await entered.promise;f.state.guardError=true;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);held.resolve();assert((await work).every(v=>v.status==='rejected'));assert.equal(f.state.reads.filter(v=>v==='witness').length,2,'both independent membership reads drain without publishing a claim');
+});
+
+
+async function heldQualificationFixture(){
+ const f=await aggregateFixture(),gates=Object.fromEntries(['canonical','bindings','effects','membership'].map(name=>[name,Promise.withResolvers()]));
+ f.state.reads=[];
+ const entered=new Set(),all=Promise.withResolvers();
+ const enter=async name=>{entered.add(name);if(entered.size===4)all.resolve();await gates[name].promise;};
+ const block=f.input.ethProvider.getBlock,call=f.input.ethProvider.call,code=f.input.ethProvider.getCode,witness=f.backend.getL1ToL2MessageMembershipWitness;
+ let canonicalCalls=0;
+ f.input.ethProvider.getBlock=async(...args)=>{if(++canonicalCalls===1)await enter('canonical');return block(...args);};
+ f.input.ethProvider.call=async(...args)=>{await enter('bindings');return call(...args);};
+ f.input.ethProvider.getCode=async(...args)=>{await enter('effects');return code(...args);};
+ f.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{await enter('membership');return witness(...args);};
+ return {f,gates,entered,all};
+}
+test('qualification wave starts actual canonical bindings effects and native membership reads before any completes',async()=>{
+ const {f,gates,entered,all}=await heldQualificationFixture();let settled=false;
+ const work=prepareFundingClaim(f.input).finally(()=>settled=true);await all.promise;
+ assert.deepEqual([...entered].sort(),['bindings','canonical','effects','membership']);assert.equal(settled,false);
+ for(const name of ['canonical','bindings','effects'])gates[name].resolve();
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);
+ gates.membership.resolve();const result=await work;assert.equal(result.status,'claim-ready');assert.equal(result.evidence.messageKey,f.input.receipt.messageKey);
+ assert.equal(f.state.reads.filter(v=>v==='witness').length,1);assert.equal(f.state.reads.filter(v=>v==='l2').length,2);assert.equal(f.state.reads.filter(v=>v==='l1').length,4);
+});
+for(const side of ['canonical','bindings','effects','membership'])test(`qualification wave drains all reads after ${side} failure`,async()=>{
+ const {f,gates,all}=await heldQualificationFixture();let settled=false;
+ const work=prepareFundingClaim(f.input).finally(()=>settled=true),rejected=assert.rejects(work,{code:'ROLLING_FUNDING_UNKNOWN'});await all.promise;
+ gates[side].reject(Error('PRIVATE read failure'));
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);
+ for(const [name,gate]of Object.entries(gates))if(name!==side)gate.resolve();
+ await rejected;
+});
+for(const mutation of ['owner','l1-fork','l2-fork','wrong-message','wrong-path'])test(`qualification wave rejects ${mutation} while another read is held`,async()=>{
+ const {f,gates,all}=await heldQualificationFixture();let settled=false;
+ const work=prepareFundingClaim(f.input).finally(()=>settled=true),rejected=assert.rejects(work);await all.promise;
+ if(mutation==='owner')f.state.guardError=true;
+ if(mutation==='l1-fork')f.state.blockHash=h(999);
+ if(mutation==='l2-fork')f.state.l2Hash=h(999);
+ if(mutation==='wrong-message')f.state.receipt.logs=[];
+ if(mutation==='wrong-path')f.state.witness[0]=10n;
+ for(const name of ['canonical','bindings','effects'])gates[name].resolve();
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);
+ gates.membership.resolve();await rejected;
+});
+test('qualification wave keeps canonical then bindings then effects failure priority after drainage',async()=>{
+ const {f,gates,all}=await heldQualificationFixture();const work=prepareFundingClaim(f.input),rejected=assert.rejects(work,{code:'ROLLING_FUNDING_REORG'});await all.promise;
+ f.state.blockHash=h(999);f.state.bindings.L2_CONTRACT=h(999);f.state.receipt.logs=[];f.state.witness[0]=10n;
+ for(const gate of Object.values(gates))gate.resolve();await rejected;
 });

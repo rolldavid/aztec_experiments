@@ -107,6 +107,9 @@ export function observeRollingWorkerPerformance({send,PerformanceObserver:Observ
  }catch{/* Unsupported worker diagnostics remain absent. */}
  return ()=>{stopped=true;for(const observer of observers)try{observer.disconnect();}catch{}};
 }
+// Keep individual resource spans for the active operation, including overlapping
+// page preparation. Fixed slots bound the browser timeline across all operations.
+const workerResourceSlots=new WeakMap();
 export function receiveRollingWorkerPerformance(message,{enabled=false,timing=globalThis.performance}={}){
  try{
   if(!enabled||message?.type!=='performance'||Object.keys(message).some(key=>!['type','timeOrigin','entries','dropped'].includes(key))||!diagnosticNumber(message.timeOrigin)||!diagnosticNumber(timing.timeOrigin)||!Array.isArray(message.entries)||message.entries.length>64)return;
@@ -119,7 +122,11 @@ export function receiveRollingWorkerPerformance(message,{enabled=false,timing=gl
     name=value.name;detail={realm:'worker',...(value.aggregateMs===undefined?{}:{kind:'aggregate',durationMs:value.aggregateMs})};
    }else{
     for(const key of resourcePoints)if(value[key]>0){value[key]+=offset;if(!diagnosticNumber(value[key]))throw Error('Invalid timing');}
-    name='rolling.worker.resource.'+value.endpoint;detail={...value,realm:'worker'};
+    let slots=workerResourceSlots.get(timing);if(!slots){slots={next:0,names:[]};workerResourceSlots.set(timing,slots);}
+    const slot=slots.next;slots.next=(slot+1)%128;
+    if(slots.names[slot])timing.clearMeasures(slots.names[slot]);
+    const suffix=String.fromCharCode(97+Math.floor(slot/26),97+slot%26);
+    name='rolling.worker.resource.'+value.endpoint+'.'+suffix;slots.names[slot]=name;detail={...value,realm:'worker'};
    }
    timing.clearMeasures(name);timing.measure(name,{start:value.start,end:value.start+value.duration,detail});
   }catch{/* One malformed record never prevents later numeric observations. */}

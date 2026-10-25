@@ -1154,3 +1154,54 @@ for(const changedWallet of [false,true])test('unsigned saved opening quote canno
  const before=[...f.records],reopened=await f.open(),token=await reopened.prepareReadOnly(allocation);assert(token);assert.deepEqual([...f.records],before);
  await assert.rejects(reopened.installPreparedQuote(token),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});assert.deepEqual([...f.records],before);assert.equal(f.state.sends,1);
 });
+
+import {readRollingFundingOperation} from './funding-session.mjs';
+function operationFundingReader(provider,owner){
+ return Object.fromEntries(Object.entries(provider).filter(([,fn])=>typeof fn==='function').map(([name])=>[name,(...args)=>readRollingFundingOperation({provider,operationScope:()=>owner.scope,name,args})]));
+}
+test('mature funding operation reuses actual claim receipt reads while every canonical fence stays fresh',async()=>{
+ const f=fixture(),first=await f.open();await first.prepare(f.allocation);const payment=await first.confirm();
+ const raw=f.options.provider,counts={};for(const name of ['getNetwork','getTransactionReceipt','getTransaction','getCode','getBlock']){const call=raw[name];raw[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;const value=await call(...args);return name==='getTransaction'?{...value,blockHash:h(17),blockNumber:17}:value;};}
+ const owner={scope:{synchronized:true}};f.options.provider=operationFundingReader(raw,owner);const funding=await f.open();
+ for(let i=0;i<2;i++){const custody=await funding.loadAggregate(payment.receipt.txHash);assert.equal(custody.intent.nonce,7);assert(custody.bridgeSecret&&custody.recipientSalt);}
+ assert.deepEqual(counts,{getNetwork:1,getTransactionReceipt:1,getTransaction:1,getBlock:4,getCode:1});
+ owner.scope={synchronized:true};await funding.loadAggregate(payment.receipt.txHash);
+ assert.deepEqual(counts,{getNetwork:2,getTransactionReceipt:2,getTransaction:2,getBlock:6,getCode:2});assert.equal(f.state.sends,1);
+});
+for(const forkRead of [3,4])test('mature funding cached receipt rejects fresh canonical fork at read '+forkRead,async()=>{
+ const f=fixture(),first=await f.open();await first.prepare(f.allocation);const payment=await first.confirm(),raw=f.options.provider;
+ let blocks=0,receipts=0;const getBlock=raw.getBlock,getReceipt=raw.getTransactionReceipt;
+ raw.getBlock=async(...args)=>{const result=await getBlock(...args);return ++blocks===forkRead?{...result,hash:h(999)}:result;};
+ raw.getTransactionReceipt=async(...args)=>{receipts++;return getReceipt(...args);};
+ const owner={scope:{synchronized:true}};f.options.provider=operationFundingReader(raw,owner);const funding=await f.open();
+ await funding.loadAggregate(payment.receipt.txHash);const before=[...f.records];await assert.rejects(funding.loadAggregate(payment.receipt.txHash));
+ assert.equal(receipts,1);assert.equal(blocks,forkRead);assert.deepEqual([...f.records],before);assert.equal(f.state.sends,1);
+});
+test('mature funding failed receipt is evicted and same operation can read its real receipt',async()=>{
+ const f=fixture(),first=await f.open();await first.prepare(f.allocation);const payment=await first.confirm(),raw=f.options.provider;
+ let receipts=0;const read=raw.getTransactionReceipt;raw.getTransactionReceipt=async(...args)=>{if(++receipts===1)throw Error('receipt unavailable');return read(...args);};
+ const owner={scope:{synchronized:true}};f.options.provider=operationFundingReader(raw,owner);const funding=await f.open();
+ await assert.rejects(funding.loadAggregate(payment.receipt.txHash));assert(await funding.loadAggregate(payment.receipt.txHash));assert.equal(receipts,2);assert.equal(f.state.sends,1);
+});
+test('mature funding held receipt rejects operation replacement without releasing before it drains',async()=>{
+ const f=fixture(),first=await f.open();await first.prepare(f.allocation);const payment=await first.confirm(),raw=f.options.provider;
+ const held=Promise.withResolvers(),entered=Promise.withResolvers(),read=raw.getTransactionReceipt;let reads=0,settled=false;
+ raw.getTransactionReceipt=async(...args)=>{reads++;entered.resolve();await held.promise;return read(...args);};
+ const owner={scope:{synchronized:true}};f.options.provider=operationFundingReader(raw,owner);const funding=await f.open();
+ const pending=funding.loadAggregate(payment.receipt.txHash).finally(()=>settled=true);pending.catch(()=>{});await entered.promise;owner.scope={synchronized:true};await new Promise(setImmediate);assert.equal(settled,false);
+ held.resolve();await assert.rejects(pending);assert.equal(reads,1);assert.equal(f.state.sends,1);
+});
+test('mature funding read identity separates providers and changed method capabilities',async()=>{
+ const owner={scope:{synchronized:true}},a={getTransactionReceipt:async()=>({blockHash:h(1)})},b={getTransactionReceipt:async()=>({blockHash:h(2)})};
+ const one=operationFundingReader(a,owner),two=operationFundingReader(b,owner);
+ assert.equal((await one.getTransactionReceipt(h(3))).blockHash,h(1));assert.equal((await two.getTransactionReceipt(h(3))).blockHash,h(2));
+ a.getTransactionReceipt=async()=>({blockHash:h(4)});assert.equal((await one.getTransactionReceipt(h(3))).blockHash,h(4));
+});
+test('mature funding mutable and null or pending observations never reuse stale values',async()=>{
+ const owner={scope:{synchronized:true}},counts={};
+ const raw=Object.fromEntries(['getBlock','getFeeData','getTransactionCount','send','getCode','call','getTransactionReceipt','getTransaction'].map(name=>[name,async()=>{counts[name]=(counts[name]??0)+1;return name==='getTransactionReceipt'?null:name==='getTransaction'?{blockHash:null}:counts[name];}]));
+ const read=operationFundingReader(raw,owner);
+ for(let i=0;i<2;i++)await Promise.all([read.getBlock(17),read.getFeeData(),read.getTransactionCount(a(1),'pending'),read.send('eth_chainId',[]),read.getCode(a(1),'latest'),read.call({to:a(1),blockTag:'pending'}),read.getTransactionReceipt(h(1)),read.getTransaction(h(1))]);
+ for(const count of Object.values(counts))assert.equal(count,2);
+ owner.scope=null;await read.getCode(a(1),17);await read.getCode(a(1),17);assert.equal(counts.getCode,4);
+});

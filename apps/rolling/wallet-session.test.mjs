@@ -1675,3 +1675,45 @@ for(const changed of [false,true])test('opening status owns public Board sync th
  if(changed){assert.equal(outcome.error.code,'ROLLING_PRIVATE_ROUTE');assert.equal(discovered,0);f.state.wrongPXE=false;}else{assert.equal(outcome.error,undefined);assert(discovered>0);}
  await session.close();
 });
+
+test('adopted funding reader uses only synchronized native scopes and preserves exact provider',async()=>{
+ const f=await sessionFixture();let bound,receipts=0,blocks=0;
+ const provider={getTransactionReceipt:async()=>{if(!f.state.earlyOnly)assert(f.state.active);receipts++;return {blockHash:hex(41)};},getBlock:async()=>{assert(f.state.active);blocks++;return {hash:hex(41)};}};
+ f.input.config.aggregateFunding={};
+ f.input.fundingContext={node:f.node,assertContext:async()=>{},registrationDeployment:async options=>({deployment:await (await import('../../shared/rolling/deployment.mjs')).verifyRollingDeployment(options)}),
+  async bindPrivateContext(value){bound=value;assert.equal(typeof bound.readFunding,'function');
+   // A worker's early funding read during native construction is not owned by
+   // a synchronized operation and cannot inherit that initialization cache.
+   await bound.readFunding(provider,'getTransactionReceipt',[hex(40)]);await bound.readFunding(provider,'getTransactionReceipt',[hex(40)]);
+  },aggregate:{loadAggregate:async()=>null},prepareStarter:async()=>{},close(){throw Error('Externally owned funding context must not be closed');}};
+ f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10},hash:async()=>hex(55),state:{l1ToL2MessageTree:{root:new Fr(1)}}});
+ f.input.sdk.prepareFundingClaim=async()=>{
+  await bound.readFunding(provider,'getTransactionReceipt',[hex(40)]);await bound.readFunding(provider,'getTransactionReceipt',[hex(40)]);
+  await bound.readFunding(provider,'getBlock',[2]);await bound.readFunding(provider,'getBlock',[2]);return {status:'waiting'};
+ };
+ const session=await createRollingWalletSession(f.input);assert.equal(receipts,2);
+ const receipt={txHash:hex(40),blockHash:hex(41),blockNumber:2,sender:'0x'+'33'.repeat(20),nonce:'1',amount:'100',leafIndex:'2',messageKey:hex(43),secretHash:hex(44)};
+ for(let i=0;i<2;i++){await assert.rejects(session.application.prepare({type:'claim-deposit',receipt}),{code:'ROLLING_FUNDING_NOT_READY'});assert.equal(receipts,3+i);assert.equal(blocks,2*(i+1));}
+ assert.equal(f.state.sends,0);await session.close();
+ // The worker owns this context. A discarded/closed native session cannot
+ // hijack an otherwise independent early payment through its closed guard.
+ f.state.earlyOnly=true;await bound.readFunding(provider,'getTransactionReceipt',[hex(40)]);assert.equal(receipts,5);
+});
+
+
+test('ordinary session binds source-plan warmup to exact account contracts before fresh discovery',async()=>{
+ const f=await sessionFixture();let warms=0,discoveries=0;
+ const publicRead=f.node.getPublicStorageAt;f.node.getPublicStorageAt=async(reference,address,slot)=>{if(slot.equals(artifact.storageLayout.main_version.slot)){assert.deepEqual(reference,{hash:hex(55)});assert(address.equals(f.board.address));return Fr.ONE;}return publicRead(reference,address,slot);};
+ f.pxe.syncForOrdinaryPost=async(targets,read)=>{
+  assert(f.state.active);warms++;
+  assert.deepEqual(targets,{owner:f.input.account.address,board:f.input.config.board.contractAddress,privateFee:f.input.config.privateFee.contractAddress});
+  const anchor={number:10,hash:BlockHash.fromString(hex(55))};
+  return {anchor,value:await read(anchor)};
+ };
+ f.pxe.prepareOrdinaryPostState=async()=>{assert(f.state.active);assert.equal(warms,1);discoveries++;throw Error('stop after fresh discovery');};
+ const session=await createRollingWalletSession(f.input),syncs=f.state.syncs;
+ try{
+  await assert.rejects(session.application.executeAction({type:'post',deposit:'9',content:'Paused composer uses current source plan'}),/stop after fresh discovery/);
+  assert.equal(warms,1);assert.equal(discoveries,1);assert.equal(f.state.syncs,syncs);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
+ }finally{await session.close();}
+});
