@@ -201,3 +201,8 @@ export function createRollingFundingRelay({contextGuard}){
   return read('/api/funding/usdc/status?planHash='+planHash);
  }});
 }
+
+// The HTML entry starts public worker preparation independently of the reader's
+// module graph. Later account-panel imports share the exact same loading promise.
+// Explicit markup keeps this browser entry inert for library/test consumers.
+if(typeof document!=='undefined'&&document.querySelector('script[data-rolling-wallet-preload]'))void loadRollingWalletRuntime().catch(()=>{});

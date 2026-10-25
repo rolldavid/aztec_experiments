@@ -4,11 +4,11 @@ import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {webcrypto,createHash} from 'node:crypto';
 const source=await readFile(new URL('./wallet-cache-worker.mjs',import.meta.url),'utf8');
-function fixture({body='public sdk',quota=false}={}){
- const handlers={},saved=new Map();let requests=0;
- const cache={match:async key=>saved.get(key)?.clone(),put:async(key,value)=>{if(quota)throw Error('Quota');saved.set(key,value);},keys:async()=>[...saved.keys()].map(url=>({url})),delete:async({url})=>saved.delete(url)};
- vm.runInNewContext(source,{self:{location:{origin:'https://board.test'},addEventListener:(name,handler)=>handlers[name]=handler},URL,Headers,Response,Uint8Array,crypto:webcrypto,caches:{open:async()=>cache},fetch:async request=>{requests++;const r=new Response(body);Object.defineProperty(r,'url',{value:request.url});return r;}});
- return {saved,get requests(){return requests;},request(path,options={}){let result;handlers.fetch({request:new Request('https://board.test'+path,options),respondWith:p=>result=p});return result;}};
+function fixture({body='public sdk',quota=false,holdPut}={}){
+ const handlers={},saved=new Map(),lifetimes=[];let requests=0;
+ const cache={match:async key=>saved.get(key)?.clone(),put:async(key,value)=>{if(holdPut)await holdPut;if(quota)throw Error('Quota');saved.set(key,value);},keys:async()=>[...saved.keys()].map(url=>({url})),delete:async({url})=>saved.delete(url)};
+ vm.runInNewContext(source,{self:{location:{origin:'https://board.test'},addEventListener:(name,handler)=>handlers[name]=handler},URL,Headers,Response,Uint8Array,performance,crypto:webcrypto,caches:{open:async()=>cache},fetch:async request=>{requests++;const r=new Response(body);Object.defineProperty(r,'url',{value:request.url});return r;}});
+ return {saved,settle:()=>Promise.allSettled(lifetimes),get requests(){return requests;},request(path,options={}){let result;handlers.fetch({request:new Request('https://board.test'+path,options),respondWith:p=>result=p,waitUntil:p=>lifetimes.push(p)});return result;}};
 }
 const hash=value=>createHash('sha256').update(value).digest('hex');
 test('verified SDK persists, concurrent requests join, changed hash replaces old bytes',async()=>{
@@ -16,7 +16,7 @@ test('verified SDK persists, concurrent requests join, changed hash replaces old
  const [a,b]=await Promise.all([f.request(path),f.request(path)]);assert.equal(await a.text(),'public sdk');assert.equal(await b.text(),'public sdk');
  await f.request(path);assert.equal(f.requests,1);
  f.saved.set('https://board.test/wallet/aztec_bundle.js?sha256='+'0'.repeat(64),new Response('old'));
- f.saved.delete('https://board.test'+path);await f.request(path);assert.equal(f.saved.size,1);
+ await f.settle();f.saved.delete('https://board.test'+path);await f.request(path);await f.settle();assert.equal(f.saved.size,1);
 });
 test('private, unpinned, range and authorization requests are not intercepted',()=>{
  const f=fixture(),suffix='?sha256='+hash('public sdk');
@@ -31,4 +31,11 @@ test('wrong digests and oversized public files are never stored',async()=>{
 });
 test('storage quota errors still return verified bytes without refetching',async()=>{
  const f=fixture({quota:true}),r=await f.request('/wallet/aztec_bundle.js?sha256='+hash('public sdk'));assert.equal(await r.text(),'public sdk');assert.equal(f.requests,1);
+});
+
+test('verified bytes return before cache writes and concurrent callers still share the download',async()=>{
+ let release;const holdPut=new Promise(resolve=>{release=resolve;});const f=fixture({holdPut}),path='/wallet/aztec_bundle.js?sha256='+hash('public sdk');
+ const first=await f.request(path);assert.equal(await first.text(),'public sdk');assert.match(first.headers.get('server-timing'),/^rolling-asset-miss;/);assert.equal(f.saved.size,0);
+ const second=await f.request(path);assert.equal(await second.text(),'public sdk');assert.equal(f.requests,1);release();await f.settle();
+ const cached=await f.request(path);assert.match(cached.headers.get('server-timing'),/^rolling-asset-hit;/);assert.equal(f.requests,1);
 });

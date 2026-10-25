@@ -9,7 +9,7 @@ function replace(source,before,after){if(source.split(before).length!==2)throw E
 // sync, anchor, staged writes, failure discard and final tagging persistence.
 export function validatedPxeProve(source){
  if(sha(source)!==PXE_SOURCE_PINS.find(pin=>pin.path==='dest/pxe.js').sha256)throw Error('PXE validated proof source mismatch');
- source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {poseidon2HashWithSeparator as syncPoseidon} from '@aztec-labs/foundation/crypto/poseidon';\nimport {FactCollectionKey as SyncFactCollectionKey} from './storage/fact_store/fact_store_keys.js';\nimport {sha256ToField as syncSha256ToField} from '@aztec-labs/foundation/crypto/sha256';\nimport {computePublicDataTreeLeafSlot as syncPublicDataLeaf,siloNullifier as syncSiloNullifier} from '@aztec-labs/stdlib/hash';\nimport {MerkleTreeId as SyncTreeId} from '@aztec-labs/stdlib/trees';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
+ source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {poseidon2HashWithSeparator as syncPoseidon,poseidon2Hash as syncAccountKeyHash,poseidon2HashBytes as syncAccountSlotHash} from '@aztec-labs/foundation/crypto/poseidon';\nimport {FactCollectionKey as SyncFactCollectionKey} from './storage/fact_store/fact_store_keys.js';\nimport {sha256ToField as syncSha256ToField} from '@aztec-labs/foundation/crypto/sha256';\nimport {computePublicDataTreeLeafSlot as syncPublicDataLeaf,siloNullifier as syncSiloNullifier} from '@aztec-labs/stdlib/hash';\nimport {MerkleTreeId as SyncTreeId} from '@aztec-labs/stdlib/trees';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
  source=replace(source,'}, txRequest, privateExecutionResult) {\n        const { publicInputs, chonkProof, executionSteps, timings: { proving } = {} } = await this.#prove',`}, txRequest, privateExecutionResult, validatePublic = false) {
         let validationTime;
         const beforeProof = validatePublic ? async publicInputs => {
@@ -34,7 +34,33 @@ export function validatedPxeProve(source){
             kernelWitness: executionSteps.filter(step => step.kind === CircuitKind.Kernel || step.kind === CircuitKind.HidingKernel).reduce((total, step) => total + step.timings.witgen, 0),
             perFunction,
             unaccounted: totalTime - ((syncTime ?? 0) + (proving ?? 0) + (validationTime ?? 0) + perFunction.reduce((acc, { time })=>acc + time, 0))`);
- source=replace(source,'    // Public API\n',`    // Validate actual kernel output before expensive proof generation. No
+ source=replace(source,'    // Public API\n',`    // Exact pinned initializerless-account constructor semantics, without ACVM
+    // or contract synchronization. Capsules are native non-block-anchored data.
+    // The private account circuit independently checks this key's immutable
+    // hash and signature on every use; this method grants no transaction right.
+    async initializeSchnorrAccount(owner, signingPublicKey, {contextGuard} = {}) {
+        const check=value=>{if(!value)throw new Error('Invalid initializerless account capsule');};
+        check(typeof contextGuard==='function');
+        const address=SyncAddress.fromStringUnsafe(owner.toString());
+        const key=[SyncFr.fromString(signingPublicKey.x.toString()),SyncFr.fromString(signingPublicKey.y.toString())];
+        return this.operationQueue.runSynced(async ({changeSetId})=>{
+            await contextGuard();
+            const accounts=await this.keyStore.getAccounts();
+            check(accounts.some(account=>account.equals(address)));
+            const instance=await this.contractStore.getContractInstance(address);
+            const classId=SyncFr.fromString('${ORDINARY_POST_GAS_PROFILE.accountClassId}');
+            check(instance && instance.originalContractClassId.equals(classId) && instance.currentContractClassId.equals(classId));
+            check((await computeContractAddressFromInstance(instance)).equals(address));
+            check((await syncAccountKeyHash(key)).equals(instance.immutablesHash));
+            const slot=await syncAccountSlotHash(Buffer.from('INITIALIZERLESS_ACCOUNT_PUB_KEY'));
+            const existing=await this.capsuleStore.getCapsule(address,slot,changeSetId,address);
+            if(!existing || existing.length!==2 || !existing.every((value,index)=>value.equals(key[index]))) {
+                await this.capsuleStore.setCapsule(address,slot,key,changeSetId,address);
+            }
+            await contextGuard();
+        },{beforeCommit:contextGuard});
+    }
+    // Validate actual kernel output before expensive proof generation. No
     // synthetic kernel implementation or second private execution is involved.
     async #validateKernelPublicInputs(txRequest, privateExecutionResult, publicInputs) {
         const simulatedTx = await new PrivateSimulationResult(privateExecutionResult, publicInputs).toSimulatedTx();

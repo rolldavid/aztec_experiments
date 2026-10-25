@@ -11,10 +11,12 @@ self.addEventListener('fetch',event=>{
  const request=event.request,url=new URL(request.url),hash=/^\?sha256=([a-f0-9]{64})$/.exec(url.search)?.[1],limit=limits.get(url.pathname);
  if(request.method!=='GET'||request.headers.has('range')||request.headers.has('authorization')||url.origin!==self.location.origin||!hash||!limit)return;
  const key=url.href;
+ const observed=(response,kind,start)=>{const headers=new Headers(response.headers);headers.set('Server-Timing','rolling-asset-'+kind+';dur='+(performance.now()-start).toFixed(3));return new Response(response.body,{status:response.status,headers});};
  if(!pending.has(key)){
+  let persistence=Promise.resolve();
   const operation=(async()=>{
-   let cache;
-   try{cache=await caches.open(cacheName);const saved=await cache.match(key);if(saved)return saved;}catch{/* Browser storage is optional. */}
+   const start=performance.now();let cache;
+   try{cache=await caches.open(cacheName);const saved=await cache.match(key);if(saved)return observed(saved,'hit',start);}catch{/* Browser storage is optional. */}
    const response=await fetch(request);
    if(response.status!==200||response.redirected||response.url!==key)return Response.error();
    const reader=response.body.getReader(),chunks=[];let length=0;
@@ -24,14 +26,18 @@ self.addEventListener('fetch',event=>{
    if(actual!==hash)return Response.error();
    const headers=new Headers(response.headers);headers.delete('content-encoding');headers.delete('content-length');
    const verified=new Response(bytes,{status:200,headers});
-   if(cache)try{
+   if(cache)persistence=(async()=>{try{
     await cache.put(key,verified.clone());
     // Retain one version per allowed asset, keeping the persistent cache bounded.
     for(const old of await cache.keys())if(old.url!==key&&new URL(old.url).pathname===url.pathname)await cache.delete(old);
-   }catch{/* Quota failures do not discard the verified network response. */}
-   return verified;
+   }catch{/* Quota failures do not discard the verified network response. */}})();
+   return observed(verified,'miss',start);
   })();
-  pending.set(key,operation);void operation.finally(()=>pending.delete(key)).catch(()=>{});
+  // Persist after delivering verified bytes. Keep single-flight ownership until
+  // storage completes, so another consumer never starts a duplicate download.
+  const lifetime=operation.then(()=>persistence).finally(()=>pending.delete(key));
+  pending.set(key,{response:operation,lifetime});void lifetime.catch(()=>{});
  }
- event.respondWith(pending.get(key).then(response=>response.clone()));
+ const entry=pending.get(key);event.waitUntil(entry.lifetime);
+ event.respondWith(entry.response.then(response=>response.clone()));
 });

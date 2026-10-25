@@ -1,3 +1,4 @@
+import {PXE_STARTUP_PINS} from './pxe-startup.mjs';
 import {PXE_OPERATION_PINS,PXE_SOURCE_PINS,restoreNativePxe} from './patch-pxe-operation-guards.mjs';
 import {BB_WORKER_TIMING_PINS} from './bb-worker-timings.mjs';
 import {SELECTED_NOTE_PINS} from './selected-note-witnesses.mjs';
@@ -83,6 +84,11 @@ function fixture(t) {
     const name='node_modules/@aztec-labs/pxe/'+pin.path;
     const native=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
     inputs[name]=pin.sha256?restoreNativePxe(native,pin.path):native;
+  }
+  for(const name of ['scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','shared/pxe-startup-cache.mjs'])inputs[name]=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
+  for(const name of Object.keys(PXE_STARTUP_PINS)){
+    const source=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
+    inputs[name]=name.endsWith('/dest/pxe.js')?restoreNativePxe(source,'dest/pxe.js'):source;
   }
   const outputs = {
     'aztec_bundle.js': '// synthetic built bundle',
@@ -301,4 +307,11 @@ for (const [section, name, file] of [
   fs.symlinkSync(outside, path.join(f.root, file));
   f.manifest[section][name] = hash('outside fixture');f.save();
   assert.throws(() => checkSdk(f.root), /SDK path escapes its directory/);
+});
+
+for(const name of ['scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','shared/pxe-startup-cache.mjs',...Object.keys(PXE_STARTUP_PINS)])test('PXE startup input is mandatory: '+name,t=>{
+ const f=fixture(t);delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input|operation patch mismatch/);
+});
+for(const name of Object.keys(PXE_STARTUP_PINS))test('PXE startup native pin cannot be rebound: '+name,t=>{
+ const f=fixture(t);f.write(name,'changed native startup');f.manifest.inputs[name]=hash(f.read(name));f.save();assert.throws(()=>checkSdk(f.root),/operation patch mismatch/);
 });

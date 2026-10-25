@@ -1,3 +1,4 @@
+import {efficientPxeStartup,PXE_STARTUP_PINS} from './pxe-startup.mjs';
 import {assertTransformBindings} from './check-transform-bindings.mjs';
 import {BB_WORKER_TIMING_PINS,instrumentBrowserWorker} from './bb-worker-timings.mjs';
 import {selectedNoteWitnesses,SELECTED_NOTE_PINS} from './selected-note-witnesses.mjs';
@@ -6,7 +7,7 @@ import {reusePrivateLogEffects} from './pxe-log-projection.mjs';
 import {inspectOwnerDiscovery,OWNER_DISCOVERY_PINS} from './patch-pxe-owner-discovery.mjs';
 import {parallelPxeAnchorSnapshot} from './pxe-sync-snapshot.mjs';
 import {zeroWindowRpcMicrotasks} from './rpc-zero-window.mjs';
-import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs';
+import {validatedKernelProve} from './pxe-validated-prove.mjs';
 import {inspectOperationGuards,PXE_OPERATION_PINS,PXE_SOURCE_PINS} from './patch-pxe-operation-guards.mjs';
 import {inspectIndexedDBAtomicity, INDEXEDDB_ATOMICITY_PINS} from './patch-indexeddb-atomicity.mjs';
 import {inspectPxeReorgAnchor,PXE_REORG_ANCHOR_PINS} from './patch-pxe-reorg-anchor.mjs';
@@ -50,15 +51,16 @@ const relocations = new Map([
 const relocationPlugin = {
   name: 'aztec-worker-url-relocation',
   setup(builder) {
+    builder.onResolve({filter:/^rolling:pxe-startup$/},()=>({path:path.join(root,'shared/pxe-startup-cache.mjs')}));
     builder.onLoad({ filter: /\.js$/ }, async ({ path: filename }) => {
       const relative = path.relative(root, filename).split(path.sep).join('/');
-      const transform = Object.hasOwn(BB_WORKER_TIMING_PINS,relative) ? source => instrumentBrowserWorker(source,relative)
+      const transform = Object.hasOwn(PXE_STARTUP_PINS,relative) ? source => efficientPxeStartup(source,relative)
+        : Object.hasOwn(BB_WORKER_TIMING_PINS,relative) ? source => instrumentBrowserWorker(source,relative)
         : Object.hasOwn(SELECTED_NOTE_PINS,relative) ? source => selectedNoteWitnesses(source,relative)
         : Object.hasOwn(KERNEL_WORK_PINS,relative) ? source => efficientKernelWitnessWork(source,relative)
         : relative==='node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js' ? reusePrivateLogEffects
         : relative==='node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js' ? zeroWindowRpcMicrotasks
         : relative==='node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js' ? parallelPxeAnchorSnapshot
-        : relative==='node_modules/@aztec-labs/pxe/dest/pxe.js' ? validatedPxeProve
         : relative==='node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js' ? validatedKernelProve : undefined;
       if (transform) {
         const original = await fs.readFile(filename,'utf8');
@@ -152,7 +154,7 @@ const assets = [
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js', 'sqlite3-opfs-async-proxy.js'],
 ];
 for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
-const inputs = [...new Set(['shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
+const inputs = [...new Set(['scripts/pxe-startup.mjs','shared/pxe-startup-cache.mjs',...Object.keys(PXE_STARTUP_PINS),'shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
   ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-sync-snapshot.mjs', 'scripts/pxe-validated-prove.mjs', 'scripts/check-transform-bindings.mjs', 'shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/like-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
@@ -161,6 +163,7 @@ const inputs = [...new Set(['shared/bb-worker-timings.mjs','scripts/bb-worker-ti
   ...[...PXE_OPERATION_PINS,...PXE_SOURCE_PINS].map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),
   'scripts/build-portal-runtime.mjs',...Object.keys(portalMetadata.sources).map(name=>'billboard/portal/'+name)])].sort();
 const operationLiteralInputs = [
+  ...Object.entries(PXE_STARTUP_PINS),
   ...PXE_OPERATION_PINS.map(pin=>['node_modules/@aztec-labs/pxe/'+pin.path,pin.after]),
   ...PXE_SOURCE_PINS.map(pin=>['node_modules/@aztec-labs/pxe/'+pin.path,pin.sha256]),
 ];

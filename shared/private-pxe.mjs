@@ -1,3 +1,4 @@
+import {beginPXEConstruction,readPXEConstruction,endPXEConstruction} from './pxe-startup-cache.mjs';
 import {withOwnerEnvelopeOracles} from './owner-envelope.mjs';
 import {RoutedKernelProver} from './routed-kernel-prover.mjs';
 import {createRemoteProverClient} from './remote-prover-client.mjs';
@@ -95,11 +96,15 @@ class BrowserPrivateKernelProver extends RoutedKernelProver {
     return proof;
   }
 }
+// This initializes the native shared ACVM/ABI WASM singleton only. It needs no
+// account, private inputs, PXE store or node, and executes no circuit.
+export async function initializePrivateExecution(){await new WASMSimulator(privateLogger).init();}
+
 export async function createPXE(node,config,options={}) {
   let selected=options;
   const readOnly=options.readOnly===true;
   let remote=options.remoteProver;
-  const info=await node.getNodeInfo();
+  const construction=await beginPXEConstruction(node),info=readPXEConstruction(construction,node);
   const proofsEnabled=provingEnabledForNode(info);
   if(info.realProofs===false && Number(info.l1ChainId)!==31337)throw Error('Disabled proofs require local devnet');
   const transport=value=>value?createRemoteProverClient({...value,chainId:info.l1ChainId,rollupVersion:info.rollupVersion,proofsEnabled:true}):null;
@@ -125,7 +130,9 @@ export async function createPXE(node,config,options={}) {
     selected={...options,simulator,proverOrOptions:new BrowserPrivateKernelProver(simulator,{...initialized.options,logger:privateLogger},{proofsEnabled:true,transport:null})};
   }
   selected={...selected,simulator:selected.simulator??withOwnerEnvelopeOracles(new WASMSimulator(privateLogger))};
-  const pxe=await createSdkPXE(node,config,{...selected,loggers:{store:privateLogger,pxe:privateLogger,prover:privateLogger}});
+  let pxe;
+  try{pxe=await createSdkPXE(node,config,{...selected,rollingConstruction:construction,loggers:{store:privateLogger,pxe:privateLogger,prover:privateLogger}});}
+  finally{endPXEConstruction(construction);}
   privatePXERoutes.set(pxe,{source:node,cached:pxe.node});
   if(readOnly)pxe.proveTx=async()=>{throw new Error('Read-only PXE cannot prove transactions');};
   if(selected.proverOrOptions instanceof RoutedKernelProver){

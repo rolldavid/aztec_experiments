@@ -433,7 +433,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    };
    if(fundingContext){
     node=fundingContext.node;await fundingContext.assertContext({config:selected,account,node,proofsEnabled});begin('deployment');
-    ({deployment:verifiedDeployment}=await fundingContext.claimDeployment({sdk,ethers,config:selected,boardArtifact,privateFeeArtifact,node,proofsEnabled,contextGuard:guard,onProgress:deploymentProgress}));
+    ({deployment:verifiedDeployment}=await fundingContext.registrationDeployment({sdk,ethers,config:selected,boardArtifact,privateFeeArtifact,node,proofsEnabled,contextGuard:guard,onProgress:deploymentProgress}));
    }else{
     deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config:selected,boardArtifact,privateFeeArtifact,trustedQuery:query,proofsEnabled});begin('deployment');
     ({node,deployment:verifiedDeployment}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:guard,onProgress:deploymentProgress}));
@@ -494,8 +494,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    initializeAccount=async()=>{
     await guardRoute();if(initialized)return;
     const signingPublicKey=await accountContract.getSigningPublicKey();await guardRoute();
-    const constructor=artifact.functions.find(fn=>fn.name==='constructor');
-    if(constructor){await new sdk.ContractFunctionInteraction(wallet,instance.address,constructor,[signingPublicKey.x,signingPublicKey.y]).simulate({from:instance.address});await guardRoute();}
+    await measureRollingStage('account.signing-capsule',()=>pxe.initializeSchnorrAccount(instance.address,signingPublicKey,{contextGuard:guardRoute}));await guardRoute();
     initialized=true;
    };
    begin('application-bind');

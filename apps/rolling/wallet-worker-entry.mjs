@@ -1,5 +1,5 @@
 import {prepareRollingAccount} from '../../shared/rolling/account-preparation.mjs';
-import {observeRollingWorkerPerformance} from './performance.mjs';
+import {beginRollingMeasure,observeRollingWorkerPerformance} from './performance.mjs';
 import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
 import {createRollingDeploymentPreparation,prepareRollingDeployment} from '../../shared/rolling/deployment.mjs';
 import {createRollingFundingSession,verifyRollingAggregateScope} from '../../shared/rolling/funding-session.mjs';
@@ -18,8 +18,8 @@ async function guard(){localGuard();}
 let foreground=0;
 const progress=value=>{if(!closed)send({type:foreground?'progress':'background-progress',value});};
 function background(step,promise){
- const start=performance.now();
- const report=(state,error)=>{if(!closed)send({type:'background-progress',value:{stage:'worker-initialization',step,state,start,timeOrigin:performance.timeOrigin,duration:performance.now()-start,...(error?{code:errorRecord(error).code}:{})}});};
+ const start=performance.now(),finish=beginRollingMeasure('worker-init.'+step);
+ const report=(state,error)=>{if(state!=='started')finish();if(!closed)send({type:'background-progress',value:{stage:'worker-initialization',step,state,start,timeOrigin:performance.timeOrigin,duration:performance.now()-start,...(error?{code:errorRecord(error).code}:{})}});};
  report('started');promise.then(()=>report('complete'),error=>report('failed',error));
  // Keep the original rejection for the actual consumer; observation never retries.
  return promise;
@@ -77,6 +77,8 @@ function initialize(value){
  warming=background('deployment',preparePublic());
  // Start native immutable circuit loading in this same worker, never a second SDK.
  background('kernels',Promise.resolve().then(()=>sdk.preloadPostingKernels()));
+ // Native ACVM/ABI compilation must not first occur after a wallet signature.
+ background('execution-engine',sdk.initializePrivateExecution());
  return metadata();
 }
 let derivedIdentity;

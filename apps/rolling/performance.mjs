@@ -58,6 +58,9 @@ export function rollingResourceTiming(entry,origin){
     const count=Number(phase.description);if(count<=8*1024*1024)result[countKey]=count;
    }
   }
+  if(asset&&Array.isArray(entry.serverTiming))for(const phase of entry.serverTiming.slice(0,16)){
+   if(['rolling-asset-hit','rolling-asset-miss'].includes(phase.name)&&Number.isFinite(phase.duration)&&phase.duration>=0){result.assetCacheHit=phase.name==='rolling-asset-hit'?1:0;result.assetReadyDuration=phase.duration;}
+  }
   result.protocol=['h2','h3','http/1.1','http/1.0'].includes(entry.nextHopProtocol)?entry.nextHopProtocol:'unknown';
   return result;
  }catch{return null;}
@@ -68,7 +71,7 @@ export function rollingResourceTiming(entry,origin){
 const workerMeasureName=/^rolling\.[a-z.-]{1,96}$/;
 const resourceEndpoints=new Set(['wallet-asset','proof-asset','node','prover-submit','prover-job','prover-result','public-read']);
 const resourcePoints=['fetchStart','domainLookupStart','domainLookupEnd','connectStart','secureConnectionStart','connectEnd','requestStart','responseStart','responseEnd'];
-const resourceNumbers=['start','duration',...resourcePoints,'transferSize','encodedBodySize','decodedBodySize','serverBody','serverValidate','serverQueue','serverBodyFirst','serverBodyGap','serverBodyChunks','serverBodyBytes'];
+const resourceNumbers=['start','duration',...resourcePoints,'transferSize','encodedBodySize','decodedBodySize','serverBody','serverValidate','serverQueue','serverBodyFirst','serverBodyGap','serverBodyChunks','serverBodyBytes','assetCacheHit','assetReadyDuration'];
 const diagnosticNumber=value=>Number.isFinite(value)&&value>=0&&value<=Number.MAX_SAFE_INTEGER;
 function workerPerformanceRecord(value){
  if(!value||Object.getPrototypeOf(value)!==Object.prototype)return null;

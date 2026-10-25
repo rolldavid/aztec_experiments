@@ -2,7 +2,7 @@ import {encodeConfigCommitment} from '../protocol-commitments.mjs';
 
 // Fixed diagnostic vocabulary only. Never inspect exception text or invoke a
 // code getter. Observation is not readiness authority and owns no SDK work.
-export const ROLLING_DEPLOYMENT_STAGES=Object.freeze(['config','node-readiness','artifact-layout','board-class','checkpoint','board-instance','public-config','config-commitment','fee-instance','l1-context','portal-code-and-immutables','canonical-recheck','final-readiness-and-context','prepared-refresh']);
+export const ROLLING_DEPLOYMENT_STAGES=Object.freeze(['config','node-readiness','artifact-layout','board-class','checkpoint','board-instance','public-config','config-commitment','fee-instance','l1-context','portal-code-and-immutables','canonical-recheck','final-readiness-and-context','prepared-refresh','prepared-registration']);
 export const ROLLING_SETUP_ERROR_CODES=Object.freeze(['BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_STALE','BB_BROWSER_PROVER_CONFIGURATION','ROLLING_SESSION_CONFIG','ROLLING_OTHER_TAB','ROLLING_CONTEXT_CHANGED','ROLLING_ACCOUNT_MISMATCH','ROLLING_PRIVATE_ROUTE','ROLLING_DEPLOYMENT_INVALID']);
 export function rollingSetupErrorCode(error){
  try{const descriptor=error!=null?Object.getOwnPropertyDescriptor(error,'code'):null;return descriptor&&Object.hasOwn(descriptor,'value')&&ROLLING_SETUP_ERROR_CODES.includes(descriptor.value)?descriptor.value:'unknown';}catch{return 'unknown';}
@@ -57,7 +57,8 @@ const preparedDeployments=new WeakMap();
 
 /** Page-scoped, account-independent preparation. The opaque handle owns one
  * successful full verification and its exact trusted client. It is not a lease
- * on readiness: consumers must use consumeRollingDeploymentPreparation below.
+ * on readiness. Native registration may share its metadata; consumers seeking
+ * current admission use consumeRollingDeploymentPreparation below.
  */
 export function createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled=true,onProgress}){
  const fixed={sdk,ethers,config:detach(config),boardArtifact,privateFeeArtifact,proofsEnabled};
@@ -81,6 +82,27 @@ export async function prepareRollingDeployment(preparation,{contextGuard,onProgr
 export function assertRollingDeploymentPreparation(preparation,{sdk,ethers,config,boardArtifact,privateFeeArtifact,node,proofsEnabled=true}={}){
  const state=preparedDeployments.get(preparation);
  check(state&&state.result&&sdk===state.fixed.sdk&&ethers===state.fixed.ethers&&boardArtifact===state.boardArtifact&&privateFeeArtifact===state.privateFeeArtifact&&proofsEnabled===state.fixed.proofsEnabled&&JSON.stringify(config)===JSON.stringify(state.fixed.config)&&node===state.result.node&&sdk.isTrustedPrivateNode(node));
+}
+
+/** Same owned initialization snapshot for local PXE class/instance registration.
+ * This result is metadata, not current readiness or permission to pay/prove/send.
+ * Native actions retain fresh trusted-node/anchor/class checks; funding retains
+ * its own current portal/runtime/admission and final canonical checks.
+ */
+export async function readRollingDeploymentRegistration(preparation,options={}){
+ const {contextGuard,onProgress}=options;
+ const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'deployment-initialization',step:'prepared-registration',state,code:state==='failed'?rollingSetupErrorCode(error):null});
+ try{
+  check(typeof contextGuard==='function');
+  assertRollingDeploymentPreparation(preparation,options);
+  emit('started');await contextGuard();
+  const result=preparedDeployments.get(preparation).result;
+  // Recheck provenance after the await, before handing detached SDK values to
+  // a second owner. No caller-supplied record or time-based validity is accepted.
+  assertRollingDeploymentPreparation(preparation,options);
+  const registration=Object.freeze({node:result.node,deployment:deploymentRecord(result.deployment)});
+  emit('complete');return registration;
+ }catch(error){emit('failed',error);throw error;}
 }
 
 /** Authenticate the same-page handoff, then refresh mutable authorities. Class

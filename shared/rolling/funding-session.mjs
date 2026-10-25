@@ -1,4 +1,4 @@
-import {assertRollingDeploymentPreparation,prepareRollingDeployment,consumeRollingDeploymentPreparation} from './deployment.mjs';
+import {assertRollingDeploymentPreparation,prepareRollingDeployment,readRollingDeploymentRegistration} from './deployment.mjs';
 import {createAggregateWallet,starterFundingAllocation,timeFundingPreparation} from './aggregate-wallet.mjs';
 const fail=code=>Object.assign(Error('Funding is unavailable.'),{code});
 
@@ -160,7 +160,7 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
   await guard();if(JSON.stringify(config)!==JSON.stringify(selected)||account.secretKey!==captured.secretKey||String(account.salt)!==captured.salt||String(account.address)!==captured.address||currentNode!==node||currentProofs!==proofsEnabled)throw fail('ROLLING_CONTEXT_CHANGED');
  };
  return Object.freeze({aggregate,node,defaultPrivateFeeCap,usdcAvailable:scope.usdcRelayAddress!==undefined,assertContext,
-  async claimDeployment(options){await guard();const result=await consumeRollingDeploymentPreparation(deploymentPreparation,options);await guard();return result;},
+  async registrationDeployment(options){await guard();const result=await readRollingDeploymentRegistration(deploymentPreparation,options);await guard();return result;},
   async bindPrivateContext(context){await guard();if(privateContext||!context||['readExistingCredit','ensureBok','reconcileClaim'].some(key=>typeof context[key]!=='function'))throw fail('ROLLING_SESSION_CONFIG');privateContext=Object.freeze({...context});},
   async prepareStarter({asset}){
    await guard();

@@ -11,7 +11,7 @@ import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {derivePrivateFeeInstance,normalizePrivateFeeGasSettings} from '../private-fee-client.mjs';
 import {expectedPortalRuntime,verifyPortalRuntime} from '../portal-runtime.mjs';
 import {encodeConfigCommitment} from '../protocol-commitments.mjs';
-import {verifyRollingDeployment,createRollingDeploymentPreparation,prepareRollingDeployment,assertRollingDeploymentPreparation,consumeRollingDeploymentPreparation} from './deployment.mjs';
+import {verifyRollingDeployment,createRollingDeploymentPreparation,prepareRollingDeployment,assertRollingDeploymentPreparation,consumeRollingDeploymentPreparation,readRollingDeploymentRegistration} from './deployment.mjs';
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 const feeArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../apps/src/billboard/private_fee_artifact.json',import.meta.url))));
 const metadata=JSON.parse(fs.readFileSync(new URL('../portal-runtime.json',import.meta.url)));
@@ -187,4 +187,46 @@ test('prepared refresh rejects changed class, disabled admission and reorged cac
   const f=await preparedFixture();await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});mutate(f);
   await assert.rejects(consumeRollingDeploymentPreparation(f.preparation,f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});assert.equal(f.state.destroyed,2);
  }
+});
+
+
+test('registration snapshot reuses verified initialization without RPC or artifact recomputation',async()=>{
+ const f=await preparedFixture(),first=await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ const before={reads:f.state.reads.length,ethReads:f.state.ethReads.length,inspection:f.state.inspection,destroyed:f.state.destroyed,counts:{...f.counts}};
+ for(const name of ['getBlockData','getContract','getPublicStorageAt','getL1ContractAddresses'])f.node[name]=()=>assert.fail('Registration cannot issue node RPC');
+ for(const name of ['getBlock','getCode','getNetwork'])f.provider[name]=()=>assert.fail('Registration cannot issue Ethereum RPC');
+ f.options.sdk.inspectTrustedNode=()=>assert.fail('Registration is not current readiness');
+ const out=await readRollingDeploymentRegistration(f.preparation,f.options);
+ assert.equal(out.node,first.node);assert.notEqual(out.deployment,first.deployment);assert.notEqual(out.deployment.board.instance,first.deployment.board.instance);
+ assert.equal(out.deployment.board.artifact,artifact);assert.equal(out.deployment.configHash,first.deployment.configHash);
+ assert.throws(()=>{out.deployment.board.instance.currentContractClassId=new Fr(99);},TypeError);
+ assert.notEqual(out.deployment.board.instance.currentContractClassId,first.deployment.board.instance.currentContractClassId);
+ const second=await readRollingDeploymentRegistration(f.preparation,f.options);assert.equal(second.deployment.board.instance.currentContractClassId.toString(),first.deployment.board.instance.currentContractClassId.toString());
+ assert.deepEqual({reads:f.state.reads.length,ethReads:f.state.ethReads.length,inspection:f.state.inspection,destroyed:f.state.destroyed,counts:f.counts},before);
+});
+test('registration snapshot rejects foreign handles and exact initialization identity changes',async()=>{
+ const f=await preparedFixture();await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ await assert.rejects(readRollingDeploymentRegistration({},f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
+ for(const change of [{node:{...f.node}},{boardArtifact:{...artifact}},{privateFeeArtifact:{...feeArtifact}},{sdk:{...f.options.sdk}},{ethers:{...f.options.ethers}},{config:{...f.options.config,board:{...f.options.config.board,portalAddress:eth(23)}}},{proofsEnabled:false}])
+  await assert.rejects(readRollingDeploymentRegistration(f.preparation,{...f.options,...change}),{code:'ROLLING_DEPLOYMENT_INVALID'});
+});
+test('registration snapshot rechecks identity after held guard and propagates account cancellation',async()=>{
+ const f=await preparedFixture();await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers(),options={...f.options,contextGuard:async()=>{entered.resolve();await gate.promise;}};
+ const work=readRollingDeploymentRegistration(f.preparation,options),rejection=assert.rejects(work,{code:'ROLLING_DEPLOYMENT_INVALID'});
+ await entered.promise;options.node={...f.node};gate.resolve();await rejection;
+ const cancelled=Object.assign(Error('account replaced'),{code:'ROLLING_CONTEXT_CHANGED'});
+ await assert.rejects(readRollingDeploymentRegistration(f.preparation,{...f.options,contextGuard:async()=>{throw cancelled;}}),error=>error===cancelled);
+});
+import {Interface} from 'ethers';
+import {verifyRollingAggregateScope} from './funding-session.mjs';
+for(const defect of ['stale-node','l1-reorg','portal-binding'])test('financial scope still rejects after registration-only handoff '+defect,async()=>{
+ const f=await preparedFixture();await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ const registration=await readRollingDeploymentRegistration(f.preparation,f.options),scope={feePortal:eth(31),feeToken:eth(32)};
+ const iface=new Interface(['function UNDERLYING() view returns(address)','function decimals() view returns(uint8)']);let inspections=0,reads=0;
+ f.node.getL1ContractAddresses=async()=>({feeJuicePortalAddress:scope.feePortal});
+ f.options.sdk.inspectTrustedNode=async(node,options)=>{inspections++;assert.equal(node,registration.node);assert.deepEqual(options.expectedNetworkScope,registration.deployment.network);if(defect==='stale-node')throw Object.assign(Error('stale'),{code:'BB_TRUSTED_NODE_STALE'});};
+ const provider={getBlock:async tag=>{reads++;return {number:20,hash:defect==='l1-reorg'&&tag===20?hex(67):hex(66)};},call:async request=>{reads++;const name=iface.parseTransaction(request).name;return iface.encodeFunctionResult(name,[name==='UNDERLYING'?defect==='portal-binding'?eth(99):scope.feeToken:18]);}};
+ await assert.rejects(verifyRollingAggregateScope({sdk:f.options.sdk,ethers:{Interface},node:registration.node,provider,scope,network:registration.deployment.network,proofsEnabled:true,contextGuard:async()=>{},includeBok:false,asset:'ETH'}),{code:defect==='stale-node'?'BB_TRUSTED_NODE_STALE':defect==='l1-reorg'?'ROLLING_CONTEXT_CHANGED':'ROLLING_SESSION_CONFIG'});
+ assert.equal(inspections,1);assert(reads>=3,'fresh actual funding boundary still performs its independent L1 checks');
 });

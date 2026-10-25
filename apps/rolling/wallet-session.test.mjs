@@ -48,7 +48,7 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {BlockHash} from '@aztec-labs/stdlib/block';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {loadContractArtifact,decodeFromAbi,getFunctionReturnType,EventSelector,decodeFunctionSignature} from '@aztec-labs/stdlib/abi';
-import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
+import {poseidon2Hash,poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
 import {nameRegistration,NAME_DOMAIN} from '../../shared/rolling/name-policy.mjs';
 import {computeArtifactHash,getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
@@ -113,6 +113,7 @@ async function sessionFixture({chainId='31337'}={}){
  const held=event=>{assert.equal(state.active,true,event);state.events.push(event);};
  const store={close:async()=>{held('store-close');state.closes++;if(state.failClose)throw Error('close failed');}};
  const pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{held('claim-membership');throw Error('fixture claim adapter must supply membership');}},registerAccount:async()=>{held('register-account');state.registrations++;if(state.failRegister)throw Error('registration failed');},registerContractClass:async()=>{held('register-class');},registerContract:async()=>{held('register-contract');},
+  initializeSchnorrAccount:async(owner,key,{contextGuard})=>{held('signing-capsule');assert.equal(String(owner),account.address);assert.equal((await accountContract.getImmutablesHash()).toString(),(await poseidon2Hash([key.x,key.y])).toString());await contextGuard();},
   sync:async()=>{held('sync');state.syncs++;if(state.waitSync)await state.waitSync;if(state.failSync)throw Error('sync failed');},
   prepareBoardActionState:async targets=>{held('board-state');assert.deepEqual(Object.fromEntries(Object.entries(targets).map(([key,value])=>[key,['owner','board','privateFee'].includes(key)?String(value):value])),{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress,method:targets.method});state.boardStateMethod=targets.method;if(state.waitBoardState)await state.waitBoardState;if(state.failBoardState)throw Error('board state failed');},
   prepareOrdinaryPostState:async targets=>{held('ordinary-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress});if(state.waitOrdinaryState)await state.waitOrdinaryState;if(state.failOrdinaryState)throw Error('ordinary state failed');},
@@ -239,7 +240,7 @@ test('account mutation during each awaited initialization step blocks the next p
   }
   if(stage==='signing-key'){
    f.input.sdk.SchnorrInitializerlessAccountContract=class extends SchnorrInitializerlessAccountContract{async getSigningPublicKey(){const result=await super.getSigningPublicKey();if(f.state.events.includes('account-manager'))change();return result;}};
-   f.input.sdk.ContractFunctionInteraction=class{async simulate(){forbidden++;}};
+   f.pxe.initializeSchnorrAccount=async()=>{forbidden++;};
   }
   if(stage==='signing-key'){
    const session=await createRollingWalletSession(f.input);
@@ -592,7 +593,7 @@ for(const phase of ['lock','context','pxe-sync','account-initialize','method'])t
  if(phase==='lock')f.input.locks.request=async()=>{throw original;};
  if(phase==='context')f.input.sdk.isPrivatePXEForNode=()=>{throw original;};
  if(phase==='pxe-sync')f.pxe.sync=async()=>{throw original;};
- if(phase==='account-initialize')f.input.sdk.ContractFunctionInteraction=class{async simulate(){throw original;}};
+ if(phase==='account-initialize')f.pxe.initializeSchnorrAccount=async()=>{throw original;};
  if(phase==='method')f.input.sdk.preparePrivateFeePayment=async()=>{throw original;};
  // The production application captures SDK capabilities at construction.
  if(phase==='method'){

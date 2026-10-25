@@ -191,3 +191,10 @@ test('worker observer is opt-in, bounds batches, removes private data and stops 
   const count=messages.length;stop();emit('measure',[{name:'rolling.action.sync',startTime:1,duration:1}]);assert.equal(messages.length,count);assert([...instances.values()].every(x=>x.stopped));
  }finally{if(old===undefined)delete globalThis[symbol];else globalThis[symbol]=old;}
 });
+
+test('public asset timing distinguishes service-worker hit and miss without assuming zero transfer means hit',()=>{
+ for(const hit of [true,false]){
+  const entry={name:'https://board.test/wallet/aztec_bundle.js?sha256='+'a'.repeat(64),initiatorType:'fetch',startTime:1,duration:2,transferSize:0,nextHopProtocol:'',serverTiming:[{name:hit?'rolling-asset-hit':'rolling-asset-miss',duration:1.25}]};
+  const value=rollingResourceTiming(entry,'https://board.test');assert.equal(value.assetCacheHit,hit?1:0);assert.equal(value.assetReadyDuration,1.25);assert(!JSON.stringify(value).includes('sha256'));
+ }
+});
