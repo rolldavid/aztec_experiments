@@ -1210,10 +1210,10 @@ for(const asset of ['ETH','token'])test('standalone Bok custody verifies one exa
  const f=asset==='ETH'?ethTopupFixture():topupFixture();f.state.allowance=1000n;
  const cap=await f.open();await cap.prepare({...f.allocation,...(asset==='ETH'?{asset:'ETH'}:{})});const payment=await cap.confirm();
  const counts={};for(const method of ['getTransactionReceipt','getTransaction','getBlock','getCode']){const original=f.options.provider[method];f.options.provider[method]=async(...args)=>{counts[method]=(counts[method]??0)+1;return original(...args);};}
- for(let n=1;n<=2;n++){const custody=await cap.loadAggregate(payment.receipt.txHash);assert(custody.bridgeSecret&&custody.recipientSalt);assert.equal(counts.getTransactionReceipt,n);assert.equal(counts.getTransaction,n);assert.equal(counts.getCode??0,asset==='ETH'?n:0);assert.equal(counts.getBlock,(asset==='ETH'?3:2)*n);}
+ for(let n=1;n<=2;n++){const custody=await cap.loadAggregate(payment.receipt.txHash);assert(custody.bridgeSecret&&custody.recipientSalt);assert.equal(counts.getTransactionReceipt,n);assert.equal(counts.getTransaction,n);assert.equal(counts.getCode??0,asset==='ETH'?n:0);assert.equal(counts.getBlock,2*n);}
  assert.equal(f.state.sends,1);
 });
-for(const failure of ['initial-fork','verifier-final-fork','final-fork','effects','request','network','owner'])test('standalone Bok custody retains exact authority on '+failure,async()=>{
+for(const failure of ['initial-fork','verifier-final-fork','effects','request','network','owner'])test('standalone Bok custody retains exact authority on '+failure,async()=>{
  const f=ethTopupFixture(),cap=await f.open();await cap.prepare({...f.allocation,asset:'ETH'});const payment=await cap.confirm();
  const getBlock=f.options.provider.getBlock,getReceipt=f.options.provider.getTransactionReceipt,getTransaction=f.options.provider.getTransaction;let blockReads=0;
  if(failure.endsWith('fork'))f.options.provider.getBlock=async(...args)=>{const block=await getBlock(...args);return {...block,hash:++blockReads===(failure==='initial-fork'?1:failure==='verifier-final-fork'?2:3)?h(999):block.hash};};
@@ -1221,7 +1221,7 @@ for(const failure of ['initial-fork','verifier-final-fork','final-fork','effects
  if(failure==='request')f.options.provider.getTransaction=async(...args)=>({...await getTransaction(...args),data:'0x'});
  if(failure==='network')f.options.provider.getNetwork=async()=>({chainId:1n});
  if(failure==='owner')f.options.provider.getTransactionReceipt=async(...args)=>{const value=await getReceipt(...args);f.state.invalid=true;return value;};
- await assert.rejects(cap.loadAggregate(payment.receipt.txHash));assert.equal(f.state.sends,1);if(failure==='final-fork')assert.equal(blockReads,3);
+ await assert.rejects(cap.loadAggregate(payment.receipt.txHash));assert.equal(f.state.sends,1);if(failure==='verifier-final-fork')assert.equal(blockReads,2);
 });
 
 import {invalidateRollingFundingNativeSnapshot} from './funding-session.mjs';
@@ -1250,7 +1250,7 @@ for(const failure of [null,'fork','network','owner'])test('Bok bridge keeps exac
  assert.equal(f.state.sends,1);assert.deepEqual([...f.records],before);assert.equal(owner.scope,null);
  assert.equal(counts.getTransactionReceipt,1);assert.equal(counts.getTransaction,1);assert.equal(counts.getCode,!failure?2:1);
  if(failure==='owner'){assert.equal(prepared,0);assert.equal(replacements,0);}else{assert.equal(prepared,1);assert.equal(replacements,1);assert.equal(counts.getNetwork,2);}
- if(!failure){assert.equal(counts.getBlock,6,'all original numbered canonical fences remain');
+ if(!failure){assert.equal(counts.getBlock,5,'recover keeps its post-journal check; direct custody uses verifier final check');
   const receipts=counts.getTransactionReceipt;bridged=false;await assert.rejects(continuation.advanceClaim(),error=>error===stop);assert.equal(counts.getTransactionReceipt,receipts+1,'next outer lease obtains a fresh receipt');}
 });
 test('native reset retains only completed positive Ethereum identities, not pending, negative or network reads',async()=>{
@@ -1278,4 +1278,38 @@ test('native reset rereads same-height Ethereum code and bindings under the new 
  const next=await read.getBlock(8);assert.notEqual(next.hash,first.hash);
  assert.equal(await read.getCode(a(1),8),'0x02');assert.equal(await read.call(request),'0x04');assert.equal((await read.getBlock(8)).hash,next.hash);
  assert.deepEqual(counts,{code:2,call:2});
+});
+
+for(const phase of ['recover','custody'])for(const mutation of ['fork-during-effects','owner-after-verifier'])test('purchase terminal fence rejects '+mutation+' in '+phase,async()=>{
+ const f=ethTopupFixture(),cap=await f.open();await cap.prepare({...f.allocation,asset:'ETH'});const paid=await cap.confirm();
+ const originalBlock=f.options.provider.getBlock,originalCode=f.options.provider.getCode,guard=f.options.contextGuard;
+ let fork=false,blocks=0,invalid=false;const entered=Promise.withResolvers(),release=Promise.withResolvers();
+ f.options.provider.getCode=async(...args)=>{entered.resolve();await release.promise;return originalCode(...args);};
+ f.options.provider.getBlock=async(...args)=>{const value=await originalBlock(...args);blocks++;if(blocks===2&&mutation==='owner-after-verifier')invalid=true;return fork?{...value,hash:h(999)}:value;};
+ f.options.contextGuard=async()=>{await guard();if(invalid)throw Error('owner changed after verifier');};
+ // The capability captures its context guard at construction.
+ const reopened=await f.open(),before=[...f.records];let settled=false;
+ const pending=(phase==='recover'?reopened.recover():reopened.loadAggregate(paid.receipt.txHash)).finally(()=>settled=true),rejected=assert.rejects(pending);
+ await entered.promise;assert.equal(settled,false);if(mutation==='fork-during-effects')fork=true;release.resolve();await rejected;
+ assert.equal(blocks,2);assert.deepEqual([...f.records],before);assert.equal(f.state.sends,1);
+});
+test('purchase confirm still checks canonical block after reopening saved custody',async()=>{
+ const f=ethTopupFixture(),cap=await f.open();await cap.prepare({...f.allocation,asset:'ETH'});
+ const block=f.options.provider.getBlock;let receiptChecks=0;
+ f.options.provider.getBlock=async number=>{const value=await block(number);if(f.state.sends&&number===17&&++receiptChecks===3)return {...value,hash:h(999)};return value;};
+ await assert.rejects(cap.confirm());assert.equal(receiptChecks,3);assert.equal(f.state.sends,1);
+});
+
+test('purchase recovery retains final canonical check after fallback journal write',async()=>{
+ const f=ethTopupFixture(),cap=await f.open();await cap.prepare({...f.allocation,asset:'ETH'});await cap.confirm();
+ const receipt=f.options.provider.getTransactionReceipt,block=f.options.provider.getBlock,cas=f.options.storage.compareAndSwap;
+ const entered=Promise.withResolvers(),release=Promise.withResolvers();let reads=0,writes=0,fork=false,finalForkReads=0,settled=false;
+ // The stored hash is unavailable initially. The real journal scans its nonce,
+ // verifies the rediscovered transaction, then persists its hash before return.
+ f.options.provider.getTransactionReceipt=async(...args)=>++reads===1?null:receipt(...args);
+ f.options.storage.compareAndSwap=async(...args)=>{writes++;entered.resolve();await release.promise;return cas(...args);};
+ f.options.provider.getBlock=async(...args)=>{const value=await block(...args);if(fork){finalForkReads++;return {...value,hash:h(999)};}return value;};
+ const pending=cap.recover().finally(()=>settled=true),rejected=assert.rejects(pending);
+ await entered.promise;assert.equal(settled,false);assert.equal(reads,2);assert.equal(writes,1);
+ fork=true;release.resolve();await rejected;assert.equal(finalForkReads,1);assert.equal(f.state.sends,1);
 });

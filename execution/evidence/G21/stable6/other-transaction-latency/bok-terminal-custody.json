@@ -1,0 +1,15 @@
+{
+  "change": "Remove duplicate final canonical read only after direct successful Bok purchase verification",
+  "preserved": [
+    "Recover path final check after possible journal write",
+    "Confirm and archived paths",
+    "Verifier initial/final canonical checks and context guard"
+  ],
+  "integratedTests": 226,
+  "failures": 0,
+  "browserBuild": "six scripts evaluated;90 files107inputs",
+  "review": "private_tips approved narrowed patch; root rejected earlier generic recovery shortcut",
+  "sourceSha256": "9adbe150b2350e2110de6f6b2ca56e450ed278fa2a6662f22c834423fc5c40ce",
+  "published": false,
+  "liveTiming": null
+}
