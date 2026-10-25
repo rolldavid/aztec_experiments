@@ -1047,3 +1047,22 @@ for(const failure of ['initial-fork','final-fork','effects','request','network',
  await assert.rejects((await f.open()).loadAggregate(payment.receipt.txHash));assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);
  if(failure==='final-fork')assert.equal(blockReads,2);
 });
+
+
+test('aggregate archived predecessor uses the exact verifier final canonical read once and retains fork rejection',async()=>{
+ const f=fixture(),funding=await f.open();await funding.prepare(f.allocation);await funding.confirm();
+ durableClaimApplication(f,funding);await advanceAggregateClaim({application:f.state.workflow.open(),funding});
+ const next=await f.open();await next.prepare(f.allocation);
+ const getBlock=f.options.provider.getBlock,verify=f.options.sdk.verifyEthereumIntentReceipt;
+ let inside=false,after=false,canonicalReads=0,duplicateReads=0,verified=0,fork=false;
+ f.options.provider.getBlock=async(...args)=>{
+  const value=await getBlock(...args);
+  if(args[0]===17){if(inside){canonicalReads++;if(fork&&canonicalReads===2)return {...value,hash:h(99)};}else if(after)duplicateReads++;}
+  return value;
+ };
+ f.options.sdk.verifyEthereumIntentReceipt=async(...args)=>{inside=true;after=false;canonicalReads=0;try{const result=await verify(...args);verified++;after=true;return result;}finally{inside=false;}};
+ const verifyClaim=f.options.verifyClaim;f.options.verifyClaim=async(...args)=>{assert.equal(duplicateReads,0);after=false;return verifyClaim(...args);};
+ const reopened=await f.open();await reopened.prepare(f.allocation);
+ assert.equal(verified,1);assert.equal(canonicalReads,2,'initial and final canonical checks in real receipt verifier remain');assert.equal(duplicateReads,0);
+ fork=true;await assert.rejects((await f.open()).prepare(f.allocation));assert.equal(verified,1);assert.equal(f.state.sends,1);
+});

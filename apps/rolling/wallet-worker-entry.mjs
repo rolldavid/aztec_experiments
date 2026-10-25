@@ -110,7 +110,7 @@ async function openAccount(raw){
 }
 function startSession(){
  if(!account||settings.config.refundOnly)throw workerFailure('ROLLING_SESSION_CONFIG');if(session)return session;if(creating)return creating;
- creating=background('private-session',proverReady.then(()=>createRollingWalletSession({sdk,routing,ethers,config:settings.config,boardArtifact:publicState.boardArtifact,privateFeeArtifact:publicState.privateFeeArtifact,getBokArtifact,account,accountPreparation,trustedQuery:settings.trustedQuery,remoteProver:settings.remoteProver,contextGuard:guard,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),captureFundingWallet:captureWallet,fundingRelay:relay(),fundingContext:funding,onProgress:progress,proofsEnabled:settings.proofsEnabled})).then(value=>(session=value)));return creating;
+ creating=background('private-session',createRollingWalletSession({proverReady,sdk,routing,ethers,config:settings.config,boardArtifact:publicState.boardArtifact,privateFeeArtifact:publicState.privateFeeArtifact,getBokArtifact,account,accountPreparation,trustedQuery:settings.trustedQuery,remoteProver:settings.remoteProver,contextGuard:guard,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),captureFundingWallet:captureWallet,fundingRelay:relay(),fundingContext:funding,onProgress:progress,proofsEnabled:settings.proofsEnabled}).then(value=>(session=value)));return creating;
 }
 async function ensureSession(){await opening;const result=await startSession();await fundingCompletion;return result;}
 async function ensureRefundSession(){
@@ -132,6 +132,10 @@ async function invoke(method,args){
  if(!account)throw workerFailure('ROLLING_LOCKED');await guard();
  if(method==='ensureSession'){await ensureSession();return metadata();}
  if(method==='ensureRefundSession'){await ensureRefundSession();return metadata();}
+ if(method==='prepareOpening'){
+  const result=await(await ensureSession()).prepareOpening(...args);
+  return {...result,...(result.quoteError?{quoteError:errorRecord(result.quoteError)}:{})};
+ }
  if(['preparePostingState','observeIncluded'].includes(method))return(await ensureSession())[method](...args);
  const parts=method.split('.');
  if(parts.length===2&&parts[0]==='application'&&APPLICATION_METHODS.includes(parts[1]))return(settings.config.refundOnly?await ensureRefundSession():await ensureSession()).application[parts[1]](...args);

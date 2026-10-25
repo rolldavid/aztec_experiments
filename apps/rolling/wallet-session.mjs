@@ -374,7 +374,7 @@ export async function createRollingRefundSession({sdk,ethers,config,boardArtifac
 }
 
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,getBokArtifact,account,accountPreparation,
- trustedQuery,remoteProver,fundingContext,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
+ trustedQuery,remoteProver,fundingContext,proverReady,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const ownsFundingContext=fundingContext==null;
  const nativeChainTip='proposed';
@@ -426,17 +426,17 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   try{
    begin('trusted-node');
    const network={chainId:String(selected.network.chainId),version:String(selected.network.rollupVersion),rollup:selected.network.rollupAddress};
-   let node,verifiedDeployment,deploymentPreparation;
+   let node,verifiedDeployment,deploymentPreparation,nodeSnapshot;
    const deploymentProgress=record=>{
     const value={stage:'session-initialization',step:'deployment',deploymentStep:record.step,state:record.state,code:record.code};
     if(record.state==='failed')nestedFailure=Object.freeze(value);observeRollingSetup(onProgress,value);
    };
    if(fundingContext){
     node=fundingContext.node;await fundingContext.assertContext({config:selected,account,node,proofsEnabled});begin('deployment');
-    ({deployment:verifiedDeployment}=await fundingContext.registrationDeployment({sdk,ethers,config:selected,boardArtifact,privateFeeArtifact,node,proofsEnabled,contextGuard:guard,onProgress:deploymentProgress}));
+    ({deployment:verifiedDeployment,nodeSnapshot}=await fundingContext.registrationDeployment({sdk,ethers,config:selected,boardArtifact,privateFeeArtifact,node,proofsEnabled,contextGuard:guard,onProgress:deploymentProgress}));
    }else{
     deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config:selected,boardArtifact,privateFeeArtifact,trustedQuery:query,proofsEnabled});begin('deployment');
-    ({node,deployment:verifiedDeployment}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:guard,onProgress:deploymentProgress}));
+    ({node,deployment:verifiedDeployment,nodeSnapshot}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:guard,onProgress:deploymentProgress}));
    }
    await guard();
    const deployment={...verifiedDeployment};
@@ -463,7 +463,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    await guard();store=await sdk.openPXEStore({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
    begin('pxe-create');
-   await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:nativeChainTip},{store,remoteProver:remote});await guard();
+   // Immutable verifier preparation is independent of local account/store setup.
+   // It must still finish before the real PXE consumes its manifest and prover.
+   await proverReady;await guard();pxe=await sdk.createPXE(node,{proverEnabled:proofsEnabled,autoSync:false,syncChainTip:nativeChainTip},{store,remoteProver:remote,nodeSnapshot});await guard();
    if(!sdk.isPrivatePXEForNode(pxe,node))throw fail('ROLLING_PRIVATE_ROUTE');
    // The first private operation selects the anchor once. Opening the engine
    // itself does not require a second, immediately discarded synchronization.
@@ -620,7 +622,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   // It never changes payment readiness; Post still validates its own payment.
   if(refreshFeeCredit){const credit=await app.readPrivateFeeCredit();await guardRoute();return credit;}
  });}
- return Object.freeze({application,preparePostingState,observeIncluded:input=>observeIncludedTransaction({sdk,node:privateNode,contextGuard:guardRoute},input),ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze({observe:()=>withdrawal.observe(),waitUntilReady:options=>withdrawal.waitUntilReady(options),...Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,async(...args)=>{const captured=structuredClone(args);return locked(()=>withdrawal[name](...captured));}]))}),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
+ return Object.freeze({application,prepareOpening:fundingContext?options=>{const captured=structuredClone(options);return locked(()=>fundingContext.prepareOpening(()=>synchronized.readAccountStatus(),captured));}:undefined,preparePostingState,observeIncluded:input=>observeIncludedTransaction({sdk,node:privateNode,contextGuard:guardRoute},input),ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(selected.privateFee.gasSettings).toString(),postingFeeLimit:privateFeeCap,bokConfigured:selected.bok!==undefined,depositRefunds:refunds,withdrawal:Object.freeze({observe:()=>withdrawal.observe(),waitUntilReady:options=>withdrawal.waitUntilReady(options),...Object.fromEntries(['prepare','prepareSaved','confirm','recover','cancel'].map(name=>[name,async(...args)=>{const captured=structuredClone(args);return locked(()=>withdrawal[name](...captured));}]))}),topup,funding:aggregate?Object.freeze({prepareStarter:options=>locked(()=>prepareStarter(options)),usdcAvailable:selected.aggregateFunding.usdcRelayAddress!==undefined,...continuation(aggregate),defaultPrivateFeeCap:privateFeeCap,...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>aggregate[name](...args))]))}):null,get busy(){return busy;},close(){
   if(closing)return closing;
   if(busy)return Promise.reject(fail('ROLLING_BUSY'));
   if(closed&&!pxe&&!store)return Promise.resolve();

@@ -1,3 +1,4 @@
+import {inspectTrustedNode} from '../shared/trusted-private-node.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -81,11 +82,11 @@ for(const name of Object.keys(PXE_STARTUP_PINS))test('pinned native transform ke
 function contractStoreFixture(){
  const name='node_modules/@aztec-labs/pxe/dest/storage/contract_store/contract_store.js';
  const source=efficientPxeStartup(nativeSource(name),name).replace(/^import .*;\n/gm,'').replace(/export /g,'');
- let derivations=0,writes=0,fail=false;const maps=new Map();
+ let derivations=0,writes=0,selectorCalls=0,fail=false;const maps=new Map();
  const kv={openMap(name){const values=maps.get(name)??new Map();maps.set(name,values);return{getAsync:async key=>values.get(key),set:async(key,value)=>{if(fail){fail=false;throw Error('write failed');}writes++;values.set(key,Buffer.from(value));}};},async transactionAsync(fn){const backups=[...maps].map(([k,v])=>[k,new Map(v)]);try{return await fn();}catch(e){for(const [k,v]of backups){maps.get(k).clear();for(const [a,b]of v)maps.get(k).set(a,b);}throw e;}}};
- const args={Buffer,rollingRetainedClass:retainedContractClass,rollingRegisteredBytes:sameRegisteredBytes,contractArtifactToBuffer:serialize,getContractClassFromArtifact:async()=>{derivations++;return classValue();},FunctionType:{PRIVATE:'private'},allToCompletion:values=>Promise.all(values),FunctionSelector:{fromNameAndParameters:async name=>({toString:()=>name})},numToUInt8:n=>n,serializeToBuffer:(...values)=>serialize(values),SerializableContractInstancePreimage:class{constructor(value){this.value=value;}toBuffer(){return serialize(this.value);}}};
+ const args={Buffer,rollingRetainedClass:retainedContractClass,rollingRegisteredBytes:sameRegisteredBytes,contractArtifactToBuffer:serialize,getContractClassFromArtifact:async()=>{derivations++;return classValue();},FunctionType:{PRIVATE:'private'},allToCompletion:values=>Promise.all(values),FunctionSelector:{fromNameAndParameters:async name=>{selectorCalls++;return {toString:()=>name};}},numToUInt8:n=>n,serializeToBuffer:(...values)=>serialize(values),SerializableContractInstancePreimage:class{constructor(value){this.value=value;}toBuffer(){return serialize(this.value);}}};
  const ContractStore=Function(...Object.keys(args),source+'\nreturn ContractStore;')(...Object.values(args));
- return {maps,create:()=>new ContractStore(kv),counts:()=>({derivations,writes}),fail:()=>{fail=true;}};
+ return {maps,create:()=>new ContractStore(kv),counts:()=>({derivations,writes}),selectorCalls:()=>selectorCalls,fail:()=>{fail=true;}};
 }
 test('actual transformed ContractStore reuses authenticated persisted blobs and repairs changed bytes',async()=>{
  const f=contractStoreFixture(),artifact={functions:[]};await rememberContractClass(artifact,serialize(artifact),classValue(),serialize);
@@ -98,4 +99,32 @@ test('actual transformed ContractStore reuses authenticated persisted blobs and 
 test('failed native registration does not publish an in-memory success cache',async()=>{
  const f=contractStoreFixture(),store=f.create(),artifact={functions:[]};await rememberContractClass(artifact,serialize(artifact),classValue(),serialize);f.fail();
  await assert.rejects(store.addContractArtifact(artifact),/write failed/);await store.addContractArtifact(artifact);assert.equal(f.maps.get('contract_artifacts').has('class'),true);assert.equal(f.counts().writes,2);
+});
+
+test('actual transformed ContractStore reuses authenticated selectors but validates caller-supplied classes',async()=>{
+ const {FunctionSelector}=await import(pathToFileURL(nativeRoot+'node_modules/@aztec-labs/stdlib/dest/abi/index.js'));
+ const f=contractStoreFixture(),selector=FunctionSelector.fromString('0x00000001');
+ const artifact={functions:[{name:'foo',functionType:'private',parameters:[]}]};
+ const value={...classValue(),privateFunctions:[{selector,vkHash:new Field('vk')}]};
+ await rememberContractClass(artifact,serialize(artifact),value,serialize);
+ await f.create().addContractArtifact(artifact);assert.equal(f.selectorCalls(),0,'no duplicate Poseidon selector derivation');
+ const duplicate={functions:[...artifact.functions,...artifact.functions]};
+ await rememberContractClass(duplicate,serialize(duplicate),{...value,privateFunctions:[...value.privateFunctions,...value.privateFunctions]},serialize);
+ await assert.rejects(f.create().addContractArtifact(duplicate),/Repeated function selectors/);
+ await assert.rejects(f.create().addContractArtifact(duplicate,{...value,privateFunctions:[]}),/Repeated function selectors/);
+ assert.equal(f.selectorCalls(),2,'supplied class cannot suppress native artifact selector validation');
+});
+
+test('actual trusted readiness snapshot supplies construction metadata without a second node-info RPC',async()=>{
+ const hash=n=>'0x'+n.toString(16).padStart(64,'0'),rollup='0x'+'12'.repeat(20);let calls=0;
+ const info={l1ChainId:31337,rollupVersion:1,realProofs:false,l1ContractAddresses:{rollupAddress:rollup}};
+ const id=n=>({number:n,hash:hash(n)}),tip=n=>({block:id(n)});
+ const node={getNodeInfo:async()=>{calls++;return info;},getChainTips:async()=>({proposed:id(8),checkpointed:tip(7),proven:tip(4),finalized:tip(3)}),
+  getWorldStateSyncStatus:async()=>({latestBlockNumber:8,latestBlockHash:hash(8),finalizedBlockNumber:3,oldestHistoricBlockNumber:0,treesAreSynched:true}),
+  getSyncedL1Timestamp:async()=>990n,getBlockData:async n=>({header:{globalVariables:{blockNumber:n}},blockHash:hash(n)})};
+ const snapshot=await inspectTrustedNode(node,{expectedNetworkScope:{chainId:'31337',version:'1',rollup},proofsEnabled:false,nowSeconds:1000});assert.equal(calls,1);
+ const construction=await beginPXEConstruction(node,{nodeSnapshot:snapshot});assert.equal(calls,1);
+ assert.equal(readPXEConstruction(construction,node).l1ChainId,31337);
+ for(const [candidate,client]of [[{},node],[structuredClone(snapshot),node],[snapshot,{...node}]])await assert.rejects(beginPXEConstruction(client,{nodeSnapshot:candidate}));
+ assert.equal(calls,1,'invalid supplied provenance never falls back to an RPC');endPXEConstruction(construction);
 });

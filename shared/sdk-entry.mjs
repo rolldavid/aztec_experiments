@@ -15,7 +15,7 @@ globalThis.Buffer ??= Buffer;
 
 // Explicit browser/CLI compatibility surface for the pinned Aztec SDK.
 // Build this source; do not recover exports by editing a generated bundle.
-export { createTrustedPrivateNode, inspectTrustedNode, isTrustedPrivateNode } from './trusted-private-node.mjs';
+export { createTrustedPrivateNode, inspectTrustedNode, isTrustedPrivateNode, getTrustedNodeSnapshotInfo, getTrustedNodeCanonicalBlock } from './trusted-private-node.mjs';
 export { createPXE, isPrivatePXEForNode, initializeBrowserProver, initializeCliProver, initializePrivateExecution } from './private-pxe.mjs';
 export { recordProofTimings, beginProofSpan, measureProofPhase } from './proof-timings.mjs';
 export {prefetchBoardClaimWitnesses} from './board-claim-witnesses.mjs';

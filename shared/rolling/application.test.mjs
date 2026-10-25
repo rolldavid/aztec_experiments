@@ -3073,3 +3073,29 @@ for(const type of ['preference','read-marker'])test(`removed on-chain ${type} ac
  const f=fixture();assert.equal(f.app.readPreferenceHead,undefined);
  await assert.rejects(f.app.prepare({type}),{code:'ROLLING_INVALID_ACTION'});assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
+
+
+test('synchronized status ignores only completed ordinary history and still discovers actual native state',async()=>{
+ const f=fixture(),intent=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(intent.intentId);
+ const scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
+ const app=f.restart(),before=[...f.values.entries()],reads=f.state.privateReads.length;
+ const status=await app.readAccountStatus();assert.equal(status.status,'fee-ready');assert.equal(inspections,0);
+ assert(f.state.privateReads.length>reads);assert(f.state.privateReads.some(x=>x.name==='get_deposit_ids'));
+ assert.deepEqual([...f.values.entries()],before,'status never rewrites confirmed history');
+ assert.equal((await app.readFundingState()).status,'recovering');assert.equal(inspections,1,'funding authority still inspects receipt');
+ await assert.rejects(app.prepare({type:'like',post:'6'}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(inspections,2);
+});
+for(const synchronized of [false,undefined])test('status historical shortcut requires synchronized native operation: '+synchronized,async()=>{
+ const f=fixture(),intent=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(intent.intentId);
+ f.options.accountSession.operationScope=()=>synchronized===undefined?null:{synchronized};
+ let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
+ assert.equal((await f.restart().readAccountStatus()).status,'recovering');assert.equal(inspections,1);
+});
+test('pending withdrawal keeps ordinary history on the canonical status path',async()=>{
+ const f=collateralFixture(),exit=await f.app.prepare({type:'withdraw',deposit:'9'});await f.app.submitPrepared(exit.intentId);
+ const intent=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(intent.intentId);
+ const scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
+ const status=await f.restart().readAccountStatus();assert.equal(status.status,'recovering');assert.equal(inspections,1);assert.equal(status.pendingWithdrawal.intentId,exit.intentId);
+});

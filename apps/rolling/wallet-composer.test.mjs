@@ -125,10 +125,10 @@ test('opening and reopening the social composer reuses the unlocked session whil
  f.balance.resolve({available:true,availableCredit:'0'});
 });
 
-function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statusGate=null,signInGate=null,status='fee-ready',freshAccount=false,savedClient=null,funding=null}={}){
+function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statusGate=null,signInGate=null,status='fee-ready',freshAccount=false,savedClient=null,funding=null,prepareOpening=null}={}){
  const document=dom(t),statusStarted=Promise.withResolvers(),calls={load:0,restore:0,signIn:0,sessions:0,status:0,names:0,moderator:0,signOut:0};let account=null,configured;
  const identity=document.createElement('section');document.body.append(identity);
- const session={busy:false,...(funding?{funding}:{}),application:{
+ const session={busy:false,...(funding?{funding}:{}),...(prepareOpening?{prepareOpening}:{}),application:{
   async readAccountStatus(){calls.status++;statusStarted.resolve();if(statusGate){session.busy=true;await statusGate.promise;session.busy=false;}return {status,depositIds:status==='fee-ready'?['9']:[]};},
   async ownedIdentities(){calls.names++;return {identities:[],records:[],nextCursor:null};},
   async readModeratorStatus(){calls.moderator++;return {authorized:false};}
@@ -1237,4 +1237,15 @@ for(const replaceOwner of [false,true])test(`fresh setup quote failure preserves
  assert(!f.document.body.textContent.includes('Your account could not connect'));assert(!f.document.body.textContent.includes('Wallet sign-in could not complete'));
  const refresh=f.document.querySelectorAll('button').find(b=>b.textContent==='Refresh price');assert(refresh);assert.equal(refresh.disabled,false);refresh.fire('click');
  await f.document.until(()=>quotes===2&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.calls.sessions,1);assert.equal(sends,0);
+});
+
+for(const failQuote of [false,true])test(`normal sign-in uses checked opening status without reread; quote failure=${failQuote}`,{timeout:3000},async t=>{
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers();let openingCalls=0,quotes=0,sends=0;
+ const quote={kind:'rolling-aggregate-eth-v1',privateFeeCap:'100',slippageBps:100,breakdown:{collateralWei:'100',fee:{maxEth:'20',amount:'200'},bok:{maxEth:'0',amount:'0'},gasBudgetWei:'10',maximumTotalWei:'130'}};
+ const f=signInFixture(t,{funding:{prepareStarter:async()=>{quotes++;return quote;},confirm:async()=>{sends++;}},prepareOpening:async()=>{openingCalls++;entered.resolve();await gate.promise;return {status:{status:'fee-needed',depositIds:[]},...(failQuote?{quoteError:Object.assign(Error('private quote detail'),{code:'AGGREGATE_LIQUIDITY_UNAVAILABLE'})}:{quote})};}});
+ await f.panel.initialize();f.panel.open({type:'post'});f.document.querySelectorAll('button').find(b=>b.textContent.includes('Connect MetaMask')).fire('click');await entered.promise;
+ assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Confirm payment'));gate.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(openingCalls,1);assert.equal(f.calls.status,0);assert.equal(quotes,0);assert.equal(sends,0);assert(!f.document.body.textContent.includes('private quote detail'));assert(!f.document.body.textContent.includes('Your account could not connect'));
+ if(failQuote)assert(f.document.body.textContent.includes('The exchange cannot currently quote this amount. No payment was sent.'));
+ else{const pay=f.document.querySelectorAll('button').find(b=>b.textContent==='Confirm payment');assert(pay);assert.equal(pay.disabled,false);}
 });

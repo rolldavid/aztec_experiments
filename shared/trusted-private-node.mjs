@@ -17,9 +17,22 @@ const diagnostics = new WeakMap();
 const canonicalBlocks = new WeakMap();
 export function getTrustedNodeCanonicalBlock(snapshot, number, hash) {
   if(number === undefined && hash === undefined)return undefined;
-  return canonicalBlocks.get(snapshot)?.find(record =>
+  return canonicalBlocks.get(snapshot)?.blocks.find(record =>
     (number === undefined || record.number === number) &&
     (hash === undefined || record.hash === hash))?.data;
+}
+// Only a successful inspection's exact node can supply construction metadata.
+// Return detached native values: callers cannot mutate the recorded identity.
+function detachedInfo(value){
+ if(value===null||typeof value!=='object')return value;
+ if(ArrayBuffer.isView(value))return value.constructor.from(value);
+ if(value instanceof ArrayBuffer)return value.slice(0);
+ const result=Array.isArray(value)?[]:Object.create(Object.getPrototypeOf(value));
+ for(const key of Object.keys(value))result[key]=detachedInfo(value[key]);return result;
+}
+export function getTrustedNodeSnapshotInfo(snapshot,node){
+ const record=canonicalBlocks.get(snapshot);if(!record||record.node!==node)throw fail('IDENTITY');
+ return detachedInfo(record.info);
 }
 export function getTrustedNodeFailureDiagnostic(error) { return diagnostics.get(error) ?? null; }
 function snapshotDiagnostic(tips,state,stamp) {
@@ -105,12 +118,12 @@ export async function inspectTrustedNode(node, options) {
     // These requests contain public metadata only. Read and validate identity
     // alongside the detached chain snapshot; no private work starts until the
     // whole group and its canonical anchors have passed.
-    const [,tips,state,stamp]=await readTogether([
+    const [info,tips,state,stamp]=await readTogether([
       async()=>{const info=await node.getNodeInfo();
         const chainId=info?.l1ChainId,version=info?.rollupVersion,realProofs=info?.realProofs,rollup=info?.l1ContractAddresses?.rollupAddress;
         if(!natural(chainId)||!natural(version)||typeof realProofs!=='boolean')throw fail('UNAVAILABLE');
         if(String(chainId)!==p.chainId||String(version)!==p.version||hex(rollup,20)!==p.rollup||realProofs!==p.proofsEnabled)throw fail('IDENTITY');
-        return true;},
+        return detachedInfo(info);},
       async()=>{const value=await node.getChainTips();return {
         proposed:block(value?.proposed),checkpointed:block(value?.checkpointed?.block),
         proven:block(value?.proven?.block),finalized:block(value?.finalized?.block)};},
@@ -161,7 +174,7 @@ export async function inspectTrustedNode(node, options) {
       ...(historical?{readinessTier:p.readinessTier,readinessBlockNumber:selected.number,readinessBlockHash:selected.hash}:{}),
       finalizedBlockNumber:finalized.number,oldestHistoricBlockNumber:oldest,
       syncedL1Timestamp:String(stamp),checkedAtSeconds:now,lagSeconds:lag});
-    canonicalBlocks.set(result,finalBlocks);return result;
+    canonicalBlocks.set(result,{node,info,blocks:finalBlocks});return result;
     }
   } catch(error) { throw failures.has(error) ? error : fail('UNAVAILABLE'); }
 }
@@ -231,7 +244,8 @@ async function privateFetch(host, body, extraHeaders={}) {
  * One immediate native retry for allowlisted reads on HTTP 502/503/504 only.
  * No submission retries, redirects, alternate endpoint or ordinary-node fallback.
  */
-export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsEnabled=true,allowLocalDev=false,maxLagSeconds=120,readinessTier='proposed'}) {
+export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsEnabled=true,allowLocalDev=false,maxLagSeconds=120,readinessTier='proposed',onReady}) {
+  if(onReady!==undefined&&typeof onReady!=='function')throw fail('CONFIG');
   const p=policy({expectedNetworkScope,proofsEnabled,maxLagSeconds,readinessTier}),host=endpoint(url,allowLocalDev);
   // This owned gateway accepts eight calls per admission. Keep one zero-window
   // native batch instead of repeating its readiness checks for groups of three.
@@ -247,7 +261,7 @@ export async function createTrustedPrivateNode({url,expectedNetworkScope,proofsE
    };
    return [name,{enumerable:true,get:()=>method}];
   }))));
-  await inspectTrustedNode(node,{expectedNetworkScope,proofsEnabled,maxLagSeconds,readinessTier});
-  trusted.add(node);return node;
+  const snapshot=await inspectTrustedNode(node,{expectedNetworkScope,proofsEnabled,maxLagSeconds,readinessTier});
+  trusted.add(node);if(onReady)await onReady(snapshot);return node;
 }
 export function isTrustedPrivateNode(node) { return trusted.has(node); }

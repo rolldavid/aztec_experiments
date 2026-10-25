@@ -470,9 +470,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
  }
  function unlocked(){if(invalidated||reloadRequired)return false;const current=runtime?runtime.getAccount():null;if(accountIdentity&&current!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');return false;}return !!current;}
- async function refresh(){
+ async function refresh(openingStatus){
   const epoch=accountEpoch;checkAccount(epoch);balances=null;bokAccounting=null;recoveryInspection=null;invalidateBokBalance();blocked=true;
-  const next=await session.application.readAccountStatus();
+  const next=openingStatus??await session.application.readAccountStatus();
   checkAccount(epoch);status=next;intent=next.intent??null;setPendingWithdrawal(next.pendingWithdrawal??null);
   if(next.status==='recovering'){
    if(!intent?.intentId)throw Error('Missing recovery intent');
@@ -482,7 +482,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function connect(){return connectPending??=connectAccount().finally(()=>{connectPending=null;});}
  async function connectAccount(){
-  const epoch=accountEpoch,attempt=++initializationAttempt;let needsFundingQuote=false;
+  const epoch=accountEpoch,attempt=++initializationAttempt;let needsFundingQuote=false,openingQuoteError;
   dialog.removeAttribute('data-rolling-initialization');
   if(setupMode)note('Connecting to the network…');
   try{
@@ -522,9 +522,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    // actual state; missing local records never mean an empty account.
    status={status:'fee-needed',depositIds:[]};intent=null;blocked=false;view='funding';
    needsFundingQuote=true;
+  }else if(setupMode&&session.funding&&typeof session.prepareOpening==='function'){
+   const opening=await session.prepareOpening({asset:fundingInputs.asset});checkAccount(epoch);
+   await refresh(opening.status);checkAccount(epoch);
+   if(opening.quote||opening.quoteError){view='funding';fundingQuoteRequested=true;fundingQuote=opening.quote??null;openingQuoteError=opening.quoteError;}
   }else await refresh();checkAccount(epoch);note('');
   }catch{if(attempt===initializationAttempt)initializationAttempt++;throw connectionFailure;}
   // Connection succeeded. A quote failure must retain its own safe diagnosis.
+  if(openingQuoteError)throw openingQuoteError;
   if(needsFundingQuote){try{await prepareFundingQuote();checkAccount(epoch);}catch(failure){checkAccount(epoch);throw failure;}}
  }
  function ensureRuntime(){

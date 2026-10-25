@@ -36,7 +36,7 @@ test('query construction receives captured scope and rejects without fallback',a
  const {input}=options(),f=await deploymentFixture(),original=Object.assign(Error('Trusted service unavailable'),{code:'BB_TRUSTED_NODE_UNAVAILABLE'});let calls=0,privateReads=0,released=false;const diagnostics=[];
  Object.assign(input,f.options);input.onProgress=value=>diagnostics.push(value);
  input.locks={request:async(_name,_config,fn)=>{try{return await fn({});}finally{released=true;}}};
- input.sdk={...f.options.sdk,createTrustedPrivateNode:async value=>{calls++;assert.deepEqual(value,{url:'http://127.0.0.1:1',allowLocalDev:true,
+ input.sdk={...f.options.sdk,createTrustedPrivateNode:async value=>{calls++;const {onReady,...captured}=value;assert.equal(typeof onReady,'function');assert.deepEqual(captured,{url:'http://127.0.0.1:1',allowLocalDev:true,
   expectedNetworkScope:{chainId:'31337',version:'1',rollup:f.options.config.network.rollupAddress},proofsEnabled:true,readinessTier:'checkpointed'});throw original;},
   openPXEStore:async()=>{privateReads++;throw Error('Unexpected store access');},createPXE:async()=>{privateReads++;throw Error('Unexpected PXE access');}};
  await assert.rejects(createRollingWalletSession(input),{code:'ROLLING_DEPLOYMENT_INVALID'});assert.equal(calls,1);assert.equal(privateReads,0);assert.equal(released,true);
@@ -1654,3 +1654,13 @@ for(const [method,label]of [['readAccountStatus','account.sync'],['readBokStatus
 });
 
 test('private session no longer exposes chain saved-item recovery',async()=>{const f=await sessionFixture(),session=await createRollingWalletSession(f.input);assert.equal(Object.hasOwn(session.application,'readPreferences'),false);assert.equal(Object.hasOwn(session.application,'readColdPreferences'),false);assert(!f.state.events.includes('preference-events'));await session.close();});
+
+for(const rejectReady of [false,true])test(`opening local store precedes held prover readiness; rejection=${rejectReady}`,async()=>{
+ const f=await sessionFixture(),ready=Promise.withResolvers(),storeOpened=Promise.withResolvers(),open=f.input.sdk.openPXEStore;
+ f.input.proverReady=ready.promise;f.input.sdk.openPXEStore=async(...args)=>{const result=await open(...args);storeOpened.resolve();return result;};
+ let done=false;const pending=createRollingWalletSession(f.input).then(value=>(done=true,value),error=>{done=true;throw error;});pending.catch(()=>{});
+ await storeOpened.promise;await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.state.active,true);assert(!f.state.events.includes('create-pxe'));
+ if(rejectReady){const original=Error('verifier failed');ready.reject(original);await assert.rejects(pending,error=>error===original);assert.equal(f.state.closes,1);assert(!f.state.events.includes('create-pxe'));}
+ else{ready.resolve();const session=await pending;assert(f.state.events.includes('create-pxe'));await session.close();}
+ assert.equal(f.state.active,false);
+});

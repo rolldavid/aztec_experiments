@@ -15,6 +15,12 @@ export async function timeFundingPreparation(observer, step, operation) {
   observeRollingSetup(observer, {stage:'funding-preparation', step, state:'failed', start,
    timeOrigin:performance.timeOrigin, duration:performance.now()-start, code:rollingSetupErrorCode(error)});
   throw error;
+ } finally {
+  // Fixed stage labels only; timing never changes funding or error handling.
+  if(FUNDING_PREPARATION_STAGES.includes(step))try{
+   const name='rolling.funding-preparation.'+step;performance.clearMeasures(name);
+   performance.measure(name,{start,end:performance.now()});
+  }catch{}
  }
 }
 const fail=code=>Object.assign(Error('Funding is unavailable. Preserve saved recovery records.'),{code:'ROLLING_FUNDING_'+code});
@@ -118,7 +124,11 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   check(old?.txHash===value.previousTxHash&&old.confirmedRequest,'MISMATCH');original(saved,old.confirmedRequest);
   const result=await read(()=>sdk.verifyEthereumIntentReceipt(provider,old.confirmedRequest,old.txHash));
   check(result?.outcome===(old.paymentOutcome??'success'),'RECOVERY_REQUIRED');
-  await terminalPayment({...result,request:old.confirmedRequest});
+  check(result&&['success','reverted'].includes(result.outcome),'RECOVERY_REQUIRED');
+  // This exact verifier just checked the successful aggregate receipt's
+  // canonical block after all effect reads. No result is retained across calls.
+  // Reverted outcomes retain their separate network/terminal qualification.
+  if(result.outcome==='reverted')await terminalPayment({...result,request:old.confirmedRequest});
   if(result.outcome==='success')await completedClaim(old);
   return {...result,request:old.confirmedRequest};
  }
@@ -243,7 +253,8 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    });
    if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
    const {previous,priorPayment}=await timeFundingPreparation(onProgress,'journal',async()=>{const previous=await stored();return {previous,priorPayment:await archivePrevious(previous)};});
-   const wallet=await timeFundingPreparation(onProgress,'wallet',async()=>{const wallet=await read(captureWallet);await read(wallet.guard);return wallet;});
+   // Production capture resolves only after checking the live wallet and chain.
+   const wallet=await timeFundingPreparation(onProgress,'wallet',()=>read(captureWallet));
    const depositor=wallet.address;
    const existing=await read(async()=> (await journal(depositor)).inspectSummary());check(existing===null||priorPayment&&existing.txHash===priorPayment.txHash&&existing.outcome===priorPayment.outcome,'RECOVERY_REQUIRED');
    let nonce=await timeFundingPreparation(onProgress,'nonce',()=>read(()=>provider.getTransactionCount(depositor,'pending')));if(priorPayment?.request.from===depositor)nonce=Math.max(nonce,priorPayment.request.nonce+1);check(Number.isSafeInteger(nonce)&&nonce>=0);

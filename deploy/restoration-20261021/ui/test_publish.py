@@ -8,6 +8,7 @@ import os
 import pathlib
 import re
 import stat
+import subprocess
 import shutil
 import tempfile
 import types
@@ -307,6 +308,7 @@ class RepeatPublication(unittest.TestCase):
     def test_capacity_counts_replacements_and_new_assets_once_before_stage_mutations(self):
         source = self.old_source
         old_bytes, new_bytes = b'old artifact', b'new artifact contents'
+        if getattr(self,'large_assets',False):new_bytes*=10000
         asset = '.build/sdk/sdk.mjs'
         manifest = '.build/rolling-wallet/manifest.json'
         for directory in [source, self.packet / 'files']:
@@ -326,6 +328,7 @@ class RepeatPublication(unittest.TestCase):
         existing.parent.mkdir(parents=True); existing.write_bytes(old_bytes)
         payload_bytes = sum((self.packet / 'files' / name).stat().st_size for name in [asset, manifest])
         required_data = payload_bytes + len(new_bytes) + len(b'page') + 1024 * 1024
+        if len(new_bytes)>=100*1024:required_data+=len(new_bytes)+65536
         self.ns['shutil'] = types.SimpleNamespace(disk_usage=lambda _: types.SimpleNamespace(free=required_data + 1024**3 - 1))
         with self.assertRaisesRegex(RuntimeError, 'Insufficient disk space'): self.ns['capacity_preflight']()
         self.assertEqual(list(self.new_source.iterdir()), [])
@@ -339,6 +342,10 @@ class RepeatPublication(unittest.TestCase):
         export = next(i for i, value in enumerate(calls) if value.startswith('export_assets('))
         self.assertLess(check, copy); self.assertLess(check, export)
 
+
+    def test_capacity_includes_brotli_upper_bound_before_any_stage_mutation(self):
+        self.large_assets=True
+        self.test_capacity_counts_replacements_and_new_assets_once_before_stage_mutations()
 
     def test_native_overlay_allows_only_the_exact_owner_oracle(self):
         native = 'node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js'
@@ -461,6 +468,65 @@ class SharedReleaseDependencies(unittest.TestCase):
         with self.assertRaises(AssertionError): self.ns['clone_source']()
         self.assertFalse(self.next.exists())
 
+
+
+
+
+class BrotliPublication(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
+        class HostPath(type(pathlib.Path())):
+            def lstat(self):
+                fields=list(super().lstat());fields[4]=0
+                return os.stat_result(fields)
+        self.root=HostPath(self.temp.name).resolve();self.source=self.root/'source';self.source.mkdir()
+        self.base=self.root/'public';self.destination=self.base/'release'
+        self.node=shutil.which('node');self.assertIsNotNone(self.node)
+        self.ns={'pathlib':pathlib,'stat':stat,'os':os,'subprocess':subprocess,'hashlib':hashlib,'json':json,'re':re,
+                 'BASE':self.base,'SOURCE':self.source,'m':{'node':self.node},'sha':lambda value:hashlib.sha256(value).hexdigest()}
+        exec(compile(FUNCTIONS,str(SOURCE_FILE),'exec'),self.ns)
+        original_atomic=self.ns['atomic']
+        self.ns['atomic']=lambda p,data,mode=0o644,uid=0,gid=0:original_atomic(p,data,mode,os.getuid(),os.getgid())
+        self.data=b'export const example = "verified asset";\n'*4000
+        (self.source/'sdk.mjs').write_bytes(self.data)
+        self.sha=hashlib.sha256(self.data).hexdigest()
+        self.description={'runtime':{'schemaVersion':1},'files':{'/wallet/sdk.mjs':{'file':'sdk.mjs','bytes':len(self.data),'sha256':self.sha}}}
+        self.target=self.base/'by-hash'/self.sha/'wallet/sdk.mjs'
+
+    def publish(self,destination=None):
+        self.ns['export_assets'](self.source,self.description,destination or self.destination)
+
+    def test_actual_node_brotli_roundtrip_original_hash_and_linked_delivery(self):
+        self.publish();sidecar=self.target.with_name('sdk.mjs.br')
+        decoded=subprocess.run([self.node,'-e',"process.stdout.write(require('node:zlib').brotliDecompressSync(require('node:fs').readFileSync(0)))"],input=sidecar.read_bytes(),check=True,capture_output=True).stdout
+        self.assertEqual(decoded,self.data);self.assertLess(sidecar.stat().st_size,len(self.data))
+        self.assertEqual(self.target.read_bytes(),self.data)
+        self.assertEqual((self.destination/'wallet/sdk.mjs.br').stat().st_ino,sidecar.stat().st_ino)
+        self.assertEqual(stat.S_IMODE(sidecar.stat().st_mode),0o444)
+        second=self.base/'second';self.publish(second)
+        self.assertEqual((second/'wallet/sdk.mjs.br').stat().st_ino,sidecar.stat().st_ino)
+        # Stage inventory naturally binds generated delivery encodings too.
+        self.assertIn('wallet/sdk.mjs.br',[str(p.relative_to(second)) for p in second.rglob('*') if p.is_file()])
+
+    def test_corrupt_or_symlink_sidecar_is_rejected_without_replacing_original(self):
+        self.publish();sidecar=self.target.with_name('sdk.mjs.br');original=self.target.read_bytes()
+        sidecar.unlink();sidecar.write_bytes(b'corrupt');sidecar.chmod(0o444)
+        with self.assertRaises(AssertionError):self.publish(self.base/'corrupt')
+        sidecar.unlink();sidecar.symlink_to(self.target)
+        with self.assertRaises(AssertionError):self.publish(self.base/'symlink')
+        self.assertEqual(self.target.read_bytes(),original)
+
+    def test_wrong_decoded_hash_rejected_before_compression_or_publication(self):
+        self.description['files']['/wallet/sdk.mjs']['sha256']='0'*64
+        self.ns['brotli_bytes']=lambda _:self.fail('Compression preceded input authentication')
+        with self.assertRaises(AssertionError):self.publish()
+        self.assertFalse(self.base.exists())
+
+    def test_only_large_javascript_assets_are_compressed(self):
+        selected=self.ns['brotli_asset']
+        self.assertTrue(selected('/wallet/sdk.js',102400));self.assertTrue(selected('/wallet/runtime.mjs',102400))
+        for url,size in [('/crs/data.bin',1000000),('/wallet/runtime.json',1000000),('/wallet/small.js',102399)]:
+            self.assertFalse(selected(url,size))
 
 if __name__ == '__main__':
     unittest.main()

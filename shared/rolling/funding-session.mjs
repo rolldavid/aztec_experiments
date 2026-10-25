@@ -91,6 +91,27 @@ export async function fundingUsdEstimate({ethers,provider,chainId,wei}){
  try{return usdAmount(await fundingUsdRate({ethers,provider,chainId}),wei);}catch{return null;}
 }
 
+// One held account operation. These public reads never prepare custody or imply
+// an empty account; the native result remains the only signup decision.
+export async function prepareRollingFundingOpening({asset,readStatus,readAllocation,readRate,prepareQuote,guard}){
+   await guard();if(!['ETH','USDC'].includes(asset))throw fail('ROLLING_FUNDING_INVALID');
+   const reads=await Promise.allSettled([
+    readStatus,
+    readAllocation,
+    readRate,
+   ].map(read=>Promise.resolve().then(read)));
+   await guard();if(reads[0].status==='rejected')throw reads[0].reason;
+   const status=reads[0].value;
+   // Empty local custody is not evidence of an empty account. Only the real
+   // native status chooses signup; funded/recovering accounts never prepare it.
+   if(status?.intent||!['fee-needed','collateral-pending'].includes(status?.status)||!Array.isArray(status.depositIds)||status.depositIds.length!==0)return {status};
+   try{
+    for(const result of reads.slice(1))if(result.status==='rejected')throw result.reason;
+    const quote=await prepareQuote(reads[1].value);await guard();
+    return {status,quote:asset==='USDC'?quote:Object.freeze({...quote,usdEstimate:usdAmount(reads[2].value,quote.breakdown.maximumTotalWei)})};
+   }catch(quoteError){await guard();return {status,quoteError};}
+}
+
 // Both early payment and mature native callers enter this SAME cross-tab
 // lease. Native callers acquire account -> funding; early calls never acquire
 // the native account lease. Internal aggregate calls stay inside one method.
@@ -162,6 +183,12 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
  return Object.freeze({aggregate,node,defaultPrivateFeeCap,usdcAvailable:scope.usdcRelayAddress!==undefined,assertContext,
   async registrationDeployment(options){await guard();const result=await readRollingDeploymentRegistration(deploymentPreparation,options);await guard();return result;},
   async bindPrivateContext(context){await guard();if(privateContext||!context||['readExistingCredit','ensureBok','reconcileClaim'].some(key=>typeof context[key]!=='function'))throw fail('ROLLING_SESSION_CONFIG');privateContext=Object.freeze({...context});},
+  prepareOpening(readStatus,{asset='ETH'}={}){
+   return prepareRollingFundingOpening({asset,readStatus,guard,
+    readAllocation:()=>timeFundingPreparation(onProgress,'allocation',()=>starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap:defaultPrivateFeeCap,provider:fundingProvider})),
+    readRate:()=>asset==='USDC'?null:fundingUsdRate({ethers,provider:fundingProvider,chainId:network.chainId}),
+    prepareQuote:allocation=>aggregate.prepare(allocation)});
+  },
   async prepareStarter({asset}){
    await guard();
    // The fiat reference does not depend on the payment amount or authorize it.

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {gunzipSync} from 'node:zlib';
-import {inspectTrustedNode,createTrustedPrivateNode,isTrustedPrivateNode,getTrustedNodeFailureDiagnostic,getTrustedNodeCanonicalBlock} from './trusted-private-node.mjs';
+import {inspectTrustedNode,createTrustedPrivateNode,isTrustedPrivateNode,getTrustedNodeFailureDiagnostic,getTrustedNodeCanonicalBlock,getTrustedNodeSnapshotInfo} from './trusted-private-node.mjs';
 import {BlockHeader} from '@aztec-labs/stdlib/tx';
 import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
 import {L1ContractsNames} from '@aztec-labs/ethereum/l1-contract-addresses';
@@ -416,3 +416,20 @@ test('identity rejection drains already-started public metadata without releasin
  await entered.promise;await turn();assert.equal(finished,false);assert.equal(f.calls.some(x=>x[0]==='getBlockData'),false);
  gate.resolve();assert.equal((await result).code,'BB_TRUSTED_NODE_IDENTITY');
 });
+
+test('snapshot handoff binds exact successful node and returns independent native metadata',async()=>{
+ const f=fixture(),snapshot=await inspectTrustedNode(f.node,options),first=getTrustedNodeSnapshotInfo(snapshot,f.node);
+ assert.equal(first.l1ChainId,31337);first.txsLimits.gas.daGas=999;f.info.l1ChainId=1;
+ const second=getTrustedNodeSnapshotInfo(snapshot,f.node);assert.equal(second.l1ChainId,31337);assert.equal(second.txsLimits.gas.daGas,100);
+ for(const [value,node]of [[{},f.node],[{...snapshot},f.node],[snapshot,{...f.node}],[undefined,f.node]])assert.throws(()=>getTrustedNodeSnapshotInfo(value,node),{code:'BB_TRUSTED_NODE_IDENTITY'});
+ assert.equal(f.calls.filter(([name])=>name==='getNodeInfo').length,1);
+});
+test('snapshot handoff factory exposes actual safeRPC native values only after full success',async()=>withFetch(async set=>{
+ const f=fixture();f.node.getSyncedL1Timestamp=async()=>BigInt(Math.floor(Date.now()/1000));let snapshot,notified=0;
+ set(async(_url,init)=>new Response(jsonStringify(await responseFor(f,JSON.parse(init.body)))));
+ const node=await create({onReady:value=>{snapshot=value;notified++;}});
+ assert.equal(notified,1);const info=getTrustedNodeSnapshotInfo(snapshot,node);
+ assert.equal(info.l1ContractAddresses.rollupAddress.toString(),rollup);assert.notEqual(typeof info.l1ContractAddresses.rollupAddress,'string');
+ const later=getTrustedNodeSnapshotInfo(snapshot,node);assert.notEqual(later.l1ContractAddresses.rollupAddress,info.l1ContractAddresses.rollupAddress);assert.equal(later.l1ContractAddresses.rollupAddress.toString(),rollup);
+ f.state.treesAreSynched=false;await rejects(()=>create({onReady:()=>{notified++;}}),'UNSYNCED');assert.equal(notified,1);
+}));

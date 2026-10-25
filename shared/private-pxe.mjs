@@ -104,7 +104,7 @@ export async function createPXE(node,config,options={}) {
   let selected=options;
   const readOnly=options.readOnly===true;
   let remote=options.remoteProver;
-  const construction=await beginPXEConstruction(node),info=readPXEConstruction(construction,node);
+  const construction=await beginPXEConstruction(node,{nodeSnapshot:options.nodeSnapshot}),info=readPXEConstruction(construction,node);
   const proofsEnabled=provingEnabledForNode(info);
   if(info.realProofs===false && Number(info.l1ChainId)!==31337)throw Error('Disabled proofs require local devnet');
   const transport=value=>value?createRemoteProverClient({...value,chainId:info.l1ChainId,rollupVersion:info.rollupVersion,proofsEnabled:true}):null;

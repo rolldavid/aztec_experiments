@@ -408,11 +408,20 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   // Inspect only the authenticated current workflow. Funding needs this fence
   // before a claim, not unrelated deposit and private fee balance utilities.
-  async function fundingWorkflowState(emptyOnly=false){
+  async function fundingWorkflowState(emptyOnly=false,statusView=false){
     await guard();const saved=await (await slot()).read();await localGuard();
     // A genuinely empty authenticated workflow has no native state to inspect.
-    // Every saved record still takes the normal synchronized authority path.
+    // Authorization callers still inspect every saved record normally.
     if(emptyOnly)return saved.value===null?{status:'ready'}:null;
+    // Status presentation still reads fresh native balances below. Completed
+    // ordinary history grants no authority to claim, prepare, prove or send.
+    const record=saved.value,owner=statusView?getOperationScope():null;
+    if(owner?.synchronized===true&&record?.status==='confirmed'&&
+      ['post','reply','quote','repost','like','unlike','name','bio','avatar','subboard'].includes(record.action?.type)&&
+      !record.bok&&!record.fundingBok&&!record.bokReleaseSource&&!record.bokRequestScope&&!record.withdrawal&&!record.replacementReview&&
+      !await pendingExitSummary()){
+      await localGuard();check(getOperationScope()===owner&&owner.synchronized===true,'ROLLING_CONTEXT_CHANGED');return {status:'ready'};
+    }
     if(saved.value&&saved.value.status!=='cancelled'){
       if(!terminalHistory(saved.value))await checkBokRecord(saved.value);
       if(!usableStatus(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
@@ -1023,7 +1032,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     },
     async readAccountStatus(){
       if(!session)return {status:'locked'};
-      return exclusive(async()=>{const workflow=await fundingWorkflowState();if(workflow.status==='recovering')return {...workflow,pendingWithdrawal:await pendingExitSummary()};
+      return exclusive(()=>measure('account.status',async()=>{const workflow=await measure('account.status.workflow',()=>fundingWorkflowState(false,true));if(workflow.status==='recovering')return {...workflow,pendingWithdrawal:await pendingExitSummary()};
         const operation=getOperationScope(),context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
         await localGuard();
         // Enqueue discovery first, then overlap independent public fee metadata.
@@ -1031,10 +1040,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const reads=await Promise.allSettled([
           async()=>{
             if(operation?.synchronized===true){
-              await context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'});
+              await measure('account.status.discovery-queued',()=>context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'}));
               await localGuard();check(getOperationScope()===operation&&operation.synchronized===true&&session.wallet===context.wallet&&context.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
             }
-            const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;
+            const ids=await measure('account.status.deposit-ids-queued',async()=>utility(await contract(),'get_deposit_ids',[session.owner,0]));check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;
           },
           ()=>pendingExitSummary(),()=>payment(),
         ].map(read=>Promise.resolve().then(read)));
@@ -1047,7 +1056,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const fee=reads[2].value;
         return {status:ids.some(id=>BigInt(id)!==0n)?'fee-ready':'collateral-pending',privateFeeCredit:String(fee.availableCredit),
           depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal,postEligibility:'requires-action-simulation'};
-      });
+      }));
     },
     async readProfile({name}={}){return exclusive(async()=>{
       await guard();const id=field(name,true),record=await utility(await contract(),'profile_state',[id]);

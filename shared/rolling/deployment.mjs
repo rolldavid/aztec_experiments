@@ -75,7 +75,7 @@ export async function prepareRollingDeployment(preparation,{contextGuard,onProgr
   state.pending=pending;pending.then(result=>{if(state.pending===pending)state.result=result;},()=>{});pending.catch(()=>{if(state.pending===pending)state.pending=null;});
  }
  const result=await state.pending;await contextGuard();
- return Object.freeze({node:result.node,deployment:result.deployment,preparation});
+ return Object.freeze({node:result.node,nodeSnapshot:result.nodeSnapshot,deployment:result.deployment,preparation});
 }
 
 // Identity/provenance only. This synchronous assertion does not grant readiness.
@@ -100,7 +100,7 @@ export async function readRollingDeploymentRegistration(preparation,options={}){
   // Recheck provenance after the await, before handing detached SDK values to
   // a second owner. No caller-supplied record or time-based validity is accepted.
   assertRollingDeploymentPreparation(preparation,options);
-  const registration=Object.freeze({node:result.node,deployment:deploymentRecord(result.deployment)});
+  const registration=Object.freeze({node:result.node,nodeSnapshot:result.nodeSnapshot,deployment:deploymentRecord(result.deployment)});
   emit('complete');return registration;
  }catch(error){emit('failed',error);throw error;}
 }
@@ -158,9 +158,11 @@ async function verifyDeployment({sdk,node,ethers,config,boardArtifact,privateFee
  let provider,firstFailure;
  const emit=(step,state,error)=>observeRollingSetup(onProgress,{stage:'deployment-initialization',step,state,code:state==='failed'?rollingSetupErrorCode(error):null});
  const stage=async(step,operation)=>{
+  let started;try{if(ROLLING_DEPLOYMENT_STAGES.includes(step))started=globalThis.performance?.now();}catch{}
   emit(step,'started');
   try{const value=await operation();emit(step,'complete');return value;}
   catch(error){firstFailure??={step,error};throw error;}
+  finally{try{if(Number.isFinite(started)){const name='rolling.deployment.'+step;performance.clearMeasures(name);performance.measure(name,{start:started,end:performance.now()});}}catch{/* Diagnostics never affect deployment authority. */}}
  };
  try{
   const {b,f,network,endpoint}=await stage('config',async()=>{
@@ -182,23 +184,29 @@ async function verifyDeployment({sdk,node,ethers,config,boardArtifact,privateFee
   // Public metadata and cryptographic artifact derivation are independent of
   // one another. The owned factory's successful inspection is the prerequisite
   // for using its exact returned client; the final fresh inspection remains.
+  let initialSnapshot;
   const ready=stage('node-readiness',async()=>{
    if(preparation){
     check(preparation.query&&typeof sdk.createTrustedPrivateNode==='function');
-    node=await sdk.createTrustedPrivateNode({...preparation.query,expectedNetworkScope:network,proofsEnabled,readinessTier:'checkpointed'});
+    node=await sdk.createTrustedPrivateNode({...preparation.query,expectedNetworkScope:network,proofsEnabled,readinessTier:'checkpointed',onReady:snapshot=>{initialSnapshot=snapshot;}});
     check(sdk.isTrustedPrivateNode(node));
-   }else await sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled});
+   }else initialSnapshot=await sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled});
    return node;
   });
   const boardClass=stage('board-class',async()=>(await sdk.getContractClassFromArtifact(boardArtifact)).id);
   const checkpoint=stage('checkpoint',async()=>{
-   const client=await ready,head=await client.getBlockData('checkpointed');
+   const client=await ready;
+   // Reuse only the canonical checkpoint already read by this exact initial
+   // inspection. The final numeric canonical read remains fresh below.
+   const head=(initialSnapshot&&sdk.getTrustedNodeCanonicalBlock?.(initialSnapshot,initialSnapshot.checkpointedBlockNumber))??await client.getBlockData('checkpointed');
    const number=Number(head?.header?.globalVariables?.blockNumber),hashValue=head?.blockHash?.toString();
    check(Number.isSafeInteger(number)&&number>0&&hash(hashValue));return {number,hash:hashValue,reference:{hash:hashValue}};
   });
   const boardInstance=stage('board-instance',async()=>{
-   const [classId,anchor,client]=await together([()=>boardClass,()=>checkpoint,()=>ready]);
-   const published=await client.getContract(address,anchor.reference);
+   const [classId,published]=await together([()=>boardClass,async()=>{
+    const [anchor,client]=await together([()=>checkpoint,()=>ready]);
+    return client.getContract(address,anchor.reference);
+   }]);
    check(published&&same(published.address,address)&&same(published.currentContractClassId,classId)&&same(published.originalContractClassId,classId)&&same(await sdk.computeContractAddressFromInstance(published),address));return published;
   });
   const publicConfig=stage('public-config',async()=>{
@@ -216,11 +224,13 @@ async function verifyDeployment({sdk,node,ethers,config,boardArtifact,privateFee
    return sdk.sha256ToField({toBuffer:()=>encoded});
   });
   const fee=stage('fee-instance',async()=>{
-   const [canonicalFee,anchor,client]=await together([
-    ()=>sdk.derivePrivateFeeInstance(privateFeeArtifact),()=>checkpoint,()=>ready,
+   const [canonicalFee,instance]=await together([
+    ()=>sdk.derivePrivateFeeInstance(privateFeeArtifact),async()=>{
+     const [anchor,client]=await together([()=>checkpoint,()=>ready]);
+     return client.getContract(new sdk.AztecAddress(new sdk.Fr(BigInt(f.contractAddress))),anchor.reference);
+    },
    ]);
    check(same(canonicalFee.address,f.contractAddress));
-   const instance=await client.getContract(canonicalFee.address,anchor.reference);
    check(instance&&same(instance.address,canonicalFee.address)&&same(instance.currentContractClassId,canonicalFee.currentContractClassId)&&same(instance.originalContractClassId,canonicalFee.originalContractClassId)&&same(await sdk.computeContractAddressFromInstance(instance),canonicalFee.address));return {canonicalFee,instance};
   });
   const l1=stage('l1-context',async()=>{
@@ -250,15 +260,17 @@ async function verifyDeployment({sdk,node,ethers,config,boardArtifact,privateFee
    const [l1Again,l2Again]=await together([()=>provider.getBlock(l1Head.number),()=>node.getBlockData(anchor.number)]);
    check(l1Again?.hash===l1Head.hash&&l2Again?.blockHash?.toString()===anchor.hash&&Number(l2Again?.header?.globalVariables?.blockNumber)===anchor.number);
   });
+  let nodeSnapshot;
   await stage('final-readiness-and-context',async()=>{
-   await together([()=>canonicalRecheck,()=>sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled})]);
+   const observations=await together([()=>canonicalRecheck,()=>sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled})]);
+   nodeSnapshot=observations[1];
    // Account/page context is checked after all in-flight verification has drained.
    await contextGuard();
   });
   const deployment=deploymentRecord({board:{address,artifact:boardArtifact,instance:published},network,portal:b.portalAddress,
    privateFee:{address:privateFee.canonicalFee.address,artifact:privateFeeArtifact,instance:privateFee.instance,gasSettings:f.gasSettings},proofsEnabled,economics:values.economics,
    checkpoint:{number:anchor.number,hash:anchor.hash},ethereumCheckpoint:{number:l1Head.number,hash:l1Head.hash},configHash:configHash.toString()});
-  return Object.freeze({node,deployment});
+  return Object.freeze({node,nodeSnapshot,deployment});
  }catch(error){const reported=firstFailure??{step:'config',error};emit(reported.step,'failed',reported.error);throw failure();}
  finally{try{provider?.destroy();}catch{/* Disposing a read-only provider cannot authorize any action. */}}
 }

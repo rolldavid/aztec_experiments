@@ -1,3 +1,4 @@
+import {getTrustedNodeSnapshotInfo} from './trusted-private-node.mjs';
 // Owned by one SDK realm. Construction metadata is never a node-wide cache.
 const constructions=new WeakMap(),classes=new WeakMap();
 const invalid=()=>Error('PXE startup provenance mismatch');
@@ -12,8 +13,8 @@ const BUILTIN_CLASS_PINS={
 const equal=(a,b)=>a.length===b.length&&(typeof a.equals==='function'?a.equals(b):a.every((value,i)=>value===b[i]));
 export function forgetContractClass(artifact){classes.delete(artifact);}
 export function nativeClassBytes(value){return new TextEncoder().encode(JSON.stringify({version:value.version,id:value.id.toString(),artifactHash:value.artifactHash.toString(),privateFunctionsRoot:value.privateFunctionsRoot.toString(),publicBytecodeCommitment:value.publicBytecodeCommitment.toString(),privateFunctions:value.privateFunctions.map(fn=>({selector:fn.selector.toString(),vkHash:fn.vkHash.toString()})),packedBytecode:Array.from(value.packedBytecode)}));}
-export async function beginPXEConstruction(node){
- const info=await node.getNodeInfo(),handle=Object.freeze({});
+export async function beginPXEConstruction(node,{nodeSnapshot}={}){
+ const info=nodeSnapshot===undefined?await node.getNodeInfo():getTrustedNodeSnapshotInfo(nodeSnapshot,node),handle=Object.freeze({});
  constructions.set(handle,{node,info});return handle;
 }
 export function readPXEConstruction(handle,node){
@@ -62,8 +63,7 @@ export async function startupPreloadedContracts(pending,serialize){
  const remembered=await Promise.allSettled(contracts.map(value=>rememberBuiltinContract(value,serialize)));
  const failed=remembered.find(value=>value.status==='rejected');if(failed)throw failed.reason;return contracts;
 }
-export async function sameRegisteredBytes(artifact,classData,storedArtifact,storedClass){
+export function sameRegisteredBytes(artifact,classData,storedArtifact,storedClass){
  if(!storedArtifact||!storedClass||artifact.length!==storedArtifact.length||classData.length!==storedClass.length)return false;
- const values=await Promise.all([digest(artifact),digest(storedArtifact),digest(classData),digest(storedClass)]);
- return values[0]===values[1]&&values[2]===values[3];
+ return equal(artifact,storedArtifact)&&equal(classData,storedClass);
 }

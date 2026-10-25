@@ -1,3 +1,4 @@
+import {inspectTrustedNode as actualInspect,getTrustedNodeCanonicalBlock,getTrustedNodeSnapshotInfo} from '../trusted-private-node.mjs';
 // Labelled RPC doubles: real processed artifacts/class/instance hashes, SDK
 // commitment hash and complete compiler portal runtime. No chain or wallet call.
 import test from 'node:test';
@@ -229,4 +230,38 @@ for(const defect of ['stale-node','l1-reorg','portal-binding'])test('financial s
  const provider={getBlock:async tag=>{reads++;return {number:20,hash:defect==='l1-reorg'&&tag===20?hex(67):hex(66)};},call:async request=>{reads++;const name=iface.parseTransaction(request).name;return iface.encodeFunctionResult(name,[name==='UNDERLYING'?defect==='portal-binding'?eth(99):scope.feeToken:18]);}};
  await assert.rejects(verifyRollingAggregateScope({sdk:f.options.sdk,ethers:{Interface},node:registration.node,provider,scope,network:registration.deployment.network,proofsEnabled:true,contextGuard:async()=>{},includeBok:false,asset:'ETH'}),{code:defect==='stale-node'?'BB_TRUSTED_NODE_STALE':defect==='l1-reorg'?'ROLLING_CONTEXT_CHANGED':'ROLLING_SESSION_CONFIG'});
  assert.equal(inspections,1);assert(reads>=3,'fresh actual funding boundary still performs its independent L1 checks');
+});
+
+async function snapshotFixture(){
+ const f=await preparedFixture(),id={number:10,hash:hex(55)},calls=[];
+ Object.assign(f.node,{getNodeInfo:async()=>({l1ChainId:31337,rollupVersion:1,realProofs:true,l1ContractAddresses:{rollupAddress:f.options.config.network.rollupAddress}}),getChainTips:async()=>({proposed:id,checkpointed:{block:id},proven:{block:id},finalized:{block:id}}),getWorldStateSyncStatus:async()=>({latestBlockNumber:10,latestBlockHash:hex(55),finalizedBlockNumber:10,oldestHistoricBlockNumber:0,treesAreSynched:true}),getSyncedL1Timestamp:async()=>BigInt(Math.floor(Date.now()/1000))});
+ const read=f.node.getBlockData;f.node.getBlockData=async number=>{calls.push(number);return read(number);};
+ const sdk=f.options.sdk;let initial;
+ sdk.inspectTrustedNode=actualInspect;sdk.getTrustedNodeCanonicalBlock=getTrustedNodeCanonicalBlock;
+ sdk.createTrustedPrivateNode=async options=>{initial=await actualInspect(f.node,options);await options.onReady?.(initial);return f.node;};
+ return {...f,calls,initial:()=>initial};
+}
+test('snapshot handoff reuses initial canonical checkpoint and returns final exact-node inspection',async()=>{
+ const f=await snapshotFixture(),out=await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ assert.equal(f.calls.includes('checkpointed'),false);assert.equal(f.calls.filter(x=>x===10).length,3,'initial canonical, final explicit canonical, final readiness canonical');
+ assert.notEqual(out.nodeSnapshot,f.initial());assert.equal(getTrustedNodeSnapshotInfo(out.nodeSnapshot,f.node).l1ChainId,31337);
+ const registration=await readRollingDeploymentRegistration(f.preparation,{...f.options,node:f.node});assert.equal(registration.nodeSnapshot,out.nodeSnapshot);
+});
+test('snapshot handoff preserves fresh canonical rejection after authenticated initial checkpoint',async()=>{
+ const f=await snapshotFixture(),read=f.node.getBlockData;let count=0;
+ f.node.getBlockData=async number=>{const value=await read(number);return ++count===1?value:{...value,blockHash:Fr.fromString(hex(56))};};
+ await assert.rejects(prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard}),{code:'ROLLING_DEPLOYMENT_INVALID'});assert.equal(f.calls.includes('checkpointed'),false);assert.equal(f.state.destroyed,1);
+});
+test('deployment instance fetch overlaps held Board and FPC derivation at the same captured anchor',async()=>{
+ const f=await fixture(),boardGate=Promise.withResolvers(),feeGate=Promise.withResolvers(),fetched=Promise.withResolvers();
+ const board=f.options.sdk.getContractClassFromArtifact,fee=f.options.sdk.derivePrivateFeeInstance,read=f.node.getContract;let reads=0;
+ f.options.sdk.getContractClassFromArtifact=async(...args)=>{const value=await board(...args);await boardGate.promise;return value;};f.options.sdk.derivePrivateFeeInstance=async(...args)=>{const value=await fee(...args);await feeGate.promise;return value;};
+ f.node.getContract=async(...args)=>{assert.deepEqual(args[1],{hash:hex(55)});const value=await read(...args);if(++reads===2)fetched.resolve();return value;};
+ let done=false;const pending=verifyRollingDeployment(f.options).then(value=>(done=true,value));await fetched.promise;assert.equal(done,false);boardGate.resolve();feeGate.resolve();await pending;assert.equal(f.state.destroyed,1);
+});
+test('deployment instance fetch drains a held read when independent class derivation fails',async()=>{
+ const f=await fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),read=f.node.getContract;
+ f.options.sdk.getContractClassFromArtifact=async()=>{throw Error('class failed');};
+ f.node.getContract=async(...args)=>{if(args[0].equals(f.board.address)){entered.resolve();await gate.promise;}return read(...args);};
+ let done=false;const pending=verifyRollingDeployment(f.options).catch(error=>{done=true;return error;});await entered.promise;await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.state.destroyed,0);gate.resolve();assert.equal((await pending).code,'ROLLING_DEPLOYMENT_INVALID');assert.equal(f.state.destroyed,1);
 });

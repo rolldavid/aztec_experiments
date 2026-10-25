@@ -133,6 +133,33 @@ def clone_source():
  os.symlink(dependencies,NEXT/'node_modules',target_is_directory=True)
  assert dependency_root(NEXT)==dependencies
 
+def brotli_asset(url,size):
+ return pathlib.PurePosixPath(url).suffix in ('.js','.mjs') and size>=100*1024
+
+def brotli_bytes(data):
+ # The stage already authenticated this Node binary. No new packages or SDK
+ # inputs: sidecars are delivery encodings of the verified decoded asset.
+ program="""const fs=require('node:fs'),z=require('node:zlib');
+ const input=fs.readFileSync(0);
+ const output=z.brotliCompressSync(input,{params:{
+  [z.constants.BROTLI_PARAM_QUALITY]:9,[z.constants.BROTLI_PARAM_MODE]:z.constants.BROTLI_MODE_TEXT}});
+ if(!z.brotliDecompressSync(output).equals(input))throw Error('Brotli roundtrip failed');
+ process.stdout.write(output);"""
+ encoded=subprocess.run([m['node'],'-e',program],input=data,check=True,capture_output=True).stdout
+ assert len(encoded)<=len(data)+65536
+ return encoded
+
+def export_brotli(target,data,destination):
+ encoded=brotli_bytes(data);sidecar=target.with_name(target.name+'.br')
+ if sidecar.exists() or sidecar.is_symlink():
+  info=sidecar.lstat()
+  assert stat.S_ISREG(info.st_mode) and info.st_uid==0 and stat.S_IMODE(info.st_mode)==0o444
+  assert sidecar.read_bytes()==encoded, 'Existing Brotli sidecar differs from verified encoding'
+ else:public_file(sidecar,encoded)
+ link=destination.with_name(destination.name+'.br')
+ assert not link.exists() and not link.is_symlink()
+ os.link(sidecar,link)
+
 def export_assets(source,description,destination=None):
  for url,entry in description['files'].items():
   assert re.fullmatch('/(?:wallet|crs)/[A-Za-z0-9_.-]+',url) and url!='/wallet/runtime.json'
@@ -143,6 +170,7 @@ def export_assets(source,description,destination=None):
   else:public_file(target,data)
   if destination:
    link=destination/url.lstrip('/');public_directory(link.parent);os.link(target,link)
+   if brotli_asset(url,len(data)):export_brotli(target,data,link)
  if destination:public_file(destination/'wallet/runtime.json',json.dumps(description['runtime'],separators=(',',':')).encode())
 
 PUBLIC={'/':'live.html','/archive/':'archive.html','/archive/snapshot.json':'archive.json','/reader.mjs':'reader.mjs','/reader-client.mjs':'reader-client.mjs','/profile-view.mjs':'profile-view.mjs','/avatar-upload.mjs':'avatar-upload.mjs','/performance.mjs':'performance.mjs','/reader-updates.mjs':'reader-updates.mjs','/wallet-action.mjs':'wallet-action.mjs','/model.mjs':'model.mjs','/navigation.mjs':'navigation.mjs','/style.css':'style.css','/wallet-panel.mjs':'wallet-panel.mjs','/wallet-cache-worker.mjs':'wallet-cache-worker.mjs'}
@@ -166,7 +194,7 @@ def capacity_preflight():
  def candidate(name):return P/'files'/name if name in m['files'] else SOURCE/name
  reserve(NEXT.parent,sum((P/'files'/name).stat().st_size for name in m['files']))
  missing=set()
- for source,select in [(RUNNING,lambda name:RUNNING/name),(SOURCE,candidate)]:
+ for source,select,compressed in [(RUNNING,lambda name:RUNNING/name,False),(SOURCE,candidate,True)]:
   manifest=json.loads(select('.build/rolling-wallet/manifest.json').read_text())
   for url,entry in manifest['files'].items():
    assert re.fullmatch('/(?:wallet|crs)/[A-Za-z0-9_.-]+',url) and re.fullmatch('[0-9a-f]{64}',entry['sha256'])
@@ -177,6 +205,9 @@ def capacity_preflight():
    assert file.stat().st_size==entry['bytes']
    target=BASE/'by-hash'/entry['sha256']/url.lstrip('/')
    if not target.exists() and target not in missing:reserve(BASE,entry['bytes']);missing.add(target)
+   sidecar=target.with_name(target.name+'.br')
+   if compressed and brotli_asset(url,entry['bytes']) and not sidecar.exists() and sidecar not in missing:
+    reserve(BASE,entry['bytes']+65536);missing.add(sidecar)
  reserve(BASE,sum(candidate('apps/rolling/'+name).stat().st_size for name in PUBLIC.values())+1024*1024)
  for entry in reservations.values():
   required=entry['bytes']+1024*1024*1024

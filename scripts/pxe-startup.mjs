@@ -35,6 +35,12 @@ export function efficientPxeStartup(original,name){
   source=replace(source,'const contractClass = contractClassWithIdAndPreimage ?? await getContractClassFromArtifact(contract);',`const artifactBytes = contractArtifactToBuffer(contract);
         const contractClass = contractClassWithIdAndPreimage ?? await rollingRetainedClass(contract, artifactBytes) ?? await getContractClassFromArtifact(contract);
         if(!contractArtifactToBuffer(contract).equals(artifactBytes))throw Error('PXE artifact changed during registration');`);
+  // Native-derived or byte-authenticated class records already contain every
+  // private selector. Preserve the original artifact validation for caller-
+  // supplied classes, whose provenance this method deliberately does not check.
+  source=replace(source,'const privateSelectors = await allToCompletion(privateFunctions.map(async (fn)=>(await FunctionSelector.fromNameAndParameters(fn.name, fn.parameters)).toString()));',`const privateSelectors = contractClassWithIdAndPreimage
+            ? await allToCompletion(privateFunctions.map(async (fn)=>(await FunctionSelector.fromNameAndParameters(fn.name, fn.parameters)).toString()))
+            : contractClass.privateFunctions.map(fn=>fn.selector.toString());`);
   source=replace(source,`this.#contractArtifactCache.set(key, contract);
         await this.#store.transactionAsync(async ()=>{
             await this.#contractArtifacts.set(key, contractArtifactToBuffer(contract));
@@ -43,7 +49,7 @@ export function efficientPxeStartup(original,name){
         const [storedArtifact,storedClass] = await this.#store.transactionAsync(async ()=>[
             await this.#contractArtifacts.getAsync(key),await this.#contractClassData.getAsync(key)
         ]);
-        if (!await rollingRegisteredBytes(artifactBytes,classBytes,storedArtifact,storedClass)) {
+        if (!rollingRegisteredBytes(artifactBytes,classBytes,storedArtifact,storedClass)) {
             await this.#store.transactionAsync(async ()=>{
                 await this.#contractArtifacts.set(key,artifactBytes);
                 await this.#contractClassData.set(key,classBytes);
