@@ -2926,8 +2926,8 @@ for(const kind of ['private-fee','bok'])test('Board claim immutable reads exclud
 });
 
 
-function synchronizedFundingFixture(){
- const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+function synchronizedFundingFixture({included=false}={}){
+ const f=fixture(),scope={};f.options.accountSession.proposedTransactions=included;f.options.accountSession.journal.included=async receipt=>{assert.equal(receipt.status,'proposed');};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
  let syncs=0,contexts=0;
  const app=createSynchronizedRollingApplication({application:f.app,operationScope:()=>scope,contextGuard:f.options.contextGuard,synchronize:async()=>{syncs++;},prepareContext:async()=>{contexts++;}});
  return {...f,wrapped:app,scope,counts:()=>({syncs,contexts})};
@@ -2937,13 +2937,13 @@ test('empty funding workflow authenticates local storage without a native sync, 
  assert.deepEqual(f.counts(),{syncs:0,contexts:0});assert.equal(f.scope.synchronized,undefined);assert.equal(f.state.privateReads.length,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
  const prepared=await f.wrapped.prepare({type:'like',post:'5'});assert.equal(prepared.status,'prepared');assert.deepEqual(f.counts(),{syncs:1,contexts:1});assert.equal(f.scope.synchronized,true);assert.equal(f.state.sends,0);
 });
-for(const status of ['prepared','cancelled','confirmed','unknown'])test(`empty funding probe never bypasses a saved ${status} workflow`,async()=>{
+for(const status of ['prepared','cancelled','unknown'])test(`pre-sync funding probe retains synchronized handling for saved ${status} workflow`,async()=>{
  const f=synchronizedFundingFixture(),prepared=await f.app.prepare({type:'like',post:'5'});
  if(status==='cancelled')await f.app.cancelPrepared(prepared.intentId);
  if(['confirmed','unknown'].includes(status))await f.app.submitPrepared(prepared.intentId);
  if(status==='unknown')f.state.outcome=null;
  const sends=f.state.sends,priorPrivateReads=f.state.privateReads.length;
- assert.equal(await f.app.readFundingState({emptyOnly:true}),null);
+ if(status!=='unknown')assert.equal(await f.app.readFundingState({beforeSync:true}),null);
  const result=await f.wrapped.readFundingState();assert.deepEqual(f.counts(),{syncs:1,contexts:1});assert.equal(f.state.sends,sends);assert.equal(f.state.privateReads.length,priorPrivateReads);
  assert.equal(result.status,['prepared','unknown'].includes(status)?'recovering':'ready');
  if(status==='unknown')assert.equal(result.intent.status,'unknown');
@@ -2964,7 +2964,7 @@ test('empty funding readiness does not authorize overwriting a subsequently save
 });
 test('empty funding probe rejects storage failure and invalid probe options without native reads or writes',async()=>{
  const f=synchronizedFundingFixture();let invoked=0;
- for(const option of [{emptyOnly:false},{get emptyOnly(){invoked++;return true;}},{emptyOnly:true,extra:1}])await assert.rejects(f.app.readFundingState(option),{code:'ROLLING_INVALID_ACTION'});
+ for(const option of [{beforeSync:false},{get beforeSync(){invoked++;return true;}},{beforeSync:true,extra:1}])await assert.rejects(f.app.readFundingState(option),{code:'ROLLING_INVALID_ACTION'});
  assert.equal(invoked,0);const error=Error('encrypted storage unavailable');f.options.privateStore.read=async()=>{throw error;};
  await assert.rejects(f.wrapped.readFundingState(),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(f.counts(),{syncs:0,contexts:0});assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
@@ -3253,4 +3253,96 @@ for(const change of ['scope','wallet','pxe','owner','synchronized'])test('funded
  if(change==='pxe')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};if(change==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
  if(change==='synchronized')scope.synchronized=false;
  gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+
+for(const included of [false,true])test('canonical ordinary funding workflow avoids pre-bridge sync, included='+included,async()=>{
+ const f=synchronizedFundingFixture({included});
+ const prepared=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(prepared.intentId);
+ if(included){f.state.outcome.receipt.status='proposed';await f.app.reconcile(prepared.intentId);}
+ let inspections=0;const inspect=f.options.accountSession.journal.inspectOutcome;
+ f.options.accountSession.journal.inspectOutcome=async(...args)=>{inspections++;return inspect(...args);};
+ const beforeReads=f.state.privateReads.length;assert.deepEqual(await f.wrapped.readFundingState(),{status:'ready'});
+ assert.equal(inspections,1);assert.deepEqual(f.counts(),{syncs:0,contexts:0});assert.equal(f.scope.synchronized,undefined);assert.equal(f.state.privateReads.length,beforeReads);
+ await f.wrapped.prepare({type:'unlike',post:'5'});assert.deepEqual(f.counts(),{syncs:1,contexts:1});assert.equal(f.state.sends,1);
+});
+test('pre-sync funding workflow holds receipt authority and rejects changed owner',async()=>{
+ const f=synchronizedFundingFixture(),prepared=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(prepared.intentId);
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers(),inspect=f.options.accountSession.journal.inspectOutcome;
+ f.options.accountSession.journal.inspectOutcome=async(...args)=>{entered.resolve();await gate.promise;return inspect(...args);};
+ const work=f.wrapped.readFundingState(),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);gate.resolve();await rejected;
+ assert.deepEqual(f.counts(),{syncs:0,contexts:0});assert.equal(f.state.sends,1);
+});
+
+for(const field of ['bok','fundingBok','fundingFee','bokReleaseSource','bokRequestScope','withdrawal','replacementReview'])test('pre-sync funding excludes completed ordinary record carrying '+field,async()=>{
+ const f=synchronizedFundingFixture(),prepared=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(prepared.intentId);
+ const slot=await createEncryptedJournalSlot({storage:f.options.privateStore,walletSecret:f.options.accountSession.walletSecret,walletSalt:f.options.accountSession.walletSalt,scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText({account:f.options.accountSession.owner.toString(),chainId:'31337',version:'1',rollup:f.options.deployment.network.rollup,board:hex(1),portal:f.options.deployment.portal})]),keyDomain:'ROLLING_WORKFLOW_V1'});
+ const prior=await slot.read();await slot.write(prior,{...prior.value,[field]:{held:true}});
+ assert.equal(await f.app.readFundingState({beforeSync:true}),null);assert.deepEqual(f.counts(),{syncs:0,contexts:0});
+});
+test('pre-sync funding canonical failure does not mark scope synchronized or permit a new action',async()=>{
+ const f=synchronizedFundingFixture(),prepared=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(prepared.intentId);
+ const error=Error('canonical block changed');f.options.accountSession.journal.inspectOutcome=async()=>{throw error;};
+ await assert.rejects(f.wrapped.readFundingState(),e=>e===error);assert.deepEqual(f.counts(),{syncs:0,contexts:0});assert.equal(f.scope.synchronized,undefined);
+ assert.equal(f.state.sends,1);
+});
+
+for(const kind of ['collateral','private-fee','bok'])for(const included of [false,true])test('pre-sync completed '+kind+' claim keeps exact receipt authority before fresh next claim, included='+included,async()=>{
+ const f=kind==='collateral'?fundingFixture():topUpFixture(kind),action=kind==='collateral'?{type:'claim-deposit',receipt:f.receipt}:f.action;
+ f.options.accountSession.proposedTransactions=included;f.options.accountSession.journal.included=async receipt=>assert.equal(receipt.status,'proposed');
+ const scope={};f.options.accountSession.operationScope=()=>scope;
+ const raw=f.restart(),prepared=await raw.prepare(action);await raw.submitPrepared(prepared.intentId);
+ if(included){f.state.outcome.receipt.status='proposed';await raw.reconcile(prepared.intentId);}
+ let syncs=0,inspections=0;
+ const inspect=f.options.accountSession.journal.inspectOutcome;f.options.accountSession.journal.inspectOutcome=async(...args)=>{inspections++;return inspect(...args);};
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:f.options.contextGuard,synchronize:async()=>{syncs++;}});
+ const reads=f.state.claimReads.length,privateReads=f.state.privateReads.length;
+ assert.deepEqual(await app.readFundingState(),{status:'ready'});assert.equal(inspections,1);assert.equal(syncs,0);assert.equal(scope.synchronized,undefined);
+ assert.equal(f.state.claimReads.length,reads);assert.equal(f.state.privateReads.length,privateReads);
+ f.state.claimError=true;await assert.rejects(app.prepare(action,{immediate:true}),{code:'ROLLING_FUNDING_REORG'});
+ assert.equal(syncs,1);assert(f.state.claimReads.length>reads);assert.equal(f.state.sends,1);
+});
+for(const kind of ['private-fee','bok'])test('pre-sync completed '+kind+' claim rejects lost canonical predecessor authority',async()=>{
+ const f=topUpFixture(kind),scope={};f.options.accountSession.operationScope=()=>scope;
+ const raw=f.restart(),prepared=await raw.prepare(f.action);await raw.submitPrepared(prepared.intentId);f.state.outcome=null;let syncs=0;
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:f.options.contextGuard,synchronize:async()=>{syncs++;}});
+ const result=await app.readFundingState();assert.equal(result.status,'recovering');assert.equal(result.intent.intentId,prepared.intentId);assert.equal(result.intent.status,'unknown');
+ await assert.rejects(app.prepare(f.action,{immediate:true}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);assert.equal(syncs,1);
+});
+
+for(const kind of ['private-fee','bok'])for(const included of [false,true])test('completed '+kind+' claim display uses fresh native balances without historical receipt, included='+included,async()=>{
+ const f=topUpFixture(kind),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ f.options.accountSession.proposedTransactions=included;f.options.accountSession.journal.included=async()=>{};
+ const raw=f.restart(),prepared=await raw.prepare(f.action);await raw.submitPrepared(prepared.intentId);
+ if(included){f.state.outcome.receipt.status='proposed';await raw.reconcile(prepared.intentId);}
+ let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
+ const before=f.state.privateReads.length,status=await raw.readAccountStatus();assert.equal(status.status,'fee-ready');assert.equal(status.privateFeeCredit,'200');assert.equal(inspections,0);
+ assert(f.state.privateReads.slice(before).some(x=>x.name==='get_deposit_ids'));
+ assert.equal((await raw.readFundingState()).status,'recovering');assert.equal(inspections,1);
+ await assert.rejects(raw.prepare(f.action),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+for(const kind of ['private-fee','bok'])test('completed '+kind+' claim display still rejects missing native collateral',async()=>{
+ const f=topUpFixture(kind),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ const raw=f.restart(),prepared=await raw.prepare(f.action);await raw.submitPrepared(prepared.intentId);
+ let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};f.state.responses={get_deposit_ids:Array(10).fill(0n)};
+ assert.equal((await raw.readAccountStatus()).status,'collateral-pending');assert.equal(inspections,0);
+ await assert.rejects(raw.prepare(f.action),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+});
+for(const kind of ['private-fee','bok'])test('completed '+kind+' claim display still reports insufficient native fee credit',async()=>{
+ const f=topUpFixture(kind),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ const raw=f.restart(),prepared=await raw.prepare(f.action);await raw.submitPrepared(prepared.intentId);
+ f.options.accountSession.journal.inspectOutcome=async()=>assert.fail('display does not consume historical receipt');
+ f.options.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('native credit absent'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
+ assert.equal((await raw.readAccountStatus()).status,'fee-needed');assert.equal(f.state.sends,1);
+});
+test('private-fee predecessor to Bok claim synchronizes once after bridge and refreshes spendable balance afterward',async()=>{
+ const {advanceAggregateClaim}=await import('./aggregate-wallet.mjs');
+ const f=topUpFixture('bok'),header=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>{const value=await header();return {...value,globalVariables:{...value.globalVariables,timestamp:100n}};};let scope={},syncs=0;f.options.accountSession.operationScope=()=>scope;
+ const raw=f.restart(),prior=await raw.prepare({type:'claim-private-fee',receipt:f.receipt});await raw.submitPrepared(prior.intentId);
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:f.options.contextGuard,synchronize:async()=>{syncs++;}});
+ const funding={inspect:async()=>({paymentSaved:true,claimAction:'claim-bok',privateFeeCap:'100',claim:null}),recover:async()=>({receipt:f.receipt}),checkpointClaim:async()=>{}};
+ const result=await advanceAggregateClaim({application:app,funding,contextGuard:f.options.contextGuard,waits:{bridge:async()=>{assert.equal(syncs,0);scope={};}}});
+ assert.equal(result.state,'complete');assert.equal(syncs,1);assert.equal(f.state.sends,2);assert.equal(scope.synchronized,false);
+ f.state.bokCredit=123n;const before=f.state.privateReads.length,balance=await app.readBokStatus();
+ assert.equal(syncs,2,'spendable balance still synchronizes after actual inclusion');assert.equal(balance.availableCredit,'123');assert(f.state.privateReads.slice(before).some(x=>x.name==='balance_of'));
 });

@@ -1,14 +1,17 @@
 import test,{after} from 'node:test';
+import {readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {PrivateCircuitPublicInputs,PrivateLogData,PublicCallRequest,CountedPublicCallRequest,ReadRequest} from '@aztec-labs/stdlib/kernel';
 import {PrivateLog} from '@aztec-labs/stdlib/logs';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
-import {PrivateSimulationResult,TxSimulationResult,ExecutionPayload,HashedValues} from '@aztec-labs/stdlib/tx';
+import {PrivateSimulationResult,PrivateExecutionResult,TxSimulationResult,ExecutionPayload,HashedValues} from '@aztec-labs/stdlib/tx';
 import {generateSimulatedProvingResult} from '@aztec-labs/pxe/simulator';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {createPrivateFeeSimulator} from '../shared/private-fee-simulation.mjs';
+import {snapshotPrivateFeeSimulationInput} from '../shared/private-fee-validation.mjs';
+import {withCache} from '../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js';
 after(()=>BarretenbergSync.destroySingleton());
 const address=AztecAddress.fromFieldUnsafe(new Fr(123));
 const privateSettings=GasSettings.forEstimation({maxFeesPerGas:GasFees.empty(),maxPriorityFeesPerGas:GasFees.empty(),teardownGasLimits:Gas.empty()});
@@ -125,4 +128,57 @@ for(const publicCall of [false,true])test('native low-credit private metering in
  const zero=await meter(Gas.empty()),full=await meter(refund);
  assert.deepEqual(zero,new Gas(128,540000+30800+20000*(publicCall?2:1)));
  assert.deepEqual(zero.add(refund).add(publicBody),full.add(publicBody));
+});
+
+// Exercise the exact construction/attestation source, replacing only the SDK
+// constructor and setup dependencies. The returned node uses the actual native
+// withCache implementation and synthetic kernel generation, without a PXE DB.
+async function attestedMeasurementFixture({brand=true,absent=false}={}){
+ const pxeSource=await readFile(new URL('../shared/private-pxe.mjs',import.meta.url),'utf8');
+ const routeStart=pxeSource.indexOf('const privatePXERoutes=new WeakMap();'),routeEnd=pxeSource.indexOf('let cliProverInitialization;',routeStart),createStart=pxeSource.indexOf('export async function createPXE(');
+ assert(routeStart>=0&&routeEnd>routeStart&&createStart>routeEnd);
+ const state={membership:0,public:0,private:0,hook:null},node={findLeavesIndexes:async()=>{state.membership++;return [absent?undefined:1n];},simulatePublicCalls:async tx=>{state.public++;await state.hook?.();return {gasUsed:{totalGas:tx.data.gasUsed,teardownGas:tx.data.constants.txContext.gasSettings.teardownGasLimits}};}};
+ const cached=withCache(node),pxe={node:cached,proveTxWithPublicValidation:()=>assert.fail('Measurement cannot prove')};
+ const info={realProofs:false,l1ChainId:31337,rollupVersion:1};
+ const deps={beginPXEConstruction:async actual=>{assert.equal(actual,node);return {};},readPXEConstruction:()=>info,endPXEConstruction:()=>{},provingEnabledForNode:()=>false,createSdkPXE:async actual=>{assert.equal(actual,node);return pxe;},RoutedKernelProver:class{},privateLogger:{},browserEnvironment:false};
+ const route=Function(...Object.keys(deps),pxeSource.slice(routeStart,routeEnd).replace('export function','function')+pxeSource.slice(createStart).replace('export async function','async function')+';return {createPXE,isPrivatePXEForNode};')(...Object.values(deps));
+ if(brand)await route.createPXE(node,{proverEnabled:false},{simulator:{}});
+ assert.equal(route.isPrivatePXEForNode(pxe,node),brand);
+ const adapterSource=(await readFile(new URL('../shared/private-fee-simulation.mjs',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace('export function','function');
+ const native={isPrivatePXEForNode:route.isPrivatePXEForNode,TxSimulationResult,PrivateSimulationResult,PrivateExecutionResult,HashedValues,PrivateCircuitPublicInputs,GasSettings,generateSimulatedProvingResult,snapshotPrivateFeeSimulationInput};
+ const create=Function(...Object.keys(native),adapterSource+';return createPrivateFeeSimulator;')(...Object.values(native));
+ const source=execution(privateSettings,true),reference=execution(privateSettings,true);
+ // Absence must be checked by the regenerated native kernel; seed only the
+ // successful initial private result before switching this synthetic node.
+ const initialNode=absent?{findLeavesIndexes:async()=>[1n]}:cached;
+ const {publicInputs}=await generateSimulatedProvingResult(reference,async()=> 'native reference',initialNode);
+ pxe.getSyncedBlockHeader=async()=>publicInputs.constants.anchorBlockHeader;
+ pxe.simulateTx=async()=>{state.private++;return new TxSimulationResult(source,publicInputs);};
+ const wallet={pxe,completeFeeOptions:async value=>value,createTxExecutionRequestFromPayloadAndFee:async()=>({}),scopesFrom:from=>[from],senderForTagsFrom:from=>from};
+ const payload=new ExecutionPayload([],[],[],[]),adapter=create(wallet,node),measured=await adapter.private(payload,address,privateSettings);
+ return {state,node,cached,pxe,wallet,payload,adapter,measured,source};
+}
+test('attested native cache removes duplicate membership reads but never caches public validation',async()=>{
+ const h=await attestedMeasurementFixture();assert.equal(h.state.membership,2);
+ for(const teardown of [Gas.empty(),new Gas(30,2000)])await h.adapter.public(h.payload,address,probeSettings(teardown),false,h.measured);
+ assert.equal(h.state.membership,2,'native private assembly already resolved both exact anchored leaves');assert.equal(h.state.public,2,'each AVM probe remains fresh');assert.equal(h.state.private,1);
+});
+test('unattested PXE cannot supply a cache merely by exposing node',async()=>{
+ const h=await attestedMeasurementFixture({brand:false});assert.equal(h.state.membership,2);
+ await h.adapter.public(h.payload,address,probeSettings(Gas.empty()),false,h.measured);
+ assert.equal(h.state.membership,4,'unbranded caller retains original raw membership checks');assert.equal(h.state.public,1);
+});
+for(const change of ['cache','pxe','anchor','during-public'])test('attested measurement rejects route or anchor change: '+change,async()=>{
+ const h=await attestedMeasurementFixture();
+ if(change==='cache')h.pxe.node=withCache(h.node);
+ if(change==='pxe')h.wallet.pxe={...h.pxe};
+ if(change==='anchor')h.pxe.getSyncedBlockHeader=async()=>({hash:async()=>new Fr(999)});
+ if(change==='during-public')h.state.hook=()=>{h.pxe.node=withCache(h.node);};
+ await assert.rejects(h.adapter.public(h.payload,address,probeSettings(Gas.empty()),false,h.measured),{code:'BB_SIMULATION_CHANGED'});
+ assert.equal(h.state.public,change==='during-public'?1:0);
+});
+test('cached nonmembership never becomes successful native measurement',async()=>{
+ const h=await attestedMeasurementFixture({absent:true});
+ await assert.rejects(h.adapter.public(h.payload,address,probeSettings(Gas.empty()),false,h.measured),/unknown note hash|unknown nullifier/);
+ assert.equal(h.state.public,0);assert.equal(h.state.membership,2);
 });

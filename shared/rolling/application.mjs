@@ -408,20 +408,30 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   // Inspect only the authenticated current workflow. Funding needs this fence
   // before a claim, not unrelated deposit and private fee balance utilities.
-  async function fundingWorkflowState(emptyOnly=false,statusView=false){
+  async function fundingWorkflowState(beforeSync=false,statusView=false){
     await guard();const saved=await (await slot()).read();await localGuard();
-    // A genuinely empty authenticated workflow has no native state to inspect.
-    // Authorization callers still inspect every saved record normally.
-    if(emptyOnly)return saved.value===null?{status:'ready'}:null;
+    // Empty or completed ordinary/claim workflows need only authenticated journal
+    // authority here, not a native note sync which bridge readiness invalidates.
+    // The unchanged outcome path below verifies the actual signed receipt and
+    // canonical block; local completion labels never grant readiness.
+    if(beforeSync&&saved.value!==null){
+      const record=saved.value;
+      if(!['included','confirmed'].includes(record.status)||
+        !['post','reply','quote','repost','like','unlike','name','bio','avatar','subboard','claim-deposit','claim-private-fee','claim-bok'].includes(record.action?.type)||
+        record.fundingBok&&!['claim-deposit','claim-bok'].includes(record.action.type)||
+        record.fundingFee&&!['claim-deposit','claim-private-fee','claim-bok'].includes(record.action.type)||
+        record.bok||record.bokReleaseSource||record.bokRequestScope||record.withdrawal||record.replacementReview||
+        await pendingExitSummary())return null;
+    }
     // Status presentation still reads fresh native balances below. Completed
     // ordinary/claim history grants no authority to claim, prepare, prove or send.
     // Included claims remain provisional; only fresh native balances below
     // determine current usability, never the saved completion label.
     const record=saved.value,owner=statusView?getOperationScope():null;
-    const nativeClaimStatus=record?.action?.type==='claim-deposit'&&['included','confirmed'].includes(record.status);
+    const nativeClaimStatus=['claim-deposit','claim-private-fee','claim-bok'].includes(record?.action?.type)&&['included','confirmed'].includes(record.status);
     if(owner?.synchronized===true&&(nativeClaimStatus||['included','confirmed'].includes(record?.status)&&
       ['post','reply','quote','repost','like','unlike','name','bio','avatar','subboard'].includes(record.action?.type))&&
-      !record.bok&&!record.fundingBok&&!record.bokReleaseSource&&!record.bokRequestScope&&!record.withdrawal&&!record.replacementReview&&
+      !record.bok&&(!record.fundingBok||nativeClaimStatus&&['claim-deposit','claim-bok'].includes(record.action.type))&&!record.bokReleaseSource&&!record.bokRequestScope&&!record.withdrawal&&!record.replacementReview&&
       !await pendingExitSummary()){
       await localGuard();check(getOperationScope()===owner&&owner.synchronized===true,'ROLLING_CONTEXT_CHANGED');return {status:'ready'};
     }
@@ -1029,9 +1039,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     });},
     async readBokStatus(){return exclusive(async()=>{await ensureBok();if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
     async readFundingState(options){
-      const emptyOnly=options!==undefined;
-      if(emptyOnly)check(exactData(options,['emptyOnly']).emptyOnly===true,'ROLLING_INVALID_ACTION');
-      if(!session)return {status:'locked'};return exclusive(()=>fundingWorkflowState(emptyOnly));
+      const beforeSync=options!==undefined;
+      if(beforeSync)check(exactData(options,['beforeSync']).beforeSync===true,'ROLLING_INVALID_ACTION');
+      if(!session)return {status:'locked'};return exclusive(()=>fundingWorkflowState(beforeSync));
     },
     async readAccountStatus(options){
       const opening=options!==undefined;

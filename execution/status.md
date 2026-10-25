@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — f16 live/pushed, real100FEE+ETHBok succeeded. Bok46.175275s oneETHpayment→nativeincluded usable1USDC, no39.223speedup claim. Fee134.757725s includes36.181s testhandler approvaldwell; functional evidence. Integrated reviewed publicnode/artifactstartupoverlap and exactanchorFPCclasswarmup; focusedcombinedchecks/build next, thenpublish+normalopening measure. Agents audit lowcredit syntheticmembershipcache and actualBokclaimserialreads. All2s/50% targets active.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 69658 live/pushed and retained2normalopening traces. Integrated reviewed nativefee-measurement cache reuse and completedordinary/claim pre-sync funding authority + displayonlycompletedclaim status. Next focusedcombinedchecks/build/push/publish then realcachedopening andcreditclaimmeasure. 2s/50% goals remain active. Agent investigates intermittentcachedassets and nativevsbespokefences.
 
 ## Ready internal work
 

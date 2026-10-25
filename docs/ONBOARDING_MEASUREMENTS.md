@@ -1,5 +1,10 @@
 ## Live3b032339 measurements
 
+## 69658 normal funded opening — 26 October 2026
+
+Live/pushed `69658a998a78ab2370a1eb9545c804b1b837ea89`. Wallet selection→visible ready8.390770s first changed SDK /4.568375s cached. Automatic signature approval included. Completed Bok credit claim now precedes opening, unlike f16; native status reread its completed historical receipt521ms. Startup execution-engine initialization1999ms vs173ms on f16 cached, with several wallet assets1.4–1.6s; root investigates concrete cache/scheduling cause. Public node preparation overlaps assets as implemented. FPC class prefetch removes its separate class stage, but latest discovery645ms and other stages vary. No end-to-end speedup or2s acceptance claimed. Raw traces retained.
+
+
 ## f16 normal funded opening — 26 October 2026
 
 Live/pushed `f16ff3d778a31563c66b1169708b6d353efa8cfa`. Exact wallet selection→visible enabled Write a post: first changed SDK5.734270s, cached3.558800s. Account-button click→ready first7.791065s, cached4.866170s. Automatic test signature approval included (241/240ms); no explicit new-test shortcut. Cached private session~642ms, sync~1198ms, status~1207ms; nested timings are not additive with parents. Two-second target remains unmet. Raw `funded-opening-f16-run1.json` and `funded-opening-f16-run2.json` live in the G21 transaction-latency evidence directory.

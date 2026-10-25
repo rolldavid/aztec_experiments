@@ -1,3 +1,4 @@
+import {isPrivatePXEForNode} from './private-pxe.mjs';
 import {TxSimulationResult,PrivateSimulationResult,PrivateExecutionResult,HashedValues} from '@aztec-labs/stdlib/tx';
 import {PrivateCircuitPublicInputs} from '@aztec-labs/stdlib/kernel';
 import {GasSettings} from '@aztec-labs/stdlib/gas';
@@ -10,11 +11,16 @@ export function createPrivateFeeSimulator(wallet, node) {
   // the same pinned SDK build. Direct EmbeddedWallet callers use the unpatched
   // SDK and retain fresh private execution for every public simulation.
   const measurementPXE=wallet.pxe,reusableMeasurements=typeof measurementPXE?.proveTxWithPublicValidation==='function';
+  // Only the exact native cache registered when this PXE was constructed may
+  // serve immutable membership reads already performed by private simulation.
+  // Unbranded EmbeddedWallet callers retain their original raw node behavior.
+  const cachedMeasurementNode=reusableMeasurements&&isPrivatePXEForNode(measurementPXE,node)?measurementPXE.node:null;
   const measurements=new WeakMap();
   const changed=()=>Object.assign(Error('Fee measurement context changed'),{code:'BB_SIMULATION_CHANGED'});
+  const checkRoute=()=>{if(cachedMeasurementNode&&(!isPrivatePXEForNode(measurementPXE,node)||measurementPXE.node!==cachedMeasurementNode))throw changed();};
   const anchorHash=async header=>{if(typeof header?.hash!=='function')throw changed();return (await header.hash()).toString();};
   async function privateSimulation(payload, from, gasSettings) {
-    if(reusableMeasurements&&wallet.pxe!==measurementPXE)throw changed();
+    if(reusableMeasurements&&wallet.pxe!==measurementPXE)throw changed();checkRoute();
     const pxe=wallet.pxe,settings=GasSettings.from(gasSettings),fingerprint=snapshotPrivateFeeSimulationInput(payload,from,settings);
     const fee = await wallet.completeFeeOptions({from, feePayer:payload.feePayer, gasSettings:settings, forEstimation:true});
     const request = await wallet.createTxExecutionRequestFromPayloadAndFee(payload, from, fee);
@@ -24,19 +30,19 @@ export function createPrivateFeeSimulator(wallet, node) {
     });
     if(!reusableMeasurements)return result;
     const anchor=await anchorHash(result.publicInputs?.constants?.anchorBlockHeader);
-    if(wallet.pxe!==pxe||fingerprint!==snapshotPrivateFeeSimulationInput(payload,from,settings))throw changed();
+    checkRoute();if(wallet.pxe!==pxe||fingerprint!==snapshotPrivateFeeSimulationInput(payload,from,settings))throw changed();
     measurements.set(result,{pxe,payload,from:from.toString(),settings,fingerprint,anchor});
     return result;
   }
   async function validateMeasurement(payload,from,measurement){
     const binding=measurements.get(measurement);
-    const verify=()=>{if(!binding||binding.pxe!==wallet.pxe||binding.payload!==payload||binding.from!==from.toString()||
+    const verify=()=>{checkRoute();if(!binding||binding.pxe!==wallet.pxe||binding.payload!==payload||binding.from!==from.toString()||
       binding.fingerprint!==snapshotPrivateFeeSimulationInput(payload,from,binding.settings))throw changed();};
     verify();if(binding.anchor!==await anchorHash(await binding.pxe.getSyncedBlockHeader()))throw changed();verify();
   }
   async function publicFromMeasurement(payload,from,gasSettings,measurement){
     const binding=measurements.get(measurement);
-    const verify=()=>{if(!binding||binding.pxe!==wallet.pxe||binding.payload!==payload||binding.from!==from.toString()||
+    const verify=()=>{checkRoute();if(!binding||binding.pxe!==wallet.pxe||binding.payload!==payload||binding.from!==from.toString()||
       binding.fingerprint!==snapshotPrivateFeeSimulationInput(payload,from,binding.settings))throw changed();};
     verify();const requested=GasSettings.from(gasSettings),requestSnapshot=snapshotPrivateFeeSimulationInput(payload,from,requested);
     if(!binding.settings.maxFeesPerGas.isEmpty()||!binding.settings.maxPriorityFeesPerGas.isEmpty())throw changed();
@@ -51,7 +57,7 @@ export function createPrivateFeeSimulator(wallet, node) {
     const execution=new PrivateExecutionResult(copyCall(original.entrypoint),original.firstNullifier,
       original.publicFunctionCalldata.map(value=>HashedValues.fromBuffer(value.toBuffer())));
     execution.entrypoint.publicInputs.txContext.gasSettings=requested;
-    const {publicInputs}=await generateSimulatedProvingResult(execution,async()=> 'fee measurement',node);
+    const {publicInputs}=await generateSimulatedProvingResult(execution,async()=> 'fee measurement',cachedMeasurementNode??node);
     verify();if(requestSnapshot!==snapshotPrivateFeeSimulationInput(payload,from,gasSettings))throw changed();const result=new PrivateSimulationResult(execution,publicInputs);
     const output=publicInputs.forPublic?await node.simulatePublicCalls(await result.toSimulatedTx(),true):undefined;
     verify();if(binding.anchor!==await anchorHash(await binding.pxe.getSyncedBlockHeader()))throw changed();verify();

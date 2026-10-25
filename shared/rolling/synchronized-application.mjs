@@ -52,12 +52,13 @@ export function createSynchronizedRollingApplication({application,synchronize,co
    await contextGuard();
    const scope=operationScope();let ordinaryPost=false;
    if(name==='readFundingState'&&(!scope||!scope.synchronized)){
-    const empty=await call({emptyOnly:true});
+    const metadata=await call({beforeSync:true});
     await contextGuard();
     if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
     // Do not mark this operation synchronized: bridge readiness and the next
     // real preparation still require their normal fresh native anchor.
-    if(empty?.status==='ready')return empty;
+    // Completed ordinary/claim history still receives its full canonical receipt check.
+    if(metadata?.status==='ready')return metadata;
    }
    // Moderator identity is public storage; it needs no private-state sync.
    if(name!=='readModeratorStatus'&&(!scope||!scope.synchronized)){

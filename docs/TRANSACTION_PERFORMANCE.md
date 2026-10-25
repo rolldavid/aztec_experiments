@@ -30,6 +30,10 @@ ETH-to-Bok: **46.175275s** Pay→native Aztec inclusion and usable1USDC, one Eth
 
 Posting-credit top-up:100FEE credited in **134.757725s** Pay→usable credit, including36.180520s recorded test-adapter repair dwell before accepting the first wallet request. The fresh fixture required an Ethereum allowance approval plus deposit. Aztec included at block5296; required balance refresh2.417s. This is successful functional evidence, not a clean timing acceptance or controlled baseline. No app error, duplicate deposit or recovery path occurred. Test signer now uses its existing provider; no real funds were used.
 
+### Reviewed claim and measurement improvements
+
+The completed-workflow probe now performs its authenticated receipt check before synchronization for completed ordinary/deposit/fee/Bok claims. It no longer synchronizes only to have the bridge step invalidate that work; actual claim preparation still selects fresh native state afterward. Display-only account readiness uses fresh native collateral/credit for completed fee/Bok histories, removing historical receipt rereads that gave no new posting authority. Release/request/withdrawal/replacement and pending-exit handling remains separate. Native fee measurement now reuses the exact attested PXE node cache for immutable membership reads already performed during private simulation; every public gas simulation remains fresh and content dependent. Independent reviews approved;774 integrated application/wrapper/native measurement checks and actual six-script build pass. Publish and live measurement remain separate evidence.
+
 ## Remaining qualification work
 
 Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.
