@@ -1,8 +1,9 @@
+import {receiveRollingWorkerPerformance} from './performance.mjs';
 import {FUNDING_PREPARATION_STAGES} from '../../shared/rolling/aggregate-wallet.mjs';
 import {ROLLING_DEPLOYMENT_STAGES} from '../../shared/rolling/deployment.mjs';
 import {APPLICATION_METHODS,FUNDING_METHODS,TOPUP_METHODS,WITHDRAWAL_METHODS,DEPOSIT_METHODS,CALLBACKS,CUSTODY_METHODS,errorRecord,restoreError,workerFailure} from './wallet-worker-protocol.mjs';
 
-export function createRollingWorkerClient({worker,contextGuard=()=>{},captureFundingWallet,onProgress=()=>{}}){
+export function createRollingWorkerClient({worker,contextGuard=()=>{},captureFundingWallet,onProgress=()=>{},profile=false}){
  let next=0,closed=false,closing=false,active=0,blocking=0,metadata={},progress=onProgress;const requests=new Map(),wallets=new Map();let walletId=0;const backgroundState=new Map();
  const check=async()=>{if(closed)throw workerFailure();await contextGuard();if(closed)throw workerFailure();};
  function failAll(){if(closed)return;closed=true;for(const request of requests.values()){request.cleanup();request.reject(workerFailure());}requests.clear();wallets.clear();worker.terminate();}
@@ -28,6 +29,7 @@ export function createRollingWorkerClient({worker,contextGuard=()=>{},captureFun
  worker.addEventListener('error',failAll);worker.addEventListener('messageerror',failAll);
  worker.addEventListener('message',event=>{
   const message=event.data;if(closed||!message||typeof message!=='object')return;
+  if(message.type==='performance'){if(!closing)receiveRollingWorkerPerformance(message,{enabled:profile===true});return;}
   if(message.type==='guard'){Promise.resolve().then(check).then(()=>worker.postMessage({type:'guard-result',id:message.id,value:true}),error=>{if(!closed)worker.postMessage({type:'guard-result',id:message.id,error:errorRecord(error)});});return;}
   if(message.type==='custody'){void custody(message);return;}
   if(message.type==='background-progress'){const value=message.value;if((value?.stage==='worker-initialization'&&['cryptography','prover','deployment','kernels','private-session','funding-scope'].includes(value.step)||value?.stage==='deployment-initialization'&&ROLLING_DEPLOYMENT_STAGES.includes(value.step)||value?.stage==='funding-preparation'&&FUNDING_PREPARATION_STAGES.includes(value.step))&&['started','complete','failed'].includes(value.state))backgroundState.set(value.stage+':'+value.step,structuredClone(value));return;}

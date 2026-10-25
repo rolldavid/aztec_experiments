@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {rollingResourceTiming,observeRollingPerformance} from './performance.mjs';
+import {rollingResourceTiming,observeRollingPerformance,observeRollingWorkerPerformance,receiveRollingWorkerPerformance} from './performance.mjs';
 const origin='https://board.example';
 const resource=(path,extras={})=>({name:origin+path,initiatorType:'fetch',startTime:10,duration:20,fetchStart:11,domainLookupStart:12,domainLookupEnd:13,connectStart:14,secureConnectionStart:15,connectEnd:16,requestStart:17,responseStart:28,responseEnd:30,transferSize:321,encodedBodySize:123,decodedBodySize:456,nextHopProtocol:'h2',...extras});
 function observers({unsupported=[],onEntries=()=>{}}={}){
@@ -85,7 +85,7 @@ test('native utility timing is opt-in, duration-only and never changes action ou
   assert.deepEqual(measures.filter(x=>x.name.includes('.native-')).map(x=>[x.name,x.detail.durationMs]),[['rolling.action.screening.native-total',30],['rolling.action.screening.native-sync',10],['rolling.action.screening.native-unaccounted',5],['rolling.action.screening.native-function',15]]);
   const bad={get stats(){throw Error('Optional stats unavailable');}};assert.equal(await active.measureRollingStage('action.screening',async()=>bad,{nativeUtility:true}),bad);
   const failure=Error('Actual action failed');await assert.rejects(active.measureRollingStage('action.screening',async()=>{throw failure;},{nativeUtility:true}),error=>error===failure);
-  globalThis.location.hash='#/home';const inactive=await import('./performance.mjs?utility-inactive');
+  globalThis[Symbol.for('rolling.proof.profile')]=false;globalThis.location.hash='#/home';const inactive=await import('./performance.mjs?utility-inactive');
   const count=measures.filter(x=>x.name.includes('.native-')).length;
   await inactive.measureRollingStage('action.screening',async()=>result,{nativeUtility:true});assert.equal(measures.filter(x=>x.name.includes('.native-')).length,count);
  }finally{for(const [key,descriptor]of originals)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}
@@ -157,4 +157,37 @@ test('proof result stream records numeric delivery phases without job capabiliti
  const serialized=JSON.stringify(result);for(const secret of [job,'PRIVATE_TOKEN','PRIVATE_FRAGMENT','/result'])assert(!serialized.includes(secret));
  for(const path of ['/prover/v1/jobs/not-a-job/result','/prover/v1/jobs/'+job+'/result/extra','/prover/v1/jobs/'+job+'/result/'])assert.equal(rollingResourceTiming(resource(path),origin),null);
  assert.equal(rollingResourceTiming(resource('/prover/v1/jobs/'+job+'/result',{name:'https://other.example/prover/v1/jobs/'+job+'/result'}),origin),null);
+});
+
+test('worker timings translate once and resource phases retain numeric meanings',()=>{
+ const measures=[],timing={timeOrigin:1000,now:()=>1000,clearMeasures(){},measure(name,value){measures.push({name,startTime:value.start,duration:value.end-value.start,detail:value.detail});}};
+ const message={type:'performance',timeOrigin:1200,entries:[{kind:'measure',name:'rolling.proof.native.total',start:10,duration:20,aggregateMs:17},rollingResourceTiming(resource('/prover/v1/jobs?SECRET=hidden',{secureConnectionStart:0}),origin)]};
+ receiveRollingWorkerPerformance(message,{timing});assert.equal(measures.length,0);
+ receiveRollingWorkerPerformance(message,{enabled:true,timing});assert.equal(measures.length,2);
+ assert.equal(measures[0].startTime,210);assert.equal(measures[0].duration,20);assert.equal(measures[0].detail.durationMs,17);
+ assert.equal(measures[1].detail.requestStart,217);assert.equal(measures[1].detail.responseEnd,230);assert.equal(measures[1].detail.secureConnectionStart,0);assert.equal(measures[1].detail.transferSize,321);
+ let latest;const h=observers({onEntries:entries=>latest=entries});h.emit('measure',measures);
+ assert.equal(latest.filter(x=>x.kind==='resource').length,1);assert.equal(latest.filter(x=>x.name==='rolling.proof.native.total').length,1);assert(!JSON.stringify(latest).includes('SECRET'));h.stop();
+});
+test('worker timing receiver rejects malformed batches and keeps valid neighbours',()=>{
+ const results=[],timing={timeOrigin:1000,now:()=>1000,clearMeasures(){},measure(name,value){results.push({name,...value});}};
+ const valid={kind:'measure',name:'rolling.action.sync',start:10,duration:2};
+ for(const message of [{type:'performance',timeOrigin:1200,entries:Array(65).fill(valid)},{type:'performance',timeOrigin:NaN,entries:[valid]},{type:'performance',timeOrigin:1200,entries:[valid],secret:'no'}])receiveRollingWorkerPerformance(message,{enabled:true,timing});
+ assert.equal(results.length,0);
+ const bad=[{...valid,start:-1},{...valid,duration:Infinity},{...valid,name:'private-account'},{...valid,secret:'no'},{...valid,start:1000},{...valid,aggregateMs:NaN}];
+ receiveRollingWorkerPerformance({type:'performance',timeOrigin:1200,entries:[...bad,valid]},{enabled:true,timing});assert.equal(results.length,1);
+ receiveRollingWorkerPerformance({type:'performance',timeOrigin:1200,entries:[valid]},{enabled:true,timing:{...timing,measure(){throw Error('diagnostic only');}}});
+});
+test('worker observer is opt-in, bounds batches, removes private data and stops on close',()=>{
+ const symbol=Symbol.for('rolling.proof.profile'),old=globalThis[symbol],instances=new Map(),messages=[];
+ class Observer{constructor(fn){this.fn=fn;}observe({type}){instances.set(type,this);}disconnect(){this.stopped=true;}}
+ try{
+  globalThis[symbol]=false;observeRollingWorkerPerformance({send:v=>messages.push(v),PerformanceObserver:Observer,origin});assert.equal(instances.size,0);
+  globalThis[symbol]=true;const stop=observeRollingWorkerPerformance({send:v=>messages.push(v),PerformanceObserver:Observer,origin,timing:{timeOrigin:1200}});
+  const emit=(type,entries)=>instances.get(type).fn({getEntries:()=>entries});
+  emit('measure',Array.from({length:520},(_,i)=>({name:'rolling.action.sync',startTime:i,duration:1,detail:{secret:'NEVER_SEND'}})));
+  emit('resource',[resource('/prover/v1/jobs?token=NEVER_SEND')]);
+  assert(messages.every(m=>m.entries.length<=64));assert.equal(messages[0].dropped.measure,8);assert.equal(messages.flatMap(m=>m.entries).length,513);assert(!JSON.stringify(messages).includes('NEVER_SEND'));
+  const count=messages.length;stop();emit('measure',[{name:'rolling.action.sync',startTime:1,duration:1}]);assert.equal(messages.length,count);assert([...instances.values()].every(x=>x.stopped));
+ }finally{if(old===undefined)delete globalThis[symbol];else globalThis[symbol]=old;}
 });

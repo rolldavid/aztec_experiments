@@ -420,7 +420,13 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
  const pause=()=>{if(paused())throw fail('PAUSED');};
  let step='inspect',observedFailure=false;
  const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'funding-claim',step,deploymentStep:null,state,code:state==='failed'?claimProgressCode(error):null});
- const read=async(name,fn)=>{step=name;observedFailure=false;emit('started');try{await contextGuard();pause();const value=await fn();await contextGuard();pause();emit('complete');return value;}catch(error){observedFailure=true;emit('failed',error);throw error;}};
+ const read=async(name,fn,span=name)=>{
+  step=name;observedFailure=false;emit('started');let start;
+  try{start=performance.now();}catch{}
+  try{await contextGuard();pause();const value=await fn();await contextGuard();pause();emit('complete');return value;}
+  catch(error){observedFailure=true;emit('failed',error);throw error;}
+  finally{try{if(Number.isFinite(start))performance.measure('rolling.funding-claim.'+span,{start,end:performance.now()});}catch{}}
+ };
  try{
  const saved=await read('inspect',()=>funding.inspect());check(saved?.paymentSaved,'RECOVERY_REQUIRED');const claimAction=saved.claimAction??'claim-deposit';check(['claim-deposit','claim-private-fee','claim-bok'].includes(claimAction));
  let next;
@@ -445,11 +451,11 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
      // for their native tree readiness before the expensive full preparation.
      // This is only scheduling: preparation still verifies canonical receipt,
      // message membership and root at its freshly synchronized anchor below.
-     if(waits?.bridge)await read('prepare',()=>waits.bridge(receipts));
+     if(waits?.bridge)await read('prepare',()=>waits.bridge(receipts),'bridge');
      try{next=await read('prepare',()=>application.prepare({type:claimAction,...receipts},{immediate:true}));}
      catch(error){
       if(errorValue(error,'code')!=='ROLLING_FUNDING_NOT_READY'||!waits||errorValue(error,'reason')!=='l2-delivery')throw error;
-      await read('prepare',()=>waits.bridge(receipts,errorValue(error,'reason')));
+      await read('prepare',()=>waits.bridge(receipts,errorValue(error,'reason')),'bridge');
       next=await read('prepare',()=>application.prepare({type:claimAction,...receipts},{immediate:true}));
      }
     }

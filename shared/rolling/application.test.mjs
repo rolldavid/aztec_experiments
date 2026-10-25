@@ -2971,18 +2971,42 @@ test('empty funding probe rejects storage failure and invalid probe options with
 
 for(const mode of ['success','discovery-failure','scope-change','wallet-change','pxe-change','owner-change'])test('account readiness native preparation boundary '+mode,{timeout:3000},async()=>{
  const f=fixture();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
- const gate=Promise.withResolvers(),entered=Promise.withResolvers();let payments=0,seen;
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers(),feeGate=Promise.withResolvers(),feeEntered=Promise.withResolvers();let payments=0,seen,settled=false;
  f.options.accountSession.wallet.pxe.prepareBoardActionState=async input=>{seen=input;entered.resolve();await gate.promise;if(mode==='discovery-failure')throw Error('discovery failed');};
- f.options.sdk.preparePrivateFeePayment=async()=>{payments++;return {availableCredit:77n};};f.app=f.restart();
- const work=f.app.readAccountStatus();work.catch(()=>{});await entered.promise;
+ f.options.sdk.preparePrivateFeePayment=async()=>{payments++;feeEntered.resolve();await feeGate.promise;return {availableCredit:77n};};f.app=f.restart();
+ const work=f.app.readAccountStatus().finally(()=>{settled=true;});work.catch(()=>{});await Promise.all([entered.promise,feeEntered.promise]);
  assert.equal(seen.method,'get_deposit_ids');assert.equal(seen.owner.toString(),hex(3));assert.equal(seen.board.toString(),hex(1));assert.equal(seen.privateFee.toString(),hex(2));
- assert.equal(f.state.privateReads.length,0);assert.equal(payments,0);await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ assert.equal(f.state.privateReads.length,0);assert.equal(payments,1,'independent fee work starts while discovery is held');await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
  if(mode==='scope-change')scope={synchronized:true};if(mode==='wallet-change')f.options.accountSession.wallet={...f.options.accountSession.wallet};
  if(mode==='pxe-change')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};if(mode==='owner-change')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
- gate.resolve();
- if(mode==='success'){const result=await work;assert.equal(result.status,'fee-ready');assert.equal(result.privateFeeCredit,'77');assert.equal(payments,1);assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,1);}
- else{await assert.rejects(work,mode==='discovery-failure'?/discovery failed/:{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(payments,0);assert.equal(f.state.privateReads.length,0);}
- assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ gate.resolve();await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(settled,false,'discovery result cannot release the operation before the fee sibling drains');await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ assert.equal(f.state.privateReads.length,mode==='success'?1:0);feeGate.resolve();
+ if(mode==='success'){const result=await work;assert.equal(result.status,'fee-ready');assert.equal(result.privateFeeCredit,'77');assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,1);}
+ else await assert.rejects(work,mode==='discovery-failure'?/discovery failed/:{code:'ROLLING_CONTEXT_CHANGED'});
+ assert.equal(payments,1);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+for(const bothFail of [false,true])test('account readiness fee failure drains held discovery '+bothFail,{timeout:3000},async()=>{
+ const f=fixture(),scope={synchronized:true},discovery=Promise.withResolvers(),discoveryEntered=Promise.withResolvers(),feeEntered=Promise.withResolvers();let settled=false;
+ f.options.accountSession.operationScope=()=>scope;
+ f.options.accountSession.wallet.pxe.prepareBoardActionState=async()=>{discoveryEntered.resolve();await discovery.promise;if(bothFail)throw Error('discovery first');};
+ f.options.sdk.preparePrivateFeePayment=()=>{feeEntered.resolve();throw Error('fee second');};f.app=f.restart();
+ const work=f.app.readAccountStatus().finally(()=>{settled=true;}),rejection=assert.rejects(work,bothFail?/discovery first/:/fee second/);
+ await Promise.all([discoveryEntered.promise,feeEntered.promise]);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(settled,false);assert.equal(f.state.privateReads.length,0);await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ discovery.resolve();await rejection;assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ assert.deepEqual(await f.app.readFundingState(),{status:'ready'},'failed read releases its lease only after every sibling settles');
+});
+for(const change of ['scope','wallet','pxe','owner'])test('account readiness rejects late context change while fee result is held '+change,{timeout:3000},async()=>{
+ const f=fixture(),feeGate=Promise.withResolvers(),feeEntered=Promise.withResolvers(),idsEntered=Promise.withResolvers();let scope={synchronized:true},settled=false;
+ f.options.accountSession.operationScope=()=>scope;f.state.beforeDepositIds=()=>idsEntered.resolve();
+ f.options.sdk.preparePrivateFeePayment=async()=>{feeEntered.resolve();await feeGate.promise;return {availableCredit:77n};};f.app=f.restart();
+ const work=f.app.readAccountStatus().finally(()=>{settled=true;}),rejection=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});
+ await Promise.all([feeEntered.promise,idsEntered.promise]);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(settled,false);assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,1);
+ if(change==='scope')scope={synchronized:true};if(change==='wallet')f.options.accountSession.wallet={...f.options.accountSession.wallet};
+ if(change==='pxe')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};if(change==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
+ feeGate.resolve();await rejection;assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
 test('account readiness recovering saved work does not discover unrelated contracts',async()=>{
  const f=fixture();const saved=await f.app.prepare({type:'post',deposit:'9',content:'Saved current work'});

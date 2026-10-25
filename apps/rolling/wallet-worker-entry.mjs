@@ -1,10 +1,13 @@
+import {prepareRollingAccount} from '../../shared/rolling/account-preparation.mjs';
+import {observeRollingWorkerPerformance} from './performance.mjs';
 import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
 import {createRollingDeploymentPreparation,prepareRollingDeployment} from '../../shared/rolling/deployment.mjs';
 import {createRollingFundingSession,verifyRollingAggregateScope} from '../../shared/rolling/funding-session.mjs';
 import {APPLICATION_METHODS,FUNDING_METHODS,TOPUP_METHODS,WITHDRAWAL_METHODS,DEPOSIT_METHODS,CALLBACKS,errorRecord,restoreError,workerFailure} from './wallet-worker-protocol.mjs';
 
 const sdk=globalThis.__aztec,ethers=globalThis.ethers,routing=globalThis.BillboardPrivateFeeRouting;
-let closed=false,closing=false,settings,warming,cryptoReady,proverReady,publicState,account,funding,opening,session,creating,refundSession,fundingBusy=false,fundingCompletion=Promise.resolve();
+let closed=false,closing=false,settings,warming,cryptoReady,proverReady,publicState,account,accountPreparation,funding,opening,session,creating,refundSession,fundingBusy=false,fundingCompletion=Promise.resolve();
+let stopPerformance=()=>{};
 let nextCallback=0;const pendingCallbacks=new Map(),operations=new Map();
 const send=value=>globalThis.postMessage(value);
 function localGuard(){if(closed)throw workerFailure('ROLLING_CONTEXT_CHANGED');}
@@ -62,7 +65,10 @@ async function preparePublic(){
 function metadata(){return {bokConfigured:settings.config.bok!==undefined,bokEthAvailable:settings.config.bokTopup!==undefined,usdcAvailable:settings.config.aggregateFunding?.usdcRelayAddress!==undefined,privateFeeCap:sdk.normalizePrivateFeeGasSettings(settings.config.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString(),ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(settings.config.privateFee.gasSettings).toString(),refundOnly:settings.config.refundOnly===true};}
 function initialize(value){
  if(settings||!sdk||!ethers||!routing||!globalThis.makeClaimSecretStore||!globalThis.BillboardCRS)throw workerFailure();
- settings=structuredClone(value);if(typeof settings.proofsEnabled!=='boolean'||!settings.proofsEnabled&&settings.config.network.chainId!=='31337')throw workerFailure();
+ settings=structuredClone(value);
+ globalThis[Symbol.for('rolling.proof.profile')]=settings.profile===true;
+ if(settings.profile===true)try{stopPerformance=observeRollingWorkerPerformance({send,origin:new URL(globalThis.__rollingWalletAssetBase).origin});}catch{}
+ if(typeof settings.proofsEnabled!=='boolean'||!settings.proofsEnabled&&settings.config.network.chainId!=='31337')throw workerFailure();
  globalThis._getPublicConfig=()=>structuredClone(settings.config);
  // Same native singleton used by Poseidon, Schnorr and account derivation.
  cryptoReady=background('cryptography',sdk.BarretenbergSync.initSingleton());
@@ -74,18 +80,16 @@ function initialize(value){
  return metadata();
 }
 let derivedIdentity;
-async function deriveAccount(raw){
+async function prepareAccount(raw){
  localGuard();if(!settings)throw workerFailure();
  const modulus=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
  if(!raw||['secretKey','salt'].some(name=>typeof raw[name]!=='string'||!/^0x[0-9a-f]{64}$/.test(raw[name])||BigInt(raw[name])>=modulus)||BigInt(raw.secretKey)===0n)throw workerFailure('BB_ACCOUNT_RECORD_INVALID');
- if(derivedIdentity?.secretKey===raw.secretKey&&derivedIdentity.salt===raw.salt){if(raw.address!==undefined&&String(raw.address).toLowerCase()!==derivedIdentity.result.address)throw workerFailure('BB_ACCOUNT_RECORD_INVALID');return {...derivedIdentity.result};}
+ if(derivedIdentity?.secretKey===raw.secretKey&&derivedIdentity.salt===raw.salt){if(raw.address!==undefined&&String(raw.address).toLowerCase()!==derivedIdentity.result.address)throw workerFailure('BB_ACCOUNT_RECORD_INVALID');return derivedIdentity;}
  await cryptoReady;localGuard();
- const secret=sdk.Fr.fromHexString(raw.secretKey),contract=new sdk.SchnorrInitializerlessAccountContract(sdk.deriveSigningKey(secret));
- const {publicKeys}=await sdk.deriveKeys(secret),artifact=await contract.getContractArtifact();
- const instance=await sdk.getContractInstanceFromInstantiationParams(artifact,{constructorArtifact:undefined,constructorArgs:undefined,salt:new sdk.Fr(BigInt(raw.salt)),publicKeys,immutablesHash:await contract.getImmutablesHash()});
- const result={address:instance.address.toString(),partialAddress:(await sdk.computePartialAddress(instance)).toString()};localGuard();
- if(raw.address!==undefined&&String(raw.address).toLowerCase()!==result.address)throw workerFailure('BB_ACCOUNT_RECORD_INVALID');derivedIdentity=Object.freeze({secretKey:raw.secretKey,salt:raw.salt,result:Object.freeze(result)});return {...result};
+ const {preparation,identity:result}=await prepareRollingAccount({sdk,secretKey:raw.secretKey,salt:raw.salt});localGuard();
+ if(raw.address!==undefined&&String(raw.address).toLowerCase()!==result.address)throw workerFailure('BB_ACCOUNT_RECORD_INVALID');derivedIdentity=Object.freeze({secretKey:raw.secretKey,salt:raw.salt,preparation,result});return derivedIdentity;
 }
+async function deriveAccount(raw){return {...(await prepareAccount(raw)).result};}
 let bokLoading;
 function getBokArtifact(){return settings.artifacts.bok?(bokLoading??=jsonAsset(settings.artifacts.bok,32*1024*1024).then(sdk.loadContractArtifact)):Promise.resolve(undefined);}
 function relay(){
@@ -94,9 +98,9 @@ function relay(){
 }
 async function openAccount(raw){
  if(account){if(account.secretKey!==raw.secretKey||account.salt!==String(raw.salt)||account.address!==String(raw.address))throw workerFailure('ROLLING_CONTEXT_CHANGED');return opening;}
- const captured=structuredClone(raw);const derived=await deriveAccount(captured);await guard();
+ const captured=structuredClone(raw);const prepared=await prepareAccount(captured),derived=prepared.result;await guard();
  if(closing)throw workerFailure('ROLLING_CONTEXT_CHANGED');
- if(account)throw workerFailure('ROLLING_BUSY');account=Object.freeze({secretKey:captured.secretKey,salt:String(captured.salt),address:derived.address});
+ if(account)throw workerFailure('ROLLING_BUSY');account=Object.freeze({secretKey:captured.secretKey,salt:String(captured.salt),address:derived.address});accountPreparation=prepared.preparation;
  opening=(async()=>{const state=await warming;await guard();
   if(settings.config.aggregateFunding&&!settings.config.refundOnly)funding=await createRollingFundingSession({sdk,ethers,config:settings.config,account,deploymentPreparation:state.deploymentPreparation,boardArtifact:state.boardArtifact,privateFeeArtifact:state.privateFeeArtifact,node:state.node,contextGuard:guard,captureWallet,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),relay:relay(),provider:state.fundingProvider,scopePreparation:state.scopePreparation,onProgress:progress,proofsEnabled:settings.proofsEnabled});
   if(!settings.config.refundOnly)startSession();
@@ -104,7 +108,7 @@ async function openAccount(raw){
 }
 function startSession(){
  if(!account||settings.config.refundOnly)throw workerFailure('ROLLING_SESSION_CONFIG');if(session)return session;if(creating)return creating;
- creating=background('private-session',proverReady.then(()=>createRollingWalletSession({sdk,routing,ethers,config:settings.config,boardArtifact:publicState.boardArtifact,privateFeeArtifact:publicState.privateFeeArtifact,getBokArtifact,account,trustedQuery:settings.trustedQuery,remoteProver:settings.remoteProver,contextGuard:guard,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),captureFundingWallet:captureWallet,fundingRelay:relay(),fundingContext:funding,onProgress:progress,proofsEnabled:settings.proofsEnabled})).then(value=>(session=value)));return creating;
+ creating=background('private-session',proverReady.then(()=>createRollingWalletSession({sdk,routing,ethers,config:settings.config,boardArtifact:publicState.boardArtifact,privateFeeArtifact:publicState.privateFeeArtifact,getBokArtifact,account,accountPreparation,trustedQuery:settings.trustedQuery,remoteProver:settings.remoteProver,contextGuard:guard,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),captureFundingWallet:captureWallet,fundingRelay:relay(),fundingContext:funding,onProgress:progress,proofsEnabled:settings.proofsEnabled})).then(value=>(session=value)));return creating;
 }
 async function ensureSession(){await opening;const result=await startSession();await fundingCompletion;return result;}
 async function ensureRefundSession(){
@@ -122,7 +126,7 @@ async function earlyFunding(name,args){
 }
 async function invoke(method,args){
  if(method==='initialize')return initialize(args[0]);if(method==='deriveAccount')return deriveAccount(args[0]);if(method==='openAccount')return openAccount(args[0]);
- if(method==='close'){if(fundingBusy||session?.busy)throw workerFailure('ROLLING_BUSY');closing=true;await Promise.allSettled([warming,opening].filter(Boolean));await Promise.allSettled([creating].filter(Boolean));await Promise.allSettled([publicState?.scopePreparation?.result].filter(Boolean));for(const controller of operations.values())controller.abort();if(session)await session.close();funding?.close();publicState?.fundingProvider?.destroy();if(refundSession)await refundSession.close();derivedIdentity=undefined;account=undefined;closed=true;return true;}
+ if(method==='close'){if(fundingBusy||session?.busy)throw workerFailure('ROLLING_BUSY');closing=true;stopPerformance();await Promise.allSettled([warming,opening].filter(Boolean));await Promise.allSettled([creating].filter(Boolean));await Promise.allSettled([publicState?.scopePreparation?.result].filter(Boolean));for(const controller of operations.values())controller.abort();if(session)await session.close();funding?.close();publicState?.fundingProvider?.destroy();if(refundSession)await refundSession.close();derivedIdentity=undefined;accountPreparation=undefined;account=undefined;closed=true;return true;}
  if(!account)throw workerFailure('ROLLING_LOCKED');await guard();
  if(method==='ensureSession'){await ensureSession();return metadata();}
  if(method==='ensureRefundSession'){await ensureRefundSession();return metadata();}

@@ -1024,22 +1024,24 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     async readAccountStatus(){
       if(!session)return {status:'locked'};
       return exclusive(async()=>{const workflow=await fundingWorkflowState();if(workflow.status==='recovering')return {...workflow,pendingWithdrawal:await pendingExitSummary()};
-        const operation=getOperationScope();
-        if(operation?.synchronized===true){
-          const wallet=session.wallet,pxe=wallet.pxe,node=session.node;
-          await localGuard();
-          await pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'});
-          await localGuard();check(getOperationScope()===operation&&operation.synchronized===true&&session.wallet===wallet&&wallet.pxe===pxe&&session.node===node,'ROLLING_CONTEXT_CHANGED');
-        }
-        // These reads share this owned operation. Native utilities retain their
-        // queue; public fee qualification can overlap collateral discovery.
+        const operation=getOperationScope(),context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
+        await localGuard();
+        // Enqueue discovery first, then overlap independent public fee metadata.
+        // Fee utilities retain the same native queue behind this discovery.
         const reads=await Promise.allSettled([
-          async()=>{const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;},
+          async()=>{
+            if(operation?.synchronized===true){
+              await context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'});
+              await localGuard();check(getOperationScope()===operation&&operation.synchronized===true&&session.wallet===context.wallet&&context.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
+            }
+            const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;
+          },
           ()=>pendingExitSummary(),()=>payment(),
         ].map(read=>Promise.resolve().then(read)));
         // Keep collateral, pending-exit, then fee failure priority after draining.
         for(const result of reads.slice(0,2))if(result.status==='rejected')throw result.reason;
         await localGuard();
+        check(getOperationScope()===operation&&session.wallet===context.wallet&&session.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
         const ids=reads[0].value,pendingWithdrawal=reads[1].value;
         if(reads[2].status==='rejected'){const error=reads[2].reason;if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};throw error;}
         const fee=reads[2].value;
@@ -1345,17 +1347,32 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       // Reuse only the exact predecessor observation owned by this locked action.
       // A separate submit/reload has no permit and performs a fresh canonical read.
       await session.journal.assertCanStart(!replacing&&saved.value.predecessor?{predecessor:saved.value.predecessor}:undefined); // Before private simulation, not merely before send.
-      await checkActionSubmission(saved.value);
-      const selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
       const paymentScope=session.operationScope?.(),cachedPayment=paymentScope&&preparedPayments.get(paymentScope);
       if(paymentScope)preparedPayments.delete(paymentScope);
-      const preparedPayment=await measure('action.fee-prepare',async()=>{
+      const preparePayment=()=>measure('action.fee-prepare',async()=>{
         if(cachedPayment&&cachedPayment.encoded===saved.encoded&&cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node){
           if(cachedPayment.claim)await verifiedFeeClaim(saved.value.action,saved.value);
           await guard();check(session.operationScope()===paymentScope,'ROLLING_CONTEXT_CHANGED');return cachedPayment.payment;
         }
         return payment(saved.value.action,saved.value,{ordinaryProof:!!ordinaryPost(saved.value),likeProof:!!qualifiedLike(saved.value)});
       });
+      let preparedPayment,selected;
+      if(!replacing&&paymentScope?.synchronized===true&&['claim-deposit','claim-private-fee','claim-bok'].includes(saved.value.action.type)){
+        const context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
+        // All receipt legs still revalidate against current custody and canonical
+        // blocks. They share only this submission's existing aggregate context.
+        const reads=await Promise.allSettled([
+          ()=>checkActionSubmission(saved.value),preparePayment,
+        ].map(read=>Promise.resolve().then(read)));
+        const failure=reads.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+        await guard();check(session.operationScope()===paymentScope&&paymentScope.synchronized===true&&session.wallet===context.wallet&&context.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
+        preparedPayment=reads[1].value;
+        selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
+      }else{
+        await checkActionSubmission(saved.value);
+        selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
+        preparedPayment=await preparePayment();
+      }
       const estimated=await measure('action.fee-simulate',()=>sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,prepared:preparedPayment,from:session.owner,guard,deferSimulation:true,ordinaryPost:ordinaryPost(saved.value),qualifiedLike:qualifiedLike(saved.value),measure}));
       const maximumFee=replacing?saved.value.replacementReview.maximumFee:saved.value.maximumFee;
       check(estimated.maximumFee<=BigInt(maximumFee),'ROLLING_FEE_CHANGED');await guard();

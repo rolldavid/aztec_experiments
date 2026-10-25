@@ -32,11 +32,15 @@ test('invalidated account rejects before trusted-node construction; lock callbac
  input.contextGuard=()=>{throw original;};input.locks={request:async(_name,_config,fn)=>{try{return await fn({});}finally{released=true;}}};
  await assert.rejects(createRollingWalletSession(input),error=>error===original);assert.equal(released,true);assert.deepEqual(accesses,[]);
 });
-test('query construction receives captured scope and preserves failure without fallback',async()=>{
- const {input}=options(),original=Error('Trusted service unavailable');let calls=0;
- input.sdk={createTrustedPrivateNode:async value=>{calls++;assert.deepEqual(value,{url:'http://127.0.0.1:1',allowLocalDev:true,
-  expectedNetworkScope:{chainId:'31337',version:'1',rollup:'0x'+'1'.repeat(40)},proofsEnabled:true,readinessTier:'checkpointed'});throw original;}};
- await assert.rejects(createRollingWalletSession(input),error=>error===original);assert.equal(calls,1);
+test('query construction receives captured scope and rejects without fallback',async()=>{
+ const {input}=options(),f=await deploymentFixture(),original=Object.assign(Error('Trusted service unavailable'),{code:'BB_TRUSTED_NODE_UNAVAILABLE'});let calls=0,privateReads=0,released=false;const diagnostics=[];
+ Object.assign(input,f.options);input.onProgress=value=>diagnostics.push(value);
+ input.locks={request:async(_name,_config,fn)=>{try{return await fn({});}finally{released=true;}}};
+ input.sdk={...f.options.sdk,createTrustedPrivateNode:async value=>{calls++;assert.deepEqual(value,{url:'http://127.0.0.1:1',allowLocalDev:true,
+  expectedNetworkScope:{chainId:'31337',version:'1',rollup:f.options.config.network.rollupAddress},proofsEnabled:true,readinessTier:'checkpointed'});throw original;},
+  openPXEStore:async()=>{privateReads++;throw Error('Unexpected store access');},createPXE:async()=>{privateReads++;throw Error('Unexpected PXE access');}};
+ await assert.rejects(createRollingWalletSession(input),{code:'ROLLING_DEPLOYMENT_INVALID'});assert.equal(calls,1);assert.equal(privateReads,0);assert.equal(released,true);
+ assert(diagnostics.some(value=>value.state==='failed'&&value.deploymentStep==='node-readiness'&&value.code===original.code));
 });
 
 import fs from 'node:fs';
@@ -130,7 +134,12 @@ async function sessionFixture({chainId='31337'}={}){
   Contract:{at:()=>({methods:{get_screen_hints:(owner,deposit)=>({simulate:async options=>{held('screen-hints');assert.equal(owner.toString(),account.address);assert.equal(options.from.toString(),account.address);return {result:[null,null]};}}),preference_head:()=>({simulate:async()=>{held('preference-head');return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='preference_head')),[Fr.ZERO,Fr.ONE,Fr.ZERO,Fr.ZERO])};}}),register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
   prefetchOrdinaryPostWitnesses:async input=>{held('posting-witnesses');(state.witnessPrefetches??=[]).push(input);},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
- const locks={request:async(name,options,run)=>{assert.equal(name,'billboard-wallet:'+account.address);assert.deepEqual(options,{ifAvailable:true});
+ const locks={request:async(name,options,run)=>{
+  if(name==='billboard-wallet:'+account.address+':funding'){
+   assert.deepEqual(options,{mode:'exclusive'});assert.equal(state.active,true);
+   const next=(state.fundingQueue??Promise.resolve()).then(()=>run({}));state.fundingQueue=next.catch(()=>{});return next;
+  }
+  assert.equal(name,'billboard-wallet:'+account.address);assert.deepEqual(options,{ifAvailable:true});
   if(state.active||state.otherTab)return run(null);state.active=true;state.events.push('lock');try{return await run({});}finally{state.active=false;state.events.push('unlock');}}};
  return {...f,state,deploymentState:f.state,ownedId,privateStore,pxe,store,wallet,input:{...f.options,sdk,routing,account,locks,trustedQuery:{url:'http://127.0.0.1:3/v1/node',allowLocalDev:true},remoteProver:{url:'http://127.0.0.1:3',board:String(f.board.address)},contextGuard:async()=>{held('guard');}}};
 }
@@ -283,8 +292,8 @@ for(const [step,inject]of Object.entries(diagnosticSessionFailures))test('labell
  f.input.contextGuard=async()=>{if(f.state.diagnosticFailure)throw f.state.diagnosticFailure;return guard();};
  f.input.onProgress=record=>{observed.push(record);if(record.step===step&&record.deploymentStep===null&&record.state==='started')inject(f,original);};
  let rejected=false,caught;try{await createRollingWalletSession(f.input);}catch(error){rejected=true;caught=error;}
- assert(rejected);if(step==='deployment')assert.equal(caught.code,'ROLLING_DEPLOYMENT_INVALID');else assert.equal(caught,original);
- assert.deepEqual(observed.at(-1),{stage:'session-initialization',step,deploymentStep:step==='deployment'?'node-readiness':null,state:'failed',code:'unknown'});
+ assert(rejected);if(['trusted-node','deployment'].includes(step))assert.equal(caught.code,'ROLLING_DEPLOYMENT_INVALID');else assert.equal(caught,original);
+ assert.deepEqual(observed.at(-1),{stage:'session-initialization',step:['trusted-node','deployment'].includes(step)?'deployment':step,deploymentStep:step==='trusted-node'?'node-readiness':step==='deployment'?'final-readiness-and-context':null,state:'failed',code:'unknown'});
  assert.equal(observed.filter(r=>r.state==='failed').length,1);assert(!JSON.stringify(observed).includes('PRIVATE_SENTINEL'));assert.equal(f.state.active,false);assert.equal(f.state.sends,0);
  if(['pxe-create','account-register','contracts-register','initial-sync','journal-open','wallet-bind','account-manager','application-bind'].includes(step))assert.equal(f.state.closes,1);
 });
@@ -303,7 +312,7 @@ test('session diagnostic does not hide account invalidation or invoke exception 
  const f=await sessionFixture(),observed=[];f.input.onProgress=r=>{observed.push(r);if(r.step==='pxe-create'&&r.state==='started')f.input.account.salt='99';};
  await assert.rejects(createRollingWalletSession(f.input),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(observed.at(-1).code,'ROLLING_CONTEXT_CHANGED');assert(!f.state.events.includes('create-pxe'));assert.equal(f.state.closes,1);
  const g=await sessionFixture();let reads=0;const original=Object.defineProperty(Error('PRIVATE_SENTINEL'),'code',{get(){reads++;throw Error('PRIVATE_SENTINEL');}});g.input.sdk.createTrustedPrivateNode=async()=>{throw original;};g.input.onProgress=r=>observed.push(r);
- await assert.rejects(createRollingWalletSession(g.input),e=>e===original);assert.equal(reads,0);assert.equal(observed.at(-1).code,'unknown');
+ await assert.rejects(createRollingWalletSession(g.input),{code:'ROLLING_DEPLOYMENT_INVALID'});assert.equal(reads,0);assert.equal(observed.at(-1).code,'unknown');
 });
 
 for(const mode of [undefined,true,false])test(`native PXE configuration follows captured proof mode ${mode}`,async()=>{

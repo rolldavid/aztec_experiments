@@ -1,8 +1,9 @@
+import {consumeRollingAccountPreparation} from '../../shared/rolling/account-preparation.mjs';
 import {createRollingFundingSession,verifyRollingTopupClaim} from '../../shared/rolling/funding-session.mjs';
 export {createRollingFundingSession,verifyRollingFundingCredit,verifyRollingAggregateScope,verifyRollingTopupClaim,fundingUsdEstimate} from '../../shared/rolling/funding-session.mjs';
 import {executeRollingAction} from './wallet-action.mjs';
 import {executeAutomaticWithdrawal} from './automatic-withdrawal.mjs';
-import {measureRollingStage} from './performance.mjs';
+import {beginRollingMeasure,measureRollingStage} from './performance.mjs';
 // Load after explicit unlock. All SDK and custody dependencies are supplied by
 // the authenticated application bundle; no fixture or ordinary-node fallback.
 import {createDepositRefunds} from './deposit-refunds.mjs';
@@ -372,13 +373,14 @@ export async function createRollingRefundSession({sdk,ethers,config,boardArtifac
  return Object.freeze({mode:'refund-only',withdrawal:wrapped,application:{async readAccountStatus(){return refunded?{status:'refunded',intent:null}:{status:'recovering',intent:await wrapped.inspect()};}},get busy(){return busy;},async close(){if(busy)throw fail('ROLLING_BUSY');closed=true;provider.destroy();}});
 }
 
-export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,getBokArtifact,account,
+export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,getBokArtifact,account,accountPreparation,
  trustedQuery,remoteProver,fundingContext,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
  const ownsFundingContext=fundingContext==null;
  const nativeChainTip='proposed';
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
+ const preparedAccount=accountPreparation===undefined?null:consumeRollingAccountPreparation(accountPreparation,{sdk,account:captured});
  const lockName='billboard-wallet:'+captured.address;
  let operationScope=null;
  let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,initializeAccount,aggregate,prepareStarter,topups,withdrawal,depositRefunds;
@@ -415,9 +417,10 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   else if(store){await store.close();store=undefined;}}finally{if(ownsFundingContext)fundingContext?.close();fundingProvider?.destroy();fundingProvider=undefined;}
  }
  let initializationStep='account-lock',nestedFailure=null,failedObservation=false;
+ let finishInitializationStep=beginRollingMeasure('session-init.account-lock');
  const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'session-initialization',step:initializationStep,deploymentStep:null,state,code:state==='failed'?rollingSetupErrorCode(error):null});
- const begin=step=>{emit('complete');initializationStep=step;emit('started');};
- const failed=error=>{if(failedObservation)return;failedObservation=true;if(!nestedFailure)emit('failed',error);};
+ const begin=step=>{finishInitializationStep();emit('complete');initializationStep=step;finishInitializationStep=beginRollingMeasure('session-init.'+step);emit('started');};
+ const failed=error=>{finishInitializationStep();if(failedObservation)return;failedObservation=true;if(!nestedFailure)emit('failed',error);};
  emit('started');
  try{await locked(async()=>{
   try{
@@ -453,9 +456,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     deployment.bok=verified;bok=verified;return bok;
    };
    begin('account-derive');
-   const secret=sdk.Fr.fromHexString(captured.secretKey),salt=new sdk.Fr(BigInt(captured.salt));
-   const accountContract=new sdk.SchnorrInitializerlessAccountContract(sdk.deriveSigningKey(secret));
-   const keys=await sdk.deriveKeys(secret),artifact=await accountContract.getContractArtifact();
+   const secret=preparedAccount?.secret??sdk.Fr.fromHexString(captured.secretKey),salt=preparedAccount?.nativeSalt??new sdk.Fr(BigInt(captured.salt));
+   const accountContract=preparedAccount?.accountContract??new sdk.SchnorrInitializerlessAccountContract(sdk.deriveSigningKey(secret));
+   const keys=preparedAccount?.keys??await sdk.deriveKeys(secret),artifact=preparedAccount?.artifact??await accountContract.getContractArtifact();
    begin('store-open');
    await guard();store=await sdk.openPXEStore({l1ChainId:Number(network.chainId),rollupAddress:network.rollup,
     accountAddress:captured.address,dataDirectory:'rolling-wallet-v1'},undefined,logger);
@@ -539,7 +542,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},
     storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
     captureWallet:captureFundingWallet??(async()=>{throw fail('ROLLING_FUNDING_UNAVAILABLE');}),contextGuard:guardRoute});
-   emit('complete');
+   finishInitializationStep();emit('complete');
   }catch(error){failed(error);closed=true;try{await dispose();}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session initialization and cleanup failed');}throw error;}
  });}catch(error){failed(error);throw error;}
  async function guardRoute(){

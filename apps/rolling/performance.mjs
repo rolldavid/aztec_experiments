@@ -1,4 +1,3 @@
-let profilingEnabled=false;
 // Measurements observe progress; they never control it. No account IDs or content.
 export function beginRollingMeasure(stage, timing=globalThis.performance){
  let start;try{start=timing?.now?.();}catch{}let finished=false;
@@ -10,7 +9,7 @@ export function beginRollingMeasure(stage, timing=globalThis.performance){
 export async function measureRollingStage(stage,operation,{nativeUtility=false}={}){
  const finish=beginRollingMeasure(stage);try{
   const result=await operation();
-  if(nativeUtility&&profilingEnabled)try{
+  if(nativeUtility&&globalThis[Symbol.for('rolling.proof.profile')]===true)try{
    const timings=result?.stats?.timings,functions=timings?.perFunction;
    const values={total:timings?.total,sync:timings?.sync,unaccounted:timings?.unaccounted};
    if(Array.isArray(functions)&&functions.length<=256){
@@ -63,6 +62,71 @@ export function rollingResourceTiming(entry,origin){
   return result;
  }catch{return null;}
 }
+// Only fixed labels and numeric observations cross the private-worker boundary.
+// Re-emit on the page timeline so existing collectors and manual observers see
+// the same measurements. No SDK execution or transaction data reaches the page.
+const workerMeasureName=/^rolling\.[a-z.-]{1,96}$/;
+const resourceEndpoints=new Set(['wallet-asset','proof-asset','node','prover-submit','prover-job','prover-result','public-read']);
+const resourcePoints=['fetchStart','domainLookupStart','domainLookupEnd','connectStart','secureConnectionStart','connectEnd','requestStart','responseStart','responseEnd'];
+const resourceNumbers=['start','duration',...resourcePoints,'transferSize','encodedBodySize','decodedBodySize','serverBody','serverValidate','serverQueue','serverBodyFirst','serverBodyGap','serverBodyChunks','serverBodyBytes'];
+const diagnosticNumber=value=>Number.isFinite(value)&&value>=0&&value<=Number.MAX_SAFE_INTEGER;
+function workerPerformanceRecord(value){
+ if(!value||Object.getPrototypeOf(value)!==Object.prototype)return null;
+ if(value.kind==='measure'){
+  if(Object.keys(value).some(key=>!['kind','name','start','duration','aggregateMs'].includes(key))||typeof value.name!=='string'||!workerMeasureName.test(value.name)||!diagnosticNumber(value.start)||!diagnosticNumber(value.duration)||value.duration>3600000)return null;
+  if(value.aggregateMs!==undefined&&(!diagnosticNumber(value.aggregateMs)||value.aggregateMs>3600000))return null;
+  return {...value};
+ }
+ if(value.kind!=='resource'||!resourceEndpoints.has(value.endpoint)||!['h2','h3','http/1.1','http/1.0','unknown'].includes(value.protocol)||Object.keys(value).some(key=>!['kind','endpoint','protocol',...resourceNumbers].includes(key)))return null;
+ if(!diagnosticNumber(value.start)||!diagnosticNumber(value.duration)||value.duration>3600000)return null;
+ for(const key of resourceNumbers)if(value[key]!==undefined&&!diagnosticNumber(value[key]))return null;
+ return {...value};
+}
+export function observeRollingWorkerPerformance({send,PerformanceObserver:Observer=globalThis.PerformanceObserver,timing=globalThis.performance,origin}={}){
+ if(globalThis[Symbol.for('rolling.proof.profile')]!==true)return ()=>{};
+ const observers=[];let stopped=false;
+ for(const type of ['measure','resource'])try{
+  const observer=new Observer(list=>{try{
+   if(stopped)return;
+   const groups={measure:[],oracle:[],resource:[]},limits={measure:512,oracle:4096,resource:128},dropped={};
+   for(const entry of list.getEntries()){
+    const projected=type==='resource'?rollingResourceTiming(entry,origin):{kind:'measure',name:entry.name,start:entry.startTime,duration:entry.duration,...(entry.detail?.kind==='aggregate'?{aggregateMs:entry.detail.durationMs}:{})};
+    const value=workerPerformanceRecord(projected);if(!value)continue;
+    const category=value.kind==='resource'?'resource':value.name.startsWith('rolling.proof.native.phase.oracle-')?'oracle':'measure';
+    const group=groups[category];group.push(value);if(group.length>limits[category]){group.shift();dropped[category]=(dropped[category]??0)+1;}
+   }
+   const entries=Object.values(groups).flat().sort((a,b)=>a.start-b.start);
+   if(!diagnosticNumber(timing.timeOrigin))return;
+   // One bounded message per batch, no per-entry promise or awaited IPC.
+   for(let i=0;i<entries.length;i+=64)send({type:'performance',timeOrigin:timing.timeOrigin,entries:entries.slice(i,i+64),...(i===0&&Object.keys(dropped).length?{dropped}:{})});
+  }catch{/* Diagnostics cannot change worker execution. */}});
+  observer.observe({type,buffered:true});observers.push(observer);
+ }catch{/* Unsupported worker diagnostics remain absent. */}
+ return ()=>{stopped=true;for(const observer of observers)try{observer.disconnect();}catch{}};
+}
+export function receiveRollingWorkerPerformance(message,{enabled=false,timing=globalThis.performance}={}){
+ try{
+  if(!enabled||message?.type!=='performance'||Object.keys(message).some(key=>!['type','timeOrigin','entries','dropped'].includes(key))||!diagnosticNumber(message.timeOrigin)||!diagnosticNumber(timing.timeOrigin)||!Array.isArray(message.entries)||message.entries.length>64)return;
+  const offset=message.timeOrigin-timing.timeOrigin,now=timing.now();if(!diagnosticNumber(now))return;
+  for(const raw of message.entries)try{
+   const value=workerPerformanceRecord(raw);if(!value)continue;
+   value.start+=offset;if(!diagnosticNumber(value.start)||value.start+value.duration>now+1)continue;
+   let name,detail;
+   if(value.kind==='measure'){
+    name=value.name;detail={realm:'worker',...(value.aggregateMs===undefined?{}:{kind:'aggregate',durationMs:value.aggregateMs})};
+   }else{
+    for(const key of resourcePoints)if(value[key]>0){value[key]+=offset;if(!diagnosticNumber(value[key]))throw Error('Invalid timing');}
+    name='rolling.worker.resource.'+value.endpoint;detail={...value,realm:'worker'};
+   }
+   timing.clearMeasures(name);timing.measure(name,{start:value.start,end:value.start+value.duration,detail});
+  }catch{/* One malformed record never prevents later numeric observations. */}
+  if(message.dropped&&Object.getPrototypeOf(message.dropped)===Object.prototype&&Object.keys(message.dropped).length<=3)for(const [category,count]of Object.entries(message.dropped)){
+   if(!['measure','oracle','resource'].includes(category)||!Number.isSafeInteger(count)||count<=0)continue;
+   const name='rolling.worker.trace-overflow';timing.clearMeasures(name);timing.measure(name,{start:now,end:now,detail:{kind:'trace-overflow',realm:'worker',category,count}});
+  }
+ }catch{/* The optional bridge never rejects a worker operation. */}
+}
+
 // Each observer is optional and independently bounded. Failure or unsupported
 // browser diagnostics cannot interrupt normal application work.
 export function observeRollingPerformance({PerformanceObserver:Observer=globalThis.PerformanceObserver,origin=globalThis.location?.origin,document:doc=globalThis.document,timing=globalThis.performance,onEntries=()=>{},onChange}={}){
@@ -87,17 +151,24 @@ export function observeRollingPerformance({PerformanceObserver:Observer=globalTh
   const observer=new Observer(list=>{try{
    let changed=false;
    for(const entry of list.getEntries()){
-    let value=null;
-    if(type==='resource')value=rollingResourceTiming(entry,origin);
+    let value=null,recordType=type;
+    if(type==='measure'&&entry.detail?.realm==='worker'&&entry.detail.kind==='trace-overflow'){
+     const {category,count}=entry.detail;if(['measure','oracle','resource'].includes(category)&&Number.isSafeInteger(count)&&count>0){dropped[category]=Math.min(Number.MAX_SAFE_INTEGER,(dropped[category]??0)+count);changed=true;}continue;
+    }
+    if(type==='measure'&&entry.detail?.realm==='worker'&&entry.detail.kind==='resource'){
+     const {realm,...resource}=entry.detail;value=workerPerformanceRecord(resource);if(value){value.realm=realm;recordType='resource';}
+    }
+    else if(type==='resource')value=rollingResourceTiming(entry,origin);
     else if(Number.isFinite(entry.startTime)&&entry.startTime>=0&&Number.isFinite(entry.duration)&&entry.duration>=0){
      if(type==='measure'&&/^rolling\.[a-z.-]{1,96}$/.test(entry.name)){
       value={name:entry.name,start:entry.startTime,duration:entry.duration};
+      if(entry.detail?.realm==='worker')value.realm='worker';
       if(entry.detail?.kind==='aggregate'&&Number.isFinite(entry.detail.durationMs)&&entry.detail.durationMs>=0)value.aggregateMs=entry.detail.durationMs;
      }
      if(type==='longtask')value={kind:'longtask',start:entry.startTime,duration:entry.duration};
     }
     if(value){
-     const category=type==='measure'&&entry.name.startsWith('rolling.proof.native.phase.oracle-')?'oracle':type;
+     const category=recordType==='measure'&&entry.name.startsWith('rolling.proof.native.phase.oracle-')?'oracle':recordType;
      records[category].push(value);
      if(category==='oracle'){
       const key=oracleTotals.has(value.name)||oracleTotals.size<127?value.name:'rolling.proof.native.phase.oracle-other-categories';
@@ -117,7 +188,7 @@ export function observeRollingPerformance({PerformanceObserver:Observer=globalTh
 // Opt-in developer trace for an actual browser run. Recording has no authority
 // over application state or transaction progression. Normal visits create none.
 try{if(typeof document!=='undefined'&&globalThis.location.hash.endsWith('?profile=1')){
- profilingEnabled=true;globalThis[Symbol.for('rolling.proof.profile')]=true;
+ globalThis[Symbol.for('rolling.proof.profile')]=true;
  // Consume the diagnostic flag before the reader initializes its route.
  const route=new URL(globalThis.location.href);route.hash=route.hash.slice(0,-10);history.replaceState(history.state,'',route);
  const initialVisibility=['visible','hidden'].includes(document.visibilityState)?document.visibilityState:'unknown';

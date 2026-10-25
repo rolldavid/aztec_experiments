@@ -88,12 +88,13 @@ async function load(signal){
   const prefix='globalThis.__rollingWalletAssetBase='+JSON.stringify(new URL('/wallet/',location.href).href)+';\n';
   workerURL=URL.createObjectURL(new Blob([prefix,...parts.flatMap(bytes=>[bytes,'\n;\n'])],{type:'text/javascript'}));
   const worker=new Worker(workerURL,{name:'rolling-private-wallet'});
-  workerClient=createRollingWorkerClient({worker,contextGuard:workerGuard,
+  const profile=globalThis[Symbol.for('rolling.proof.profile')]===true;
+  workerClient=createRollingWorkerClient({worker,contextGuard:workerGuard,profile,
    captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:workerGuard,chainId:config.network.chainId}),
    onProgress:value=>progressObserver(value)});
   // Do not make wallet discovery wait for SDK parsing or deployment preparation.
   // Each worker command waits only for its own actual prerequisites.
-  const initialized=workerClient.initialize({config,trustedQuery:query,remoteProver:remote,proofsEnabled:metadata.proofsEnabled,artifacts:metadata.artifacts,crs:metadata.crs});
+  const initialized=workerClient.initialize({profile,config,trustedQuery:query,remoteProver:remote,proofsEnabled:metadata.proofsEnabled,artifacts:metadata.artifacts,crs:metadata.crs});
   initialized.catch(()=>{});
   return workerClient;
  })();

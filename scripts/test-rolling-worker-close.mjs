@@ -20,7 +20,7 @@ async function scenario({legacy=false,fail=false,lateIdentity=false,identityGuar
  '../../shared/rolling/funding-session.mjs':{createRollingFundingSession:async()=>({close:()=>events.push('funding-close')}),verifyRollingAggregateScope:()=>{}},
  };
  let source=original;
- const admission='const captured=structuredClone(raw);const derived=await deriveAccount(captured);await guard();';
+ const admission='const captured=structuredClone(raw);const prepared=await prepareAccount(captured),derived=prepared.result;await guard();';
  if(lateIdentity){
   source=source.replace(admission+"\n if(closing)throw workerFailure('ROLLING_CONTEXT_CHANGED');",admission).replace(admission+"if(closing)throw workerFailure('ROLLING_CONTEXT_CHANGED');",admission);
   if(identityGuard)source=source.replace(admission,admission+"if(closing)throw workerFailure('ROLLING_CONTEXT_CHANGED');");
@@ -32,6 +32,8 @@ async function scenario({legacy=false,fail=false,lateIdentity=false,identityGuar
  const entry=new vm.SourceTextModule(source,{context,identifier:'actual-worker-entry'});
  await entry.link(async specifier=>{
   if(specifier==='./wallet-worker-protocol.mjs')return new vm.SourceTextModule(protocolSource,{context});
+  if(specifier==='../../shared/rolling/account-preparation.mjs')return new vm.SourceTextModule(await fs.readFile(root+'/shared/rolling/account-preparation.mjs','utf8'),{context});
+  if(specifier==='./performance.mjs')return new vm.SourceTextModule(await fs.readFile(root+'/apps/rolling/performance.mjs','utf8'),{context});
   const exports=stubs[specifier];assert(exports,specifier);return new vm.SyntheticModule(Object.keys(exports),function(){for(const [key,value]of Object.entries(exports))this.setExport(key,value);},{context});
  });await entry.evaluate();
  const state={node:{},deploymentPreparation:{},boardArtifact:{},privateFeeArtifact:{},fundingProvider:{destroy:()=>events.push('provider-destroy')},scopePreparation:{result:Promise.resolve(()=>{})}};
