@@ -1,3 +1,4 @@
+import {BB_WORKER_TIMING_PINS} from './bb-worker-timings.mjs';
 import {SELECTED_NOTE_PINS} from './selected-note-witnesses.mjs';
 import {KERNEL_WORK_PINS} from './kernel-witness-work.mjs';
 import {OWNER_DISCOVERY_PINS,transformOwnerDiscovery} from './patch-pxe-owner-discovery.mjs';
@@ -34,6 +35,8 @@ function fixture(t) {
     'scripts/pxe-sync-snapshot.mjs':'// fixture sync transform',
     'shared/owner-envelope.mjs':'// fixture envelope',
     'shared/ordinary-post-fees.mjs':'// fixture fee profile',
+    'shared/like-fees.mjs':'// fixture like profile',
+    'shared/preference-fees.mjs':'// fixture preference profile',
     'shared/ordinary-post-witnesses.mjs':'// fixture witness prefetch',
     'toolchain.json': '{"aztec":"5.0.0"}',
     'scripts/toolchain.mjs': '// synthetic toolchain',
@@ -48,6 +51,9 @@ function fixture(t) {
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3.wasm': 'synthetic sqlite asset',
     'node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js': 'synthetic sqlite proxy',
   };
+  inputs['shared/bb-worker-timings.mjs']='// fixture timing helper';
+  inputs['scripts/bb-worker-timings.mjs']='// fixture timing transform';
+  for(const name of Object.keys(BB_WORKER_TIMING_PINS))inputs[name]=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
   inputs['scripts/selected-note-witnesses.mjs']='// fixture selected note transform';
   for(const name of Object.keys(SELECTED_NOTE_PINS))inputs[name]=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
   inputs['scripts/kernel-witness-work.mjs']='// fixture kernel transform';
@@ -274,3 +280,6 @@ for(const name of ['scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED
 for(const name of Object.keys(SELECTED_NOTE_PINS))test('selected note literal native pin '+name,t=>{
  const f=fixture(t);f.write(name,'changed native implementation');f.manifest.inputs[name]=hash('changed native implementation');f.save();assert.throws(()=>checkSdk(f.root),/selected note source mismatch/);
 });
+
+for(const name of ['shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS)])test('worker diagnostic input is mandatory: '+name,t=>{const f=fixture(t);delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input|worker timing source mismatch/);});
+test('native worker pin cannot be rebound by updating manifest to changed bytes',t=>{const f=fixture(t),name=Object.keys(BB_WORKER_TIMING_PINS)[0];f.write(name,'changed native worker');f.manifest.inputs[name]=hash(f.read(name));f.save();assert.throws(()=>checkSdk(f.root),/worker timing source mismatch/);});

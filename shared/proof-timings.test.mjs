@@ -1,3 +1,4 @@
+import {measureWorkerVerification} from './bb-worker-timings.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {recordProofTimings,measureProofStage,beginProofSpan,measureProofPhase,timedCircuitCallbacks} from './proof-timings.mjs';
@@ -49,7 +50,7 @@ test('remote proof decompression and verification keep the exact checks and expo
  const source=(await readFile(new URL('./routed-kernel-prover.mjs',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace('export function','function').replace(/export const RoutedKernelProver=.*;/,'');
  const calls=[],proof={},vk=new Uint8Array([1]);let valid=true;
  const bb={async chonkDecompressProof(){calls.push('decompress');advance(3);return {proof};},async chonkVerify(input){assert.equal(input.proof,proof);assert.equal(input.vk,vk);calls.push('verify');advance(5);return {valid};}};
- const factory=vm.runInNewContext(source+'\nroutedKernelProverClass',{Buffer,Uint8Array,measureProofStage,Barretenberg:{initSingleton:async()=>bb},CircuitKind:{HidingKernel:3},flattenChonkProofFields:()=>[],ChonkProofWithPublicInputs:{fromBufferArray:()=>({})}});
+ const factory=vm.runInNewContext(source+'\nroutedKernelProverClass',{Buffer,Uint8Array,measureProofStage,measureWorkerVerification,Barretenberg:{initSingleton:async()=>bb},CircuitKind:{HidingKernel:3},flattenChonkProofFields:()=>[],ChonkProofWithPublicInputs:{fromBufferArray:()=>({})}});
  const Prover=factory(class{}),p=new Prover({}, {},{transport:{prove:async()=>{calls.push('transport');return {mode:'real',compressedProof:'AA=='};}}});
  await p.createChonkProof([{kind:3,vk}]);assert.deepEqual(calls,['transport','decompress','verify']);
  assert.deepEqual(entries.map(e=>[e.name,e.end-e.start]),[['rolling.proof.local.decompress',3],['rolling.proof.local.verify',5]]);

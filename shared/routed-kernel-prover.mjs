@@ -1,3 +1,4 @@
+import {measureWorkerVerification} from './bb-worker-timings.mjs';
 import {Buffer} from 'node:buffer';
 import {BBLazyPrivateKernelProver} from '@aztec-labs/bb-prover/client/lazy';
 import {ChonkProofWithPublicInputs} from '@aztec-labs/stdlib/proofs';
@@ -17,7 +18,7 @@ export function routedKernelProverClass(Base){return class extends Base {
   const {proof}=await measureProofStage('local.decompress',()=>bb.chonkDecompressProof({compressedProof}));
   const finalStep=steps.at(-1),vk=finalStep?.vk;
   if(finalStep?.kind!==CircuitKind.HidingKernel||!(vk instanceof Uint8Array)||vk.length===0)throw Error('Missing pinned hiding-kernel verification key');
-  if((await measureProofStage('local.verify',()=>bb.chonkVerify({proof,vk}))).valid!==true)throw Error('Remote proof verification failed');
+  if((await measureWorkerVerification(bb,()=>bb.chonkVerify({proof,vk}))).valid!==true)throw Error('Remote proof verification failed');
   const output=ChonkProofWithPublicInputs.fromBufferArray(flattenChonkProofFields(proof));output.compressedProof=compressedProof;return output;
  }
 };}
