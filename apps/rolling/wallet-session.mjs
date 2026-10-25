@@ -107,15 +107,28 @@ export async function verifyRollingBokCapability({sdk,node,config,artifact,deplo
 // Display-only observation. It owns no account lease, journal or private state.
 // The current operation still authenticates its predecessor independently.
 export async function observeIncludedTransaction({sdk,node,contextGuard},input){
- const txHash=input?.txHash;
- if(typeof txHash!=='string'||!/^0x[0-9a-f]{64}$/.test(txHash))throw fail('ROLLING_INVALID_ACTION');
+ const txHash=input?.txHash,inclusion=input?.inclusion;
+ if(typeof txHash!=='string'||!/^0x[0-9a-f]{64}$/.test(txHash)||!Number.isSafeInteger(inclusion?.blockNumber)||inclusion.blockNumber<1||!/^0x[0-9a-f]{64}$/.test(inclusion?.blockHash))throw fail('ROLLING_INVALID_ACTION');
+ // Detach the successful inclusion before any asynchronous observation. A
+ // transient missing receipt/block is uncertainty, not evidence of a fork.
+ const expected={blockNumber:inclusion.blockNumber,blockHash:inclusion.blockHash};
  const read=async fn=>{await contextGuard();const result=await sdk.boundedTransactionRead(fn);await contextGuard();return result;};
+ const blockHashAt=async number=>{
+  const block=await read(()=>node.getBlock(number));if(!block)return null;
+  const hash=block.hash?.toString();
+  if(Number(block.header?.globalVariables?.blockNumber)!==number||!/^0x[0-9a-f]{64}$/.test(hash))throw fail('ROLLING_INVALID_RESPONSE');
+  return hash;
+ };
+ const uncertain=async observed=>{
+  const canonical=observed===undefined?await blockHashAt(expected.blockNumber):observed;
+  return {status:canonical!==null&&canonical!==expected.blockHash?'orphaned':'unknown',txHash};
+ };
  const hash=sdk.TxHash.fromString(txHash),receipt=await read(()=>node.getTxReceipt(hash));
  if(receipt?.txHash?.toString()!==txHash)throw fail('ROLLING_INVALID_RESPONSE');
- if(['pending','dropped'].includes(receipt.status))return {status:'unavailable',txHash};
+ if(['pending','dropped'].includes(receipt.status))return uncertain();
  if(!['proposed','checkpointed','proven','finalized'].includes(receipt.status)||!['success','reverted'].includes(receipt.executionResult)||!Number.isSafeInteger(receipt.blockNumber)||receipt.blockNumber<1||!/^0x[0-9a-f]{64}$/.test(receipt.blockHash?.toString()))throw fail('ROLLING_INVALID_RESPONSE');
- const block=await read(()=>node.getBlock(receipt.blockNumber));
- if(block?.hash?.toString()!==receipt.blockHash.toString())return {status:'unavailable',txHash};
+ const canonical=await blockHashAt(receipt.blockNumber);
+ if(canonical!==receipt.blockHash.toString())return uncertain(receipt.blockNumber===expected.blockNumber?canonical:undefined);
  return {status:receipt.executionResult==='reverted'?'reverted':receipt.status==='proposed'?'included':'confirmed',txHash,
   inclusion:{blockNumber:receipt.blockNumber,blockHash:receipt.blockHash.toString()}};
 }

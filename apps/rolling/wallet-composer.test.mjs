@@ -1147,3 +1147,22 @@ test('profile pagination discards a held profile version after account replaceme
  await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.equal(f.submissions.length,0);assert.equal(f.prepared(),null);assert.equal(f.document.querySelector('select[aria-label="Profile name"]'),null);assert.equal(f.document.querySelector('[data-action-review]'),null);
 });
+
+for(const observed of ['unknown','orphaned','reverted'])test('subscription observer '+observed+' keeps uncertainty separate from canonical removal',{timeout:3000},async t=>{
+ const txHash=includedPost().txHash,inclusion={blockNumber:108,blockHash:includedPost().blockHash};
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash,inclusion}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);
+ f.runtime.selectPrivateViews=()=>({});f.session.application.readPreferences=async()=>({status:'complete',complete:true,preferences:{bookmarks:[],followedBoards:[],followedNames:[],subscriptions:['42'],replyNotifications:false}});
+ let reads=0;f.session.observeIncluded=async input=>{assert.deepEqual(input,{txHash,inclusion});reads++;return {status:reads===1?observed:'confirmed',txHash};};
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));
+ assert.equal((await f.panel.act({type:'preference',kind:4,target:'42',enabled:true})).status,'included');assert.equal(f.panel.preferenceEnabled(4,'42'),true);
+ await new Promise(setImmediate);const before=f.core();
+ const snapshot={checkpoint:{number:110,hash:'0x'+'a'.repeat(64)}};f.panel.observePublicPosts([],snapshot);await new Promise(setImmediate);
+ assert.equal(reads,1);assert.equal(f.submissions.length,1);
+ if(observed==='unknown'){
+  assert.equal(f.panel.preferenceEnabled(4,'42'),true);assert(identity.textContent.includes('confirmation pending'));assert(!identity.textContent.includes('no longer'));assert.deepEqual(f.core(),before);
+  f.panel.observePublicPosts([],snapshot);await new Promise(setImmediate);assert.equal(reads,1,'no same-revision retry loop');
+  f.panel.observePublicPosts([],{...snapshot,confirmationCheckpoint:{number:108,hash:inclusion.blockHash}});await new Promise(setImmediate);
+  assert.equal(reads,2);assert(identity.textContent.includes(': confirmed.'));assert.equal(f.panel.preferenceEnabled(4,'42'),true);
+ }else{assert.equal(f.panel.preferenceEnabled(4,'42'),null);assert(identity.textContent.includes(observed==='reverted'?'change reverted':'no longer included'));}
+});

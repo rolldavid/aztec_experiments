@@ -1368,16 +1368,37 @@ test('deposit refund waits under its account lease then prepares immediate gener
  assert.equal(prepared.withdrawal.depositor,receipt.sender);assert.equal(prepared.withdrawal.depositId,receipt.depositId);assert.equal(estimates,0);assert.equal(f.state.active,false);await session.close();
 });
 
-test('display-only included observer requires exact receipt/block and never enters private state or journal',async()=>{
- const txHash=hex(90),blockHash=hex(91);let status='proposed',executionResult='success',canonical=true,guards=0;
- const sdk={TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn()},node={getTxReceipt:async hash=>({txHash:hash,status,executionResult,blockNumber:12,blockHash}),getBlock:async()=>({hash:canonical?blockHash:hex(92)})};
- const opts={sdk,node,contextGuard:async()=>guards++};
- assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'included');assert.equal(guards,4);
- status='checkpointed';assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'confirmed');
- status='proposed';canonical=false;assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'unavailable');
- canonical=true;executionResult='reverted';assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'reverted');
- status='pending';assert.equal((await observeIncludedTransaction(opts,{txHash})).status,'unavailable');
- node.getTxReceipt=async()=>({txHash:hex(99)});await assert.rejects(observeIncludedTransaction(opts,{txHash}),{code:'ROLLING_INVALID_RESPONSE'});
+test('display-only included observer uses actual NodeBlockProvider projection and keeps transient reads uncertain',async()=>{
+ const {NodeBlockProvider}=await import(new URL('./modules/node_block_provider.js',import.meta.resolve('@aztec-labs/aztec-node')));
+ const txHash=hex(90),blockHash=BlockHash.fromString(hex(91)),inclusion={blockNumber:12,blockHash:blockHash.toString()};
+ let status='proposed',executionResult='success',canonical=blockHash,absent=false,guards=0;
+ const header={globalVariables:{blockNumber:12},getBlockNumber:()=>12};
+ const provider=new NodeBlockProvider({}, {getBlockData:async()=>absent?undefined:{header,blockHash:canonical,archive:{},checkpointNumber:1,indexWithinCheckpoint:0}});
+ const sdk={TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn()},node={getTxReceipt:async hash=>({txHash:hash,status,executionResult,blockNumber:12,blockHash}),getBlock:(...args)=>provider.getBlock(...args)};
+ const opts={sdk,node,contextGuard:async()=>guards++},input={txHash,inclusion};
+ assert.equal(typeof (await node.getBlock(12)).hash,'object','native RPC returns projected hash data, not L2Block.hash()');
+ assert.equal((await observeIncludedTransaction(opts,input)).status,'included');assert.equal(guards,4);
+ for(const transient of ['pending','dropped']){status=transient;assert.equal((await observeIncludedTransaction(opts,input)).status,'unknown');absent=true;assert.equal((await observeIncludedTransaction(opts,input)).status,'unknown');absent=false;}
+ status='checkpointed';assert.equal((await observeIncludedTransaction(opts,input)).status,'confirmed');
+ status='proposed';absent=true;assert.equal((await observeIncludedTransaction(opts,input)).status,'unknown');absent=false;
+ canonical=BlockHash.fromString(hex(92));assert.equal((await observeIncludedTransaction(opts,input)).status,'orphaned');
+ status='pending';assert.equal((await observeIncludedTransaction(opts,input)).status,'orphaned');
+ canonical=blockHash;status='proposed';executionResult='reverted';assert.equal((await observeIncludedTransaction(opts,input)).status,'reverted');
+ node.getTxReceipt=async()=>({txHash:hex(99)});await assert.rejects(observeIncludedTransaction(opts,input),{code:'ROLLING_INVALID_RESPONSE'});
+ await assert.rejects(observeIncludedTransaction(opts,{txHash}),{code:'ROLLING_INVALID_ACTION'});
+});
+
+test('included observer detaches saved anchor, rejects account change, and never treats an inconsistent receipt as a fork',async()=>{
+ const txHash=hex(90),blockHash=hex(91),gate=Promise.withResolvers(),entered=Promise.withResolvers();let current=true;
+ const input={txHash,inclusion:{blockNumber:12,blockHash}},heights=[];
+ const sdk={TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn()},node={getTxReceipt:async()=>{entered.resolve();await gate.promise;return {txHash,status:'pending'};},getBlock:async number=>{heights.push(number);return {header:{globalVariables:{blockNumber:number}},hash:blockHash};}};
+ const opts={sdk,node,contextGuard:async()=>{if(!current)throw Error('account changed');}};
+ const pending=observeIncludedTransaction(opts,input);await entered.promise;input.inclusion.blockNumber=99;input.inclusion.blockHash=hex(99);gate.resolve();
+ assert.equal((await pending).status,'unknown');assert.deepEqual(heights,[12]);
+ node.getTxReceipt=async()=>({txHash,status:'proposed',executionResult:'success',blockNumber:12,blockHash:hex(92)});
+ assert.equal((await observeIncludedTransaction(opts,{txHash,inclusion:{blockNumber:12,blockHash}})).status,'unknown','saved inclusion remains canonical despite inconsistent new receipt');
+ node.getTxReceipt=async()=>{current=false;return {txHash,status:'pending'};};
+ await assert.rejects(observeIncludedTransaction(opts,{txHash,inclusion:{blockNumber:12,blockHash}}),/account changed/);
 });
 
 test('included claim verification is explicit and rejects orphaned or failed proposed receipts',async()=>{

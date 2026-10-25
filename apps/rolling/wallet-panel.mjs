@@ -223,10 +223,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const target=includedObservation,active=session,epoch=accountEpoch;
   if(!target||includedObservationPending||!active||typeof active.observeIncluded!=='function'||!unlocked()||includedRevision===null)return;
   if(target.observed===includedRevision)return;target.observed=includedRevision;
-  const reading=Promise.resolve().then(()=>active.observeIncluded({txHash:target.txHash})).then(result=>{
+  const reading=Promise.resolve().then(()=>active.observeIncluded({txHash:target.txHash,inclusion:target.inclusion})).then(result=>{
    if(epoch!==accountEpoch||active!==session||target!==includedObservation||!unlocked()||result.txHash!==target.txHash)return;
    if(result.status==='confirmed'){includedObservation=null;actionFeedback.textContent=actionLabel(target.action)+': confirmed.';actionFeedback.hidden=false;}
-   else if(['unavailable','reverted'].includes(result.status)){
+   else if(['orphaned','reverted'].includes(result.status)){
     includedObservation=null;actionFeedback.textContent=result.status==='reverted'?'The change reverted.':'The change is no longer included.';actionFeedback.hidden=false;
     preferenceUpdates.clear();clearPreferences();profileSnapshot=null;namesLoaded=false;identities=[];identityRecords=[];cursor=0;selectedName='0';selectedLabel='Anonymous';
     accountRefreshNeeded=true;requestAccountRefresh();onPrivateChange();if(!busy)render();
