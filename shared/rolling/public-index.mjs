@@ -439,7 +439,12 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
         if(previous&&!comparisonDone&&oldSequence===BigInt(previous.segmentCount))finishComparison();
         await recheck(block);
       }
-      if(control.cursor.block===null)currentBlock=null;
+      if(control.cursor.block===null){
+        currentBlock=null;
+        // A private service may retain its freshly authenticated complete prefix
+        // across first-bootstrap interruption. This does not publish readiness.
+        storage.recordOwnedPublication?.({expectedControl:control,deployment});
+      }
       // A final publication recheck happens on a separate bounded step. It
       // includes a fresh target; a tip advance cannot yield a partial ready view.
       return state();

@@ -1,3 +1,4 @@
+import {isNativeError} from 'node:util/types';
 // Aggregate public-work health only. Never spread store records or caught errors.
 const messages=Object.freeze({
  RETRYABLE_WORK_FAILED:'Check model/context availability and inspect durable retries; fresh feed ingestion does not establish successful evaluation.',
@@ -44,4 +45,28 @@ export function summarizeModerationHealth({status,now=Date.now(),staleAfterMs=90
   const stateCounts={};for(const state of ['queued','leased','evaluated-ok','submit-intent','submitted','reconciling','retryable-error','confirmed-flag','expired','manual-review']){const count=status.counts?.[state]??0;if(!Number.isSafeInteger(count)||count<0)throw Error();stateCounts[state]=count;}
   return {type:'billboard-moderation-health-v1',stateCounts,severity:critical?'critical':alerts.length?'warning':'ok',checkpointHeight,lastSuccessfulIngestAgeMs:age,counts,alerts};
  }catch{return moderationFailure();}
+}
+
+// Fixed classifications and bounded source locations only: never error messages,
+// request values, absolute paths, function names, or arbitrary error properties.
+const nativeStackGetter=Object.getOwnPropertyDescriptor(new Error(),'stack')?.get;
+const diagnosticCodes=new Set(['ERR_ASSERTION','ROLLING_PUBLIC_INVALID','ROLLING_PUBLIC_UNAVAILABLE','ROLLING_PUBLIC_REOPEN_REQUIRED','ROLLING_PUBLIC_CHAIN_CHANGED','ROLLING_PUBLIC_CACHE_MISMATCH','ROLLING_PUBLIC_NOT_READY','ROLLING_PUBLIC_BUSY','PUBLIC_FEED_CONFLICT','ROLLING_PUBLIC_STORAGE_INVALID','ROLLING_PUBLIC_STORAGE_CONFLICT','ROLLING_PUBLIC_STORAGE_CAPACITY','INVALID_VERDICT']);
+const diagnosticSources=new Set(['censor-daemon/daemon.mjs','censor-daemon/worker.mjs','censor-daemon/rolling-adapter.mjs','censor-daemon/job-store.mjs','shared/rolling/public-index.mjs','shared/rolling/public-sqlite.mjs','shared/rolling/public-events.mjs','shared/rolling/public-projection.mjs','plugins/operations.mjs']);
+export function safeModerationErrorLocation(error){
+ const result={name:'unknown',code:'unknown',frames:[]};
+ try{
+  if(!isNativeError(error))return result;
+  const own=Object.getOwnPropertyDescriptors(error),names=['Error','TypeError','RangeError','SyntaxError','AssertionError','AbortError'];
+  const name=own.name?.value??Object.getOwnPropertyDescriptor(Object.getPrototypeOf(error),'name')?.value;
+  if(names.includes(name))result.name=name;
+  if(diagnosticCodes.has(own.code?.value))result.code=own.code.value;
+  const stack=own.stack?.value??(nativeStackGetter&&own.stack?.get===nativeStackGetter?nativeStackGetter.call(error):undefined);
+  if(typeof stack!=='string')return result;
+  for(const line of stack.slice(0,16384).split('\n').slice(1,25)){
+   const match=line.match(/\/((?:censor-daemon|shared\/rolling|plugins)\/[a-z-]+\.mjs):(\d{1,7}):(\d{1,7})\)?$/);
+   if(match&&diagnosticSources.has(match[1]))result.frames.push({source:match[1],line:Number(match[2]),column:Number(match[3])});
+   if(result.frames.length===4)break;
+  }
+ }catch{}
+ return result;
 }

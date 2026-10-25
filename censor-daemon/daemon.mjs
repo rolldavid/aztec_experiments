@@ -7,7 +7,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {scopeKey} from '../shared/protocol-schema.mjs';
 import {publicNode} from '../shared/public-feed-rpc.mjs';
 import {observeFeedLag} from './feed-health.mjs';
-import {summarizeModerationHealth, moderationFailure, safeModerationDiagnostic} from './health.mjs';
+import {summarizeModerationHealth, moderationFailure, safeModerationDiagnostic, safeModerationErrorLocation} from './health.mjs';
 import {openJobStore} from './job-store.mjs';
 import {processModerationCycle,processRollingModerationCycle} from './worker.mjs';
 import {createRollingModerationService} from './rolling-adapter.mjs';
@@ -120,7 +120,7 @@ export async function runDaemon(argv = process.argv.slice(2), { startRuntime = s
         const result=await (rolling?processRollingModerationCycle:processModerationCycle)({store,signer,node,scope:storeScope,worker,log,dryRun:config.dryRun,stopping:()=>stopping,evaluate:(post,policy)=>moderatePost(post,policy,runtime.port,{signal:wait.signal})});
         complete=result.complete;catchUp=Boolean(rolling&&result.catchUp===true);log(JSON.stringify(summarizeModerationHealth({status:result.status,staleAfterMs:Math.max(config.pollInterval*3000,60000)})));
         if(!stopping&&!rolling)log(JSON.stringify(await observeFeedLag({node:healthNode,scope:storeScope,checkpoint:result.status.checkpoint})));
-      }catch(error){let status;try{status=store?.status();}catch{}log(JSON.stringify({...summarizeModerationHealth({status,cycleFailed:true,staleAfterMs:Math.max(config.pollInterval*3000,60000)}),diagnostic:safeModerationDiagnostic(error)}),'error');}
+      }catch(error){let status;try{status=store?.status();}catch{}log(JSON.stringify({...summarizeModerationHealth({status,cycleFailed:true,staleAfterMs:Math.max(config.pollInterval*3000,60000)}),diagnostic:safeModerationDiagnostic(error),errorLocation:safeModerationErrorLocation(error)}),'error');}
       if(config.once){if(!complete)throw new Error('Moderation jobs remain unresolved or require attention; saved work will resume next run');log('All posts processed (--once mode).');break;}
       if(!stopping&&!catchUp)await delay(config.pollInterval*1000,undefined,{signal:wait.signal}).catch(error=>{if(error.name!=='AbortError')throw error;});
     }while(!stopping);

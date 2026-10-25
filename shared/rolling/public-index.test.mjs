@@ -806,3 +806,22 @@ test('default accounting remains empty when confirmed watermark regresses before
  const result=index.query('bok-accounting');assert.deepEqual(result.requests,[]);assert.deepEqual(result.checkpoint,{number:0,hash:hex(1000)});assert.equal(result.confirmationTier,'checkpointed');assert.equal(result.nextCursor,null);
  const proposed=index.query('bok-accounting',{blockNumber:3,blockHash:hex(1003)});assert.equal(proposed.requests[0].requestId,'7');assert.equal(proposed.confirmationTier,'proposed');
 });
+
+for(const fork of [false,true])test('service-owned first bootstrap retains only authenticated complete prefix; fork='+fork,async t=>{
+ const f=await persistentFixture(t),a=await f.openOwned();await a.index.step();await a.index.step();
+ const before=a.storage.inspect().control;assert.equal(before.checkpoint.number,'2');assert.equal(a.index.status().complete,false);assert.throws(()=>a.index.query('feed'));
+ a.storage.close();f.calls.length=0;
+ if(fork)f.put(2,f.blocks.get(2).body.txEffects[0].publicLogs,100);
+ const b=await f.openOwned();assert.throws(()=>b.index.query('feed'));await f.drain(b.index);
+ assert.equal(b.storage.inspect().control.generation,before.generation);assert.equal(b.index.status().cacheComparison,fork?'canonical-prefix':'service-owned');
+ assert.deepEqual(f.calls.map(([,n])=>n),fork?[2,3]:[3]);assert.equal(b.index.query('post',{id:'10'}).post.text,'Hello');
+ if(fork)assert.equal(b.index.query('directory').boards.length,1);
+});
+test('service-owned first bootstrap does not record provenance before complete block final canonical check',async t=>{
+ const f=await persistentFixture(t),a=await f.openOwned(),getInfo=f.node.getNodeInfo;let interrupted=false;
+ f.node.getNodeInfo=async()=>{if(a.storage.inspect().control?.checkpoint.number==='1'){interrupted=true;throw Error('held final canonical boundary');}return getInfo();};
+ await assert.rejects(a.index.step(),{code:'ROLLING_PUBLIC_UNAVAILABLE'});assert(interrupted);
+ const before=a.storage.inspect().control;assert.equal(before.checkpoint.number,'1');assert.equal(a.storage.canResumeOwned({expectedControl:before,deployment:f.options.deployment}),false);
+ a.storage.close();f.node.getNodeInfo=getInfo;f.calls.length=0;const b=await f.openOwned();await f.drain(b.index);
+ assert.notEqual(b.storage.inspect().control.generation,before.generation);assert.deepEqual(f.calls.map(([,n])=>n),[1,2,3]);
+});

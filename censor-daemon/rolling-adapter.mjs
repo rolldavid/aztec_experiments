@@ -182,7 +182,9 @@ export async function createRollingModerationService({configFile,stateDirectory,
   const portalValue=(await read(artifact.storageLayout.portal_address.slot,checkpoint)).toBigInt();assert(portalValue>0n&&portalValue<2n**160n);
   const scope={l1ChainId:config.chainId,rollupVersion:config.rollupVersion,rollupAddress:config.rollupAddress,portalAddress:'0x'+portalValue.toString(16).padStart(40,'0'),boardAddress:config.boardAddress};
   const indexScope={chainId:config.chainId,rollupVersion:config.rollupVersion,rollupAddress:config.rollupAddress,boardAddress:config.boardAddress,classId};
-  const storage=createRollingPublicSqliteStore(path.join(stateDirectory,'public-index'),{scope:indexScope});
+  // This private, exclusively leased service store may resume only its own
+  // authenticated publication; canonical catch-up/fork checks remain native.
+  const storage=createRollingPublicSqliteStore(path.join(stateDirectory,'public-index'),{scope:indexScope,serviceOwned:true});
   try{index=ownRollingPersistentPublicIndex(await createRollingPersistentPublicIndex({node:hostedIndexNode(node,config.development),artifact,scope:indexScope,deployment,storage}),storage);}catch(error){storage.close();throw error;}
   const normalNode={async getTxReceipt(hash){const r=await node.getTxReceipt(TxHash.fromString(hash));return {txHash:String(r.txHash),status:r.status,executionResult:r.executionResult,blockNumber:Number(r.blockNumber),blockHash:String(r.blockHash),...(r.transactionFee===undefined?{}:{transactionFee:String(r.transactionFee)})};},async getBlockData(number){const b=await node.getBlock(number);return b?{blockHash:String(b.hash),header:b.header}:null;}};
   const state=await fileState(path.join(stateDirectory,'removals.json'));
