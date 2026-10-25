@@ -80,3 +80,10 @@ export function createInlineActionRegistry({perform,onState}) {
   }
  });
 }
+
+// Unknown private choices are never interpreted as disabled settings. Only a
+// validated boolean supplies an inverse action.
+export function privatePreferenceControl(label,value,status,loading=false){
+ if(typeof value!=='boolean'){const busy=status==='recovering'&&loading;return {label,disabled:busy,busy,enabled:undefined};}
+ return {label:value?({'Bookmark':'Unbookmark','Follow board':'Unfollow board','Follow name':'Unfollow name','Subscribe to thread':'Unsubscribe from thread'}[label]??'Remove '+label):label,disabled:false,busy:false,enabled:!value};
+}

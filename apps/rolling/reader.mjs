@@ -2,13 +2,13 @@ import {createReaderUpdates} from './reader-updates.mjs';
 import {beginRollingMeasure} from './performance.mjs';
 import {createPublicReader} from './reader-client.mjs';
 import {createPublicAvatar,createPublicProfile} from './profile-view.mjs';
-import {createMessageContent as richText,createInlineActionRegistry} from './model.mjs';
+import {createMessageContent as richText,createInlineActionRegistry,privatePreferenceControl} from './model.mjs';
 import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 const currentRoute=()=>location.hash==='#/new-account'?'/home':location.hash.slice(1)||'/home';
 let controller,sequence=0,route=currentRoute(),main,renderedRoute,loadedPages=1,loadedThreadEnd=false,renderActive=0;
-let walletPanel,privatePanel,savedItemsLoad,accountPreparation;
+let walletPanel,privatePanel,savedItemsLoad,accountPreparation,savedItemsAttempted=false;
 async function preparePublicAssetCache(){
  if(!navigator.serviceWorker)return;
  try{
@@ -23,14 +23,24 @@ async function preparePublicAssetCache(){
 }
 function prepareAccountTools(){return accountPreparation??=preparePublicAssetCache().then(()=>import('/wallet/runtime.mjs')).then(runtime=>runtime.loadRollingWalletRuntime());}
 const privateViews=new Set(['following','bookmarks','notifications']);
+function loadSavedItems(){
+ return savedItemsLoad??=Promise.resolve().then(()=>privatePanel.loadSavedItems()).finally(()=>{savedItemsLoad=null;updatePreferenceControls();});
+}
+function hydrateSavedItems(){
+ const status=privatePanel?.privateStatus?.();
+ if(status==='locked'){savedItemsAttempted=false;return;}
+ if(status!=='recovering'||savedItemsAttempted||typeof privatePanel?.loadSavedItems!=='function')return;
+ savedItemsAttempted=true;void loadSavedItems().catch(()=>{});
+}
 function privateChanged(){
+ hydrateSavedItems();
  for(const node of app.querySelectorAll('[data-moderator-action]'))showModeratorButton(node);
  if(privateViews.has(route.split('/')[1])){controller?.abort();main?.replaceChildren();void render();}
- else for(const node of app.querySelectorAll('[data-private-setting]'))if(node.getAttribute('aria-busy')!=='true')node.textContent=preferenceLabel(node.dataset.privateSetting,Number(node.dataset.kind),node.dataset.target);
+ else updatePreferenceControls();
 }
 async function accountPanel(){
  return walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
-   loadRuntime:prepareAccountTools,onPublicEffect:()=>!main?.querySelector('.public-content')||privateViews.has(route.split('/')[1])||route.split('/')[1]==='directory'?render({live:!!main?.querySelector('.public-content')}):updates.request(),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void panel.initialize();return panel;});
+   loadRuntime:prepareAccountTools,onPublicEffect:()=>!main?.querySelector('.public-content')||privateViews.has(route.split('/')[1])||route.split('/')[1]==='directory'?render({live:!!main?.querySelector('.public-content')}):updates.request(),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void Promise.resolve(panel.initialize()).then(privateChanged).catch(()=>{});return panel;});
 }
 async function openWallet(defaults={}){
  try{
@@ -62,7 +72,9 @@ function removalPolicy(value){
  if(typeof value!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(value)||BigInt(value)>0xffffffffffffffffn)return null;
  const packed=BigInt(value);return policyLabel('Removal policy',String(packed&0xffffffffn),String(packed>>32n));
 }
-function preferenceLabel(label,kind,target){return privatePanel?.preferenceEnabled?.(kind,target)===true?({'Bookmark':'Unbookmark','Follow board':'Unfollow board','Follow name':'Unfollow name','Subscribe to thread':'Unsubscribe from thread'}[label]??'Remove '+label):label;}
+function preferenceControl(label,kind,target){return privatePreferenceControl(label,privatePanel?.preferenceEnabled?.(kind,target),privatePanel?.privateStatus?.()??'locked',!!savedItemsLoad);}
+function updatePreferenceControl(node,blocked=false){const state=preferenceControl(node.dataset.privateSetting,Number(node.dataset.kind),node.dataset.target);node.textContent=state.label;node.disabled=blocked||state.disabled;if(state.busy)node.setAttribute('aria-busy','true');else node.removeAttribute('aria-busy');}
+function updatePreferenceControls(){for(const node of app.querySelectorAll('[data-private-setting]')){const retained=inlineActions.snapshot(node.dataset.inlineAction);if(retained)node.renderInlineAction(retained);else updatePreferenceControl(node);}}
 const inlineActions=createInlineActionRegistry({perform:async(captured,onIncluded)=>{
  let panel;try{panel=await accountPanel();}catch{walletPanel=null;return {status:'failed',message:'Account tools could not load. Try again.'};}
  return panel.act(captured,{onIncluded});
@@ -74,14 +86,14 @@ function socialButton(label,action,attrs={}){
  // The target identity excludes the toggle value: a rerender must not offer
  // its inverse while this exact target's previous operation still owns it.
  const target=action(),key=JSON.stringify([target.type,target.post??null,target.kind??null,target.target??null,target.thread??null]);
- const node=button(label,()=>void inlineActions.run(key,action),{...attrs,'data-inline-action':key});
+ const node=button(label,()=>{if(attrs['data-private-setting']&&typeof action().enabled!=='boolean'){void openWallet({view:'preferences'});return;}void inlineActions.run(key,action);},{...attrs,'data-inline-action':key});
  node.renderInlineAction=({state,captured,result},notify=false)=>{
   feedback?.remove();feedback=null;
   node.disabled=['pending','unknown'].includes(state)||state==='included'&&!result;
   if(state==='pending'){node.setAttribute('aria-busy','true');node.textContent=({like:'Liking…',unlike:'Removing like…','read-marker':'Marking read…'})[captured.type]??'Saving…';return;}
   if(state==='included'&&!result){node.setAttribute('aria-busy','true');node.textContent='Confirmation pending';if(notify)announce('Change included. Confirmation pending.');return;}
   node.removeAttribute('aria-busy');
-  node.textContent=attrs['data-private-setting']?preferenceLabel(attrs['data-private-setting'],Number(attrs['data-kind']),attrs['data-target']):label;
+  if(attrs['data-private-setting'])updatePreferenceControl(node,node.disabled);else node.textContent=label;
   const message=state==='included'?'Saved. Confirmation pending.':state==='confirmed'?'Saved.':state==='unknown'?'Still waiting for confirmation.':state==='reverted'?'This change did not go through.':state==='failed'?(result.message||'This change could not be saved. Try again.'):state==='blocked'&&result.reason==='busy'?'Another action is still finishing.':'';
   if(message&&notify)announce(message);
   if(['unknown','reverted','failed'].includes(state)&&node.isConnected){
@@ -94,7 +106,8 @@ function socialButton(label,action,attrs={}){
  return node;
 }
 function preferenceButton(label,kind,target){
- return socialButton(preferenceLabel(label,kind,target),()=>({type:'preference',kind,target,enabled:privatePanel?.preferenceEnabled?.(kind,target)!==true}),{'data-private-setting':label,'data-kind':kind,'data-target':target});
+ const node=socialButton(preferenceControl(label,kind,target).label,()=>({type:'preference',kind,target,enabled:preferenceControl(label,kind,target).enabled}),{'data-private-setting':label,'data-kind':kind,'data-target':target});
+ if(!inlineActions.snapshot(node.dataset.inlineAction))updatePreferenceControl(node);return node;
 }
 function showModeratorButton(node){node.hidden=privatePanel?.moderatorAuthorized?.()!==true;node.style.display=node.hidden?'none':'';}
 function moderatorButton(label,defaults){
@@ -211,8 +224,8 @@ async function render({live=false,publicationRevision}={}){
    const signedIn=privatePanel?.privateStatus?.()==='recovering';
    if(signedIn&&typeof privatePanel.loadSavedItems==='function'){
     const state=el('div',{class:'empty',role:'status'},el('p',{},'Loading your '+title.toLowerCase()+'…'));main.append(state);
-    savedItemsLoad??=Promise.resolve().then(()=>privatePanel.loadSavedItems()).finally(()=>{savedItemsLoad=null;});
-    void savedItemsLoad.then(ok=>{if(current!==sequence||signal.aborted||ok)return;state.replaceChildren(el('p',{},'Your saved items could not load.'),button('Try again',()=>render()));});
+    const pending=loadSavedItems();
+    void pending.then(ok=>{if(current!==sequence||signal.aborted||ok)return;state.replaceChildren(el('p',{},'Your saved items could not load.'),button('Try again',()=>render()));});
     return;
    }
    main.append(el('div',{class:'empty'},el('h2',{},signedIn?'Load your '+title.toLowerCase():'Your '+title.toLowerCase()),el('p',{},signedIn?'Your saved items are kept with your account.':{following:'Sign in to see posts from people and boards you follow.',bookmarks:'Sign in to see the posts you have saved.',notifications:'Sign in to see updates to your conversations.'}[privateView]),button(signedIn?'Load '+title.toLowerCase():'Sign in',()=>openWallet({view:'preferences'}))));

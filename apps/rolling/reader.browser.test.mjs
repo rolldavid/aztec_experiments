@@ -594,7 +594,7 @@ test('public revision notification renders a Bok response without navigation or 
  assert.equal(await page.evaluate(()=>performance.getEntriesByName('rolling.reader.update').length),1);
 });
 
-async function threadRefreshFixture(t,{total=32}={}){
+async function threadRefreshFixture(t,{total=32,hydrate=false,locked=false}={}){
  const state={total,revision:'1',calls:[],invalidPage:false,hold:false,pending:[],postMetadata:{}};
  const files=new Set(['live.html','reader.mjs','reader-updates.mjs','performance.mjs','reader-client.mjs','profile-view.mjs','model.mjs','navigation.mjs','style.css']);
  const checkpoint={number:12,hash:'0x'+'a'.repeat(64)},scope={boardAddress:'public'};
@@ -603,7 +603,7 @@ async function threadRefreshFixture(t,{total=32}={}){
   const url=new URL(req.url,'http://localhost');
   if(url.pathname==='/api/events'){res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-store'});res.flushHeaders();stream=res;connected.resolve();return;}
   if(url.pathname==='/wallet-panel.mjs'){
-   res.writeHead(200,{'content-type':'text/javascript'});res.end('export function mountRollingWalletPanel(options){window.refreshThread=options.onPublicEffect;let saved=false;return {initialize(){},attachIdentityControls(){},attachBokControls(){},open(){},close(){},preferenceEnabled:()=>saved,act(action,{onIncluded}){window.inlineCalls=(window.inlineCalls??0)+1;window.includeInline=onIncluded;return new Promise(resolve=>window.finishInline=status=>{if(status==="included"||status==="confirmed")saved=action.enabled;options.onPrivateChange();resolve({status});});}}}');return;
+   res.writeHead(200,{'content-type':'text/javascript'});res.end('export function mountRollingWalletPanel(options){window.refreshThread=options.onPublicEffect;let saved='+JSON.stringify(hydrate?null:false)+';return {initialize(){},attachIdentityControls(){},attachBokControls(){},open(options){window.privateOpen=options;},close(){},privateStatus:()=>'+JSON.stringify(locked)+'?"locked":saved===null?"recovering":"complete",loadSavedItems(){window.hydrationCalls=(window.hydrationCalls??0)+1;return new Promise(resolve=>window.finishHydration=value=>{if(value===null){resolve(false);return;}saved=value;options.onPrivateChange();resolve(true);});},preferenceEnabled:()=>saved,act(action,{onIncluded}){window.inlineAction=action;window.inlineCalls=(window.inlineCalls??0)+1;window.includeInline=onIncluded;return new Promise(resolve=>window.finishInline=status=>{if(status==="included"||status==="confirmed")saved=action.enabled;options.onPrivateChange();resolve({status});});}}}');return;
   }
   if(url.pathname==='/api/thread'||url.pathname==='/api/home'){
    const offset=Number(url.searchParams.get('cursor')??0);state.calls.push(offset);
@@ -753,4 +753,19 @@ test('active bookmark feedback survives feed replacement through inclusion until
  await page.evaluate(()=>includeInline());await page.evaluate(()=>refreshThread());assert.equal(await bookmark().textContent(),'Confirmation pending');assert.equal(await bookmark().isDisabled(),true);
  await page.evaluate(()=>finishInline('included'));await page.waitForFunction(()=>document.querySelector('#post-1 [data-private-setting="Bookmark"]').textContent==='Unbookmark');assert.equal(await bookmark().isDisabled(),false);assert.equal(await page.evaluate(()=>inlineCalls),1);
  assert.equal(await page.locator('#announcement').textContent(),'Saved. Confirmation pending.');
+});
+
+test('public feed hydrates saved choices once and never guesses unknown preference inverse',async t=>{
+ const {page}=await threadRefreshFixture(t,{total:16,hydrate:true}),bookmark=()=>page.locator('#post-1 [data-private-setting="Bookmark"]');
+ await page.waitForFunction(()=>window.hydrationCalls===1);assert.equal(await bookmark().textContent(),'Bookmark');assert.equal(await bookmark().getAttribute('aria-busy'),'true');assert.equal(await bookmark().isDisabled(),true);assert.equal(await page.evaluate(()=>window.inlineCalls??0),0);
+ await page.evaluate(()=>refreshThread());assert.equal(await page.evaluate(()=>window.hydrationCalls),1);assert.equal(await bookmark().isDisabled(),true);
+ await page.evaluate(()=>finishHydration(true));await page.waitForFunction(()=>document.querySelector('#post-1 [data-private-setting="Bookmark"]').textContent==='Unbookmark');assert.equal(await bookmark().isDisabled(),false);
+ await page.locator('#post-1 .post-more > summary').click();await bookmark().click();await page.waitForFunction(()=>window.inlineCalls===1);assert.deepEqual(await page.evaluate(()=>window.inlineAction),{type:'preference',kind:1,target:'1',enabled:false});await page.evaluate(()=>finishInline('included'));
+});
+
+for(const locked of [false,true])test(`unknown saved choice opens existing preferences retry/sign-in without sending, locked=${locked}`,async t=>{
+ const {page}=await threadRefreshFixture(t,{total:16,hydrate:true,locked}),bookmark=()=>page.locator('#post-1 [data-private-setting="Bookmark"]');
+ if(!locked){await page.waitForFunction(()=>window.hydrationCalls===1);await page.evaluate(()=>finishHydration(null));await page.waitForFunction(()=>!document.querySelector('#post-1 [data-private-setting="Bookmark"]').disabled);}
+ assert.equal(await bookmark().textContent(),'Bookmark');assert.equal(await bookmark().isDisabled(),false);await page.locator('#post-1 .post-more > summary').click();await bookmark().click();await page.waitForFunction(()=>window.privateOpen?.view==='preferences');assert.equal(await page.evaluate(()=>window.inlineCalls??0),0);
+ await page.evaluate(()=>refreshThread());assert.equal(await page.evaluate(()=>window.hydrationCalls??0),locked?0:1,'no automatic retry loop');
 });

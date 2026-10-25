@@ -952,3 +952,10 @@ test('top-up changes wallet prompt to Ethereum waiting after acknowledged submis
  await submitted.promise;assert.deepEqual(steps,['deposit','confirmation']);assert.equal(completed,false);
  receipt.resolve();assert.deepEqual(await pending,{paid:true});
 });
+
+test('new subboard title starts empty instead of inheriting anonymous or selected identity',{timeout:3000},async t=>{
+ const f=await fixture(t,{defaults:{},profile:true,balanceRead:async()=>({available:true,availableCredit:'0'})});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Create a board').fire('click');await f.document.until(()=>f.document.querySelector('[data-action-review]')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const textInputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');assert(textInputs.length>0);assert.equal(textInputs[0].value,'');assert.equal(f.document.querySelector('[data-action-review]').disabled,true);
+ f.panel.close();f.panel.open({type:'subboard'});assert.equal(f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text')[0].value,'');
+});
