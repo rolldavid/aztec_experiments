@@ -569,7 +569,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   // Reuse the original submission checks at recovery boundaries; none of these
   // checks grants permission to resend without the exact authenticated journal.
   async function checkActionSubmission(record){
-      if(record.withdrawal?.kind==='bok'){check(same(await resolveBokWithdrawal(),record.withdrawal.bokScope),'ROLLING_CONTEXT_CHANGED');const anchor=await balanceAnchor(),available=chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact));check(available>=uint128(record.withdrawal.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');await checkBalanceAnchor(anchor);}
+      if(record.withdrawal?.kind==='bok'){
+        const anchor=await balanceAnchor();
+        const reads=await Promise.allSettled([
+          ()=>resolveBokWithdrawal(),async()=>chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact)),
+        ].map(read=>Promise.resolve().then(read)));
+        const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+        const [scope,available]=reads.map(value=>value.value);
+        check(same(scope,record.withdrawal.bokScope),'ROLLING_CONTEXT_CHANGED');check(available>=uint128(record.withdrawal.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');await checkBalanceAnchor(anchor);
+      }
       else if(record.withdrawal?.kind==='cancelled-collateral'){check(same(await cancellationArguments(record.action),record.args),'ROLLING_FUNDING_MISMATCH');}
       else if(record.withdrawal){const anchor=await balanceAnchor(),current=await collateralInfo(record.action.deposit,await contract(),BigInt(anchor.timestamp));check(current.eligible&&same(current,record.withdrawal),'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(record.action.type==='claim-deposit')check(same(await collateralClaim(record.action),record.args),'ROLLING_FUNDING_MISMATCH');
@@ -1152,8 +1160,15 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         record.withdrawal={kind:'cancelled-collateral',depositor:action.receipt.sender,amount:action.receipt.amount,depositId:action.receipt.depositId,eligible:true};
       }
       if(action.type==='withdraw-bok'){
-        check(resolveBokWithdrawal,'ROLLING_BOK_UNAVAILABLE');const anchor=await balanceAnchor(),available=chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact));check(available>=uint128(action.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');
-        const scope=await resolveBokWithdrawal();check(scope.recipient===bok.address,'ROLLING_CONTEXT_CHANGED');
+        check(resolveBokWithdrawal,'ROLLING_BOK_UNAVAILABLE');const anchor=await balanceAnchor();
+        // Native credit and immutable portal bindings are independent. Drain both
+        // under this owned anchor before recording an exit or releasing its lease.
+        const reads=await Promise.allSettled([
+          async()=>chainValue(await utility(await bokContract(),'balance_of',[session.owner],deployment.bok.artifact)),()=>resolveBokWithdrawal(),
+        ].map(read=>Promise.resolve().then(read)));
+        const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+        const [available,scope]=reads.map(value=>value.value);
+        check(available>=uint128(action.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');check(scope.recipient===bok.address,'ROLLING_CONTEXT_CHANGED');
         record.withdrawal={kind:'bok',amount:action.amount,depositor:action.recipient,nonce,eligible:true,bokScope:clone(scope)};await checkBalanceAnchor(anchor);
       }
       if(action.type==='claim-deposit'&&action.bokReceipt!==undefined)record.fundingBok=await bokFundingClaim(action);

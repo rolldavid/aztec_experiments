@@ -2858,3 +2858,30 @@ for(const change of ['overflow','canonical','anchor','owner'])test(`standalone f
  if(change==='owner')f.state.guard=false;
  held.resolve();await assert.rejects(pending);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
+
+for(const phase of ['prepare','submit'])for(const mode of ['success','balance-failure','scope-failure','anchor','canonical','owner','scope-change'])test(`Bok withdrawal independent read wave drains ${phase} ${mode}`,{timeout:3000},async()=>{
+ const f=bokAccountingFixture(),action={type:'withdraw-bok',amount:'500',recipient:'0x'+'33'.repeat(20)};
+ const prepared=phase==='submit'?await f.app.prepare(action):null;
+ const before=new Map(f.values),native=f.options.sdk.Contract.at,resolve=f.options.funding.resolveBokWithdrawal;
+ const balance=Promise.withResolvers(),scope=Promise.withResolvers(),entered=Promise.withResolvers(),failure=Error('labelled read failure');let balanceReads=0,scopeReads=0,settled=false;
+ const started=()=>{if(balanceReads&&scopeReads)entered.resolve();};
+ f.options.sdk.Contract.at=async(...args)=>{
+  const contract=await native(...args);if(args[0].toString()!==hex(5))return contract;
+  return {methods:new Proxy(contract.methods,{get:(methods,key)=>key!=='balance_of'?methods[key]:(...values)=>({simulate:async()=>{
+   balanceReads++;started();await balance.promise;if(mode==='balance-failure')throw failure;return methods.balance_of(...values).simulate();
+  }})})};
+ };
+ f.options.funding.resolveBokWithdrawal=async()=>{scopeReads++;started();await scope.promise;if(mode==='scope-failure')throw failure;const result=await resolve();return mode==='scope-change'?{...result,recipient:hex(6)}:result;};
+ f.app=f.restart();
+ const pending=(phase==='prepare'?f.app.prepare(action,{immediate:true}):f.app.submitPrepared(prepared.intentId)).finally(()=>settled=true);
+ const observed=mode==='success'?pending:assert.rejects(pending,mode.endsWith('failure')?error=>error===failure:undefined);
+ await entered.promise;assert.equal(balanceReads,1);assert.equal(scopeReads,1);assert.equal(f.state.sends,0);assert.deepEqual(f.values,before);
+ if(mode==='scope-failure')scope.resolve();else balance.resolve();await new Promise(setImmediate);
+ assert.equal(settled,false,'a completed or failed sibling cannot release the operation');assert.equal(f.state.sends,0);assert.deepEqual(f.values,before);
+ if(mode==='anchor')f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:100n},hash:async()=>hex(43)});
+ if(mode==='canonical')f.options.accountSession.node.getBlockData=async number=>({header:{globalVariables:{blockNumber:number}},blockHash:hex(43)});
+ if(mode==='owner')f.state.guard=false;
+ balance.resolve();scope.resolve();const result=await observed;
+ if(mode==='success'){assert.equal(result.status,phase==='prepare'?'prepared':'confirmed');assert.equal(f.state.sends,phase==='prepare'?0:1);}
+ else{assert.equal(f.state.sends,0);assert.deepEqual(f.values,before);}
+});

@@ -122,7 +122,7 @@ test('requested deposit is recovered from its one event block without old accoun
   const receipt = await f.cap.request(f.id);
   assert.equal(receipt.txHash,h(66)); assert.equal(f.state.sends,0);
   assert.deepEqual(f.state.logFilter.topics.slice(1),['0x'+f.owner.slice(2).padStart(64,'0'),f.id]);
-  assert.equal(f.state.journal,undefined);
+  assert.equal(f.values.get('rolling-refund-request:journal'),undefined,'receipt-only lookup writes no journal');
 });
 for (const defect of ['claimed','returned','wallet','context','node']) test('request refuses '+defect+' before sending', async () => {
   const f = fixture();
@@ -200,4 +200,46 @@ test('receipt transaction and block lookup overlap but their rejection drains be
  f.options.provider.getTransactionReceipt=()=>{mark();throw Error('receipt unavailable');};f.options.provider.getTransaction=async()=>{mark();await gate.promise;return f.state.tx;};
  f.options.provider.getBlock=async number=>{if(receiptPhase){mark();await gate.promise;}return block(number);};
  const work=f.cap.request(f.id).catch(error=>{done=true;assert.match(error.message,/receipt unavailable/);});await entered.promise;assert.equal(started,3);assert.equal(done,false);await assert.rejects(f.cap.list(),{code:'ROLLING_BUSY'});gate.resolve();await work;assert.equal(f.state.sends,0);
+});
+
+function journalBoundary(f, hook) {
+ const create=f.options.sdk.createEthereumJournal;
+ f.options.sdk.createEthereumJournal=async options=>hook(await create(options));
+}
+test('empty cancellation journal uses one fresh qualification before send and one receipt snapshot after',async()=>{
+ const f=fixture();let snapshots=0,atSend,recordsAtSend;const tips=f.options.node.getChainTips;
+ f.options.node.getChainTips=async()=>{snapshots++;return tips();};
+ journalBoundary(f,journal=>({...journal,send:async intent=>{atSend=snapshots;recordsAtSend=f.state.reads.length;return journal.send(intent);}}));
+ await f.cap.request(f.id);assert.equal(atSend,1);assert.equal(recordsAtSend,1);assert.equal(snapshots,2);assert.equal(f.state.reads.length,2);assert.equal(f.state.sends,1);
+});
+test('held empty journal inspection performs no stale qualification and keeps refund operation owned',async()=>{
+ const f=fixture(),entered=Promise.withResolvers(),gate=Promise.withResolvers();let snapshots=0;const tips=f.options.node.getChainTips;
+ f.options.node.getChainTips=async()=>{snapshots++;return tips();};
+ journalBoundary(f,journal=>({...journal,inspectRequest:async()=>{entered.resolve();await gate.promise;return null;}}));
+ const work=f.cap.request(f.id);await entered.promise;assert.equal(snapshots,0);assert.equal(f.state.reads.length,0);
+ await assert.rejects(f.cap.list(),{code:'ROLLING_BUSY'});f.state.consumed=true;gate.resolve();
+ await assert.rejects(work,{code:'ROLLING_DEPOSIT_NOT_REFUNDABLE'});assert.equal(snapshots,1);assert.equal(f.state.sends,0);
+});
+for(const defect of ['owner','context','l1','l2'])test('empty journal final cancellation qualification rejects changed '+defect,async()=>{
+ const f=fixture();journalBoundary(f,journal=>({...journal,inspectRequest:async()=>{if(defect==='owner')f.state.walletChanged=true;if(defect==='context')f.state.contextChanged=true;return null;}}));
+ if(defect==='l1'){const block=f.options.provider.getBlock;f.options.provider.getBlock=async number=>number==='latest'?block(number):{number,hash:h(999)};}
+ if(defect==='l2')f.state.l2Fork=true;
+ await assert.rejects(f.cap.request(f.id));assert.equal(f.state.sends,0);
+});
+test('cancellation final snapshot failure drains held reads before releasing operation',async()=>{
+ const f=fixture(),entered=Promise.withResolvers(),gate=Promise.withResolvers();let done=false;
+ f.options.provider.getNetwork=()=>{throw Error('network unavailable');};f.options.node.getNodeInfo=async()=>{entered.resolve();await gate.promise;return {};};
+ const work=f.cap.request(f.id).then(()=>assert.fail('must reject'),error=>{done=true;assert.match(error.message,/network unavailable/);});
+ await entered.promise;assert.equal(done,false);await assert.rejects(f.cap.request(f.id),{code:'ROLLING_BUSY'});gate.resolve();await work;assert.equal(f.state.sends,0);
+});
+test('saved cancellation recovery retains its prior snapshot and refreshes after reconciliation',async()=>{
+ const f=fixture();f.state.pending=true;let snapshots=0;const tips=f.options.node.getChainTips;
+ f.options.node.getChainTips=async()=>{snapshots++;return tips();};
+ journalBoundary(f,journal=>({...journal,recover:async options=>{assert.deepEqual(options,{retry:false,wait:true});assert.equal(snapshots,1);f.completedRequest();return {outcome:'success'};}}));
+ const receipt=await f.cap.request(f.id);assert.equal(receipt.txHash,h(66));assert.equal(snapshots,2);assert.equal(f.state.sends,0);
+});
+test('saved cancellation holds ownership through uncertain recovery and does not send again',async()=>{
+ const f=fixture(),entered=Promise.withResolvers(),gate=Promise.withResolvers();f.state.pending=true;let done=false;
+ journalBoundary(f,journal=>({...journal,recover:async options=>{assert.deepEqual(options,{retry:false,wait:true});entered.resolve();await gate.promise;throw Error('Original request unresolved');}}));
+ const work=f.cap.request(f.id).catch(error=>{done=true;assert.match(error.message,/unresolved/);});await entered.promise;assert.equal(done,false);await assert.rejects(f.cap.list(),{code:'ROLLING_BUSY'});gate.resolve();await work;assert.equal(f.state.sends,0);
 });

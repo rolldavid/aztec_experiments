@@ -150,3 +150,5 @@ Root owns live testing, integration and cleanup. pending_reply_ui fixes proven r
 ## All transaction performance — 25 October
 
 Root owns live test transactions, source integration, one retained build, publication and cleanup. pending_reply_ui owns preference readiness, funding completion/progress and duplicate-scope review; pending_feed_release owns native exit/payment boundaries and independent review; proposed_feed_design owns Bok capacity failure diagnosis and bounded obsolete test repository reuse proposal. No extra dependency trees or browser profiles. Overall per-flow50% acceptance remains open.
+
+Current follow-up: pending_feed_release reviews remaining moderation authority/read waves; pending_reply_ui reviews remaining UX and transaction completion work; proposed_feed_design diagnoses exact samejournal Bok lifecycle readiness and publication. Root alone performs live writes and integrates source-only reviewed patches.547 integrated withdrawal/cancellation checks pass; retained build frozen for the submitted Bok lifecycle.

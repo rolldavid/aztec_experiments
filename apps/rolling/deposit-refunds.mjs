@@ -179,14 +179,16 @@ export function createDepositRefunds({sdk, ethers, provider, node, scope, storag
       return exclusive(async () => {
         depositId(id);
         const session = await selectedWallet();
-        let anchor = await snapshot(session), entry = await inspect(session,anchor,id);
-        await recheck(session,anchor);
-        if (entry.status === 'requested') return requestedReceipt(session,anchor,entry);
-        check(entry.status === 'available','ROLLING_DEPOSIT_NOT_REFUNDABLE');
+        let anchor, entry;
         const journal = await sdk.createEthereumJournal({storage:journalStorage, walletSecret, walletSalt,
           scope:{...fixed,depositor:session.owner}, provider, signer:session.wallet.signer, contextGuard:session.guard});
         const saved = await journal.inspectRequest();
         if (saved) {
+          // Saved requests retain their original eligibility/reconciliation boundary.
+          anchor = await snapshot(session); entry = await inspect(session,anchor,id);
+          await recheck(session,anchor);
+          if (entry.status === 'requested') return requestedReceipt(session,anchor,entry);
+          check(entry.status === 'available','ROLLING_DEPOSIT_NOT_REFUNDABLE');
           const result = await journal.recover({retry:false,wait:true});
           check(['success','reverted','replaced'].includes(result.outcome));
           if (result.outcome === 'success' && saved.expected.kind === 'request-refund' && saved.expected.depositId === id) {
@@ -194,7 +196,7 @@ export function createDepositRefunds({sdk, ethers, provider, node, scope, storag
             return requestedReceipt(session,anchor,entry);
           }
         }
-        // Recheck eligibility immediately before asking the existing journal to sign.
+        // Qualify immediately before signing; an empty journal needs no earlier duplicate snapshot.
         anchor = await snapshot(session); entry = await inspect(session,anchor,id);
         await recheck(session,anchor);
         if (entry.status === 'requested') return requestedReceipt(session,anchor,entry);
