@@ -194,7 +194,12 @@ test('Rolling removed post reorg reopens exact uncertainty fence',async t=>{
  const f=rollingFixture(t);f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();f.posts=[f.post(1),f.post(2)];f.advance();await f.run();assert.equal(f.calls.broadcast,2);assert(f.store.list().every(r=>r.job.state==='reconciling'));
 });
 test('Rolling explicit missing canonical post invalidates completed evaluation',async t=>{
- const f=rollingFixture(t);await f.run();f.posts=[];await f.run();assert(f.store.list().every(r=>r.orphaned&&r.job.state==='manual-review'));
+ const f=rollingFixture(t);await f.run();const evaluated=f.calls.evaluate;f.posts=[];
+ const result=await f.run();assert(f.store.list().every(r=>r.orphaned&&r.job.state==='manual-review'));
+ assert.equal(result.complete,true);assert.equal(result.catchUp,false);assert.equal(result.status.counts['manual-review'],2);assert.equal(result.status.health.manualAttention,0);
+ assert.equal(f.calls.evaluate,evaluated);assert.equal(f.calls.prepare,0);assert.equal(f.calls.broadcast,0);
+ f.store=f.open();assert.equal((await f.run()).complete,true);f.posts=[f.post(1),f.post(2)];
+ assert.equal((await f.run()).complete,true);assert.equal(f.calls.evaluate,evaluated*2);assert(f.store.list().every(r=>!r.orphaned&&r.job.state==='evaluated-ok'));
 });
 test('Rolling wrong canonical block cannot complete removal',async t=>{
  const f=rollingFixture(t);f.node.getBlockData=async n=>({blockHash:hex(999),header:{globalVariables:{blockNumber:n}}});f.evaluate=async()=>({isViolation:true,reason:'Spam'});await f.run();assert.equal(f.calls.broadcast,1);assert.equal(f.store.list()[0].job.state,'reconciling');
@@ -392,4 +397,11 @@ test('Rolling failed receipt stays unknown only after held sibling completes',as
  f.node.getTxReceipt=hash=>{if(++calls===1)throw Error('receipt unavailable');return held.promise.then(()=>receipt(hash));};
  const result=f.signer.reconcileRemovals(f.store.list()).finally(()=>{finished=true;});await tick();assert.equal(calls,2);assert.equal(finished,false);
  held.resolve();assert.deepEqual((await result).map(r=>r.state),['unknown','confirmed']);
+});
+
+test('Rolling orphaned submitted posts remain unresolved and incomplete',async t=>{
+ const f=rollingFixture(t);f.evaluate=async()=>({isViolation:true,reason:'Spam'});f.broadcastError=true;
+ await f.run();assert.equal(f.calls.broadcast,1);f.posts=[];f.advance();
+ const result=await f.run();assert.equal(result.complete,false);assert.equal(result.status.health.unresolvedSigning,1);
+ assert.equal(f.calls.broadcast,1);assert(f.store.list().some(r=>r.orphaned&&r.intent&&r.job.state==='reconciling'));
 });

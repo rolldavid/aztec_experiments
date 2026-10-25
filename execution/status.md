@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Live static ab6658f2: public action completion, withdrawal overlap, funding receipt reuse/direct custody and combined Board+Bok prefetch; affectedchecks537/221/226/695 andactualbrowserbuild pass. Server bff92 overlay published on bothhosts,235checks, dependenciesunchanged; BokreadyPID96885, moderatorPID188661currentingest but2manual-reviewitems underdiagnosis. Allsourcepushed67e6; transfer/draftcleanupdone. Browsertoolstilldisabled;no newendtoendtimes;2s/all50%targetsactive.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — All performance releases live/pushed; Bokready and moderatoringests. Both manualalerts are exactunsigned POST_ORPHANED with nointent/hash/lease/receipt; reviewed narrow worker+health classification patch integration next, preserve signed/uncertain fences.17focusedpeerchecks; root affectedchecks then moderator-only publication. Browserstilldisabled,latencytargetsnotverified.
 
 ## Ready internal work
 

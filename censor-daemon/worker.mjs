@@ -1,3 +1,4 @@
+import {isUnsignedOrphanedJob} from './job-store.mjs';
 import {moderateRollingPost} from './moderation.mjs';
 import {safeModerationDiagnostic} from './health.mjs';
 import {scopeKey} from '../shared/protocol-schema.mjs';
@@ -104,8 +105,8 @@ export async function processModerationCycle({store,signer,node,scope,evaluate,w
    log('Moderation work remains unresolved: '+safeModerationDiagnostic(error)+'; inspect durable state before retrying.','error');
   }
  }
- const records=store.list(),pending=records.filter(r=>!superseded(r)&&!['evaluated-ok','confirmed-flag'].includes(r.job.state)&&!(r.job.state==='manual-review'&&['FLAG_ALREADY_PRESENT',...(dryRun?['DRY_RUN_VIOLATION']:[])].includes(r.errorCode)));
- for(const record of records.filter(r=>!superseded(r)&&['expired','manual-review'].includes(r.job.state)&&r.errorCode!=='FLAG_ALREADY_PRESENT'))log('Moderation work requires operator attention; inspect durable state.','warn');
+ const records=store.list(),pending=records.filter(r=>!superseded(r)&&!isUnsignedOrphanedJob(r)&&!['evaluated-ok','confirmed-flag'].includes(r.job.state)&&!(r.job.state==='manual-review'&&['FLAG_ALREADY_PRESENT',...(dryRun?['DRY_RUN_VIOLATION']:[])].includes(r.errorCode)));
+ for(const record of records.filter(r=>!superseded(r)&&!isUnsignedOrphanedJob(r)&&['expired','manual-review'].includes(r.job.state)&&r.errorCode!=='FLAG_ALREADY_PRESENT'))log('Moderation work requires operator attention; inspect durable state.','warn');
  return {complete:pending.length===0,status:store.status()};
 }
 
@@ -166,7 +167,7 @@ export async function processRollingModerationCycle({store,signer,evaluate,worke
    log('Rolling moderation remains unresolved; preserve its original journal.','error');
   }
  }
- const status=store.status(),pending=store.list().filter(r=>!superseded(r)&&!['evaluated-ok','confirmed-flag'].includes(r.job.state)&&!(r.job.state==='manual-review'&&!r.intent&&['FLAG_ALREADY_PRESENT',...(dryRun?['DRY_RUN_VIOLATION']:[])].includes(r.errorCode)));
+ const status=store.status(),pending=store.list().filter(r=>!superseded(r)&&!isUnsignedOrphanedJob(r)&&!['evaluated-ok','confirmed-flag'].includes(r.job.state)&&!(r.job.state==='manual-review'&&!r.intent&&['FLAG_ALREADY_PRESENT',...(dryRun?['DRY_RUN_VIOLATION']:[])].includes(r.errorCode)));
  // Only successful progress with explicit remaining work skips idle polling.
  // Unknown sends, failed inference and unchanged pages never cause a spin.
  const catchUp=(scanAdvanced&&scanRemaining)||(completedJobs>0&&!pending.some(r=>r.intent||r.lease)&&pending.some(r=>r.job.state==='queued'&&!r.lease&&!r.intent&&!r.orphaned));

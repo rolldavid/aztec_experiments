@@ -22,6 +22,12 @@ function receipt(value){
  return {txHash:value.txHash,blockHash:value.blockHash,blockNumber:String(value.blockNumber),status:value.status,executionResult:value.executionResult};
 }
 
+// Canonically absent posts have no unsigned moderation obligation. Any signing
+// evidence or active ownership still requires the existing attention/fence path.
+export const isUnsignedOrphanedJob=record=>record.job.state==='manual-review'&&
+ record.errorCode==='POST_ORPHANED'&&record.orphaned===true&&record.intent===null&&
+ record.job.transactionHash===null&&record.lease===null&&record.receipt===null;
+
 export function openJobStore({filename,scope,modelVersion,maxAttempts=3,maxReconcileAttempts=20,retryDelayMs=30000,maxJobs=100000,now=Date.now,profile='legacy',development=false,leaseMs=profile==='rolling'?null:360000}){
  scope=validateScope(scope);
  if(!['legacy','rolling'].includes(profile)||typeof development!=='boolean'||(profile==='rolling'&&scope.l1ChainId!==(development?'31337':'11155111')))throw fail('Invalid moderation profile');
@@ -206,7 +212,7 @@ export function openJobStore({filename,scope,modelVersion,maxAttempts=3,maxRecon
    if(fence)health.manualSigningFences++;
    if(signing.has(r.job.state)&&!(r.job.state==='submitted'&&included))health.unresolvedSigning++;
    if(r.job.state==='submitted'&&included)health.awaitingFinality++;
-   const benign=r.job.state==='manual-review'&&((['MODEL_SUPERSEDED','POLICY_SUPERSEDED'].includes(r.errorCode)&&!r.intent&&!r.job.transactionHash)||(r.errorCode==='FLAG_ALREADY_PRESENT'&&!r.intent));
+   const benign=isUnsignedOrphanedJob(r)||r.job.state==='manual-review'&&((['MODEL_SUPERSEDED','POLICY_SUPERSEDED'].includes(r.errorCode)&&!r.intent&&!r.job.transactionHash)||(r.errorCode==='FLAG_ALREADY_PRESENT'&&!r.intent));
    if(benign||['evaluated-ok','confirmed-flag'].includes(r.job.state))continue;
    if(r.job.state==='manual-review')health.manualAttention++;
    if(r.job.state==='expired')health.expiredObligations++;

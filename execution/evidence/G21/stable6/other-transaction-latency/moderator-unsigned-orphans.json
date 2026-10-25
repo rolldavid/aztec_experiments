@@ -1,0 +1,20 @@
+{
+  "problem": "Two unsigned canonical orphan posts incorrectly raised critical moderator health and incomplete-cycle status",
+  "change": "Treat strictly unsigned orphaned jobs as nonblocking in health and worker completion; preserve raw rows and normal reobservation",
+  "rootTests": 158,
+  "failures": 0,
+  "peerReview": "pending_reply_ui approved17 focused cases",
+  "sourceSha256": {
+    "censor-daemon/job-store.mjs": "3efa624141d48ee70cfda29aa6fec3e36a747a0e2499e05f81b2ef9b2d9424ab",
+    "censor-daemon/worker.mjs": "0aed1af2e9bfee7e9224639790d362f0e9f2a0415555be5a0a363eea928f3646"
+  },
+  "liveObserved": {
+    "errorCode": "POST_ORPHANED",
+    "count": 2,
+    "intent": false,
+    "transactionHash": false,
+    "lease": false,
+    "receipt": false
+  },
+  "published": false
+}

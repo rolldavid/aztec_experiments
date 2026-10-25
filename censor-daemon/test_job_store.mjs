@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {execFileSync} from 'node:child_process';
-import {openJobStore} from './job-store.mjs';
+import {openJobStore,isUnsignedOrphanedJob} from './job-store.mjs';
+import {summarizeModerationHealth} from './health.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const scope={l1ChainId:'1',rollupVersion:'1',rollupAddress:'0x'+'1'.repeat(40),portalAddress:'0x'+'2'.repeat(40),boardAddress:hex(3)},modelVersion=hex(4);
 function fixture(t,options={}){
@@ -162,4 +163,36 @@ test('policy update preserves included prior-policy receipt and intent',t=>{
  const proof={...evidence(old).receipt,status:'checkpointed'};f.store.transition(old.key,old.lease.token,{state:'submitted',transactionHash:hex(50),receipt:proof});f.store.release(old.key,old.lease.token);
  f.policies.push({policyVersion:hex(11),text:'New rules',censorWindow:'1000'});f.store.ingestSnapshot({...f.snapshot(),currentPolicyVersion:hex(11)});
  const saved=f.store.get(old.key);assert.equal(saved.orphaned,false);assert.deepEqual(saved.receipt,proof);assert(saved.intent);assert.equal(lease(f.store).key,old.key);
+});
+
+test('unsigned canonical orphan is nonblocking without erasing its stored state and requeues on reobservation',t=>{
+ const f=fixture(t);f.store.ingestSnapshot(f.snapshot());const job=lease(f.store);
+ f.store.transition(job.key,job.lease.token,{state:'evaluated-ok',decision:{isViolation:false}});
+ f.store.ingestSnapshot(f.snapshot([]));const old=f.store.get(job.key);
+ assert.equal(isUnsignedOrphanedJob(old),true);assert.equal(f.store.status().counts['manual-review'],1);
+ assert.equal(f.store.status().health.manualAttention,0);assert.equal(f.open().status().health.manualAttention,0);
+ assert.equal(summarizeModerationHealth({status:f.store.status(),now:f.getTime()}).severity,'ok');
+ assert.equal(lease(f.store),null);f.store.ingestSnapshot(f.snapshot());
+ const fresh=lease(f.store);assert.equal(fresh.key,job.key);assert.equal(fresh.job.state,'leased');assert.equal(fresh.orphaned,false);
+});
+for(const [name,change] of [
+ ['reason',r=>{r.errorCode='POST_CHANGED';}],['orphan flag',r=>{r.orphaned=false;}],['intent',r=>{r.intent={postId:hex(1)};}],
+ ['hash',r=>{r.job.transactionHash=hex(50);}],['lease',r=>{r.lease={token:'held'};}],['receipt',r=>{r.receipt={status:'checkpointed'};}],
+ ['state',r=>{r.job.state='reconciling';}],['missing hash',r=>{delete r.job.transactionHash;}],['missing intent',r=>{delete r.intent;}],['missing lease',r=>{delete r.lease;}],['missing receipt',r=>{delete r.receipt;}]
+])test('unsigned canonical orphan classification rejects '+name,t=>{
+ const f=fixture(t);f.store.ingestSnapshot(f.snapshot());f.store.ingestSnapshot(f.snapshot([]));
+ const record=f.store.list()[0];assert.equal(isUnsignedOrphanedJob(record),true);change(record);assert.equal(isUnsignedOrphanedJob(record),false);
+});
+for(const sent of [false,true])test('orphaned signing obligation remains critical with '+(sent?'saved hash':'unknown hash'),t=>{
+ const f=fixture(t);f.store.ingestSnapshot(f.snapshot());const job=lease(f.store);
+ if(sent)submitted(f.store,job);else intent(f.store,job);
+ f.store.ingestSnapshot(f.snapshot([]));assert.equal(f.store.status().health.unresolvedSigning,1);
+ const next=lease(f.store);f.store.transition(next.key,next.lease.token,{state:'manual-review',errorCode:'POST_ORPHANED'});
+ assert.equal(f.store.status().health.manualAttention,1);assert.equal(f.store.status().health.manualSigningFences,1);assert.equal(lease(f.store),null);
+ assert.equal(summarizeModerationHealth({status:f.store.status(),now:f.getTime()}).severity,'critical');
+});
+test('unconfirmed orphan reason and other manual failures remain critical',t=>{
+ const f=fixture(t);f.store.ingestSnapshot(f.snapshot([f.post(),f.post(2)]));
+ for(const errorCode of ['POST_ORPHANED','POST_CHANGED']){const job=lease(f.store);f.store.transition(job.key,job.lease.token,{state:'manual-review',errorCode});}
+ assert.equal(f.store.status().health.manualAttention,2);
 });
