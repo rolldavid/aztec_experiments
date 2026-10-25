@@ -2913,3 +2913,60 @@ for(const defect of ['unauthorized','fork','owner'])test('moderation wave reject
  const work=app.prepare(moderatorActions[0]).then(()=>assert.fail('must reject'),()=>{done=true;});await entered.promise;if(defect==='owner')f.state.guard=false;
  assert.equal(done,false);gate.resolve();await work;assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
+
+test('withdrawal observation reuses readiness only for same owned immediate preparation; submission still rereads',async()=>{
+ const f=automaticWithdrawalFixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ await f.app.readWithdrawalReadiness('9');
+ const prepared=await f.app.prepare({type:'withdraw',deposit:'9'},{immediate:true});
+ assert.equal(f.state.privateReads.filter(r=>r.name==='get_deposit_info').length,1);
+ f.state.responses.get_deposit_info[2]=101n;
+ await assert.rejects(f.app.submitPrepared(prepared.intentId),{code:'ROLLING_WITHDRAWAL_NOT_READY'});
+ assert.equal(f.state.privateReads.filter(r=>r.name==='get_deposit_info').length,2);assert.equal(f.state.sends,0);
+});
+test('withdrawal observation reuses exact selected screening hints once',async()=>{
+ const f=automaticWithdrawalFixture(true),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ await f.app.readWithdrawalReadiness('9');const prepared=await f.app.prepare({type:'screen',deposit:'9'},{immediate:true});
+ assert.equal(f.state.privateReads.filter(r=>r.name==='get_screen_hints').length,1);
+ assert.equal((await f.app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.sends,1);
+});
+for(const change of ['operation','anchor','cached-node','unsynchronized','review'])test(`withdrawal observation is not reused after ${change}`,async()=>{
+ const f=automaticWithdrawalFixture();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ await f.app.readWithdrawalReadiness('9');
+ if(change==='operation')scope={synchronized:true};
+ if(change==='unsynchronized')scope.synchronized=false;
+ if(change==='cached-node')f.options.accountSession.wallet.pxe.node={};
+ if(change==='anchor'){
+  f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:101n},hash:async()=>hex(43)});
+  f.options.accountSession.node.getBlockData=async height=>({header:{globalVariables:{blockNumber:height}},blockHash:hex(43)});
+ }
+ f.state.responses.get_deposit_info[2]=102n;
+ const prepared=await f.app.prepare({type:'withdraw',deposit:'9'},change==='review'?undefined:{immediate:true});
+ assert.equal(prepared.withdrawal.amount,'102');assert.equal(f.state.privateReads.filter(r=>r.name==='get_deposit_info').length,2);
+});
+test('withdrawal observation rejects an orphaned readiness anchor before creating intent',async()=>{
+ const f=automaticWithdrawalFixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ await f.app.readWithdrawalReadiness('9');f.options.accountSession.node.getBlockData=async()=>({header:{globalVariables:{blockNumber:1}},blockHash:hex(99)});
+ await assert.rejects(f.app.prepare({type:'withdraw',deposit:'9'},{immediate:true}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('withdrawal observation cannot cross exact deposit or route identity',async()=>{
+ for(const change of ['deposit','owner','route']){
+  const f=automaticWithdrawalFixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();await f.app.readWithdrawalReadiness('9');
+  if(change==='deposit')f.state.responses.get_deposit_info[1]=10n;
+  if(change==='owner')f.options.accountSession.owner=new AztecAddress(new Fr(4n));
+  if(change==='route')f.state.guard=false;
+  if(change==='deposit'){
+   await f.app.prepare({type:'withdraw',deposit:'10'},{immediate:true});assert.equal(f.state.privateReads.filter(r=>r.name==='get_deposit_info').length,2);
+  }else{await assert.rejects(f.app.prepare({type:'withdraw',deposit:'9'},{immediate:true}));assert.equal(f.values.size,0);}
+  assert.equal(f.state.sends,0);
+ }
+});
+test('withdrawal observation retains maturity check and never promotes time-locked credit',async()=>{
+ const f=automaticWithdrawalFixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.state.responses.get_deposit_info[9]=101n;f.app=f.restart();
+ assert.equal((await f.app.readWithdrawalReadiness('9')).readyAt,'101');await assert.rejects(f.app.prepare({type:'withdraw',deposit:'9'},{immediate:true}),{code:'ROLLING_WITHDRAWAL_NOT_READY'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('withdrawal observation cannot survive operation replacement while predecessor is held',async()=>{
+ const f=automaticWithdrawalFixture();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();await f.app.readWithdrawalReadiness('9');
+ const entered=Promise.withResolvers(),release=Promise.withResolvers();f.options.accountSession.journal.assertCanStart=async()=>{entered.resolve();await release.promise;};
+ const preparing=f.app.prepare({type:'withdraw',deposit:'9'},{immediate:true});await entered.promise;scope={synchronized:true};release.resolve();
+ await assert.rejects(preparing,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});

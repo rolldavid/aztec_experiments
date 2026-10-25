@@ -160,7 +160,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   void publicReader; // Never route personalized requests through public readers.
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
   let busy=false,callScope=null,slotPromise,pendingExitPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
-  const networkChecks=new WeakMap(),preparedPayments=new WeakMap(),preparedPolicies=new WeakMap(),preparedPreferenceHeads=new WeakMap();
+  const networkChecks=new WeakMap(),preparedPayments=new WeakMap(),preparedPolicies=new WeakMap(),preparedPreferenceHeads=new WeakMap(),withdrawalObservations=new WeakMap();
   const session=accountSession;
   // Only this browser capability enables provisional completion. A private exit
   // may be included while its separately saved Ethereum payment remains pending.
@@ -686,7 +686,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(policy[4]!==true,'ROLLING_SUBBOARD_REJECTED');
     return {mainVersion:Number(BigInt(policy[0])),localVersion:Number(BigInt(policy[2]))};
   }
-  async function argumentsFor(action,board,nonce,{atomicBok=false,postingAnchor,preparedPolicy}={}){
+  async function argumentsFor(action,board,nonce,{atomicBok=false,postingAnchor,preparedPolicy,withdrawalObservation}={}){
     const allowed=keys[action?.type];check(allowed&&Object.keys(action).every(k=>k==='type'||allowed.includes(k)));
     switch(action.type){
       case 'cancel-deposit':return cancellationArguments(action);
@@ -713,7 +713,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       case 'expire-bok-request':
       case 'cancel-bok-request':check(bok&&completedAccounting&&completedAccounting.requests.some(r=>r.requestId===field(action.requestId,true)&&['1','2'].includes(r.state)&&(action.type==='expire-bok-request'||r.reserved==='0')),'ROLLING_BOK_ACCOUNTING_INCOMPLETE');await checkBalanceAnchor(completedAccounting.anchor);return [field(action.requestId,true)];
       case 'withdraw':return [field(action.deposit,true)];
-      case 'screen':return screeningArguments(board,field(action.deposit,true));
+      case 'screen':return withdrawalObservation?.screening??screeningArguments(board,field(action.deposit,true));
       default:{
         // Atomic authorization + publication is validated once by the actual
         // private/public contract simulation, including parent/root/removal.
@@ -876,6 +876,21 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(record.encoded)check(JSON.stringify(encoded)===JSON.stringify(record.encoded),'ROLLING_INTENT_CHANGED');
     return {call,encoded};
   }
+  // Readiness may hand its exact selected note to immediate preparation in the
+  // same held operation. It is consumed once; final submission still rereads
+  // the native deposit and checks its canonical anchor before proving.
+  async function takeWithdrawalObservation(action,immediate){
+    const operation=session.operationScope?.(),saved=operation&&withdrawalObservations.get(operation);
+    if(operation)withdrawalObservations.delete(operation);
+    if(!immediate||!saved||operation.synchronized!==true||!['screen','withdraw'].includes(action.type))return null;
+    if(saved.deposit!==field(action.deposit,true)||saved.wallet!==session.wallet||saved.pxe!==session.wallet.pxe||saved.node!==session.node||saved.cachedNode!==session.wallet.pxe.node)return null;
+    const anchor=await balanceAnchor();
+    await localGuard();check(session.operationScope()===operation,'ROLLING_CONTEXT_CHANGED');
+    if(!same(anchor,saved.anchor))return null;
+    if(action.type==='screen')await checkBalanceAnchor(anchor);
+    check(session.operationScope()===operation&&saved.wallet===session.wallet&&saved.pxe===session.wallet.pxe&&saved.node===session.node&&saved.cachedNode===session.wallet.pxe.node,'ROLLING_CONTEXT_CHANGED');
+    return saved;
+  }
   async function collateralInfo(id,board,timestamp){
     const values=await utility(board,'get_deposit_info',[session.owner,id]);
     check(Array.isArray(values)&&values.length===11,'ROLLING_INVALID_RESPONSE');
@@ -992,12 +1007,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }catch(error){accountingScan=null;completedAccounting=null;throw error;}
     });},
     async readWithdrawalReadiness(deposit){return exclusive(async()=>{
-      const id=field(deposit,true),anchor=await balanceAnchor(),board=await contract();
+      const id=field(deposit,true),operation=session.operationScope?.();
+      if(operation)withdrawalObservations.delete(operation);
+      const anchor=await balanceAnchor(),board=await contract(),context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,cachedNode:session.wallet.pxe.node};
       const info=await collateralInfo(id,board,BigInt(anchor.timestamp));
       const needsScreening=BigInt(info.screenedSequence)<BigInt(info.lastRealSequence);
-      let readyAt=BigInt(info.nextAllowedTime);
+      let readyAt=BigInt(info.nextAllowedTime),screening=null;
       if(needsScreening){
-        const [,child]=await screeningArguments(board,id);
+        screening=await screeningArguments(board,id);const [,child]=screening;
         check(child?.note&&BigInt(child.note.sequence)===BigInt(info.screenedSequence)+1n,'ROLLING_HISTORY_UNAVAILABLE');
         if(!child.note.is_dummy){
           const observations=await Promise.allSettled(['post_exists','post_flag_deadline'].map(async name=>{
@@ -1012,6 +1029,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         }
       }
       await checkBalanceAnchor(anchor);
+      if(operation?.synchronized===true){
+        check(session.operationScope()===operation&&context.wallet===session.wallet&&context.pxe===session.wallet.pxe&&context.node===session.node&&context.cachedNode===session.wallet.pxe.node,'ROLLING_CONTEXT_CHANGED');
+        withdrawalObservations.set(operation,{operation,deposit:id,anchor:clone(anchor),info:clone(info),screening,...context});
+      }
       return {anchor,screenedSequence:info.screenedSequence,needsScreening,readyAt:String(readyAt)};
     });},
     async readBalances({cursor=0,includeBok=false}={}){return exclusive(async()=>{
@@ -1092,7 +1113,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           check(postingRules.chainId===scope.chainId&&postingRules.rollupVersion===scope.version&&postingRules.boardAddress===fixed.board&&field(postingRules.subboard)===field(input.subboard??'0'),'ROLLING_POSTING_RULES_CHANGED');
         }
       }
-      await guard();const action=clone(input);
+      await guard();const action=clone(input),withdrawalObservation=await takeWithdrawalObservation(action,immediate);
       const earlyScope=immediate&&['post','reply','quote','repost'].includes(action.type)&&field(action.subboard??'0')===zero
         ?getOperationScope():null;
       const policyOwner=earlyScope?.synchronized===true?{scope:earlyScope,wallet:session.wallet,pxe:session.wallet.pxe,node:session.node}:null;
@@ -1148,7 +1169,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const earlyMode=ordinaryPreparation?'ordinary-post-proof':['like','unlike'].includes(action.type)?'qualified-like-proof':['preference','read-marker'].includes(action.type)?'qualified-preference-proof':undefined;
         const earlyPayment=earlyMode&&earlier?.phase==='metadata'&&earlier.payment.creditCheck===earlyMode&&earlier.wallet===session.wallet&&earlier.pxe===session.wallet.pxe&&earlier.node===session.node?earlier.payment:null;
         const values=await Promise.allSettled([
-          ()=>measure('action.arguments',async()=>{if(moderationTypes.has(action.type)){moderation=await moderationArguments(action,board);return moderation.args;}return argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor,preparedPolicy:earlyPolicy?.policy});}),
+          ()=>measure('action.arguments',async()=>{if(moderationTypes.has(action.type)){moderation=await moderationArguments(action,board);return moderation.args;}return argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor,preparedPolicy:earlyPolicy?.policy,withdrawalObservation});}),
           ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:ordinaryPreparation,likeProof:['like','unlike'].includes(action.type),preferenceProof:['preference','read-marker'].includes(action.type)})),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
@@ -1161,7 +1182,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(immediate&&['like','unlike'].includes(action.type)?{feeProfile:'like-v1'}:immediate&&['preference','read-marker'].includes(action.type)?{feeProfile:'preference-v1'}:{}),...(moderation?{moderation:moderation.review}:{})};
       if(action.type==='name')record.nameAvailability=await nameAvailability(action);
       if(['withdraw','withdraw-bok','cancel-deposit'].includes(action.type)){const pending=await pendingExit();check(!pending.value||pending.value.paymentStatus==='refunded','ROLLING_WITHDRAWAL_PENDING');if(pending.value){check(verifyWithdrawal&&await verifyWithdrawal(pending.value),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');await localGuard();check(await (await pendingExitSlot()).isCurrent(pending.encoded),'ROLLING_CONTEXT_CHANGED');}}
-      if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
+      if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=withdrawalObservation&&same(anchor,withdrawalObservation.anchor)?clone(withdrawalObservation.info):await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(action.type==='cancel-deposit'){
         record.withdrawal={kind:'cancelled-collateral',depositor:action.receipt.sender,amount:action.receipt.amount,depositId:action.receipt.depositId,eligible:true};
       }
@@ -1203,7 +1224,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         record.maximumFee=(ordinaryPost(record)?sdk.ordinaryPostFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{ordinaryProof:true}),board:ordinaryPost(record)}).maximumFee:qualifiedLike(record)?sdk.likeFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{likeProof:true}),board:qualifiedLike(record)}).maximumFee:qualifiedPreference(record)?sdk.preferenceFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{preferenceProof:true}),board:qualifiedPreference(record)}).maximumFee:sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee).toString();
       }
       else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
-        prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();const saved=await store.write(prior,record);
+        prepared:await payment(action,record),from:session.owner,guard});record.maximumFee=estimated.maximumFee.toString();}await guard();
+      if(withdrawalObservation){
+        const currentAnchor=await balanceAnchor(),observed=withdrawalObservation;
+        check(session.operationScope()===observed.operation&&observed.operation.synchronized===true&&session.wallet===observed.wallet&&session.wallet.pxe===observed.pxe&&session.node===observed.node&&session.wallet.pxe.node===observed.cachedNode&&same(currentAnchor,observed.anchor),'ROLLING_CONTEXT_CHANGED');
+      }
+      const saved=await store.write(prior,record);
       // No persistent cache: only the unchanged journal record in the same held
       // operation may use this result. Separate submissions prepare afresh.
       if(paymentScope&&session.operationScope()===paymentScope)preparedPayments.set(paymentScope,{encoded:saved.encoded,payment:preparedPayment,...paymentOwner});
