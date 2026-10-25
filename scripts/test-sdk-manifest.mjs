@@ -1,8 +1,8 @@
+import {PXE_OPERATION_PINS,PXE_SOURCE_PINS,restoreNativePxe} from './patch-pxe-operation-guards.mjs';
 import {BB_WORKER_TIMING_PINS} from './bb-worker-timings.mjs';
 import {SELECTED_NOTE_PINS} from './selected-note-witnesses.mjs';
 import {KERNEL_WORK_PINS} from './kernel-witness-work.mjs';
 import {OWNER_DISCOVERY_PINS,transformOwnerDiscovery} from './patch-pxe-owner-discovery.mjs';
-import {PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN,preferenceRecoverySource,transformPreferencePage} from './patch-pxe-preference-page.mjs';
 import {INDEXEDDB_ATOMICITY_PINS, transformIndexedDBAtomicity} from './patch-indexeddb-atomicity.mjs';
 import {PXE_REORG_ANCHOR_PINS,transformPxeReorgAnchor} from './patch-pxe-reorg-anchor.mjs';
 import {PRIVATE_EVENT_QUERY_PINS,transformPrivateEventQuery} from './patch-private-event-query.mjs';
@@ -30,6 +30,7 @@ function fixture(t) {
   };
   const read = name => fs.readFileSync(path.join(root, name));
   const inputs = {
+    'scripts/check-transform-bindings.mjs':'// fixture binding verifier',
     'scripts/pxe-log-projection.mjs':fs.readFileSync(new URL('./pxe-log-projection.mjs',import.meta.url),'utf8'),
     'node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js':fs.readFileSync(new URL('../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js',import.meta.url),'utf8'),
     'scripts/pxe-sync-snapshot.mjs':'// fixture sync transform',
@@ -77,17 +78,12 @@ function fixture(t) {
     const source=fs.readFileSync(new URL('./fixtures/indexeddb-atomicity-6.0.0-rc.1/'+pin.path.split('/').at(-1),import.meta.url),'utf8');
     inputs['node_modules/@aztec-labs/kv-store/'+pin.path]=transformIndexedDBAtomicity(source,pin.path);
   }
-  inputs['scripts/patch-pxe-preference-page.mjs']=fs.readFileSync(new URL('./patch-pxe-preference-page.mjs',import.meta.url),'utf8');
-  for(const pin of PREFERENCE_PAGE_PINS){
-    const source=fs.readFileSync(new URL('./testing/fixtures/pxe-preference-page-6.0.0/'+pin.path,import.meta.url),'utf8');
-    assert.equal(hash(source),pin.before);
-    inputs['node_modules/@aztec-labs/pxe/'+pin.path]=transformPreferencePage(source,pin.path);
+  inputs['scripts/patch-pxe-operation-guards.mjs']='// fixture operation guards';
+  for(const pin of [...PXE_OPERATION_PINS,...PXE_SOURCE_PINS]){
+    const name='node_modules/@aztec-labs/pxe/'+pin.path;
+    const native=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
+    inputs[name]=pin.sha256?restoreNativePxe(native,pin.path):native;
   }
-  const compact=fs.readFileSync(new URL('../'+PREFERENCE_PAGE_COMPACT_PIN.source,import.meta.url),'utf8');
-  assert.equal(hash(compact),PREFERENCE_PAGE_COMPACT_PIN.sha256);
-  inputs[PREFERENCE_PAGE_COMPACT_PIN.source]=compact;
-  inputs['node_modules/@aztec-labs/pxe/'+PREFERENCE_PAGE_COMPACT_PIN.generated]=compact;
-  inputs['node_modules/@aztec-labs/pxe/'+PREFERENCE_PAGE_RECOVERY_PIN.generated]=preferenceRecoverySource();
   const outputs = {
     'aztec_bundle.js': '// synthetic built bundle',
     'aztec_browser.js': '// synthetic browser bundle',
@@ -235,26 +231,6 @@ test('IndexedDB installer is mandatory provenance',t=>{
  const f=fixture(t);delete f.manifest.inputs['scripts/patch-indexeddb-atomicity.mjs'];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
 });
 
-// Complete distribution closure: neither an omitted field nor a refreshed
-// manifest hash can authorize different installed recovery implementation.
-const preferenceRequiredInputs=[
-  'scripts/patch-pxe-preference-page.mjs',PREFERENCE_PAGE_COMPACT_PIN.source,
-  ...PREFERENCE_PAGE_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),
-  ...[PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN].map(pin=>'node_modules/@aztec-labs/pxe/'+pin.generated),
-];
-for(const name of preferenceRequiredInputs)test('missing preference distribution input rejects: '+name,t=>{
-  const f=fixture(t);delete f.manifest.inputs[name];f.save();
-  assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
-});
-for(const name of preferenceRequiredInputs.filter(name=>name!=='scripts/patch-pxe-preference-page.mjs'))test('refreshed hash cannot replace literal preference pin: '+name,t=>{
-  const f=fixture(t);f.write(name,'changed preference fixture');f.manifest.inputs[name]=hash('changed preference fixture');f.save();
-  assert.throws(()=>checkSdk(f.root),/SDK preference page patch mismatch/);
-});
-test('preference installer source change requires an SDK rebuild',t=>{
-  const f=fixture(t);f.write('scripts/patch-pxe-preference-page.mjs','changed installer');
-  assert.throws(()=>checkSdk(f.root),/SDK input changed/);
-});
-
 for(const pin of OWNER_DISCOVERY_PINS)test('owner discovery literal SDK pin '+pin.path,t=>{
  const f=fixture(t),name='node_modules/@aztec-labs/pxe/'+pin.path;
  delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
@@ -282,3 +258,47 @@ for(const name of Object.keys(SELECTED_NOTE_PINS))test('selected note literal na
 
 for(const name of ['shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS)])test('worker diagnostic input is mandatory: '+name,t=>{const f=fixture(t);delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input|worker timing source mismatch/);});
 test('native worker pin cannot be rebound by updating manifest to changed bytes',t=>{const f=fixture(t),name=Object.keys(BB_WORKER_TIMING_PINS)[0];f.write(name,'changed native worker');f.manifest.inputs[name]=hash(f.read(name));f.save();assert.throws(()=>checkSdk(f.root),/worker timing source mismatch/);});
+
+function sharedDependenciesFixture(t) {
+  const f = fixture(t), shared = path.join(f.container, 'dependencies', 'node_modules');
+  fs.mkdirSync(path.dirname(shared));
+  fs.renameSync(path.join(f.root, 'node_modules'), shared);
+  fs.symlinkSync(shared, path.join(f.root, 'node_modules'), 'dir');
+  assert.deepEqual(checkSdk(f.root), f.manifest);
+  return { ...f, shared: fs.realpathSync(shared) };
+}
+
+test('shared dependency tree passes without copying installed inputs', t => {
+  const f = sharedDependenciesFixture(t);
+  assert.equal(fs.realpathSync(path.join(f.root, 'node_modules')), f.shared);
+  assert.equal(fs.lstatSync(path.join(f.root, 'node_modules')).isSymbolicLink(), true);
+});
+
+test('shared dependency tree rejects nested package links outside its root', t => {
+  const f = sharedDependenciesFixture(t), name = 'node_modules/fixture-module/index.js';
+  // Identical bytes and an unchanged manifest: confinement must cause rejection.
+  const outside = path.join(f.container, 'outside-package');fs.mkdirSync(outside);
+  fs.writeFileSync(path.join(outside, 'index.js'), f.read(name));
+  fs.rmSync(path.join(f.shared, 'fixture-module'), {recursive:true});
+  fs.symlinkSync(outside, path.join(f.shared, 'fixture-module'), 'dir');
+  assert.throws(() => checkSdk(f.root), /SDK path escapes its directory/);
+});
+
+test('shared dependency tree still rejects changed native bytes and rebound native pins', t => {
+  const f = sharedDependenciesFixture(t), name = Object.keys(SELECTED_NOTE_PINS)[0];
+  f.write(name, 'changed native shared implementation');
+  assert.throws(() => checkSdk(f.root), /SDK input changed/);
+  f.manifest.inputs[name] = hash(f.read(name));f.save();
+  assert.throws(() => checkSdk(f.root), /selected note source mismatch/);
+});
+
+for (const [section, name, file] of [
+  ['inputs', 'shared/escape.js', 'shared/escape.js'],
+  ['outputs', 'escape.js', '.build/sdk/escape.js'],
+]) test(`shared dependency tree does not permit ${section} symlink escapes`, t => {
+  const f = sharedDependenciesFixture(t), outside = path.join(f.container, 'outside.js');
+  fs.writeFileSync(outside, 'outside fixture');
+  fs.symlinkSync(outside, path.join(f.root, file));
+  f.manifest[section][name] = hash('outside fixture');f.save();
+  assert.throws(() => checkSdk(f.root), /SDK path escapes its directory/);
+});

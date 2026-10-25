@@ -15,6 +15,75 @@ def service_states(role,run=subprocess.check_output):
                 'pid':int(row['MainPID']),'restarts':int(row['NRestarts']), 'successful':row.get('Result')=='success'}
  return result
 
+def observe_current_prover(h,control,qualify_files=False,record_path=pathlib.Path('/etc/rolling-supervision/current-prover.json')):
+ # Explicit root-owned current deployment, with no discovery or fallback.
+ # Historical bootstrap/proxy records and h.RELEASE remain unchanged.
+ import hashlib,os,stat,pwd,grp,re
+ def regular(path):
+  if path.resolve()!=path:raise ValueError('Current prover symlink')
+  info=path.stat()
+  if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_mode&0o022:raise ValueError('Current prover ownership')
+  for parent in path.parents:
+   item=parent.stat()
+   if item.st_uid!=0 or item.st_mode&0o022:raise ValueError('Current prover parent ownership')
+  return info
+ def digest(path):
+  regular(path);value=hashlib.sha256()
+  with path.open('rb') as stream:
+   for chunk in iter(lambda:stream.read(1024*1024),b''):value.update(chunk)
+  return value.hexdigest()
+ info=regular(record_path)
+ if stat.S_IMODE(info.st_mode)!=0o600 or info.st_size>4096:raise ValueError('Current prover record permissions')
+ expected=json.loads(record_path.read_bytes())
+ if type(expected) is not dict or set(expected)!={'schemaVersion','target','stagePath','stageSha256','activationPath','activationSha256'} or type(expected['schemaVersion']) is not int or expected['schemaVersion']!=1:raise ValueError('Current prover record schema')
+ for key in ('target','stagePath','stageSha256','activationPath','activationSha256'):
+  if type(expected[key]) is not str:raise ValueError('Current prover record types')
+ if not re.fullmatch('/opt/board-prover/releases/[a-z0-9][a-z0-9-]{0,127}',expected['target']):raise ValueError('Current prover target')
+ if not re.fullmatch(r'/var/lib/rolling-bootstrap-private/[a-zA-Z0-9_-]+/config/prover-stage\.json',expected['stagePath']):raise ValueError('Current prover stage path')
+ target=pathlib.Path(expected['target']);stage_path=pathlib.Path(expected['stagePath'])
+ if expected['activationPath']!=str(stage_path.with_name('prover-activation.json')):raise ValueError('Current prover activation path')
+ for key in ('stageSha256','activationSha256'):
+  if not re.fullmatch('[a-f0-9]{64}',expected[key]):raise ValueError('Current prover receipt SHA')
+ def receipt(path,sha256):
+  info=regular(path)
+  if stat.S_IMODE(info.st_mode)!=0o600 or info.st_size>262144 or stat.S_IMODE(path.parent.stat().st_mode)!=0o700:raise ValueError('Current prover receipt permissions')
+  data=path.read_bytes()
+  if hashlib.sha256(data).hexdigest()!=sha256:raise ValueError('Current prover receipt binding')
+  return json.loads(data)
+ stage=receipt(stage_path,expected['stageSha256'])
+ active=receipt(pathlib.Path(expected['activationPath']),expected['activationSha256'])
+ if stage['target']!=str(target) or active['source']!=str(target) or active['activated'] is not True or active['files']!=stage['files'] or active['configSha256']!=stage['configSha256']:raise ValueError('Current prover activation binding')
+ if pathlib.Path('/opt/board-prover/current').resolve()!=target:raise ValueError('Current prover release changed')
+ # Full overlay/native validation is performed once when admitting this exact
+ # replacement. Recurring observation preserves the existing control contract:
+ # immutable receipt pins, exact config/current source, service identity/health.
+ if qualify_files:
+  for name,expected in stage['files'].items():
+   rel=pathlib.PurePosixPath(name)
+   if rel.is_absolute() or '..' in rel.parts or '\\' in name or not re.fullmatch('[a-f0-9]{64}',expected):raise ValueError('Current prover source path')
+   if digest(target/rel)!=expected:raise ValueError('Current prover source changed')
+  for name,key in [('node/bin/node','node'),('node_modules/@aztec-foundation/bb.js/build/amd64-linux/bb','bb'),('prover-release.json','manifest')]:
+   if digest(target/name)!=h['PINS'][key]:raise ValueError('Current prover native runtime changed')
+  if digest(target/'crs-manifest.json')!=stage['baseline']['runtimePins'][stage['baseline']['base']+'/crs-manifest.json']:raise ValueError('Current prover CRS changed')
+ owner=pwd.getpwnam('board-prover');group=grp.getgrnam('board-prover')
+ if owner.pw_uid!=995 or owner.pw_gid!=986 or group.gr_gid!=986:raise ValueError('Current prover identity changed')
+ # Preserve native host, UID traffic, proxy, systemd and real-health checks.
+ proxy=control['proxy_host_observe'](h,runtime=True)
+ control['activation_traffic'](h,owner.pw_uid)
+ current={**h,'RELEASE':target}
+ control['activation_service'](current,owner.pw_uid,group.gr_gid,stage['configSha256'])
+ def identity():
+  pid=h['run'](['systemctl','show','board-prover.service','--property=MainPID','--value'],capture=True,timeout=5)
+  if not re.fullmatch('[1-9][0-9]*',pid):raise ValueError('Current prover PID')
+  proc=pathlib.Path('/proc')/pid
+  if (proc/'cwd').resolve()!=target or (proc/'exe').resolve()!=target/'node/bin/node':raise ValueError('Current prover process source')
+  return pid,(proc/'stat').read_text().rsplit(')',1)[1].split()[19]
+ before=identity();health=control['activation_health'](observation=True)
+ control['activation_service'](current,owner.pw_uid,group.gr_gid,stage['configSha256'])
+ if identity()!=before:raise ValueError('Current prover restarted during observation')
+ return {'proverActivated':True,'proverAvailability':'ready' if health['query']['ready'] and proxy.get('proxyQuery',{}).get('ready',True) else 'degraded'}
+
+
 def observe(role,h,control,states):
  checks={}
  def check(name,fn):
@@ -25,7 +94,7 @@ def observe(role,h,control,states):
  check('host-controls',h['verify_controls'])
  if role=='core':
   def prover():
-   result=control['prover_activation'](h,'observe')
+   result=observe_current_prover(h,control)
    return result.get('proverActivated') is True and result.get('proverAvailability')=='ready'
   def query():
    result=control['query_host_readback'](h,runtime=True)

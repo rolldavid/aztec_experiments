@@ -335,8 +335,13 @@ def install_controls(config):
     shaper += 'tc class replace dev "$DEV" parent 1: classid 1:1 htb rate '+str(ceiling)+'mbit ceil '+str(ceiling)+'mbit burst 1mb cburst 1mb\n'
     shaper += 'tc class replace dev "$DEV" parent 1:1 classid 1:10 htb rate '+str(share)+'mbit ceil '+str(ceiling)+'mbit\n'
     shaper += 'tc class replace dev "$DEV" parent 1:1 classid 1:20 htb rate '+str(share)+'mbit ceil '+str(ceiling)+'mbit\n'
-    # The installed prover is disabled. Future enablement must classify its UID as mark20.
+    # Restore the enabled native prover traffic classification after every boot.
     shaper += 'tc filter replace dev "$DEV" parent 1: protocol all prio 1 handle 20 fw classid 1:20\n'
+    shaper += 'if id -u board-prover >/dev/null 2>&1; then\n'
+    shaper += '  PROVER_UID=$(id -u board-prover)\n  test "$PROVER_UID" -gt 0\n'
+    shaper += '  for FAMILY in iptables ip6tables; do\n'
+    shaper += '    "$FAMILY" -w 5 -t mangle -C OUTPUT -m owner --uid-owner "$PROVER_UID" -j MARK --set-xmark 0x14/0xffffffff 2>/dev/null || "$FAMILY" -w 5 -t mangle -A OUTPUT -m owner --uid-owner "$PROVER_UID" -j MARK --set-xmark 0x14/0xffffffff\n'
+    shaper += '  done\nfi\n'
     write('/usr/local/sbin/rolling-egress', shaper, 0o700)
     write('/etc/systemd/system/rolling-egress.service', '[Unit]\nDescription=Whole host egress ceiling\nAfter=network-online.target\nWants=network-online.target\nBefore=docker.service rolling-node.service\n[Service]\nType=oneshot\nExecStart=/usr/local/sbin/rolling-egress\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target\n', 0o644)
     mark('shaper-start');run(['systemctl','daemon-reload']);run(['systemctl','enable','--now','rolling-egress.service'])

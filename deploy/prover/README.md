@@ -334,3 +334,7 @@ header logging require separate deployment readback. Service logs are disabled;
 operator keys must never be selected for CloudFront real-time logs. No CloudFront
 or security-group mutation is performed by this source generator. The existing
 prover proxy stays masked and proof routes are not activated by this option.
+
+### Current-deployment monitoring
+
+The core monitor reads the root-owned0600 `/etc/rolling-supervision/current-prover.json`. It binds the active prover release to authenticated staging and activation receipts. When deploying another prover, qualify its complete file manifest and native controls, then atomically update this record to the new receipts; do not point monitoring at the historical bootstrap release. The observer keeps checking process identity, effective configuration, native health and host security controls. UID traffic classification is restored by the existing egress startup service. Monitor failures report availability; they do not stop healthy application services.

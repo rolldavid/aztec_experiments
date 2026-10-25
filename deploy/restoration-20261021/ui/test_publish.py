@@ -65,6 +65,7 @@ class RepeatPublication(unittest.TestCase):
                    'urllib': types.SimpleNamespace(request=types.SimpleNamespace(urlopen=self.urlopen))}
         exec(compile(FUNCTIONS, str(SOURCE_FILE), 'exec'), self.ns)
         self.ns['run'] = self.run_command
+        self.ns['dependency_root'] = lambda source: self.root / 'labelled-existing-dependencies'
         self.native_retention_helper=self.ns['retention_helper']
         self.retention_calls=[]
         self.ns['retention_helper']=lambda:types.SimpleNamespace(ROOTS=(),prune=lambda plan,apply:self.retention_calls.append(plan) or {'applied':True})
@@ -78,7 +79,7 @@ class RepeatPublication(unittest.TestCase):
         self.ns['m'] = self.plan
         (self.packet / 'plan.json').write_text(json.dumps(self.plan))
         (self.packet / 'application.service.next').write_text('WorkingDirectory=' + str(self.new_source) + '\n')
-        self.result = {'schemaVersion': 1, 'commit': self.plan['commit'], 'source': str(self.new_source), 'ui': str(self.new_ui),
+        self.result = {'schemaVersion': 1, 'dependencyRoot': str(self.ns['dependency_root'](self.old_source)), 'commit': self.plan['commit'], 'source': str(self.new_source), 'ui': str(self.new_ui),
                        'planSha256': digest(self.packet / 'plan.json'), 'publisherSha256': digest(SOURCE_FILE),
                        'expectedCurrentUi': str(self.old_ui), 'caddySha256': self.plan['caddySha256'], 'notifySha256': self.plan['notifySha256'],
                        'unitSha256': digest(self.packet / 'application.service.next'), 'files': {'wallet/runtime.json': digest(self.new_ui / 'wallet/runtime.json')}}
@@ -334,7 +335,7 @@ class RepeatPublication(unittest.TestCase):
         stage = next(node for node in TREE.body if isinstance(node, ast.If) and ast.unparse(node.test) == "mode == 'stage'")
         calls = [ast.unparse(node) for node in stage.body]
         check = next(i for i, value in enumerate(calls) if value == 'capacity_preflight()')
-        copy = next(i for i, value in enumerate(calls) if "['cp', '-al'" in value)
+        copy = next(i for i, value in enumerate(calls) if value == 'clone_source()')
         export = next(i for i, value in enumerate(calls) if value.startswith('export_assets('))
         self.assertLess(check, copy); self.assertLess(check, export)
 
@@ -382,6 +383,83 @@ class RepeatPublication(unittest.TestCase):
         target.write_bytes(original); self.ns['activate']()
         self.assertEqual(target.read_bytes(), original)
         self.assertFalse((self.packet / 'files').exists())
+
+
+class SharedReleaseDependencies(unittest.TestCase):
+    """Run production clone/confinement code against real temporary filesystem trees."""
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
+        root = pathlib.Path(temp.name).resolve()
+        class HostPath(type(root)):
+            # Model root-owned deployment files; retain real type/mode and all
+            # real path resolution. No /opt paths or host ownership are changed.
+            def lstat(self):
+                actual = super().lstat()
+                values = list(actual); values[4] = 0
+                return os.stat_result(values)
+        self.root = HostPath(root)
+        self.releases = self.root / 'releases'; self.releases.mkdir()
+        self.source = self.releases / 'old'; self.source.mkdir()
+        self.next = self.releases / 'new'
+        self.dependencies = self.source / 'node_modules'
+        self.ethers = self.dependencies / 'ethers/dist/ethers.umd.min.js'
+        self.ethers.parent.mkdir(parents=True); self.ethers.write_bytes(b'fixture ethers')
+        (self.source / 'shared').mkdir(); (self.source / 'shared/source.mjs').write_bytes(b'fixture source')
+        (self.source / 'source-link').symlink_to('shared/source.mjs')
+        def host_path(value):
+            return self.releases if str(value) == '/opt/rolling-app/releases' else HostPath(value)
+        self.ns = {'pathlib': types.SimpleNamespace(Path=host_path, PurePosixPath=pathlib.PurePosixPath),
+                   'os': os, 'stat': stat, 're': re, 'shutil': shutil, 'SOURCE': self.source,
+                   'NEXT': self.next, 'm': {'files': {}}}
+        exec(compile(FUNCTIONS, str(SOURCE_FILE), 'exec'), self.ns)
+
+    def test_repeated_clones_reuse_one_dependency_tree_and_hardlink_only_source(self):
+        native = self.ethers.stat(); source = (self.source / 'shared/source.mjs').stat()
+        self.ns['clone_source']()
+        first = self.next; second = self.releases / 'third'
+        self.ns.update(SOURCE=first, NEXT=second); self.ns['clone_source']()
+        for release in (first, second):
+            self.assertTrue((release / 'node_modules').is_symlink())
+            self.assertEqual(os.readlink(release / 'node_modules'), str(self.dependencies))
+            self.assertEqual((release / 'shared/source.mjs').stat().st_ino, source.st_ino)
+            self.assertEqual(os.readlink(release / 'source-link'), 'shared/source.mjs')
+        self.assertEqual(self.ethers.stat().st_ino, native.st_ino)
+        self.assertEqual(self.ethers.stat().st_nlink, native.st_nlink)
+        real_trees = [p / 'node_modules' for p in self.releases.iterdir() if not (p / 'node_modules').is_symlink()]
+        self.assertEqual(real_trees, [self.dependencies])
+
+    def test_only_exact_ethers_asset_can_resolve_through_shared_dependency_root(self):
+        self.ns['clone_source'](); asset = self.ns['asset_file']
+        name = 'node_modules/ethers/dist/ethers.umd.min.js'
+        self.assertEqual(asset(self.next, name).read_bytes(), b'fixture ethers')
+        self.assertEqual(asset(self.next, 'shared/source.mjs').read_bytes(), b'fixture source')
+        other = self.dependencies / 'ethers/dist/other.js'; other.write_bytes(b'fixture ethers')
+        for name in ('node_modules/ethers/dist/other.js', '../old/shared/source.mjs'):
+            with self.subTest(name=name), self.assertRaises(AssertionError): asset(self.next, name)
+        outside = self.root / 'outside.js'; outside.write_bytes(b'fixture ethers')
+        self.ethers.unlink(); self.ethers.symlink_to(outside)
+        with self.assertRaises(AssertionError): asset(self.next, 'node_modules/ethers/dist/ethers.umd.min.js')
+        (self.next / 'shared/escape.js').symlink_to(outside)
+        with self.assertRaises(AssertionError): asset(self.next, 'shared/escape.js')
+
+    def test_dependency_payload_is_rejected_before_clone_or_dependency_mutation(self):
+        before = self.ethers.read_bytes()
+        for name in ('node_modules/ethers/dist/ethers.umd.min.js',
+                     'node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js',
+                     'nested/node_modules/other.js'):
+            self.ns['m']['files'] = {name: {}}
+            with self.subTest(name=name), self.assertRaisesRegex(AssertionError, 'cannot mutate shared dependencies'):
+                self.ns['clone_source']()
+            self.assertFalse(self.next.exists()); self.assertEqual(self.ethers.read_bytes(), before)
+
+    def test_dependency_root_outside_release_tree_or_writable_is_rejected(self):
+        self.dependencies.chmod(0o777)
+        with self.assertRaises(AssertionError): self.ns['clone_source']()
+        self.assertFalse(self.next.exists()); self.dependencies.chmod(0o755)
+        outside = self.root / 'external/node_modules'; outside.parent.mkdir()
+        shutil.move(self.dependencies, outside); self.dependencies.symlink_to(outside)
+        with self.assertRaises(AssertionError): self.ns['clone_source']()
+        self.assertFalse(self.next.exists())
 
 
 if __name__ == '__main__':

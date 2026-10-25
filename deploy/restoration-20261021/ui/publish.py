@@ -105,10 +105,38 @@ def public_directory(target):
 def public_file(target,data):
  public_directory(target.parent);assert not target.exists();atomic(target,data,0o444)
 
+def dependency_root(source):
+ # Share only an existing root-owned release dependency tree, never a parent
+ # directory or an arbitrary target supplied through a package symlink.
+ assert source.resolve()==source and not source.is_symlink()
+ target=(source/'node_modules').resolve(strict=True)
+ assert target.name=='node_modules' and target.parent.parent==pathlib.Path('/opt/rolling-app/releases')
+ assert re.fullmatch(r'[A-Za-z0-9._-]+',target.parent.name)
+ for directory in (target.parent,target):
+  info=directory.lstat();assert stat.S_ISDIR(info.st_mode) and info.st_uid==0 and not info.st_mode&0o022
+ return target
+
+def asset_file(source,name):
+ relative=pathlib.PurePosixPath(name)
+ assert not relative.is_absolute() and '..' not in relative.parts
+ file=source/name
+ if name=='node_modules/ethers/dist/ethers.umd.min.js':
+  assert file.resolve(strict=True).is_relative_to(dependency_root(source))
+ else:assert file.resolve().is_relative_to(source.resolve())
+ return file
+
+def clone_source():
+ assert all('node_modules' not in pathlib.PurePosixPath(name).parts for name in m['files']), 'Static publication cannot mutate shared dependencies'
+ dependencies=dependency_root(SOURCE)
+ shutil.copytree(SOURCE,NEXT,copy_function=os.link,symlinks=True,
+  ignore=lambda directory,names:['node_modules'] if pathlib.Path(directory)==SOURCE else [])
+ os.symlink(dependencies,NEXT/'node_modules',target_is_directory=True)
+ assert dependency_root(NEXT)==dependencies
+
 def export_assets(source,description,destination=None):
  for url,entry in description['files'].items():
   assert re.fullmatch('/(?:wallet|crs)/[A-Za-z0-9_.-]+',url) and url!='/wallet/runtime.json'
-  file=(source/entry['file']);assert file.resolve().is_relative_to(source.resolve())
+  file=asset_file(source,entry['file'])
   data=file.read_bytes();assert len(data)==entry['bytes'] and sha(data)==entry['sha256']
   target=BASE/'by-hash'/entry['sha256']/url.lstrip('/')
   if target.exists():assert not target.is_symlink() and digest(target)==entry['sha256']
@@ -126,7 +154,7 @@ def packet_archive_hash():
  return digest(archive)
 
 def capacity_preflight():
- # cp -al shares source file data. Replacements, new immutable assets and static
+ # Hardlinks share source data; node_modules is one immutable tree. New static
  # HTML/modules consume new blocks. Reserve 1GiB for metadata and service writes.
  reservations={}
  def reserve(target,size):
@@ -143,7 +171,9 @@ def capacity_preflight():
   for url,entry in manifest['files'].items():
    assert re.fullmatch('/(?:wallet|crs)/[A-Za-z0-9_.-]+',url) and re.fullmatch('[0-9a-f]{64}',entry['sha256'])
    relative=pathlib.PurePosixPath(entry['file']);assert not relative.is_absolute() and '..' not in relative.parts
-   file=select(str(relative));assert file.resolve().is_relative_to((P/'files').resolve()) or file.resolve().is_relative_to(source.resolve())
+   file=select(str(relative))
+   if file.is_relative_to(P/'files'):assert file.resolve().is_relative_to((P/'files').resolve())
+   else:assert file==asset_file(source,str(relative))
    assert file.stat().st_size==entry['bytes']
    target=BASE/'by-hash'/entry['sha256']/url.lstrip('/')
    if not target.exists() and target not in missing:reserve(BASE,entry['bytes']);missing.add(target)
@@ -204,6 +234,7 @@ def activate():
  retention_helper() # Qualify shipped code before any pointer/unit change.
  r=json.loads((P/'stage-result.json').read_text())
  assert r['schemaVersion']==1 and r['commit']==m['commit'] and r['source']==str(NEXT) and r['ui']==str(UI)
+ assert str(dependency_root(NEXT))==r['dependencyRoot']==str(dependency_root(SOURCE))
  assert r['planSha256']==digest(P/'plan.json') and r['publisherSha256']==digest(pathlib.Path(__file__))
  assert r['expectedCurrentUi']==m['expectedCurrentUi'] and r['caddySha256']==m['caddySha256'] and r['notifySha256']==m['notifySha256']
  assert digest(P/'application.service.next')==r['unitSha256']
@@ -261,7 +292,7 @@ if mode=='stage':
   assert (not old.exists() and not old.is_symlink()) if entry['previousSha256'] is None else (not old.is_symlink() and digest(old)==entry['previousSha256'])
  capacity_preflight()
  archive_hash=packet_archive_hash()
- run(['cp','-al',str(SOURCE),str(NEXT)])
+ clone_source()
  for name,entry in m['files'].items():
   target=confined_payload_file(NEXT,name);reference=target if target.exists() else NEXT/'apps/rolling/wallet-panel.mjs';info=reference.stat();atomic(target,confined_payload_file(P/'files',name).read_bytes(),stat.S_IMODE(info.st_mode),info.st_uid,info.st_gid)
   assert digest(target)==entry['sha256'];assert not (SOURCE/name).exists() or target.stat().st_ino!=(SOURCE/name).stat().st_ino
@@ -280,7 +311,7 @@ if mode=='stage':
  atomic(P/'application.service.next',updated.encode(),0o600)
  public_directory(UI);export_assets(RUNNING,old);export_assets(NEXT,new,UI)
  for url,name in PUBLIC.items():public_file(UI/(url.lstrip('/')+('index.html' if url.endswith('/') else '')),(NEXT/'apps/rolling'/name).read_bytes())
- result={'schemaVersion':1,'payloadArchiveSha256':archive_hash,'commit':m['commit'],'source':str(NEXT),'ui':str(UI),'planSha256':digest(P/'plan.json'),'publisherSha256':digest(pathlib.Path(__file__)),'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256'],'expectedCurrentUi':m['expectedCurrentUi'],'unitSha256':digest(P/'application.service.next'),'walletConfigSha256':digest(NEXT/'deploy/runtime-wallet.json') if (NEXT/'deploy/runtime-wallet.json').is_file() else None,'files':{str(f.relative_to(UI)):digest(f) for f in UI.rglob('*') if f.is_file()}}
+ result={'schemaVersion':1,'dependencyRoot':str(dependency_root(NEXT)),'payloadArchiveSha256':archive_hash,'commit':m['commit'],'source':str(NEXT),'ui':str(UI),'planSha256':digest(P/'plan.json'),'publisherSha256':digest(pathlib.Path(__file__)),'caddySha256':m['caddySha256'],'notifySha256':m['notifySha256'],'expectedCurrentUi':m['expectedCurrentUi'],'unitSha256':digest(P/'application.service.next'),'walletConfigSha256':digest(NEXT/'deploy/runtime-wallet.json') if (NEXT/'deploy/runtime-wallet.json').is_file() else None,'files':{str(f.relative_to(UI)):digest(f) for f in UI.rglob('*') if f.is_file()}}
  atomic(P/'stage-result.json',json.dumps(result,sort_keys=True).encode(),0o600)
  for name,entry in m['files'].items():assert (not (SOURCE/name).exists()) if entry['previousSha256'] is None else digest(SOURCE/name)==entry['previousSha256']
  preserved();print(json.dumps({'staged':True,'files':len(result['files'])}))

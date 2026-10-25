@@ -33,7 +33,12 @@ function confinedFile(base, name, flat = false) {
     throw new Error(`Invalid SDK ${flat ? 'output' : 'input'} path: ${name}`);
   }
   const filename = fs.realpathSync(path.join(base, name));
-  const relative = path.relative(fs.realpathSync(base), filename);
+  // A release can share its immutable top-level dependency tree. Confinement
+  // stays within that tree: nested package links cannot escape its real root.
+  // Every admitted input is still checked against the complete SDK manifest.
+  const boundary = !flat && name.startsWith('node_modules/')
+    ? fs.realpathSync(path.join(base, 'node_modules')) : fs.realpathSync(base);
+  const relative = path.relative(boundary, filename);
   if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
     throw new Error(`SDK path escapes its directory: ${name}`);
   }
