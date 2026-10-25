@@ -1,0 +1,4727 @@
+{
+  "measures": [
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 160.7699999809265,
+      "name": "rolling.worker-init.cryptography",
+      "start": 1558.2450391054151
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 417.90499997138977,
+      "name": "rolling.worker-init.pxe-artifacts",
+      "start": 1558.2750390768051
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2940.030000090599,
+      "name": "rolling.worker-init.prover",
+      "start": 1558.5400390625
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 4114.850000023842,
+      "name": "rolling.worker-init.deployment",
+      "start": 1558.6000391244888
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 16.31499993801117,
+      "name": "rolling.worker-init.kernels",
+      "start": 1558.610039114952
+    },
+    {
+      "detail": {
+        "assetCacheHit": 1,
+        "assetReadyDuration": 0.79,
+        "connectEnd": 1558.8800390958786,
+        "connectStart": 1558.8800390958786,
+        "decodedBodySize": 968847,
+        "domainLookupEnd": 1558.8800390958786,
+        "domainLookupStart": 1558.8800390958786,
+        "duration": 16.899999976158142,
+        "encodedBodySize": 968847,
+        "endpoint": "wallet-asset",
+        "fetchStart": 1558.8800390958786,
+        "kind": "resource",
+        "protocol": "unknown",
+        "realm": "worker",
+        "requestStart": 1558.8800390958786,
+        "responseEnd": 1575.640039086342,
+        "responseStart": 1559.9700391292572,
+        "secureConnectionStart": 1558.8800390958786,
+        "start": 1558.7400391101835,
+        "transferSize": 0
+      },
+      "duration": 16.899999976158142,
+      "name": "rolling.worker.resource.wallet-asset.ae",
+      "start": 1558.7400391101835
+    },
+    {
+      "detail": {
+        "assetCacheHit": 1,
+        "assetReadyDuration": 0.96,
+        "connectEnd": 1559.015039086342,
+        "connectStart": 1559.015039086342,
+        "decodedBodySize": 3634847,
+        "domainLookupEnd": 1559.015039086342,
+        "domainLookupStart": 1559.015039086342,
+        "duration": 418.9800000190735,
+        "encodedBodySize": 3634847,
+        "endpoint": "wallet-asset",
+        "fetchStart": 1559.015039086342,
+        "kind": "resource",
+        "protocol": "unknown",
+        "realm": "worker",
+        "requestStart": 1559.015039086342,
+        "responseEnd": 1977.835039138794,
+        "responseStart": 1560.3100390434265,
+        "secureConnectionStart": 1559.015039086342,
+        "start": 1558.8550391197205,
+        "transferSize": 0
+      },
+      "duration": 418.9800000190735,
+      "name": "rolling.worker.resource.wallet-asset.ah",
+      "start": 1558.8550391197205
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 425.5150001049042,
+      "name": "rolling.worker-init.execution-engine",
+      "start": 1558.9250390529633
+    },
+    {
+      "detail": {
+        "connectEnd": 1559.4150390625,
+        "connectStart": 1559.4150390625,
+        "decodedBodySize": 5428879,
+        "domainLookupEnd": 1559.4150390625,
+        "domainLookupStart": 1559.4150390625,
+        "duration": 16.77999997138977,
+        "encodedBodySize": 5327786,
+        "endpoint": "wallet-asset",
+        "fetchStart": 1559.4150390625,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 1559.9250390529633,
+        "responseEnd": 1576.1050391197205,
+        "responseStart": 1561.5500390529633,
+        "secureConnectionStart": 1559.4150390625,
+        "start": 1559.3250391483307,
+        "transferSize": 0
+      },
+      "duration": 16.77999997138977,
+      "name": "rolling.worker.resource.wallet-asset.af",
+      "start": 1559.3250391483307
+    },
+    {
+      "detail": {
+        "assetCacheHit": 1,
+        "assetReadyDuration": 2.19,
+        "connectEnd": 1559.5350390672684,
+        "connectStart": 1559.5350390672684,
+        "decodedBodySize": 9614934,
+        "domainLookupEnd": 1559.5350390672684,
+        "domainLookupStart": 1559.5350390672684,
+        "duration": 582.2400000095367,
+        "encodedBodySize": 9614934,
+        "endpoint": "wallet-asset",
+        "fetchStart": 1559.5350390672684,
+        "kind": "resource",
+        "protocol": "unknown",
+        "realm": "worker",
+        "requestStart": 1559.5350390672684,
+        "responseEnd": 2141.6350390911102,
+        "responseStart": 1562.0800391435623,
+        "secureConnectionStart": 1559.5350390672684,
+        "start": 1559.3950390815735,
+        "transferSize": 0
+      },
+      "duration": 582.2400000095367,
+      "name": "rolling.worker.resource.wallet-asset.ai",
+      "start": 1559.3950390815735
+    },
+    {
+      "detail": {
+        "assetCacheHit": 1,
+        "assetReadyDuration": 2.475,
+        "connectEnd": 1559.6050391197205,
+        "connectStart": 1559.6050391197205,
+        "decodedBodySize": 2163081,
+        "domainLookupEnd": 1559.6050391197205,
+        "domainLookupStart": 1559.6050391197205,
+        "duration": 37.52499997615814,
+        "encodedBodySize": 2163081,
+        "endpoint": "wallet-asset",
+        "fetchStart": 1559.6050391197205,
+        "kind": "resource",
+        "protocol": "unknown",
+        "realm": "worker",
+        "requestStart": 1559.6050391197205,
+        "responseEnd": 1596.9700391292572,
+        "responseStart": 1562.265039086342,
+        "secureConnectionStart": 1559.6050391197205,
+        "start": 1559.445039153099,
+        "transferSize": 0
+      },
+      "duration": 37.52499997615814,
+      "name": "rolling.worker.resource.wallet-asset.ag",
+      "start": 1559.445039153099
+    },
+    {
+      "detail": {
+        "connectEnd": 1560.5950391292572,
+        "connectStart": 1560.5950391292572,
+        "decodedBodySize": 1156360,
+        "domainLookupEnd": 1560.5950391292572,
+        "domainLookupStart": 1560.5950391292572,
+        "duration": 10.93999993801117,
+        "encodedBodySize": 851380,
+        "endpoint": "wallet-asset",
+        "fetchStart": 1560.5950391292572,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 1561.860039114952,
+        "responseEnd": 1570.7700390815735,
+        "responseStart": 1563.3250391483307,
+        "secureConnectionStart": 1560.5950391292572,
+        "start": 1559.8300391435623,
+        "transferSize": 0
+      },
+      "duration": 10.93999993801117,
+      "name": "rolling.worker.resource.wallet-asset.ad",
+      "start": 1559.8300391435623
+    },
+    {
+      "detail": {
+        "connectEnd": 1560.6350390911102,
+        "connectStart": 1560.6350390911102,
+        "decodedBodySize": 1101105,
+        "domainLookupEnd": 1560.6350390911102,
+        "domainLookupStart": 1560.6350390911102,
+        "duration": 9.80999994277954,
+        "encodedBodySize": 739083,
+        "endpoint": "wallet-asset",
+        "fetchStart": 1560.6350390911102,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 1562.0800391435623,
+        "responseEnd": 1569.6800390481949,
+        "responseStart": 1562.6500390768051,
+        "secureConnectionStart": 1560.6350390911102,
+        "start": 1559.8700391054151,
+        "transferSize": 0
+      },
+      "duration": 9.80999994277954,
+      "name": "rolling.worker.resource.wallet-asset.ac",
+      "start": 1559.8700391054151
+    },
+    {
+      "detail": null,
+      "duration": 447.8700000047684,
+      "name": "rolling.reader.load",
+      "start": 1836.7949999570849
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.4650000333786011,
+      "name": "rolling.deployment.config",
+      "start": 2338.0100390911102
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.08500003814697266,
+      "name": "rolling.deployment.artifact-layout",
+      "start": 2338.4950391054153
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2092.985000014305,
+      "name": "rolling.deployment.node-readiness",
+      "start": 2338.610039114952
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1730.1949999332428,
+      "name": "rolling.deployment.board-class",
+      "start": 2339.6050391197205
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1259.4649999141693,
+      "name": "rolling.deployment.checkpoint",
+      "start": 3172.335039138794
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1732.4049999713898,
+      "name": "rolling.deployment.board-instance",
+      "start": 3172.850039124489
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1732.3650000095367,
+      "name": "rolling.deployment.public-config",
+      "start": 3173.0450390577316
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1732.8050000667572,
+      "name": "rolling.deployment.config-commitment",
+      "start": 3173.2700390815735
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1731.929999947548,
+      "name": "rolling.deployment.fee-instance",
+      "start": 3173.350039124489
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1733.0499999523165,
+      "name": "rolling.deployment.portal-code-and-immutables",
+      "start": 3174.0050390958786
+    },
+    {
+      "detail": {
+        "connectEnd": 3295.8700391054153,
+        "connectStart": 3295.8700391054153,
+        "decodedBodySize": 2785,
+        "domainLookupEnd": 3295.8700391054153,
+        "domainLookupStart": 3295.8700391054153,
+        "duration": 521.4700000286102,
+        "encodedBodySize": 1344,
+        "endpoint": "node",
+        "fetchStart": 3295.8700391054153,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 3296.875039100647,
+        "responseEnd": 3816.850039124489,
+        "responseStart": 3816.3250391483302,
+        "secureConnectionStart": 3295.8700391054153,
+        "start": 3295.3800390958786,
+        "transferSize": 1644
+      },
+      "duration": 521.4700000286102,
+      "name": "rolling.worker.resource.node.aj",
+      "start": 3295.3800390958786
+    },
+    {
+      "detail": {
+        "connectEnd": 4070.785039067269,
+        "connectStart": 4070.785039067269,
+        "decodedBodySize": 128,
+        "domainLookupEnd": 4070.785039067269,
+        "domainLookupStart": 4070.785039067269,
+        "duration": 1.2350000143051147,
+        "encodedBodySize": 128,
+        "endpoint": "proof-asset",
+        "fetchStart": 4070.785039067269,
+        "kind": "resource",
+        "protocol": "h3",
+        "realm": "worker",
+        "requestStart": 4071.2150391340256,
+        "responseEnd": 4071.7900390625,
+        "responseStart": 4071.585039138794,
+        "secureConnectionStart": 4070.785039067269,
+        "start": 4070.555039048195,
+        "transferSize": 0
+      },
+      "duration": 1.2350000143051147,
+      "name": "rolling.worker.resource.proof-asset.ak",
+      "start": 4070.555039048195
+    },
+    {
+      "detail": {
+        "connectEnd": 4109.620039105415,
+        "connectStart": 4109.620039105415,
+        "decodedBodySize": 3577,
+        "domainLookupEnd": 4109.620039105415,
+        "domainLookupStart": 4109.620039105415,
+        "duration": 320.4800000190735,
+        "encodedBodySize": 1262,
+        "endpoint": "node",
+        "fetchStart": 4109.620039105415,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 4110.115039110184,
+        "responseEnd": 4429.985039114952,
+        "responseStart": 4429.13503909111,
+        "secureConnectionStart": 4109.620039105415,
+        "start": 4109.505039095879,
+        "transferSize": 1562
+      },
+      "duration": 320.4800000190735,
+      "name": "rolling.worker.resource.node.an",
+      "start": 4109.505039095879
+    },
+    {
+      "detail": {
+        "connectEnd": 4112.160039067268,
+        "connectStart": 4112.160039067268,
+        "decodedBodySize": 128,
+        "domainLookupEnd": 4112.160039067268,
+        "domainLookupStart": 4112.160039067268,
+        "duration": 1.1950000524520874,
+        "encodedBodySize": 128,
+        "endpoint": "proof-asset",
+        "fetchStart": 4112.160039067268,
+        "kind": "resource",
+        "protocol": "h3",
+        "realm": "worker",
+        "requestStart": 4112.525039076805,
+        "responseEnd": 4113.245039105415,
+        "responseStart": 4112.920039057732,
+        "secureConnectionStart": 4112.160039067268,
+        "start": 4112.050039052963,
+        "transferSize": 0
+      },
+      "duration": 1.1950000524520874,
+      "name": "rolling.worker.resource.proof-asset.al",
+      "start": 4112.050039052963
+    },
+    {
+      "detail": {
+        "connectEnd": 4114.570039153099,
+        "connectStart": 4114.570039153099,
+        "decodedBodySize": 8388608,
+        "domainLookupEnd": 4114.570039153099,
+        "domainLookupStart": 4114.570039153099,
+        "duration": 9.879999995231628,
+        "encodedBodySize": 8388608,
+        "endpoint": "proof-asset",
+        "fetchStart": 4114.570039153099,
+        "kind": "resource",
+        "protocol": "h3",
+        "realm": "worker",
+        "requestStart": 4114.925039052963,
+        "responseEnd": 4124.220039129257,
+        "responseStart": 4115.2700390815735,
+        "secureConnectionStart": 4114.570039153099,
+        "start": 4114.340039134026,
+        "transferSize": 0
+      },
+      "duration": 9.879999995231628,
+      "name": "rolling.worker.resource.proof-asset.am",
+      "start": 4114.340039134026
+    },
+    {
+      "detail": {
+        "connectEnd": 4432.455039143562,
+        "connectStart": 4432.455039143562,
+        "decodedBodySize": 884,
+        "domainLookupEnd": 4432.455039143562,
+        "domainLookupStart": 4432.455039143562,
+        "duration": 463.77500009536743,
+        "encodedBodySize": 884,
+        "endpoint": "node",
+        "fetchStart": 4432.455039143562,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 4433.01003909111,
+        "responseEnd": 4895.940039157867,
+        "responseStart": 4895.205039143562,
+        "secureConnectionStart": 4432.455039143562,
+        "start": 4432.1650390625,
+        "transferSize": 1184
+      },
+      "duration": 463.77500009536743,
+      "name": "rolling.worker.resource.node.ao",
+      "start": 4432.1650390625
+    },
+    {
+      "detail": {
+        "connectEnd": 4432.755039095879,
+        "connectStart": 4432.755039095879,
+        "decodedBodySize": 3038,
+        "domainLookupEnd": 4432.755039095879,
+        "domainLookupStart": 4432.755039095879,
+        "duration": 465.60000002384186,
+        "encodedBodySize": 905,
+        "endpoint": "node",
+        "fetchStart": 4432.755039095879,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 4433.285039067268,
+        "responseEnd": 4898.225039124489,
+        "responseStart": 4897.865039110184,
+        "secureConnectionStart": 4432.755039095879,
+        "start": 4432.625039100647,
+        "transferSize": 1205
+      },
+      "duration": 465.60000002384186,
+      "name": "rolling.worker.resource.node.aq",
+      "start": 4432.625039100647
+    },
+    {
+      "detail": {
+        "connectEnd": 4432.865039110184,
+        "connectStart": 4432.865039110184,
+        "decodedBodySize": 521,
+        "domainLookupEnd": 4432.865039110184,
+        "domainLookupStart": 4432.865039110184,
+        "duration": 463.5699999332428,
+        "encodedBodySize": 521,
+        "endpoint": "node",
+        "fetchStart": 4432.865039110184,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 4433.4800391197205,
+        "responseEnd": 4896.280039072037,
+        "responseStart": 4895.440039157867,
+        "secureConnectionStart": 4432.865039110184,
+        "start": 4432.710039138794,
+        "transferSize": 821
+      },
+      "duration": 463.5699999332428,
+      "name": "rolling.worker.resource.node.ap",
+      "start": 4432.710039138794
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 328.97499990463257,
+      "name": "rolling.deployment.canonical-recheck",
+      "start": 4907.080039143562
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 764.5900000333786,
+      "name": "rolling.deployment.final-readiness-and-context",
+      "start": 4907.1650390625
+    },
+    {
+      "detail": {
+        "connectEnd": 4908.015039086342,
+        "connectStart": 4908.015039086342,
+        "decodedBodySize": 1790,
+        "domainLookupEnd": 4908.015039086342,
+        "domainLookupStart": 4908.015039086342,
+        "duration": 326.56500005722046,
+        "encodedBodySize": 832,
+        "endpoint": "node",
+        "fetchStart": 4908.015039086342,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 4909.970039129257,
+        "responseEnd": 5234.240039110184,
+        "responseStart": 5233.4800391197205,
+        "secureConnectionStart": 4908.015039086342,
+        "start": 4907.675039052963,
+        "transferSize": 1132
+      },
+      "duration": 326.56500005722046,
+      "name": "rolling.worker.resource.node.ar",
+      "start": 4907.675039052963
+    },
+    {
+      "detail": {
+        "connectEnd": 4908.250039100647,
+        "connectStart": 4908.250039100647,
+        "decodedBodySize": 2789,
+        "domainLookupEnd": 4908.250039100647,
+        "domainLookupStart": 4908.250039100647,
+        "duration": 461.0750000476837,
+        "encodedBodySize": 1345,
+        "endpoint": "node",
+        "fetchStart": 4908.250039100647,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 4910.190039157867,
+        "responseEnd": 5369.100039124489,
+        "responseStart": 5368.525039076805,
+        "secureConnectionStart": 4908.250039100647,
+        "start": 4908.025039076805,
+        "transferSize": 1645
+      },
+      "duration": 461.0750000476837,
+      "name": "rolling.worker.resource.node.as",
+      "start": 4908.025039076805
+    },
+    {
+      "detail": {
+        "connectEnd": 5372.545039057732,
+        "connectStart": 5372.545039057732,
+        "decodedBodySize": 3579,
+        "domainLookupEnd": 5372.545039057732,
+        "domainLookupStart": 5372.545039057732,
+        "duration": 296.93499994277954,
+        "encodedBodySize": 1263,
+        "endpoint": "node",
+        "fetchStart": 5372.545039057732,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 5373.900039076805,
+        "responseEnd": 5669.025039076805,
+        "responseStart": 5668.445039153099,
+        "secureConnectionStart": 5372.545039057732,
+        "start": 5372.090039134026,
+        "transferSize": 1563
+      },
+      "duration": 296.93499994277954,
+      "name": "rolling.worker.resource.node.at",
+      "start": 5372.090039134026
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 306.1749999523163,
+      "name": "rolling.worker-init.pxe-native",
+      "start": 5672.940039157867
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1206.8250000476835,
+      "name": "rolling.worker-init.funding-scope",
+      "start": 5673.26003909111
+    },
+    {
+      "detail": {
+        "connectEnd": 5674.320039153099,
+        "connectStart": 5674.320039153099,
+        "decodedBodySize": 2636,
+        "domainLookupEnd": 5674.320039153099,
+        "domainLookupStart": 5674.320039153099,
+        "duration": 302.1100000143051,
+        "encodedBodySize": 1071,
+        "endpoint": "node",
+        "fetchStart": 5674.320039153099,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 5675.4150390625,
+        "responseEnd": 5975.890039086342,
+        "responseStart": 5975.370039105415,
+        "secureConnectionStart": 5674.320039153099,
+        "start": 5673.780039072037,
+        "transferSize": 1371
+      },
+      "duration": 302.1100000143051,
+      "name": "rolling.worker.resource.node.au",
+      "start": 5673.780039072037
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.2450000047683716,
+      "name": "rolling.session-init.account-lock",
+      "start": 5677.745039105415
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 923.8450000286102,
+      "name": "rolling.worker-init.private-session",
+      "start": 5677.870039105415
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.05500006675720215,
+      "name": "rolling.session-init.trusted-node",
+      "start": 5679.01003909111
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.2099999189376831,
+      "name": "rolling.session-init.deployment",
+      "start": 5679.075039148331
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.009999990463256836,
+      "name": "rolling.session-init.account-derive",
+      "start": 5679.295039057732
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3.75,
+      "name": "rolling.session-init.store-open",
+      "start": 5679.3100390434265
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 486,
+      "name": "rolling.session-init.pxe-create",
+      "start": 5683.075039148331
+    },
+    {
+      "detail": {
+        "connectEnd": 5980.295039057732,
+        "connectStart": 5980.295039057732,
+        "decodedBodySize": 2789,
+        "domainLookupEnd": 5980.295039057732,
+        "domainLookupStart": 5980.295039057732,
+        "duration": 309.77499997615814,
+        "encodedBodySize": 1348,
+        "endpoint": "node",
+        "fetchStart": 5980.295039057732,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 5982.100039124489,
+        "responseEnd": 6289.845039129257,
+        "responseStart": 6289.26003909111,
+        "secureConnectionStart": 5980.295039057732,
+        "start": 5980.070039153099,
+        "transferSize": 1648
+      },
+      "duration": 309.77499997615814,
+      "name": "rolling.worker.resource.node.av",
+      "start": 5980.070039153099
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.2749999761581421,
+      "name": "rolling.session-init.journal-open",
+      "start": 6169.090039134026
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.11000001430511476,
+      "name": "rolling.session-init.wallet-bind",
+      "start": 6169.375039100647
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 14.039999961853027,
+      "name": "rolling.session-init.account-manager",
+      "start": 6169.490039110184
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 6.664999961853027,
+      "name": "rolling.session-init.account-register",
+      "start": 6183.565039157867
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 409.3550000190735,
+      "name": "rolling.session-init.contracts-register",
+      "start": 6190.240039110184
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 14.040000081062315,
+      "name": "rolling.session-init.contracts-account-class",
+      "start": 6190.305039048195
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.8500000238418579,
+      "name": "rolling.session-init.contracts-account-instance",
+      "start": 6204.350039124489
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 342.95499992370605,
+      "name": "rolling.session-init.contracts-board-class",
+      "start": 6205.205039143562
+    },
+    {
+      "detail": {
+        "connectEnd": 6371.655039072037,
+        "connectStart": 6371.655039072037,
+        "decodedBodySize": 3579,
+        "domainLookupEnd": 6371.655039072037,
+        "domainLookupStart": 6371.655039072037,
+        "duration": 301,
+        "encodedBodySize": 1263,
+        "endpoint": "node",
+        "fetchStart": 6371.655039072037,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 6372.125039100647,
+        "responseEnd": 6672.5200390815735,
+        "responseStart": 6672.085039138794,
+        "secureConnectionStart": 6371.655039072037,
+        "start": 6371.5200390815735,
+        "transferSize": 1563
+      },
+      "duration": 301,
+      "name": "rolling.worker.resource.node.aw",
+      "start": 6371.5200390815735
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.2100000381469729,
+      "name": "rolling.session-init.contracts-board-instance",
+      "start": 6548.175039052963
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 49.22500002384186,
+      "name": "rolling.session-init.contracts-fee-class",
+      "start": 6549.405039072037
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.9450000524520874,
+      "name": "rolling.session-init.contracts-fee-instance",
+      "start": 6598.640039086342
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.7649999856948853,
+      "name": "rolling.session-init.application-bind",
+      "start": 6599.6050391197205
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 277.6599999666214,
+      "name": "rolling.funding-preparation.allocation",
+      "start": 6602.090039134026
+    },
+    {
+      "detail": {
+        "connectEnd": 6602.9800391197205,
+        "connectStart": 6602.9800391197205,
+        "decodedBodySize": 4499,
+        "domainLookupEnd": 6602.9800391197205,
+        "domainLookupStart": 6602.9800391197205,
+        "duration": 523.704999923706,
+        "encodedBodySize": 1372,
+        "endpoint": "node",
+        "fetchStart": 6602.9800391197205,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 6603.430039048195,
+        "responseEnd": 7126.5200390815735,
+        "responseStart": 7125.815039157867,
+        "secureConnectionStart": 6602.9800391197205,
+        "start": 6602.815039157867,
+        "transferSize": 1672
+      },
+      "duration": 523.704999923706,
+      "name": "rolling.worker.resource.node.ay",
+      "start": 6602.815039157867
+    },
+    {
+      "detail": {
+        "connectEnd": 6604.990039110184,
+        "connectStart": 6604.990039110184,
+        "decodedBodySize": 798,
+        "domainLookupEnd": 6604.990039110184,
+        "domainLookupStart": 6604.990039110184,
+        "duration": 451.7849999666214,
+        "encodedBodySize": 798,
+        "endpoint": "node",
+        "fetchStart": 6604.990039110184,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 6605.420039057732,
+        "responseEnd": 7056.055039048195,
+        "responseStart": 7054.600039124489,
+        "secureConnectionStart": 6604.990039110184,
+        "start": 6604.2700390815735,
+        "transferSize": 1098
+      },
+      "duration": 451.7849999666214,
+      "name": "rolling.worker.resource.node.ax",
+      "start": 6604.2700390815735
+    },
+    {
+      "detail": {
+        "connectEnd": 7060.595039129257,
+        "connectStart": 7060.595039129257,
+        "decodedBodySize": 1367,
+        "domainLookupEnd": 7060.595039129257,
+        "domainLookupStart": 7060.595039129257,
+        "duration": 325.0699999332428,
+        "encodedBodySize": 739,
+        "endpoint": "node",
+        "fetchStart": 7060.595039129257,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 7063.340039134026,
+        "responseEnd": 7384.890039086342,
+        "responseStart": 7384.095039129257,
+        "secureConnectionStart": 7060.595039129257,
+        "start": 7059.820039153099,
+        "transferSize": 1039
+      },
+      "duration": 325.0699999332428,
+      "name": "rolling.worker.resource.node.ba",
+      "start": 7059.820039153099
+    },
+    {
+      "detail": {
+        "connectEnd": 7065.410039067268,
+        "connectStart": 7065.410039067268,
+        "decodedBodySize": 1799,
+        "domainLookupEnd": 7065.410039067268,
+        "domainLookupStart": 7065.410039067268,
+        "duration": 300.22500002384186,
+        "encodedBodySize": 835,
+        "endpoint": "node",
+        "fetchStart": 7065.410039067268,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 7066.305039048195,
+        "responseEnd": 7365.360039114952,
+        "responseStart": 7364.800039052963,
+        "secureConnectionStart": 7065.410039067268,
+        "start": 7065.13503909111,
+        "transferSize": 1135
+      },
+      "duration": 300.22500002384186,
+      "name": "rolling.worker.resource.node.az",
+      "start": 7065.13503909111
+    },
+    {
+      "detail": {
+        "connectEnd": 7066.1050391197205,
+        "connectStart": 7066.1050391197205,
+        "decodedBodySize": 1799,
+        "domainLookupEnd": 7066.1050391197205,
+        "domainLookupStart": 7066.1050391197205,
+        "duration": 444.3799999952316,
+        "encodedBodySize": 831,
+        "endpoint": "node",
+        "fetchStart": 7066.1050391197205,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 7067.200039148331,
+        "responseEnd": 7509.995039105415,
+        "responseStart": 7509.005039095879,
+        "secureConnectionStart": 7066.1050391197205,
+        "start": 7065.615039110184,
+        "transferSize": 1131
+      },
+      "duration": 444.3799999952316,
+      "name": "rolling.worker.resource.node.bb",
+      "start": 7065.615039110184
+    },
+    {
+      "detail": {
+        "connectEnd": 7130.440039157867,
+        "connectStart": 7130.440039157867,
+        "decodedBodySize": 3579,
+        "domainLookupEnd": 7130.440039157867,
+        "domainLookupStart": 7130.440039157867,
+        "duration": 389.8600000143051,
+        "encodedBodySize": 1263,
+        "endpoint": "node",
+        "fetchStart": 7130.440039157867,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 7131.5200390815735,
+        "responseEnd": 7519.970039129257,
+        "responseStart": 7518.6650390625,
+        "secureConnectionStart": 7130.440039157867,
+        "start": 7130.110039114952,
+        "transferSize": 1563
+      },
+      "duration": 389.8600000143051,
+      "name": "rolling.worker.resource.node.bc",
+      "start": 7130.110039114952
+    },
+    {
+      "detail": {
+        "connectEnd": 7520.380039095879,
+        "connectStart": 7520.380039095879,
+        "decodedBodySize": 1799,
+        "domainLookupEnd": 7520.380039095879,
+        "domainLookupStart": 7520.380039095879,
+        "duration": 437.7849999666214,
+        "encodedBodySize": 831,
+        "endpoint": "node",
+        "fetchStart": 7520.380039095879,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 7521.315039157867,
+        "responseEnd": 7956.535039067268,
+        "responseStart": 7956.255039095879,
+        "secureConnectionStart": 7520.380039095879,
+        "start": 7518.750039100647,
+        "transferSize": 1131
+      },
+      "duration": 437.7849999666214,
+      "name": "rolling.worker.resource.node.be",
+      "start": 7518.750039100647
+    },
+    {
+      "detail": {
+        "connectEnd": 7520.485039114952,
+        "connectStart": 7520.485039114952,
+        "decodedBodySize": 2596,
+        "domainLookupEnd": 7520.485039114952,
+        "domainLookupStart": 7520.485039114952,
+        "duration": 305.4299999475479,
+        "encodedBodySize": 1070,
+        "endpoint": "node",
+        "fetchStart": 7520.485039114952,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 7521.555039048195,
+        "responseEnd": 7824.930039048195,
+        "responseStart": 7824.055039048195,
+        "secureConnectionStart": 7520.485039114952,
+        "start": 7519.500039100647,
+        "transferSize": 1370
+      },
+      "duration": 305.4299999475479,
+      "name": "rolling.worker.resource.node.bd",
+      "start": 7519.500039100647
+    },
+    {
+      "detail": {
+        "connectEnd": 7962.465039134026,
+        "connectStart": 7962.465039134026,
+        "decodedBodySize": 2596,
+        "domainLookupEnd": 7962.465039134026,
+        "domainLookupStart": 7962.465039134026,
+        "duration": 345.07999992370605,
+        "encodedBodySize": 1070,
+        "endpoint": "node",
+        "fetchStart": 7962.465039134026,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 7963.100039124489,
+        "responseEnd": 8307.295039057732,
+        "responseStart": 8306.330039143562,
+        "secureConnectionStart": 7962.465039134026,
+        "start": 7962.215039134026,
+        "transferSize": 1370
+      },
+      "duration": 345.07999992370605,
+      "name": "rolling.worker.resource.node.bf",
+      "start": 7962.215039134026
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 5.725000023841858,
+      "name": "rolling.account.signing-capsule",
+      "start": 8313.115039110184
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1460.4350000619888,
+      "name": "rolling.account.status",
+      "start": 8319.035039067268
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.465000033378601,
+      "name": "rolling.account.status.workflow",
+      "start": 8319.100039124489
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 387.86500000953674,
+      "name": "rolling.account.status.discovery-queued",
+      "start": 8320.880039095879
+    },
+    {
+      "detail": {
+        "connectEnd": 8351.475039124489,
+        "connectStart": 8351.475039124489,
+        "decodedBodySize": 53,
+        "domainLookupEnd": 8351.475039124489,
+        "domainLookupStart": 8351.475039124489,
+        "duration": 309.664999961853,
+        "encodedBodySize": 53,
+        "endpoint": "node",
+        "fetchStart": 8351.475039124489,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 8352.340039134026,
+        "responseEnd": 8660.860039114952,
+        "responseStart": 8660.185039043427,
+        "secureConnectionStart": 8351.475039124489,
+        "start": 8351.195039153099,
+        "transferSize": 353
+      },
+      "duration": 309.664999961853,
+      "name": "rolling.worker.resource.node.bg",
+      "start": 8351.195039153099
+    },
+    {
+      "detail": {
+        "connectEnd": 8378.595039129257,
+        "connectStart": 8378.595039129257,
+        "decodedBodySize": 8094,
+        "domainLookupEnd": 8378.595039129257,
+        "domainLookupStart": 8378.595039129257,
+        "duration": 305.11500000953674,
+        "encodedBodySize": 3411,
+        "endpoint": "node",
+        "fetchStart": 8378.595039129257,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 8379.205039143562,
+        "responseEnd": 8683.425039052963,
+        "responseStart": 8682.030039072037,
+        "secureConnectionStart": 8378.595039129257,
+        "start": 8378.310039043427,
+        "transferSize": 3711
+      },
+      "duration": 305.11500000953674,
+      "name": "rolling.worker.resource.node.bh",
+      "start": 8378.310039043427
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 11.235000014305117,
+      "name": "rolling.account.status.deposit-ids-queued",
+      "start": 8708.770039081573
+    },
+    {
+      "detail": {
+        "connectEnd": 8748.840039134026,
+        "connectStart": 8748.840039134026,
+        "decodedBodySize": 3004,
+        "domainLookupEnd": 8748.840039134026,
+        "domainLookupStart": 8748.840039134026,
+        "duration": 298.3200000524521,
+        "encodedBodySize": 1495,
+        "endpoint": "node",
+        "fetchStart": 8748.840039134026,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 8749.350039124489,
+        "responseEnd": 9046.990039110184,
+        "responseStart": 9045.930039048197,
+        "secureConnectionStart": 8748.840039134026,
+        "start": 8748.670039057732,
+        "transferSize": 1795
+      },
+      "duration": 298.3200000524521,
+      "name": "rolling.worker.resource.node.bi",
+      "start": 8748.670039057732
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 724.1750000715256,
+      "name": "rolling.action.fee-balance",
+      "start": 9055.060039043428
+    },
+    {
+      "detail": {
+        "connectEnd": 9058.225039124489,
+        "connectStart": 9058.225039124489,
+        "decodedBodySize": 1209,
+        "domainLookupEnd": 9058.225039124489,
+        "domainLookupStart": 9058.225039124489,
+        "duration": 311.27999997138977,
+        "encodedBodySize": 555,
+        "endpoint": "node",
+        "fetchStart": 9058.225039124489,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 9058.720039129255,
+        "responseEnd": 9369.13003909588,
+        "responseStart": 9368.425039052963,
+        "secureConnectionStart": 9058.225039124489,
+        "start": 9057.850039124489,
+        "transferSize": 855
+      },
+      "duration": 311.27999997138977,
+      "name": "rolling.worker.resource.node.bj",
+      "start": 9057.850039124489
+    },
+    {
+      "detail": {
+        "connectEnd": 9060.190039157867,
+        "connectStart": 9060.190039157867,
+        "decodedBodySize": 58,
+        "domainLookupEnd": 9060.190039157867,
+        "domainLookupStart": 9060.190039157867,
+        "duration": 449.69000005722046,
+        "encodedBodySize": 58,
+        "endpoint": "node",
+        "fetchStart": 9060.190039157867,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 9060.560039043428,
+        "responseEnd": 9509.690039157867,
+        "responseStart": 9509.425039052963,
+        "secureConnectionStart": 9060.190039157867,
+        "start": 9060.000039100649,
+        "transferSize": 358
+      },
+      "duration": 449.69000005722046,
+      "name": "rolling.worker.resource.node.bk",
+      "start": 9060.000039100649
+    },
+    {
+      "detail": {
+        "connectEnd": 9419.48003911972,
+        "connectStart": 9419.48003911972,
+        "decodedBodySize": 15484,
+        "domainLookupEnd": 9419.48003911972,
+        "domainLookupStart": 9419.48003911972,
+        "duration": 323.11500000953674,
+        "encodedBodySize": 5838,
+        "endpoint": "node",
+        "fetchStart": 9419.48003911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 9420.32503914833,
+        "responseEnd": 9742.2900390625,
+        "responseStart": 9741.045039057732,
+        "secureConnectionStart": 9419.48003911972,
+        "start": 9419.175039052963,
+        "transferSize": 6138
+      },
+      "duration": 323.11500000953674,
+      "name": "rolling.worker.resource.node.bl",
+      "start": 9419.175039052963
+    },
+    {
+      "detail": {
+        "connectEnd": 9786.98003911972,
+        "connectStart": 9786.98003911972,
+        "decodedBodySize": 2789,
+        "domainLookupEnd": 9786.98003911972,
+        "domainLookupStart": 9786.98003911972,
+        "duration": 299.35000002384186,
+        "encodedBodySize": 1345,
+        "endpoint": "node",
+        "fetchStart": 9786.98003911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 9787.590039134026,
+        "responseEnd": 10086.065039157867,
+        "responseStart": 10085.475039124489,
+        "secureConnectionStart": 9786.98003911972,
+        "start": 9786.715039134026,
+        "transferSize": 1645
+      },
+      "duration": 299.35000002384186,
+      "name": "rolling.worker.resource.node.bm",
+      "start": 9786.715039134026
+    },
+    {
+      "detail": {
+        "connectEnd": 9787.3200391531,
+        "connectStart": 9787.3200391531,
+        "decodedBodySize": 798,
+        "domainLookupEnd": 9787.3200391531,
+        "domainLookupStart": 9787.3200391531,
+        "duration": 440.94000005722046,
+        "encodedBodySize": 798,
+        "endpoint": "node",
+        "fetchStart": 9787.3200391531,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 9787.900039076803,
+        "responseEnd": 10228.080039143562,
+        "responseStart": 10227.150039076803,
+        "secureConnectionStart": 9787.3200391531,
+        "start": 9787.140039086342,
+        "transferSize": 1098
+      },
+      "duration": 440.94000005722046,
+      "name": "rolling.worker.resource.node.bn",
+      "start": 9787.140039086342
+    },
+    {
+      "detail": {
+        "connectEnd": 10089.6650390625,
+        "connectStart": 10089.6650390625,
+        "decodedBodySize": 3579,
+        "domainLookupEnd": 10089.6650390625,
+        "domainLookupStart": 10089.6650390625,
+        "duration": 300.81499993801117,
+        "encodedBodySize": 1266,
+        "endpoint": "node",
+        "fetchStart": 10089.6650390625,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 10090.9450391531,
+        "responseEnd": 10389.910039067268,
+        "responseStart": 10388.930039048197,
+        "secureConnectionStart": 10089.6650390625,
+        "start": 10089.095039129255,
+        "transferSize": 1566
+      },
+      "duration": 300.81499993801117,
+      "name": "rolling.worker.resource.node.bo",
+      "start": 10089.095039129255
+    },
+    {
+      "detail": {
+        "connectEnd": 10230.455039143562,
+        "connectStart": 10230.455039143562,
+        "decodedBodySize": 1799,
+        "domainLookupEnd": 10230.455039143562,
+        "domainLookupStart": 10230.455039143562,
+        "duration": 436.1599999666214,
+        "encodedBodySize": 834,
+        "endpoint": "node",
+        "fetchStart": 10230.455039143562,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 10231.170039057732,
+        "responseEnd": 10666.425039052963,
+        "responseStart": 10665.765039086342,
+        "secureConnectionStart": 10230.455039143562,
+        "start": 10230.265039086342,
+        "transferSize": 1134
+      },
+      "duration": 436.1599999666214,
+      "name": "rolling.worker.resource.node.bq",
+      "start": 10230.265039086342
+    },
+    {
+      "detail": {
+        "connectEnd": 10230.500039100649,
+        "connectStart": 10230.500039100649,
+        "decodedBodySize": 1799,
+        "domainLookupEnd": 10230.500039100649,
+        "domainLookupStart": 10230.500039100649,
+        "duration": 306.88499999046326,
+        "encodedBodySize": 835,
+        "endpoint": "node",
+        "fetchStart": 10230.500039100649,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 10231.375039100649,
+        "responseEnd": 10537.285039067268,
+        "responseStart": 10536.345039129255,
+        "secureConnectionStart": 10230.500039100649,
+        "start": 10230.400039076803,
+        "transferSize": 1135
+      },
+      "duration": 306.88499999046326,
+      "name": "rolling.worker.resource.node.bp",
+      "start": 10230.400039076803
+    },
+    {
+      "detail": {
+        "connectEnd": 10671.100039124489,
+        "connectStart": 10671.100039124489,
+        "decodedBodySize": 1799,
+        "domainLookupEnd": 10671.100039124489,
+        "domainLookupStart": 10671.100039124489,
+        "duration": 438.3899999856949,
+        "encodedBodySize": 835,
+        "endpoint": "node",
+        "fetchStart": 10671.100039124489,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 10672.765039086342,
+        "responseEnd": 11108.985039114952,
+        "responseStart": 11108.280039072037,
+        "secureConnectionStart": 10671.100039124489,
+        "start": 10670.595039129255,
+        "transferSize": 1135
+      },
+      "duration": 438.3899999856949,
+      "name": "rolling.worker.resource.node.br",
+      "start": 10670.595039129255
+    },
+    {
+      "detail": {
+        "connectEnd": 10671.5400390625,
+        "connectStart": 10671.5400390625,
+        "decodedBodySize": 2596,
+        "domainLookupEnd": 10671.5400390625,
+        "domainLookupStart": 10671.5400390625,
+        "duration": 479.7699999809265,
+        "encodedBodySize": 1062,
+        "endpoint": "node",
+        "fetchStart": 10671.5400390625,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 10672.930039048197,
+        "responseEnd": 11150.930039048197,
+        "responseStart": 11150.680039048197,
+        "secureConnectionStart": 10671.5400390625,
+        "start": 10671.160039067268,
+        "transferSize": 1362
+      },
+      "duration": 479.7699999809265,
+      "name": "rolling.worker.resource.node.bs",
+      "start": 10671.160039067268
+    },
+    {
+      "detail": {
+        "connectEnd": 11154.23003911972,
+        "connectStart": 11154.23003911972,
+        "decodedBodySize": 2596,
+        "domainLookupEnd": 11154.23003911972,
+        "domainLookupStart": 11154.23003911972,
+        "duration": 328.35000002384186,
+        "encodedBodySize": 1062,
+        "endpoint": "node",
+        "fetchStart": 11154.23003911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 11154.705039143562,
+        "responseEnd": 11482.440039157867,
+        "responseStart": 11481.525039076803,
+        "secureConnectionStart": 11154.23003911972,
+        "start": 11154.090039134026,
+        "transferSize": 1362
+      },
+      "duration": 328.35000002384186,
+      "name": "rolling.worker.resource.node.bt",
+      "start": 11154.090039134026
+    },
+    {
+      "detail": {
+        "assetCacheHit": 1,
+        "assetReadyDuration": 1.915,
+        "connectEnd": 11490.795039057732,
+        "connectStart": 11490.795039057732,
+        "decodedBodySize": 3154738,
+        "domainLookupEnd": 11490.795039057732,
+        "domainLookupStart": 11490.795039057732,
+        "duration": 8.40499997138977,
+        "encodedBodySize": 3154738,
+        "endpoint": "wallet-asset",
+        "fetchStart": 11490.795039057732,
+        "kind": "resource",
+        "protocol": "unknown",
+        "realm": "worker",
+        "requestStart": 11490.795039057732,
+        "responseEnd": 11498.685039043428,
+        "responseStart": 11493.060039043428,
+        "secureConnectionStart": 11490.795039057732,
+        "start": 11490.280039072037,
+        "transferSize": 0
+      },
+      "duration": 8.40499997138977,
+      "name": "rolling.worker.resource.wallet-asset.bu",
+      "start": 11490.280039072037
+    },
+    {
+      "detail": {
+        "connectEnd": 11544.910039067268,
+        "connectStart": 11544.910039067268,
+        "decodedBodySize": 1790,
+        "domainLookupEnd": 11544.910039067268,
+        "domainLookupStart": 11544.910039067268,
+        "duration": 319.56500005722046,
+        "encodedBodySize": 832,
+        "endpoint": "node",
+        "fetchStart": 11544.910039067268,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 11546.365039110184,
+        "responseEnd": 11864.065039157867,
+        "responseStart": 11862.23003911972,
+        "secureConnectionStart": 11544.910039067268,
+        "start": 11544.500039100649,
+        "transferSize": 1132
+      },
+      "duration": 319.56500005722046,
+      "name": "rolling.worker.resource.node.bv",
+      "start": 11544.500039100649
+    },
+    {
+      "detail": {
+        "connectEnd": 12629.640039086342,
+        "connectStart": 12629.640039086342,
+        "decodedBodySize": 1209,
+        "domainLookupEnd": 12629.640039086342,
+        "domainLookupStart": 12629.640039086342,
+        "duration": 301.7350000143051,
+        "encodedBodySize": 659,
+        "endpoint": "node",
+        "fetchStart": 12629.640039086342,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 12631.365039110184,
+        "responseEnd": 12930.440039157867,
+        "responseStart": 12930.000039100649,
+        "secureConnectionStart": 12629.640039086342,
+        "start": 12628.705039143562,
+        "transferSize": 959
+      },
+      "duration": 301.7350000143051,
+      "name": "rolling.worker.resource.node.bw",
+      "start": 12628.705039143562
+    },
+    {
+      "detail": {
+        "connectEnd": 12936.5400390625,
+        "connectStart": 12936.5400390625,
+        "decodedBodySize": 417,
+        "domainLookupEnd": 12936.5400390625,
+        "domainLookupStart": 12936.5400390625,
+        "duration": 302.35000002384186,
+        "encodedBodySize": 417,
+        "endpoint": "node",
+        "fetchStart": 12936.5400390625,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 12937.030039072037,
+        "responseEnd": 13238.495039105415,
+        "responseStart": 13237.805039048197,
+        "secureConnectionStart": 12936.5400390625,
+        "start": 12936.145039081572,
+        "transferSize": 717
+      },
+      "duration": 302.35000002384186,
+      "name": "rolling.worker.resource.node.bx",
+      "start": 12936.145039081572
+    },
+    {
+      "detail": {
+        "connectEnd": 13241.50503909588,
+        "connectStart": 13241.50503909588,
+        "decodedBodySize": 1790,
+        "domainLookupEnd": 13241.50503909588,
+        "domainLookupStart": 13241.50503909588,
+        "duration": 300.1200000047684,
+        "encodedBodySize": 832,
+        "endpoint": "node",
+        "fetchStart": 13241.50503909588,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 13242.45003914833,
+        "responseEnd": 13541.035039067268,
+        "responseStart": 13539.030039072037,
+        "secureConnectionStart": 13241.50503909588,
+        "start": 13240.9150390625,
+        "transferSize": 1132
+      },
+      "duration": 300.1200000047684,
+      "name": "rolling.worker.resource.node.by",
+      "start": 13240.9150390625
+    },
+    {
+      "detail": {
+        "connectEnd": 13542.890039086342,
+        "connectStart": 13542.890039086342,
+        "decodedBodySize": 2789,
+        "domainLookupEnd": 13542.890039086342,
+        "domainLookupStart": 13542.890039086342,
+        "duration": 302.0550000667572,
+        "encodedBodySize": 1342,
+        "endpoint": "node",
+        "fetchStart": 13542.890039086342,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 13543.57503914833,
+        "responseEnd": 13844.710039138794,
+        "responseStart": 13844.020039081572,
+        "secureConnectionStart": 13542.890039086342,
+        "start": 13542.655039072037,
+        "transferSize": 1642
+      },
+      "duration": 302.0550000667572,
+      "name": "rolling.worker.resource.node.bz",
+      "start": 13542.655039072037
+    },
+    {
+      "detail": {
+        "connectEnd": 13848.225039124489,
+        "connectStart": 13848.225039124489,
+        "decodedBodySize": 3579,
+        "domainLookupEnd": 13848.225039124489,
+        "domainLookupStart": 13848.225039124489,
+        "duration": 299.91999995708466,
+        "encodedBodySize": 1266,
+        "endpoint": "node",
+        "fetchStart": 13848.225039124489,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 13850.13003909588,
+        "responseEnd": 14147.545039057732,
+        "responseStart": 14146.63503909111,
+        "secureConnectionStart": 13848.225039124489,
+        "start": 13847.625039100649,
+        "transferSize": 1566
+      },
+      "duration": 299.91999995708466,
+      "name": "rolling.worker.resource.node.ca",
+      "start": 13847.625039100649
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3.359999895095825,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "start": 14305.1950391531
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 7.544999957084656,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "start": 14308.710039138794
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 35.81499993801117,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "start": 14319.975039124489
+    },
+    {
+      "detail": {
+        "connectEnd": 14360.25503909588,
+        "connectStart": 14360.25503909588,
+        "decodedBodySize": 209,
+        "domainLookupEnd": 14360.25503909588,
+        "domainLookupStart": 14360.25503909588,
+        "duration": 307.84500002861023,
+        "encodedBodySize": 209,
+        "endpoint": "node",
+        "fetchStart": 14360.25503909588,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 14360.815039157867,
+        "responseEnd": 14667.76003909111,
+        "responseStart": 14665.690039157867,
+        "secureConnectionStart": 14360.25503909588,
+        "start": 14359.9150390625,
+        "transferSize": 509
+      },
+      "duration": 307.84500002861023,
+      "name": "rolling.worker.resource.node.cb",
+      "start": 14359.9150390625
+    },
+    {
+      "detail": {
+        "connectEnd": 14669.055039048197,
+        "connectStart": 14669.055039048197,
+        "decodedBodySize": 1790,
+        "domainLookupEnd": 14669.055039048197,
+        "domainLookupStart": 14669.055039048197,
+        "duration": 295.9599999189377,
+        "encodedBodySize": 830,
+        "endpoint": "node",
+        "fetchStart": 14669.055039048197,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 14670.35503911972,
+        "responseEnd": 14964.785039067268,
+        "responseStart": 14964.150039076803,
+        "secureConnectionStart": 14669.055039048197,
+        "start": 14668.82503914833,
+        "transferSize": 1130
+      },
+      "duration": 295.9599999189377,
+      "name": "rolling.worker.resource.node.cc",
+      "start": 14668.82503914833
+    },
+    {
+      "detail": {
+        "connectEnd": 14970.410039067268,
+        "connectStart": 14970.410039067268,
+        "decodedBodySize": 1209,
+        "domainLookupEnd": 14970.410039067268,
+        "domainLookupStart": 14970.410039067268,
+        "duration": 304.22000002861023,
+        "encodedBodySize": 659,
+        "endpoint": "node",
+        "fetchStart": 14970.410039067268,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 14971.70003914833,
+        "responseEnd": 15274.360039114952,
+        "responseStart": 15273.155039072037,
+        "secureConnectionStart": 14970.410039067268,
+        "start": 14970.140039086342,
+        "transferSize": 959
+      },
+      "duration": 304.22000002861023,
+      "name": "rolling.worker.resource.node.cd",
+      "start": 14970.140039086342
+    },
+    {
+      "detail": {
+        "connectEnd": 15312.170039057732,
+        "connectStart": 15312.170039057732,
+        "decodedBodySize": 290,
+        "domainLookupEnd": 15312.170039057732,
+        "domainLookupStart": 15312.170039057732,
+        "duration": 315.90499997138977,
+        "encodedBodySize": 290,
+        "endpoint": "node",
+        "fetchStart": 15312.170039057732,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 15312.765039086342,
+        "responseEnd": 15627.810039043428,
+        "responseStart": 15623.98003911972,
+        "secureConnectionStart": 15312.170039057732,
+        "start": 15311.905039072037,
+        "transferSize": 590
+      },
+      "duration": 315.90499997138977,
+      "name": "rolling.worker.resource.node.ce",
+      "start": 15311.905039072037
+    },
+    {
+      "detail": {
+        "connectEnd": 15639.555039048197,
+        "connectStart": 15639.555039048197,
+        "decodedBodySize": 159,
+        "domainLookupEnd": 15639.555039048197,
+        "domainLookupStart": 15639.555039048197,
+        "duration": 312.13499999046326,
+        "encodedBodySize": 159,
+        "endpoint": "node",
+        "fetchStart": 15639.555039048197,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 15640.420039057732,
+        "responseEnd": 15951.365039110184,
+        "responseStart": 15950.70003914833,
+        "secureConnectionStart": 15639.555039048197,
+        "start": 15639.23003911972,
+        "transferSize": 459
+      },
+      "duration": 312.13499999046326,
+      "name": "rolling.worker.resource.node.cf",
+      "start": 15639.23003911972
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1668.929999947548,
+      "name": "rolling.account.bok-sync",
+      "start": 102593.09503912926
+    },
+    {
+      "detail": {
+        "connectEnd": 102596.35503911972,
+        "connectStart": 102596.35503911972,
+        "decodedBodySize": 2789,
+        "domainLookupEnd": 102596.35503911972,
+        "domainLookupStart": 102596.35503911972,
+        "duration": 478.4450000524521,
+        "encodedBodySize": 1346,
+        "endpoint": "node",
+        "fetchStart": 102596.35503911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 102596.89003908634,
+        "responseEnd": 103074.44003915788,
+        "responseStart": 103073.73503911497,
+        "secureConnectionStart": 102596.35503911972,
+        "start": 102595.99503910542,
+        "transferSize": 1646
+      },
+      "duration": 478.4450000524521,
+      "name": "rolling.worker.resource.node.cg",
+      "start": 102595.99503910542
+    },
+    {
+      "detail": {
+        "connectEnd": 102597.03503906728,
+        "connectStart": 102597.03503906728,
+        "decodedBodySize": 798,
+        "domainLookupEnd": 102597.03503906728,
+        "domainLookupStart": 102597.03503906728,
+        "duration": 533.375,
+        "encodedBodySize": 798,
+        "endpoint": "node",
+        "fetchStart": 102597.03503906728,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 102597.4300390482,
+        "responseEnd": 103130.24003911018,
+        "responseStart": 103129.70503914356,
+        "secureConnectionStart": 102597.03503906728,
+        "start": 102596.86503911018,
+        "transferSize": 1098
+      },
+      "duration": 533.375,
+      "name": "rolling.worker.resource.node.ch",
+      "start": 102596.86503911018
+    },
+    {
+      "detail": {
+        "connectEnd": 103077.8050390482,
+        "connectStart": 103077.8050390482,
+        "decodedBodySize": 3579,
+        "domainLookupEnd": 103077.8050390482,
+        "domainLookupStart": 103077.8050390482,
+        "duration": 489.55999994277954,
+        "encodedBodySize": 1196,
+        "endpoint": "node",
+        "fetchStart": 103077.8050390482,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 103078.5400390625,
+        "responseEnd": 103567.0250390768,
+        "responseStart": 103566.26503908634,
+        "secureConnectionStart": 103077.8050390482,
+        "start": 103077.46503913404,
+        "transferSize": 1496
+      },
+      "duration": 489.55999994277954,
+      "name": "rolling.worker.resource.node.ci",
+      "start": 103077.46503913404
+    },
+    {
+      "detail": {
+        "connectEnd": 103140.59503912926,
+        "connectStart": 103140.59503912926,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 103140.59503912926,
+        "domainLookupStart": 103140.59503912926,
+        "duration": 501.66999995708466,
+        "encodedBodySize": 837,
+        "endpoint": "node",
+        "fetchStart": 103140.59503912926,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 103141.1800390482,
+        "responseEnd": 103642.0400390625,
+        "responseStart": 103641.83003914356,
+        "secureConnectionStart": 103140.59503912926,
+        "start": 103140.37003910542,
+        "transferSize": 1137
+      },
+      "duration": 501.66999995708466,
+      "name": "rolling.worker.resource.node.ck",
+      "start": 103140.37003910542
+    },
+    {
+      "detail": {
+        "connectEnd": 103140.71503913404,
+        "connectStart": 103140.71503913404,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 103140.71503913404,
+        "domainLookupStart": 103140.71503913404,
+        "duration": 501.1850000619888,
+        "encodedBodySize": 834,
+        "endpoint": "node",
+        "fetchStart": 103140.71503913404,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 103141.30003905296,
+        "responseEnd": 103641.72003912926,
+        "responseStart": 103623.1800390482,
+        "secureConnectionStart": 103140.71503913404,
+        "start": 103140.53503906728,
+        "transferSize": 1134
+      },
+      "duration": 501.1850000619888,
+      "name": "rolling.worker.resource.node.cj",
+      "start": 103140.53503906728
+    },
+    {
+      "detail": {
+        "connectEnd": 103645.17503905296,
+        "connectStart": 103645.17503905296,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 103645.17503905296,
+        "domainLookupStart": 103645.17503905296,
+        "duration": 304.34500002861023,
+        "encodedBodySize": 834,
+        "endpoint": "node",
+        "fetchStart": 103645.17503905296,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 103645.82503914832,
+        "responseEnd": 103949.3350391388,
+        "responseStart": 103949.05003905296,
+        "secureConnectionStart": 103645.17503905296,
+        "start": 103644.99003911018,
+        "transferSize": 1134
+      },
+      "duration": 304.34500002861023,
+      "name": "rolling.worker.resource.node.cm",
+      "start": 103644.99003911018
+    },
+    {
+      "detail": {
+        "connectEnd": 103645.24003911018,
+        "connectStart": 103645.24003911018,
+        "decodedBodySize": 2598,
+        "domainLookupEnd": 103645.24003911018,
+        "domainLookupStart": 103645.24003911018,
+        "duration": 304.2099999189377,
+        "encodedBodySize": 1076,
+        "endpoint": "node",
+        "fetchStart": 103645.24003911018,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 103645.9300390482,
+        "responseEnd": 103949.30003905296,
+        "responseStart": 103948.97003912926,
+        "secureConnectionStart": 103645.24003911018,
+        "start": 103645.09003913404,
+        "transferSize": 1376
+      },
+      "duration": 304.2099999189377,
+      "name": "rolling.worker.resource.node.cl",
+      "start": 103645.09003913404
+    },
+    {
+      "detail": {
+        "connectEnd": 103958.81503915788,
+        "connectStart": 103958.81503915788,
+        "decodedBodySize": 2598,
+        "domainLookupEnd": 103958.81503915788,
+        "domainLookupStart": 103958.81503915788,
+        "duration": 297.75999999046326,
+        "encodedBodySize": 1076,
+        "endpoint": "node",
+        "fetchStart": 103958.81503915788,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 103959.30003905296,
+        "responseEnd": 104256.39503908156,
+        "responseStart": 104256.13003909588,
+        "secureConnectionStart": 103958.81503915788,
+        "start": 103958.63503909112,
+        "transferSize": 1376
+      },
+      "duration": 297.75999999046326,
+      "name": "rolling.worker.resource.node.cn",
+      "start": 103958.63503909112
+    },
+    {
+      "detail": {
+        "connectEnd": 104263.70503914356,
+        "connectStart": 104263.70503914356,
+        "decodedBodySize": 211,
+        "domainLookupEnd": 104263.70503914356,
+        "domainLookupStart": 104263.70503914356,
+        "duration": 512.6449999809265,
+        "encodedBodySize": 211,
+        "endpoint": "node",
+        "fetchStart": 104263.70503914356,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 104264.19003915788,
+        "responseEnd": 104776.1500390768,
+        "responseStart": 104775.58003914356,
+        "secureConnectionStart": 104263.70503914356,
+        "start": 104263.50503909588,
+        "transferSize": 511
+      },
+      "duration": 512.6449999809265,
+      "name": "rolling.worker.resource.node.co",
+      "start": 104263.50503909588
+    },
+    {
+      "detail": {
+        "connectEnd": 104778.75003910065,
+        "connectStart": 104778.75003910065,
+        "decodedBodySize": 1791,
+        "domainLookupEnd": 104778.75003910065,
+        "domainLookupStart": 104778.75003910065,
+        "duration": 448.27499997615814,
+        "encodedBodySize": 833,
+        "endpoint": "node",
+        "fetchStart": 104778.75003910065,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 104779.8200391531,
+        "responseEnd": 105226.51003909112,
+        "responseStart": 105226.22003912926,
+        "secureConnectionStart": 104778.75003910065,
+        "start": 104778.23503911497,
+        "transferSize": 1133
+      },
+      "duration": 448.27499997615814,
+      "name": "rolling.worker.resource.node.cp",
+      "start": 104778.23503911497
+    },
+    {
+      "detail": {
+        "connectEnd": 105230.2750390768,
+        "connectStart": 105230.2750390768,
+        "decodedBodySize": 1210,
+        "domainLookupEnd": 105230.2750390768,
+        "domainLookupStart": 105230.2750390768,
+        "duration": 306.49000000953674,
+        "encodedBodySize": 659,
+        "endpoint": "node",
+        "fetchStart": 105230.2750390768,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 105230.86003911497,
+        "responseEnd": 105536.5400390625,
+        "responseStart": 105535.64003908634,
+        "secureConnectionStart": 105230.2750390768,
+        "start": 105230.05003905296,
+        "transferSize": 959
+      },
+      "duration": 306.49000000953674,
+      "name": "rolling.worker.resource.node.cq",
+      "start": 105230.05003905296
+    },
+    {
+      "detail": {
+        "connectEnd": 105603.24003911018,
+        "connectStart": 105603.24003911018,
+        "decodedBodySize": 291,
+        "domainLookupEnd": 105603.24003911018,
+        "domainLookupStart": 105603.24003911018,
+        "duration": 301.59500002861023,
+        "encodedBodySize": 291,
+        "endpoint": "node",
+        "fetchStart": 105603.24003911018,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 105603.81003904344,
+        "responseEnd": 105904.5250390768,
+        "responseStart": 105903.95503914356,
+        "secureConnectionStart": 105603.24003911018,
+        "start": 105602.9300390482,
+        "transferSize": 591
+      },
+      "duration": 301.59500002861023,
+      "name": "rolling.worker.resource.node.cr",
+      "start": 105602.9300390482
+    },
+    {
+      "detail": {
+        "connectEnd": 105921.96503913404,
+        "connectStart": 105921.96503913404,
+        "decodedBodySize": 160,
+        "domainLookupEnd": 105921.96503913404,
+        "domainLookupStart": 105921.96503913404,
+        "duration": 305.9499999284744,
+        "encodedBodySize": 160,
+        "endpoint": "node",
+        "fetchStart": 105921.96503913404,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 105922.79503905772,
+        "responseEnd": 106227.64003908634,
+        "responseStart": 106224.11003911497,
+        "secureConnectionStart": 105921.96503913404,
+        "start": 105921.69003915788,
+        "transferSize": 460
+      },
+      "duration": 305.9499999284744,
+      "name": "rolling.worker.resource.node.cs",
+      "start": 105921.69003915788
+    },
+    {
+      "detail": {
+        "connectEnd": 106238.17503905296,
+        "connectStart": 106238.17503905296,
+        "decodedBodySize": 2793,
+        "domainLookupEnd": 106238.17503905296,
+        "domainLookupStart": 106238.17503905296,
+        "duration": 435.2150000333786,
+        "encodedBodySize": 1347,
+        "endpoint": "node",
+        "fetchStart": 106238.17503905296,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 106239.98003911972,
+        "responseEnd": 106672.86003911497,
+        "responseStart": 106671.9150390625,
+        "secureConnectionStart": 106238.17503905296,
+        "start": 106237.64503908156,
+        "transferSize": 1647
+      },
+      "duration": 435.2150000333786,
+      "name": "rolling.worker.resource.node.cu",
+      "start": 106237.64503908156
+    },
+    {
+      "detail": {
+        "connectEnd": 106239.48003911972,
+        "connectStart": 106239.48003911972,
+        "decodedBodySize": 799,
+        "domainLookupEnd": 106239.48003911972,
+        "domainLookupStart": 106239.48003911972,
+        "duration": 304.9099999666214,
+        "encodedBodySize": 799,
+        "endpoint": "node",
+        "fetchStart": 106239.48003911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 106240.97003912926,
+        "responseEnd": 106543.64503908156,
+        "responseStart": 106537.25003910065,
+        "secureConnectionStart": 106239.48003911972,
+        "start": 106238.73503911497,
+        "transferSize": 1099
+      },
+      "duration": 304.9099999666214,
+      "name": "rolling.worker.resource.node.ct",
+      "start": 106238.73503911497
+    },
+    {
+      "detail": {
+        "connectEnd": 106547.53003907204,
+        "connectStart": 106547.53003907204,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 106547.53003907204,
+        "domainLookupStart": 106547.53003907204,
+        "duration": 302.75,
+        "encodedBodySize": 836,
+        "endpoint": "node",
+        "fetchStart": 106547.53003907204,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 106548.53503906728,
+        "responseEnd": 106849.92003905772,
+        "responseStart": 106848.3350391388,
+        "secureConnectionStart": 106547.53003907204,
+        "start": 106547.17003905772,
+        "transferSize": 1136
+      },
+      "duration": 302.75,
+      "name": "rolling.worker.resource.node.cv",
+      "start": 106547.17003905772
+    },
+    {
+      "detail": {
+        "connectEnd": 106547.98003911972,
+        "connectStart": 106547.98003911972,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 106547.98003911972,
+        "domainLookupStart": 106547.98003911972,
+        "duration": 434.65000009536743,
+        "encodedBodySize": 837,
+        "endpoint": "node",
+        "fetchStart": 106547.98003911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 106549.10503911972,
+        "responseEnd": 106982.20003914832,
+        "responseStart": 106981.93503904344,
+        "secureConnectionStart": 106547.98003911972,
+        "start": 106547.55003905296,
+        "transferSize": 1137
+      },
+      "duration": 434.65000009536743,
+      "name": "rolling.worker.resource.node.cw",
+      "start": 106547.55003905296
+    },
+    {
+      "detail": {
+        "connectEnd": 106675.7100391388,
+        "connectStart": 106675.7100391388,
+        "decodedBodySize": 3581,
+        "domainLookupEnd": 106675.7100391388,
+        "domainLookupStart": 106675.7100391388,
+        "duration": 563.0349999666214,
+        "encodedBodySize": 1196,
+        "endpoint": "node",
+        "fetchStart": 106675.7100391388,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 106677.23503911497,
+        "responseEnd": 107238.10503911972,
+        "responseStart": 107235.4000390768,
+        "secureConnectionStart": 106675.7100391388,
+        "start": 106675.0700391531,
+        "transferSize": 1496
+      },
+      "duration": 563.0349999666214,
+      "name": "rolling.worker.resource.node.cx",
+      "start": 106675.0700391531
+    },
+    {
+      "detail": {
+        "connectEnd": 106985.00003910065,
+        "connectStart": 106985.00003910065,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 106985.00003910065,
+        "domainLookupStart": 106985.00003910065,
+        "duration": 457.4599999189377,
+        "encodedBodySize": 837,
+        "endpoint": "node",
+        "fetchStart": 106985.00003910065,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 106985.51003909112,
+        "responseEnd": 107442.28003907204,
+        "responseStart": 107440.98003911972,
+        "secureConnectionStart": 106985.00003910065,
+        "start": 106984.8200391531,
+        "transferSize": 1137
+      },
+      "duration": 457.4599999189377,
+      "name": "rolling.worker.resource.node.cz",
+      "start": 106984.8200391531
+    },
+    {
+      "detail": {
+        "connectEnd": 106985.0700391531,
+        "connectStart": 106985.0700391531,
+        "decodedBodySize": 2598,
+        "domainLookupEnd": 106985.0700391531,
+        "domainLookupStart": 106985.0700391531,
+        "duration": 416.4649999141693,
+        "encodedBodySize": 1071,
+        "endpoint": "node",
+        "fetchStart": 106985.0700391531,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 106985.59003913404,
+        "responseEnd": 107401.40503907204,
+        "responseStart": 107399.22503912447,
+        "secureConnectionStart": 106985.0700391531,
+        "start": 106984.94003915788,
+        "transferSize": 1371
+      },
+      "duration": 416.4649999141693,
+      "name": "rolling.worker.resource.node.cy",
+      "start": 106984.94003915788
+    },
+    {
+      "detail": {
+        "connectEnd": 107449.6500390768,
+        "connectStart": 107449.6500390768,
+        "decodedBodySize": 2598,
+        "domainLookupEnd": 107449.6500390768,
+        "domainLookupStart": 107449.6500390768,
+        "duration": 299.1050000190735,
+        "encodedBodySize": 1071,
+        "endpoint": "node",
+        "fetchStart": 107449.6500390768,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 107450.9300390482,
+        "responseEnd": 107748.36003911497,
+        "responseStart": 107747.74503910542,
+        "secureConnectionStart": 107449.6500390768,
+        "start": 107449.25503909588,
+        "transferSize": 1371
+      },
+      "duration": 299.1050000190735,
+      "name": "rolling.worker.resource.node.da",
+      "start": 107449.25503909588
+    },
+    {
+      "detail": {
+        "connectEnd": 107757.5400390625,
+        "connectStart": 107757.5400390625,
+        "decodedBodySize": 2460,
+        "domainLookupEnd": 107757.5400390625,
+        "domainLookupStart": 107757.5400390625,
+        "duration": 313.22500002384186,
+        "encodedBodySize": 785,
+        "endpoint": "node",
+        "fetchStart": 107757.5400390625,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 107759.0700391531,
+        "responseEnd": 108070.21503913404,
+        "responseStart": 108069.35003912447,
+        "secureConnectionStart": 107757.5400390625,
+        "start": 107756.99003911018,
+        "transferSize": 1085
+      },
+      "duration": 313.22500002384186,
+      "name": "rolling.worker.resource.node.db",
+      "start": 107756.99003911018
+    },
+    {
+      "detail": {
+        "connectEnd": 107758.23503911497,
+        "connectStart": 107758.23503911497,
+        "decodedBodySize": 6177,
+        "domainLookupEnd": 107758.23503911497,
+        "domainLookupStart": 107758.23503911497,
+        "duration": 315.19000005722046,
+        "encodedBodySize": 2678,
+        "endpoint": "node",
+        "fetchStart": 107758.23503911497,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 107759.82503914832,
+        "responseEnd": 108073.12503910065,
+        "responseStart": 108072.64003908634,
+        "secureConnectionStart": 107758.23503911497,
+        "start": 107757.93503904344,
+        "transferSize": 2978
+      },
+      "duration": 315.19000005722046,
+      "name": "rolling.worker.resource.node.dc",
+      "start": 107757.93503904344
+    },
+    {
+      "detail": {
+        "connectEnd": 108098.2100391388,
+        "connectStart": 108098.2100391388,
+        "decodedBodySize": 59,
+        "domainLookupEnd": 108098.2100391388,
+        "domainLookupStart": 108098.2100391388,
+        "duration": 304.78000009059906,
+        "encodedBodySize": 59,
+        "endpoint": "node",
+        "fetchStart": 108098.2100391388,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 108098.81503915788,
+        "responseEnd": 108402.69003915788,
+        "responseStart": 108401.64003908634,
+        "secureConnectionStart": 108098.2100391388,
+        "start": 108097.91003906728,
+        "transferSize": 359
+      },
+      "duration": 304.78000009059906,
+      "name": "rolling.worker.resource.node.dd",
+      "start": 108097.91003906728
+    },
+    {
+      "detail": {
+        "connectEnd": 108100.99003911018,
+        "connectStart": 108100.99003911018,
+        "decodedBodySize": 54,
+        "domainLookupEnd": 108100.99003911018,
+        "domainLookupStart": 108100.99003911018,
+        "duration": 304.0350000858307,
+        "encodedBodySize": 54,
+        "endpoint": "node",
+        "fetchStart": 108100.99003911018,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 108101.47003912926,
+        "responseEnd": 108404.82503914832,
+        "responseStart": 108404.37003910542,
+        "secureConnectionStart": 108100.99003911018,
+        "start": 108100.7900390625,
+        "transferSize": 354
+      },
+      "duration": 304.0350000858307,
+      "name": "rolling.worker.resource.node.de",
+      "start": 108100.7900390625
+    },
+    {
+      "detail": {
+        "connectEnd": 108114.2100391388,
+        "connectStart": 108114.2100391388,
+        "decodedBodySize": 15485,
+        "domainLookupEnd": 108114.2100391388,
+        "domainLookupStart": 108114.2100391388,
+        "duration": 312.6299999952316,
+        "encodedBodySize": 5838,
+        "endpoint": "node",
+        "fetchStart": 108114.2100391388,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 108114.8050390482,
+        "responseEnd": 108426.59003913404,
+        "responseStart": 108424.6800390482,
+        "secureConnectionStart": 108114.2100391388,
+        "start": 108113.9600391388,
+        "transferSize": 6138
+      },
+      "duration": 312.6299999952316,
+      "name": "rolling.worker.resource.node.df",
+      "start": 108113.9600391388
+    },
+    {
+      "detail": {
+        "connectEnd": 108121.66003906728,
+        "connectStart": 108121.66003906728,
+        "decodedBodySize": 8095,
+        "domainLookupEnd": 108121.66003906728,
+        "domainLookupStart": 108121.66003906728,
+        "duration": 331.72000002861023,
+        "encodedBodySize": 3413,
+        "endpoint": "node",
+        "fetchStart": 108121.66003906728,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 108122.17503905296,
+        "responseEnd": 108453.0700391531,
+        "responseStart": 108434.05003905296,
+        "secureConnectionStart": 108121.66003906728,
+        "start": 108121.35003912447,
+        "transferSize": 3713
+      },
+      "duration": 331.72000002861023,
+      "name": "rolling.worker.resource.node.dg",
+      "start": 108121.35003912447
+    },
+    {
+      "detail": {
+        "connectEnd": 108488.47003912926,
+        "connectStart": 108488.47003912926,
+        "decodedBodySize": 160,
+        "domainLookupEnd": 108488.47003912926,
+        "domainLookupStart": 108488.47003912926,
+        "duration": 434.9450000524521,
+        "encodedBodySize": 160,
+        "endpoint": "node",
+        "fetchStart": 108488.47003912926,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 108489.00003910065,
+        "responseEnd": 108923.06503915788,
+        "responseStart": 108922.2100391388,
+        "secureConnectionStart": 108488.47003912926,
+        "start": 108488.12003910542,
+        "transferSize": 460
+      },
+      "duration": 434.9450000524521,
+      "name": "rolling.worker.resource.node.dh",
+      "start": 108488.12003910542
+    },
+    {
+      "detail": {
+        "connectEnd": 108941.06503915788,
+        "connectStart": 108941.06503915788,
+        "decodedBodySize": 10109,
+        "domainLookupEnd": 108941.06503915788,
+        "domainLookupStart": 108941.06503915788,
+        "duration": 334.7699999809265,
+        "encodedBodySize": 3974,
+        "endpoint": "node",
+        "fetchStart": 108941.06503915788,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 108941.59003913404,
+        "responseEnd": 109275.52003908156,
+        "responseStart": 109274.35003912447,
+        "secureConnectionStart": 108941.06503915788,
+        "start": 108940.75003910065,
+        "transferSize": 4274
+      },
+      "duration": 334.7699999809265,
+      "name": "rolling.worker.resource.node.di",
+      "start": 108940.75003910065
+    },
+    {
+      "detail": {
+        "connectEnd": 109282.48003911972,
+        "connectStart": 109282.48003911972,
+        "decodedBodySize": 2060,
+        "domainLookupEnd": 109282.48003911972,
+        "domainLookupStart": 109282.48003911972,
+        "duration": 306.22500002384186,
+        "encodedBodySize": 1608,
+        "endpoint": "node",
+        "fetchStart": 109282.48003911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 109284.13003909588,
+        "responseEnd": 109587.59503912926,
+        "responseStart": 109586.6800390482,
+        "secureConnectionStart": 109282.48003911972,
+        "start": 109281.37003910542,
+        "transferSize": 1908
+      },
+      "duration": 306.22500002384186,
+      "name": "rolling.worker.resource.node.dj",
+      "start": 109281.37003910542
+    },
+    {
+      "detail": null,
+      "duration": 3633.504999995232,
+      "name": "rolling.composer.prepare",
+      "start": 165978.30499994755
+    },
+    {
+      "detail": {
+        "connectEnd": 165980.28003907204,
+        "connectStart": 165980.28003907204,
+        "decodedBodySize": 2793,
+        "domainLookupEnd": 165980.28003907204,
+        "domainLookupStart": 165980.28003907204,
+        "duration": 514.8399999141693,
+        "encodedBodySize": 1345,
+        "endpoint": "node",
+        "fetchStart": 165980.28003907204,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 165981.48003911972,
+        "responseEnd": 166494.65503907204,
+        "responseStart": 166494.15503907204,
+        "secureConnectionStart": 165980.28003907204,
+        "start": 165979.81503915787,
+        "transferSize": 1645
+      },
+      "duration": 514.8399999141693,
+      "name": "rolling.worker.resource.node.dk",
+      "start": 165979.81503915787
+    },
+    {
+      "detail": {
+        "connectEnd": 165980.99503910542,
+        "connectStart": 165980.99503910542,
+        "decodedBodySize": 799,
+        "domainLookupEnd": 165980.99503910542,
+        "domainLookupStart": 165980.99503910542,
+        "duration": 517.0899999141693,
+        "encodedBodySize": 799,
+        "endpoint": "node",
+        "fetchStart": 165980.99503910542,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 165981.72003912926,
+        "responseEnd": 166497.79503905773,
+        "responseStart": 166497.14503908157,
+        "secureConnectionStart": 165980.99503910542,
+        "start": 165980.70503914356,
+        "transferSize": 1099
+      },
+      "duration": 517.0899999141693,
+      "name": "rolling.worker.resource.node.dl",
+      "start": 165980.70503914356
+    },
+    {
+      "detail": {
+        "connectEnd": 166497.5850391388,
+        "connectStart": 166497.5850391388,
+        "decodedBodySize": 3581,
+        "domainLookupEnd": 166497.5850391388,
+        "domainLookupStart": 166497.5850391388,
+        "duration": 433.1449999809265,
+        "encodedBodySize": 1235,
+        "endpoint": "node",
+        "fetchStart": 166497.5850391388,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 166498.35503911972,
+        "responseEnd": 166930.37503910065,
+        "responseStart": 166929.48003911972,
+        "secureConnectionStart": 166497.5850391388,
+        "start": 166497.23003911972,
+        "transferSize": 1535
+      },
+      "duration": 433.1449999809265,
+      "name": "rolling.worker.resource.node.dm",
+      "start": 166497.23003911972
+    },
+    {
+      "detail": {
+        "connectEnd": 166499.98503911495,
+        "connectStart": 166499.98503911495,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 166499.98503911495,
+        "domainLookupStart": 166499.98503911495,
+        "duration": 487.8599998950958,
+        "encodedBodySize": 836,
+        "endpoint": "node",
+        "fetchStart": 166499.98503911495,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 166500.5550390482,
+        "responseEnd": 166987.6800390482,
+        "responseStart": 166986.72003912926,
+        "secureConnectionStart": 166499.98503911495,
+        "start": 166499.8200391531,
+        "transferSize": 1136
+      },
+      "duration": 487.8599998950958,
+      "name": "rolling.worker.resource.node.do",
+      "start": 166499.8200391531
+    },
+    {
+      "detail": {
+        "connectEnd": 166500.14503908157,
+        "connectStart": 166500.14503908157,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 166500.14503908157,
+        "domainLookupStart": 166500.14503908157,
+        "duration": 451.2350000143051,
+        "encodedBodySize": 836,
+        "endpoint": "node",
+        "fetchStart": 166500.14503908157,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 166500.84003913403,
+        "responseEnd": 166951.15503907204,
+        "responseStart": 166950.8500391245,
+        "secureConnectionStart": 166500.14503908157,
+        "start": 166499.92003905773,
+        "transferSize": 1136
+      },
+      "duration": 451.2350000143051,
+      "name": "rolling.worker.resource.node.dn",
+      "start": 166499.92003905773
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 303.63499999046326,
+      "name": "rolling.proof.native.phase.sync-prewrite-advance",
+      "start": 166989.86503911018
+    },
+    {
+      "detail": {
+        "connectEnd": 166990.19003915787,
+        "connectStart": 166990.19003915787,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 166990.19003915787,
+        "domainLookupStart": 166990.19003915787,
+        "duration": 302.0349999666214,
+        "encodedBodySize": 836,
+        "endpoint": "node",
+        "fetchStart": 166990.19003915787,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 166990.8200391531,
+        "responseEnd": 167292.03003907204,
+        "responseStart": 167291.53503906727,
+        "secureConnectionStart": 166990.19003915787,
+        "start": 166989.99503910542,
+        "transferSize": 1136
+      },
+      "duration": 302.0349999666214,
+      "name": "rolling.worker.resource.node.dq",
+      "start": 166989.99503910542
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 301.7300000190735,
+      "name": "rolling.proof.native.phase.sync-prewrite-snapshot",
+      "start": 166990.05003905296
+    },
+    {
+      "detail": {
+        "connectEnd": 166990.23503911495,
+        "connectStart": 166990.23503911495,
+        "decodedBodySize": 2598,
+        "domainLookupEnd": 166990.23503911495,
+        "domainLookupStart": 166990.23503911495,
+        "duration": 298.9449999332428,
+        "encodedBodySize": 1072,
+        "endpoint": "node",
+        "fetchStart": 166990.23503911495,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 166990.92503905296,
+        "responseEnd": 167289.04503905773,
+        "responseStart": 167288.62503910065,
+        "secureConnectionStart": 166990.23503911495,
+        "start": 166990.1000391245,
+        "transferSize": 1372
+      },
+      "duration": 298.9449999332428,
+      "name": "rolling.worker.resource.node.dp",
+      "start": 166990.1000391245
+    },
+    {
+      "detail": {
+        "connectEnd": 167301.56003904343,
+        "connectStart": 167301.56003904343,
+        "decodedBodySize": 2598,
+        "domainLookupEnd": 167301.56003904343,
+        "domainLookupStart": 167301.56003904343,
+        "duration": 296.06000006198883,
+        "encodedBodySize": 1073,
+        "endpoint": "node",
+        "fetchStart": 167301.56003904343,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 167302.14503908157,
+        "responseEnd": 167597.36503911018,
+        "responseStart": 167596.81503915787,
+        "secureConnectionStart": 167301.56003904343,
+        "start": 167301.3050390482,
+        "transferSize": 1373
+      },
+      "duration": 296.06000006198883,
+      "name": "rolling.worker.resource.node.dr",
+      "start": 167301.3050390482
+    },
+    {
+      "detail": {
+        "connectEnd": 167602.79503905773,
+        "connectStart": 167602.79503905773,
+        "decodedBodySize": 2460,
+        "domainLookupEnd": 167602.79503905773,
+        "domainLookupStart": 167602.79503905773,
+        "duration": 302.25999999046326,
+        "encodedBodySize": 785,
+        "endpoint": "node",
+        "fetchStart": 167602.79503905773,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 167603.44003915787,
+        "responseEnd": 167904.8350391388,
+        "responseStart": 167904.2600390911,
+        "secureConnectionStart": 167602.79503905773,
+        "start": 167602.57503914833,
+        "transferSize": 1085
+      },
+      "duration": 302.25999999046326,
+      "name": "rolling.worker.resource.node.ds",
+      "start": 167602.57503914833
+    },
+    {
+      "detail": {
+        "connectEnd": 167602.93503904343,
+        "connectStart": 167602.93503904343,
+        "decodedBodySize": 6177,
+        "domainLookupEnd": 167602.93503904343,
+        "domainLookupStart": 167602.93503904343,
+        "duration": 449.0350000858307,
+        "encodedBodySize": 2676,
+        "endpoint": "node",
+        "fetchStart": 167602.93503904343,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 167603.5400390625,
+        "responseEnd": 168051.81503915787,
+        "responseStart": 168051.5250390768,
+        "secureConnectionStart": 167602.93503904343,
+        "start": 167602.78003907204,
+        "transferSize": 2976
+      },
+      "duration": 449.0350000858307,
+      "name": "rolling.worker.resource.node.dt",
+      "start": 167602.78003907204
+    },
+    {
+      "detail": {
+        "connectEnd": 167953.67003905773,
+        "connectStart": 167953.67003905773,
+        "decodedBodySize": 59,
+        "domainLookupEnd": 167953.67003905773,
+        "domainLookupStart": 167953.67003905773,
+        "duration": 458.3899999856949,
+        "encodedBodySize": 59,
+        "endpoint": "node",
+        "fetchStart": 167953.67003905773,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 167954.2750390768,
+        "responseEnd": 168411.75003910065,
+        "responseStart": 168411.2600390911,
+        "secureConnectionStart": 167953.67003905773,
+        "start": 167953.36003911495,
+        "transferSize": 359
+      },
+      "duration": 458.3899999856949,
+      "name": "rolling.worker.resource.node.dv",
+      "start": 167953.36003911495
+    },
+    {
+      "detail": {
+        "connectEnd": 167957.76503908634,
+        "connectStart": 167957.76503908634,
+        "decodedBodySize": 54,
+        "domainLookupEnd": 167957.76503908634,
+        "domainLookupStart": 167957.76503908634,
+        "duration": 317.68499994277954,
+        "encodedBodySize": 54,
+        "endpoint": "node",
+        "fetchStart": 167957.76503908634,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 167958.3050390482,
+        "responseEnd": 168275.2600390911,
+        "responseStart": 168274.86503911018,
+        "secureConnectionStart": 167957.76503908634,
+        "start": 167957.57503914833,
+        "transferSize": 354
+      },
+      "duration": 317.68499994277954,
+      "name": "rolling.worker.resource.node.du",
+      "start": 167957.57503914833
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 483.72500002384186,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 167961.7600390911
+    },
+    {
+      "detail": {
+        "connectEnd": 167971.97003912926,
+        "connectStart": 167971.97003912926,
+        "decodedBodySize": 15485,
+        "domainLookupEnd": 167971.97003912926,
+        "domainLookupStart": 167971.97003912926,
+        "duration": 459.75999999046326,
+        "encodedBodySize": 5846,
+        "endpoint": "node",
+        "fetchStart": 167971.97003912926,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 167972.6000391245,
+        "responseEnd": 168431.51503908634,
+        "responseStart": 168428.93503904343,
+        "secureConnectionStart": 167971.97003912926,
+        "start": 167971.75503909588,
+        "transferSize": 6146
+      },
+      "duration": 459.75999999046326,
+      "name": "rolling.worker.resource.node.dw",
+      "start": 167971.75503909588
+    },
+    {
+      "detail": {
+        "connectEnd": 167978.87003910542,
+        "connectStart": 167978.87003910542,
+        "decodedBodySize": 8095,
+        "domainLookupEnd": 167978.87003910542,
+        "domainLookupStart": 167978.87003910542,
+        "duration": 459.9250000715256,
+        "encodedBodySize": 3413,
+        "endpoint": "node",
+        "fetchStart": 167978.87003910542,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 167980.37503910065,
+        "responseEnd": 168438.4750391245,
+        "responseStart": 168438.05003905296,
+        "secureConnectionStart": 167978.87003910542,
+        "start": 167978.55003905296,
+        "transferSize": 3713
+      },
+      "duration": 459.9250000715256,
+      "name": "rolling.worker.resource.node.dx",
+      "start": 167978.55003905296
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 7.375,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 168445.6800390482
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 168453.34003913403
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.05000007152557373,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 168453.43503904343
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.010000109672546388,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 168453.5550390482
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1130.9649999141693,
+      "name": "rolling.composer.posting-witnesses",
+      "start": 168479.32503914833
+    },
+    {
+      "detail": {
+        "connectEnd": 168487.04503905773,
+        "connectStart": 168487.04503905773,
+        "decodedBodySize": 160,
+        "domainLookupEnd": 168487.04503905773,
+        "domainLookupStart": 168487.04503905773,
+        "duration": 317.0199999809265,
+        "encodedBodySize": 160,
+        "endpoint": "node",
+        "fetchStart": 168487.04503905773,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 168487.63003909588,
+        "responseEnd": 168803.75503909588,
+        "responseStart": 168803.4450391531,
+        "secureConnectionStart": 168487.04503905773,
+        "start": 168486.73503911495,
+        "transferSize": 460
+      },
+      "duration": 317.0199999809265,
+      "name": "rolling.worker.resource.node.dy",
+      "start": 168486.73503911495
+    },
+    {
+      "detail": {
+        "connectEnd": 168814.2100391388,
+        "connectStart": 168814.2100391388,
+        "decodedBodySize": 10109,
+        "domainLookupEnd": 168814.2100391388,
+        "domainLookupStart": 168814.2100391388,
+        "duration": 311.6399999856949,
+        "encodedBodySize": 3973,
+        "endpoint": "node",
+        "fetchStart": 168814.2100391388,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 168814.92503905296,
+        "responseEnd": 169125.45503914356,
+        "responseStart": 169124.35503911972,
+        "secureConnectionStart": 168814.2100391388,
+        "start": 168813.81503915787,
+        "transferSize": 4273
+      },
+      "duration": 311.6399999856949,
+      "name": "rolling.worker.resource.node.dz",
+      "start": 168813.81503915787
+    },
+    {
+      "detail": {
+        "connectEnd": 169127.6500390768,
+        "connectStart": 169127.6500390768,
+        "decodedBodySize": 2060,
+        "domainLookupEnd": 169127.6500390768,
+        "domainLookupStart": 169127.6500390768,
+        "duration": 481.4599999189377,
+        "encodedBodySize": 1607,
+        "endpoint": "node",
+        "fetchStart": 169127.6500390768,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 169128.14503908157,
+        "responseEnd": 169608.79503905773,
+        "responseStart": 169608.3050390482,
+        "secureConnectionStart": 169127.6500390768,
+        "start": 169127.3350391388,
+        "transferSize": 1907
+      },
+      "duration": 481.4599999189377,
+      "name": "rolling.worker.resource.node.ea",
+      "start": 169127.3350391388
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1767.960000038147,
+      "name": "rolling.action.prepare",
+      "start": 169615.2900390625
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 945.5600000619888,
+      "name": "rolling.action.sync",
+      "start": 169615.43503904343
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 384.9399999380112,
+      "name": "rolling.action.payment-prefetch",
+      "start": 169616.4450391531
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 382.0549999475479,
+      "name": "rolling.action.fee-metadata",
+      "start": 169617.11003911495
+    },
+    {
+      "detail": {
+        "connectEnd": 169689.91003906727,
+        "connectStart": 169689.91003906727,
+        "decodedBodySize": 3007,
+        "domainLookupEnd": 169689.91003906727,
+        "domainLookupStart": 169689.91003906727,
+        "duration": 308,
+        "encodedBodySize": 1495,
+        "endpoint": "node",
+        "fetchStart": 169689.91003906727,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 169690.63003909588,
+        "responseEnd": 169997.6350390911,
+        "responseStart": 169997.31503915787,
+        "secureConnectionStart": 169689.91003906727,
+        "start": 169689.6350390911,
+        "transferSize": 1795
+      },
+      "duration": 308,
+      "name": "rolling.worker.resource.node.eb",
+      "start": 169689.6350390911
+    },
+    {
+      "detail": {
+        "connectEnd": 169730.60503911972,
+        "connectStart": 169730.60503911972,
+        "decodedBodySize": 2793,
+        "domainLookupEnd": 169730.60503911972,
+        "domainLookupStart": 169730.60503911972,
+        "duration": 297.7649999856949,
+        "encodedBodySize": 1350,
+        "endpoint": "node",
+        "fetchStart": 169730.60503911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 169731.2900390625,
+        "responseEnd": 170028.1650390625,
+        "responseStart": 170027.23503911495,
+        "secureConnectionStart": 169730.60503911972,
+        "start": 169730.4000390768,
+        "transferSize": 1650
+      },
+      "duration": 297.7649999856949,
+      "name": "rolling.worker.resource.node.ec",
+      "start": 169730.4000390768
+    },
+    {
+      "detail": {
+        "connectEnd": 169768.0250390768,
+        "connectStart": 169768.0250390768,
+        "decodedBodySize": 363,
+        "domainLookupEnd": 169768.0250390768,
+        "domainLookupStart": 169768.0250390768,
+        "duration": 437.31500005722046,
+        "encodedBodySize": 363,
+        "endpoint": "node",
+        "fetchStart": 169768.0250390768,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 169768.57503914833,
+        "responseEnd": 170205.1000391245,
+        "responseStart": 170204.89503908157,
+        "secureConnectionStart": 169768.0250390768,
+        "start": 169767.78503906727,
+        "transferSize": 663
+      },
+      "duration": 437.31500005722046,
+      "name": "rolling.worker.resource.node.ee",
+      "start": 169767.78503906727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 437.5499999523163,
+      "name": "rolling.proof.native.phase.sync-stream",
+      "start": 169769.84003913403
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 434.2999999523163,
+      "name": "rolling.proof.native.phase.sync-source-snapshot",
+      "start": 169769.8500391245
+    },
+    {
+      "detail": {
+        "connectEnd": 169770.18503904343,
+        "connectStart": 169770.18503904343,
+        "decodedBodySize": 799,
+        "domainLookupEnd": 169770.18503904343,
+        "domainLookupStart": 169770.18503904343,
+        "duration": 433.3400000333786,
+        "encodedBodySize": 799,
+        "endpoint": "node",
+        "fetchStart": 169770.18503904343,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 169770.6500390768,
+        "responseEnd": 170203.2750390768,
+        "responseStart": 170202.96503913403,
+        "secureConnectionStart": 169770.18503904343,
+        "start": 169769.93503904343,
+        "transferSize": 1099
+      },
+      "duration": 433.3400000333786,
+      "name": "rolling.worker.resource.node.ed",
+      "start": 169769.93503904343
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2.0649999380111694,
+      "name": "rolling.action.fee-binding",
+      "start": 169999.23003911972
+    },
+    {
+      "detail": {
+        "connectEnd": 170029.90503907204,
+        "connectStart": 170029.90503907204,
+        "decodedBodySize": 3581,
+        "domainLookupEnd": 170029.90503907204,
+        "domainLookupStart": 170029.90503907204,
+        "duration": 305.49000000953674,
+        "encodedBodySize": 1235,
+        "endpoint": "node",
+        "fetchStart": 170029.90503907204,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 170030.47003912926,
+        "responseEnd": 170335.0700391531,
+        "responseStart": 170334.7600390911,
+        "secureConnectionStart": 170029.90503907204,
+        "start": 170029.58003914356,
+        "transferSize": 1535
+      },
+      "duration": 305.49000000953674,
+      "name": "rolling.worker.resource.node.ef",
+      "start": 170029.58003914356
+    },
+    {
+      "detail": {
+        "connectEnd": 170205.44003915787,
+        "connectStart": 170205.44003915787,
+        "decodedBodySize": 2619,
+        "domainLookupEnd": 170205.44003915787,
+        "domainLookupStart": 170205.44003915787,
+        "duration": 353.2450000047684,
+        "encodedBodySize": 863,
+        "endpoint": "node",
+        "fetchStart": 170205.44003915787,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 170205.98003911972,
+        "responseEnd": 170558.36503911018,
+        "responseStart": 170557.88003909588,
+        "secureConnectionStart": 170205.44003915787,
+        "start": 170205.12003910542,
+        "transferSize": 1163
+      },
+      "duration": 353.2450000047684,
+      "name": "rolling.worker.resource.node.ei",
+      "start": 170205.12003910542
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 351.3200000524521,
+      "name": "rolling.action.policy",
+      "start": 170205.43503904343
+    },
+    {
+      "detail": {
+        "connectEnd": 170205.68503904343,
+        "connectStart": 170205.68503904343,
+        "decodedBodySize": 106,
+        "domainLookupEnd": 170205.68503904343,
+        "domainLookupStart": 170205.68503904343,
+        "duration": 350.125,
+        "encodedBodySize": 106,
+        "endpoint": "node",
+        "fetchStart": 170205.68503904343,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 170206.15503907204,
+        "responseEnd": 170555.69003915787,
+        "responseStart": 170555.30003905296,
+        "secureConnectionStart": 170205.68503904343,
+        "start": 170205.56503915787,
+        "transferSize": 406
+      },
+      "duration": 350.125,
+      "name": "rolling.worker.resource.node.eh",
+      "start": 170205.56503915787
+    },
+    {
+      "detail": {
+        "connectEnd": 170206.64003908634,
+        "connectStart": 170206.64003908634,
+        "decodedBodySize": 1800,
+        "domainLookupEnd": 170206.64003908634,
+        "domainLookupStart": 170206.64003908634,
+        "duration": 351.664999961853,
+        "encodedBodySize": 835,
+        "endpoint": "node",
+        "fetchStart": 170206.64003908634,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 170207.10503911972,
+        "responseEnd": 170558.1650390625,
+        "responseStart": 170557.7600390911,
+        "secureConnectionStart": 170206.64003908634,
+        "start": 170206.50003910065,
+        "transferSize": 1135
+      },
+      "duration": 351.664999961853,
+      "name": "rolling.worker.resource.node.ej",
+      "start": 170206.50003910065
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 347.8200000524521,
+      "name": "rolling.proof.native.phase.sync-postwrite-check",
+      "start": 170207.4000390768
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 347.75,
+      "name": "rolling.proof.native.phase.sync-postwrite-snapshot",
+      "start": 170207.40503907204
+    },
+    {
+      "detail": {
+        "connectEnd": 170207.62503910065,
+        "connectStart": 170207.62503910065,
+        "decodedBodySize": 2598,
+        "domainLookupEnd": 170207.62503910065,
+        "domainLookupStart": 170207.62503910065,
+        "duration": 345.61500000953674,
+        "encodedBodySize": 1072,
+        "endpoint": "node",
+        "fetchStart": 170207.62503910065,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 170208.0100390911,
+        "responseEnd": 170553.10503911972,
+        "responseStart": 170552.67503905296,
+        "secureConnectionStart": 170207.62503910065,
+        "start": 170207.49003911018,
+        "transferSize": 1372
+      },
+      "duration": 345.61500000953674,
+      "name": "rolling.worker.resource.node.eg",
+      "start": 170207.49003911018
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 483.04499995708466,
+      "name": "rolling.action.contract-state",
+      "start": 170564.8850390911
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 791.9300000667572,
+      "name": "rolling.action.predecessor",
+      "start": 170565.2900390625
+    },
+    {
+      "detail": {
+        "connectEnd": 170566.64003908634,
+        "connectStart": 170566.64003908634,
+        "decodedBodySize": 6177,
+        "domainLookupEnd": 170566.64003908634,
+        "domainLookupStart": 170566.64003908634,
+        "duration": 478.875,
+        "encodedBodySize": 2675,
+        "endpoint": "node",
+        "fetchStart": 170566.64003908634,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 170567.2750390768,
+        "responseEnd": 171045.25503909588,
+        "responseStart": 171044.68503904343,
+        "secureConnectionStart": 170566.64003908634,
+        "start": 170566.38003909588,
+        "transferSize": 2975
+      },
+      "duration": 478.875,
+      "name": "rolling.worker.resource.node.ek",
+      "start": 170566.38003909588
+    },
+    {
+      "detail": {
+        "connectEnd": 171050.73003911972,
+        "connectStart": 171050.73003911972,
+        "decodedBodySize": 3599,
+        "domainLookupEnd": 171050.73003911972,
+        "domainLookupStart": 171050.73003911972,
+        "duration": 304.4099999666214,
+        "encodedBodySize": 1286,
+        "endpoint": "node",
+        "fetchStart": 171050.73003911972,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 171051.75503909588,
+        "responseEnd": 171354.8050390482,
+        "responseStart": 171354.38003909588,
+        "secureConnectionStart": 171050.73003911972,
+        "start": 171050.39503908157,
+        "transferSize": 1586
+      },
+      "duration": 304.4099999666214,
+      "name": "rolling.worker.resource.node.el",
+      "start": 171050.39503908157
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 20.949999928474423,
+      "name": "rolling.action.arguments",
+      "start": 171358.23003911972
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 20.15499997138977,
+      "name": "rolling.action.screening",
+      "start": 171358.73003911972
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.14499998092651367,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 171368.53503906727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.040000081062316895,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 171370.7900390625
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.3450000286102295,
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "start": 171370.87503910065
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 838.6950000524521,
+      "name": "rolling.action.history-witnesses",
+      "start": 171378.92003905773
+    },
+    {
+      "detail": {
+        "connectEnd": 171382.19003915787,
+        "connectStart": 171382.19003915787,
+        "decodedBodySize": 10109,
+        "domainLookupEnd": 171382.19003915787,
+        "domainLookupStart": 171382.19003915787,
+        "duration": 459,
+        "encodedBodySize": 3974,
+        "endpoint": "node",
+        "fetchStart": 171382.19003915787,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 171382.87503910065,
+        "responseEnd": 171840.78503906727,
+        "responseStart": 171840.2750390768,
+        "secureConnectionStart": 171382.19003915787,
+        "start": 171381.78503906727,
+        "transferSize": 4274
+      },
+      "duration": 459,
+      "name": "rolling.worker.resource.node.em",
+      "start": 171381.78503906727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.040000081062316895,
+      "name": "rolling.action.fee-prepare",
+      "start": 171403.7750390768
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.0549999475479126,
+      "name": "rolling.action.fee-simulate",
+      "start": 171403.83003914356
+    },
+    {
+      "detail": null,
+      "duration": 36.81500005722046,
+      "name": "rolling.transaction.estimating",
+      "start": 171403.89999997616
+    },
+    {
+      "detail": null,
+      "duration": 35.0349999666214,
+      "name": "rolling.transaction.preparing",
+      "start": 171442.0950000286
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 4.924999952316284,
+      "name": "rolling.proof.wallet.phase.account-request",
+      "start": 171476.98503911495
+    },
+    {
+      "detail": null,
+      "duration": 8543.055000066757,
+      "name": "rolling.transaction.proving",
+      "start": 171477.14499998093
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 8439.75,
+      "name": "rolling.proof.wallet.phase.prove-tx-with-public-validation",
+      "start": 171481.98003911972
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.5200001001358032,
+      "name": "rolling.proof.native.phase.queue-and-anchor",
+      "start": 171482.29503905773
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.2400000095367432,
+      "name": "rolling.proof.native.phase.contract-sync",
+      "start": 171482.8500391245
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.6800000667572021,
+      "name": "rolling.proof.native.phase.sync-binding",
+      "start": 171482.91003906727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.4499999284744262,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "start": 171483.6000391245
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.sync-records",
+      "start": 171484.06003904343
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1219.5,
+      "name": "rolling.proof.native.phase.private-execution",
+      "start": 171484.09003913403
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.5199999809265137,
+      "name": "rolling.proof.native.phase.oracle-get-capsule",
+      "start": 171499.32503914833
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.06500005722045898,
+      "name": "rolling.proof.native.phase.oracle-get-auth-witness",
+      "start": 171501.0100390911
+    },
+    {
+      "detail": {
+        "connectEnd": 171530.8050390482,
+        "connectStart": 171530.8050390482,
+        "decodedBodySize": 11243,
+        "domainLookupEnd": 171530.8050390482,
+        "domainLookupStart": 171530.8050390482,
+        "duration": 515.4099999666214,
+        "encodedBodySize": 4683,
+        "endpoint": "node",
+        "fetchStart": 171530.8050390482,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 171531.40503907204,
+        "responseEnd": 172045.86003911495,
+        "responseStart": 172045.3500391245,
+        "secureConnectionStart": 171530.8050390482,
+        "start": 171530.45003914833,
+        "transferSize": 4983
+      },
+      "duration": 515.4099999666214,
+      "name": "rolling.worker.resource.node.en",
+      "start": 171530.45003914833
+    },
+    {
+      "detail": {
+        "connectEnd": 171843.36503911018,
+        "connectStart": 171843.36503911018,
+        "decodedBodySize": 2060,
+        "domainLookupEnd": 171843.36503911018,
+        "domainLookupStart": 171843.36503911018,
+        "duration": 316.97000002861023,
+        "encodedBodySize": 1609,
+        "endpoint": "node",
+        "fetchStart": 171843.36503911018,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 171844.1800390482,
+        "responseEnd": 172159.96503913403,
+        "responseStart": 172158.9150390625,
+        "secureConnectionStart": 171843.36503911018,
+        "start": 171842.99503910542,
+        "transferSize": 1909
+      },
+      "duration": 316.97000002861023,
+      "name": "rolling.worker.resource.node.eo",
+      "start": 171842.99503910542
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.2799999713897705,
+      "name": "rolling.proof.native.phase.oracle-notify-created-nullifier",
+      "start": 172053.99503910542
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.07999992370605469,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 172061.23003911972
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.31999993324279785,
+      "name": "rolling.proof.native.phase.oracle-notify-revertible-phase-start",
+      "start": 172061.31503915787
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 629.2099999189377,
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "start": 172070.44003915787
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 608.9800000190735,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 172088.49003911018
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.04500007629394531,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 172216.4000390768
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.869999885559082,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 172217.06503915787
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.5999999046325684,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 172277.6950391531
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.0549999475479126,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "start": 172283.87503910065
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.039999961853027344,
+      "name": "rolling.proof.native.phase.oracle-is-nullifier-pending",
+      "start": 172284.07503914833
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.1850000619888306,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collection",
+      "start": 172284.1350390911
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 172285.44003915787
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.005000114440917969,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 172285.56003904343
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.12000000476837158,
+      "name": "rolling.proof.native.phase.oracle-get-note-hash-membership-witness",
+      "start": 172289.15503907204
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.09999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-public-data-witness",
+      "start": 172294.95003914833
+    },
+    {
+      "detail": {
+        "connectEnd": 172311.67503905296,
+        "connectStart": 172311.67503905296,
+        "decodedBodySize": 5767,
+        "domainLookupEnd": 172311.67503905296,
+        "domainLookupStart": 172311.67503905296,
+        "duration": 310.7700001001358,
+        "encodedBodySize": 2510,
+        "endpoint": "node",
+        "fetchStart": 172311.67503905296,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 172312.50003910065,
+        "responseEnd": 172621.56503915787,
+        "responseStart": 172618.70503914356,
+        "secureConnectionStart": 172311.67503905296,
+        "start": 172310.79503905773,
+        "transferSize": 2810
+      },
+      "duration": 310.7700001001358,
+      "name": "rolling.worker.resource.node.ep",
+      "start": 172310.79503905773
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 172625.4300390482
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.06499993801116943,
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "start": 172625.70003914833
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.0800000429153442,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 172625.7900390625
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2.4600000381469727,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 172627.4000390768
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "start": 172629.97003912926
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.12000000476837158,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "start": 172630.1800390482
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.06499993801116943,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "start": 172630.84503912926
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "start": 172630.92003905773
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.015000104904174805,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "start": 172630.93503904343
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1,
+      "name": "rolling.proof.native.phase.kernel-class-hints",
+      "start": 172704.1500390768
+    },
+    {
+      "detail": {
+        "connectEnd": 172705.11003911495,
+        "connectStart": 172705.11003911495,
+        "decodedBodySize": 7904,
+        "domainLookupEnd": 172705.11003911495,
+        "domainLookupStart": 172705.11003911495,
+        "duration": 467.0349999666214,
+        "encodedBodySize": 3431,
+        "endpoint": "node",
+        "fetchStart": 172705.11003911495,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 172705.6800390482,
+        "responseEnd": 173171.87503910065,
+        "responseStart": 173171.48503911495,
+        "secureConnectionStart": 172705.11003911495,
+        "start": 172704.84003913403,
+        "transferSize": 3731
+      },
+      "duration": 467.0349999666214,
+      "name": "rolling.worker.resource.node.eq",
+      "start": 172704.84003913403
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1316.3400000333786,
+      "name": "rolling.proof.native.phase.kernel-body",
+      "start": 172705.15503907204
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 7.429999947547913,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "start": 173931.87503910065
+    },
+    {
+      "detail": {
+        "connectEnd": 173933.64003908634,
+        "connectStart": 173933.64003908634,
+        "decodedBodySize": 140230,
+        "domainLookupEnd": 173933.64003908634,
+        "domainLookupStart": 173933.64003908634,
+        "duration": 5.899999976158142,
+        "encodedBodySize": 28656,
+        "endpoint": "wallet-asset",
+        "fetchStart": 173933.64003908634,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 173935.20503914356,
+        "responseEnd": 173937.90503907204,
+        "responseStart": 173936.94003915787,
+        "secureConnectionStart": 173933.64003908634,
+        "start": 173932.00503909588,
+        "transferSize": 0
+      },
+      "duration": 5.899999976158142,
+      "name": "rolling.worker.resource.wallet-asset.er",
+      "start": 173932.00503909588
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 17.87000000476837,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "start": 173939.32503914833
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 25.009999990463257,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "start": 173957.2250391245
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 22.855000019073486,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "start": 173982.26503908634
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 12.600000023841858,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "start": 174005.1500390768
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.940000057220459,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "start": 174017.78503906727
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 545.9750000238419,
+      "name": "rolling.proof.native.phase.validation",
+      "start": 174022.42003905773
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 94.2150000333786,
+      "name": "rolling.proof.native.phase.validation-transaction",
+      "start": 174031.40503907204
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 442.6399999856949,
+      "name": "rolling.proof.native.phase.public-execution",
+      "start": 174125.6950391531
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 438.4800000190735,
+      "name": "rolling.proof.native.phase.admission-check",
+      "start": 174129.8350391388
+    },
+    {
+      "detail": {
+        "connectEnd": 174169.00003910065,
+        "connectStart": 174169.00003910065,
+        "decodedBodySize": 12060,
+        "domainLookupEnd": 174169.00003910065,
+        "domainLookupStart": 174169.00003910065,
+        "duration": 397.5700000524521,
+        "encodedBodySize": 4172,
+        "endpoint": "node",
+        "fetchStart": 174169.00003910065,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 174170.5400390625,
+        "responseEnd": 174564.34503912926,
+        "responseStart": 174561.9150390625,
+        "secureConnectionStart": 174169.00003910065,
+        "start": 174166.7750390768,
+        "transferSize": 4472
+      },
+      "duration": 397.5700000524521,
+      "name": "rolling.worker.resource.node.es",
+      "start": 174166.7750390768
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 5289.310000061989,
+      "name": "rolling.proof.native.phase.remote-proof",
+      "start": 174568.40503907204
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 57.09500002861023,
+      "name": "rolling.proof.transport.serialize",
+      "start": 174568.73003911972
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3.440000057220459,
+      "name": "rolling.proof.transport.circuit-ids",
+      "start": 174568.77003908157
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 41.3400000333786,
+      "name": "rolling.proof.transport.dictionary",
+      "start": 174572.4750391245
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 11.799999952316284,
+      "name": "rolling.proof.transport.compress",
+      "start": 174613.85503911972
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 632.7099999189377,
+      "name": "rolling.proof.transport.submit",
+      "start": 174625.84503912926
+    },
+    {
+      "detail": {
+        "connectEnd": 174626.74503910542,
+        "connectStart": 174626.74503910542,
+        "decodedBodySize": 73,
+        "domainLookupEnd": 174626.74503910542,
+        "domainLookupStart": 174626.74503910542,
+        "duration": 631.7849999666214,
+        "encodedBodySize": 73,
+        "endpoint": "prover-submit",
+        "fetchStart": 174626.74503910542,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 174627.64503908157,
+        "responseEnd": 175257.99503910542,
+        "responseStart": 175257.2600390911,
+        "secureConnectionStart": 174626.74503910542,
+        "serverBody": 342.398,
+        "serverBodyBytes": 162002,
+        "serverBodyChunks": 62,
+        "serverBodyFirst": 10.674,
+        "serverBodyGap": 92.014,
+        "serverQueue": 0.887,
+        "serverValidate": 0.361,
+        "start": 174626.2100391388,
+        "transferSize": 373
+      },
+      "duration": 631.7849999666214,
+      "name": "rolling.worker.resource.prover-submit.et",
+      "start": 174626.2100391388
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3698.889999985695,
+      "name": "rolling.proof.transport.wait",
+      "start": 175258.66003906727
+    },
+    {
+      "detail": {
+        "connectEnd": 175259.56503915787,
+        "connectStart": 175259.56503915787,
+        "decodedBodySize": 149487,
+        "domainLookupEnd": 175259.56503915787,
+        "domainLookupStart": 175259.56503915787,
+        "duration": 3697.2799999713898,
+        "encodedBodySize": 149487,
+        "endpoint": "prover-result",
+        "fetchStart": 175259.56503915787,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 175260.60503911972,
+        "responseEnd": 178956.54503905773,
+        "responseStart": 175546.0700391531,
+        "secureConnectionStart": 175259.56503915787,
+        "start": 175259.26503908634,
+        "transferSize": 149787
+      },
+      "duration": 3697.2799999713898,
+      "name": "rolling.worker.resource.prover-result.eu",
+      "start": 175259.26503908634
+    },
+    {
+      "detail": {
+        "durationMs": 0.373003002256155,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.persist",
+      "start": 178957.04503905773
+    },
+    {
+      "detail": {
+        "durationMs": 0.021219998598098755,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.queue-wait",
+      "start": 178957.11503911018
+    },
+    {
+      "detail": {
+        "durationMs": 3244.879588998854,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready",
+      "start": 178957.12503910065
+    },
+    {
+      "detail": {
+        "durationMs": 0.6036150000290945,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.read",
+      "start": 178957.1350390911
+    },
+    {
+      "detail": {
+        "durationMs": 88.75531000003684,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.decompress",
+      "start": 178957.14003908634
+    },
+    {
+      "detail": {
+        "durationMs": 122.0264470000984,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.binding",
+      "start": 178957.14503908157
+    },
+    {
+      "detail": {
+        "durationMs": 61.44519700005185,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.backend",
+      "start": 178957.1500390768
+    },
+    {
+      "detail": {
+        "durationMs": 2969.7968539999565,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.native-prove",
+      "start": 178957.1500390768
+    },
+    {
+      "detail": {
+        "durationMs": 0.5469439999433234,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-start",
+      "start": 178957.16003906727
+    },
+    {
+      "detail": {
+        "durationMs": 426.4385390002281,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-load",
+      "start": 178957.17503905296
+    },
+    {
+      "detail": {
+        "durationMs": 1431.796680000145,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-accumulate",
+      "start": 178957.1800390482
+    },
+    {
+      "detail": {
+        "durationMs": 1058.3880979999667,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-prove",
+      "start": 178957.1800390482
+    },
+    {
+      "detail": {
+        "durationMs": 48.374393999925815,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-verify",
+      "start": 178957.19003915787
+    },
+    {
+      "detail": {
+        "durationMs": 2.029404000029899,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-compress",
+      "start": 178957.1950391531
+    },
+    {
+      "detail": {
+        "durationMs": 0.21564199996646496,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-encode",
+      "start": 178957.1950391531
+    },
+    {
+      "detail": {
+        "durationMs": 3242.915505000041,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.child-total",
+      "start": 178957.20003914833
+    },
+    {
+      "detail": {
+        "durationMs": 0.04906099662184715,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.ready-wait",
+      "start": 178957.20003914833
+    },
+    {
+      "detail": {
+        "durationMs": 3244.6083460003138,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.dispatch-to-result",
+      "start": 178957.2100391388
+    },
+    {
+      "detail": {
+        "durationMs": 0.07936100289225578,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready-to-snapshot",
+      "start": 178957.2100391388
+    },
+    {
+      "detail": {
+        "connectEnd": 178957.67003905773,
+        "connectStart": 178957.67003905773,
+        "decodedBodySize": 21,
+        "domainLookupEnd": 178957.67003905773,
+        "domainLookupStart": 178957.67003905773,
+        "duration": 289.40499997138977,
+        "encodedBodySize": 21,
+        "endpoint": "prover-job",
+        "fetchStart": 178957.67003905773,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 178958.78003907204,
+        "responseEnd": 179246.7600390911,
+        "responseStart": 179244.6000391245,
+        "secureConnectionStart": 178957.67003905773,
+        "start": 178957.35503911972,
+        "transferSize": 321
+      },
+      "duration": 289.40499997138977,
+      "name": "rolling.worker.resource.prover-job.ev",
+      "start": 178957.35503911972
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 43.769999980926514,
+      "name": "rolling.proof.local.decompress",
+      "start": 178959.22003912926
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 842.4599999189377,
+      "name": "rolling.proof.local.verify",
+      "start": 179003.09003913403
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 15.264824151992798,
+      "name": "rolling.proof.native.phase.worker-verify-before-entry",
+      "start": 179003.36503911018
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 826.4199999570847,
+      "name": "rolling.proof.native.phase.worker-verify-cbind",
+      "start": 179018.62986326218
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 826.3149999380112,
+      "name": "rolling.proof.native.phase.worker-verify-wasm",
+      "start": 179018.69986331463
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.40017592906951904,
+      "name": "rolling.proof.native.phase.worker-verify-after-exit",
+      "start": 179845.04986321926
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.1399999856948853,
+      "name": "rolling.proof.native.phase.proof-public-inputs",
+      "start": 179857.7600390911
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 59.545000076293945,
+      "name": "rolling.proof.native.phase.result-and-tag-persistence",
+      "start": 179859.04503905773
+    },
+    {
+      "detail": {
+        "durationMs": 8376.629999995232,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.total",
+      "start": 179921.94003915787
+    },
+    {
+      "detail": {
+        "durationMs": 0,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.sync",
+      "start": 179921.95003914833
+    },
+    {
+      "detail": {
+        "durationMs": 1216.7650001049042,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.private-witness",
+      "start": 179921.95503914356
+    },
+    {
+      "detail": {
+        "durationMs": 1041.0500000715256,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.kernel-witness",
+      "start": 179921.9750391245
+    },
+    {
+      "detail": {
+        "durationMs": 537.3600000143051,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.public-validation",
+      "start": 179921.98003911972
+    },
+    {
+      "detail": {
+        "durationMs": 5289.3550000190735,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.proof-transport",
+      "start": 179921.98003911972
+    },
+    {
+      "detail": {
+        "durationMs": 292.0999997854233,
+        "kind": "aggregate",
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.unaccounted",
+      "start": 179921.98503911495
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 17.514999985694885,
+      "name": "rolling.proof.wallet.phase.to-tx",
+      "start": 179921.99503910542
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 18.9449999332428,
+      "name": "rolling.proof.wallet.phase.guard-before-journal",
+      "start": 179939.6000391245
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 44.50499999523163,
+      "name": "rolling.proof.wallet.phase.journal-prepare",
+      "start": 179958.57503914833
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 16.830000042915344,
+      "name": "rolling.proof.wallet.phase.journal-signed",
+      "start": 180003.13003909588
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "start": 180020.0100390911
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3.684999942779541,
+      "name": "rolling.proof.wallet.phase.signed-guard",
+      "start": 180020.1000391245
+    },
+    {
+      "detail": null,
+      "duration": 500.57999992370605,
+      "name": "rolling.transaction.submitting",
+      "start": 180020.21000003815
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 496.52500009536743,
+      "name": "rolling.proof.wallet.phase.submit-to-aztec",
+      "start": 180023.79503905773
+    },
+    {
+      "detail": {
+        "connectEnd": 180028.25503909588,
+        "connectStart": 180028.25503909588,
+        "decodedBodySize": 42,
+        "domainLookupEnd": 180028.25503909588,
+        "domainLookupStart": 180028.25503909588,
+        "duration": 491.27500009536743,
+        "encodedBodySize": 42,
+        "endpoint": "node",
+        "fetchStart": 180028.25503909588,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 180029.1350390911,
+        "responseEnd": 180519.07503914833,
+        "responseStart": 180518.61503911015,
+        "secureConnectionStart": 180028.25503909588,
+        "start": 180027.80003905296,
+        "transferSize": 342
+      },
+      "duration": 491.27500009536743,
+      "name": "rolling.worker.resource.node.ew",
+      "start": 180027.80003905296
+    },
+    {
+      "detail": {
+        "connectEnd": 180552.9150390625,
+        "connectStart": 180552.9150390625,
+        "decodedBodySize": 136,
+        "domainLookupEnd": 180552.9150390625,
+        "domainLookupStart": 180552.9150390625,
+        "duration": 301.2150000333786,
+        "encodedBodySize": 136,
+        "endpoint": "node",
+        "fetchStart": 180552.9150390625,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 180553.59003913403,
+        "responseEnd": 180853.8450391293,
+        "responseStart": 180853.3900390863,
+        "secureConnectionStart": 180552.9150390625,
+        "start": 180552.63003909588,
+        "transferSize": 436
+      },
+      "duration": 301.2150000333786,
+      "name": "rolling.worker.resource.node.ex",
+      "start": 180552.63003909588
+    },
+    {
+      "detail": {
+        "connectEnd": 181859.5100390911,
+        "connectStart": 181859.5100390911,
+        "decodedBodySize": 136,
+        "domainLookupEnd": 181859.5100390911,
+        "domainLookupStart": 181859.5100390911,
+        "duration": 303.56500005722046,
+        "encodedBodySize": 136,
+        "endpoint": "node",
+        "fetchStart": 181859.5100390911,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 181861.5950391293,
+        "responseEnd": 182162.3200391531,
+        "responseStart": 182161.87503910065,
+        "secureConnectionStart": 181859.5100390911,
+        "start": 181858.75503909588,
+        "transferSize": 436
+      },
+      "duration": 303.56500005722046,
+      "name": "rolling.worker.resource.node.aa",
+      "start": 181858.75503909588
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 332.97000002861023,
+      "name": "rolling.proof.receipt.phase.read",
+      "start": 183164.74503910544
+    },
+    {
+      "detail": {
+        "connectEnd": 183165.6950391531,
+        "connectStart": 183165.6950391531,
+        "decodedBodySize": 136,
+        "domainLookupEnd": 183165.6950391531,
+        "domainLookupStart": 183165.6950391531,
+        "duration": 331.25999999046326,
+        "encodedBodySize": 136,
+        "endpoint": "node",
+        "fetchStart": 183165.6950391531,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 183166.7600390911,
+        "responseEnd": 183496.2750390768,
+        "responseStart": 183495.87003910544,
+        "secureConnectionStart": 183165.6950391531,
+        "start": 183165.0150390863,
+        "transferSize": 436
+      },
+      "duration": 331.25999999046326,
+      "name": "rolling.worker.resource.node.ab",
+      "start": 183165.0150390863
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.receipt.phase.pending",
+      "start": 183497.78503906727
+    },
+    {
+      "detail": null,
+      "duration": 441.835000038147,
+      "name": "rolling.reader.update",
+      "start": 184277.7599999905
+    },
+    {
+      "detail": null,
+      "duration": 5.205000042915344,
+      "name": "rolling.reader.dom",
+      "start": 184714.3600000143
+    },
+    {
+      "detail": null,
+      "duration": 5.240000009536743,
+      "name": "rolling.post.composer-close",
+      "start": 184725.47500002384
+    }
+  ],
+  "observation": {
+    "click": 166559.03999996185,
+    "confirmation": "pending",
+    "postId": "post-9453107015421205539432382005679159514372738386618680088706709912061351820688",
+    "ready": 184736.77499997616,
+    "txHash": "0x198a3749ddc168188ef8c9c50d5270f95603737be734b866efb3afc192ad0024"
+  },
+  "source": "8ae95b3d839caf7293c0aff4ab0031d0dacec552"
+}

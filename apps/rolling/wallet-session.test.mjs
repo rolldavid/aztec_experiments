@@ -1717,3 +1717,16 @@ test('ordinary session binds source-plan warmup to exact account contracts befor
   assert.equal(warms,1);assert.equal(discoveries,1);assert.equal(f.state.syncs,syncs);assert.equal(f.state.sends,0);assert.equal(f.state.active,false);
  }finally{await session.close();}
 });
+
+for(const phase of ['before','sync','discovery','witness'])test('composer supersession drains completed native boundary: '+phase,async()=>{
+ const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),controller=new AbortController();let discoveries=0,witnesses=0;
+ f.input.sdk.prefetchOrdinaryPostWitnesses=async()=>{witnesses++;if(phase==='witness'){entered.resolve();await gate.promise;}};
+ const session=await createRollingWalletSession(f.input),originalSync=f.pxe.sync,originalDiscovery=f.pxe.prepareOrdinaryPostState;
+ f.pxe.sync=async()=>{if(phase==='sync'){entered.resolve();await gate.promise;}return originalSync();};
+ f.pxe.prepareOrdinaryPostState=async targets=>{discoveries++;await originalDiscovery(targets);if(phase==='discovery'){entered.resolve();await gate.promise;}};
+ if(phase==='before')controller.abort();let done=false;const work=session.preparePostingState('9',{signal:controller.signal}).finally(()=>done=true);
+ try{
+  if(phase!=='before'){await entered.promise;controller.abort();await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.state.active,true);await assert.rejects(session.application.ownedIdentities(),{code:'ROLLING_BUSY'});gate.resolve();}
+  await work;assert.equal(f.state.active,false);assert.equal(f.state.sends,0);assert.equal(discoveries,['discovery','witness'].includes(phase)?1:0);assert.equal(witnesses,phase==='witness'?1:0);
+ }finally{gate.resolve();await session.close();}
+});

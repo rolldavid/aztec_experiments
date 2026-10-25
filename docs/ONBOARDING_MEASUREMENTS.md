@@ -1,5 +1,28 @@
 # Measured onboarding, 25 October 2026
 
+Off-chain bookmark: click→usable Unbookmark control11.660ms on8ae95. This measures local UI readiness, not remote encrypted-preference replication durability; no blockchain transaction. Raw evidence`bookmark-8ae95.json`.
+
+## Immediate funded opening and delayed composition — 26 October,8ae95b3d
+
+Published source `8ae95b3d839caf7293c0aff4ab0031d0dacec552`. This run selects the test wallet as soon as its control appears after reload, removing the earlier harness pause before selection. It reopens the now-funded account; this is a different state from the preceding unfunded payment quote. Automatic signature approval included.
+
+| Interval | Observed |
+| --- | ---: |
+| Wallet→readyWrite; new SDK download |10.753415s|
+| Wallet→readyWrite; cached SDK, immediate selection |6.321715s|
+| Post→actual included feed text visible after composition pause |18.177735s|
+
+First funded run: wallet→worker initialization2.298s, deployment3.135s, native session0.919s, sync1.511s, account workflow/discovery/fee-note readiness2.879s plus small handoffs. Main SDK resource was4.183s, partly beforewallet selection. Repeat native ACVM cache hit:3,634,847bytes, cached response ready0.96ms, resource duration418.98ms; ABI968,847bytes, cache ready0.79ms, total16.9ms. These resource durations are not pure network time.
+
+Post preparation overlap works: actual action.prepare1.767960s, compared with3.295275s onfb619. However the click first awaited3.052770s of an already-running composer.prepare job; actualaction started3.056250s afterclick. The composer job began580.735ms beforeclick and lasted3.633505s. It includes1.130965s speculative posting-witness work; actualaction then separately synchronizes/selects current state. Publiccheckpoint callbacks can restart that full prewarm during editing. Removing those unnecessary restarts and cooperative supersession are assigned; this observation alone does not identify which trigger started that particular job.
+
+Actual action: sync945.560ms; fresh contractstate483.045ms overlaps predecessor791.930ms; arguments20.950ms. Witness/proof/validation8.543055s, submission500.580ms. The exact included feed rendered4.216415s after submission ended; the native receipt callback arrived75.380ms later (its inclusion span4.291795s), so the supplemental completed-spans file preserves that late timing without changing the click→visible endpoint. This is not an optimistic local post. Target15s and opening2s remain unmet.
+
+Aztec transaction `0x198a3749ddc168188ef8c9c50d5270f95603737be734b866efb3afc192ad0024`; post9453107015421205539432382005679159514372738386618680088706709912061351820688. Raw files:`funded-opening-8ae95-run1.json`,`funded-opening-8ae95-run2.json`,`post-8ae95.json`,`post-8ae95-completed-spans.json` under the same evidence directory.
+
+Integrated focused checks:256post path,148claim qualification,51diagnostics,9funding/lifecycle; SDK and six-script actual-worker evaluation passed. Published changes preserve native/current authorization, overlap independent reads, reuse operation-owned immutable funding observations, and retain128individual resource records. All7core service PIDs unchanged; no contract/dependency redeployment. Fresh Ethereum claim after this batch has not yet been remeasured; precedingfb619signup is not evidence of this batch's claim speedup.
+
+
 ## Published measurement — 26 October, fb61925c
 
 UI/source `fb61925ce5d926c551f710c3ed0914ee4e4db3af`, actual existing IAB tab, Sepolia11155111/stable6, same Ethereum disposable test wallet. Automatic signature/payment approvals included; human MetaMask dwell is not measured. Normal signed-out account opening; no new-test shortcut in either timed opening. A fresh unfunded identity was selected before those runs. No mainnet funds.

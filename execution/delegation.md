@@ -219,3 +219,7 @@ Current continuation: root integrates normal-opening gates; private_tips investi
 ## 26 October live measurement continuation
 
 Root measured published fb619 normal opening3.256s repeat/7.880s cold-asset, freshsignup58.075s and includedvisiblepost19.920s; no target completion. Root owns retained build, publication and existing IAB. private_tips investigates changed-anchor post preparation and drafts safe overlap; pending_feed_release investigates combined claim read wave. pending_reply_ui independently reviews both. Reviewed mature funding cache and bounded sync diagnostics integrated with9+51checks; source publication pending. No extra browser/profile/dependency copy.
+
+## 26 October immediate-opening correction
+
+Live8ae immediate funded opening10.753s cold/6.322s warm; delayedpost18.178s. Root identified3.053s composer prewarm wait before realaction; pending_reply_ui implements checkpoint-restart removal/cooperative supersession, private_tips independently approved; root74checks and actualworker build pass. Composer-only publish next keeps SDK unchanged. private_tips drafts native artifact boundaries; pending_feed_release drafts SHA-bound public registration-only descriptor; peer reviews ongoing. No all-flow completion, no skipped current authority.

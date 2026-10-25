@@ -2,6 +2,12 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Current live update — 26 October,8ae95b3d
+
+Live UI/source `8ae95b3d839caf7293c0aff4ab0031d0dacec552`; master and both app branches pushed. Actual immediate funded opening wallet→readyWrite10.753415s coldSDK /6.321715s cachedSDK. Actual delayed-composer135char post18.177735s click→included visible.2s/15s/all-flow50% targets remain incomplete. Previous3.256s unfunded quote run allowed more prewarming beforewalletselection and must not be presented as immediate opening. Latest source overlaps post/claim reads, reconnects owned funding cache, preserves bounded per-request/sync timing; focused256+148+51+9checks and actualworker build passed. Services unchanged.
+
+Concrete next defect: Post awaited3.052770s of an already-running composer prewarm before realaction. Checkpoint changes can restart full speculative preparation. pending_reply_ui fixes restart/supersession; private_tips splits unused/duplicated inline native artifacts from mainSDK; pending_feed_release drafts exact published deployment registration descriptor and studies serialfunded status reads. Root remains sole publisher/realbrowser owner. Latest data [onboarding measurements](docs/ONBOARDING_MEASUREMENTS.md). No new Ethereum claim was measured after8ae; do not claim funding speedup from its tests.
+
 ## Latest measured release — 26 October, fb61925c
 
 Live UI/source `fb61925ce5d926c551f710c3ed0914ee4e4db3af`, pushed to master and both application branches. All7core service PIDs unchanged. Normal unfunded wallet→enabledPay first-new-asset visit7.879700s; repeat visit3.256300s. Full realETHsignup Pay→readyWrite58.075380s, new account first135-character post click→actualAztecIncludedVisible19.919695s. Goals2s/15s/allflows50% remain incomplete. Repeat opening improves from0d23 6.623745–6.832120s; fullsignup/post did not improve in these observations. Raw traces and stage definitions: [onboarding measurements](docs/ONBOARDING_MEASUREMENTS.md).
@@ -74,7 +80,7 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/fb61925ce5d926c551f710c3ed0914ee4e4db3af` |
+| Browser UI | `/opt/rolling-ui/releases/8ae95b3d839caf7293c0aff4ab0031d0dacec552` |
 | Running application | `/opt/rolling-app/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Prover | `/opt/board-prover/releases/fresh-board-bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Bok | `/opt/rolling-bok/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |

@@ -594,17 +594,21 @@ for(const outcome of ['confirmed','unknown'])test(`rendered exact submitted post
  f.panel.observePublicPosts([post],snapshot);assert.equal(reveals.length,1,'completion cannot re-arm a revealed post');
 });
 
- test('composer native preparation is nonblocking, checkpoint-coalesced, and Post joins it',{timeout:3000},async t=>{
- const gates=[Promise.withResolvers(),Promise.withResolvers()],started=Promise.withResolvers();let warms=0;
- const f=await fixture(t,{warm:async()=>{const index=warms++;started.resolve();await gates[index]?.promise;},posting:{}});
+ test('Post supersedes speculative work but joins its active native phase; checkpoints never rewarm',{timeout:3000},async t=>{
+ const gate=Promise.withResolvers(),started=Promise.withResolvers();let warms=0,signal;
+ const f=await fixture(t,{warm:async(_deposit,options)=>{warms++;signal=options.signal;started.resolve();await gate.promise;},posting:{}});
  await f.started.promise;f.balance.resolve({available:true,availableCredit:'0'});await started.promise;
- const editor=f.document.querySelector('textarea');editor.value='Native preparation keeps typing free';editor.fire('input');
- assert.equal(editor.disabled,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
- f.panel.observePublicPosts([],warmHead(80));f.panel.observePublicPosts([],warmHead(81));assert.equal(warms,1);
- gates[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(warms,2);
- f.panel.observePublicPosts([],warmHead(81));assert.equal(warms,2);
- f.document.querySelector('[data-action-review]').fire('click');await Promise.resolve();assert.equal(f.prepared(),null);
- gates[1].resolve();await f.document.until(()=>!f.document.querySelector('dialog').open);assert.equal(f.prepared().content,editor.value);assert.equal(warms,2);
+ const editor=f.document.querySelector('textarea');editor.value='Current submitted content';editor.fire('input');
+ assert.equal(editor.disabled,false);f.panel.observePublicPosts([],warmHead(80));f.panel.observePublicPosts([],warmHead(81));assert.equal(warms,1);
+ f.document.querySelector('[data-action-review]').fire('click');await Promise.resolve();assert.equal(signal.aborted,true);assert.equal(f.prepared(),null);
+ gate.resolve();await f.document.until(()=>!f.document.querySelector('dialog').open);assert.equal(f.prepared().content,editor.value);assert.equal(warms,1);assert.equal(f.submissions.length,1);
+ });
+ test('completed composer prewarm is not restarted by later checkpoints before Post',{timeout:3000},async t=>{
+ let warms=0;const f=await fixture(t,{balanceRead:async()=>({available:true,availableCredit:'0'}),warm:async()=>{if(++warms>1)await new Promise(()=>{});},posting:{}});
+ await new Promise(setImmediate);assert.equal(warms,1);
+ for(let n=80;n<90;n++)f.panel.observePublicPosts([],warmHead(n));await new Promise(setImmediate);assert.equal(warms,1);
+ const editor=f.document.querySelector('textarea');editor.value='Edited after checkpoint';editor.fire('input');f.document.querySelector('[data-action-review]').fire('click');
+ await f.document.until(()=>!f.document.querySelector('dialog').open);assert.equal(f.prepared().content,'Edited after checkpoint');assert.equal(warms,1);
  });
  test('closing composer stops follow-up preparation and background failure stays invisible',{timeout:3000},async t=>{
  const gate=Promise.withResolvers(),started=Promise.withResolvers();let warms=0;

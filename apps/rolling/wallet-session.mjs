@@ -607,20 +607,23 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    });
   },
  });
- async function preparePostingState(deposit,{refreshFeeCredit=false}={}){
-  if(typeof refreshFeeCredit!=='boolean')throw fail('ROLLING_INVALID_ACTION');
+ async function preparePostingState(deposit,{refreshFeeCredit=false,signal}={}){
+  if(typeof refreshFeeCredit!=='boolean'||signal!==undefined&&!(signal instanceof AbortSignal))throw fail('ROLLING_INVALID_ACTION');
   if(typeof deposit!=='string'||!(/^(?:[1-9][0-9]{0,76}|0x[0-9a-f]{64})$/.test(deposit))||BigInt(deposit)===0n)throw fail('ROLLING_INVALID_ACTION');
   return locked(async()=>{
-  await guardRoute();
+  await guardRoute();if(signal?.aborted)return;
   const results=await Promise.allSettled([()=>pxe.sync(),()=>app.prefetchContext()].map(read=>Promise.resolve().then(read)));
   const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
-  await guardRoute();await initializeAccount();
+  // Supersession skips only not-yet-started hints. Each active native phase
+  // and its siblings finish under the existing account lease.
+  await guardRoute();if(signal?.aborted)return;await initializeAccount();
+  await guardRoute();if(signal?.aborted)return;
   await pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress});
-  await guardRoute();
+  await guardRoute();if(signal?.aborted)return;
   // The same screening call also primes only its required native witnesses,
   // including mature flags. Post still selects and verifies at its own anchor.
   await measureRollingStage('composer.posting-witnesses',()=>app.prefetchPostingWitnesses(deposit));
-  await guardRoute();
+  await guardRoute();if(signal?.aborted)return;
   // Optional display refresh shares this exact native sync and account lease.
   // It never changes payment readiness; Post still validates its own payment.
   if(refreshFeeCredit){const credit=await app.readPrivateFeeCredit();await guardRoute();return credit;}
