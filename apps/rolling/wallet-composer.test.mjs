@@ -1079,3 +1079,13 @@ for(const mode of ['paid','wrong-amount','owner-change','uncertain'])test(`saved
  }else{assert(!f.document.body.textContent.includes('The saved Ethereum refund is confirmed.'));assert.equal(inventoryReads,0);}
  inventory.resolve();await new Promise(setImmediate);
 });
+
+test('signup funding shows Ethereum waiting after acknowledgment while confirm still holds receipt',{timeout:3000},async t=>{
+ const f=await fixture(t,{fee:'collateral-pending',balanceRead:async()=>({available:true,availableCredit:'0'})}),started=Promise.withResolvers(),held=Promise.withResolvers();let submitted,claims=0;
+ f.session.funding={defaultPrivateFeeCap:'100',async prepareStarter(){return {kind:'rolling-aggregate-eth-v1',privateFeeCap:'100',slippageBps:100,breakdown:{collateralWei:'100',fee:{maxEth:'20',amount:'200'},bok:{maxEth:'0',amount:'0'},gasBudgetWei:'10',maximumTotalWei:'130'}};},async confirm({onSubmitted}){submitted=onSubmitted;started.resolve();await held.promise;return {pending:true};},async advanceClaim(){claims++;return {state:'complete'};},pauseClaim(){}};
+ f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Set up posting').fire('click');
+ const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Confirm payment'&&!b.disabled));pay.fire('click');await started.promise;
+ assert(f.document.body.textContent.includes('Approve the payment in your wallet'));assert.equal(claims,0);submitted();
+ assert(f.document.body.textContent.includes('Waiting for Ethereum confirmation…'));assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');assert.equal(claims,0);
+ held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(claims,1);
+});

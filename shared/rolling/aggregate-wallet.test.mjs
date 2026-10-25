@@ -902,3 +902,21 @@ for(const mode of ['no-bok','unexpected-bok','missing-bok','changed-bok','missin
  }else{await assert.rejects(advanceAggregateClaim({application,funding:await f.open()}),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});assert.equal(workflow.state.sends,0);}
  assert.equal(f.state.sends,1);
 });
+
+for(const mode of ['normal','throw','reject','pending'])test(`aggregate ETH reports durable submission before receipt without awaiting callback: ${mode}`,{timeout:3000},async()=>{
+ const f=fixture(),receipt=Promise.withResolvers(),receiptStarted=Promise.withResolvers(),ack=Promise.withResolvers(),read=f.options.provider.getTransactionReceipt;let calls=0;
+ f.options.provider.getTransactionReceipt=async(...args)=>{if(f.state.sends){receiptStarted.resolve();await receipt.promise;}return read(...args);};
+ const app=await f.open();await app.prepare(f.allocation);let finished=false;
+ const work=app.confirm({onSubmitted:(...args)=>{assert.deepEqual(args,[]);calls++;ack.resolve();if(mode==='throw')throw Error('observer');if(mode==='reject')return Promise.reject(Error('observer'));if(mode==='pending')return new Promise(()=>{});}}).then(value=>{finished=true;return value;});
+ await ack.promise;await receiptStarted.promise;assert.equal(calls,1);assert.equal(finished,false);assert.equal((await app.inspect()).paymentSaved,true);
+ receipt.resolve();const result=await work;assert.equal(result.receipt.txHash,h(20));assert.equal(f.state.sends,1);assert.equal(calls,1);
+});
+for(const mode of ['hash','no-hash','malformed'])test(`aggregate USDC submission notification requires validated saved relay hash: ${mode}`,{timeout:3000},async()=>{
+ const f=usdcWalletFixture(),submit=f.options.relay.submit,slots=[],create=f.options.sdk.createEncryptedJournalSlot;let calls=0,checked;
+ f.options.sdk.createEncryptedJournalSlot=async options=>{const value=await create(options);slots.push(value);return value;};
+ f.options.relay.submit=async data=>{const state=await submit(data);if(mode==='no-hash')delete state.transactionHash;if(mode==='malformed')state.transactionHash='invalid';return state;};
+ const app=await f.open();await app.prepare(f.allocation);
+ const work=app.confirm({onSubmitted:(...args)=>{assert.deepEqual(args,[]);calls++;checked=slots[0].read().then(saved=>assert.equal(saved.value.relay.transactionHash,h(200)));}});
+ if(mode==='malformed')await assert.rejects(work,{code:'ROLLING_FUNDING_RELAY_SCOPE'});else assert.equal((await work).pending,true);
+ if(checked)await checked;assert.equal(calls,mode==='hash'?1:0);assert.equal(f.state.posts,1);
+});

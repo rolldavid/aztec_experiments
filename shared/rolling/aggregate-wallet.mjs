@@ -150,7 +150,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   prepared={kind:'usdc',wallet,quote,saved,recheckScope,feeAmount:values.feeAmount};
   return freeze({kind:quote.kind,breakdown:clone(quote.breakdown),deadline:quote.plan.deadline,beneficiary:wallet.address,router:s.router,walletName:wallet.name,privateFeeCap,slippageBps:values.slippageBps,relayer:terms.relayer,relayGasBudgetWei:terms.gasBudgetWei});
  }
- async function confirmUsdc({wallet,quote,saved,recheckScope,feeAmount}){
+ async function confirmUsdc({wallet,quote,saved,recheckScope,feeAmount},onSubmitted){
   await read(wallet.guard);await read(()=>verifyFeeCredit(feeAmount));await read(()=>sdk.validateAggregateFundingQuote(quote));
   const consent=await signConsent(wallet,quote.consent);
   await read(()=>sdk.validateAggregateFundingQuote(quote));
@@ -167,7 +167,9 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   await read(()=>slot.write(saved,{...saved.value,relay:{planHash:tx.planHash,submitted:true,request,startBlock:start.number}}));
   await read(wallet.guard);
   let state;try{state=await read(()=>relay.submit(request.data));}catch{state=await read(()=>relay.status(tx.planHash));}
-  await rememberRelayState(await stored(),state);
+  const acknowledged=await rememberRelayState(await stored(),state);
+  // Only a validated, durably retained relay hash acknowledges Ethereum submission.
+  if(acknowledged.value.relay.transactionHash)try{void Promise.resolve(onSubmitted?.()).catch(()=>{});}catch{}
   return {pending:true};
  }
  async function rememberRelayState(saved,state){
@@ -229,9 +231,9 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    return freeze({kind:quote.kind,breakdown:clone(quote.breakdown),deadline:quote.plan.deadline,beneficiary:depositor,router:s.router,
     walletName:wallet.name,privateFeeCap,slippageBps:values.slippageBps,consentNonce:quote.plan.nonce,ethereumNonce:nonce});
   },
-  async confirm(){
+  async confirm({onSubmitted}={}){
    const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');
-   if(current.kind==='usdc')return confirmUsdc(current);
+   if(current.kind==='usdc')return confirmUsdc(current,onSubmitted);
    const {wallet,quote,nonce}=current;await read(wallet.guard);await read(()=>verifyFeeCredit(current.feeAmount));await read(()=>sdk.validateAggregateFundingQuote(quote));
    // Signature is requested only after explicit review. It is narrowly bound to
    // the captured portal consent nonce, which is NOT the derivation nonce.
@@ -248,7 +250,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const [gas,fees]=estimates.map(result=>result.value),price=fees.maxFeePerGas??fees.gasPrice;
    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(quote.breakdown.gasBudgetWei),'GAS_CHANGED');await read(wallet.guard);
    const j=await sdk.createEthereumJournal({storage,walletSecret,walletSalt,scope:{account:owner,...n,board,portal:s.router,depositor:wallet.address},provider,
-    acknowledgeTx:current.saved.value.previousTxHash,signer:wallet.signer,prepareRequest:async request=>{
+    acknowledgeTx:current.saved.value.previousTxHash,signer:wallet.signer,onSubmitted,prepareRequest:async request=>{
      await wallet.guard();const fees=await read(()=>provider.getFeeData());await wallet.guard();
      const price=fees.maxFeePerGas??fees.gasPrice;check(typeof price==='bigint'&&price>0n&&typeof request.gasLimit==='bigint'&&request.gasLimit*price<=BigInt(quote.breakdown.gasBudgetWei),'GAS_CHANGED');
      const bounded=fees.maxFeePerGas!==null&&fees.maxFeePerGas!==undefined?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price};

@@ -1435,7 +1435,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     paragraph(isUsdc?'Your wallet will ask for two signatures to approve this payment.':'Approve the payment in your wallet.'));
    const details=el('details',{class:'account-details'},el('summary',{},'Payment details'),paragraph('Deposit held: '+decimal(isUsdc?b.collateral.amount:b.collateralWei,18)+' ETH.'),paragraph('Posting balance: '+decimal(b.fee.amount,18)+' fee tokens. Account setup can use up to '+decimal(q.privateFeeCap,18)+' of these tokens.'),paragraph('Exchange price tolerance: '+(q.slippageBps/100)+'%. Unused exchange funds are returned to the paying wallet.'));content.append(details);
    content.append(button('Confirm payment',()=>void work(async()=>{
-    const epoch=accountEpoch;checkAccount(epoch);fundingQuote=null;fundingAutomatic=true;notice='Approve the payment in your wallet…';render();const payment=await session.funding.confirm();note('');checkAccount(epoch);
+    const epoch=accountEpoch;checkAccount(epoch);fundingQuote=null;fundingAutomatic=true;notice='Approve the payment in your wallet…';render();const payment=await session.funding.confirm({onSubmitted:()=>{checkAccount(epoch);note('Waiting for Ethereum confirmation…');}});note('');checkAccount(epoch);
     fundingAutomatic=true;notice=payment?.pending?'Payment submitted. Waiting for confirmation…':'Payment confirmed. Setting up posting…';await advanceFunding();
    },aggregateFundingFailure),true));
   }else if(!fundingAutomatic){

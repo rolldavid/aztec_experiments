@@ -1,0 +1,16 @@
+{
+  "source": "ef358ebb",
+  "network": "Ethereum Sepolia11155111",
+  "result": "confirmed payment; pending withdrawal cleared",
+  "receipts": [
+    {
+      "hash": "0x7c022571d209d45f59c74982954d730835f3255a6fab5c801f57fa2ebe0991a6",
+      "status": 1,
+      "blockNumber": 11988338,
+      "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "amount": "100000",
+      "recipient": "0x8d83fed116a7542934CA2E968055555317F91CA4"
+    }
+  ],
+  "timingQualification": "No continuously observed click-to-payment timing. Earlier Aztec inclusion trace retained separately. Observer was resumed after idle time; do not count this elapsed delay as protocol settlement latency."
+}
