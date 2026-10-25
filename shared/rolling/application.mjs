@@ -142,26 +142,32 @@ const methods={'transfer-moderator':'transfer_moderator','moderate-post':'remove
  * Bok authorization and posting are separately confirmed and journalled. The encrypted
  * workflow retains the exact request, target and draft between them; no automatic resend.
  * withdraw creates the existing funded deposit's L2 exit. Its encrypted original
+ * receipt survives later private actions in the single pending-exit slot.
  * readBokAccounting advances one private ownership or uniform public page per
  * call. Its opaque cursor is session-local and bound to an unchanged canonical
  * PXE anchor. Only a fully consumed public revision returns owned totals. Free
  * balance excludes request allocations; refunded amounts are historical and
  * already returned to that free balance, never additive.
- * receipt remains in this workflow until the captured session refund verifier
- * confirms the separate original-depositor Ethereum journal outcome.
+ * Only the separate original-recipient Ethereum journal marks the exit paid.
  */
+// One current exit is retained independently of the next private action. The
+// existing Ethereum journal still owns signing, payment and canonical receipts.
+export function createPendingWithdrawalSlot({storage,walletSecret,walletSalt,scope}){
+  return createEncryptedJournalSlot({storage,walletSecret,walletSalt,
+    scopeText:JSON.stringify(['ROLLING_PENDING_EXIT_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_PENDING_EXIT_V1'});
+}
 export function createRollingApplication({sdk,deployment,accountSession,privateStore,publicReader,readBokAccountingPage,resolveBok,funding,onProgress=()=>{},contextGuard,measure=(_stage,operation)=>operation()}){
   void publicReader; // Never route personalized requests through public readers.
   const readAccountingPage=typeof readBokAccountingPage==='function'?readBokAccountingPage:null;
-  let busy=false,callScope=null,slotPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
+  let busy=false,callScope=null,slotPromise,pendingExitPromise,balanceContinuation=null,accountingScan=null,completedAccounting=null;
   const networkChecks=new WeakMap(),preparedPayments=new WeakMap(),preparedPolicies=new WeakMap(),preparedPreferenceHeads=new WeakMap();
   const session=accountSession;
-  // Only this browser capability enables provisional completion. Actual exits
-  // and legacy split Bok continuations retain their settlement policy.
+  // Only this browser capability enables provisional completion. A private exit
+  // may be included while its separately saved Ethereum payment remains pending.
   const proposedTransactions=session?.proposedTransactions===true;
   const atomicBok=record=>record.action?.type==='bok'&&record.bok?.phase==='atomic'&&record.method==='post_with_bok';
-  const includedAction=record=>proposedTransactions&&!record.withdrawal&&!record.bokReleaseSource&&
-    (atomicBok(record)||!record.bok&&['cancel-bok-request','expire-bok-request','screen','claim-deposit','claim-private-fee','claim-bok','post','reply','quote','repost','like','unlike','preference','read-marker','name','bio','avatar','subboard','moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator'].includes(record.action?.type));
+  const includedAction=record=>proposedTransactions&&!record.bokReleaseSource&&
+    (atomicBok(record)||!record.bok&&['withdraw','withdraw-bok','cancel-deposit','cancel-bok-request','expire-bok-request','screen','claim-deposit','claim-private-fee','claim-bok','post','reply','quote','repost','like','unlike','preference','read-marker','name','bio','avatar','subboard','moderate-post','moderate-avatar','reject-subboard','set-main-policy','transfer-moderator'].includes(record.action?.type));
   const usableStatus=status=>['included','confirmed','reverted'].includes(status);
   const getOperationScope=typeof session?.operationScope==='function'?session.operationScope.bind(session):()=>callScope;
   const chainInfoMethod=session?.wallet?.getChainInfo,accountsMethod=session?.wallet?.getAccounts;
@@ -172,8 +178,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const owner=session?.owner?.toString();
   const fundingProvider=funding?.provider,claimStore=funding?.claimStore;
   const bokTopupScope=funding?.bokTopupScope?clone(funding.bokTopupScope):undefined;
-  const resolveBokWithdrawal=typeof funding?.resolveBokWithdrawal==='function'?funding.resolveBokWithdrawal.bind(funding):null;
   const verifyWithdrawal=typeof funding?.verifyWithdrawal==='function'?funding.verifyWithdrawal.bind(funding):null;
+  const resolveBokWithdrawal=typeof funding?.resolveBokWithdrawal==='function'?funding.resolveBokWithdrawal.bind(funding):null;
   const loadAggregate=typeof funding?.loadAggregate==='function'?funding.loadAggregate.bind(funding):null;
   const fixed=deployment&&{board:deployment.board.address.toString(),network:clone(deployment.network),portal:deployment.portal,
     fee:deployment.privateFee.address.toString(),gas:JSON.parse(JSON.stringify(deployment.privateFee.gasSettings,(_,v)=>typeof v==='bigint'?v.toString():v)),proofsEnabled:deployment.proofsEnabled!==false};
@@ -201,6 +207,32 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     rollup:fixed.network.rollup,board:fixed.board,portal:fixed.portal};
   const slot=()=>slotPromise??=createEncryptedJournalSlot({storage:privateStore,walletSecret:session.walletSecret,walletSalt:session.walletSalt,
     scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(scope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+  const pendingExitSlot=()=>pendingExitPromise??=createPendingWithdrawalSlot({storage:privateStore,
+    walletSecret:session.walletSecret,walletSalt:session.walletSalt,scope});
+  async function pendingExit(){await localGuard();const saved=await (await pendingExitSlot()).read();await localGuard();return saved;}
+  const sameExit=(a,b)=>a?.intentId===b?.intentId&&a?.txHash===b?.txHash&&same(a?.action,b?.action)&&same(a?.withdrawal,b?.withdrawal);
+  async function retainExit(record){
+    if(!record.withdrawal||!['included','confirmed'].includes(record.status))return;
+    const next=summary(record),saved=await pendingExit();
+    if(saved.value&&sameExit(saved.value,next)&&saved.value.paymentStatus==='refunded')return;
+    const replacement=saved.value?.paymentStatus==='pending'&&saved.value.intentId===next.intentId&&same(saved.value.action,next.action)&&same(saved.value.withdrawal,next.withdrawal)&&record.replacementReview?.sourceTxHash===saved.value.txHash;
+    check(!saved.value||saved.value.paymentStatus==='refunded'||sameExit(saved.value,next)||replacement,'ROLLING_WITHDRAWAL_PENDING');
+    await localGuard();await (await pendingExitSlot()).write(saved,{...next,paymentStatus:'pending'});await localGuard();
+  }
+  async function pendingExitSummary(){const saved=await pendingExit();return saved.value?.paymentStatus==='pending'?clone(saved.value):null;}
+  async function pendingExitOutcome(){
+    const saved=await pendingExit();if(!saved.value||saved.value.paymentStatus==='refunded')return null;
+    const r=saved.value;check(r.paymentStatus==='pending'&&r.withdrawal&&['withdraw','withdraw-bok','cancel-deposit'].includes(r.action?.type),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');
+    const receipt=await session.node.getTxReceipt(sdk.TxHash.fromString(r.txHash));await localGuard();
+    check(hashText(receipt?.txHash)===r.txHash,'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');
+    if(!['proposed','checkpointed','proven','finalized'].includes(receipt.status)||receipt.executionResult!=='success')return {...clone(r),status:'unknown'};
+    check(Number.isSafeInteger(receipt.blockNumber)&&receipt.blockNumber>0,'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');
+    const block=await session.node.getBlockData(receipt.blockNumber);await localGuard();
+    check(Number(block?.header?.globalVariables?.blockNumber)===receipt.blockNumber&&hashText(block.blockHash)===hashText(receipt.blockHash),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');
+    check(await (await pendingExitSlot()).isCurrent(saved.encoded),'ROLLING_CONTEXT_CHANGED');
+    return {...clone(r),status:receipt.status==='proposed'?'included':'confirmed',inclusion:{blockNumber:receipt.blockNumber,blockHash:hashText(receipt.blockHash)}};
+  }
+
   function chainValue(value){
     try{
       if(value&&typeof value==='object'&&typeof value.toBigInt==='function')value=value.toBigInt();
@@ -341,7 +373,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   // Historical receipts belong to this account/board journal, not whichever
   // optional plugin is currently offered. Continuations and exits still require
   // their original plugin; a local terminal label alone never proves completion.
-  const terminalHistory=record=>usableStatus(record.status)&&!record.withdrawal&&
+  const terminalHistory=record=>usableStatus(record.status)&&
     !(record.status==='confirmed'&&record.bok?.phase==='authorize')&&
     !(record.status==='reverted'&&(record.bok?.phase==='post'||record.bokReleaseSource));
   async function outcome(saved,{history=false}={}){
@@ -354,7 +386,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     await acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
     const next={...saved.value,...(saved.value.withdrawal?{actualNetworkFee:String(chainValue(found.receipt.transactionFee))}:{}),status:found.outcome==='success'?(found.receipt.status==='proposed'?'included':'confirmed'):'reverted',txHash:found.txHash,...(includedAction(saved.value)?{inclusion:{blockNumber:found.receipt.blockNumber,blockHash:hashText(found.receipt.blockHash)}}:{}),...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
     if(historical&&!terminalHistory(next))await checkBokRecord(next);
-    await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:next.bokReleaseSource&&next.status==='reverted'?{status:'bok-release-reverted'}:{})};
+    await retainExit(next);await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:next.bokReleaseSource&&next.status==='reverted'?{status:'bok-release-reverted'}:{})};
   }
   const preferenceAction=record=>['preference','read-marker'].includes(record.action.type);
   const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -845,7 +877,6 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(same(current,anchor),'ROLLING_CONTEXT_CHANGED');
     check(Number(block?.header?.globalVariables?.blockNumber)===anchor.blockNumber&&hashText(block.blockHash)===anchor.blockHash,'ROLLING_CONTEXT_CHANGED');await guard();
   }
-  async function refundComplete(record){return !!verifyWithdrawal&&await verifyWithdrawal(clone(summary(record)))===true;}
   return Object.freeze({
     // Warm the selected deposit's exact native history witnesses while editing.
     // Nothing is retained as authority: Post selects and verifies again.
@@ -891,11 +922,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
       await localGuard();check(getOperationScope()===owner,'ROLLING_CONTEXT_CHANGED');
     },
-    async readWithdrawal(){return exclusive(async()=>{await guard();const saved=await (await slot()).read();
-      if(!['withdraw','withdraw-bok','cancel-deposit'].includes(saved.value?.action?.type)||!saved.value.withdrawal)return null;
-      if(['prepared','cancelled'].includes(saved.value.status))return summary(saved.value);
-      return outcome(saved);
-    });},
+    async readWithdrawal(){return exclusive(async()=>{await guard();return pendingExitOutcome();});},
     async readBokAccounting({cursor=0}={}){return exclusive(async()=>{
       await ensureBok();check(bok&&readAccountingPage,'ROLLING_BOK_ACCOUNTING_UNAVAILABLE');
       const anchor=await balanceAnchor();
@@ -987,13 +1014,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       return exclusive(async()=>{await guard();const saved=await (await slot()).read();
         if(saved.value&&saved.value.status!=='cancelled'){
           if(!terminalHistory(saved.value))await checkBokRecord(saved.value);
-          if(!usableStatus(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
-          const canonical=await outcome(saved,{history:true});if(canonical.status==='confirmed'&&saved.value.withdrawal&&!await refundComplete({...saved.value,txHash:canonical.txHash}))return {status:'recovering',intent:canonical};if(!usableStatus(canonical.status))return {status:'recovering',intent:canonical};
+          if(!usableStatus(saved.value.status))return {status:'recovering',intent:summary(saved.value),pendingWithdrawal:await pendingExitSummary()};
+          const canonical=await outcome(saved,{history:true});if(!usableStatus(canonical.status))return {status:'recovering',intent:canonical,pendingWithdrawal:await pendingExitSummary()};
         }
         const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');
-        let fee;try{fee=await payment();}catch(error){if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n)};throw error;}
+        const pendingWithdrawal=await pendingExitSummary();
+        let fee;try{fee=await payment();}catch(error){if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};throw error;}
         return {status:ids.some(id=>BigInt(id)!==0n)?'fee-ready':'collateral-pending',privateFeeCredit:String(fee.availableCredit),
-          depositIds:ids.filter(id=>BigInt(id)!==0n),postEligibility:'requires-action-simulation'};
+          depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal,postEligibility:'requires-action-simulation'};
       });
     },
     async readProfile({name}={}){return exclusive(async()=>{
@@ -1043,7 +1071,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const readPredecessor=async()=>{
         const store=await slot();let prior=await store.read();
         if(prior.value&&prior.value.status!=='cancelled'){check(usableStatus(prior.value.status),'ROLLING_RECOVERY_REQUIRED');
-          const final=await outcome(prior,{history:true});check(usableStatus(final.status),'ROLLING_RECOVERY_REQUIRED');if(final.status==='confirmed'&&prior.value.withdrawal)check(await refundComplete({...prior.value,txHash:final.txHash}),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');prior=await store.read();}
+          const final=await outcome(prior,{history:true});check(usableStatus(final.status),'ROLLING_RECOVERY_REQUIRED');prior=await store.read();}
         // A cancelled unsent draft still acknowledges its prior confirmed transaction.
         if(prior.value?.status==='cancelled'&&prior.value.predecessor)await acknowledge(await session.journal.inspectOutcome({reuse:true}),prior.value.predecessor);
         const previousTx=await session.journal.assertCanStart();
@@ -1102,6 +1130,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(postingRules)check(String(args[2].expected_main_policy_version)===postingRules.parentVersion&&String(args[2].expected_local_policy_version)===postingRules.localVersion,'ROLLING_POSTING_RULES_CHANGED');
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(immediate&&['like','unlike'].includes(action.type)?{feeProfile:'like-v1'}:immediate&&['preference','read-marker'].includes(action.type)?{feeProfile:'preference-v1'}:{}),...(moderation?{moderation:moderation.review}:{})};
       if(action.type==='name')record.nameAvailability=await nameAvailability(action);
+      if(['withdraw','withdraw-bok','cancel-deposit'].includes(action.type)){const pending=await pendingExit();check(!pending.value||pending.value.paymentStatus==='refunded','ROLLING_WITHDRAWAL_PENDING');if(pending.value){check(verifyWithdrawal&&await verifyWithdrawal(pending.value),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');await localGuard();check(await (await pendingExitSlot()).isCurrent(pending.encoded),'ROLLING_CONTEXT_CHANGED');}}
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(action.type==='cancel-deposit'){
         record.withdrawal={kind:'cancelled-collateral',depositor:action.receipt.sender,amount:action.receipt.amount,depositId:action.receipt.depositId,eligible:true};

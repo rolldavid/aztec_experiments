@@ -209,7 +209,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  const identityControls=el('div',{class:'posting-name-controls'}),inlineName=el('section',{class:'inline-name',hidden:''});
  let runtime,session,busy=false,blocked=false,invalidated=false,reloadRequired=false,returnFocus;
  let depositRefundPage=null;
- let balances=null,bokAccounting=null,accountingCheck=null,bokExitAmount='',refundQuote=null,withdrawalActive=false;
+ let balances=null,bokAccounting=null,accountingCheck=null,bokExitAmount='',refundQuote=null,withdrawalActive=false,pendingWithdrawal=null,refundReadiness=null,refundWatch=null;
  let topupKind='private-fee',topupQuote=null,topupInputs={amount:''},topupQuoteKey=null,topupQuotePending=null,topupQuoteError='',topupSaved=null,updateTopupQuote=()=>{};
  let moderatorStatus=null,bokStatus=null,status=null,intent=null,identities=[],identityRecords=[],cursor=0,error='',notice='',draft={type:'post',subboard:'0',content:''};
  const preferenceUpdates=new Map();
@@ -318,7 +318,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){updateBokForm=()=>{};renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
- function clearPrivateView(){includedObservation=null;includedRevision=null;actionFeedback.textContent='';actionFeedback.hidden=true;composerAttempt=null;composerCheckpoint='open';ownBokPosts.clear();bokRefreshNeeded=false;preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){stopRefundWatch();pendingWithdrawal=null;refundReadiness=null;includedObservation=null;includedRevision=null;actionFeedback.textContent='';actionFeedback.hidden=true;composerAttempt=null;composerCheckpoint='open';ownBokPosts.clear();bokRefreshNeeded=false;preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
  function preferenceEnabled(kind,target){const updated=preferenceUpdates.get(kind+':'+target);if(updated!==undefined&&unlocked())return updated;if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
@@ -440,7 +440,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(!accountRefreshNeeded||accountRefreshPending||busy||!session||!unlocked())return;
   accountRefreshNeeded=false;const epoch=accountEpoch,active=session,finishRefresh=beginRollingMeasure('account.status-refresh');
   accountRefreshPending=Promise.resolve().then(async()=>{
-   try{const next=await active.application.readAccountStatus();checkAccount(epoch);if(session!==active)return;status=next;intent=next.intent??null;}
+   try{const next=await active.application.readAccountStatus();checkAccount(epoch);if(session!==active)return;status=next;intent=next.intent??null;setPendingWithdrawal(next.pendingWithdrawal??null);}
    catch{if(epoch===accountEpoch)accountRefreshNeeded=true;}
   }).finally(()=>{finishRefresh();accountRefreshPending=null;if(epoch===accountEpoch&&unlocked()){updatePostingBalance();renderBokControls();requestBokBalance();}});
  }
@@ -460,7 +460,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  async function refresh(){
   const epoch=accountEpoch;checkAccount(epoch);balances=null;bokAccounting=null;recoveryInspection=null;invalidateBokBalance();clearPreferences();blocked=true;
   const next=await session.application.readAccountStatus();
-  checkAccount(epoch);status=next;intent=next.intent??null;
+  checkAccount(epoch);status=next;intent=next.intent??null;setPendingWithdrawal(next.pendingWithdrawal??null);
   if(next.status==='recovering'){
    if(!intent?.intentId)throw Error('Missing recovery intent');
   }
@@ -699,6 +699,40 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(failure?.code==='ROLLING_WITHDRAWAL_NO_PROGRESS')return 'Your withdrawal could not continue. No further payment was sent.';
   return 'Your withdrawal could not complete. Any transaction already sent is saved; check its status before trying again.';
  }
+ function setPendingWithdrawal(value){
+  if(value?.intentId!==pendingWithdrawal?.intentId||value?.txHash!==pendingWithdrawal?.txHash){stopRefundWatch();refundQuote=null;refundReadiness=null;}
+  pendingWithdrawal=value;
+ }
+ function stopRefundWatch(){refundWatch?.controller.abort();refundWatch=null;}
+ function watchPendingRefund(){
+  const active=session,saved=pendingWithdrawal,epoch=accountEpoch;
+  if(!dialog.open||view!=='refund'||!saved||invalidated||reloadRequired||typeof active?.withdrawal?.waitUntilReady!=='function'){stopRefundWatch();return;}
+  if(refundReadiness==='ready'||refundWatch)return;
+  const current={controller:new AbortController(),intentId:saved.intentId,txHash:saved.txHash};refundWatch=current;
+  void Promise.resolve().then(()=>active.withdrawal.waitUntilReady({signal:current.controller.signal})).then(found=>{
+   if(current.controller.signal.aborted||refundWatch!==current||session!==active||epoch!==accountEpoch||!dialog.open||view!=='refund'||pendingWithdrawal?.intentId!==current.intentId||pendingWithdrawal?.txHash!==current.txHash)return;
+   checkAccount(epoch);
+   if(found?.status==='none')setPendingWithdrawal(null);
+   else{
+    if(!['waiting','ready','unknown'].includes(found?.status)||found.intentId!==current.intentId||found.txHash!==current.txHash)return;
+    refundReadiness=found.status;if(found.status!=='ready')refundQuote=null;
+   }
+   render();
+  }).catch(()=>{});
+ }
+ async function checkRefundReadiness(){
+  const epoch=accountEpoch,active=session,saved=pendingWithdrawal;
+  if(!saved||typeof active?.withdrawal?.observe!=='function')throw connectionFailure;
+  refundReadiness=null;refundQuote=null;
+  const found=await active.withdrawal.observe();checkAccount(epoch);
+  if(active!==session||pendingWithdrawal?.intentId!==saved.intentId||pendingWithdrawal?.txHash!==saved.txHash)throw connectionFailure;
+  if(found?.status==='none'){setPendingWithdrawal(null);return;}
+  if(!['waiting','ready','unknown'].includes(found?.status)||found.intentId!==saved.intentId||found.txHash!==saved.txHash)throw connectionFailure;
+  refundReadiness=found.status;
+ }
+ function openPendingRefund(){
+  if(busy||!pendingWithdrawal)return;clearOperationFeedback();view='refund';render();if(typeof session?.withdrawal?.waitUntilReady!=='function')void work(checkRefundReadiness);
+ }
  async function withdrawDeposit(deposit){
   const epoch=accountEpoch,controller=new AbortController();let stop;
   checkAccount(epoch);withdrawalActive=true;refundQuote=null;note('Preparing your withdrawal…');
@@ -722,6 +756,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function balancesView(){
   content.append(el('h3',{},'Balances and withdrawals'),paragraph('Your deposit is refundable. Your posting balance pays network fees and cannot be withdrawn. Unused Bok credit can be withdrawn separately.'));
+  if(pendingWithdrawal)content.append(button('Pending Ethereum refund',openPendingRefund,true));
   unfinishedDepositsView();
   if(!balances){content.append(button('Check private balances',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0});checkAccount(epoch);balances=value;}),true));return;}
   content.append(paragraph('Posting balance: '+decimal(balances.fee.available,18)+' credits (FEE).'));
@@ -764,12 +799,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   content.append(button('Refresh balances',()=>void work(async()=>{balances=null;bokAccounting=null;const epoch=accountEpoch;const page=await session.application.readBalances({cursor:0});checkAccount(epoch);balances=page;})));
  }
  function refundView(){
-  const bok=intent.withdrawal.kind==='bok',amountText=decimal(intent.withdrawal.amount,bok?6:18)+(bok?' USDC':' ETH');
+  const saved=pendingWithdrawal??intent;if(!saved?.withdrawal){content.append(paragraph('No pending Ethereum refund.'));return;}
+  const bok=saved.withdrawal.kind==='bok',amountText=decimal(saved.withdrawal.amount,bok?6:18)+(bok?' USDC':' ETH');
   fundingWalletView();
-  if(intent.actualNetworkFee!==null&&intent.actualNetworkFee!==undefined)content.append(paragraph('Actual private exit fee: '+decimal(intent.actualNetworkFee,18)+' FEE.'));
-  content.append(paragraph('The private '+(bok?'Bok credit':'collateral')+' exit is confirmed. The refund remains saved until Ethereum verifies payment to the saved recipient. Ethereum settlement and confirmation must complete before the refund can be marked finished.'),paragraph('Refund: '+amountText+'. Connect '+(bok?'the saved receiving':'the original depositing')+' wallet; another recipient cannot be substituted.'));
-  if(refundQuote){if(refundQuote.savedRequest)content.append(paragraph('This saved refund may still be pending. Confirmation asks your wallet to send the exact original request with the same nonce '+refundQuote.nonce+'. Only one request with that nonce can execute.'));content.append(paragraph('Wallet: '+refundQuote.walletName),paragraph('Maximum Ethereum gas cost: '+decimal(refundQuote.maximumGasWei,18)+' ETH. The refund amount is separate.'),button(refundQuote.savedRequest?'Confirm saved Ethereum refund':'Confirm Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;refundQuote=null;note('Confirm the refund in your Ethereum wallet, then wait for network confirmation. Do not send again.');const result=await session.withdrawal.confirm();note('');checkAccount(epoch);notice='Ethereum refund confirmed: '+decimal(result.amount,bok?6:18)+(bok?' USDC. ':' ETH. ')+(result.gasCostWei===null||result.gasCostWei===undefined?'Gas was paid separately; its exact cost is unavailable here.':'Actual Ethereum gas cost: '+decimal(result.gasCostWei,18)+' ETH.');intent=null;balances=null;await refresh();}),true),button('Cancel refund review',()=>void work(async()=>{await session.withdrawal.cancel();refundQuote=null;})));return;}
-  content.append(button('Review Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.withdrawal.prepare({});checkAccount(epoch);refundQuote=value;}),true),button('Review saved Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking the saved Ethereum refund; waiting for network confirmation.');const value=await session.withdrawal.prepareSaved({});note('');checkAccount(epoch);if(value.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else refundQuote=value;}),true),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking existing Ethereum refund; waiting for network confirmation.');const result=await session.withdrawal.recover();note('');checkAccount(epoch);if(result.status==='refunded'){notice='The saved Ethereum refund is confirmed.';intent=null;balances=null;await refresh();}else notice='Refund '+result.status+'. A new refund is never sent automatically.';})));
+  if(saved.actualNetworkFee!==null&&saved.actualNetworkFee!==undefined)content.append(paragraph('Actual private exit fee: '+decimal(saved.actualNetworkFee,18)+' FEE.'));
+  content.append(paragraph('The private '+(bok?'Bok credit':'collateral')+' exit '+(saved.status==='included'&&refundReadiness!=='ready'?'is included on Aztec; confirmation is pending.':'has been confirmed on Aztec.')+' The refund remains saved until Ethereum verifies payment to the saved recipient. Ethereum settlement and confirmation must complete before the refund can be marked finished.'),paragraph('Refund: '+amountText+'. Connect '+(bok?'the saved receiving':'the original depositing')+' wallet; another recipient cannot be substituted.'));
+  if(refundQuote){if(refundQuote.savedRequest)content.append(paragraph('This saved refund may still be pending. Confirmation asks your wallet to send the exact original request with the same nonce '+refundQuote.nonce+'. Only one request with that nonce can execute.'));content.append(paragraph('Wallet: '+refundQuote.walletName),paragraph('Maximum Ethereum gas cost: '+decimal(refundQuote.maximumGasWei,18)+' ETH. The refund amount is separate.'),button(refundQuote.savedRequest?'Confirm saved Ethereum refund':'Confirm Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;refundQuote=null;note('Confirm the refund in your Ethereum wallet, then wait for network confirmation. Do not send again.');const result=await session.withdrawal.confirm();note('');checkAccount(epoch);notice='Ethereum refund confirmed: '+decimal(result.amount,bok?6:18)+(bok?' USDC. ':' ETH. ')+(result.gasCostWei===null||result.gasCostWei===undefined?'Gas was paid separately; its exact cost is unavailable here.':'Actual Ethereum gas cost: '+decimal(result.gasCostWei,18)+' ETH.');setPendingWithdrawal(null);balances=null;await refresh();}),true),button('Cancel refund review',()=>void work(async()=>{await session.withdrawal.cancel();refundQuote=null;})));return;}
+  content.append(paragraph(refundReadiness==='ready'?'The Ethereum refund is ready for review.':refundReadiness==='unknown'?'The private exit is not currently verified. No refund will be sent.':'The Ethereum refund is waiting for settlement. Your account remains available.'),button('Check refund readiness',()=>void work(checkRefundReadiness)));
+  if(refundReadiness==='ready')content.append(button('Review Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.withdrawal.prepare({});checkAccount(epoch);refundQuote=value;}),true));
+  content.append(button('Review saved Ethereum refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking the saved Ethereum refund; waiting for network confirmation.');const value=await session.withdrawal.prepareSaved({});note('');checkAccount(epoch);if(value.status==='refunded'){notice='The saved Ethereum refund is confirmed.';setPendingWithdrawal(null);balances=null;await refresh();}else refundQuote=value;}),true),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking existing Ethereum refund; waiting for network confirmation.');const result=await session.withdrawal.recover();note('');checkAccount(epoch);if(result.status==='refunded'){notice='The saved Ethereum refund is confirmed.';setPendingWithdrawal(null);balances=null;await refresh();}else notice='Refund '+result.status+'. A new refund is never sent automatically.';})));
  }
  const postingTypes=new Set(['post','reply','quote','repost','bok']);
  const immediateTypes=new Set([...postingTypes,'like','unlike','preference','read-marker','name','bio','avatar','subboard','cancel-bok-request','expire-bok-request',...MODERATOR_TYPES]),readerActionTypes=new Set(['like','unlike','preference','read-marker']);
@@ -843,7 +881,8 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function feeLabel(value){const amount=BigInt(value);return amount>0n&&amount<100000000000000n?'less than 0.0001':'up to '+decimal((amount+99999999999999n)/100000000000000n,4);}
  function reviewLabel(action){return immediateTypes.has(action?.type)?(action.type==='bok'?'Post':actionLabel(action)):'Review cost';}
  function showIntent(){
-  if(['withdraw','withdraw-bok','cancel-deposit'].includes(intent.action?.type)&&intent.status==='confirmed'&&session.withdrawal){refundView();return;}
+  if(pendingWithdrawal&&pendingWithdrawal.intentId!==intent.intentId)content.append(button('Pending Ethereum refund',openPendingRefund));
+  if(['withdraw','withdraw-bok','cancel-deposit'].includes(intent.action?.type)&&['included','confirmed'].includes(intent.status)&&session.withdrawal){refundView();return;}
   const replacement=intent.status==='replacement-prepared',prepared=intent.status==='prepared'||replacement;
   if(!prepared)content.append(el('h3',{},'Check your action'));
   if(replacement)content.append(paragraph('Review the replacement cost before confirming.'));
@@ -955,6 +994,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    notice=result.action?.type==='expire-bok-request'?'Expiry transaction confirmed. Only unreserved credit can return; refresh private balances and complete request accounting to see refunded and still-reserved amounts.':actionLabel(result.action)+': done.';
    if(!provisional&&actionOperation?.included&&!postingTypes.has(result.action?.type)){actionFeedback.textContent=actionLabel(result.action)+': confirmed.';actionFeedback.hidden=false;}
    if(result.action?.type==='transfer-moderator')moderatorStatus=null;
+   if(['withdraw','withdraw-bok','cancel-deposit'].includes(result.action?.type)&&result.withdrawal){
+    setPendingWithdrawal({...result,paymentStatus:'pending'});intent=null;balances=null;view='refund';note('');
+    notice='Your exit is '+(provisional?'included on Aztec; confirmation is pending.':'confirmed on Aztec.')+' The Ethereum refund has not been paid.';
+    accountRefreshNeeded=true;return;
+   }
    if(provisional&&['preference','read-marker'].includes(result.action?.type))await measureRollingStage('action.required-account-refresh',recoverPreferences);
    if(result.action?.type==='name'){
     // Only owned-name discovery is required to use a newly included name.
@@ -1392,7 +1436,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   releasePreviews();content.replaceChildren();
   if(inlineCreation)content.append(el('h3',{},view==='funding'?'Set up your account':intent?'Review your name':'Create a name'));
   const signedIn=!!runtime&&unlocked();
-  title.textContent=!signedIn?'Connect your wallet':view==='funding'?'Set up posting':view==='topup'?(topupKind==='bok'?'Add Bok credit':'Add posting credit'):view==='preferences'?'Follows and bookmarks':view==='names'?'Your names':view==='balances'?'Balance and withdrawals':view==='action'?(TYPES[draft.type]??'Your account'):'Your account';
+  title.textContent=!signedIn?'Connect your wallet':view==='funding'?'Set up posting':view==='topup'?(topupKind==='bok'?'Add Bok credit':'Add posting credit'):view==='preferences'?'Follows and bookmarks':view==='names'?'Your names':view==='balances'?'Balance and withdrawals':view==='refund'?'Pending Ethereum refund':view==='action'?(TYPES[draft.type]??'Your account'):'Your account';
   if(signedIn&&intent&&['prepared','replacement-prepared'].includes(intent.status))title.textContent=intent.status==='replacement-prepared'?'Review replacement':reviewLabel(intent.action);
   description.textContent=!signedIn?'Join the conversation without sharing your identity.':'';
   description.hidden=!!setupMode||!description.textContent;
@@ -1406,6 +1450,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   else if(!unlocked())custody();
   else{
    if(!session)content.append(paragraph('Your account could not connect. Try again to continue.'),button('Reconnect',()=>void work(connect),true));
+   else if(view==='refund'&&pendingWithdrawal){refundView();content.append(button(intent?'Back to saved action':'Back to account',()=>selectView('overview')));}
    else if(intent)showIntent();
    else if(blocked&&view==='preferences'){
     content.append(paragraph('Recover saved choices without checking funds or preparing a transaction.'));preferencesView();
@@ -1423,12 +1468,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
       settings.open=accountSettingsOpen;settings.addEventListener('toggle',()=>{accountSettingsOpen=settings.open;if(settings.open)requestModeratorMenu();});
       settings.append(button('Refresh account',()=>void work(refresh)),button('Your names',()=>selectView('names')),button('Follows and bookmarks',()=>selectView('preferences')));
       if(typeof session.application.readBalances==='function')settings.append(button('Balance and withdrawals',()=>{balances=null;bokAccounting=null;selectView('balances');}));
+      if(pendingWithdrawal)settings.append(button('Pending Ethereum refund',openPendingRefund));
       settings.append(button('Create a board',()=>chooseAction('subboard')));if(moderatorStatus?.authorized)settings.append(button('Update site rules',()=>chooseAction('set-main-policy')),button('Transfer moderator authority',()=>chooseAction('transfer-moderator')));
       if(session.topup?.['private-fee'])settings.append(button('Add posting credit',()=>{topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;selectView('topup');}));
       content.append(settings);
      }else{
       if(!viewReady())content.append(button(view==='names'?'Load your names':'Load publishing options',()=>void work(loadView),true));
-      else if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else{if(status?.status==='fee-needed'||status?.status==='collateral-pending')content.append(paragraph('Add a posting balance before publishing.'),button(status?.depositIds?.length?'Add posting credit':'Set up posting',()=>{topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;selectView(status?.depositIds?.length?'topup':'funding');},true));form();}
+      else if(view==='refund')refundView();else if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else{if(status?.status==='fee-needed'||status?.status==='collateral-pending')content.append(paragraph('Add a posting balance before publishing.'),button(status?.depositIds?.length?'Add posting credit':'Set up posting',()=>{topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;selectView(status?.depositIds?.length?'topup':'funding');},true));form();}
       if(!inlineCreation)content.append(button('Back to account',()=>selectView('overview')));
      }
     }
@@ -1438,7 +1484,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(runtime.canStartTestAccount&&view==='overview'&&!intent)content.append(button('Start new test account',startTestAccount));
    content.append(button('Sign out',()=>void signOut()));
   }
-  controlsBusy(busy);renderBokControls();requestBokBalance();if(view==='topup'&&!busy&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected))queueMicrotask(requestTopupQuote);
+  controlsBusy(busy);renderBokControls();requestBokBalance();watchPendingRefund();if(view==='topup'&&!busy&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected))queueMicrotask(requestTopupQuote);
   if(view==='funding'&&session?.funding&&!busy&&!blocked&&!intent&&!fundingQuote&&!fundingQuoteRequested&&!fundingAutomatic&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected)){
    queueMicrotask(()=>{if((dialog.open||inlineCreation)&&view==='funding'&&!busy&&!fundingQuoteRequested)void work(prepareFundingQuote,aggregateFundingFailure);});
   }
@@ -1452,7 +1498,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
   }
  }
- function close(){if(!actionOperation?.included&&(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending&&!accountRefreshPending&&!composerPreparation)){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
+ function close(){if(!actionOperation?.included&&(busy||!initializing&&session?.busy&&!bokBalance.pending&&!topupQuotePending&&!accountRefreshPending&&!composerPreparation)){note('An account operation is in progress. Wait before closing.');return false;}stopFunding();stopRefundWatch();recoveryInspection=null;releasePreviews();if(dialog.open)dialog.close();return true;}
  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
  dialog.addEventListener('close',()=>{if(returnFocus?.isConnected)returnFocus.focus();});
  dialog.addEventListener('keydown',event=>{

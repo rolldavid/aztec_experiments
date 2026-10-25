@@ -705,15 +705,16 @@ test('moderator transfer requires explicit consent to the current successor but 
  assert.deepEqual(f.prepared(),{type:'transfer-moderator',successor:recipient.value});assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.equal(f.panel.moderatorAuthorized(),false);
 });
 
-async function exitFixture(t,type){
+async function exitFixture(t,type,exitStatus='confirmed'){
  const f=await fixture(t,{defaults:{},posting:{},balanceRead:async()=>({available:true,availableCredit:'0'})});
  const recipient='0x'+'3'.repeat(40);let selected=recipient,saved=null,refundPrepare=0,refundRequest=0;
  f.runtime.fundingWalletStatus=()=>({connected:true,name:'Test wallet',address:selected});f.runtime.fundingWallets=()=>[];f.runtime.connectFundingWallet=async()=>{};
  f.session.withdrawal={};f.session.application.readBalances=async()=>({fee:{available:'1000000000000000000'},bok:{available:'10000000'},collateral:{deposits:[],nextCursor:null}});
  const prepare=f.session.application.prepare;
  f.session.application.prepare=async(action,options)=>{const value=await prepare(action,options);return {...value,withdrawal:{kind:action.type==='withdraw-bok'?'bok':'cancelled-collateral',amount:action.amount??'100',depositor:action.recipient??recipient,eligible:true}};};
- f.session.application.submitPrepared=async id=>{f.submissions.push(id);saved={intentId:id,status:'confirmed',action:f.prepared(),withdrawal:{kind:type==='withdraw-bok'?'bok':'cancelled-collateral',amount:type==='withdraw-bok'?'1500000':'100',depositor:recipient,eligible:true}};return saved;};
- f.session.application.readAccountStatus=async()=>saved?{status:'recovering',intent:saved}:{status:'fee-ready',privateFeeCredit:'1000000000000000000',depositIds:['9']};
+ f.session.application.submitPrepared=async id=>{f.submissions.push(id);if(!['withdraw-bok','cancel-deposit'].includes(f.prepared().type))return {intentId:id,status:'included',action:f.prepared(),txHash:'0x'+'8'.repeat(64)};saved={intentId:id,status:exitStatus,txHash:'0x'+'7'.repeat(64),action:f.prepared(),withdrawal:{kind:type==='withdraw-bok'?'bok':'cancelled-collateral',amount:type==='withdraw-bok'?'1500000':'100',depositor:recipient,eligible:true}};return saved;};
+ f.session.application.readAccountStatus=async()=>({status:'fee-ready',privateFeeCredit:'1000000000000000000',depositIds:['9'],pendingWithdrawal:saved});
+ f.session.withdrawal.observe=async()=>({status:'waiting',intentId:saved.intentId,txHash:saved.txHash});
  if(type==='cancel-deposit')f.session.depositRefunds={list:async()=>({deposits:[{status:'available',depositId:'17',amount:'100'}],nextOffset:null}),request:async id=>{refundRequest++;assert.equal(id,'17');return {depositId:id};},prepare:async receipt=>{refundPrepare++;return f.session.application.prepare({type:'cancel-deposit',receipt},{immediate:true});}};
  f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Balance and withdrawals').fire('click');
  await f.document.until(()=>f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]')&&!f.session.busy&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
@@ -725,7 +726,7 @@ test('Bok withdrawal goes directly to private submission and keeps the saved Eth
  f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');
  await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.deepEqual(f.prepared(),{type:'withdraw-bok',amount:'1500000',recipient:f.recipient});assert.deepEqual(f.prepareOptions,[{immediate:true}]);assert.deepEqual(f.submissions,['post-1']);assert.equal(f.document.querySelector('dialog').open,true);
- assert(!f.document.body.textContent.includes('Review cost'));
+ assert(!f.document.body.textContent.includes('Review cost'));await new Promise(resolve=>setImmediate(resolve));
 });
 test('Bok withdrawal rejects a connected recipient changed since its displayed action',{timeout:3000},async t=>{
  const f=await exitFixture(t,'withdraw-bok'),amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1';amount.fire('input');f.setRecipient('0x'+'4'.repeat(40));
@@ -878,6 +879,58 @@ test('optional moderator lookup ignores an external account replacement before r
  const settings=f.document.querySelector('.account-links');settings.open=true;settings.fire('toggle');await entered.promise;
  f.runtime.getAccount=()=>null;held.resolve({authorized:true});await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.panel.moderatorAuthorized(),false);assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Transfer moderator authority'));
+});
+
+for(const type of ['withdraw-bok','cancel-deposit'])test(`included ${type} leaves account usable and pending refund reachable after another action`,{timeout:3000},async t=>{
+ const f=await exitFixture(t,type,'included');
+ if(type==='withdraw-bok'){
+  const amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1.5';amount.fire('input');f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');
+ }else{
+  f.document.querySelectorAll('button').find(b=>b.textContent==='Find refundable deposits').fire('click');await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent.startsWith('Refund '))&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');f.document.querySelectorAll('button').find(b=>b.textContent.startsWith('Refund ')).fire('click');
+ }
+ await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(f.document.body.textContent.includes('included on Aztec; confirmation is pending'));assert(!f.document.body.textContent.includes('exit is confirmed'));assert(!f.document.body.textContent.includes('Ethereum refund confirmed:'));
+ assert.equal(f.panel.close(),true);const result=await f.panel.act({type:'like',post:'42'});assert.equal(result.status,'included');
+ f.panel.open({});await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pending Ethereum refund'));
+ const pending=f.document.querySelectorAll('button').find(b=>b.textContent==='Pending Ethereum refund');assert.equal(pending.disabled,false);pending.fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('waiting for settlement')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Review Ethereum refund'));assert.equal(f.submissions.length,2);await new Promise(resolve=>setImmediate(resolve));
+});
+test('pending refund readiness is identity-bound and never marks Ethereum payment complete',{timeout:3000},async t=>{
+ const f=await exitFixture(t,'withdraw-bok','included'),amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1';amount.fire('input');f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ let prepares=0;f.session.withdrawal.prepare=async()=>{prepares++;return {};};
+ f.session.withdrawal.observe=async()=>({status:'ready',intentId:'other',txHash:'0x'+'7'.repeat(64)});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Check refund readiness').fire('click');await f.document.until(()=>f.document.querySelector('[role=alert]')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Review Ethereum refund'));assert.equal(prepares,0);
+ f.session.withdrawal.observe=async()=>({status:'ready',intentId:'post-1',txHash:'0x'+'7'.repeat(64)});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Check refund readiness').fire('click');await f.document.until(()=>f.document.querySelectorAll('button').some(b=>b.textContent==='Review Ethereum refund')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(f.document.body.textContent.includes('has not been paid')||f.document.body.textContent.includes('refund remains saved'));assert.equal(prepares,0);assert.equal(f.submissions.length,1);
+ f.session.withdrawal.observe=async()=>({status:'unknown',intentId:'post-1',txHash:'0x'+'7'.repeat(64)});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Check refund readiness').fire('click');await f.document.until(()=>f.document.body.textContent.includes('not currently verified')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Review Ethereum refund'));assert.equal(prepares,0);
+});
+
+test('pending refund stays reachable beside a newer unresolved action without discarding it',{timeout:3000},async t=>{
+ const f=await exitFixture(t,'withdraw-bok','included'),amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1';amount.fire('input');f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const status=f.session.application.readAccountStatus;const newer={intentId:'newer',action:{type:'like',post:'42'},status:'unknown',txHash:'0x'+'8'.repeat(64)};f.session.application.readAccountStatus=async()=>({...await status(),status:'recovering',intent:newer});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Back to account').fire('click');f.document.querySelectorAll('button').find(b=>b.textContent==='Refresh account').fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('Check your action')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Pending Ethereum refund').fire('click');await f.document.until(()=>f.document.body.textContent.includes('waiting for settlement')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.submissions.length,1);f.document.querySelectorAll('button').find(b=>b.textContent==='Back to saved action').fire('click');assert(f.document.body.textContent.includes('Check your action'));assert.equal(f.submissions.length,1);await new Promise(setImmediate);
+});
+
+for(const leave of ['none','close','view','account'])test(`pending refund follows native readiness without busy lease and ignores departed context=${leave}`,{timeout:3000},async t=>{
+ const f=await exitFixture(t,'withdraw-bok','included'),gate=Promise.withResolvers(),entered=Promise.withResolvers();let signal,waits=0;
+ f.session.withdrawal.waitUntilReady=async options=>{signal=options.signal;waits++;entered.resolve();return gate.promise;};
+ const amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1';amount.fire('input');f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');await entered.promise;
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(signal.aborted,false);assert.equal(waits,1);assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Review Ethereum refund'));
+ if(leave==='close'){assert.equal(f.panel.close(),true);assert.equal(signal.aborted,true);}
+ if(leave==='view'){f.document.querySelectorAll('button').find(b=>b.textContent==='Back to account').fire('click');assert.equal(signal.aborted,true);}
+ if(leave==='account')f.runtime.getAccount=()=>null;
+ gate.resolve({status:'ready',intentId:'post-1',txHash:'0x'+'7'.repeat(64)});await new Promise(setImmediate);
+ assert.equal(f.document.querySelectorAll('button').some(b=>b.textContent==='Review Ethereum refund'),leave==='none');assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.equal(f.submissions.length,1);assert.equal(waits,1);
 });
 
 test('included Bok funding requires fresh native Bok credit but releases before unrelated account refresh',{timeout:3000},async t=>{

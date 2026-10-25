@@ -1,0 +1,22 @@
+✔ direct private-fee top-up scope checks none against canonical protocol bindings (7.704042ms)
+✔ direct private-fee top-up scope checks token against canonical protocol bindings (2.191958ms)
+✔ direct private-fee top-up scope checks portal against canonical protocol bindings (1.418584ms)
+✔ direct private-fee top-up scope checks canonical against canonical protocol bindings (1.308708ms)
+✔ direct bok top-up scope checks none against canonical protocol bindings (2.054417ms)
+✔ direct bok top-up scope checks token against canonical protocol bindings (1.82625ms)
+✔ direct bok top-up scope checks portal against canonical protocol bindings (1.818209ms)
+✔ direct bok top-up scope checks canonical against canonical protocol bindings (1.862041ms)
+✔ top-up private-fee binding wave drains independent reads before return (4.656708ms)
+✔ top-up private-fee binding wave drains independent reads before failure (1.345709ms)
+✔ top-up bok binding wave drains independent reads before return (2.452542ms)
+✔ top-up bok binding wave drains independent reads before failure (1.947208ms)
+✔ top-up bindings reject l1-anchor changed while independent reads are pending (2.253166ms)
+✔ top-up bindings reject context changed while independent reads are pending (1.848209ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1333.897583

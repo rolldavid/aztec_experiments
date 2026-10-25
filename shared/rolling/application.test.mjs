@@ -22,7 +22,7 @@ import {derivePrivateFeeBridgeSecret,isPrivateFeeCreditFailure} from '../private
 import {prepareFundingClaim as verifyFundingClaim} from './funding-receipts.mjs';
 import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
-import {createRollingApplication} from './application.mjs';
+import {createRollingApplication,createPendingWithdrawalSlot} from './application.mjs';
 import {executeRollingAction} from '../../apps/rolling/wallet-action.mjs';
 import {executeAutomaticWithdrawal} from '../../apps/rolling/automatic-withdrawal.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
@@ -67,8 +67,8 @@ function fixture(){
     assert.equal(opts.transactionJournal,journal);if(state.failSend)throw Error('unknown after send');
     state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77),status:'checkpointed',blockNumber:1,blockHash:hex(42),transactionFee:2n}};return {receipt:{}};
   }};
-  const node={getBlockData:async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{throw Error('Unexpected fixture membership read');}},getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
-  const sdk={poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
+  const node={getTxReceipt:async()=>({...state.outcome?.receipt,executionResult:state.outcome?.outcome==='success'?'success':'reverted'}),getBlockData:async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{throw Error('Unexpected fixture membership read');}},getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
+  const sdk={TxHash,poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},preferenceFeeBudget:()=>({maximumFee:100n}),likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
@@ -1241,13 +1241,12 @@ test('RC22 balances reject malformed owned deposits, stale anchors and noncontig
   await assert.rejects(f.app.readBalances());assert.equal(f.state.sends,0);
  }
 });
-test('RC22 exit preserves original depositor through encrypted reopen and blocks overwriting until verified refund',async()=>{
+test('RC22 exit preserves original depositor independently of unrelated private actions',async()=>{
  const f=collateralFixture(),review=await f.app.prepare({type:'withdraw',deposit:'9'});assert.equal(review.maximumFee,'10');assert.equal(review.withdrawal.depositor,'0x'+'33'.repeat(20));
  const confirmed=await f.app.submitPrepared(review.intentId);assert.equal(confirmed.status,'confirmed');
  const reopened=f.restart();assert.equal((await reopened.readWithdrawal()).withdrawal.amount,'100');
- await assert.rejects(reopened.prepare({type:'like',post:'1'}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
- assert.equal((await reopened.readAccountStatus()).status,'recovering');f.state.refunded=true;
- await reopened.prepare({type:'like',post:'1'});assert.equal(f.state.sends,1);
+ const status=await reopened.readAccountStatus();assert.equal(status.status,'fee-ready');assert.equal(status.pendingWithdrawal.intentId,review.intentId);
+ await reopened.prepare({type:'like',post:'1'});assert.equal(f.state.sends,1);assert.equal((await reopened.readWithdrawal()).intentId,review.intentId);
 });
 test('RC22 exit submit rechecks private receipt and never gates withdrawal on rejected public policy',async()=>{
  const f=collateralFixture();f.state.policyReadError=Error('rejected');const review=await f.app.prepare({type:'withdraw',deposit:'9'});
@@ -1295,8 +1294,8 @@ for(const change of ['missing','revision','checkpoint','conservation','order','s
 test('RC22 Bok exit uses actual ABI and encrypted original scope, independent of rejected board/plugin',async()=>{
  const f=bokAccountingFixture();f.state.bokEnabled=false;f.state.effectivePolicy=[1n,1n,1n,1n,true];
  const action={type:'withdraw-bok',amount:'500',recipient:'0x'+'33'.repeat(20)},intent=await f.app.prepare(action);assert.equal(intent.withdrawal.kind,'bok');assert.equal(intent.withdrawal.amount,'500');assert.equal(f.state.calls.at(-1).name,'withdraw');assert.equal(f.state.calls.at(-1).args.length,3);
- await f.restart().submitPrepared(intent.intentId);assert.equal((await f.restart().readWithdrawal()).withdrawal.nonce,intent.withdrawal.nonce);await assert.rejects(f.restart().prepare({type:'name',first:'River',last:'Stone'}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
- f.state.refunded=true;assert.equal((await f.restart().prepare({type:'name',first:'River',last:'Stone'})).status,'prepared');
+ await f.restart().submitPrepared(intent.intentId);assert.equal((await f.restart().readWithdrawal()).withdrawal.nonce,intent.withdrawal.nonce);
+ assert.equal((await f.restart().prepare({type:'name',first:'River',last:'Stone'})).status,'prepared');
 });
 test('RC22 Bok exit cannot spend reserved request credit or replace an unknown send',async()=>{
  const f=bokAccountingFixture();f.state.bokCredit=10n;await assert.rejects(f.app.prepare({type:'withdraw-bok',amount:'11',recipient:'0x'+'33'.repeat(20)}),{code:'ROLLING_BOK_CREDIT_INSUFFICIENT'});assert.equal(f.state.sends,0);
@@ -1906,11 +1905,11 @@ test('prior-plugin reverted legacy post and release retain their funded continua
   assert.equal(f.state.sends,2);assert.deepEqual([...f.values.entries()],before);
  }
 });
-test('prior-plugin confirmed withdrawal cannot bypass its outstanding refund',async()=>{
+test('prior-plugin withdrawal retains its outstanding refund independently of later actions',async()=>{
  const f=bokAccountingFixture(),intent=await f.app.prepare({type:'withdraw-bok',amount:'500',recipient:'0x'+'33'.repeat(20)});await f.app.submitPrepared(intent.intentId);
  f.options.deployment.bok.pluginId=hex(97);const reopened=f.restart();
- const status=await reopened.readAccountStatus();assert.equal(status.status,'recovering');assert.equal(status.intent.intentId,intent.intentId);
- await assert.rejects(reopened.prepare({type:'post',deposit:'9',content:'Refund pending',name:'0',subboard:'0'},{immediate:true}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});
+ const status=await reopened.readAccountStatus();assert.equal(status.status,'fee-ready');assert.equal(status.pendingWithdrawal.intentId,intent.intentId);
+ await reopened.prepare({type:'post',deposit:'9',content:'Refund pending',name:'0',subboard:'0'},{immediate:true});
  assert.equal(f.state.sends,1);assert.equal((await reopened.readWithdrawal()).withdrawal.nonce,intent.withdrawal.nonce);
 });
 test('immediate Bok batch relies on strict contract simulation and enforces total fee before sending',async()=>{
@@ -2542,7 +2541,7 @@ test('immediate Bok withdrawal keeps exact recipient and pending Ethereum refund
  const intent=await f.app.prepare(action,{immediate:true});assert.equal(f.state.estimates,0);assert.equal(intent.maximumFee,'100');assert.deepEqual(intent.action,action);
  await f.app.submitPrepared(intent.intentId);assert.equal(f.state.estimates,1);assert.equal(f.state.sends,1);
  const saved=await f.app.readWithdrawal();assert.equal(saved.withdrawal.depositor,action.recipient);assert.equal(saved.withdrawal.amount,action.amount);assert.equal(saved.withdrawal.nonce,intent.withdrawal.nonce);
- await assert.rejects(f.app.prepare({type:'post',deposit:'9',content:'Cannot discard refund'},{immediate:true}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
+ await f.app.prepare({type:'post',deposit:'9',content:'Refund remains available'},{immediate:true});assert.equal((await f.app.readWithdrawal()).intentId,intent.intentId);assert.equal(f.state.sends,1);
 });
 
 
@@ -2677,10 +2676,10 @@ function proposedScreenFixture(){
  f.options.accountSession.wallet.sendTx=async(...args)=>{const result=await send(...args);f.state.outcome.receipt.status=args[1].confirmationTier==='proposed'?'proposed':'checkpointed';return result;};
  f.app=f.restart();return {...f,included:()=>included};
 }
-test('included screening uses exact proposed policy then collateral exit retains checkpointed policy',async()=>{
+test('included screening and collateral exit retain exact proposed predecessor policy',async()=>{
  const f=proposedScreenFixture(),tiers=[],send=f.options.accountSession.wallet.sendTx;
  f.options.accountSession.wallet.sendTx=async(...args)=>{tiers.push(args[1].confirmationTier);return send(...args);};
- const result=await f.run();assert.equal(result.status,'confirmed');assert.equal(result.action.type,'withdraw');assert.deepEqual(tiers,['proposed','checkpointed']);assert.equal(f.included(),2);assert.equal(f.state.sends,2);
+ const result=await f.run();assert.equal(result.status,'included');assert.equal(result.action.type,'withdraw');assert.deepEqual(tiers,['proposed','proposed']);assert.equal(f.included(),3);assert.equal(f.state.sends,2);
 });
 test('included screening orphan cannot authorize subsequent collateral exit',async()=>{
  const f=proposedScreenFixture();const screened=await executeRollingAction(f.app,{type:'screen',deposit:'9'});assert.equal(screened.status,'included');
@@ -2699,7 +2698,7 @@ test('included screening synchronizes consecutive private note state before prep
  f.options.accountSession.wallet.sendTx=async(...args)=>{const prior=f.state.responses.get_deposit_info;const result=await send(...args);if(args[0].name==='screen'){pendingNote=f.state.responses.get_deposit_info;f.state.responses.get_deposit_info=prior;}return result;};
  const application=createSynchronizedRollingApplication({application:f.app,operationScope:()=>scope,contextGuard:async()=>{},synchronize:async()=>{steps++;if(pendingNote){f.state.responses.get_deposit_info=pendingNote;pendingNote=null;}}});
  const result=await executeAutomaticWithdrawal({application,deposit:'9',guard:async()=>{},waitUntil:async()=>assert.fail('no cooldown')});
- assert.equal(result.status,'confirmed');assert.equal(steps,2);assert.equal(pendingNote,null);assert.deepEqual(f.state.calls.map(call=>call.name),['screen','withdraw']);
+ assert.equal(result.status,'included');assert.equal(steps,2);assert.equal(pendingNote,null);assert.deepEqual(f.state.calls.map(call=>call.name),['screen','withdraw']);
 });
 
 for(const type of ['preference','read-marker'])for(const immediate of [false,true])test(`exact ${type} fee profile only qualifies immediate submission, immediate=${immediate}`,async()=>{
@@ -2767,4 +2766,53 @@ test('claim verification receives the existing application measurement capabilit
  const f=fundingFixture(),stages=[];f.options.measure=async(stage,operation)=>{stages.push(stage);return operation();};
  const verify=f.options.sdk.prepareFundingClaim;f.options.sdk.prepareFundingClaim=async input=>{assert.equal(input.measure,f.options.measure);return input.measure('action.claim-receipt',()=>verify(input));};
  const prepared=await f.restart().prepare({type:'claim-deposit',receipt:f.receipt});assert(prepared.intentId);assert(stages.includes('action.claim-receipt'));assert.equal(f.state.sends,0);
+});
+
+function pendingExitFixture(){
+ const f=proposedFixture(),send=f.options.accountSession.wallet.sendTx;let tx=80n;
+ const receipts=new Map();
+ f.options.accountSession.wallet.sendTx=async(...args)=>{const result=await send(...args);f.state.outcome.txHash=hex(++tx);f.state.outcome.receipt.txHash=f.state.outcome.txHash;f.state.outcome.receipt.executionResult='success';receipts.set(f.state.outcome.txHash,structuredClone(f.state.outcome.receipt));return result;};
+ f.options.accountSession.node.getTxReceipt=async hash=>receipts.get(String(hash))??{txHash:String(hash),status:'dropped'};
+ return {...f,receipts};
+}
+test('pending exit survives a new included action and encrypted application reopen without Ethereum payment',async()=>{
+ const f=pendingExitFixture();const result=await executeRollingAction(f.app,{type:'withdraw',deposit:'9'});
+ assert.equal(result.status,'included');assert.equal(f.state.sent.opts.confirmationTier,'proposed');
+ const next=await executeRollingAction(f.app,{type:'name',first:'Exit',last:'Owner'});assert.equal(next.status,'included');
+ const reopened=f.restart(),saved=await reopened.readWithdrawal();assert.equal(saved.txHash,result.txHash);assert.equal(saved.intentId,result.intentId);assert.equal(saved.withdrawal.depositor,result.withdrawal.depositor);
+ const status=await reopened.readAccountStatus();assert.equal(status.status,'fee-ready');assert.equal(status.pendingWithdrawal.txHash,result.txHash);assert.equal(f.state.sends,2);
+ await assert.rejects(reopened.prepare({type:'withdraw',deposit:'9'},{immediate:true}),{code:'ROLLING_WITHDRAWAL_PENDING'});assert.equal(f.state.sends,2);
+});
+test('pending exit read detects orphan and changed canonical block without replay or latest-workflow mutation',async()=>{
+ const f=pendingExitFixture();const exit=await executeRollingAction(f.app,{type:'withdraw',deposit:'9'});await executeRollingAction(f.app,{type:'name',first:'Exit',last:'Next'});
+ const before=[...f.values];f.receipts.set(exit.txHash,{txHash:exit.txHash,status:'dropped'});assert.equal((await f.app.readWithdrawal()).status,'unknown');assert.deepEqual([...f.values],before);assert.equal(f.state.sends,2);
+ f.receipts.set(exit.txHash,{txHash:exit.txHash,status:'proposed',executionResult:'success',blockNumber:1,blockHash:hex(99)});
+ await assert.rejects(f.app.readWithdrawal(),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.deepEqual([...f.values],before);
+});
+test('pending exit is saved before workflow can advance and CAS failure preserves signed exit for reconciliation',async()=>{
+ const f=pendingExitFixture(),cas=f.options.privateStore.compareAndSwap;let writes=0;
+ f.options.privateStore.compareAndSwap=async(...args)=>{writes++;if(writes===3)throw Error('pending slot write failed');return cas(...args);};
+ await assert.rejects(executeRollingAction(f.app,{type:'withdraw',deposit:'9'}));assert.equal(f.state.sends,1);
+ f.options.privateStore.compareAndSwap=cas;const current=await (await createEncryptedJournalSlot({storage:f.options.privateStore,walletSecret:f.options.accountSession.walletSecret,walletSalt:f.options.accountSession.walletSalt,scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText({account:f.options.accountSession.owner.toString(),chainId:'31337',version:'1',rollup:f.options.deployment.network.rollup,board:hex(1),portal:f.options.deployment.portal})]),keyDomain:'ROLLING_WORKFLOW_V1'})).read();
+ assert.equal(current.value.action.type,'withdraw');
+ const resumed=await f.app.reconcile(current.value.id);assert.equal(resumed.status,'included');assert.equal((await f.app.readWithdrawal()).txHash,resumed.txHash);assert.equal(f.state.sends,1);
+});
+
+test('a paid exit tombstone is not resurrected and a second exit freshly verifies its Ethereum payment',async()=>{
+ const f=pendingExitFixture();let verified=0,canonical=true;
+ f.options.funding={verifyWithdrawal:async saved=>{verified++;assert.equal(saved.paymentStatus,'refunded');assert.equal(saved.ethereumTxHash,hex(900));return canonical;}};
+ const app=f.restart(),exit=await executeRollingAction(app,{type:'withdraw',deposit:'9'});
+ const scope={account:f.options.accountSession.owner.toString(),chainId:'31337',version:'1',rollup:f.options.deployment.network.rollup,board:hex(1),portal:f.options.deployment.portal};
+ const slot=await createPendingWithdrawalSlot({storage:f.options.privateStore,walletSecret:f.options.accountSession.walletSecret,walletSalt:f.options.accountSession.walletSalt,scope});
+ const saved=await slot.read();await slot.write(saved,{...saved.value,paymentStatus:'refunded',ethereumTxHash:hex(900)});
+ assert.equal((await app.readAccountStatus()).pendingWithdrawal,null);assert.equal((await slot.read()).value.paymentStatus,'refunded');assert.equal(verified,0);
+ await executeRollingAction(app,{type:'name',first:'Paid',last:'Exit'});assert.equal(verified,0);
+ canonical=false;const before=(await slot.read()).encoded;
+ await assert.rejects(app.prepare({type:'withdraw',deposit:'9'},{immediate:true}),{code:'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED'});assert.equal(verified,1);assert.equal((await slot.read()).encoded,before);
+ canonical=true;const next=await executeRollingAction(app,{type:'withdraw',deposit:'9'});assert.equal(next.status,'included');assert.notEqual(next.txHash,exit.txHash);assert.equal(verified,2);assert.equal((await slot.read()).value.txHash,next.txHash);assert.equal(f.state.sends,3);
+});
+test('pending exit remains visible when a newer independent action requires reconciliation',async()=>{
+ const f=pendingExitFixture(),exit=await executeRollingAction(f.app,{type:'withdraw',deposit:'9'});
+ const next=await f.app.prepare({type:'name',first:'New',last:'Action'},{immediate:true});
+ const status=await f.app.readAccountStatus();assert.equal(status.status,'recovering');assert.equal(status.intent.intentId,next.intentId);assert.equal(status.pendingWithdrawal.txHash,exit.txHash);assert.equal(f.state.sends,1);
 });

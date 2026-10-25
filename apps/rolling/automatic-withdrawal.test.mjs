@@ -67,3 +67,9 @@ test('included screen with unchanged or rolled-back note cursor cannot spend aga
  const f=fixture([state(2,true),state(1,true)]);f.application.submitPrepared=async()=>({status:'included'});
  await assert.rejects(executeAutomaticWithdrawal(f.options),{code:'ROLLING_WITHDRAWAL_NO_PROGRESS'});assert.deepEqual(f.calls,['screen']);
 });
+
+test('included final withdrawal returns once without waiting for or claiming an Ethereum payment',async()=>{
+ const f=fixture([state(5,false)]),submit=f.application.submitPrepared;
+ f.application.submitPrepared=async id=>({...await submit(id),status:'included',withdrawal:{amount:'100'}});
+ const result=await executeAutomaticWithdrawal(f.options);assert.equal(result.status,'included');assert.deepEqual(f.calls,['withdraw']);assert.equal(result.withdrawal.amount,'100');
+});
