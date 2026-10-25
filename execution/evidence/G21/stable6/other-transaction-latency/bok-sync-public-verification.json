@@ -1,0 +1,15 @@
+{
+  "commit": "b6f7554d4a6f51d1bc12dfcb46dc5613c7c99627",
+  "verified": [
+    {
+      "path": "/wallet/native-worker.js",
+      "bytes": 421472,
+      "sha256": "159bb2665f67da4d24ab93c6c43babfeb702239294384c18a31ad890d13206a7"
+    },
+    {
+      "path": "/wallet/aztec_bundle.js",
+      "bytes": 8392172,
+      "sha256": "fcd7eea41b84304367b100db50c2b7d1a346b827afa6491be87c9c7dc8fb3aec"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+Success
+{"activated": true, "appRestarted": false, "proxyRestarted": false, "payloadCleaned": true, "sdkRetentionCleaned": true}
+
+

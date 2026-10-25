@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Resumed after usage interruption. c7900efd live/pushed774checks+actualbrowserbuild; transfercleaned. FirstchangedSDKopening6.3222s; cachedrun notcaptured browsercurrentlydisabled. Integrated independentlyreviewed nativeBokimmutableprefetch and postwritefreshnesspoll removal preservinglocalcoherence/prewrite/nativevalidation. Next focusedcombinedchecks/build/push/staticpublish; browsermeasurement pendingavailabletool. All2s/50%targets active.",
+      "checkpoint": "b6f7554d committed/pushed/live,751 integratedchecks+actual6scriptbuild; approved Bokimmutableprefetch + redundantpostcommitpollremoval. c790claimworkflow/feecachereuse also live. Staticactivate noapp/proxyrestart; remote retentioncleaned. Browsertoolreportsdisabled so no b6endtoend measurementclaim. Next actualcachedopening+ETHBok fullboundedtrace;2s/all50%goal active. Integrateddraftscleaned,onebuildretained.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",

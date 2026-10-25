@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Resumed after usage interruption. c7900efd live/pushed774checks+actualbrowserbuild; transfercleaned. FirstchangedSDKopening6.3222s; cachedrun notcaptured browsercurrentlydisabled. Integrated independentlyreviewed nativeBokimmutableprefetch and postwritefreshnesspoll removal preservinglocalcoherence/prewrite/nativevalidation. Next focusedcombinedchecks/build/push/staticpublish; browsermeasurement pendingavailabletool. All2s/50%targets active.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — b6f7554d committed/pushed/live,751 integratedchecks+actual6scriptbuild; approved Bokimmutableprefetch + redundantpostcommitpollremoval. c790claimworkflow/feecachereuse also live. Staticactivate noapp/proxyrestart; remote retentioncleaned. Browsertoolreportsdisabled so no b6endtoend measurementclaim. Next actualcachedopening+ETHBok fullboundedtrace;2s/all50%goal active. Integrateddraftscleaned,onebuildretained.
 
 ## Ready internal work
 
