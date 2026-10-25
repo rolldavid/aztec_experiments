@@ -454,7 +454,7 @@ test('USDC session exposes only explicitly pinned relay capability and retains a
 });
 
 import {verifyRollingTopupScope} from './wallet-session.mjs';
-for(const kind of ['private-fee','bok'])for(const defect of ['none','token','portal','canonical'])test(`direct ${kind} top-up scope checks ${defect} against canonical protocol bindings`,async()=>{
+function topupScopeFixture(kind,defect='none'){
  const network={chainId:'31337',version:'1',rollup:eth(1)},privateFee=hex(2),portal=eth(3),token=eth(4),recipient=hex(5);
  const addresses={rollupAddress:network.rollup,feeJuicePortalAddress:portal,feeJuiceAddress:token,inboxAddress:eth(6),outboxAddress:eth(7)};
  const abi=new Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)','function token() view returns(address)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function active() view returns(bool)','function decimals() view returns(uint8)']);
@@ -464,7 +464,11 @@ for(const kind of ['private-fee','bok'])for(const defect of ['none','token','por
   if(defect==='token'&&name==='decimals')values[name]=9;if(defect==='portal'&&['ROLLUP','escrow'].includes(name))values[name]=name==='ROLLUP'?eth(99):hex(99);return abi.encodeFunctionResult(name,[values[name]]);
  }};
  const input={sdk:{Fr,ProtocolContractAddress:{FeeJuice:hex(9)}},ethers:{Interface},node,provider,network,privateFee,bok:{address:recipient,artifact:{storageLayout:{portal:{slot:'1'}}}},kind,contextGuard:async()=>{}};
- if(defect==='none')assert.deepEqual(await verifyRollingTopupScope(input),{portal,token,recipient:kind==='bok'?recipient:privateFee});else await assert.rejects(verifyRollingTopupScope(input),{code:'ROLLING_SESSION_CONFIG'});
+ return {input,abi,portal,token,recipient:kind==='bok'?recipient:privateFee};
+}
+for(const kind of ['private-fee','bok'])for(const defect of ['none','token','portal','canonical'])test(`direct ${kind} top-up scope checks ${defect} against canonical protocol bindings`,async()=>{
+ const {input,portal,token,recipient}=topupScopeFixture(kind,defect);
+ if(defect==='none')assert.deepEqual(await verifyRollingTopupScope(input),{portal,token,recipient});else await assert.rejects(verifyRollingTopupScope(input),{code:'ROLLING_SESSION_CONFIG'});
 });
 
 import {verifyRollingTopupClaim} from './wallet-session.mjs';
@@ -1490,4 +1494,20 @@ test('preference readiness handoff rejects account mutation before native discov
  const session=await createRollingWalletSession(f.input);mutate=true;const syncs=f.state.syncs;
  await assert.rejects(session.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
  assert.equal(f.state.syncs,syncs);assert(!f.state.events.includes('preference-events'));assert.equal(session.busy,false);await session.close();
+});
+
+for(const kind of ['private-fee','bok'])for(const fail of [false,true])test(`top-up ${kind} binding wave drains independent reads before ${fail?'failure':'return'}`,async()=>{
+ const {input,abi,portal,token,recipient}=topupScopeFixture(kind);const names=kind==='bok'?['token','escrow','version','chainId','active','inbox','outbox']:['ROLLUP','UNDERLYING','VERSION','L2_TOKEN_ADDRESS'];
+ const gates=new Map(names.map(name=>[name,Promise.withResolvers()])),entered=Promise.withResolvers(),seen=[],call=input.provider.call,blocks=[],getBlock=input.provider.getBlock;
+ input.provider.getBlock=async tag=>{blocks.push(tag);return getBlock(tag);};input.provider.call=async request=>{const name=abi.parseTransaction(request).name;seen.push(name);if(gates.has(name)){if(seen.length===names.length)entered.resolve();await gates.get(name).promise;}return call(request);};
+ let done=false;const pending=verifyRollingTopupScope(input).finally(()=>done=true),failure=Error('labelled binding failure');const result=fail?assert.rejects(pending,error=>error===failure):pending;
+ await entered.promise;assert.deepEqual(seen,names);assert.deepEqual(blocks,['latest']);if(fail)gates.get(names[0]).reject(failure);else gates.get(names[0]).resolve();
+ await new Promise(setImmediate);assert.equal(done,false);assert(!seen.includes('decimals'));for(const name of names.slice(1))gates.get(name).resolve();
+ const value=await result;if(!fail){assert.deepEqual(value,{portal,token,recipient});assert.deepEqual(seen,[...names,'decimals']);assert.deepEqual(blocks,['latest',10]);}else{assert.deepEqual(seen,names);assert.deepEqual(blocks,['latest']);}
+});
+for(const change of ['l1-anchor','context'])test(`top-up bindings reject ${change} changed while independent reads are pending`,async()=>{
+ const {input,abi}=topupScopeFixture('bok'),held=Promise.withResolvers(),entered=Promise.withResolvers(),call=input.provider.call,getBlock=input.provider.getBlock;let changed=false;
+ input.provider.call=async request=>{if(abi.parseTransaction(request).name==='outbox'){entered.resolve();await held.promise;}return call(request);};
+ input.contextGuard=async()=>{if(changed&&change==='context')throw Error('labelled account changed');};input.provider.getBlock=async tag=>{const block=await getBlock(tag);return changed&&tag!=='latest'&&change==='l1-anchor'?{...block,hash:hex(11)}:block;};
+ const result=assert.rejects(verifyRollingTopupScope(input),change==='l1-anchor'?{code:'ROLLING_SESSION_CONFIG'}:/account changed/);await entered.promise;changed=true;held.resolve();await result;
 });

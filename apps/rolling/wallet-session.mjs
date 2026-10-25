@@ -646,6 +646,7 @@ export async function verifyRollingAggregateScope({sdk,ethers,node,provider,scop
  * contract, then pin all token/portal reads to one canonical L1 block. */
 export async function verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee,bok,kind,contextGuard}){
  const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;},check=ok=>{if(!ok)throw fail('ROLLING_SESSION_CONFIG');};
+ const together=async tasks=>{const settled=await Promise.allSettled(tasks.map(task=>Promise.resolve().then(task)));const failed=settled.find(value=>value.status==='rejected');if(failed)throw failed.reason;return settled.map(value=>value.value);};
  const addresses=await read(()=>node.getL1ContractAddresses());check(addresses.rollupAddress?.toString().toLowerCase()===network.rollup);
  const abi=new ethers.Interface(['function ROLLUP() view returns(address)','function UNDERLYING() view returns(address)','function VERSION() view returns(uint256)','function L2_TOKEN_ADDRESS() view returns(bytes32)','function token() view returns(address)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function active() view returns(bool)','function decimals() view returns(uint8)']);
  const l1=await read(()=>provider.getBlock('latest'));check(Number.isSafeInteger(l1?.number)&&/^0x[0-9a-f]{64}$/.test(l1?.hash));
@@ -653,14 +654,16 @@ export async function verifyRollingTopupScope({sdk,ethers,node,provider,network,
  let portal,token,recipient;
  if(kind==='private-fee'){
   portal=addresses.feeJuicePortalAddress?.toString().toLowerCase();token=addresses.feeJuiceAddress?.toString().toLowerCase();recipient=privateFee;
-  check(String(await call(portal,'ROLLUP')).toLowerCase()===network.rollup&&String(await call(portal,'UNDERLYING')).toLowerCase()===token&&String(await call(portal,'VERSION'))===network.version&&BigInt(await call(portal,'L2_TOKEN_ADDRESS'))===BigInt(sdk.ProtocolContractAddress.FeeJuice.toString()));
+  const [rollup,underlying,version,l2Token]=await together(['ROLLUP','UNDERLYING','VERSION','L2_TOKEN_ADDRESS'].map(name=>()=>call(portal,name)));
+  check(String(rollup).toLowerCase()===network.rollup&&String(underlying).toLowerCase()===token&&String(version)===network.version&&BigInt(l2Token)===BigInt(sdk.ProtocolContractAddress.FeeJuice.toString()));
  }else{
   check(kind==='bok'&&bok);recipient=bok.address.toString();const head=await read(()=>node.getBlockData('checkpointed')),number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bok.artifact.storageLayout?.portal?.slot;
   check(Number.isSafeInteger(number)&&number>0&&/^0x[0-9a-f]{64}$/.test(hash)&&slot!==undefined);
   const value=await read(()=>node.getPublicStorageAt({hash},bok.address,new sdk.Fr(BigInt(slot))));check(BigInt(value.toString())>0n&&BigInt(value.toString())<1n<<160n);portal='0x'+BigInt(value.toString()).toString(16).padStart(40,'0');
   const again=await read(()=>node.getBlockData(number));check(again?.blockHash?.toString()===hash&&Number(again?.header?.globalVariables?.blockNumber)===number);
-  token=String(await call(portal,'token')).toLowerCase();check(BigInt(await call(portal,'escrow'))===BigInt(recipient)&&String(await call(portal,'version'))===network.version&&String(await call(portal,'chainId'))===network.chainId&&await call(portal,'active')===true);
-  check(String(await call(portal,'inbox')).toLowerCase()===addresses.inboxAddress?.toString().toLowerCase()&&String(await call(portal,'outbox')).toLowerCase()===addresses.outboxAddress?.toString().toLowerCase());
+  const [underlying,escrow,version,chainId,active,inbox,outbox]=await together(['token','escrow','version','chainId','active','inbox','outbox'].map(name=>()=>call(portal,name)));
+  token=String(underlying).toLowerCase();check(BigInt(escrow)===BigInt(recipient)&&String(version)===network.version&&String(chainId)===network.chainId&&active===true);
+  check(String(inbox).toLowerCase()===addresses.inboxAddress?.toString().toLowerCase()&&String(outbox).toLowerCase()===addresses.outboxAddress?.toString().toLowerCase());
  }
  check(/^0x[0-9a-f]{40}$/.test(portal)&&/^0x[0-9a-f]{40}$/.test(token)&&BigInt(portal)>0n&&BigInt(token)>0n);
  check(BigInt(await call(token,'decimals'))===(kind==='bok'?6n:18n));check((await read(()=>provider.getBlock(l1.number)))?.hash===l1.hash);return Object.freeze({portal,token,recipient});
