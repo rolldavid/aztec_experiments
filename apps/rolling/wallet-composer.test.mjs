@@ -125,15 +125,15 @@ test('opening and reopening the social composer reuses the unlocked session whil
  f.balance.resolve({available:true,availableCredit:'0'});
 });
 
-function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statusGate=null,signInGate=null,status='fee-ready',freshAccount=false,savedClient=null}={}){
+function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statusGate=null,signInGate=null,status='fee-ready',freshAccount=false,savedClient=null,funding=null}={}){
  const document=dom(t),statusStarted=Promise.withResolvers(),calls={load:0,restore:0,signIn:0,sessions:0,status:0,names:0,moderator:0,signOut:0};let account=null,configured;
  const identity=document.createElement('section');document.body.append(identity);
- const session={busy:false,application:{
+ const session={busy:false,...(funding?{funding}:{}),application:{
   async readAccountStatus(){calls.status++;statusStarted.resolve();if(statusGate){session.busy=true;await statusGate.promise;session.busy=false;}return {status,depositIds:status==='fee-ready'?['9']:[]};},
   async ownedIdentities(){calls.names++;return {identities:[],records:[],nextCursor:null};},
   async readModeratorStatus(){calls.moderator++;return {authorized:false};}
  },async close(){}};
- const runtime={...(savedClient?{savedItems:async()=>savedClient}:{}),canStartTestAccount:true,startingTestAccount:()=>freshAccount,account:{configure(value){configured=value;},async endSession(){calls.signOut++;account=null;configured.onChange({});}},
+ const runtime={...(savedClient?{savedItems:async()=>savedClient}:{}),canStartTestAccount:true,startingTestAccount:()=>freshAccount,startedFreshAccount:()=>freshAccount&&!!funding,account:{configure(value){configured=value;},async endSession(){calls.signOut++;account=null;configured.onChange({});}},
   getAccount:()=>account,
   fundingWallets:()=>[{id:'metamask',name:'MetaMask',icon:'data:image/png;base64,AA=='}],
   fundingWalletStatus:()=>({connected:!!account,name:'MetaMask',address:'0x'+'1'.repeat(40)}),
@@ -142,7 +142,7 @@ function signInFixture(t,{restored=false,restoreGate=null,sessionGate=null,statu
   async createSession(){calls.sessions++;if(sessionGate)await sessionGate.promise;return session;}
  };
  const panel=mountRollingWalletPanel({loadRuntime:async()=>{calls.load++;return runtime;}});panel.attachIdentityControls(identity);
- return {document,panel,calls,identity,statusStarted:statusStarted.promise};
+ return {document,panel,calls,identity,statusStarted:statusStarted.promise,replaceAccount(){account={};configured.onChange({});}};
 }
 
 test('wallet chooser has icons and no password, files, passkey or backup path; one click preserves a reply',{timeout:3000},async t=>{
@@ -1223,3 +1223,18 @@ for(const kind of [4,5])test('subscriptions and notifications remain unavailable
 for(const kind of [1,2,3])test('saved item capacity is explained inline without a transaction kind='+kind,{timeout:3000},async t=>{const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'})}),client=savedFixture();client.set=async()=>{throw Object.assign(Error('cap'),{code:'ROLLING_SAVED_ITEMS_LIMIT',kind});};f.runtime.savedItems=async()=>client;const result=await f.panel.act({type:'preference',kind,target:'42',enabled:true});assert.equal(result.status,'failed');assert.equal(result.message,kind===1?'You can save up to 100 bookmarks. Remove one first.':'You can follow up to 100 people and boards. Remove one first.');assert.equal(f.submissions.length,0);});
 
 test('saved items restore before a held native session or financial account read',{timeout:3000},async t=>{const sessionGate=Promise.withResolvers(),client=savedFixture();await client.set({kind:1,target:'42',enabled:true});const f=signInFixture(t,{restored:true,sessionGate,savedClient:client});let done=false;const initializing=f.panel.initialize().then(()=>done=true);await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.calls.sessions,1);assert.equal(f.calls.status,0);assert.deepEqual(f.panel.savedItemsSnapshot().bookmarks,['42']);assert.equal(f.panel.preferenceEnabled(1,'42'),true);sessionGate.resolve();await initializing;assert.equal(f.calls.status,1);});
+
+for(const replaceOwner of [false,true])test(`fresh setup quote failure preserves diagnosis and session; account replacement=${replaceOwner}`,{timeout:3000},async t=>{
+ const entered=Promise.withResolvers(),held=Promise.withResolvers();let quotes=0,sends=0;
+ const funding={async prepareStarter(){quotes++;if(quotes===1){entered.resolve();await held.promise;throw Object.assign(Error('private provider detail'),{code:'AGGREGATE_LIQUIDITY_UNAVAILABLE'});}return {kind:'rolling-aggregate-eth-v1',privateFeeCap:'100',slippageBps:100,breakdown:{collateralWei:'100',fee:{maxEth:'20',amount:'200'},bok:{maxEth:'0',amount:'0'},gasBudgetWei:'10',maximumTotalWei:'130'}};},async confirm(){sends++;}};
+ const f=signInFixture(t,{freshAccount:true,funding});await f.panel.initialize();
+ f.document.querySelectorAll('button').find(b=>b.textContent.includes('Connect MetaMask')).fire('click');await entered.promise;
+ if(replaceOwner)f.replaceAccount();held.resolve();
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(sends,0);assert.equal(f.calls.sessions,1);assert.equal(f.calls.status,0);assert(!f.document.body.textContent.includes('private provider detail'));
+ if(replaceOwner){assert(!f.document.body.textContent.includes('The exchange cannot currently quote'));assert.match(f.document.body.textContent,/account.*(connect|changed)/i);return;}
+ assert(f.document.body.textContent.includes('The exchange cannot currently quote this amount. No payment was sent.'));
+ assert(!f.document.body.textContent.includes('Your account could not connect'));assert(!f.document.body.textContent.includes('Wallet sign-in could not complete'));
+ const refresh=f.document.querySelectorAll('button').find(b=>b.textContent==='Refresh price');assert(refresh);assert.equal(refresh.disabled,false);refresh.fire('click');
+ await f.document.until(()=>quotes===2&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.calls.sessions,1);assert.equal(sends,0);
+});

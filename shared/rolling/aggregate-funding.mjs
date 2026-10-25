@@ -26,6 +26,12 @@ const P=218882428718392752222464057452572750885483644004160343436982041865758084
 const prepared=new WeakMap();
 function fail(code){throw Object.assign(new Error('Aggregate funding is unavailable.'),{code:`AGGREGATE_${code}`});}
 function check(x,code='INVALID'){if(!x)fail(code);}
+// Only an explicit quoter call exception gets this presentation category.
+// Never infer liquidity from provider text or inspect exception getters.
+function publicReadFailure(error,quoting){
+ let code;try{code=Object.getOwnPropertyDescriptor(error??{},'code')?.value;}catch{}
+ fail(quoting&&code==='CALL_EXCEPTION'?'LIQUIDITY_UNAVAILABLE':'PUBLIC_READ_FAILED');
+}
 function record(x,keys){check(x && [Object.prototype,null].includes(Object.getPrototypeOf(x)) && Reflect.ownKeys(x).length===keys.length);const r={};for(const k of keys){const d=Object.getOwnPropertyDescriptor(x,k);check(d && 'value' in d);r[k]=d.value;}return r;}
 function hex(x,n=32){check(typeof x==='string' && new RegExp(`^0x[0-9a-f]{${n*2}}$`).test(x) && BigInt(x)>0n);return x;}
 function uint(x,bits=256){check(typeof x==='string' && /^(0|[1-9][0-9]{0,77})$/.test(x) && BigInt(x)<2n**BigInt(bits));return BigInt(x);}
@@ -100,13 +106,13 @@ export async function prepareAggregateFunding(input,{provider}={}) {
   const w=record(x.wallet,['address','chainId','canSendTransaction','canSignTypedData','gasBudgetWei']);hex(w.address,20);uint(w.chainId,64);
   check(w.chainId===s.chainId && w.canSendTransaction===true && w.canSignTypedData===true,'WALLET_CAPABILITY');check(uint(w.gasBudgetWei)>0n,'USER_GAS_REQUIRED');
   check(provider && typeof provider.request==='function');
-  const request=async(method,params)=>{try{return await provider.request({method,params});}catch{fail('PUBLIC_READ_FAILED');}};
+  const request=async(method,params,quoting=false)=>{try{return await provider.request({method,params});}catch(error){publicReadFailure(error,quoting);}};
   const [,block]=await together([
     async()=>check(quantity(await request('eth_chainId',[]))===BigInt(s.chainId),'CHAIN'),
     async()=>blockSnapshot(await request('eth_getBlockByNumber',['latest',false])),
   ]);
   const tag=block.number;
-  const call=async(address,abi,name,args=[])=>{const data=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag]);try{return abi.decodeFunctionResult(name,data);}catch{fail('PUBLIC_READ_FAILED');}};
+  const call=async(address,abi,name,args=[])=>{const data=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag],address===s.quoter&&abi===quoter&&name==='quoteExactOutputSingle');try{return abi.decodeFunctionResult(name,data);}catch{fail('PUBLIC_READ_FAILED');}};
   const quote=async(token,amount,poolFee)=>{
     const q=(await call(s.quoter,quoter,'quoteExactOutputSingle',[[s.weth,token,amount,poolFee,0]]))[0];
     check(q>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxEth:((q*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedEth:q.toString()};
@@ -191,10 +197,10 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
   const w=record(x.wallet,['address','chainId','canSignTypedData']);hex(w.address,20);check(w.chainId===s.chainId&&w.canSignTypedData===true,'WALLET_CAPABILITY');
   const relay=record(x.relay,['address','feeUsdc','gasBudgetWei']);hex(relay.address,20);check(relay.address!==w.address&&relay.address!==s.router,'RELAY_SCOPE');check(uint(relay.feeUsdc,128)>0n&&uint(relay.gasBudgetWei)>0n,'RELAY_BUDGET');
   check(provider&&typeof provider.request==='function');
-  const request=async(method,params)=>{try{return await provider.request({method,params});}catch{fail('PUBLIC_READ_FAILED');}};
+  const request=async(method,params,quoting=false)=>{try{return await provider.request({method,params});}catch(error){publicReadFailure(error,quoting);}};
   check(quantity(await request('eth_chainId',[]))===BigInt(s.chainId),'CHAIN');
   const block=blockSnapshot(await request('eth_getBlockByNumber',['latest',false])),tag=block.number;
-  const call=async(address,abi,name,args=[])=>{const value=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag]);try{return abi.decodeFunctionResult(name,value);}catch{fail('PUBLIC_READ_FAILED');}};
+  const call=async(address,abi,name,args=[])=>{const value=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag],address===s.quoter&&abi===quoter&&name==='quoteExactOutputSingle');try{return abi.decodeFunctionResult(name,value);}catch{fail('PUBLIC_READ_FAILED');}};
   const domain={...s.usdcDomain,chainId:s.chainId,verifyingContract:s.bokToken};
   const [,,minimum,maximum,nonce]=await together([
     ()=>together([[s.router,s.routerCodeHash],[s.quoter,s.quoterCodeHash],[s.bokToken,s.usdcCodeHash],[s.usdcImplementation,s.usdcImplementationCodeHash]].map(([address,expected])=>async()=>{

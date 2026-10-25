@@ -129,7 +129,8 @@ function fundingFailureText(failure){
    ROLLING_FUNDING_GAS_CHANGED:'Ethereum fees changed. Review the current cost before continuing.',
    AGGREGATE_STALE_QUOTE:'This quote has expired on Ethereum. Get a fresh quote and review the amounts before confirming again.',
    AGGREGATE_QUOTE_REORG:'Ethereum changed the block used for this quote. Get a fresh quote before confirming again.',
-   AGGREGATE_PUBLIC_READ_FAILED:'The funding quote could not be verified against current Ethereum state. Check your Ethereum connection, then get a fresh quote. Your recovery records are preserved.',
+   AGGREGATE_PUBLIC_READ_FAILED:'The current price could not be checked. Try again.',
+   AGGREGATE_LIQUIDITY_UNAVAILABLE:'The exchange cannot currently quote this amount. No payment was sent.',
    AGGREGATE_INSUFFICIENT_USER_FUNDS:'Your Ethereum wallet does not have enough funds for these allocations and the approved costs. Add funds to your wallet or choose another payment currency, then review the cost again.',
    AGGREGATE_PORTAL_NOT_READY:'The funding bridge is not accepting deposits. Try again when the service is available.',
    AGGREGATE_RELAY_GAS_REQUIRED:'The USDC funding relay currently lacks Ethereum gas. Try again when the relay is funded.',
@@ -481,7 +482,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function connect(){return connectPending??=connectAccount().finally(()=>{connectPending=null;});}
  async function connectAccount(){
-  const epoch=accountEpoch,attempt=++initializationAttempt;
+  const epoch=accountEpoch,attempt=++initializationAttempt;let needsFundingQuote=false;
   dialog.removeAttribute('data-rolling-initialization');
   if(setupMode)note('Connecting to the network…');
   try{
@@ -520,9 +521,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    // not require private note discovery. Returning accounts still obtain their
    // actual state; missing local records never mean an empty account.
    status={status:'fee-needed',depositIds:[]};intent=null;blocked=false;view='funding';
-   await prepareFundingQuote();checkAccount(epoch);
+   needsFundingQuote=true;
   }else await refresh();checkAccount(epoch);note('');
   }catch{if(attempt===initializationAttempt)initializationAttempt++;throw connectionFailure;}
+  // Connection succeeded. A quote failure must retain its own safe diagnosis.
+  if(needsFundingQuote){try{await prepareFundingQuote();checkAccount(epoch);}catch(failure){checkAccount(epoch);throw failure;}}
  }
  function ensureRuntime(){
   return runtimePending??=Promise.resolve().then(async()=>{
@@ -545,7 +548,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!unlocked())return false;
    await connect();return true;
   }).catch(failure=>{
-   error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':'Your account could not connect. Check your connection and try again.';
+   error=failure===runtimeFailure?'Account tools could not load. Reload the page to try again.':failure!==connectionFailure&&session&&view==='funding'&&fundingQuoteRequested?(fundingFailureText(failure)??'The setup price could not be loaded. Try again. No payment was sent.'):'Your account could not connect. Check your connection and try again.';
    return false;
   }).finally(()=>{initializing=false;note('');render();requestComposerPreparation();});
   render();return initializationPending;
@@ -576,7 +579,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!intent&&['fee-needed','collateral-pending'].includes(status?.status)){
     view=status.depositIds?.length?'topup':'funding';topupKind='private-fee';
    }
-  },accountFailure));
+  },failure=>failure!==connectionFailure&&session&&view==='funding'&&fundingQuoteRequested?(fundingFailureText(failure)??'The setup price could not be loaded. Try again. No payment was sent.'):accountFailure(failure)));
   if(runtime.canStartTestAccount&&!runtime.startingTestAccount?.())content.append(button('Start new test account',startTestAccount));
   content.append(privacyDetails());
  }

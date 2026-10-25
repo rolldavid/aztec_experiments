@@ -254,3 +254,20 @@ for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])for(const fork o
  const preparation=f.prepare().finally(()=>settled=true),observed=fork?assert.rejects(preparation,{code:'AGGREGATE_QUOTE_REORG'}):preparation;
  await entered.promise;assert.equal(anchorReads,1);assert.equal(settled,false,'no quote published before fresh canonical check');held.resolve();await observed;assert.equal(anchorReads,1);
 });
+
+for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])for(const mode of ['revert','network','plain','getter','portal','malformed'])test(`${asset} exact quoter failure classification: ${mode}`,async()=>{
+ const f=make(),original=f.provider.request;let getters=0;
+ f.provider.request=async call=>{
+  const target=mode==='portal'?f.input.scope.collateralPortal:f.input.scope.quoter;
+  if(call.method==='eth_call'&&call.params[0].to===target){
+   if(mode==='malformed')return '0x';
+   const failure=Error('private provider detail');
+   if(mode==='getter')Object.defineProperty(failure,'code',{get(){getters++;return 'CALL_EXCEPTION';}});
+   else if(mode!=='plain')failure.code=mode==='network'?'NETWORK_ERROR':'CALL_EXCEPTION';
+   throw failure;
+  }
+  return original(call);
+ };
+ await assert.rejects(f.prepare(),error=>{assert.equal(error.code,mode==='revert'?'AGGREGATE_LIQUIDITY_UNAVAILABLE':'AGGREGATE_PUBLIC_READ_FAILED');assert(!error.message.includes('private provider detail'));return true;});
+ assert.equal(getters,0);assert(!f.calls.some(call=>/send|sign/.test(call.method)));
+});
