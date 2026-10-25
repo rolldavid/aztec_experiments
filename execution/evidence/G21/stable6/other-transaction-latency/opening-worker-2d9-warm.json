@@ -1,0 +1,213 @@
+{
+  "measure": {
+    "click": 26066.929999947548,
+    "elapsed": 1728.7900000810623,
+    "label": "Confirm payment",
+    "ready": 27795.72000002861,
+    "wallet": [
+      {
+        "end": 26282.830000042915,
+        "id": 1,
+        "method": "personal_sign",
+        "start": 26268.34500002861
+      }
+    ]
+  },
+  "status": [
+    {
+      "duration": 486,
+      "stage": "worker-initialization",
+      "start": 753.5349999666214,
+      "state": "complete",
+      "step": "cryptography",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 1565.6600000858307,
+      "stage": "worker-initialization",
+      "start": 759.0699999332428,
+      "state": "complete",
+      "step": "prover",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 3567.2850000858307,
+      "stage": "worker-initialization",
+      "start": 762.204999923706,
+      "state": "complete",
+      "step": "deployment",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 31.084999918937683,
+      "stage": "worker-initialization",
+      "start": 762.2300000190735,
+      "state": "complete",
+      "step": "kernels",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "config"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "artifact-layout"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "node-readiness"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "board-class"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "checkpoint"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "board-instance"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "public-config"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "config-commitment"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "fee-instance"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "l1-context"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "portal-code-and-immutables"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "canonical-recheck"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "final-readiness-and-context"
+    },
+    {
+      "duration": 1061.780000090599,
+      "stage": "worker-initialization",
+      "start": 4329.344999909401,
+      "state": "complete",
+      "step": "funding-scope",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 4356.955000042915,
+      "stage": "worker-initialization",
+      "start": 23577.78499996662,
+      "state": "complete",
+      "step": "private-session",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 366.56500005722046,
+      "stage": "funding-preparation",
+      "start": 23580.2199999094,
+      "state": "complete",
+      "step": "allocation",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 298.3049999475479,
+      "stage": "funding-preparation",
+      "start": 23947.634999990463,
+      "state": "complete",
+      "step": "qualification",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 3.4049999713897705,
+      "stage": "funding-preparation",
+      "start": 24245.99500000477,
+      "state": "complete",
+      "step": "journal",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 0.9099999666213988,
+      "stage": "funding-preparation",
+      "start": 24249.419999957085,
+      "state": "complete",
+      "step": "wallet",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 161.86500000953674,
+      "stage": "funding-preparation",
+      "start": 24251.444999933243,
+      "state": "complete",
+      "step": "nonce",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 2.4100000858306885,
+      "stage": "funding-preparation",
+      "start": 24413.3449999094,
+      "state": "complete",
+      "step": "secrets",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 599.4500000476837,
+      "stage": "funding-preparation",
+      "start": 24415.90499997139,
+      "state": "complete",
+      "step": "quote",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 6.634999990463257,
+      "stage": "funding-preparation",
+      "start": 25015.669999957085,
+      "state": "complete",
+      "step": "save",
+      "timeOrigin": 1792942469376.04
+    }
+  ],
+  "source": "2d9f63d08a78adb1741ec67c746cf56aa234becb",
+  "scope": "warm-page explicit same-owner fresh account; real signature; no payment included",
+  "walletDwellMs": 14.485000014305115,
+  "targetMs": 2000,
+  "targetMet": true
+}

@@ -1,0 +1,219 @@
+{
+  "funding": {
+    "click": 92545.37000000475,
+    "elapsed": 80734.99500000477,
+    "ready": 173280.36500000954
+  },
+  "source": "2d9f63d08a78adb1741ec67c746cf56aa234becb",
+  "status": [
+    {
+      "duration": 486,
+      "stage": "worker-initialization",
+      "start": 753.5349999666214,
+      "state": "complete",
+      "step": "cryptography",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 1565.6600000858307,
+      "stage": "worker-initialization",
+      "start": 759.0699999332428,
+      "state": "complete",
+      "step": "prover",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 3567.2850000858307,
+      "stage": "worker-initialization",
+      "start": 762.204999923706,
+      "state": "complete",
+      "step": "deployment",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 31.084999918937683,
+      "stage": "worker-initialization",
+      "start": 762.2300000190735,
+      "state": "complete",
+      "step": "kernels",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "config"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "artifact-layout"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "node-readiness"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "board-class"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "checkpoint"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "board-instance"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "public-config"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "config-commitment"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "fee-instance"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "l1-context"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "portal-code-and-immutables"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "canonical-recheck"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "final-readiness-and-context"
+    },
+    {
+      "duration": 1061.780000090599,
+      "stage": "worker-initialization",
+      "start": 4329.344999909401,
+      "state": "complete",
+      "step": "funding-scope",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 4356.955000042915,
+      "stage": "worker-initialization",
+      "start": 23577.78499996662,
+      "state": "complete",
+      "step": "private-session",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 366.56500005722046,
+      "stage": "funding-preparation",
+      "start": 23580.2199999094,
+      "state": "complete",
+      "step": "allocation",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 298.3049999475479,
+      "stage": "funding-preparation",
+      "start": 23947.634999990463,
+      "state": "complete",
+      "step": "qualification",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 3.4049999713897705,
+      "stage": "funding-preparation",
+      "start": 24245.99500000477,
+      "state": "complete",
+      "step": "journal",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 0.9099999666213988,
+      "stage": "funding-preparation",
+      "start": 24249.419999957085,
+      "state": "complete",
+      "step": "wallet",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 161.86500000953674,
+      "stage": "funding-preparation",
+      "start": 24251.444999933243,
+      "state": "complete",
+      "step": "nonce",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 2.4100000858306885,
+      "stage": "funding-preparation",
+      "start": 24413.3449999094,
+      "state": "complete",
+      "step": "secrets",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 599.4500000476837,
+      "stage": "funding-preparation",
+      "start": 24415.90499997139,
+      "state": "complete",
+      "step": "quote",
+      "timeOrigin": 1792942469376.04
+    },
+    {
+      "duration": 6.634999990463257,
+      "stage": "funding-preparation",
+      "start": 25015.669999957085,
+      "state": "complete",
+      "step": "save",
+      "timeOrigin": 1792942469376.04
+    }
+  ],
+  "visible": "Your account\nClose account panel\n\nYour posting balance is ready. Confirmation pending.\n\nReady for a conversation?\n\nPost anonymously, or choose a name when you write.\n\nWrite a post\nAccount settings\nStart new test accountSign out",
+  "wallet": [
+    {
+      "end": 116401.90999996662,
+      "id": 2,
+      "method": "eth_signTypedData_v4",
+      "start": 93260.07000005244
+    },
+    {
+      "end": 120321.8450000286,
+      "id": 3,
+      "method": "eth_sendTransaction",
+      "start": 119602.45000004768
+    }
+  ],
+  "ethereumTransaction": "0x9f2265ce6da41d54d0611a0c0740684680201f9a93ee4184466061c47f4a0937",
+  "walletDwellMs": 23861.234999895096,
+  "elapsedExcludingMeasuredWalletDwellMs": 56873.76000010967,
+  "limitation": "Real successful signup with 23.862s automation wallet dwell; no matched50% performance claim."
+}

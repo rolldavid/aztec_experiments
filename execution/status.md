@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Dedicated-worker architecture integrated and independently reviewed. Real isolated browser: crypto442ms, verifier848ms, no main SDK. Fixed Blob-relative lazy imports, swallowed preload failures and duplicate custody guards. Focused boundary checks pass; hosted-origin account/payment validation and <=2s measurement outstanding. Live remains26a68597; candidate not yet published.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Published+pushed33b55824.2second target NOTcomplete.1.729s was warm explicit-testshortcut, not normal acceptance. Actual normal remembered-account reopen succeeded20.476s from navigation; click4.637s after15.838s page warmup, changed SDK download.261 capsule preimage-field regression fixed with real native-store fixture7/7. Current batch removes redundant deployment/capsule/native startup work and prewarms ACVM in worker. Realpost verified17.089s click→included/rendered;15starget notmet thisrun. Next peer-approved14check normal-opening-gates.patch not integrated.
 
 ## Ready internal work
 

@@ -208,3 +208,8 @@ Root owns integration, focused Solidity build and replacement Bok/portal deploym
 
 ## 25 October: published bbf76 performance continuation
 Root owns browser measurements, wallet test adapter, integration and publication. pending_feed_release investigates remaining signup readiness/claim critical path and prepares minimal draft; pending_reply_ui audits exact baseline and missing flow coverage. Both source/evidence only, no service changes or dependency copies. Single-router and private-tip drafts stay isolated until next contract deployment.
+
+## 25 October: worker opening validation
+Root owns b992 publication, real browser opening measurements and focused fixes. pending_feed_release independently checks scope reuse, invalidation and worker lifecycle; private_tips prepares a bounded SDK transfer delta against the exact installed ca625 bytes. Both are read-only on shared application source and may write owned temporary proposals only. No new service or dependency copies.
+
+Resume: pending_feed_release completed109-cache cleanup, verifiednine services, and proposed claim/read overlap; pending_reply_ui independently approved/installed current-prover monitor and reviews account/claim changes; private_tips prepared authenticated shared dependency publication and account derivation reuse. Root integrates and owns builds/browser measurements.

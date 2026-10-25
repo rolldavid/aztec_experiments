@@ -2,6 +2,18 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Current UI / active opening work —25 October
+
+Current published UI and pushed default/integration branches: `33b55824e18eebf578f93a9c6f2935effa832c1c`. Running application/Bok/prover remain bbf76; static publication did not restart services. All core services verified running. Prior cleanup removed109 obsolete dependency trees; publication shares immutable dependencies.
+
+**The2second onboarding target is NOT complete.** The1728.790ms result used a warm page and explicit new-test-account shortcut; it is not normal/cold onboarding acceptance. Signup payment→ready took80734.995ms, including23861.235ms automated wallet dwell; the remainder56873.760ms is still slow. Never compare these different intervals as the same measurement or call the shortcut acceptance.
+
+Published startup batch removes redundant deployment reads, repeated initializerless constructor simulation, repeated native class derivation and unchanged artifact writes. Starts worker from HTML and ACVM/ABI engine at page load; verified cache delivery no longer waits for cache persistence. Real normal restore caught a capsule integration bug in261: native persisted instance preimages lack currentContractClassId.33b fixes that and replaces the overly broad test fixture with the actual native ContractStore;7 parity/regression checks pass. Native owner/originalclass/address/key and execution authority remain enforced.
+
+Normal remembered funded-account reopen on33b succeeded: navigation→visible ready20475.545ms; account-click15838.105→ready4637.440ms. First download of changed SDK, so this is NOT a cold/warm matched comparison or new-user payment acceptance. PXE1151.415ms, registration1019.700ms, account sync1593.930ms, capsule8.150ms. The goal remains open. Evidence normal-reopen-33b-trace.json includes bounded worker spans. Real post succeeded:17088.515ms Post click→included feed rendering, composer closed. This does not satisfy the15second posting target.
+
+Next reviewed source-only patch: `/private/tmp/normal-opening-gates.patch` (not integrated). Removes duplicate wallet guard, moves prover wait to actual PXE boundary and overlaps public gas/USD reads with native account status.14 focused checks and independent review approved. Do not infer an empty private account from Ethereum deposit nonce: direct portal deposits do not increment it, and the Aztec claimant can differ from the Ethereum depositor.
+
 ## Published release — 25 October, bbf76d92
 
 UI, application, Bok and prover now run source `bbf76d92c0520f3e2192887b555b3a62d2fa4dcc`. Follows, bookmarks and conversation read state are off-chain; their obsolete contract paths have been removed. The replacement Bok portal uses the explicitly authorized deployment-operator assertion on Sepolia, avoiding an epoch-proof wait during deployment. Withdrawals still require native Outbox proofs.
@@ -43,7 +55,7 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
+| Browser UI | `/opt/rolling-ui/releases/33b55824e18eebf578f93a9c6f2935effa832c1c` |
 | Running application | `/opt/rolling-app/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Prover | `/opt/board-prover/releases/fresh-board-bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Bok | `/opt/rolling-bok/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
