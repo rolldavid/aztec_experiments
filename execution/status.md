@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Published33b55824;2stargetNOTmet. Normalunfunded/home sign-in measured8953.660/9103.410ms walletclick→enabledConfirmPayment; approval243/238msincluded; cachedSDK33/36ms; nav12.706/13.059s. Notshortcut,nopayments,nothumanMetaMask. Normalfundedreopen20.476snav included7.802sSDKmiss. RegressionfixednativeContractStorefield;realpost17.089sincluded/rendered. Peer-approved normal-opening-gates.patch14checks stillnotintegrated. Next integratepatch and remove remaining serialstartup/sync/read/quote work, fullnormalacceptance.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Progress: live/pushed UI0d23da655729212fa2fa3821ce729b943f28c33c; normal unfunded wallet→enabledPay6832.120/6623.745ms, realETHsignupPay→Write52501.800ms incl1312.565ms walletapproval, freshPost→AztecIncludedRendered15703.535ms. Targets2s/15s/allflows50% NOT complete. deacc worker dependency-cycle regression fixed with dependency-free snapshot store; realbadbundle fails and corrected actualbundle passes permanent evaluationgate. Next: nativePXEprewarm(private_tips), sync/discoverycriticalpath(pending_reply_ui), signupcompletiontail(pending_feed_release). Root solepublisher,onebuild/IABtab; transferarchives/S3versionscleaned.
 
 ## Ready internal work
 

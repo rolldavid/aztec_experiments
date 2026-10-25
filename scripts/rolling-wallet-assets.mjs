@@ -5,6 +5,7 @@ import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 import {ROOT,assertNodeVersion} from './toolchain.mjs';
 import {checkSdk} from './check-sdk.mjs';
+import {checkRollingWorkerEvaluation} from './check-rolling-worker-startup.mjs';
 import {contractInputs} from './artifact-provenance.mjs';
 import {checkNoirEmbeddedSources} from './check-noir-dependencies.mjs';
 import {validateCrsManifest} from './build-crs.mjs';
@@ -32,7 +33,7 @@ const invalid=()=>Error('Invalid Rolling wallet assets or public configuration')
 const requiredInputs=['apps/rolling/wallet-runtime.mjs','apps/rolling/wallet-session.mjs','apps/rolling/wallet-worker-entry.mjs','apps/rolling/wallet-worker-client.mjs','apps/rolling/wallet-worker-protocol.mjs','shared/rolling/funding-session.mjs',
  'shared/rolling/saved-items.mjs','shared/rolling/aggregate-wallet.mjs','shared/rolling/application.mjs','shared/rolling/synchronized-application.mjs','shared/rolling/deployment.mjs','shared/rolling/name-policy.mjs','shared/rolling/invocation.mjs',
  'shared/journal-record.mjs','shared/l2-journal.mjs','shared/transaction-outcomes.mjs','shared/protocol-commitments.mjs','shared/protocol-schema.mjs',
- 'scripts/rolling-wallet-assets.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json'];
+ 'scripts/rolling-wallet-assets.mjs','scripts/check-rolling-worker-startup.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json'];
 const keys=(value,names)=>{if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join()!==names.sort().join())throw invalid();};
 function endpoint(value,local){
  if(typeof value!=='string'||value.length>2048||/[\s\\]/.test(value))throw invalid();
@@ -113,9 +114,10 @@ export async function buildRollingWalletAssets(){
  if(Object.keys(workerBuilt.metafile.inputs).some(name=>name.includes('node_modules')))throw invalid();
  const inputs={...current,...bokInputs()};
  for(const file of [bokManifestPath,bokArtifactPath])inputs[path.relative(ROOT,file)]=sha(await fs.readFile(file));
- for(const name of new Set([...Object.keys(built.metafile.inputs),...Object.keys(workerBuilt.metafile.inputs),'scripts/rolling-wallet-assets.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json']))inputs[name]=sha(await fs.readFile(path.join(ROOT,name)));
+ for(const name of new Set([...Object.keys(built.metafile.inputs),...Object.keys(workerBuilt.metafile.inputs),'scripts/rolling-wallet-assets.mjs','scripts/check-rolling-worker-startup.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json']))inputs[name]=sha(await fs.readFile(path.join(ROOT,name)));
  const files={};for(const [url,file] of Object.entries(await inventory())){const bytes=await fs.readFile(path.join(ROOT,file));files[url]={file,bytes:bytes.length,sha256:sha(bytes)};}
  await fs.writeFile(path.join(ROOT,out,'manifest.json'),JSON.stringify({schemaVersion:1,inputs,files},null,2)+'\n');
+ checkRollingWorkerEvaluation(ROOT);
  return {files:Object.keys(files).length,inputs:Object.keys(inputs).length};
 }
 export async function loadRollingWalletAssets(configuration,scope){

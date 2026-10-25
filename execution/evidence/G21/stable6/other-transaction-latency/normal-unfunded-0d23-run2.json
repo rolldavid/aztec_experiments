@@ -1,0 +1,849 @@
+{
+  "measures": [
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 326.5199999809265,
+      "name": "rolling.worker-init.cryptography",
+      "start": 1841.8301268815992
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2627.9649999141693,
+      "name": "rolling.worker-init.prover",
+      "start": 1843.0251269340515
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3467.6699999570847,
+      "name": "rolling.worker-init.deployment",
+      "start": 1843.14512693882
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 24.149999976158146,
+      "name": "rolling.worker-init.kernels",
+      "start": 1843.1501269340515
+    },
+    {
+      "detail": {
+        "connectEnd": 1843.575126886368,
+        "connectStart": 1843.575126886368,
+        "decodedBodySize": 3634847,
+        "domainLookupEnd": 1843.575126886368,
+        "domainLookupStart": 1843.575126886368,
+        "duration": 2243.2400000095367,
+        "encodedBodySize": 946132,
+        "endpoint": "wallet-asset",
+        "fetchStart": 1843.575126886368,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 1844.545126914978,
+        "responseEnd": 4086.710126876831,
+        "responseStart": 2162.3451268672943,
+        "secureConnectionStart": 1843.575126886368,
+        "start": 1843.4701268672943,
+        "transferSize": 946432
+      },
+      "duration": 2243.2400000095367,
+      "name": "rolling.worker.resource.wallet-asset",
+      "start": 1843.4701268672943
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2245.914999961853,
+      "name": "rolling.worker-init.execution-engine",
+      "start": 1843.5501269102097
+    },
+    {
+      "detail": null,
+      "duration": 402.2999999523163,
+      "name": "rolling.reader.load",
+      "start": 1865.0499999523165
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.26499998569488525,
+      "name": "rolling.deployment.config",
+      "start": 2309.420126914978
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.05500006675720215,
+      "name": "rolling.deployment.artifact-layout",
+      "start": 2309.695126891136
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1825.2599999904633,
+      "name": "rolling.deployment.node-readiness",
+      "start": 2309.77012693882
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1484.054999947548,
+      "name": "rolling.deployment.board-class",
+      "start": 2310.4151269197464
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1519.2650001049042,
+      "name": "rolling.deployment.checkpoint",
+      "start": 2615.985126852989
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1911.100000023842,
+      "name": "rolling.deployment.board-instance",
+      "start": 2616.0801268815994
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1912.204999923706,
+      "name": "rolling.deployment.public-config",
+      "start": 2616.1501269340515
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1913.1299999952316,
+      "name": "rolling.deployment.config-commitment",
+      "start": 2616.235126852989
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1910.9399999380112,
+      "name": "rolling.deployment.fee-instance",
+      "start": 2616.2651269435883
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1914.8199999332428,
+      "name": "rolling.deployment.portal-code-and-immutables",
+      "start": 2616.500126957894
+    },
+    {
+      "detail": {
+        "connectEnd": 4007.810126900673,
+        "connectStart": 4007.810126900673,
+        "decodedBodySize": 8388608,
+        "domainLookupEnd": 4007.810126900673,
+        "domainLookupStart": 4007.810126900673,
+        "duration": 13.295000076293944,
+        "encodedBodySize": 8388608,
+        "endpoint": "proof-asset",
+        "fetchStart": 4007.810126900673,
+        "kind": "resource",
+        "protocol": "h3",
+        "realm": "worker",
+        "requestStart": 4008.0501269102097,
+        "responseEnd": 4021.0101269483566,
+        "responseStart": 4008.785126924515,
+        "secureConnectionStart": 4007.810126900673,
+        "start": 4007.7151268720622,
+        "transferSize": 0
+      },
+      "duration": 13.295000076293944,
+      "name": "rolling.worker.resource.proof-asset",
+      "start": 4007.7151268720622
+    },
+    {
+      "detail": null,
+      "duration": 333.85000002384186,
+      "name": "rolling.reader.update",
+      "start": 4088.1699999570847
+    },
+    {
+      "detail": null,
+      "duration": 4.0350000858306885,
+      "name": "rolling.reader.dom",
+      "start": 4417.949999928474
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 448.70500004291534,
+      "name": "rolling.deployment.canonical-recheck",
+      "start": 4531.360126852989
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 777.5849999189377,
+      "name": "rolling.deployment.final-readiness-and-context",
+      "start": 4531.505126953125
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1018.1850000619888,
+      "name": "rolling.worker-init.funding-scope",
+      "start": 5310.575126886368
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.0750000476837158,
+      "name": "rolling.session-init.account-lock",
+      "start": 16127.935126900671
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2639.4650000333786,
+      "name": "rolling.worker-init.private-session",
+      "start": 16128.11012685299
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.04499995708465576,
+      "name": "rolling.session-init.trusted-node",
+      "start": 16129.030126929283
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.16000008583068848,
+      "name": "rolling.session-init.deployment",
+      "start": 16129.090126872065
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.004999995231628418,
+      "name": "rolling.session-init.account-derive",
+      "start": 16129.255126953123
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2.8899999856948853,
+      "name": "rolling.session-init.store-open",
+      "start": 16129.265126943588
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1685.375,
+      "name": "rolling.session-init.pxe-create",
+      "start": 16132.18012690544
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.375,
+      "name": "rolling.session-init.journal-open",
+      "start": 17817.5801268816
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.1650000810623169,
+      "name": "rolling.session-init.wallet-bind",
+      "start": 17817.970126867294
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 23.764999985694885,
+      "name": "rolling.session-init.account-manager",
+      "start": 17818.14012694359
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 9.4099999666214,
+      "name": "rolling.session-init.account-register",
+      "start": 17841.93012690544
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 912.445000052452,
+      "name": "rolling.session-init.contracts-register",
+      "start": 17851.36512684822
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3.0600000619888306,
+      "name": "rolling.session-init.application-bind",
+      "start": 18763.8301268816
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 339.29500007629395,
+      "name": "rolling.funding-preparation.allocation",
+      "start": 18768.0801268816
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1425.280000090599,
+      "name": "rolling.action.sync",
+      "start": 18768.60012686253
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 7.490000009536743,
+      "name": "rolling.account.signing-capsule",
+      "start": 20195.08512687683
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1134.5349999666214,
+      "name": "rolling.account.status",
+      "start": 20202.885126948357
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.9600000381469728,
+      "name": "rolling.account.status.workflow",
+      "start": 20202.97512686253
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 777.5049999952316,
+      "name": "rolling.account.status.discovery-queued",
+      "start": 20204.61012685299
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 332.9150000810623,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "start": 20205.840126872063
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 442.4650000333786,
+      "name": "rolling.proof.native.phase.sync-records",
+      "start": 20538.815126895905
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 2.069999933242798,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 20579.010126948357
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3.0850000381469727,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 20587.61012685299
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 381.0699999332428,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 20591.260126948357
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 3.2049999237060547,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 20973.27512693405
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.8899999856948853,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 20977.405126929283
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.3450000286102295,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 20978.435126900673
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 20979.035126924515
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.5900000333786011,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 20979.095126867294
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 20979.755126953125
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 355.2150000333786,
+      "name": "rolling.account.status.deposit-ids-queued",
+      "start": 20982.155126929283
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 347.04500007629395,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 20988.090126872063
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 20989.85012686253
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.09500002861022948,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 20989.910126924515
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.6549999713897705,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 20990.070126891136
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 20992.285126924515
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.05500006675720215,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 20992.35512685776
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 338.914999961853,
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "start": 20992.435126900673
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.1499999761581421,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 21331.49512696266
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.8799999952316284,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 21332.285126924515
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 322.0049999952316,
+      "name": "rolling.funding-preparation.qualification",
+      "start": 21337.8301268816
+    },
+    {
+      "detail": {
+        "connectEnd": 21338.89012694359,
+        "connectStart": 21338.89012694359,
+        "decodedBodySize": 86,
+        "domainLookupEnd": 21338.89012694359,
+        "domainLookupStart": 21338.89012694359,
+        "duration": 320.1599999666214,
+        "encodedBodySize": 86,
+        "endpoint": "node",
+        "fetchStart": 21338.89012694359,
+        "kind": "resource",
+        "protocol": "h2",
+        "realm": "worker",
+        "requestStart": 21339.570126891136,
+        "responseEnd": 21658.465126872063,
+        "responseStart": 21658.090126872063,
+        "secureConnectionStart": 21338.89012694359,
+        "start": 21338.30512690544,
+        "transferSize": 386
+      },
+      "duration": 320.1599999666214,
+      "name": "rolling.worker.resource.node",
+      "start": 21338.30512690544
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.2350000143051147,
+      "name": "rolling.funding-preparation.journal",
+      "start": 21659.89012694359
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 0.8349999189376831,
+      "name": "rolling.funding-preparation.wallet",
+      "start": 21661.250126957893
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 166.01499998569489,
+      "name": "rolling.funding-preparation.nonce",
+      "start": 21663.380126953125
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 1.6299999952316284,
+      "name": "rolling.funding-preparation.secrets",
+      "start": 21829.405126929283
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 609.545000076294,
+      "name": "rolling.funding-preparation.quote",
+      "start": 21831.11012685299
+    },
+    {
+      "detail": {
+        "realm": "worker"
+      },
+      "duration": 5.039999961853027,
+      "name": "rolling.funding-preparation.save",
+      "start": 22443.940126895905
+    }
+  ],
+  "observation": {
+    "accountClick": 8185.334999918938,
+    "ready": 22459.014999985695,
+    "signatureRequested": 15862.485000014303,
+    "signatureResolved": 15868.5,
+    "walletAvailable": 8189.254999995232,
+    "walletClick": 15835.269999980928
+  },
+  "resources": [
+    {
+      "decoded": 20019,
+      "duration": 433.4150000810623,
+      "end": 934.75,
+      "path": "/style.css",
+      "serverTiming": [],
+      "start": 501.3349999189377
+    },
+    {
+      "decoded": 62614,
+      "duration": 578.9350000619888,
+      "end": 1080.5199999809265,
+      "path": "/wallet/runtime.mjs",
+      "serverTiming": [],
+      "start": 501.5849999189377
+    },
+    {
+      "decoded": 38064,
+      "duration": 737.4900000095367,
+      "end": 1239.1349999904633,
+      "path": "/reader.mjs",
+      "serverTiming": [],
+      "start": 501.6449999809265
+    },
+    {
+      "decoded": 4364,
+      "duration": 390.6050000190735,
+      "end": 1476.4599999189377,
+      "path": "/wallet/runtime.json",
+      "serverTiming": [],
+      "start": 1085.8549998998642
+    },
+    {
+      "decoded": 1938,
+      "duration": 425.75,
+      "end": 1667.3099999427795,
+      "path": "/reader-updates.mjs",
+      "serverTiming": [],
+      "start": 1241.5599999427795
+    },
+    {
+      "decoded": 16282,
+      "duration": 622.5099999904633,
+      "end": 1864.229999899864,
+      "path": "/performance.mjs",
+      "serverTiming": [],
+      "start": 1241.719999909401
+    },
+    {
+      "decoded": 2981,
+      "duration": 429.8000000715256,
+      "end": 1671.6299999952316,
+      "path": "/reader-client.mjs",
+      "serverTiming": [],
+      "start": 1241.829999923706
+    },
+    {
+      "decoded": 9971,
+      "duration": 511.210000038147,
+      "end": 1753.1399999856949,
+      "path": "/profile-view.mjs",
+      "serverTiming": [],
+      "start": 1241.929999947548
+    },
+    {
+      "decoded": 5918,
+      "duration": 304.0199999809265,
+      "end": 1546.0599999427795,
+      "path": "/model.mjs",
+      "serverTiming": [],
+      "start": 1242.039999961853
+    },
+    {
+      "decoded": 3109,
+      "duration": 418.64999997615814,
+      "end": 1660.804999947548,
+      "path": "/navigation.mjs",
+      "serverTiming": [],
+      "start": 1242.1549999713898
+    },
+    {
+      "decoded": 526551,
+      "duration": 9.72000002861023,
+      "end": 1489.0149999856949,
+      "path": "/wallet/ethers.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1479.2949999570849
+    },
+    {
+      "decoded": 16577691,
+      "duration": 48.60000002384186,
+      "end": 1528.0349999666214,
+      "path": "/wallet/aztec_bundle.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1479.4349999427795
+    },
+    {
+      "decoded": 8944,
+      "duration": 7.345000028610229,
+      "end": 1486.875,
+      "path": "/wallet/crs-client.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1479.5299999713898
+    },
+    {
+      "decoded": 7525,
+      "duration": 7.309999942779541,
+      "end": 1486.969999909401,
+      "path": "/wallet/claim-secret-store.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1479.6599999666214
+    },
+    {
+      "decoded": 136387,
+      "duration": 7.610000014305115,
+      "end": 1487.3650000095367,
+      "path": "/wallet/engine.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1479.7549999952316
+    },
+    {
+      "decoded": 404726,
+      "duration": 9.245000004768372,
+      "end": 1489.0899999141693,
+      "path": "/wallet/native-worker.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1479.844999909401
+    },
+    {
+      "decoded": 526551,
+      "duration": 14.305000066757202,
+      "end": 1495,
+      "path": "/wallet/ethers.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1480.6949999332428
+    },
+    {
+      "decoded": 1648,
+      "duration": 0,
+      "end": 1504.6549999713898,
+      "path": "/wallet/wallet-providers.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1504.6549999713898
+    },
+    {
+      "decoded": 9979,
+      "duration": 0,
+      "end": 1505.0899999141693,
+      "path": "/wallet/ethereum-account-session.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1505.0899999141693
+    },
+    {
+      "decoded": 18002,
+      "duration": 0,
+      "end": 1506.3399999141693,
+      "path": "/wallet/account.js",
+      "serverTiming": [
+        {}
+      ],
+      "start": 1506.3399999141693
+    },
+    {
+      "decoded": 165324,
+      "duration": 1771.5049999952316,
+      "end": 3636.929999947548,
+      "path": "/wallet-panel.mjs",
+      "serverTiming": [],
+      "start": 1865.4249999523165
+    },
+    {
+      "decoded": 3805,
+      "duration": 397.09999990463257,
+      "end": 2262.729999899864,
+      "path": "/api/home",
+      "serverTiming": [],
+      "start": 1865.6299999952316
+    },
+    {
+      "decoded": 10792,
+      "duration": 475.9800000190735,
+      "end": 4115.689999938011,
+      "path": "/avatar-upload.mjs",
+      "serverTiming": [],
+      "start": 3639.7099999189377
+    },
+    {
+      "decoded": 3805,
+      "duration": 326.6599999666214,
+      "end": 4416.074999928474,
+      "path": "/api/home",
+      "serverTiming": [],
+      "start": 4089.414999961853
+    },
+    {
+      "decoded": 224,
+      "duration": 344.1299999952316,
+      "end": 16470.669999957085,
+      "path": "/api/saved-items/92af808d9a5628a497ad9767ffe4a226d360268d288a71605cbc6cb25dc523c4",
+      "serverTiming": [],
+      "start": 16126.539999961851
+    }
+  ],
+  "scenario": "normal unfunded sign-in; cache state recorded in resource timings; automatic test personal_sign approval; no payment sent",
+  "source": "0d23da655729212fa2fa3821ce729b943f28c33c"
+}

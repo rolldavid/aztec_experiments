@@ -213,3 +213,5 @@ Root owns browser measurements, wallet test adapter, integration and publication
 Root owns b992 publication, real browser opening measurements and focused fixes. pending_feed_release independently checks scope reuse, invalidation and worker lifecycle; private_tips prepares a bounded SDK transfer delta against the exact installed ca625 bytes. Both are read-only on shared application source and may write owned temporary proposals only. No new service or dependency copies.
 
 Resume: pending_feed_release completed109-cache cleanup, verifiednine services, and proposed claim/read overlap; pending_reply_ui independently approved/installed current-prover monitor and reviews account/claim changes; private_tips prepared authenticated shared dependency publication and account derivation reuse. Root integrates and owns builds/browser measurements.
+
+Current continuation: root integrates normal-opening gates; private_tips investigates native PXE/registration; pending_reply_ui investigates public preparation/account sync; pending_feed_release audits full flow baselines and adapts33b publisher. Source-only drafts, one retained build, no extra browsers/dependencies.

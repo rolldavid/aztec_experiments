@@ -2,6 +2,16 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Latest measured release — 25 October, 0d23da65
+
+Published UI: `0d23da655729212fa2fa3821ce729b943f28c33c`; app/Bok/prover processes unchanged. Normal unfunded account opening measured **6832.120/6623.745ms** from wallet selection to the first rendered enabled payment button. Automatic test-signature approval6.425/6.015ms included. No explicit fresh-account shortcut was used in measured runs. Selected disposable identity had previous unsigned quotes; the new empty-slot speculative quote branch was therefore not exercised. Do not label these first-ever-user or human MetaMask timings.
+
+Real signup with this unfunded Aztec identity and the same Ethereum test wallet completed in **52501.800ms**, Confirm payment→rendered enabled Write a post. Includes1312.565ms total automated consent/payment approvals; one Ethereum payment, one combined Aztec claim. Its first real post appeared after actual Aztec inclusion, with composer closed, in **15703.535ms**. Two-second opening,15-second posting and50% all-other-flow goals remain incomplete.
+
+The intermediate deacc release crashed worker evaluation because injected native class-cache code imported SDK node schemas through a new circular dependency.0d23 extracts the snapshot WeakMap into a dependency-free module. A new permanent build gate evaluates the six exact hashed browser-worker scripts: it rejects the actual broken bundle and passes the corrected bundle. Focused integrated checks77/77 passed. The full build is now evaluated before future publication, not merely checked for successful compilation.
+
+Actual SDK delivery: Brotli2585562B versus gzip4110343B (37.1% fewer bytes), decoded SHA/size and security headers verified. Concurrent CLI transfer times are not an onboarding latency comparison. Latest detailed report: [measured onboarding](docs/ONBOARDING_MEASUREMENTS.md). Raw traces are in execution/evidence/G21/stable6/other-transaction-latency. Historical measurements below retain their original release/interval limitations.
+
 ## Current UI / active opening work —25 October
 
 Current published UI and pushed default/integration branches: `33b55824e18eebf578f93a9c6f2935effa832c1c`. Running application/Bok/prover remain bbf76; static publication did not restart services. All core services verified running. Prior cleanup removed109 obsolete dependency trees; publication shares immutable dependencies.

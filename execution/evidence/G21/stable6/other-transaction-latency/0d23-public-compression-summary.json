@@ -1,0 +1,49 @@
+{
+  "readOnly": true,
+  "source": "public HTTPS raw curl, no browser/service worker",
+  "sdk": {
+    "url": "/wallet/aztec_bundle.js",
+    "sha256": "d7b9a6b26120ec141b5a0f95dc4a93eb11a8fabc095c8142c9e3a80fab651e18",
+    "decodedBytes": 16577691
+  },
+  "encodings": {
+    "br": {
+      "wireBytes": 2585562,
+      "totalSeconds": 7.334069,
+      "firstByteSeconds": 0.56856,
+      "cloudFrontCache": "Miss from cloudfront",
+      "httpVersion": "2",
+      "decodedSha256Verified": true,
+      "headers": {
+        "contentType": "text/javascript; charset=utf-8",
+        "contentEncoding": "br",
+        "vary": "Accept-Encoding",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "coop": "same-origin",
+        "coep": "require-corp",
+        "corp": "same-origin",
+        "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self' data: https://aztec-testnet.drpc.org https://d30njln0kead8n.cloudfront.net https://ethereum-sepolia-rpc.publicnode.com; worker-src 'self' blob:; img-src 'self' blob: data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+      }
+    },
+    "gzip": {
+      "wireBytes": 4110343,
+      "totalSeconds": 13.656444,
+      "firstByteSeconds": 0.603258,
+      "cloudFrontCache": "Miss from cloudfront",
+      "httpVersion": "2",
+      "decodedSha256Verified": true,
+      "headers": {
+        "contentType": "text/javascript; charset=utf-8",
+        "contentEncoding": "gzip",
+        "vary": "Accept-Encoding",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "coop": "same-origin",
+        "coep": "require-corp",
+        "corp": "same-origin",
+        "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self' data: https://aztec-testnet.drpc.org https://d30njln0kead8n.cloudfront.net https://ethereum-sepolia-rpc.publicnode.com; worker-src 'self' blob:; img-src 'self' blob: data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+      }
+    }
+  },
+  "brotliVersusGzipReductionPercent": 37.09619854109499,
+  "interpretation": "One concurrent CLI fetch per encoding, both CloudFront misses; timings share bandwidth and are not a controlled speed comparison. Not an onboarding measurement."
+}
