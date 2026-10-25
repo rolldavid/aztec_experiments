@@ -196,12 +196,19 @@ export function validatedPxeProve(source){
         });
     }
     // Public API\n`);
- source=replace(source,'    // Public API\n',`    syncForAccountStatus(board) {
+ source=replace(source,'    // Public API\n',`    syncForAccountStatus(board, privateFee) {
         const address=SyncAddress.fromStringUnsafe(board.toString());
         return this.operationQueue.run(async()=>{
             const instance=await this.contractStore.getContractInstance(address);
             if(!instance || instance.originalContractClassId.toString()!=='${ORDINARY_POST_GAS_PROFILE.boardClassId}' ||
                 !(await computeContractAddressFromInstance(instance)).equals(address))throw new Error('Invalid account status Board');
+            let feeAddress;
+            if(privateFee!==undefined){
+                feeAddress=SyncAddress.fromStringUnsafe(privateFee.toString());
+                const fee=await this.contractStore.getContractInstance(feeAddress);
+                if(feeAddress.equals(address)||!fee||fee.originalContractClassId.toString()!=='${ORDINARY_POST_GAS_PROFILE.privateFeeClassId}'||
+                    !(await computeContractAddressFromInstance(fee)).equals(feeAddress))throw new Error('Invalid account status FPC');
+            }
             const nullifier=await syncInitializationNullifier(address,instance.initializationHash);
             // Public hash-pinned reads only. Native rollback/anchor selection
             // completes before any contract discovery or utility can consume them.
@@ -209,6 +216,8 @@ export function validatedPxeProve(source){
                 const anchor={number:selected.number,hash:SyncBlockHash.fromString(selected.hash)};
                 await allToCompletion([
                     ()=>this.node.getContract(address,anchor),
+                    // Public class only. Empty opening never discovers FPC notes.
+                    ...(feeAddress?[()=>this.node.getContract(feeAddress,anchor)]:[]),
                     ()=>this.node.findLeavesIndexes(anchor,SyncTreeId.NULLIFIER_TREE,[nullifier]),
                 ].map(read=>Promise.resolve().then(read)));
             },{warmNodeCache:true});

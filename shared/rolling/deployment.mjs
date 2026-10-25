@@ -61,10 +61,11 @@ const preparedDeployments=new WeakMap();
  * on readiness. Native registration may share its metadata; consumers seeking
  * current admission use consumeRollingDeploymentPreparation below.
  */
-export function createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled=true,onProgress,registration,artifactHashes}){
+export function createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled=true,onProgress,registration,artifactHashes,loadRegistrationArtifacts}){
+ check(loadRegistrationArtifacts===undefined||(typeof loadRegistrationArtifacts==='function'&&boardArtifact===undefined&&privateFeeArtifact===undefined&&registration===undefined&&artifactHashes===undefined));
  const fixed={sdk,ethers,config:detach(config),boardArtifact,privateFeeArtifact,proofsEnabled};
  const handle=Object.freeze({});
- preparedDeployments.set(handle,{fixed,boardArtifact,privateFeeArtifact,query:detach(trustedQuery),onProgress,registration:registration===undefined?null:structuredClone(validateRollingRegistration(registration,{config,artifactHashes,proofsEnabled})),artifactHashes:artifactHashes?{...artifactHashes}:null,pending:null,result:null});
+ preparedDeployments.set(handle,{fixed,boardArtifact,privateFeeArtifact,query:detach(trustedQuery),onProgress,loadRegistrationArtifacts,registration:registration===undefined?null:structuredClone(validateRollingRegistration(registration,{config,artifactHashes,proofsEnabled})),artifactHashes:artifactHashes?{...artifactHashes}:null,pending:null,result:null});
  return handle;
 }
 
@@ -72,7 +73,7 @@ export async function prepareRollingDeployment(preparation,{contextGuard,onProgr
  const state=preparedDeployments.get(preparation);check(state&&typeof contextGuard==='function');
  await contextGuard();
  if(!state.pending){
-  const pending=state.registration?preparePublishedRegistration(state,contextGuard):verifyDeployment({...state.fixed,contextGuard,onProgress:onProgress??state.onProgress},state);
+  const pending=(state.registration||state.loadRegistrationArtifacts)?preparePublishedRegistration(state,contextGuard):verifyDeployment({...state.fixed,contextGuard,onProgress:onProgress??state.onProgress},state);
   state.pending=pending;pending.then(result=>{if(state.pending===pending)state.result=result;},()=>{});pending.catch(()=>{if(state.pending===pending)state.pending=null;});
  }
  const result=await state.pending;await contextGuard();
@@ -86,14 +87,25 @@ export function exportRollingDeploymentRegistration(preparation,artifactHashes){
 }
 async function preparePublishedRegistration(state,contextGuard){
  try{
- const {sdk,config,boardArtifact,privateFeeArtifact,proofsEnabled}=state.fixed;
- check(state.query&&state.artifactHashes&&typeof sdk.createTrustedPrivateNode==='function');
+ const {sdk,config,proofsEnabled}=state.fixed;
+ check(state.query&&(state.artifactHashes||state.loadRegistrationArtifacts)&&typeof sdk.createTrustedPrivateNode==='function');
  sdk.normalizePrivateFeeGasSettings(config.privateFee.gasSettings);
  const network={chainId:config.network.chainId,version:config.network.rollupVersion,rollup:config.network.rollupAddress};
  let nodeSnapshot;
  const [node,metadata]=await together([
   ()=>sdk.createTrustedPrivateNode({...state.query,expectedNetworkScope:network,proofsEnabled,readinessTier:'checkpointed',onReady:value=>{nodeSnapshot=value;}}),
-  ()=>decodeRollingRegistration(sdk,state.registration,{config,artifactHashes:state.artifactHashes,proofsEnabled,boardArtifact,privateFeeArtifact}),
+  async()=>{
+   // The existing preparation owns both independent branches. No external node
+   // or snapshot can be substituted while authenticated artifacts are loading.
+   if(state.loadRegistrationArtifacts){
+    const {boardArtifact,privateFeeArtifact,registration,artifactHashes}=await state.loadRegistrationArtifacts();
+    await contextGuard();
+    const validated=structuredClone(validateRollingRegistration(registration,{config,artifactHashes,proofsEnabled}));
+    state.boardArtifact=state.fixed.boardArtifact=boardArtifact;state.privateFeeArtifact=state.fixed.privateFeeArtifact=privateFeeArtifact;
+    state.artifactHashes={...artifactHashes};state.registration=validated;
+   }
+   return decodeRollingRegistration(sdk,state.registration,{config,artifactHashes:state.artifactHashes,proofsEnabled,boardArtifact:state.boardArtifact,privateFeeArtifact:state.privateFeeArtifact});
+  },
  ]);
  check(sdk.isTrustedPrivateNode(node)&&nodeSnapshot);await contextGuard();
  // The snapshot is the actual fresh node inspection, never the operator record.

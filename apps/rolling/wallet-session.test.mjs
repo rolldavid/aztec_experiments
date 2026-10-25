@@ -1668,8 +1668,8 @@ for(const rejectReady of [false,true])test(`opening local store precedes held pr
 
 for(const changed of [false,true])test('opening status owns public Board sync through the actual session, changed='+changed,async()=>{
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input),entered=Promise.withResolvers(),held=Promise.withResolvers();let warmed=0,discovered=0;
- f.pxe.syncForAccountStatus=async board=>{assert.equal(f.state.active,true);assert.equal(String(board),f.input.config.board.contractAddress);warmed++;entered.resolve();await held.promise;};
- f.pxe.prepareBoardActionState=async options=>{assert.equal(options.method,'get_deposit_ids');assert.equal(options.collateralOnly,true);discovered++;};
+ f.pxe.syncForAccountStatus=async(board,privateFee)=>{assert.equal(f.state.active,true);assert.equal(String(board),f.input.config.board.contractAddress);assert.equal(String(privateFee),f.input.config.privateFee.contractAddress);warmed++;entered.resolve();await held.promise;};
+ f.pxe.prepareBoardActionState=async options=>{assert.equal(options.method,'get_deposit_ids');assert.equal(options.collateralOnly,discovered===0?true:undefined);discovered++;};
  const run=session.application.readAccountStatus({opening:true});const result=run.then(value=>({value}),error=>({error}));await entered.promise;
  assert.equal(session.busy,true);assert.equal(discovered,0);if(changed)f.state.wrongPXE=true;held.resolve();const outcome=await result;
  assert.equal(warmed,1);assert.equal(f.state.syncs,0,'opening invokes only the native owned sync capability');
@@ -1736,7 +1736,7 @@ for(const changed of [false,true])test('owned names use exact Board public sync 
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input),entered=Promise.withResolvers(),held=Promise.withResolvers();let warmed=0,discovered=0;
  const at=f.input.sdk.Contract.at;
  f.input.sdk.Contract.at=(...args)=>{const contract=at(...args),method=contract.methods.owned_name_records;contract.methods.owned_name_records=(...values)=>{discovered++;return method(...values);};return contract;};
- f.pxe.syncForAccountStatus=async board=>{assert.equal(f.state.active,true);assert.equal(String(board),f.input.config.board.contractAddress);warmed++;entered.resolve();await held.promise;};
+ f.pxe.syncForAccountStatus=async(board,privateFee)=>{assert.equal(f.state.active,true);assert.equal(String(board),f.input.config.board.contractAddress);assert.equal(privateFee,undefined,'ownership-only refresh does not fetch FPC');warmed++;entered.resolve();await held.promise;};
  const run=session.application.ownedIdentities({cursor:0}),result=run.then(value=>({value}),error=>({error}));await entered.promise;
  assert.equal(session.busy,true);assert.equal(discovered,0);if(changed)f.state.wrongPXE=true;held.resolve();const out=await result;
  assert.equal(warmed,1);assert.equal(f.state.syncs,0,'only the existing native Board sync runs');

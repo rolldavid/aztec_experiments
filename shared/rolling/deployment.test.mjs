@@ -323,3 +323,35 @@ for(const defect of ['stale-node','l1-reorg','portal-binding'])test(`published r
  await assert.rejects(verifyRollingAggregateScope({sdk:f.options.sdk,ethers:{Interface},node,provider,scope,network:deployment.network,proofsEnabled:true,contextGuard:async()=>{},includeBok:false,asset:'ETH'}));
  assert(reads>=3,'current financial reads still run and drain after registration');
 });
+
+for(const failing of ['none','assets','node','both'])test('published startup overlaps authenticated assets and actual node inspection, draining '+failing,async()=>{
+ const f=await registrationFixture(),nodeGate=Promise.withResolvers(),assetGate=Promise.withResolvers(),entered=Promise.withResolvers();
+ const factory=f.options.sdk.createTrustedPrivateNode;let nodeCalls=0,assetCalls=0,settled=false;
+ const started=()=>{if(nodeCalls===1&&assetCalls===1)entered.resolve();};
+ f.options.sdk.createTrustedPrivateNode=async options=>{nodeCalls++;started();await nodeGate.promise;if(failing==='node'||failing==='both')throw Error('node rejected');return factory(options);};
+ const {boardArtifact,privateFeeArtifact,registration,artifactHashes,...fixed}=f.registrationOptions;
+ const handle=createRollingDeploymentPreparation({...fixed,loadRegistrationArtifacts:async()=>{assetCalls++;started();await assetGate.promise;if(failing==='assets'||failing==='both')throw Error('asset rejected');return {boardArtifact,privateFeeArtifact,registration,artifactHashes};}});
+ const work=prepareRollingDeployment(handle,{contextGuard:f.options.contextGuard});work.then(()=>settled=true,()=>settled=true);
+ const outcome=failing==='none'?work:assert.rejects(work,{code:'ROLLING_DEPLOYMENT_INVALID'});
+ await entered.promise;
+ if(failing==='assets')assetGate.resolve();else nodeGate.resolve();
+ await new Promise(setImmediate);assert.equal(settled,false,'initialization retains its owner until both independent branches drain');
+ assetGate.resolve();nodeGate.resolve();const result=await outcome;
+ assert.equal(nodeCalls,1);assert.equal(assetCalls,1);
+ if(failing==='none'){
+  assert.equal(result.node,f.node);assert.equal(result.nodeSnapshot,f.initial());assert(getTrustedNodeSnapshotInfo(result.nodeSnapshot,f.node));
+  assertRollingDeploymentPreparation(handle,{...f.options,node:f.node});
+  assert.equal((await readRollingDeploymentRegistration(handle,f.options)).deployment.board.artifact,boardArtifact);
+  await prepareRollingDeployment(handle,{contextGuard:f.options.contextGuard});assert.equal(nodeCalls,1);assert.equal(assetCalls,1);
+  await assert.rejects(consumeRollingDeploymentPreparation(handle,f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
+  assert.throws(()=>exportRollingDeploymentRegistration(handle,artifactHashes),{code:'ROLLING_DEPLOYMENT_INVALID'});
+ }else assert.throws(()=>assertRollingDeploymentPreparation(handle,{...f.options,node:f.node}),{code:'ROLLING_DEPLOYMENT_INVALID'});
+});
+for(const change of ['context','descriptor'])test('published startup rejects held '+change+' change before metadata publication',async()=>{
+ const f=await registrationFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let valid=true;
+ const {boardArtifact,privateFeeArtifact,registration,artifactHashes,...fixed}=f.registrationOptions;
+ const handle=createRollingDeploymentPreparation({...fixed,loadRegistrationArtifacts:async()=>{entered.resolve();await gate.promise;return {boardArtifact,privateFeeArtifact,registration,artifactHashes};}});
+ const work=prepareRollingDeployment(handle,{contextGuard:async()=>{assert(valid);}}),rejected=assert.rejects(work,{code:'ROLLING_DEPLOYMENT_INVALID'});
+ await entered.promise;if(change==='context')valid=false;else registration.config.network.rollupVersion='999';gate.resolve();await rejected;
+ assert.throws(()=>assertRollingDeploymentPreparation(handle,{...f.options,node:f.node}),{code:'ROLLING_DEPLOYMENT_INVALID'});
+});

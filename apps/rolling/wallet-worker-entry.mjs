@@ -41,13 +41,17 @@ async function jsonAsset(asset,limit){
 }
 async function preparePublic(){
  const {config,trustedQuery,proofsEnabled,artifacts}=settings;
- const values=await Promise.allSettled([()=>jsonAsset(artifacts.board,32*1024*1024),()=>jsonAsset(artifacts.privateFee,32*1024*1024),()=>config.refundOnly?null:jsonAsset(settings.deploymentRegistration,65536)].map(read=>Promise.resolve().then(read)));
- const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
- const [boardRaw,feeRaw,registration]=values.map(value=>value.value);
- await cryptoReady;localGuard();
- const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
- if(config.refundOnly){publicState={boardArtifact,privateFeeArtifact};return publicState;}
- const deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled,onProgress:progress,registration,artifactHashes:{board:artifacts.board.sha256,privateFee:artifacts.privateFee.sha256}});
+ // Node readiness depends only on the fixed query/network/proof policy. Keep
+ // authenticated asset loading independent, under the same preparation owner.
+ let assets;const loadAssets=()=>assets??=(async()=>{
+  const values=await Promise.allSettled([()=>jsonAsset(artifacts.board,32*1024*1024),()=>jsonAsset(artifacts.privateFee,32*1024*1024),()=>config.refundOnly?null:jsonAsset(settings.deploymentRegistration,65536)].map(read=>Promise.resolve().then(read)));
+  const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+  const [boardRaw,feeRaw,registration]=values.map(value=>value.value);
+  await cryptoReady;localGuard();
+  return {boardArtifact:sdk.loadContractArtifact(boardRaw),privateFeeArtifact:sdk.loadContractArtifact(feeRaw),registration,artifactHashes:{board:artifacts.board.sha256,privateFee:artifacts.privateFee.sha256}};
+ })();
+ if(config.refundOnly){const {boardArtifact,privateFeeArtifact}=await loadAssets();publicState={boardArtifact,privateFeeArtifact};return publicState;}
+ const deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config,trustedQuery,proofsEnabled,onProgress:progress,loadRegistrationArtifacts:loadAssets});
  // The published descriptor supplies registration metadata, not native class
  // derivation. Warm the existing full-byte-bound native memo on these exact
  // artifact objects while independent public deployment reads are in flight.
@@ -55,6 +59,7 @@ async function preparePublic(){
  const prepared=await Promise.allSettled([
   async()=>{
    const {node,nodeSnapshot}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:localGuard,onProgress:progress});localGuard();
+   const {boardArtifact,privateFeeArtifact}=await loadAssets();
    // No account, notes or proof operation is created by public preparation.
    publicState={node,deploymentPreparation,boardArtifact,privateFeeArtifact,pxePreparation:background('pxe-native',sdk.preparePrivatePXE(node,{nodeSnapshot,artifacts:pxeArtifactsReady}))};
    if(config.aggregateFunding){
@@ -68,10 +73,13 @@ async function preparePublic(){
    }
    return publicState;
   },
-  ()=>background('application-classes',(async()=>{
+  async()=>{
+   const {boardArtifact,privateFeeArtifact}=await loadAssets();
+   return background('application-classes',(async()=>{
    const classes=await Promise.allSettled([boardArtifact,privateFeeArtifact].map(artifact=>Promise.resolve().then(()=>sdk.getContractClassFromArtifact(artifact))));
    const failed=classes.find(value=>value.status==='rejected');if(failed)throw failed.reason;
-  })()),
+   })());
+  },
  ].map(read=>Promise.resolve().then(read)));
  const failed=prepared.find(value=>value.status==='rejected');if(failed)throw failed.reason;
  localGuard();

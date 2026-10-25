@@ -24,6 +24,12 @@ Published and pushed `f16ff3d778a31563c66b1169708b6d353efa8cfa`. Same34-characte
 
 Normal immediate account-opening wallet→ready5.734270s first changed SDK and3.558800s cached. All targets remain open. Raw traces are in the current transaction-latency evidence directory. Actual standalone credit top-ups are being exercised; a test-signer provider-binding repair introduced recorded wallet dwell in the posting-credit test and must not be counted as application latency or hidden from total wall time.
 
+### f16 actual funding results
+
+ETH-to-Bok: **46.175275s** Pay→native Aztec inclusion and usable1USDC, one Ethereum payment. Wallet request at+3.388s; automatic approval accepted+3.611s and submitted+4.122s. Funding-claim work began+20.098s. Sequential inspect1.335s, saved-payment verification0.804s, account status2.328s, bridge0.547s, prepare3.996s, submit14.057s, checkpoint0.507s and required balance refresh2.488s. Submit contains fee preparation1.013s, proving9.495s, Aztec submission0.422s and inclusion2.763s; do not sum child and parent spans. This result is slower than the prior39.222685s observation; no speedup claim. Exact Ethereum and Aztec receipt anchors retained in the raw files.
+
+Posting-credit top-up:100FEE credited in **134.757725s** Pay→usable credit, including36.180520s recorded test-adapter repair dwell before accepting the first wallet request. The fresh fixture required an Ethereum allowance approval plus deposit. Aztec included at block5296; required balance refresh2.417s. This is successful functional evidence, not a clean timing acceptance or controlled baseline. No app error, duplicate deposit or recovery path occurred. Test signer now uses its existing provider; no real funds were used.
+
 ## Remaining qualification work
 
 Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.

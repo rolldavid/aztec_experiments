@@ -24,7 +24,7 @@ import {validatedPxeProve} from './pxe-validated-prove.mjs';
 import {restoreNativePxe} from './patch-pxe-operation-guards.mjs';
 import {ORDINARY_POST_GAS_PROFILE as profile} from '../shared/ordinary-post-fees.mjs';
 const source=validatedPxeProve(restoreNativePxe(fs.readFileSync(new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url),'utf8'),'dest/pxe.js'));
-const start=source.indexOf('    syncForAccountStatus(board) {'),end=source.indexOf('    prepareBoardActionState(',start);
+const start=source.indexOf('    syncForAccountStatus(board, privateFee) {'),end=source.indexOf('    prepareBoardActionState(',start);
 const Native=vm.runInNewContext('(class {'+source.slice(start,end)+'})',{SyncAddress:AztecAddress,SyncBlockHash:BlockHash,SyncTreeId:MerkleTreeId,syncInitializationNullifier:computeSiloedPrivateInitializationNullifier,computeContractAddressFromInstance,allToCompletion});
 const raw=JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))),artifact=loadContractArtifact(raw),fn=artifact.functions.find(f=>f.name==='get_deposit_ids');
 const queues=[];after(async()=>{for(const q of queues)await q.stop();await BarretenbergSync.destroySingleton();});
@@ -34,7 +34,7 @@ async function fixture({exists=true,ordinary=false}={}){
  if(ordinary){for(const [role,id]of [['owner',profile.accountClassId],['fee',profile.privateFeeClassId]]){const value=new SerializableContractInstance({...instance,currentContractClassId:Fr.fromString(id),originalContractClassId:Fr.fromString(id)}),address=await computeContractAddressFromInstance(value);registered.set(address.toString(),value);if(role==='owner')owner=address;else privateFee=address;}}
  let header=BlockHeader.empty();header.globalVariables.blockNumber=3;
  const calls=[],gate={},hooks={};let notes=0;
- const node=withCache({getContract:async(address,anchor)=>{calls.push(address.equals(board)?'class':address.equals(owner)?'account-class':'fee-class');assert(registered.has(address.toString()));assert(anchor.hash instanceof BlockHash);await gate.class?.promise;if(hooks.class)throw Error('class failed');return registered.get(address.toString());},findLeavesIndexes:async(anchor,tree,values)=>{calls.push('nullifier');assert.equal(tree,MerkleTreeId.NULLIFIER_TREE);assert(anchor.hash instanceof BlockHash);assert(values[0].equals(await computeSiloedPrivateInitializationNullifier(board,instance.initializationHash)));await gate.nullifier?.promise;if(hooks.nullifier)throw Error('nullifier failed');return [exists?{data:1n,l2BlockNumber:3,l2BlockHash:anchor.hash}:undefined];}});
+ const node=withCache({getContract:async(address,anchor)=>{calls.push(address.equals(board)?'class':address.equals(owner)?'account-class':'fee-class');assert(registered.has(address.toString()));assert(anchor.hash instanceof BlockHash);const label=privateFee!==undefined&&address.equals(privateFee)?'fee':'class';await gate[label]?.promise;if(hooks[label])throw Error(label+' failed');return registered.get(address.toString());},findLeavesIndexes:async(anchor,tree,values)=>{calls.push('nullifier');assert.equal(tree,MerkleTreeId.NULLIFIER_TREE);assert(anchor.hash instanceof BlockHash);assert(values[0].equals(await computeSiloedPrivateInitializationNullifier(board,instance.initializationHash)));await gate.nullifier?.promise;if(hooks.nullifier)throw Error('nullifier failed');return [exists?{data:1n,l2BlockNumber:3,l2BlockHash:anchor.hash}:undefined];}});
  const store={getContractInstance:async address=>{const value=registered.get(address.toString());return value&&new SerializableContractInstancePreimage(value).withAddress(address);}};
  const sync={async syncWithAnchorRead(read,options){assert.equal(options.warmNodeCache,true);node.wipeCache();const anchor={number:header.getBlockNumber(),hash:(await header.hash()).toString()},value=await read(anchor);await gate.sync?.promise;calls.push('sync-finished');return {anchor,value};}};
  const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},anchorBlockStore:{},contributors:[],stagedWriteCoordinator:{begin:()=>assert.fail('No private changeset during public sync')},log:{debug(){},verbose(){},warn(){},error(){}}});queue.start();queues.push(queue);
@@ -45,7 +45,7 @@ async function fixture({exists=true,ordinary=false}={}){
   const oracle=new UtilityExecutionOracle({callContext:context,anchorBlockHeader:header,anchoredContractData:{getContractInstance:async()=>instance},aztecNode:node,noteStore:{getNotes:async()=>{notes++;return [];}},scopes:[owner],changeSetId:1});
   await new WASMSimulator({module:'account-status-init-parity'}).executeUserCircuit(toACVMWitness(0,[owner.toField(),Fr.ZERO]),{...fn,contractName:artifact.name},buildACIRCallback(oracle,{contractAddress:board}));
  };
- return {pxe,board,owner,privateFee,registered,instance,node,store,calls,gate,hooks,utility,get notes(){return notes;},classRead:()=>new ContractClassService(node,store).getCurrentClassId(board,header),advance:()=>{header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber++;}};
+ return {pxe,board,owner,privateFee,registered,instance,node,store,calls,gate,hooks,utility,get notes(){return notes;},classRead:()=>new ContractClassService(node,store).getCurrentClassId(board,header),feeClassRead:()=>new ContractClassService(node,store).getCurrentClassId(privateFee,header),advance:()=>{header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber++;}};
 }
 test('native compiled deposit utility uses exact warmed initialization key and class anchor',async()=>{
  assert.equal((await getContractClassFromArtifact(artifact)).id.toString(),profile.boardClassId);
@@ -92,4 +92,30 @@ for(const exists of [true,false])test('native compiled owned-name records reuse 
   f.advance();await f.classRead();await f.utility('owned_name_records');
   assert.equal(f.notes,2);assert.equal(f.calls.filter(x=>x==='class').length,2);assert.equal(f.calls.filter(x=>x==='nullifier').length,2,'changed anchor cannot inherit initialized status');
  }else{await assert.rejects(f.utility('owned_name_records'),/Assertion failed/);assert.equal(f.notes,0,'absent initialization cannot reach private ownership');}
+});
+
+test('opening public FPC class uses exact native anchor cache without private discovery',async()=>{
+ const f=await fixture({ordinary:true});await f.pxe.syncForAccountStatus(f.board,f.privateFee);
+ assert.deepEqual(f.calls,['class','fee-class','nullifier','sync-finished']);assert.equal(f.notes,0);
+ assert.equal((await f.feeClassRead()).toString(),profile.privateFeeClassId);assert.equal((await f.classRead()).toString(),profile.boardClassId);
+ await f.utility();assert.equal(f.notes,1,'only the later compiled Board utility reads private notes');
+ assert.equal(f.calls.length,4,'both native class consumers and initialization use captured typed anchor');
+ f.advance();await f.feeClassRead();assert.equal(f.calls.filter(x=>x==='fee-class').length,2,'another anchor gets fresh FPC class');
+});
+for(const field of ['originalContractClassId','salt'])test('opening public FPC rejects altered local '+field+' before node reads',async()=>{
+ const f=await fixture({ordinary:true});f.registered.get(f.privateFee.toString())[field]=new Fr(999);
+ await assert.rejects(f.pxe.syncForAccountStatus(f.board,f.privateFee),/Invalid account status FPC/);assert.equal(f.calls.length,0);
+});
+for(const failure of ['fee','nullifier'])test('opening public FPC wave drains '+failure+' failure before releasing native queue',async()=>{
+ const f=await fixture({ordinary:true}),other=failure==='fee'?'nullifier':'fee';f.hooks[failure]=true;f.gate[other]=Promise.withResolvers();let settled=false,following=false;
+ const work=f.pxe.syncForAccountStatus(f.board,f.privateFee),rejected=assert.rejects(work,new RegExp(failure+' failed')).finally(()=>settled=true);
+ await new Promise(setImmediate);const next=f.pxe.operationQueue.run(()=>{following=true;});await new Promise(setImmediate);
+ assert.equal(settled,false);assert.equal(following,false);assert.equal(f.notes,0);
+ f.gate[other].resolve();await rejected;await next;assert.equal(following,true);
+});
+test('opening public FPC prefetch preserves upgraded current class for native authorization',async()=>{
+ const f=await fixture({ordinary:true});f.registered.get(f.privateFee.toString()).currentContractClassId=new Fr(999);
+ await f.pxe.syncForAccountStatus(f.board,f.privateFee);
+ assert.equal((await f.feeClassRead()).toString(),new Fr(999).toString());assert.notEqual((await f.feeClassRead()).toString(),profile.privateFeeClassId);
+ assert.equal(f.calls.filter(x=>x==='fee-class').length,1);assert.equal(f.notes,0);
 });
