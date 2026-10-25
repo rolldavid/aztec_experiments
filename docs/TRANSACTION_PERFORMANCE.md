@@ -169,3 +169,11 @@ Published79af02f2 fixes included-action observation: pending/dropped receipts or
 79af real unsubscribe:24.796770s click-to-usable visible frame; native inclusion3.158590s, proving12.567440s, completion preference refresh5.681660s. Later exact receipt checkpointed/success at3536 and UI automatically showed confirmed without losing state. No speedup claim: network wait changed substantially.
 
 Bok30fb four-file repair-loop update published to existing host, ready active0 with no last failure; no SDK/native/config/proxy changes. Real167-character request produced reply and published Reset timer update; Start/Pause/Resume/Reset controls verified. Browser CPU-profiled posting took43.754055s click-to-included visible frame. Kernel reset13.2745s and local proof verification12.3319s remain poor. CPU profile has irregular sample gaps; cannot infer CPU cost or OS throttling from wall-weighted samples. Exact reply appearance was already present before the reply observer attached, so no precise click-to-reply browser latency is claimed.
+
+### 25 October latest measured release b787
+
+Clean fresh signup took40.797s from Confirm payment to visible enabled Write a post, one successful Ethereum transaction and one successful native included Aztec claim. Compared with the later clean01cb59.033s reference this is30.9percent lower, not the50percent target and not a clean goal-start baseline. Private execution4.915s→1.705s; native readiness still4.037s.
+
+Fresh bookmark from unknown state took15.068s click to visible enabled Unbookmark after native proposed inclusion; inverse14.951s to visible enabled Bookmark. Exact receipt blocks3695/3696 succeeded. Starting bookmark action58.264s; this is74.1percent lower action completion, but baseline effect was offscreen. The b787 Like action returned in10.033s; its10.305s visible observer incorrectly targeted the permanent secondary Unlike control and is not qualified visible-count evidence. Receipt3687 checkpointed successfully.
+
+Reviewed next sourcecd798d9e removes duplicate custody receipt verification, overlaps fee metadata/custody and runs native Board/FPC readiness discovery together. Root179 aggregate,708 readiness/application and12 new fee-wave checks pass. Actual next-source speedup remains to be measured.

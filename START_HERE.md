@@ -24,6 +24,8 @@ Published2f43 removes redundant account refresh after preferences and reactions;
 
 Published946059 parallelizes same-operation claim receipt verification and hands the verified native completion receipt to the immediate outcome reader, removing duplicate receipt/block reads. Fresh same-Ethereum-wallet signup succeeded: one Ethereum payment and one combined Aztec claim, checkpoint3590. This run had test-adapter signature delays and missed the precise ready-frame endpoint, so it is functional evidence, not a clean click-to-ready performance measurement. Trace exposes duplicate claim preparation and post-inclusion account refresh for the next changes. Gzip17121 reduced real node responses197KB→74KB and152KB→58KB.
 
+Published01cb removes duplicate ETH gas/quote reads, waits for bridge readiness before full claim preparation, overlaps native account readiness reads and prefetches preference initialization. Clean fresh signup took59.033s Confirm payment→visible enabled Write a post, one Ethereum payment and one combined Aztec claim, no wallet errors. Remaining critical work: fullclaim preparation~11s, private witness4.915s mostly sequential RPC, native readiness4.662s. No50% signup claim. Prior fresh account first post13.632s click→included visible.
+
 ## Current deployment
 
 Website: https://d30njln0kead8n.cloudfront.net
@@ -33,10 +35,10 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/946059022eef1f9300b62ba3266529a1e9f71748` |
-| Browser SDK | Verified946059 claim verification/completion SDK and wallet runtime |
+| Browser UI | `/opt/rolling-ui/releases/b7870f5c0d967a4f0e0da00e049c2829d8931313` |
+| Browser SDK | Verified3de SDK and b787 funding/profile wallet runtime |
 | Running app | `/opt/rolling-app/releases/93954017009d4d9b53529d09956347682a1069ea` |
-| Next-start app | `/opt/rolling-app/releases/ui-946059022eef` |
+| Next-start app | `/opt/rolling-app/releases/ui-b7870f5c0d96` |
 | Prover | `/opt/board-prover/releases/node-gzip-17121ddedb9129828c226b1de45899788b06422a` |
 | Bok | `/opt/rolling-bok/releases/repair-30fbdee60ddc4a094d9f5b7c87d6f1255d4fd753` |
 
@@ -85,3 +87,9 @@ The historical graph is not evidence of the current network or an instruction to
 ## Generated-app hosting checks — 23 October
 
 Bok now uses one hosting policy for generation guidance, public headers and mandatory browser validation. Every new published revision needs desktop/mobile interaction and reload scenarios; runtime/policy failures return to Bok for repair. Receipts bind the exact artifact bytes, captured scenario plan and current policy. The browser remains sandboxed in the existing credential-free executor. Nineteen focused browser checks passed; the actual server executor accepted a working app and rejected both startup and click-only storage failures despite passing Node tests/builds. All nine services are running and the existing Daily Three app remains served. See [gate evidence](execution/evidence/G21/stable6/bok-browser-gate.json) and [operator documentation](deploy/BOK_BROWSER_VALIDATION.md). Checks cover exercised workflows and discovered controls, not all possible code paths or browser engines.
+
+## Latest continuation —25 October
+
+Core disk cleanup complete:1.179GB→5.814GB free. Removed obsolete transfer archives, unreferenced assets/generated SDK outputs,80 stopped retired containers and one unused image; running services/containers unchanged. New publisher prunes obsolete generated SDK outputs after activation. Node launcher now removes exact stopped container without volume deletion instead of retaining every retired container; live launcher+attestor SHA pin amended successfully, no node restart. Do not restart broad disk cleanup.
+
+Current measured signup40.797s, bookmark15.068s, inverse14.951s. Goal50percent across all other flows remains active; signup not yet passing. Next sourcecd798d9e reviewed/tested, publishing. One retained build and one browser tab.

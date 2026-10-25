@@ -1,0 +1,9 @@
+{
+  "uiCommit": "01cb4230f7062e4218ceecdb5a871507a545bf90",
+  "clickToUsableVisibleMs": 17910.024999976158,
+  "endpoint": "Selected Cedar Swiftfield in enabled main-page Post as at animation frame after native included transaction and owned-name discovery",
+  "receipt": "name-01cb-receipt.json",
+  "transactions": 1,
+  "historicalBaselineMs": 100169.295,
+  "comparability": "Historical action completion baseline; current includes selected usable visible frame. Network/account state differ, so not a matched controlled reduction."
+}

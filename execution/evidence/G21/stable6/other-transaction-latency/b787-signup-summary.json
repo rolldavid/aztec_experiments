@@ -1,0 +1,10 @@
+{
+  "release": "b7870f5c0d967a4f0e0da00e049c2829d8931313",
+  "flow": "signup",
+  "clickMs": 305992.3949999809,
+  "readyMs": 346789.6599999666,
+  "clickToReadyMs": 40797.264999985695,
+  "receiptFile": "b787-signup-receipt.json",
+  "endpoint": "visible enabled native-funded Write a post",
+  "singleObservation": true
+}

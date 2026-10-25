@@ -1,0 +1,60 @@
+{
+  "txHash": "0x24cecc1d826e11538b8d3d23b0563704ea679359ff03305bef96f1e57da1b64b",
+  "status": 1,
+  "blockNumber": 11989836,
+  "blockHash": "0x01cbe42330c66ccdbdb74ff1e39cdfc67e7575d1c35efd63f38d1ba97119ab68",
+  "walletRequests": [
+    {
+      "method": "eth_chainId",
+      "durationMs": 7
+    },
+    {
+      "method": "eth_signTypedData_v4",
+      "durationMs": 12
+    },
+    {
+      "method": "eth_chainId",
+      "durationMs": 4
+    },
+    {
+      "method": "eth_chainId",
+      "durationMs": 5
+    },
+    {
+      "method": "eth_chainId",
+      "durationMs": 6
+    },
+    {
+      "method": "eth_chainId",
+      "durationMs": 6
+    },
+    {
+      "method": "eth_chainId",
+      "durationMs": 7
+    },
+    {
+      "method": "eth_chainId",
+      "durationMs": 4
+    },
+    {
+      "method": "eth_chainId",
+      "durationMs": 5
+    },
+    {
+      "method": "eth_blockNumber",
+      "durationMs": 325
+    },
+    {
+      "method": "eth_sendTransaction",
+      "durationMs": 345
+    },
+    {
+      "method": "eth_chainId",
+      "durationMs": 11
+    },
+    {
+      "method": "eth_getTransactionByHash",
+      "durationMs": 300
+    }
+  ]
+}

@@ -185,3 +185,6 @@ Root integrates/publishes the completion and preference read-wave changes, owns 
 ## Current funding performance follow-up after946059
 
 Root published946059, verified fresh signup and owns integration/live measurements/cleanup. pending_reply_ui removes duplicate Ethereum presend calls and overlaps read-only simulation; pending_feed_release removes duplicate post-claim account refresh; proposed_feed_design investigates duplicate claim preparation and private witness RPC chain. Native preference prefetch ae3148 is reviewed/tested, pending next SDK publication. All agents use source-only scratch; no extra browser/dependency copies.
+
+## 25 October — resumed after chat payload failure
+Root integrates three reviewed patches, owns builds/live publication/browser tests. pending_feed_release adapts incremental UI packet from01cb; proposed_feed_design reviews combined claims and remaining critical path; pending_reply_ui reviews low-credit measurement and per-flow acceptance gaps. Agents use source-only drafts; no dependency copies or live mutations.

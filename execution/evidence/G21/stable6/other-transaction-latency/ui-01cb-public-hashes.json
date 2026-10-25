@@ -1,0 +1,10 @@
+[
+  {
+    "url": "/wallet/runtime.mjs",
+    "sha256": "6454bd50c206ab8e2a3247c6f58e2c6dc55235879a1f5360fddec3b8e910440f"
+  },
+  {
+    "url": "/wallet-panel.mjs",
+    "sha256": "29cac6eb430dbda0052409fe14e65605de82423f953c106d8e5c60f685784c00"
+  }
+]

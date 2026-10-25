@@ -1,0 +1,15 @@
+{
+  "uiCommit": "01cb4230f7062e4218ceecdb5a871507a545bf90",
+  "paymentClickToReadyVisibleMs": 59033.34000003338,
+  "ethereumPaymentCount": 1,
+  "combinedAztecClaimCount": 1,
+  "walletFailures": 0,
+  "endpoint": "Visible enabled Write a post in native open dialog after actual native deposit and fee balance discovery",
+  "automaticTestWalletApprovals": true,
+  "ethereumSubmitAckFromClickMs": 5842.45008790493,
+  "privateWitnessMs": 4914.78,
+  "kernelWitnessMs": 522.48,
+  "aztecInclusionMs": 2992.205,
+  "requiredNativeReadinessMs": 4661.67,
+  "comparability": "Previous946 run had manual adapter dwell and missing exact visible endpoint. This is clean current timing, not a matched50percent reduction claim."
+}

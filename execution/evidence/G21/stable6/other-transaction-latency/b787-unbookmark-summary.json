@@ -1,0 +1,10 @@
+{
+  "release": "b7870f5c0d967a4f0e0da00e049c2829d8931313",
+  "flow": "unbookmark",
+  "clickMs": 1043437.5299999714,
+  "readyMs": 1058388.6200000048,
+  "clickToReadyMs": 14951.090000033379,
+  "receiptFile": "b787-unbookmark-receipt.json",
+  "endpoint": "visible enabled inverse bookmark control after native included success",
+  "singleObservation": true
+}
