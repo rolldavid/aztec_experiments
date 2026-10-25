@@ -3,7 +3,7 @@ import {beginRollingMeasure} from './performance.mjs';
 import {createPublicReader} from './reader-client.mjs';
 import {createPublicAvatar,createPublicProfile} from './profile-view.mjs';
 import {createMessageContent as richText,createInlineActionRegistry,privatePreferenceControl} from './model.mjs';
-import {captureRoutePosition,focusRoute,skipToContent} from './navigation.mjs';
+import {captureRoutePosition,focusRoute,skipToContent,revealIncludedPost} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
 const currentRoute=()=>location.hash==='#/new-account'?'/home':location.hash.slice(1)||'/home';
@@ -40,7 +40,7 @@ function privateChanged(){
 }
 async function accountPanel(){
  return walletPanel??=import('./wallet-panel.mjs').then(({mountRollingWalletPanel})=>mountRollingWalletPanel({
-   loadRuntime:prepareAccountTools,onPublicEffect:()=>!main?.querySelector('.public-content')||privateViews.has(route.split('/')[1])||route.split('/')[1]==='directory'?render({live:!!main?.querySelector('.public-content')}):updates.request(),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void Promise.resolve(panel.initialize()).then(privateChanged).catch(()=>{});return panel;});
+   loadRuntime:prepareAccountTools,onIncludedPostRendered:post=>revealIncludedPost(post),onPublicEffect:()=>!main?.querySelector('.public-content')||privateViews.has(route.split('/')[1])||route.split('/')[1]==='directory'?render({live:!!main?.querySelector('.public-content')}):updates.request(),onPrivateChange:privateChanged})).then(panel=>{privatePanel=panel;void Promise.resolve(panel.initialize()).then(privateChanged).catch(()=>{});return panel;});
 }
 async function openWallet(defaults={}){
  try{
@@ -121,7 +121,7 @@ function postCard(post,data){
  const afterConfirmation=node=>{if(pending&&node){node.disabled=true;node.title='Available after confirmation';}return node;};
  const r=post.record,isBot=Boolean(post.bot),named=!isBot&&r.name_id!=='0'?data.names?.[r.name_id]:null,board=data.board?.id===r.subboard?data.board:data.boards?.[r.subboard];
  const author=isBot?'Bok':r.name_id==='0'?'Anonymous':named?`${text(named.first)} ${text(named.last)}`:'Registered name';
- const article=el('article',{class:'post',id:'post-'+post.id,'aria-label':'Post by '+author,...(post.confirmation?{'data-confirmation':post.confirmation}:{})});
+ const article=el('article',{class:'post',id:'post-'+post.id,'data-tx-hash':post.position?.txHash,'aria-label':'Post by '+author,...(post.confirmation?{'data-confirmation':post.confirmation}:{})});
  const who=isBot||r.name_id==='0'?el('span',{class:'author'},author):link(author,'/profile/'+r.name_id,{class:'author'});
  article.append(el('div',{class:'post-top'},named?createPublicAvatar(named,{signal:controller.signal}):el('span',{class:'avatar '+(isBot?'bot':'anonymous'),'aria-hidden':'true'},isBot?'B':'◌'),el('div',{},who,isBot?el('span',{class:'bot-badge'},'AI assistant'):null,pending?el('span',{class:'post-confirmation',role:'status'},'Confirmation pending'):null,el('div',{class:'post-context'},field(r.subboard)?link(r.subboard==='0'?'Main board':board?text(board.name):'Subboard','/board/'+r.subboard):'Board unavailable',' · ',timestamp(post.timestamp)))));
  const provenance=el('details',{class:'post-provenance'},el('summary',{},'Post details'));const authoredPolicy=policyLabel('Published under policy',post.mainVersion,post.localVersion);if(authoredPolicy)provenance.append(authoredPolicy);

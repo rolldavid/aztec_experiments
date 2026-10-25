@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {captureRoutePosition, focusRoute, skipToContent} from './navigation.mjs';
+import {captureRoutePosition, focusRoute, skipToContent, revealIncludedPost} from './navigation.mjs';
 function browserFixture() {
   const calls = [];
   const target = {focus: options => calls.push(['post-focus', options]), scrollIntoView: options => calls.push(['post-scroll', options])};
@@ -52,4 +52,14 @@ test('a removed return anchor uses an announced heading instead of a wrong saved
  const {calls,browser}=browserFixture(),status={};browser.document.getElementById=id=>id==='announcement'?status:null;
  focusRoute('/home',{y:840,anchor:{id:'post-missing',offset:-10}},false,browser);
  assert.deepEqual(calls,[['scroll',0,0],['heading-focus']]);assert.match(status.textContent,/no longer available/);
+});
+
+test('included post reveal requires exact connected transaction and scrolls only an offscreen row',()=>{
+ const calls=[],txHash='0x'+'a'.repeat(64);let top=688,bottom=949,modal=false,visible=true;
+ const node={isConnected:true,getClientRects:()=>visible?[{}]:[],getAttribute:()=>txHash,focus:options=>calls.push(['focus',options]),getBoundingClientRect:()=>({top,bottom}),scrollIntoView:options=>calls.push(['scroll',options])};
+ const browser={innerHeight:571,document:{getElementById:id=>id==='post-17'?node:null,querySelector:()=>modal?{}:null}};
+ for(const value of [{id:'18',txHash},{id:'17',txHash:'0x'+'b'.repeat(64)},{id:'bad',txHash}])assert.equal(revealIncludedPost(value,browser),false);
+ node.isConnected=false;assert.equal(revealIncludedPost({id:'17',txHash},browser),false);assert.deepEqual(calls,[]);
+ node.isConnected=true;modal=true;assert.equal(revealIncludedPost({id:'17',txHash},browser),false);modal=false;visible=false;assert.equal(revealIncludedPost({id:'17',txHash},browser),false);visible=true;assert.deepEqual(calls,[]);assert.equal(revealIncludedPost({id:'17',txHash},browser),true);assert.deepEqual(calls,[['focus',{preventScroll:true}],['scroll',{block:'nearest'}]]);
+ calls.length=0;top=100;bottom=300;revealIncludedPost({id:'17',txHash},browser);assert.deepEqual(calls,[['focus',{preventScroll:true}]]);
 });

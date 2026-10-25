@@ -20,12 +20,15 @@ function bokReleaseArguments(args){
   return [id,{type:d.value}];
  }catch{throw Object.assign(Error('Invalid Rolling action'),{code:'ROLLING_INVALID_ACTION'});}
 }
-function balanceArguments(args){
+function balanceArguments(args,allowIncludeBok){
  try{
   if(args.length===0)return [{cursor:0}];
-  const [input]=args,d=input&&Object.getOwnPropertyDescriptor(input,'cursor');
-  if(args.length!==1||Object.getPrototypeOf(input)!==Object.prototype||Reflect.ownKeys(input).length!==1||!d||!Object.hasOwn(d,'value')||!(d.value===0||typeof d.value==='string'))throw 0;
-  return [{cursor:d.value}];
+  const [input]=args,d=input&&Object.getOwnPropertyDescriptor(input,'cursor'),bok=input&&Object.getOwnPropertyDescriptor(input,'includeBok');
+  if(args.length!==1||Object.getPrototypeOf(input)!==Object.prototype||
+    Reflect.ownKeys(input).some(key=>key!=='cursor'&&!(allowIncludeBok&&key==='includeBok'))||
+    !d||!Object.hasOwn(d,'value')||!(d.value===0||typeof d.value==='string')||
+    bok&&(!allowIncludeBok||!Object.hasOwn(bok,'value')||typeof bok.value!=='boolean'))throw 0;
+  return [{cursor:d.value,...(bok?{includeBok:bok.value}:{})}];
  }catch{throw Object.assign(Error('Invalid Rolling balance cursor'),{code:'ROLLING_BALANCE_CURSOR_INVALID'});}
 }
 const boardStateMethods=Object.freeze({like:'set_like',unlike:'set_like',preference:'set_preference','read-marker':'mark_thread_read',name:'register_name',bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator',screen:'screen',withdraw:'withdraw'});
@@ -35,7 +38,7 @@ export function createSynchronizedRollingApplication({application,synchronize,co
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
   return [name,async(...args)=>{
-   const captured=name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args):args;
+   const captured=name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args,name==='readBalances'):args;
    const stateMethod=name==='prepare'&&Object.hasOwn(boardStateMethods,captured[0]?.type)?boardStateMethods[captured[0].type]:undefined;
    await contextGuard();
    const scope=operationScope();

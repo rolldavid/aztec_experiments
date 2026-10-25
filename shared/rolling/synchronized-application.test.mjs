@@ -168,3 +168,33 @@ test('only immediate preference mutations start qualified metadata alongside syn
   const work=app.prepare({type},immediate?{immediate:true}:undefined);await entered.promise;assert.equal(called,false);assert.equal(seen.preferencePayment,immediate&&['preference','read-marker'].includes(type)?true:undefined);gate.resolve();await work;
  }
 });
+
+
+test('balances capture the optional Bok selection before the first context await; accounting remains cursor-only',async()=>{
+ const gate=Promise.withResolvers();let guards=0;
+ const raw=Object.fromEntries(names.map(name=>[name,(...args)=>args]));
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{if(++guards===1)return gate.promise;},synchronize:()=>{}});
+ const input={cursor:0,includeBok:true},pending=app.readBalances(input);
+ input.cursor='changed';input.includeBok=false;gate.resolve();
+ assert.deepEqual(await pending,[{cursor:0,includeBok:true}]);
+ assert.deepEqual(await app.readBalances({cursor:'page',includeBok:false}),[{cursor:'page',includeBok:false}]);
+ for(const method of ['readBalances','readBokAccounting']){
+  assert.deepEqual(await app[method](),[{cursor:0}]);
+  assert.deepEqual(await app[method]({cursor:'page'}),[{cursor:'page'}]);
+ }
+ await assert.rejects(app.readBokAccounting({cursor:0,includeBok:true}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});
+});
+test('invalid Bok balance options are rejected without accessors, synchronization or application calls',async()=>{
+ let reads=0,calls=0;
+ const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>calls++])),contextGuard:()=>calls++,synchronize:()=>calls++});
+ for(const input of [
+  {cursor:0,get includeBok(){reads++;return true;}},
+  {get cursor(){reads++;return 0;},includeBok:true},
+  ...[undefined,null,0,1,'true',{}].map(includeBok=>({cursor:0,includeBok})),
+  {includeBok:true},{cursor:0,includeBok:true,extra:1},
+  {cursor:0,includeBok:true,[Symbol('extra')]:1},Object.assign(Object.create({includeBok:true}),{cursor:0}),
+ ])await assert.rejects(app.readBalances(input),{code:'ROLLING_BALANCE_CURSOR_INVALID'});
+ for(const includeBok of [true,false])await assert.rejects(app.readBokAccounting({cursor:0,includeBok}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});
+ await assert.rejects(app.readBalances({cursor:0,includeBok:true},{}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});
+ assert.equal(reads,0);assert.equal(calls,0);
+});

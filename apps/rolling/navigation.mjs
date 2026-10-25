@@ -46,3 +46,14 @@ export function skipToContent(event, document = window.document) {
   event.preventDefault();
   document.getElementById('content')?.focus();
 }
+
+// Called once for the submitted transaction after its actual row is connected.
+export function revealIncludedPost({id,txHash},browser=window){
+ if(typeof id!=='string'||!/^(0|[1-9][0-9]{0,76})$/.test(id)||!/^0x[0-9a-f]{64}$/.test(txHash))return false;
+ const node=browser.document.getElementById('post-'+id);
+ if(!node?.isConnected||node.getAttribute('data-tx-hash')!==txHash||browser.document.querySelector('dialog[open]')||!node.getClientRects().length||node.checkVisibility?.({visibilityProperty:true,opacityProperty:true})===false)return false;
+ node.tabIndex=-1;node.focus({preventScroll:true});
+ const rect=node.getBoundingClientRect();
+ if(rect.top<0||rect.bottom>browser.innerHeight)node.scrollIntoView({block:'nearest'});
+ return true;
+}
