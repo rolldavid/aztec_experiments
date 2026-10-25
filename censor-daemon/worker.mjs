@@ -123,7 +123,10 @@ export async function processRollingModerationCycle({store,signer,evaluate,worke
  };
  const old=store.list(),offset=signer.reconcileOffset??0;
  const sweep=old.slice(offset,offset+64);
- for(const record of sweep)if(record.job.state==='confirmed-flag'&&(await signer.reconcileRemoval(record)).state!=='confirmed')store.invalidateCompletion(record.key);
+ const completed=sweep.filter(record=>record.job.state==='confirmed-flag');
+ if(completed.length){const outcomes=await signer.reconcileRemovals(completed);
+  for(const [i,record] of completed.entries())if(outcomes[i].state!=='confirmed')store.invalidateCompletion(record.key);
+ }
  await ingest(sweep.map(r=>r.job.postId));
  signer.reconcileOffset=offset+64>=old.length?0:offset+64;
  for(let count=0;count<maxJobs&&!stopping();count++){

@@ -109,6 +109,28 @@ export function rollingModerationAdapter({index,node,scope,lease,state,deadline,
     return {txHash:tx.hash};
    }finally{busy=false;}
   },
+  async reconcileRemovals(records){
+   assert(Array.isArray(records)&&records.length<=64,'Invalid removal sweep');
+   if(records.length===0)return [];
+   const captured=clone(records);await sync();
+   const initial=index.query('home',{limit:1});
+   const snapshot={revision:initial.revision,checkpoint:clone(initial.checkpoint)},results=[];
+   // One owned index refresh, with fresh exact receipt/canonical checks for
+   // every retained intent. No completion is applied until the sweep drains.
+   for(let offset=0;offset<captured.length;offset+=8){
+    results.push(...await drained(captured.slice(offset,offset+8).map(record=>async()=>{
+     await inspect(record);
+     const query=index.query('post',{id:BigInt(record.job.postId).toString(),limit:1});
+     assert.equal(query.revision,snapshot.revision,'Mixed public projection');
+     assert.deepEqual(query.checkpoint,snapshot.checkpoint,'Public checkpoint changed');
+     return reconcileRollingRemoval({node,scope,record,event:removalEvent(query.post),development});
+    })));
+   }
+   await held();const final=index.query('home',{limit:1});
+   assert.equal(final.revision,snapshot.revision,'Mixed public projection');
+   assert.deepEqual(final.checkpoint,snapshot.checkpoint,'Public checkpoint changed');
+   return results;
+  },
   async reconcileRemoval(record){
    await inspect(record);await sync();const p=index.query('post',{id:BigInt(record.job.postId).toString(),limit:1}).post;
    return reconcileRollingRemoval({node,scope,record,event:removalEvent(p),development});

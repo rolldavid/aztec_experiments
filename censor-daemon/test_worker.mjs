@@ -155,7 +155,8 @@ function rollingFixture(t,development=true){
  const state={read:()=>value,async write(next){value=next;}};
  const prepare=async record=>{f.calls.prepare++;return {hash:hex(50+Number(BigInt(record.job.postId))),sha256:'ab'.repeat(32),maximumFee:'100'};};
  const owned=ownRollingPersistentPublicIndex(index,{close(){}});
- f.signer=rollingModerationAdapter({index:owned,node,scope:rscope,lease:{async assertHeld(){}},state,deadline:async(...args)=>f.deadline?f.deadline(...args):'2000',development,stopping:()=>Boolean(f.stopping),
+ const lease={async assertHeld(){}};f.lease=lease;
+ f.signer=rollingModerationAdapter({index:owned,node,scope:rscope,lease,state,deadline:async(...args)=>f.deadline?f.deadline(...args):'2000',development,stopping:()=>Boolean(f.stopping),
   prepare:async record=>f.prepare?f.prepare(record):prepare(record),assertAuthority:async()=>{f.calls.authority++;if(f.authorityError)throw Error('changed');},
   broadcast:async tx=>{f.calls.broadcast++;if(f.broadcastError)throw Error('lost response');const p=f.posts.find(p=>BigInt(p.id)===BigInt(tx.hash)-50n);p.text=null;p.removal={policy:String(BigInt(f.version)+(p.record.subboard==='0'?0n:1n<<32n)),reason:'Spam',penalized:false,position:{blockNumber:'11',blockHash:hex(60),txHash:tx.hash}};}});
  f.evaluate=async()=>{f.calls.evaluate++;return {isViolation:false};};
@@ -334,4 +335,61 @@ test('Rolling paginated catch-up requires a changed nonempty cursor and stops at
  assert.equal((await f.run({maxJobs:0})).catchUp,true);assert.equal((await f.run({maxJobs:0})).catchUp,true);assert.equal((await f.run({maxJobs:0})).catchUp,false);
  f.index.scanPosts=()=>({posts:f.posts,checkpoint:f.checkpoint,nextAfter:'same',revision:f.revision});
  assert.equal((await f.run({maxJobs:0})).catchUp,true);assert.equal((await f.run({maxJobs:0})).catchUp,false);
+});
+
+async function completedRemovalFixture(t,count=2){
+ const f=rollingFixture(t);f.posts=Array.from({length:count},(_,i)=>f.post(i+1));
+ f.evaluate=async()=>({isViolation:true,reason:'Spam'});
+ assert.equal((await f.run({maxJobs:count})).complete,true);
+ assert(f.store.list().every(r=>r.job.state==='confirmed-flag'));return f;
+}
+test('Rolling 64-record completed sweep refreshes index once plus normal ingestion, preserving both canonical reads per receipt',async t=>{
+ const f=await completedRemovalFixture(t,64),original=f.node.getBlockData;let syncs=0,receipts=0,canonical=0;
+ f.index.sync=async()=>{syncs++;};const receipt=f.node.getTxReceipt;
+ f.node.getTxReceipt=async hash=>{receipts++;return receipt(hash);};
+ f.node.getBlockData=async number=>{if(number===11)canonical++;return original(number);};
+ await f.run({maxJobs:0});
+ assert.equal(syncs,2);assert.equal(receipts,64);assert.equal(canonical,128);
+ assert.equal(f.calls.broadcast,64);assert(f.store.list().every(r=>r.job.state==='confirmed-flag'));
+});
+test('Rolling completed sweep starts at most eight receipt reads and drains each batch',async t=>{
+ const f=await completedRemovalFixture(t,17),held=gate(),receipt=f.node.getTxReceipt;let active=0,maximum=0,started=0;
+ f.node.getTxReceipt=async hash=>{const n=++started;active++;maximum=Math.max(maximum,active);try{if(n<=8)await held.promise;return receipt(hash);}finally{active--;}};
+ const result=f.signer.reconcileRemovals(f.store.list());await tick();assert.equal(started,8);assert.equal(active,8);
+ held.resolve();const outcomes=await result;assert.equal(maximum,8);assert.equal(started,17);assert(outcomes.every(r=>r.state==='confirmed'));
+});
+test('Rolling completed sweep drains held siblings after intent rejection before any invalidation or inference',async t=>{
+ const f=await completedRemovalFixture(t,9),records=f.store.list(),held=gate(),receipt=f.node.getTxReceipt;
+ f.state().rollingModeration.operations[records[0].key].intentDigest='changed';let started=0,finished=false,syncs=0;
+ f.index.sync=async()=>{syncs++;};f.node.getTxReceipt=async hash=>{started++;await held.promise;return receipt(hash);};
+ const before={...f.calls},result=f.run().finally(()=>{finished=true;}),rejected=assert.rejects(result,/Original moderation intent changed/);
+ await tick();assert.equal(started,7);assert.equal(finished,false);assert.equal(syncs,1);
+ assert(f.store.list().every(r=>r.job.state==='confirmed-flag'));held.resolve();await rejected;
+ assert.equal(started,7);assert.deepEqual(f.calls,before);assert(f.store.list().every(r=>r.job.state==='confirmed-flag'));
+});
+for(const change of ['receipt','event','canonical','second-canonical'])test('Rolling batch rejects changed '+change+' evidence without replay',async t=>{
+ const f=await completedRemovalFixture(t),before={...f.calls};
+ if(change==='receipt'){const original=f.node.getTxReceipt;f.node.getTxReceipt=async hash=>({...await original(hash),txHash:hex(999)});}
+ if(change==='event')f.posts[0].removal.reason='Different';
+ if(change==='canonical'||change==='second-canonical'){
+  const original=f.node.getBlockData;let reads=0;
+  f.node.getBlockData=async number=>number===11&&(change==='canonical'||++reads>2)?{blockHash:hex(999),header:{globalVariables:{blockNumber:number}}}:original(number);
+ }
+ await f.run({maxJobs:0});assert(f.store.list().some(r=>r.job.state!=='confirmed-flag'));assert.deepEqual(f.calls,before);
+});
+for(const change of ['revision','checkpoint','lease'])test('Rolling batch '+change+' replacement during receipt reads cannot publish completion',async t=>{
+ const f=await completedRemovalFixture(t),held=gate(),receipt=f.node.getTxReceipt;let reads=0,finished=false;
+ f.node.getTxReceipt=async hash=>{reads++;await held.promise;return receipt(hash);};
+ const result=f.run({maxJobs:0}).finally(()=>{finished=true;}),rejected=assert.rejects(result);
+ await tick();assert.equal(reads,2);assert.equal(finished,false);
+ if(change==='revision')f.revision='2';
+ if(change==='checkpoint')f.checkpoint.hash=hex(999);
+ if(change==='lease')f.lease.assertHeld=async()=>{throw Error('lease replaced');};
+ held.resolve();await rejected;assert(f.store.list().every(r=>r.job.state==='confirmed-flag'));assert.equal(f.calls.broadcast,2);
+});
+test('Rolling failed receipt stays unknown only after held sibling completes',async t=>{
+ const f=await completedRemovalFixture(t),held=gate(),receipt=f.node.getTxReceipt;let calls=0,finished=false;
+ f.node.getTxReceipt=hash=>{if(++calls===1)throw Error('receipt unavailable');return held.promise.then(()=>receipt(hash));};
+ const result=f.signer.reconcileRemovals(f.store.list()).finally(()=>{finished=true;});await tick();assert.equal(calls,2);assert.equal(finished,false);
+ held.resolve();assert.deepEqual((await result).map(r=>r.state),['unknown','confirmed']);
 });
