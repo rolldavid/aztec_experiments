@@ -701,7 +701,7 @@ test('automatic funding prepares directly for submission, including after bridge
   return prepare(action,options);
  };
  f.input.waits={bridge:async()=>{bridgeWaits++;},claim:()=>assert.fail('Already confirmed')};
- assert.equal((await advanceAggregateClaim(f.input)).state,'complete');assert.equal(bridgeWaits,1);assert.equal(calls.length,2);
+ assert.equal((await advanceAggregateClaim(f.input)).state,'complete');assert.equal(bridgeWaits,2);assert.equal(calls.length,2);
  for(const call of calls)assert.deepEqual(call,{action:{type:'claim-deposit',receipt:{private:'SECRET_RECEIPT'}},options:{immediate:true}});
  assert.equal(f.calls.filter(call=>call==='submit').length,1);
 });

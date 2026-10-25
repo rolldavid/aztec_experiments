@@ -843,7 +843,7 @@ test('funding continuation uses installed SDK readiness for every exact saved ke
  const f=continuationFixture(),cap=createFundingContinuation(f.input);
  assert.equal((await cap.advanceClaim()).state,'complete');assert.equal(f.busy,false);
  assert.deepEqual(f.calls.filter(c=>c[0]==='message').map(c=>c[1]),Object.values(f.receipts).map(r=>r.messageKey));
- assert.deepEqual(f.calls.map(c=>c[0]),['prepare','message','message','message','prepare','checkpoint','checkpoint','submit']);
+ assert.deepEqual(f.calls.map(c=>c[0]),['message','message','message','prepare','checkpoint','checkpoint','submit']);
 });
 for(const action of ['pause','invalidate'])test('funding '+action+' drains concurrent SDK waits and fences submission',async()=>{
  const f=continuationFixture();let entered,release;const seen=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
@@ -1486,10 +1486,10 @@ test('native message readiness recognizes actual proposed insertion before check
 for(const reorg of [false,true])test(`explicit proposed bridge readiness still requires fresh claim preparation, reorg=${reorg}`,async()=>{
  const f=continuationFixture();f.input.bridgeChainTip='proposed';let preparations=0,heads=0;
  f.input.node.getBlockData=async tier=>{assert.equal(tier,'proposed');heads++;return {header:{state:{l1ToL2MessageTree:{nextAvailableLeafIndex:2}}}};};
- f.input.application.prepare=async()=>{f.calls.push(['prepare']);if(++preparations===1)throw Object.assign(Error('not ready'),{code:'ROLLING_FUNDING_NOT_READY',reason:'l2-delivery'});if(reorg)throw Object.assign(Error('canonical membership changed'),{code:'ROLLING_FUNDING_REORG'});return f.prepared;};
+ f.input.application.prepare=async()=>{f.calls.push(['prepare']);preparations++;if(reorg)throw Object.assign(Error('canonical membership changed'),{code:'ROLLING_FUNDING_REORG'});return f.prepared;};
  const work=createFundingContinuation(f.input).advanceClaim();
  if(reorg)await assert.rejects(work,{code:'ROLLING_FUNDING_REORG'});else assert.equal((await work).state,'complete');
- assert.equal(preparations,2);assert.equal(heads,3);assert.equal(f.calls.filter(c=>c[0]==='submit').length,reorg?0:1);assert.equal(f.busy,false);
+ assert.equal(preparations,1);assert.equal(heads,3);assert.equal(f.calls.filter(c=>c[0]==='submit').length,reorg?0:1);assert.equal(f.busy,false);
 });
 test('bridge readiness tip requires explicit supported policy before starting any work',()=>{
  const f=continuationFixture();for(const bridgeChainTip of ['latest','pending',null,{}])assert.throws(()=>createFundingContinuation({...f.input,bridgeChainTip}),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.calls.length,0);
@@ -1687,4 +1687,25 @@ for(const mode of ['success','failure','account-change','anchor-change'])test(`c
   if(mode==='account-change')f.state.wrongPXE=true;if(mode==='anchor-change')f.node.getBlockData=async()=>({blockHash:Fr.fromString(hex(56)),header:{globalVariables:{blockNumber:10}}});gate.resolve();const result=await observed;
   if(mode==='success')assert.equal(result.availableCredit,'700');assert.equal(calls,1);assert.equal(f.state.syncs,syncs+1);assert.equal(f.state.sends,0);assert(!f.state.active);
  }finally{gate.resolve();f.state.wrongPXE=false;await session.close();}
+});
+
+for(const includeBok of [false,true])test(`funding waits for every recovered native message before its only full preparation, Bok=${includeBok}`,async()=>{
+ const f=continuationFixture();if(!includeBok)delete f.receipts.bokReceipt;
+ const count=Object.keys(f.receipts).length,release=[],entered=[];
+ f.input.node.getL1ToL2MessageIndex=async key=>{entered.push(String(key));await new Promise(resolve=>release.push(resolve));return 1n;};
+ const work=createFundingContinuation(f.input).advanceClaim();
+ while(entered.length<count)await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(entered,Object.values(f.receipts).map(row=>row.messageKey));assert(f.busy);
+ assert(!f.calls.some(row=>['prepare','checkpoint','submit'].includes(row[0])));
+ for(let i=0;i<count-1;i++){release[i]();await new Promise(resolve=>setImmediate(resolve));assert(!f.calls.some(row=>row[0]==='prepare'));}
+ release.at(-1)();assert.equal((await work).state,'complete');assert.equal(f.calls.filter(row=>row[0]==='prepare').length,1);assert.equal(f.calls.filter(row=>row[0]==='submit').length,1);assert.equal(f.busy,false);
+});
+test('failed native bridge readiness drains all other incoming messages before releasing the account, without prepare or send',async()=>{
+ const f=continuationFixture(),original=Error('native readiness unavailable');let release,entered=0;
+ const held=new Promise(resolve=>release=resolve);
+ f.input.node.getL1ToL2MessageIndex=async key=>{entered++;if(String(key)===f.receipts.receipt.messageKey)throw original;await held;return 1n;};
+ let settled=false;const work=createFundingContinuation(f.input).advanceClaim().finally(()=>settled=true),rejected=assert.rejects(work,e=>e===original);
+ while(entered<3)await new Promise(resolve=>setImmediate(resolve));
+ assert(f.busy);assert.equal(settled,false);assert(!f.calls.some(row=>['prepare','checkpoint','submit'].includes(row[0])));
+ release();await rejected;assert.equal(f.busy,false);assert(!f.calls.some(row=>['prepare','checkpoint','submit'].includes(row[0])));
 });

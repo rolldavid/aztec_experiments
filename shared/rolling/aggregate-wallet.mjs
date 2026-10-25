@@ -413,6 +413,11 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
      check(action?.type===claimAction&&(claimAction==='claim-deposit'?['receipt','feeReceipt','bokReceipt']:['receipt']).every(key=>key==='bokReceipt'&&action[key]===undefined&&receipts[key]===undefined||same(action[key],receipts[key])),'RECOVERY_REQUIRED');
      next=current.intent;
     }else{
+     // Recovered receipts already identify the exact incoming messages. Wait
+     // for their native tree readiness before the expensive full preparation.
+     // This is only scheduling: preparation still verifies canonical receipt,
+     // message membership and root at its freshly synchronized anchor below.
+     if(waits?.bridge)await read('prepare',()=>waits.bridge(receipts));
      try{next=await read('prepare',()=>application.prepare({type:claimAction,...receipts},{immediate:true}));}
      catch(error){
       if(errorValue(error,'code')!=='ROLLING_FUNDING_NOT_READY'||!waits||errorValue(error,'reason')!=='l2-delivery')throw error;
