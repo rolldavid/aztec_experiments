@@ -198,3 +198,70 @@ test('invalid Bok balance options are rejected without accessors, synchronizatio
  await assert.rejects(app.readBalances({cursor:0,includeBok:true},{}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});
  assert.equal(reads,0);assert.equal(calls,0);
 });
+
+// Exercise the actual UI action entry point and native queue, not a duplicate
+// model of its initial preference-head ordering.
+import {executeRollingAction} from '../../apps/rolling/wallet-action.mjs';
+for(const type of ['preference','read-marker'])test(`immediate ${type} prepares state before its one native head read and reuses the owned anchor`,async()=>{
+ let anchor=14,head=15,syncs=0,headReads=0,submitted=0;const discovered=new Set(),methods=[],contextReads=[];
+ const scope={preparationReads:[]},gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers();let starts=0;
+ const arrive=async index=>{if(++starts===2)entered.resolve();await gates[index].promise;};
+ const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},
+  anchorBlockStore:{getBlockHeader:async()=>({number:anchor})},contributors:[],
+  stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{debug(){},verbose(){},warn(){}}});queue.start();
+ try{
+  const raw=Object.fromEntries(names.map(name=>[name,()=>assert.fail('unexpected '+name)]));
+  raw.readPreferenceHead=(...args)=>queue.runSynced(({anchorBlockHeader})=>{
+   assert.deepEqual(args,[]);assert(discovered.has(anchorBlockHeader.number));headReads++;
+   return {revision:String(anchorBlockHeader.number)};
+  });
+  raw.prepare=(action,options)=>queue.runSynced(({anchorBlockHeader})=>{
+   assert.equal(action.expectedRevision,String(anchorBlockHeader.number));assert.equal(action.type,type);assert.deepEqual(options,{immediate:true});return {intentId:'exact'};
+  });
+  raw.submitPrepared=id=>{assert.equal(id,'exact');submitted++;return {status:'included'};};
+  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},
+   synchronize:async()=>{syncs++;await arrive(0);await queue.run(()=>{anchor=head;});},
+   prepareContext:async options=>{contextReads.push(options);await arrive(1);},
+   prepareContractState:({method})=>queue.runSynced(({anchorBlockHeader})=>{methods.push(method);discovered.add(anchorBlockHeader.number);})});
+  const pending=executeRollingAction(app,{type});await entered.promise;
+  assert.equal(headReads,0);assert.deepEqual(contextReads,[{predecessor:true,preferencePayment:true}]);
+  gates[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(headReads,0);
+  gates[1].resolve();assert.deepEqual(await pending,{status:'included'});
+  assert.equal(syncs,1);assert.equal(headReads,1);assert.equal(submitted,1);
+  // The later native guard remains; its same-anchor discovery is already done.
+  assert.deepEqual(methods,[genericBoardActions[type],genericBoardActions[type]]);assert.deepEqual([...discovered],[15]);
+  assert.equal(scope.synchronized,false);
+  head=16;await app.readPreferenceHead({prepareAction:type});assert.equal(anchor,16);assert.equal(headReads,2);assert.equal(syncs,2);assert.deepEqual([...discovered],[15,16]);
+ }finally{gates.forEach(g=>g.resolve());await queue.stop();}
+});
+
+test('preference preparation captures the action primitive and strips utility options before awaiting',async()=>{
+ const gate=Promise.withResolvers(),seen=[],scope={preparationReads:[]};let guards=0;
+ const raw=Object.fromEntries(names.map(name=>[name,(...args)=>{seen.push(args);return {revision:'1'};}]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{if(++guards===1)return gate.promise;},synchronize:()=>{},prepareContractState:({method})=>seen.push(method)});
+ const input={prepareAction:'preference'},pending=app.readPreferenceHead(input);input.prepareAction='read-marker';gate.resolve();await pending;
+ assert.deepEqual(seen,['set_preference',[]]);
+ let reads=0,calls=0;const guarded=createSynchronizedRollingApplication({application:raw,contextGuard:()=>calls++,synchronize:()=>calls++});
+ for(const bad of [null,undefined,{}, {prepareAction:'post'},{prepareAction:'preference',extra:true},Object.create({prepareAction:'preference'}),{get prepareAction(){reads++;return 'preference';}},{prepareAction:'preference',[Symbol('extra')]:true}]){
+  await assert.rejects(guarded.readPreferenceHead(bad),{code:'ROLLING_INVALID_ACTION'});
+ }
+ await assert.rejects(guarded.readPreferenceHead({prepareAction:'preference'},{}),{code:'ROLLING_INVALID_ACTION'});assert.equal(reads,0);assert.equal(calls,0);
+});
+
+for(const fail of ['sync','context'])test(`preference initial ${fail} failure drains its sibling before head or action work`,async()=>{
+ const gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),failure=Error(fail);let starts=0,calls=0,done=false;
+ const work=index=>async()=>{if(++starts===2)entered.resolve();await gates[index].promise;if(index===(fail==='sync'?0:1))throw failure;};
+ const scope={preparationReads:[]},raw=Object.fromEntries(names.map(name=>[name,()=>calls++]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:work(0),prepareContext:work(1),prepareContractState:()=>calls++});
+ const pending=assert.rejects(executeRollingAction(app,{type:'preference'}).finally(()=>done=true),error=>error===failure);
+ await entered.promise;gates[fail==='sync'?0:1].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(done,false);assert.equal(calls,0);
+ gates.forEach(g=>g.resolve());await pending;assert.equal(calls,0);assert.equal(scope.synchronized,undefined);
+});
+
+for(const fail of ['scope','discovery'])test(`initial preference ${fail} change prevents head consumption and intent creation`,async()=>{
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers(),failure=Error('discovery');let scope={preparationReads:[]},calls=0;
+ const raw=Object.fromEntries(names.map(name=>[name,()=>calls++]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContext:()=>{},prepareContractState:async()=>{entered.resolve();await gate.promise;if(fail==='discovery')throw failure;}});
+ const pending=assert.rejects(executeRollingAction(app,{type:'read-marker'}),fail==='scope'?{code:'ROLLING_CONTEXT_CHANGED'}:error=>error===failure);
+ await entered.promise;assert.equal(calls,0);if(fail==='scope')scope={preparationReads:[]};gate.resolve();await pending;assert.equal(calls,0);
+});

@@ -252,6 +252,36 @@ test('owned read drains parallel class/head work on either failure before releas
 test('owned readiness capability is bracketed by route checks and cannot bypass reorg publication fences',async()=>{
  const f=await fixture([changed(4)],4);let checks=0;f.input.checkReadiness=async()=>{checks++;};
  assert.equal((await f.restart().read()).status,'complete');assert.equal(checks,1);assert.equal(f.calls.filter(x=>x==='inspect').length,0);assert.equal(f.calls.filter(x=>x==='block:4').length,3);
- f.input.checkReadiness=async()=>{f.state.route=false;};const before=f.calls.filter(x=>x==='sync').length;
- await invalid(f.restart().read());assert.equal(f.calls.filter(x=>x==='sync').length,before);
+ f.input.checkReadiness=async()=>{f.state.route=false;};const before=f.calls.length,bytes=[...f.values.values()];
+ await invalid(f.restart().read());const after=f.calls.slice(before);
+ assert.equal(after.filter(x=>x==='sync').length,1,'already-started sync drains when readiness invalidates the route');
+ assert(!after.some(x=>['head','events','store-read','CAS'].includes(x)));assert.deepEqual([...f.values.values()],bytes);
+});
+
+for(const callback of [false,true])test(`refresh readiness and sync overlap before any head or encrypted-slot work, supplied readiness=${callback}`,async()=>{
+ const f=await fixture([changed(4)],4),gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers();let starts=0;
+ const work=index=>async()=>{if(++starts===2)entered.resolve();await gates[index].promise;};
+ if(callback)f.input.checkReadiness=work(0);else f.input.sdk.inspectTrustedNode=work(0);
+ f.input.pxe.sync=work(1);const reader=f.restart(),pending=reader.read();await entered.promise;
+ assert.equal(starts,2);assert(!f.calls.includes('head'));assert(!f.calls.includes('store-read'));assert(!f.calls.includes('CAS'));
+ gates[0].resolve();await new Promise(setImmediate);assert(!f.calls.includes('head'));assert(!f.calls.includes('store-read'));
+ gates[1].resolve();const result=await pending;assert.equal(result.complete,true);assert.deepEqual(result.preferences.bookmarks,['2']);
+ assert.equal(f.calls.filter(x=>x==='head').length,1);assert.equal(f.calls.filter(x=>x==='class').length,1);
+ assert(f.calls.filter(x=>x==='block:4').length>=3,'initial anchor and both fresh publication fences remain');
+});
+for(const failing of [0,1])test(`refresh ${failing===0?'readiness':'sync'} failure drains held sibling before releasing the reader`,async()=>{
+ const f=await fixture([changed(4)],4),gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers();let starts=0,done=false;
+ const work=index=>async()=>{if(++starts===2)entered.resolve();await gates[index].promise;if(index===failing)throw Error('PRIVATE_SENTINEL');};
+ f.input.checkReadiness=work(0);f.input.pxe.sync=work(1);const reader=f.restart(),pending=invalid(reader.read()).then(()=>done=true);await entered.promise;
+ gates[failing].resolve();await new Promise(setImmediate);assert.equal(done,false);await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});
+ assert(!f.calls.includes('head'));assert(!f.calls.includes('store-read'));assert.equal(f.values.size,0);
+ gates[1-failing].resolve();await pending;assert.equal(f.values.size,0);
+});
+for(const change of ['abort','account'])test(`refresh ${change} during parallel preparation drains both reads without publishing`,async()=>{
+ const f=await fixture([changed(4)],4),gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),controller=new AbortController();let starts=0,done=false;
+ const work=index=>async()=>{if(++starts===2)entered.resolve();await gates[index].promise;};
+ f.input.checkReadiness=work(0);f.input.pxe.sync=work(1);const reader=f.restart(),pending=invalid(reader.read({signal:controller.signal})).then(()=>done=true);await entered.promise;
+ if(change==='abort')controller.abort();else f.state.guard=false;
+ gates[0].resolve();await new Promise(setImmediate);assert.equal(done,false);await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});
+ gates[1].resolve();await pending;assert(!f.calls.includes('head'));assert(!f.calls.includes('CAS'));assert.equal(f.values.size,0);
 });

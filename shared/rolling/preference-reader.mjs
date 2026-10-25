@@ -119,11 +119,18 @@ export function createRollingPreferenceReader(input){
    }catch{throw error('ROLLING_PREFERENCE_READER_INVALID');}
    active={signal,deadlineAt,headers:new Map()};
    try{
-    await guard();await phase('readiness',()=>checked(checkReadiness??(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled}))));
+    await guard();
+    // Public readiness and native synchronization are independent. Neither may
+    // release this owned read until its sibling settles, even on logout/failure.
+    const preparation=await Promise.allSettled([
+     ()=>phase('readiness',()=>checked(checkReadiness??(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled})))),
+     ()=>phase('sync',()=>checked(sync)),
+    ].map(read=>Promise.resolve().then(read)));
+    const preparationFailure=preparation.find(read=>read.status==='rejected');if(preparationFailure)throw preparationFailure.reason;
     if(!slot)slot=await checked(()=>createEncryptedJournalSlot({storage:{read:key=>checked(()=>storeRead(key)),compareAndSwap:(...args)=>checked(()=>storeCAS(...args))},walletSecret,walletSalt,scopeText,keyDomain:DOMAIN}));
     if(!decoder)decoder=await checked(()=>createPreferenceEventDecoder({sdk:decoderSdk,artifact}));
     const saved=await checked(()=>slot.read());const cache=saved.value===null?null:cacheRecord(saved.value);
-    await phase('sync',()=>checked(sync));const anchor=await phase('anchor',captureAnchor);
+    const anchor=await phase('anchor',captureAnchor);
     const reads=await Promise.allSettled([phase('head',captureHead),phase('class',()=>checkClass(anchor))]);
     const failure=reads.find(read=>read.status==='rejected');if(failure)throw failure.reason;const head=reads[0].value;
     active.headers.set(anchor.blockNumber,anchor.blockHash);

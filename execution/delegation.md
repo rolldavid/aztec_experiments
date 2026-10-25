@@ -162,3 +162,7 @@ Root owns live test transactions, source integration, one retained build, public
 Current follow-up: pending_feed_release reviews remaining moderation authority/read waves; pending_reply_ui reviews remaining UX and transaction completion work; proposed_feed_design diagnoses exact samejournal Bok lifecycle readiness and publication. Root alone performs live writes and integrates source-only reviewed patches.547 integrated withdrawal/cancellation checks pass; retained build frozen for the submitted Bok lifecycle.
 
 Current integration671/671: pending_feed_release independently approved paid-refund tail and fresh L1 deployment signer helper; pending_reply_ui approved moderation read overlap and continues aggregate funding progress callback. Proposed_feed_design diagnoses pre-sign deploy-portal provider failure without live mutations. Root owns exact live reply measurement, signer-reference update, lifecycle, publication.
+
+## Resumed all-flow performance integration
+
+Root integrates initial preference preparation overlap and owns core staging/live qualification. pending_reply_ui proposes independent readiness/sync overlap after inclusion; pending_feed_release independently reviews source and stage boundaries; proposed_feed_design prepares incremental publication from the already staged e0 source without dependency copies. Current8b source is pushed but not published. Native bind proof waiter is read-only; no resubmission.

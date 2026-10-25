@@ -3,7 +3,7 @@ import {measureRollingStage} from './performance.mjs';
 // sending fails; consumers cannot accidentally resubmit an ambiguous action.
 export async function executeRollingAction(application,action,{onPrepared=()=>{},postingRules,submit=id=>application.submitPrepared(id)}={}){
  if(action.type==='preference'||action.type==='read-marker'){
-  const head=await application.readPreferenceHead();
+  const head=await application.readPreferenceHead({prepareAction:action.type});
   if(typeof head?.revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(head.revision))throw Object.assign(Error('Account state unavailable'),{code:'ROLLING_INVALID_RESPONSE'});
   action.expectedRevision=head.revision;
  }

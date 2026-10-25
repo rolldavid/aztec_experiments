@@ -31,6 +31,17 @@ function balanceArguments(args,allowIncludeBok){
   return [{cursor:d.value,...(bok?{includeBok:bok.value}:{})}];
  }catch{throw Object.assign(Error('Invalid Rolling balance cursor'),{code:'ROLLING_BALANCE_CURSOR_INVALID'});}
 }
+// Only the immediate action flow requests preparation during its initial head
+// read. Capture a primitive before awaiting, and never forward it to the utility.
+function preferencePreparation(args){
+ try{
+  if(args.length===0)return undefined;
+  const [input]=args,d=input&&Object.getOwnPropertyDescriptor(input,'prepareAction');
+  if(args.length!==1||!input||Object.getPrototypeOf(input)!==Object.prototype||Reflect.ownKeys(input).length!==1||
+    !d||!Object.hasOwn(d,'value')||!['preference','read-marker'].includes(d.value))throw 0;
+  return d.value;
+ }catch{throw Object.assign(Error('Invalid Rolling action'),{code:'ROLLING_INVALID_ACTION'});}
+}
 const boardStateMethods=Object.freeze({like:'set_like',unlike:'set_like',preference:'set_preference','read-marker':'mark_thread_read',name:'register_name',bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator',screen:'screen',withdraw:'withdraw'});
 export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null,prepareContext,prepareContractState}){
  if(typeof synchronize!=='function'||typeof contextGuard!=='function'||prepareContext!==undefined&&typeof prepareContext!=='function'||prepareContractState!==undefined&&typeof prepareContractState!=='function')throw Error('Rolling synchronization unavailable');
@@ -38,8 +49,9 @@ export function createSynchronizedRollingApplication({application,synchronize,co
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
   return [name,async(...args)=>{
-   const captured=name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args,name==='readBalances'):args;
-   const stateMethod=name==='prepare'&&Object.hasOwn(boardStateMethods,captured[0]?.type)?boardStateMethods[captured[0].type]:undefined;
+   const preferenceAction=name==='readPreferenceHead'?preferencePreparation(args):undefined;
+   const captured=name==='readPreferenceHead'?[]:name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args,name==='readBalances'):args;
+   const stateMethod=preferenceAction?boardStateMethods[preferenceAction]:name==='prepare'&&Object.hasOwn(boardStateMethods,captured[0]?.type)?boardStateMethods[captured[0].type]:undefined;
    await contextGuard();
    const scope=operationScope();
    // Moderator identity is public storage; it needs no private-state sync.
@@ -48,10 +60,10 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     // failure may release the account lease while its sibling is still running.
     const ordinaryPost=Boolean(scope)&&name==='prepare'&&captured[1]?.immediate===true&&['post','reply','quote','repost'].includes(captured[0]?.type);
     const ordinaryPolicy=ordinaryPost&&(captured[0].subboard===undefined||/^(0|0x0{64})$/.test(captured[0].subboard));
-    const reads=[()=>synchronize({ordinaryPolicy,ordinaryPost})];if(scope&&prepareContext)reads.push(()=>prepareContext({predecessor:name==='prepare',
+    const reads=[()=>synchronize({ordinaryPolicy,ordinaryPost})];if(scope&&prepareContext)reads.push(()=>prepareContext({predecessor:name==='prepare'||Boolean(preferenceAction),
       ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['post','reply','quote','repost'].includes(captured[0]?.type)?{ordinaryPayment:true}:{}),
       ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['like','unlike'].includes(captured[0]?.type)?{likePayment:true}:{}),
-      ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['preference','read-marker'].includes(captured[0]?.type)?{preferencePayment:true}:{})}));
+      ...(Array.isArray(scope.preparationReads)&&(preferenceAction||name==='prepare'&&captured[1]?.immediate===true&&['preference','read-marker'].includes(captured[0]?.type))?{preferencePayment:true}:{})}));
     const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));
     const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
     if(scope&&operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
