@@ -2816,3 +2816,27 @@ test('pending exit remains visible when a newer independent action requires reco
  const next=await f.app.prepare({type:'name',first:'New',last:'Action'},{immediate:true});
  const status=await f.app.readAccountStatus();assert.equal(status.status,'recovering');assert.equal(status.intent.intentId,next.intentId);assert.equal(status.pendingWithdrawal.txHash,exit.txHash);assert.equal(f.state.sends,1);
 });
+
+
+test('funding workflow inspection omits unrelated private balance/deposit utilities but account readiness retains them',async()=>{
+ const f=fixture();let payments=0;const payment=f.options.sdk.preparePrivateFeePayment;
+ f.options.sdk.preparePrivateFeePayment=(...args)=>{payments++;return payment(...args);};
+ assert.deepEqual(await f.app.readFundingState(),{status:'ready'});assert.equal(payments,0);assert.equal(f.state.privateReads.length,0);
+ assert.equal((await f.app.readAccountStatus()).status,'fee-ready');assert.equal(payments,1);assert(f.state.privateReads.some(r=>r.name==='get_deposit_ids'));
+ assert.deepEqual(await createRollingApplication({}).readFundingState(),{status:'locked'});
+});
+test('funding workflow inspection preserves current saved intent and freshly rejects lost terminal authority',async()=>{
+ const f=fixture(),prepared=await f.app.prepare({type:'like',post:'5'});
+ let result=await f.restart().readFundingState();assert.equal(result.status,'recovering');assert.equal(result.intent.intentId,prepared.intentId);
+ await f.app.submitPrepared(prepared.intentId);f.state.privateReads.length=0;
+ assert.deepEqual(await f.restart().readFundingState(),{status:'ready'});assert.equal(f.state.privateReads.length,0);
+ f.state.outcome=null;result=await f.restart().readFundingState();assert.equal(result.status,'recovering');assert.equal(result.intent.status,'unknown');assert.equal(result.intent.intentId,prepared.intentId);
+});
+test('funding workflow holds its read lease and rejects an owner replacement while encrypted storage is pending',async()=>{
+ const f=fixture(),entered=Promise.withResolvers(),held=Promise.withResolvers(),read=f.options.privateStore.read;
+ f.options.privateStore.read=async key=>{entered.resolve();await held.promise;return read(key);};
+ const pending=f.app.readFundingState();await entered.promise;
+ await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);held.resolve();
+ await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.state.sends,0);assert.equal(f.state.privateReads.length,0);
+});

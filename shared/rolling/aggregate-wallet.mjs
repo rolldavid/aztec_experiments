@@ -243,7 +243,9 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const tx=await read(()=>sdk.encodeAggregateFundingTransaction(quote,consent));
    const expected={kind:'aggregate-funding',routerCodeHash:s.routerCodeHash,collateralPortal:s.collateralPortal,feePortal:s.feePortal,bokPortal:s.bokPortal,privateFpc:s.privateFpc,planHash:tx.planHash};
    const gasRequest={from:tx.from,to:tx.to,data:tx.data,value:BigInt(tx.value),nonce,chainId:BigInt(tx.chainId)};
-   const gas=await read(()=>provider.estimateGas(gasRequest)),fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
+   const estimates=await Promise.allSettled([()=>read(()=>provider.estimateGas(gasRequest)),()=>read(()=>provider.getFeeData())].map(task=>Promise.resolve().then(task)));
+   const failed=estimates.find(result=>result.status==='rejected');if(failed)throw failed.reason;
+   const [gas,fees]=estimates.map(result=>result.value),price=fees.maxFeePerGas??fees.gasPrice;
    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(quote.breakdown.gasBudgetWei),'GAS_CHANGED');await read(wallet.guard);
    const j=await sdk.createEthereumJournal({storage,walletSecret,walletSalt,scope:{account:owner,...n,board,portal:s.router,depositor:wallet.address},provider,
     acknowledgeTx:current.saved.value.previousTxHash,signer:wallet.signer,prepareRequest:async request=>{
@@ -392,11 +394,12 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
   if(saved.claim)next=await read('reconcile',()=>application.reconcile(saved.claim.intentId));
   else{
    try{
-    const current=await read('account-status',()=>application.readAccountStatus());
+    const current=await read('account-status',()=>application.readFundingState());
+    check(['ready','recovering'].includes(current?.status),'RECOVERY_REQUIRED');
     if(current.status==='recovering'){
      const action=current.intent?.action;
      const same=(a,b)=>a&&b&&Object.keys(a).sort().join()===Object.keys(b).sort().join()&&Object.keys(b).every(key=>a[key]===b[key]);
-     check(action?.type===claimAction&&(claimAction==='claim-deposit'?['receipt','feeReceipt','bokReceipt']:['receipt']).every(key=>same(action[key],receipts[key])),'RECOVERY_REQUIRED');
+     check(action?.type===claimAction&&(claimAction==='claim-deposit'?['receipt','feeReceipt','bokReceipt']:['receipt']).every(key=>key==='bokReceipt'&&action[key]===undefined&&receipts[key]===undefined||same(action[key],receipts[key])),'RECOVERY_REQUIRED');
      next=current.intent;
     }else{
      try{next=await read('prepare',()=>application.prepare({type:claimAction,...receipts},{immediate:true}));}

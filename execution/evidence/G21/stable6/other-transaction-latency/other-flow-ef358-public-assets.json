@@ -1,0 +1,14 @@
+{
+  "runtime": {
+    "sha256": "c08d46d4de34f0ee82157f708aaad0d3fc0e800b749c8e52befa93004818b6fe",
+    "bytes": 382230
+  },
+  "navigation": {
+    "sha256": "ca067cad9c47adf45559576205b653f4495386634e7b732d259aa5156995d5ca",
+    "bytes": 3109
+  },
+  "reader": {
+    "sha256": "ecd73f859b619cab0b595d28256a0f30d79988181e3f227c106472503ddfffd5",
+    "bytes": 36264
+  }
+}

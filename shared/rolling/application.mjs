@@ -388,6 +388,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(historical&&!terminalHistory(next))await checkBokRecord(next);
     await retainExit(next);await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:next.bokReleaseSource&&next.status==='reverted'?{status:'bok-release-reverted'}:{})};
   }
+  // Inspect only the authenticated current workflow. Funding needs this fence
+  // before a claim, not unrelated deposit and private fee balance utilities.
+  async function fundingWorkflowState(){
+    await guard();const saved=await (await slot()).read();await localGuard();
+    if(saved.value&&saved.value.status!=='cancelled'){
+      if(!terminalHistory(saved.value))await checkBokRecord(saved.value);
+      if(!usableStatus(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
+      const canonical=await outcome(saved,{history:true});await localGuard();
+      if(!usableStatus(canonical.status))return {status:'recovering',intent:canonical};
+    }
+    return {status:'ready'};
+  }
   const preferenceAction=record=>['preference','read-marker'].includes(record.action.type);
   const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
   const hashText=value=>{const text=value?.toString();check(typeof text==='string'&&/^0x[0-9a-f]{64}$/.test(text),'ROLLING_INVALID_RESPONSE');return text;};
@@ -1009,14 +1021,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     });},
     async readModeratorStatus(){return exclusive(moderatorStatus);},
     async readBokStatus(){return exclusive(async()=>{await ensureBok();if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
+    async readFundingState(){if(!session)return {status:'locked'};return exclusive(fundingWorkflowState);},
     async readAccountStatus(){
       if(!session)return {status:'locked'};
-      return exclusive(async()=>{await guard();const saved=await (await slot()).read();
-        if(saved.value&&saved.value.status!=='cancelled'){
-          if(!terminalHistory(saved.value))await checkBokRecord(saved.value);
-          if(!usableStatus(saved.value.status))return {status:'recovering',intent:summary(saved.value),pendingWithdrawal:await pendingExitSummary()};
-          const canonical=await outcome(saved,{history:true});if(!usableStatus(canonical.status))return {status:'recovering',intent:canonical,pendingWithdrawal:await pendingExitSummary()};
-        }
+      return exclusive(async()=>{const workflow=await fundingWorkflowState();if(workflow.status==='recovering')return {...workflow,pendingWithdrawal:await pendingExitSummary()};
         const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');
         const pendingWithdrawal=await pendingExitSummary();
         let fee;try{fee=await payment();}catch(error){if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};throw error;}

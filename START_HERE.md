@@ -18,7 +18,7 @@ Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build`
 
 ## Other transaction performance — active
 
-Owner target: at least50% end-to-end reduction across all other flows. UIeecd4f60 adds automatic private-choice hydration and independent pending withdrawals, alongside parallel portal bindings, shorter Bok completion, honest Ethereum progress, overlapped claim checks, proposed bridge readiness, preference fees, included Bok actions and sparse preference reads and the08b4 exact-anchor accounting backend are published. Bok94d1a719 is published. Like, bookmark, name, bio and Bok-funding baselines are captured. The first like after-test returned in12.199s versus56.933s baseline; included display improved only modestly. The repaired bookmark completed in22.773s versus58.264s baseline; unbookmark20.037s. Exact visible/usable endpoints and broader qualification remain in the performance record. Broader matched coverage and the overall50% acceptance remain outstanding. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
+Owner target: at least50% end-to-end reduction across all other flows. UIef358ebb adds visible exact-transaction completion, single-action Ethereum withdrawal, valid Bok balance selection and automatic private-choice hydration and independent pending withdrawals, alongside parallel portal bindings, shorter Bok completion, honest Ethereum progress, overlapped claim checks, proposed bridge readiness, preference fees, included Bok actions and sparse preference reads and the08b4 exact-anchor accounting backend are published. Bok94d1a719 is published. Like, bookmark, name, bio and Bok-funding baselines are captured. The first like after-test returned in12.199s versus56.933s baseline; included display improved only modestly. The repaired bookmark completed in22.773s versus58.264s baseline; unbookmark20.037s. Exact visible/usable endpoints and broader qualification remain in the performance record. Broader matched coverage and the overall50% acceptance remain outstanding. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
 
 ## Current deployment
 
@@ -29,10 +29,10 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/eecd4f606b82a18e08e87096f9bd31e4536f7832` |
+| Browser UI | `/opt/rolling-ui/releases/ef358ebbbd20ea1fa362b5cc1acfba53f1e28280` |
 | Browser SDK SHA256 | `d244ae0de0ca1b25487d7b553905307c5a2f0c0aa62ec5ad8497e682fe7e0b80` |
 | Running app | `/opt/rolling-app/releases/accounting-08b4ce3364d4` |
-| Next-start app | `/opt/rolling-app/releases/ui-eecd4f606b82` |
+| Next-start app | `/opt/rolling-app/releases/ui-ef358ebbbd20` |
 | Prover | `/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad` |
 | Bok | `/opt/rolling-bok/releases/94d1a7198f7bd2094be66754bc3aeb8a42f657dd` |
 

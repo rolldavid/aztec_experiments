@@ -439,7 +439,7 @@ function claimProgressFixture(failureStep,original){
  const rows=[],calls=[],run=(name,value)=>async()=>{calls.push(name);if(name===failureStep)throw original;return value;};
  const saved={paymentSaved:true,privateFeeCap:'10',claim:failureStep==='reconcile'?{intentId:'PRIVATE_ID',attempted:true}:null};
  const prepared={intentId:'PRIVATE_ID',status:'prepared',maximumFee:'10'},confirmed={...prepared,status:'confirmed'};
- return {rows,calls,input:{onProgress:row=>rows.push(row),funding:{inspect:run('inspect',saved),recover:run('recover',{receipt:{private:'SECRET_RECEIPT'}}),checkpointClaim:run('checkpoint'),recordClaimCompletion:run('record')},application:{readAccountStatus:run('account-status',{status:'fee-ready'}),prepare:run('prepare',prepared),submitPrepared:run('submit',confirmed),reconcile:run('reconcile',confirmed)}}};
+ return {rows,calls,input:{onProgress:row=>rows.push(row),funding:{inspect:run('inspect',saved),recover:run('recover',{receipt:{private:'SECRET_RECEIPT'}}),checkpointClaim:run('checkpoint'),recordClaimCompletion:run('record')},application:{readFundingState:run('account-status',{status:'ready'}),prepare:run('prepare',prepared),submitPrepared:run('submit',confirmed),reconcile:run('reconcile',confirmed)}}};
 }
 for(const step of ['inspect','recover','account-status','prepare','checkpoint','submit','reconcile'])test('claim progress reports exact failing '+step+' without exposing original exception or values',async()=>{
  const original=Object.assign(Error('PRIVATE_SENTINEL'),{code:'ROLLING_FUNDING_MISMATCH'}),f=claimProgressFixture(step,original);
@@ -844,4 +844,61 @@ for(const kind of ['private-fee','bok'])test(`direct ${kind} forwards durable pa
  f.options.provider.getTransactionReceipt=async hash=>{entered();await held;return receipt(hash);};
  let done=false;const pending=cap.confirm({onSubmitted:()=>{observed++;assert.equal(f.state.sends,1);}}).then(value=>{done=true;return value;});
  await started;assert.equal(observed,1);assert.equal(done,false);release();const result=await pending;assert.equal(result.receipt.amount,'300');assert.equal(observed,1);assert.equal(f.state.sends,1);
+});
+
+
+for(const mode of ['success','gas-failure','fee-failure','changed-account'])test('aggregate ETH confirm drains independent gas and fee reads: '+mode,{timeout:5000},async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);
+ const gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),error=Error('read failed');let started=0,settled=false,feeCalls=0;
+ const run=async i=>{if(++started===2)entered.resolve();await gates[i].promise;return i===0?100n:{maxFeePerGas:2n,maxPriorityFeePerGas:1n};};
+ f.options.provider.estimateGas=()=>{const pending=run(0);if(mode==='gas-failure'){gates[0].resolve();throw error;}return pending;};
+ f.options.provider.getFeeData=()=>{feeCalls++;if(feeCalls>1)return {maxFeePerGas:2n,maxPriorityFeePerGas:1n};const pending=run(1);if(mode==='fee-failure'){gates[1].resolve();throw error;}return pending;};
+ const result=app.confirm().finally(()=>settled=true),observed=mode==='success'?result:assert.rejects(result,mode==='changed-account'?/Context changed/:e=>e===error);
+ await entered.promise;assert.equal(started,2);assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);
+ if(mode==='changed-account')f.state.invalid=true;
+ gates[mode==='fee-failure'?1:0].resolve();await new Promise(setImmediate);assert.equal(settled,false,'sibling read still owns the flow');
+ gates[0].resolve();gates[1].resolve();await observed;assert.equal(f.state.sends,mode==='success'?1:0);
+ if(mode==='success')assert(feeCalls>=2,'fresh final fee validation remains');
+});
+
+
+for(const mode of ['wrong-claim','mismatched-receipt','locked'])test('claim workflow inspection cannot bypass an unrelated or unusable saved workflow: '+mode,async()=>{
+ const f=claimProgressFixture();f.input.application.readAccountStatus=()=>assert.fail('must not scan unrelated balances');
+ f.input.application.readFundingState=async()=>mode==='locked'?{status:'locked'}:{status:'recovering',intent:{intentId:'other',status:'prepared',action:{type:mode==='wrong-claim'?'claim-bok':'claim-deposit',receipt:{private:'different'}}}};
+ await assert.rejects(advanceAggregateClaim(f.input),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
+ assert(!f.calls.includes('prepare'));assert(!f.calls.includes('submit'));
+});
+test('claim workflow inspection failure drains before continuation and never scans balances',async()=>{
+ const f=claimProgressFixture(),entered=Promise.withResolvers(),held=Promise.withResolvers(),error=Error('context changed');let settled=false;
+ f.input.application.readAccountStatus=()=>assert.fail('must not scan unrelated balances');
+ f.input.application.readFundingState=async()=>{entered.resolve();await held.promise;throw error;};
+ const result=advanceAggregateClaim(f.input).finally(()=>settled=true),observed=assert.rejects(result,e=>e===error);
+ await entered.promise;assert.equal(settled,false);assert(!f.calls.includes('prepare'));held.resolve();await observed;assert(!f.calls.includes('submit'));
+});
+
+test('exact unknown claim remains pending without preparing or sending another claim',async()=>{
+ const f=claimProgressFixture(),intent={intentId:'saved',status:'unknown',action:{type:'claim-bok',receipt:{private:'SECRET_RECEIPT'}}};
+ f.input.funding.inspect=async()=>({paymentSaved:true,privateFeeCap:'10',claim:null,claimAction:'claim-bok'});
+ f.input.application.readFundingState=async()=>({status:'recovering',intent});
+ assert.deepEqual(await advanceAggregateClaim(f.input),{state:'pending',intent});assert(!f.calls.includes('prepare'));assert(!f.calls.includes('submit'));
+});
+
+
+for(const mode of ['no-bok','unexpected-bok','missing-bok','changed-bok','missing-fee'])test('current aggregate claim relinks optional Bok receipt exactly: '+mode,async()=>{
+ const f=fixture(),funding=await f.open(),hasBok=['missing-bok','changed-bok'].includes(mode);
+ await funding.prepare({...f.allocation,...(hasBok?{}:{bokAmount:'0',bokPoolFee:0})});const receipts=await funding.confirm();
+ const workflow=durableClaimApplication(f,funding),first=workflow.open(),prepared=await first.prepare({type:'claim-deposit',...receipts});
+ assert.equal((await funding.inspect()).claim,null);
+ const app=workflow.open(),application=mode==='no-bok'?app:{...app,readFundingState:async()=>{
+  const value=await app.readFundingState(),action=structuredClone(value.intent.action);
+  if(mode==='unexpected-bok')action.bokReceipt={...receipts.feeReceipt};
+  if(mode==='missing-bok')delete action.bokReceipt;
+  if(mode==='changed-bok')action.bokReceipt={...action.bokReceipt,amount:'1'};
+  if(mode==='missing-fee')delete action.feeReceipt;
+  return {...value,intent:{...value.intent,action}};
+ }};
+ if(mode==='no-bok'){
+  const result=await advanceAggregateClaim({application,funding:await f.open()});assert.equal(result.state,'complete');assert.equal(result.intent.intentId,prepared.intentId);assert.equal(workflow.state.sends,1);
+ }else{await assert.rejects(advanceAggregateClaim({application,funding:await f.open()}),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});assert.equal(workflow.state.sends,0);}
+ assert.equal(f.state.sends,1);
 });
