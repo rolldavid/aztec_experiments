@@ -827,12 +827,22 @@ test('parallel quote retains final canonical block and wallet guards after indep
 
 for(const kind of ['aggregate','private-fee','bok'])test(`included ${kind} claim retains authenticated custody and permits a successor payment without checkpoint`,async()=>{
  const f=kind==='aggregate'?fixture():topupFixture(kind);f.state.allowance=1000n;let workflow,canonical=true,verified=0;
+ const slots=[],createSlot=f.options.sdk.createEncryptedJournalSlot;f.options.sdk.createEncryptedJournalSlot=async options=>{const slot=await createSlot(options);slots.push(slot);return slot;};
  f.options.reconcileClaim=id=>workflow.open().reconcile(id);
  f.options.verifyClaim=async txHash=>{verified++;return verifyRollingTopupClaim({sdk:{TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn(),requireSuccessfulReceipt},node:{getTxReceipt:async()=>({txHash:h(70),status:'proposed',executionResult:'success',blockNumber:3,blockHash:h(60)}),getBlock:async()=>({hash:canonical?h(60):h(61)})},txHash,contextGuard:f.options.contextGuard,confirmationTier:'proposed'});};
  const funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();workflow=durableClaimApplication(f,funding,{proposed:true});
  const result=await advanceAggregateClaim({application:workflow.open(),funding,waits:{claim:async()=>assert.fail('included claim must not wait for checkpoint')}});
  assert.equal(result.state,'included');assert.equal(result.intent.status,'included');assert.equal(workflow.state.sends,1);assert.equal(f.state.sends,1);assert(verified>0);
  const original=await funding.loadAggregate(receipts.receipt.txHash);
+ // The completion field must remain stable when the confirmation tier changes.
+ // Otherwise an already completed payment is mistaken for a pending workflow.
+ const savedRecords=await Promise.all(slots.map(async slot=>({slot,saved:await slot.read()})));
+ const completed=savedRecords.find(({saved})=>saved.value?.confirmedClaim);
+ assert(completed,'completion is durable under the established field name');
+ assert.equal(completed.saved.value.claimCompletion,undefined);
+ const value=structuredClone(completed.saved.value);delete value.confirmedClaim.status;
+ await completed.slot.write(completed.saved,value);
+ if(kind!=='aggregate')assert.equal((await funding.inspect()).completed,true);
  f.options.reconcileClaim=async()=>{throw Error('a later ordinary action has replaced the single workflow');};
  const reopened=await f.open();await reopened.prepare(f.allocation);assert.deepEqual(await reopened.loadAggregate(receipts.receipt.txHash),original);assert.equal(f.state.sends,1);
  canonical=false;await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.state.sends,1);

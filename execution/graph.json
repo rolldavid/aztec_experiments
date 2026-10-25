@@ -9845,7 +9845,7 @@
     "request": "Owner25October: apply all proven posting optimizations across ALL other application transaction flows; new goal at least50% end-to-end reduction for every flow against currentpublished74c baseline. Cover Ethereum/Aztec user and operator paths, preservevalidation and genuine usable completion.",
     "status": "active",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
-    "checkpoint": "25 October:93954017 source staged on both hosts with SDK/wallet verified; Bok escrow, portal activation and plugin registration canonical. Aggregate payment router mined successfully; read-only lifecycle check blocked in native synchronous hashing IPC before journal access. Root integrating reviewed terminal-funding/exit read reuse;156 moderation checks pass and4088ad37 pushed separately. All-flow50% acceptance open.",
+    "checkpoint": "25 October: root live funding regression repair: d4cfeee0 renamed persisted confirmedClaim, ignoring completed topups. Browser reproduced ROLLING_INTENT_NOT_FOUND with confirmedClaim present. Remove gratuitous persisted-field rename, verify successive payments, publish, then resume measured 50% other-flow latency goal. Root sole source/live writer; pending_reply_ui independent review.",
     "next_action": "Fix exact operator native hashing initialization; complete credit-router and config staging, native proof qualification and coherent9395 publication. Integrate subsequent reviewed read-reuse changes separately; measure actual browser flows and clean owned transfer data."
   },
   "completed_operating_requests": [
