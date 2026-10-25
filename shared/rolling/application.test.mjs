@@ -3086,3 +3086,41 @@ test('read-marker transition retains the exact native checked block hash',async(
  assert.equal(result.status,'included');assert.equal(result.preferenceTransition.event.kind,6);assert.equal(result.preferenceTransition.event.read_block,1);
  const block=await f.options.accountSession.node.getBlockData(1);assert.equal(result.preferenceTransition.event.read_hash,String(BigInt(block.blockHash.toString())));
 });
+
+for(const usdc of [false,true])for(const includeBok of [false,true])test(`claim verification wave ${usdc?'USDC':'ETH'} signup ${includeBok?'with':'without'} Bok drains before writing and reuses payment`,async()=>{
+ const f=aggregateClaimFixture(usdc),scope={synchronized:true},gate=Promise.withResolvers(),started=Promise.withResolvers(),kinds=[];
+ f.options.accountSession.operationScope=()=>scope;if(!includeBok)delete f.action.bokReceipt;
+ const verify=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=async input=>{kinds.push(input.kind);if(kinds.length===(includeBok?3:2))started.resolve();await gate.promise;return verify(input);};
+ const app=f.restart(),work=app.prepare(f.action,{immediate:true});await started.promise;
+ assert.deepEqual(new Set(kinds),new Set(includeBok?['collateral','bok','private-fee']:['collateral','private-fee']));
+ assert.equal(f.values.size,0);assert.equal(f.state.payments.length,0);assert.equal(f.state.sends,0);
+ gate.resolve();const prepared=await work;assert.equal(f.state.payments.length,1);assert.equal(f.state.estimates,0);
+ assert.equal((await app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(f.state.payments.length,1);assert.equal(f.state.sends,1);
+ assert.equal(f.state.claimReads.length,includeBok?6:4,'each receipt is independently revalidated at submission');
+ const payload=f.state.sent.payload;if(includeBok)assert.deepEqual(payload.interactions.map(call=>call.name),['claim_deposit','claim']);else assert.equal(payload.name,'claim_deposit');
+});
+for(const kind of ['collateral','bok','private-fee'])for(const sync of [false,true])test(`claim verification wave drains other receipts on ${kind} ${sync?'sync':'async'} failure`,async()=>{
+ const f=aggregateClaimFixture(),scope={synchronized:true},gate=Promise.withResolvers(),started=Promise.withResolvers();let calls=0,settled=false;
+ f.options.accountSession.operationScope=()=>scope;const verify=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=input=>{if(++calls===3)started.resolve();if(input.kind===kind){if(sync)throw Error(kind);return Promise.reject(Error(kind));}return gate.promise.then(()=>verify(input));};
+ const app=f.restart(),work=app.prepare(f.action,{immediate:true}).finally(()=>settled=true),rejected=assert.rejects(work,new RegExp(kind));
+ await started.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert.equal(f.values.size,0);
+ await assert.rejects(app.prepare(f.action,{immediate:true}),{code:'ROLLING_BUSY'});
+ gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+for(const change of ['scope','wallet','pxe','cached-node','owner'])test(`claim verification wave rejects ${change} replacement before saving intent`,async()=>{
+ const f=aggregateClaimFixture(),gate=Promise.withResolvers(),started=Promise.withResolvers();let scope={synchronized:true},calls=0;
+ f.options.accountSession.operationScope=()=>scope;const verify=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=async input=>{if(++calls===3)started.resolve();await gate.promise;return verify(input);};
+ const work=f.restart().prepare(f.action,{immediate:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await started.promise;
+ const session=f.options.accountSession;
+ if(change==='scope')scope={synchronized:true};if(change==='wallet')session.wallet={...session.wallet};if(change==='pxe')session.wallet.pxe={...session.wallet.pxe};if(change==='cached-node')session.wallet.pxe.node={...session.wallet.pxe.node};if(change==='owner')session.owner=new AztecAddress(new Fr(999));
+ gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('claim verification wave preserves original error priority and detached input',async()=>{
+ const f=aggregateClaimFixture(),scope={synchronized:true},gate=Promise.withResolvers(),started=Promise.withResolvers();let calls=0;
+ f.options.accountSession.operationScope=()=>scope;const action=structuredClone(f.action);
+ f.options.sdk.prepareFundingClaim=async input=>{if(++calls===3)started.resolve();await gate.promise;assert.equal(input.receipt.amount,input.kind==='collateral'?'100':input.kind==='bok'?'300':'200');throw Error(input.kind);};
+ const work=f.restart().prepare(action,{immediate:true}),rejected=assert.rejects(work,/collateral/);await started.promise;action.receipt.amount='999';action.feeReceipt.amount='999';action.bokReceipt.amount='999';gate.resolve();await rejected;assert.equal(f.values.size,0);
+});

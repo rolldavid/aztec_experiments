@@ -1178,10 +1178,27 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const paymentScope=immediate&&(ordinaryPreparation||genericPreparation||action.type==='bok')
         ?session.operationScope?.():null;
       const paymentOwner=paymentScope&&{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
-      let args,preparedPayment,preparedNameAvailability;
+      let args,preparedPayment,preparedNameAvailability,preparedFundingBok;
+      const claimScope=immediate&&['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)?session.operationScope?.():null;
+      const claimOwner=claimScope?.synchronized===true?{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,cachedNode:session.wallet.pxe.node}:null;
+      const claimFields={};
+      const checkClaimOwner=()=>check(session.operationScope()===claimScope&&session.wallet===claimOwner.wallet&&
+        session.wallet.pxe===claimOwner.pxe&&session.node===claimOwner.node&&session.wallet.pxe.node===claimOwner.cachedNode,'ROLLING_CONTEXT_CHANGED');
       const checkPaymentOwner=()=>check(session.operationScope()===paymentScope&&session.wallet===paymentOwner.wallet&&
         session.wallet.pxe===paymentOwner.pxe&&session.node===paymentOwner.node,'ROLLING_CONTEXT_CHANGED');
-      if(paymentScope&&action.type!=='withdraw-bok'){
+      if(claimOwner){
+        // Each receipt is independently bound to this operation's native anchor.
+        // Drain every validation before saving any claim or unsigned intent.
+        checkClaimOwner();
+        const values=await Promise.allSettled([
+          ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce)),
+          ()=>action.type==='claim-deposit'&&action.bokReceipt!==undefined?bokFundingClaim(action):undefined,
+          ()=>action.type==='claim-private-fee'||action.feeReceipt!==undefined?payment(action,claimFields):undefined,
+        ].map(read=>Promise.resolve().then(read)));
+        const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+        await guard();checkClaimOwner();
+        args=plain(values[0].value);preparedFundingBok=values[1].value;preparedPayment=values[2].value;
+      }else if(paymentScope&&action.type!=='withdraw-bok'){
         // Capture this operation's local anchor before either private utility
         // enters the native PXE queue. The public policy read can then overlap
         // screening and fee-note work; its final canonical/local fences remain.
@@ -1203,6 +1220,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       // A mismatch must fail before creating an unsigned intent or estimating.
       if(postingRules)check(String(args[2].expected_main_policy_version)===postingRules.parentVersion&&String(args[2].expected_local_policy_version)===postingRules.localVersion,'ROLLING_POSTING_RULES_CHANGED');
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(immediate&&['like','unlike'].includes(action.type)?{feeProfile:'like-v1'}:immediate&&['preference','read-marker'].includes(action.type)?{feeProfile:'preference-v1'}:{}),...(moderation?{moderation:moderation.review}:{})};
+      if(claimFields.fundingFee)record.fundingFee=claimFields.fundingFee;
       if(action.type==='name')record.nameAvailability=preparedNameAvailability??await nameAvailability(action);
       if(['withdraw','withdraw-bok','cancel-deposit'].includes(action.type)){const pending=await pendingExit();check(!pending.value||pending.value.paymentStatus==='refunded','ROLLING_WITHDRAWAL_PENDING');if(pending.value){check(verifyWithdrawal&&await verifyWithdrawal(pending.value),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');await localGuard();check(await (await pendingExitSlot()).isCurrent(pending.encoded),'ROLLING_CONTEXT_CHANGED');}}
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=withdrawalObservation&&same(anchor,withdrawalObservation.anchor)?clone(withdrawalObservation.info):await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
@@ -1223,7 +1241,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         check(available>=uint128(action.amount),'ROLLING_BOK_CREDIT_INSUFFICIENT');check(scope.recipient===bok.address,'ROLLING_CONTEXT_CHANGED');
         record.withdrawal={kind:'bok',amount:action.amount,depositor:action.recipient,nonce,eligible:true,bokScope:clone(scope)};await checkBalanceAnchor(anchor);
       }
-      if(action.type==='claim-deposit'&&action.bokReceipt!==undefined)record.fundingBok=await bokFundingClaim(action);
+      if(action.type==='claim-deposit'&&action.bokReceipt!==undefined)record.fundingBok=preparedFundingBok??await bokFundingClaim(action);
       if(action.type==='claim-bok')record.fundingBok={scope:clone(bok),args:clone(args)};
       // Expiry selection is private and owned; the contract simulation, not the
       // public accounting snapshot or browser clock, decides deadline eligibility.
@@ -1245,7 +1263,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(immediate){
         // Claim validation retains its exact bridge fee payload even when the
         // separate review simulation is omitted. Submission rechecks it.
-        if(action.type==='claim-private-fee'||action.feeReceipt!==undefined)preparedPayment=await payment(action,record);
+        if(!claimOwner&&(action.type==='claim-private-fee'||action.feeReceipt!==undefined))preparedPayment=await payment(action,record);
         record.maximumFee=(ordinaryPost(record)?sdk.ordinaryPostFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{ordinaryProof:true}),board:ordinaryPost(record)}).maximumFee:qualifiedLike(record)?sdk.likeFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{likeProof:true}),board:qualifiedLike(record)}).maximumFee:qualifiedPreference(record)?sdk.preferenceFeeBudget({wallet:session.wallet,prepared:preparedPayment??await payment(action,record,{preferenceProof:true}),board:qualifiedPreference(record)}).maximumFee:sdk.normalizePrivateFeeGasSettings(fixed.gas).maximumFee).toString();
       }
       else {progress('estimating');const estimated=await sdk.estimatePrivateFeeTransaction({wallet:session.wallet,node:session.node,interaction:selected.call,
@@ -1255,6 +1273,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         check(session.operationScope()===observed.operation&&observed.operation.synchronized===true&&session.wallet===observed.wallet&&session.wallet.pxe===observed.pxe&&session.node===observed.node&&session.wallet.pxe.node===observed.cachedNode&&same(currentAnchor,observed.anchor),'ROLLING_CONTEXT_CHANGED');
       }
       if(paymentScope&&['withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type))checkPaymentOwner();
+      if(claimOwner)checkClaimOwner();
       const saved=await store.write(prior,record);
       // No persistent cache: only the unchanged journal record in the same held
       // operation may use this result. Separate submissions prepare afresh.

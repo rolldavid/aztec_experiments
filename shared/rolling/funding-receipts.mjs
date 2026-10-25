@@ -178,7 +178,8 @@ export async function prepareFundingClaim(input) {
       requireThat(block && equal(block.blockHash,a.hash) && block.header?.globalVariables?.blockNumber===a.number && equal(block.header?.state?.l1ToL2MessageTree?.root,a.root),'REORG');
     };
     if(reusable){
-      await initialL1();
+      // No asynchronous work separates two identical L1 checks here. Keep the
+      // final canonical wave; exact cached effects/membership need no earlier fence.
       if(kind==='private-fee')requireThat(equal(info.l1ContractAddresses?.feeJuicePortalAddress,s.portal)&&equal(info.l1ContractAddresses?.feeJuiceAddress,s.token));
       // Membership and Ethereum effects cannot change at these exact block hashes.
       // The receipt, canonical L1/L2 blocks and current FPC publication still can.

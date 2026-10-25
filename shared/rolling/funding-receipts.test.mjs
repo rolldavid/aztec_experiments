@@ -413,7 +413,7 @@ for(const kind of ['collateral','collateral-cancel','private-fee','bok'])test(`s
  const original=await prepareFundingClaim(f.input);f.state.reads=[];
  assert.equal(await prepareFundingClaim(f.input),original);assert.equal(transactions,1);assert.equal(receipts,2);
  assert.equal(f.state.reads.filter(x=>x==='witness').length,0);assert.equal(f.state.reads.filter(Array.isArray).length,0);
- assert.equal(f.state.reads.filter(x=>x==='l1').length,2);assert.equal(f.state.reads.filter(x=>x==='l2').length,1);
+ assert.equal(f.state.reads.filter(x=>x==='l1').length,1);assert.equal(f.state.reads.filter(x=>x==='l2').length,1);
  f.input.operationScope={};f.state.reads=[];await prepareFundingClaim(f.input);assert.equal(transactions,2);assert.equal(f.state.reads.filter(x=>x==='witness').length,1);
 });
 for(const mode of ['l1-fork','l2-fork','root','receipt-block','receipt-revert','missing','guard'])test(`same operation cannot reuse a claim after ${mode}`,async()=>{
@@ -436,7 +436,7 @@ test('same operation changed secrets or anchor cannot reuse a previous successfu
 test('claim reuse drains a held native anchor read when a concurrent canonical fence rejects',async()=>{
  const f=await fixture();f.input.operationScope={};let armed=false,calls=0,release,entered;
  const hold=new Promise(r=>release=r),started=new Promise(r=>entered=r),block=f.input.ethProvider.getBlock,read=f.backend.getBlockData;
- f.input.ethProvider.getBlock=async(...args)=>{if(armed&&++calls===2){await started;throw Error('canonical read unavailable');}return block(...args);};
+ f.input.ethProvider.getBlock=async(...args)=>{if(armed&&++calls===1){await started;throw Error('canonical read unavailable');}return block(...args);};
  f.backend.getBlockData=async(...args)=>{if(armed){entered();await hold;}return read(...args);};
  await prepareFundingClaim(f.input);armed=true;let done=false;
  const next=prepareFundingClaim(f.input).finally(()=>{done=true;}),rejection=assert.rejects(next,{code:'ROLLING_FUNDING_UNKNOWN'});
@@ -526,4 +526,13 @@ test('claim instrumentation capability is captured before awaits without reading
  const g=await fixture(),network=g.input.ethProvider.getNetwork,seen=[];
  g.input.measure=async(stage,operation)=>{seen.push(stage);return operation();};g.input.ethProvider.getNetwork=()=>{g.input.measure=()=>assert.fail('replaced measurement');return network();};
  assert.equal((await prepareFundingClaim(g.input)).status,'claim-ready');assert(seen.includes('action.claim-final-canonical'));
+});
+
+for(const side of ['l1','l2','class'])test(`reused fee claim single final wave starts all fences and drains ${side} failure`,async()=>{
+ const f=await fixture('private-fee'),held=Promise.withResolvers(),started=Promise.withResolvers();let armed=false,calls=0,settled=false;
+ f.input.operationScope={};const block=f.input.ethProvider.getBlock,l2=f.backend.getBlockData,instance=f.backend.getContract;
+ const wrap=(label,fn)=>(...args)=>{if(!armed)return fn(...args);if(++calls===3)started.resolve();if(label===side)throw Error('PRIVATE failure');return held.promise.then(()=>fn(...args));};
+ f.input.ethProvider.getBlock=wrap('l1',block);f.backend.getBlockData=wrap('l2',l2);f.backend.getContract=wrap('class',instance);
+ await prepareFundingClaim(f.input);armed=true;const work=prepareFundingClaim(f.input).finally(()=>settled=true),rejected=assert.rejects(work);
+ await started.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert.equal(calls,3);held.resolve();await rejected;
 });
