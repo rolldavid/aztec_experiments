@@ -1111,7 +1111,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const action={type};
   if(type==='like'||type==='unlike'){if(!field(defaults.post))return {status:'failed',message:'This post is unavailable.'};action.post=defaults.post;}
   else if(type==='preference'){
-   if(!Number.isInteger(defaults.kind)||defaults.kind<1||defaults.kind>5||!field(defaults.target)||typeof defaults.enabled!=='boolean')return {status:'failed',message:'This saved setting is unavailable.'};
+   if(!Number.isInteger(defaults.kind)||defaults.kind<1||defaults.kind>5||!field(defaults.target)||(defaults.enabled!==undefined&&typeof defaults.enabled!=='boolean'))return {status:'failed',message:'This saved setting is unavailable.'};
    Object.assign(action,{kind:defaults.kind,target:defaults.kind===5?'0':defaults.target,enabled:defaults.enabled});
   }else{
    if(!field(defaults.thread)||typeof defaults.throughBlock!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(defaults.throughBlock)||BigInt(defaults.throughBlock)>0xffffffffn)return {status:'failed',message:'This conversation is unavailable.'};
@@ -1121,8 +1121,19 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(!initializationPending)await initialize();else if(initializing)await initializationPending;
   if(busy)return {status:'blocked',reason:'busy'};
   if(!session||!unlocked()||blocked||status?.status!=='fee-ready'||intent){panelApi.open(action);return {status:'blocked',reason:intent?'existing-action':'setup'};}
-  let outcome;
-  await work(async()=>{note('Saving…');await executeAction(action,{modal:false,onIncluded,onResult:result=>{outcome=result;}});},actionFailure,{action:true});
+  const epoch=accountEpoch,active=session;let outcome;
+  await work(async()=>{
+   checkAccount(epoch);if(session!==active)throw connectionFailure;note('Saving…');
+   if(type==='preference'&&action.enabled===undefined){
+    // This click owns hydration and the following toggle. Never infer an
+    // unknown choice or open a second review dialog to discover its inverse.
+    if(typeof preferenceEnabled(action.kind,action.target)!=='boolean')await recoverPreferences();
+    checkAccount(epoch);if(session!==active)throw connectionFailure;
+    const enabled=preferenceEnabled(action.kind,action.target);if(typeof enabled!=='boolean')throw connectionFailure;
+    action.enabled=!enabled;
+   }
+   await executeAction(action,{modal:false,onIncluded,onResult:result=>{outcome=result;}});
+  },actionFailure,{action:true});
   if(outcome)return {status:outcome.status};
   return intent?.status==='unknown'?{status:'unknown'}:{status:'failed',message:error||'This action could not complete. Try again.'};
  }

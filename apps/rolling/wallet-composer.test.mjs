@@ -1089,3 +1089,21 @@ test('signup funding shows Ethereum waiting after acknowledgment while confirm s
  assert(f.document.body.textContent.includes('Waiting for Ethereum confirmation…'));assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');assert.equal(claims,0);
  held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(claims,1);
 });
+
+for(const enabled of [false,true])test(`first unknown preference click hydrates then toggles once without opening a dialog: ${enabled}`,{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{},balanceRead:async()=>({available:true,availableCredit:'0'})});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
+ const entered=Promise.withResolvers(),held=Promise.withResolvers();let reads=0;f.runtime.selectPrivateViews=()=>({});
+ f.session.application.readPreferences=async()=>{reads++;entered.resolve();await held.promise;return {status:'complete',complete:true,preferences:{bookmarks:[],followedBoards:[],followedNames:[],subscriptions:enabled?['42']:[],replyNotifications:false}};};
+ const input={type:'preference',kind:4,target:'42',enabled:undefined};const result=f.panel.act(input);await entered.promise;
+ assert.equal(f.submissions.length,0);assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ assert.equal((await f.panel.act(input)).status,'blocked');assert.equal(reads,1);
+ input.kind=1;input.target='999';held.resolve();assert.equal((await result).status,'confirmed');
+ assert.equal(f.prepared().kind,4);assert.equal(f.prepared().target,'42');assert.equal(f.prepared().enabled,!enabled);assert.equal(f.submissions.length,1);assert.equal(reads,1);assert.equal(f.document.querySelector('dialog').open,false);
+});
+for(const failure of ['read','account','malformed'])test(`unknown preference hydration ${failure} sends nothing and leaves no dialog`,{timeout:3000},async t=>{
+ const f=await fixture(t,{posting:{},balanceRead:async()=>({available:true,availableCredit:'0'})});await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();
+ const entered=Promise.withResolvers(),held=Promise.withResolvers();f.runtime.selectPrivateViews=()=>({});
+ f.session.application.readPreferences=async()=>{entered.resolve();await held.promise;if(failure==='read')throw Error('read failed');return {status:'complete',complete:true,preferences:{bookmarks:[],followedBoards:[],followedNames:[],subscriptions:[],replyNotifications:failure==='malformed'?undefined:false}};};
+ const action=f.panel.act({type:'preference',kind:5,target:'0'});await entered.promise;if(failure==='account')f.runtime.getAccount=()=>({});held.resolve();
+ assert.equal((await action).status,'failed');assert.equal(f.submissions.length,0);assert.equal(f.prepared(),null);assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
+});

@@ -9,6 +9,14 @@ Owner goal:50% end-to-end reduction per nonordinary-posting flow. Currentbaselin
 
 Measure visible inclusion AND canonicalusable completion separately. UI changes must not relabel pending funds or imply settlement. Keep allslow/failure results; no favorableblocktiming selection. Oldstate disposable; no migrations or extra notes. Sharedsourcewriters must coordinate; no dependency copies or newChromeprofiles.
 
+## Resumed release checkpoint
+
+- Root: e0ecde0f source staging, exact pending Bok lifecycle, coherent cutover and real flow measurements.
+- proposed_feed_design: final1862-file release approved; bounded candidate-native proof qualification adaptation.
+- pending_reply_ui: source-transfer stage-only review; no service operations.
+- pending_feed_release: source-only remaining signup, collateral, moderation and avatar bottleneck audit.
+
+
 # Posting performance acceptance —25 October2026
 
 Completed current measured request on published74c2142c: two realproof posts11.095/11.894seconds, every subtarget passed including fullprivate→kernel1243/1218ms. Both automaticallycheckpointed. Earlier slowerobservations retained; no universalnetworklatency guarantee.

@@ -1,0 +1,2498 @@
+{
+  "source": "ef358ebbbd20ea1fa362b5cc1acfba53f1e28280",
+  "operation": "quote",
+  "characters": 155,
+  "postId": "post-757319001480295216893947716899893587885987273029389652721016939464878164106",
+  "clickToUnobstructedVisibleMs": 15812.344999909401,
+  "click": 13261512.845000029,
+  "visible": 13277325.189999938,
+  "timeOrigin": 1792888697209.235,
+  "actualAztecIncluded": true,
+  "composerClosed": true,
+  "laterCheckpointObserved": true,
+  "matchedBaseline": false,
+  "limitations": [
+    "Phase observer overflowed; exact visibility observer remained independent.",
+    "Source archive upload overlapped this run; no isolated speedup claim."
+  ],
+  "phaseTrace": [
+    {
+      "detail": null,
+      "duration": 474.8899999856949,
+      "name": "rolling.reader.update",
+      "startTime": 13233178.875
+    },
+    {
+      "detail": null,
+      "duration": 6.769999980926514,
+      "name": "rolling.reader.dom",
+      "startTime": 13233646.965000032
+    },
+    {
+      "detail": null,
+      "duration": 237.29500007629397,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "startTime": 13235043.314999938
+    },
+    {
+      "detail": null,
+      "duration": 2.3949999809265137,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13235288.909999968
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13235291.279999971
+    },
+    {
+      "detail": null,
+      "duration": 0.13499999046325684,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13235291.345000029
+    },
+    {
+      "detail": null,
+      "duration": 0.12999999523162842,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13235291.35500002
+    },
+    {
+      "detail": null,
+      "duration": 0.11000001430511476,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13235291.50999999
+    },
+    {
+      "detail": null,
+      "duration": 0.09000003337860107,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13235291.534999968
+    },
+    {
+      "detail": null,
+      "duration": 2.274999976158142,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13235291.654999971
+    },
+    {
+      "detail": null,
+      "duration": 4.5,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13235291.684999945
+    },
+    {
+      "detail": null,
+      "duration": 0.3049999475479126,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13235306.48000002
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13235306.595000029
+    },
+    {
+      "detail": null,
+      "duration": 0.06499993801116943,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13235306.64499998
+    },
+    {
+      "detail": null,
+      "duration": 17.59499990940094,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13235295.35500002
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13235313.059999945
+    },
+    {
+      "detail": null,
+      "duration": 0.039999961853027344,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13235313.10500002
+    },
+    {
+      "detail": null,
+      "duration": 17.360000014305115,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13235297.164999962
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13235314.60500002
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13235314.63499999
+    },
+    {
+      "detail": null,
+      "duration": 1156.0499999523165,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "startTime": 13235313.154999971
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236469.274999976
+    },
+    {
+      "detail": null,
+      "duration": 1185.4850000143051,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13235285.924999952
+    },
+    {
+      "detail": null,
+      "duration": 0.9649999141693116,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "startTime": 13236469.350000024
+    },
+    {
+      "detail": null,
+      "duration": 0.015000104904174805,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236470.33499992
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236470.35500002
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236470.379999995
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13236470.424999952
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236470.470000029
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236470.485000014
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236470.5
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236470.534999968
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236470.549999952
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236470.559999945
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236470.600000024
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13236470.639999986
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236470.684999945
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236470.694999931
+    },
+    {
+      "detail": null,
+      "duration": 0.010000109672546388,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236470.70999992
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236470.725000024
+    },
+    {
+      "detail": null,
+      "duration": 0.14499998092651367,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "startTime": 13236470.76999998
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236470.919999955
+    },
+    {
+      "detail": null,
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "startTime": 13236470.934999945
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13236470.975000024
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236470.985000014
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236471
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236471.00999999
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236471.024999976
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236471.034999968
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236471.059999945
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236471.069999931
+    },
+    {
+      "detail": null,
+      "duration": 0.015000104904174805,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236471.08499992
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236471.110000014
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13236471.139999986
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236471.164999962
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236471.179999948
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236471.189999938
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13236471.215000032
+    },
+    {
+      "detail": null,
+      "duration": 0.10000002384185792,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "startTime": 13236471.245000005
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13236471.360000014
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13236471.36500001
+    },
+    {
+      "detail": null,
+      "duration": 1259.4300000667572,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "startTime": 13235314.664999962
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236574.154999971
+    },
+    {
+      "detail": null,
+      "duration": 1295.2849999666214,
+      "name": "rolling.proof.native.phase.sync-records",
+      "startTime": 13235280.629999995
+    },
+    {
+      "detail": null,
+      "duration": 1289.9350000619888,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13235285.954999924
+    },
+    {
+      "detail": null,
+      "duration": 1.1099998950958252,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "startTime": 13236574.225000024
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236575.350000024
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.370000005
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236575.389999986
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.404999971
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236575.419999955
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.439999938
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.454999924
+    },
+    {
+      "detail": null,
+      "duration": 0.12999999523162842,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "startTime": 13236575.49000001
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.629999995
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "startTime": 13236575.659999968
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13236575.694999931
+    },
+    {
+      "detail": null,
+      "duration": 0.010000109672546388,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.704999924
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.720000029
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.735000014
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13236575.75
+    },
+    {
+      "detail": null,
+      "duration": 0.07499992847442627,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "startTime": 13236575.75999999
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13236575.840000032
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13236575.850000024
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13236791.985000014
+    },
+    {
+      "detail": null,
+      "duration": 0.05000007152557373,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13236792.039999962
+    },
+    {
+      "detail": null,
+      "duration": 0.4249999523162842,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "startTime": 13236792.120000005
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13236793.125
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13236793.174999952
+    },
+    {
+      "detail": null,
+      "duration": 265.6299999952316,
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "startTime": 13236793.215000032
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13237058.909999968
+    },
+    {
+      "detail": null,
+      "duration": 6.189999938011169,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "startTime": 13237059.00999999
+    },
+    {
+      "detail": null,
+      "duration": 0.9850000143051147,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13237065.45999992
+    },
+    {
+      "detail": null,
+      "duration": 1.2050000429153442,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13237066.50999999
+    },
+    {
+      "detail": null,
+      "duration": 283.3199999332428,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13236791
+    },
+    {
+      "detail": null,
+      "duration": 6.259999990463257,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "startTime": 13237067.784999968
+    },
+    {
+      "detail": null,
+      "duration": 285.9950000047684,
+      "name": "rolling.action.screening",
+      "startTime": 13236788.845000029
+    },
+    {
+      "detail": null,
+      "duration": 3952.735000014305,
+      "name": "rolling.composer.prepare",
+      "startTime": 13233674.079999924
+    },
+    {
+      "detail": null,
+      "duration": 838.0299999713898,
+      "name": "rolling.composer.posting-witnesses",
+      "startTime": 13236788.764999986
+    },
+    {
+      "detail": null,
+      "duration": 551.8650000095367,
+      "name": "rolling.action.history-witnesses",
+      "startTime": 13237074.899999976
+    },
+    {
+      "detail": null,
+      "duration": 314.914999961853,
+      "name": "rolling.action.fee-metadata",
+      "startTime": 13261528.51999998
+    },
+    {
+      "detail": null,
+      "duration": 326.0349999666214,
+      "name": "rolling.action.payment-prefetch",
+      "startTime": 13261520.5
+    },
+    {
+      "detail": null,
+      "duration": 2.950000047683716,
+      "name": "rolling.action.fee-binding",
+      "startTime": 13261843.45999992
+    },
+    {
+      "detail": null,
+      "duration": 336.7699999809265,
+      "name": "rolling.action.policy",
+      "startTime": 13261934.095000029
+    },
+    {
+      "detail": null,
+      "duration": 1406.25,
+      "name": "rolling.action.sync",
+      "startTime": 13261518.58499992
+    },
+    {
+      "detail": null,
+      "duration": 271.1749999523163,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "startTime": 13262925.225000024
+    },
+    {
+      "detail": null,
+      "duration": 3.6750000715255737,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13263206.429999948
+    },
+    {
+      "detail": null,
+      "duration": 0.08000004291534424,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13263210.044999955
+    },
+    {
+      "detail": null,
+      "duration": 0.19000005722045896,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13263210.159999968
+    },
+    {
+      "detail": null,
+      "duration": 0.1650000810623169,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13263210.189999938
+    },
+    {
+      "detail": null,
+      "duration": 0.14499998092651367,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13263210.389999986
+    },
+    {
+      "detail": null,
+      "duration": 0.11500000953674316,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13263210.419999955
+    },
+    {
+      "detail": null,
+      "duration": 2.680000066757202,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13263210.579999924
+    },
+    {
+      "detail": null,
+      "duration": 5.049999952316284,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13263210.629999995
+    },
+    {
+      "detail": null,
+      "duration": 0.5099999904632568,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13263239.36500001
+    },
+    {
+      "detail": null,
+      "duration": 0.21499991416931152,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13263239.49000001
+    },
+    {
+      "detail": null,
+      "duration": 0.059999942779541016,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13263239.735000014
+    },
+    {
+      "detail": null,
+      "duration": 40.329999923706055,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13263214.495000005
+    },
+    {
+      "detail": null,
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13263254.939999938
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13263254.98000002
+    },
+    {
+      "detail": null,
+      "duration": 39.84500002861023,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13263216.304999948
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13263256.215000032
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13263256.245000005
+    },
+    {
+      "detail": null,
+      "duration": 751.3899999856949,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "startTime": 13263255.024999976
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264006.485000014
+    },
+    {
+      "detail": null,
+      "duration": 805.6650000810623,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13263203.189999938
+    },
+    {
+      "detail": null,
+      "duration": 1.040000081062317,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "startTime": 13264006.574999928
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264007.649999976
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264007.679999948
+    },
+    {
+      "detail": null,
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264007.70999992
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13264007.76999998
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264007.824999928
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264007.845000029
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264007.875
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264007.904999971
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264007.919999955
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264007.929999948
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264007.975000024
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13264008.01999998
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.054999948
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264008.064999938
+    },
+    {
+      "detail": null,
+      "duration": 0.005000114440917969,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.08499992
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.100000024
+    },
+    {
+      "detail": null,
+      "duration": 0.1499999761581421,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "startTime": 13264008.13499999
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.289999962
+    },
+    {
+      "detail": null,
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "startTime": 13264008.309999945
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13264008.35500002
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.36500001
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.379999995
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.389999986
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.399999976
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264008.414999962
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264008.439999938
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.449999928
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264008.465000032
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264008.495000005
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13264008.529999971
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.564999938
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264008.574999928
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264008.590000032
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264008.629999995
+    },
+    {
+      "detail": null,
+      "duration": 0.11500000953674316,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "startTime": 13264008.674999952
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13264008.799999952
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13264008.809999945
+    },
+    {
+      "detail": null,
+      "duration": 776.1100000143051,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "startTime": 13263256.26999998
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264032.444999931
+    },
+    {
+      "detail": null,
+      "duration": 837.6100000143051,
+      "name": "rolling.proof.native.phase.sync-records",
+      "startTime": 13263196.419999955
+    },
+    {
+      "detail": null,
+      "duration": 830.7799999713898,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13263203.23000002
+    },
+    {
+      "detail": null,
+      "duration": 0.9299999475479126,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "startTime": 13264032.50999999
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264033.444999931
+    },
+    {
+      "detail": null,
+      "duration": 0.010000109672546388,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.45999992
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264033.48000002
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.495000005
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264033.50999999
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.51999998
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.539999962
+    },
+    {
+      "detail": null,
+      "duration": 0.15000009536743164,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "startTime": 13264033.569999931
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.73000002
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "startTime": 13264033.74000001
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13264033.779999971
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.789999962
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.809999945
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.819999931
+    },
+    {
+      "detail": null,
+      "duration": 0.015000104904174805,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13264033.824999928
+    },
+    {
+      "detail": null,
+      "duration": 0.09499990940093994,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "startTime": 13264033.850000024
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13264033.954999924
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "startTime": 13264033.965000032
+    },
+    {
+      "detail": null,
+      "duration": 1312.5349999666214,
+      "name": "rolling.action.contract-state",
+      "startTime": 13262924.850000024
+    },
+    {
+      "detail": null,
+      "duration": 279.125,
+      "name": "rolling.action.predecessor",
+      "startTime": 13264237.539999962
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13264519.809999945
+    },
+    {
+      "detail": null,
+      "duration": 0.04499995708465576,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "startTime": 13264519.850000024
+    },
+    {
+      "detail": null,
+      "duration": 0.3200000524520874,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "startTime": 13264519.919999955
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264520.779999971
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "startTime": 13264520.804999948
+    },
+    {
+      "detail": null,
+      "duration": 239.00499999523163,
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "startTime": 13264520.829999924
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13264759.89499998
+    },
+    {
+      "detail": null,
+      "duration": 5.639999985694885,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "startTime": 13264759.98000002
+    },
+    {
+      "detail": null,
+      "duration": 1.165000081062317,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13264765.829999924
+    },
+    {
+      "detail": null,
+      "duration": 1.1950000524520874,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13264767.034999968
+    },
+    {
+      "detail": null,
+      "duration": 254.52499997615817,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13264518.845000029
+    },
+    {
+      "detail": null,
+      "duration": 4.815000057220459,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "startTime": 13264768.279999971
+    },
+    {
+      "detail": null,
+      "duration": 257.3199999332428,
+      "name": "rolling.action.arguments",
+      "startTime": 13264516.754999995
+    },
+    {
+      "detail": null,
+      "duration": 257.0049999952316,
+      "name": "rolling.action.screening",
+      "startTime": 13264516.840000032
+    },
+    {
+      "detail": null,
+      "duration": 3259.164999961853,
+      "name": "rolling.action.prepare",
+      "startTime": 13261518.36500001
+    },
+    {
+      "detail": null,
+      "duration": 0.16000008583068848,
+      "name": "rolling.action.fee-prepare",
+      "startTime": 13264794.939999938
+    },
+    {
+      "detail": null,
+      "duration": 0.6899999380111694,
+      "name": "rolling.action.fee-simulate",
+      "startTime": 13264795.10500002
+    },
+    {
+      "detail": null,
+      "duration": 32.77999997138977,
+      "name": "rolling.transaction.estimating",
+      "startTime": 13264794.850000024
+    },
+    {
+      "detail": null,
+      "duration": 0.26499998569488525,
+      "name": "rolling.transaction.submitting",
+      "startTime": 13264827.639999986
+    },
+    {
+      "detail": null,
+      "duration": 35.67999994754791,
+      "name": "rolling.transaction.preparing",
+      "startTime": 13264827.904999971
+    },
+    {
+      "detail": null,
+      "duration": 2.034999966621399,
+      "name": "billboard.accountRequest",
+      "startTime": 13264863.514999986
+    },
+    {
+      "detail": null,
+      "duration": 2.034999966621399,
+      "name": "rolling.proof.wallet.phase.account-request",
+      "startTime": 13264863.514999986
+    },
+    {
+      "detail": null,
+      "duration": 1.309999942779541,
+      "name": "rolling.proof.native.phase.queue-and-anchor",
+      "startTime": 13264865.850000024
+    },
+    {
+      "detail": null,
+      "duration": 0.7599999904632568,
+      "name": "rolling.proof.native.phase.sync-binding",
+      "startTime": 13264867.24000001
+    },
+    {
+      "detail": null,
+      "duration": 1.1749999523162842,
+      "name": "rolling.proof.native.phase.contract-sync",
+      "startTime": 13264867.215000032
+    },
+    {
+      "detail": null,
+      "duration": 0.35500001907348633,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "startTime": 13264868
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.sync-records",
+      "startTime": 13264868.360000014
+    },
+    {
+      "detail": null,
+      "duration": 0.0700000524520874,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13264878.284999968
+    },
+    {
+      "detail": null,
+      "duration": 0.5549999475479126,
+      "name": "rolling.proof.native.phase.oracle-get-capsule",
+      "startTime": 13264878.975000024
+    },
+    {
+      "detail": null,
+      "duration": 0.2799999713897705,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "startTime": 13264879.629999995
+    },
+    {
+      "detail": null,
+      "duration": 0.05000007152557373,
+      "name": "rolling.proof.native.phase.oracle-get-auth-witness",
+      "startTime": 13264880.439999938
+    },
+    {
+      "detail": null,
+      "duration": 0.04999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13264891.235000014
+    },
+    {
+      "detail": null,
+      "duration": 7.534999966621399,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "startTime": 13264891.64499998
+    },
+    {
+      "detail": null,
+      "duration": 0.8550000190734863,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13264900.704999924
+    },
+    {
+      "detail": null,
+      "duration": 1.0700000524520874,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13264902.069999931
+    },
+    {
+      "detail": null,
+      "duration": 0.05000007152557373,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "startTime": 13264903.20999992
+    },
+    {
+      "detail": null,
+      "duration": 0.7400000095367432,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13264903.324999928
+    },
+    {
+      "detail": null,
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "startTime": 13264904.569999931
+    },
+    {
+      "detail": null,
+      "duration": 0.0549999475479126,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "startTime": 13264904.75
+    },
+    {
+      "detail": null,
+      "duration": 0.040000081062316895,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13264926.329999924
+    },
+    {
+      "detail": null,
+      "duration": 0.05500006675720215,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "startTime": 13264926.434999945
+    },
+    {
+      "detail": null,
+      "duration": 6.934999942779541,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "startTime": 13264926.725000024
+    },
+    {
+      "detail": null,
+      "duration": 0.8400000333786011,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13264939.029999971
+    },
+    {
+      "detail": null,
+      "duration": 1.194999933242798,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13264940.345000029
+    },
+    {
+      "detail": null,
+      "duration": 0.07499992847442627,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "startTime": 13264941.620000005
+    },
+    {
+      "detail": null,
+      "duration": 47.264999985694885,
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "startTime": 13264904.819999931
+    },
+    {
+      "detail": null,
+      "duration": 43.2150000333786,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13264906.654999971
+    },
+    {
+      "detail": null,
+      "duration": 0.8400000333786011,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13264941.754999995
+    },
+    {
+      "detail": null,
+      "duration": 0.04499995708465576,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "startTime": 13264943.13499999
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "startTime": 13264944.86500001
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "startTime": 13264944.89499998
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-hash-preimage",
+      "startTime": 13264952.169999955
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264952.274999976
+    },
+    {
+      "detail": null,
+      "duration": 0.1650000810623169,
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "startTime": 13264952.449999928
+    },
+    {
+      "detail": null,
+      "duration": 2.125,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13264952.629999995
+    },
+    {
+      "detail": null,
+      "duration": 1.434999942779541,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13264955.220000029
+    },
+    {
+      "detail": null,
+      "duration": 6.429999947547913,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "startTime": 13264956.73000002
+    },
+    {
+      "detail": null,
+      "duration": 1.1999999284744265,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "startTime": 13264963.35500002
+    },
+    {
+      "detail": null,
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13264964.679999948
+    },
+    {
+      "detail": null,
+      "duration": 0.08500003814697266,
+      "name": "rolling.proof.native.phase.oracle-notify-created-nullifier",
+      "startTime": 13264964.76999998
+    },
+    {
+      "detail": null,
+      "duration": 1.0749999284744265,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13264964.875
+    },
+    {
+      "detail": null,
+      "duration": 92.09500002861024,
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "startTime": 13264880.939999938
+    },
+    {
+      "detail": null,
+      "duration": 88.64999997615814,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13264882.51999998
+    },
+    {
+      "detail": null,
+      "duration": 1.190000057220459,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13264966.419999955
+    },
+    {
+      "detail": null,
+      "duration": 0.05500006675720215,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "startTime": 13264967.694999931
+    },
+    {
+      "detail": null,
+      "duration": 0.11500000953674316,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "startTime": 13264967.904999971
+    },
+    {
+      "detail": null,
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "startTime": 13264968.264999986
+    },
+    {
+      "detail": null,
+      "duration": 0.05000007152557373,
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "startTime": 13264968.309999945
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "startTime": 13264968.370000005
+    },
+    {
+      "detail": null,
+      "duration": 0.125,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "startTime": 13264968.465000032
+    },
+    {
+      "detail": null,
+      "duration": 0.12999999523162842,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "startTime": 13264968.694999931
+    },
+    {
+      "detail": null,
+      "duration": 0.14500010013580322,
+      "name": "rolling.proof.native.phase.oracle-notify-revertible-phase-start",
+      "startTime": 13264968.829999924
+    },
+    {
+      "detail": null,
+      "duration": 0.06499993801116943,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "startTime": 13265123.110000014
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "startTime": 13265123.745000005
+    },
+    {
+      "detail": null,
+      "duration": 2.4350000619888306,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "startTime": 13265123.809999945
+    },
+    {
+      "detail": null,
+      "duration": 0.06500005722045898,
+      "name": "rolling.proof.native.phase.oracle-is-nullifier-pending",
+      "startTime": 13265126.784999968
+    },
+    {
+      "detail": null,
+      "duration": 5.125,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "startTime": 13265184.659999968
+    },
+    {
+      "detail": null,
+      "duration": 0.96999990940094,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13265191.35500002
+    },
+    {
+      "detail": null,
+      "duration": 1.1150000095367432,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13265192.819999931
+    },
+    {
+      "detail": null,
+      "duration": 0.04499995708465576,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "startTime": 13265194.039999962
+    },
+    {
+      "detail": null,
+      "duration": 0.04999995231628418,
+      "name": "rolling.proof.native.phase.oracle-is-nullifier-pending",
+      "startTime": 13265194.225000024
+    },
+    {
+      "detail": null,
+      "duration": 0.9200000762939452,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collection",
+      "startTime": 13265194.309999945
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13265195.254999995
+    },
+    {
+      "detail": null,
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.314999938
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "startTime": 13265195.379999995
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.399999976
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.419999955
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.439999938
+    },
+    {
+      "detail": null,
+      "duration": 0.010000109672546388,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.454999924
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.470000029
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.49000001
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.504999995
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.524999976
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.539999962
+    },
+    {
+      "detail": null,
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "startTime": 13265195.564999938
+    },
+    {
+      "detail": null,
+      "duration": 0.21000003814697263,
+      "name": "rolling.proof.native.phase.oracle-get-public-data-witness",
+      "startTime": 13265195.949999928
+    },
+    {
+      "detail": null,
+      "duration": 1.8550000190734863,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13265197.370000005
+    },
+    {
+      "detail": null,
+      "duration": 0.12999999523162842,
+      "name": "rolling.proof.native.phase.oracle-get-note-hash-membership-witness",
+      "startTime": 13265200.164999962
+    },
+    {
+      "detail": null,
+      "duration": 0.12000000476837158,
+      "name": "rolling.proof.native.phase.oracle-get-public-data-witness",
+      "startTime": 13265201.664999962
+    },
+    {
+      "detail": null,
+      "duration": 0.10500001907348631,
+      "name": "rolling.proof.native.phase.oracle-get-public-data-witness",
+      "startTime": 13265203.154999971
+    },
+    {
+      "detail": null,
+      "duration": 0.11000001430511476,
+      "name": "rolling.proof.native.phase.oracle-get-public-data-witness",
+      "startTime": 13265204.539999962
+    },
+    {
+      "detail": null,
+      "duration": 657.4099999666214,
+      "name": "rolling.action.history-witnesses",
+      "startTime": 13264773.889999986
+    },
+    {
+      "detail": null,
+      "duration": 225.25,
+      "name": "rolling.proof.native.phase.oracle-get-public-data-witness",
+      "startTime": 13265206.054999948
+    },
+    {
+      "detail": null,
+      "duration": 0.0549999475479126,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13265438.63499999
+    },
+    {
+      "detail": null,
+      "duration": 0.10500001907348631,
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "startTime": 13265438.904999971
+    },
+    {
+      "detail": null,
+      "duration": 1.4649999141693115,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13265439.220000029
+    },
+    {
+      "detail": null,
+      "duration": 2.080000042915344,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13265441.20999992
+    },
+    {
+      "detail": null,
+      "duration": 6.284999966621399,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "startTime": 13265443.370000005
+    },
+    {
+      "detail": null,
+      "duration": 0.11500000953674316,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "startTime": 13265449.85500002
+    },
+    {
+      "detail": null,
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "startTime": 13265450.110000014
+    },
+    {
+      "detail": null,
+      "duration": 0.07999992370605469,
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "startTime": 13265450.360000014
+    },
+    {
+      "detail": null,
+      "duration": 1.034999966621399,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "startTime": 13265450.470000029
+    },
+    {
+      "detail": null,
+      "duration": 643.5950000286102,
+      "name": "rolling.proof.native.phase.private-execution",
+      "startTime": 13264868.389999986
+    },
+    {
+      "detail": null,
+      "duration": 640.1449999809265,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13264870.054999948
+    },
+    {
+      "detail": null,
+      "duration": 534.9099999666214,
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "startTime": 13264973.100000024
+    },
+    {
+      "detail": null,
+      "duration": 515.9199999570847,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13264988.975000024
+    },
+    {
+      "detail": null,
+      "duration": 1.309999942779541,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "startTime": 13265451.965000032
+    },
+    {
+      "detail": null,
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "startTime": 13265453.345000029
+    },
+    {
+      "detail": null,
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "startTime": 13265453.524999976
+    },
+    {
+      "detail": null,
+      "duration": 0.10000002384185792,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "startTime": 13265454.154999971
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "startTime": 13265454.264999986
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "startTime": 13265454.284999968
+    },
+    {
+      "detail": null,
+      "duration": 0.6150000095367432,
+      "name": "rolling.proof.native.phase.kernel-class-hints",
+      "startTime": 13265512.199999928
+    },
+    {
+      "detail": null,
+      "duration": 0.4849998950958252,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "startTime": 13265522.220000029
+    },
+    {
+      "detail": null,
+      "duration": 12.714999914169312,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "startTime": 13265522.720000029
+    },
+    {
+      "detail": null,
+      "duration": 186.8400000333786,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "startTime": 13265535.449999928
+    },
+    {
+      "detail": null,
+      "duration": 24.759999990463257,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "startTime": 13265722.309999945
+    },
+    {
+      "detail": null,
+      "duration": 0.5249999761581421,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "startTime": 13265747.095000029
+    },
+    {
+      "detail": null,
+      "duration": 4.355000019073486,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "startTime": 13265747.629999995
+    },
+    {
+      "detail": null,
+      "duration": 0.11000001430511476,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "startTime": 13265886.125
+    },
+    {
+      "detail": null,
+      "duration": 18.5349999666214,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "startTime": 13265886.245000005
+    },
+    {
+      "detail": null,
+      "duration": 193.2699999809265,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "startTime": 13265904.804999948
+    },
+    {
+      "detail": null,
+      "duration": 33.699999928474426,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "startTime": 13266098.090000032
+    },
+    {
+      "detail": null,
+      "duration": 0.4700000286102295,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "startTime": 13266131.809999945
+    },
+    {
+      "detail": null,
+      "duration": 5.245000004768372,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "startTime": 13266132.284999968
+    },
+    {
+      "detail": null,
+      "duration": 0.2549999952316284,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "startTime": 13266137.799999952
+    },
+    {
+      "detail": null,
+      "duration": 5.170000076293945,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "startTime": 13266138.059999945
+    },
+    {
+      "detail": null,
+      "duration": 7.5,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "startTime": 13266143.245000005
+    },
+    {
+      "detail": null,
+      "duration": 6.564999938011169,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "startTime": 13266150.75
+    },
+    {
+      "detail": null,
+      "duration": 645.9500000476837,
+      "name": "rolling.proof.native.phase.kernel-body",
+      "startTime": 13265512.819999931
+    },
+    {
+      "detail": null,
+      "duration": 0.375,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "startTime": 13266157.319999931
+    },
+    {
+      "detail": null,
+      "duration": 0.2200000286102295,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "startTime": 13266157.704999924
+    },
+    {
+      "detail": null,
+      "duration": 12.47000002861023,
+      "name": "rolling.proof.native.phase.validation-transaction",
+      "startTime": 13266160.794999955
+    },
+    {
+      "detail": null,
+      "duration": 523.9049999713898,
+      "name": "rolling.proof.native.phase.validation",
+      "startTime": 13266158.784999968
+    },
+    {
+      "detail": null,
+      "duration": 509.34500002861023,
+      "name": "rolling.proof.native.phase.public-execution",
+      "startTime": 13266173.314999938
+    },
+    {
+      "detail": null,
+      "duration": 508.36500000953674,
+      "name": "rolling.proof.native.phase.admission-check",
+      "startTime": 13266174.284999968
+    },
+    {
+      "detail": null,
+      "duration": 1.4849998950958252,
+      "name": "rolling.proof.transport.circuit-ids",
+      "startTime": 13266682.715000032
+    },
+    {
+      "detail": null,
+      "duration": 17.165000081062317,
+      "name": "rolling.proof.transport.dictionary",
+      "startTime": 13266684.204999924
+    },
+    {
+      "detail": null,
+      "duration": 24.955000042915344,
+      "name": "rolling.proof.transport.serialize",
+      "startTime": 13266682.704999924
+    },
+    {
+      "detail": null,
+      "duration": 6.210000038146973,
+      "name": "rolling.proof.transport.compress",
+      "startTime": 13266701.39499998
+    },
+    {
+      "detail": null,
+      "duration": 1911.3799999952316,
+      "name": "rolling.proof.transport.submit",
+      "startTime": 13266707.669999955
+    },
+    {
+      "detail": null,
+      "duration": 435.8100000619888,
+      "name": "rolling.reader.update",
+      "startTime": 13268465.944999931
+    },
+    {
+      "detail": null,
+      "duration": 4.125,
+      "name": "rolling.reader.dom",
+      "startTime": 13268897.61500001
+    },
+    {
+      "detail": null,
+      "duration": 3862.3650000095367,
+      "name": "rolling.proof.transport.wait",
+      "startTime": 13268619.13499999
+    },
+    {
+      "detail": {
+        "durationMs": 0.41773200035095215,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.persist",
+      "startTime": 13272480.970000029
+    },
+    {
+      "detail": {
+        "durationMs": 0.018389999866485596,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.queue-wait",
+      "startTime": 13272481.014999986
+    },
+    {
+      "detail": {
+        "durationMs": 3211.9434409998357,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready",
+      "startTime": 13272481.01999998
+    },
+    {
+      "detail": {
+        "durationMs": 0.6023039999417961,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.read",
+      "startTime": 13272481.01999998
+    },
+    {
+      "detail": {
+        "durationMs": 90.45065100002104,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.decompress",
+      "startTime": 13272481.024999976
+    },
+    {
+      "detail": {
+        "durationMs": 134.25738199986515,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.binding",
+      "startTime": 13272481.029999971
+    },
+    {
+      "detail": {
+        "durationMs": 68.1677530000452,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.backend",
+      "startTime": 13272481.029999971
+    },
+    {
+      "detail": {
+        "durationMs": 2916.3554990000557,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.native-prove",
+      "startTime": 13272481.029999971
+    },
+    {
+      "detail": {
+        "durationMs": 0.3785729999653995,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-start",
+      "startTime": 13272481.034999968
+    },
+    {
+      "detail": {
+        "durationMs": 484.2710819998756,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-load",
+      "startTime": 13272481.034999968
+    },
+    {
+      "detail": {
+        "durationMs": 1446.4925560001284,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-accumulate",
+      "startTime": 13272481.039999962
+    },
+    {
+      "detail": {
+        "durationMs": 938.4321580000689,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-prove",
+      "startTime": 13272481.039999962
+    },
+    {
+      "detail": {
+        "durationMs": 41.96201000013389,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-verify",
+      "startTime": 13272481.044999955
+    },
+    {
+      "detail": {
+        "durationMs": 2.038183000171557,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-compress",
+      "startTime": 13272481.044999955
+    },
+    {
+      "detail": {
+        "durationMs": 0.2012610000092536,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-encode",
+      "startTime": 13272481.044999955
+    },
+    {
+      "detail": {
+        "durationMs": 3210.1028099998366,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.child-total",
+      "startTime": 13272481.049999952
+    },
+    {
+      "detail": {
+        "durationMs": 0.016200002282857895,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.ready-wait",
+      "startTime": 13272481.049999952
+    },
+    {
+      "detail": {
+        "durationMs": 3211.7334299981594,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.dispatch-to-result",
+      "startTime": 13272481.049999952
+    },
+    {
+      "detail": {
+        "durationMs": 0.07930099964141846,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready-to-snapshot",
+      "startTime": 13272481.054999948
+    },
+    {
+      "detail": null,
+      "duration": 7.440000057220459,
+      "name": "rolling.proof.local.decompress",
+      "startTime": 13272482.419999955
+    },
+    {
+      "detail": null,
+      "duration": 5936.775000095367,
+      "name": "rolling.proof.native.phase.remote-proof",
+      "startTime": 13266682.694999931
+    },
+    {
+      "detail": null,
+      "duration": 125.20499992370604,
+      "name": "rolling.proof.local.verify",
+      "startTime": 13272489.875
+    },
+    {
+      "detail": null,
+      "duration": 0.7300000190734863,
+      "name": "rolling.proof.native.phase.proof-public-inputs",
+      "startTime": 13272619.539999962
+    },
+    {
+      "detail": null,
+      "duration": 16.289999961853027,
+      "name": "rolling.proof.native.phase.result-and-tag-persistence",
+      "startTime": 13272620.38499999
+    },
+    {
+      "detail": null,
+      "duration": 7774.704999923706,
+      "name": "billboard.proveTxWithPublicValidation",
+      "startTime": 13264865.60500002
+    },
+    {
+      "detail": null,
+      "duration": 7774.704999923706,
+      "name": "rolling.proof.wallet.phase.prove-tx-with-public-validation",
+      "startTime": 13264865.60500002
+    },
+    {
+      "detail": {
+        "durationMs": 7754.429999947548,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.total",
+      "startTime": 13272640.404999971
+    },
+    {
+      "detail": {
+        "durationMs": 0,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.sync",
+      "startTime": 13272640.414999962
+    },
+    {
+      "detail": {
+        "durationMs": 641.3450000286102,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.private-witness",
+      "startTime": 13272640.414999962
+    },
+    {
+      "detail": {
+        "durationMs": 501.65499997138977,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.kernel-witness",
+      "startTime": 13272640.419999955
+    },
+    {
+      "detail": {
+        "durationMs": 521.9049999713898,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.public-validation",
+      "startTime": 13272640.424999952
+    },
+    {
+      "detail": {
+        "durationMs": 5936.830000042915,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.proof-transport",
+      "startTime": 13272640.429999948
+    },
+    {
+      "detail": {
+        "durationMs": 152.6949999332428,
+        "kind": "aggregate"
+      },
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.unaccounted",
+      "startTime": 13272640.429999948
+    },
+    {
+      "detail": null,
+      "duration": 12.570000052452087,
+      "name": "billboard.toTx",
+      "startTime": 13272640.429999948
+    },
+    {
+      "detail": null,
+      "duration": 12.570000052452087,
+      "name": "rolling.proof.wallet.phase.to-tx",
+      "startTime": 13272640.429999948
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "billboard.contextGuard",
+      "startTime": 13272653.01999998
+    },
+    {
+      "detail": null,
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "startTime": 13272653.01999998
+    },
+    {
+      "detail": null,
+      "duration": 23.53500008583069,
+      "name": "billboard.guardBeforeJournal",
+      "startTime": 13272653.069999931
+    },
+    {
+      "detail": null,
+      "duration": 23.53500008583069,
+      "name": "rolling.proof.wallet.phase.guard-before-journal",
+      "startTime": 13272653.069999931
+    },
+    {
+      "detail": null,
+      "duration": 35.27999997138977,
+      "name": "billboard.journalPrepare",
+      "startTime": 13272676.629999995
+    },
+    {
+      "detail": null,
+      "duration": 35.27999997138977,
+      "name": "rolling.proof.wallet.phase.journal-prepare",
+      "startTime": 13272676.629999995
+    },
+    {
+      "detail": null,
+      "duration": 7865.9349999427795,
+      "name": "rolling.transaction.proving",
+      "startTime": 13264863.595000029
+    },
+    {
+      "detail": null,
+      "duration": 17.47000002861023,
+      "name": "billboard.journalSigned",
+      "startTime": 13272711.929999948
+    },
+    {
+      "detail": null,
+      "duration": 17.47000002861023,
+      "name": "rolling.proof.wallet.phase.journal-signed",
+      "startTime": 13272711.929999948
+    },
+    {
+      "detail": null,
+      "duration": 0.05000007152557373,
+      "name": "billboard.contextGuard",
+      "startTime": 13272729.424999952
+    },
+    {
+      "detail": null,
+      "duration": 0.05000007152557373,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "startTime": 13272729.424999952
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "billboard.contextGuard",
+      "startTime": 13272729.48000002
+    },
+    {
+      "detail": null,
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "startTime": 13272729.48000002
+    },
+    {
+      "detail": null,
+      "duration": 3.8299999237060542,
+      "name": "billboard.signedGuard",
+      "startTime": 13272729.504999995
+    },
+    {
+      "detail": null,
+      "duration": 3.8299999237060542,
+      "name": "rolling.proof.wallet.phase.signed-guard",
+      "startTime": 13272729.504999995
+    },
+    {
+      "detail": null,
+      "duration": 428.5900000333786,
+      "name": "rolling.transaction.submitting",
+      "startTime": 13272729.534999968
+    },
+    {
+      "detail": null,
+      "duration": 424.68499994277954,
+      "name": "billboard.submitToAztec",
+      "startTime": 13272733.350000024
+    },
+    {
+      "detail": null,
+      "duration": 424.68499994277954,
+      "name": "rolling.proof.wallet.phase.submit-to-aztec",
+      "startTime": 13272733.350000024
+    },
+    {
+      "detail": null,
+      "duration": 245.25,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13273158.409999968
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13273403.679999948
+    },
+    {
+      "detail": null,
+      "duration": 247.13999998569489,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13274405.00999999
+    },
+    {
+      "detail": null,
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13274652.179999948
+    }
+  ]
+}

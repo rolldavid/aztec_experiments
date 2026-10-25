@@ -179,3 +179,35 @@ for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])test(`${asset} r
  await both.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false);
  held.resolve();await assert.rejects(result,{code:'AGGREGATE_PUBLIC_READ_FAILED'});assert.equal(count,2);
 });
+
+for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]])for(const failure of [null,'eth_chainId','anchor','pending'])test(`${asset} fresh quote-state wave overlaps and drains ${failure??'success'}`,{timeout:3000},async()=>{
+ const options={},f=make(options),quote=await f.prepare(),original=f.provider.request,held=deferred(),started=deferred();let calls=[],done=false;
+ f.provider.request=call=>{
+  const key=call.method==='eth_chainId'?'eth_chainId':call.params[0]==='pending'?'pending':'anchor';calls.push(key);if(calls.length===3)started.resolve();
+  if(key===failure)throw Error('controlled read failure');
+  return held.promise.then(()=>original(call));
+ };
+ const checking=validateAggregateFundingQuote(quote);checking.then(()=>{done=true;},()=>{done=true;});
+ await started.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(done,false);assert.deepEqual(calls,['eth_chainId','anchor','pending']);
+ held.resolve();if(failure)await assert.rejects(checking,{code:'AGGREGATE_PUBLIC_READ_FAILED'});else await checking;
+ // Every later boundary must read again and reject newly expired execution state.
+ f.provider.request=original;options.pendingTime=1901;await assert.rejects(validateAggregateFundingQuote(quote),{code:'AGGREGATE_STALE_QUOTE'});
+});
+for(const failure of [false,true])test(`USDC post-plan authority wave shares numbered anchor and drains: ${failure}`,{timeout:3000},async()=>{
+ const f=usdcFixture(),original=f.provider.request,held=deferred(),started=deferred(),names=[];let done=false,entered=false,lateFence=false;
+ const token=new Interface(['function balanceOf(address) view returns(uint256)','function authorizationState(address,bytes32) view returns(bool)']);
+ f.provider.request=call=>{
+  let name;if(call.method==='eth_getBalance')name='relay';else if(call.method==='eth_call'){
+   if(call.params[0].to===f.input.scope.router&&r.parseTransaction(call.params[0]).name==='usdcAuthorizationNonce')name='nonce';
+   else if(call.params[0].to===f.input.scope.bokToken){const parsed=token.parseTransaction(call.params[0]);if(parsed)name=parsed.name;}
+  }
+  if(!name){if(entered&&call.method==='eth_getBlockByNumber'&&call.params[0]==='0x10')lateFence=true;return original(call);}
+  entered=true;names.push(name);if(names.length===4)started.resolve();
+  assert.equal(call.params[1],name==='relay'?'latest':'0x10');
+  if(failure&&name==='nonce')throw Error('controlled nonce read failure');
+  return held.promise.then(()=>original(call));
+ };
+ const preparing=f.prepare();preparing.then(()=>{done=true;},()=>{done=true;});await started.promise;await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(done,false);assert.equal(lateFence,false);assert.deepEqual(names,['nonce','authorizationState','balanceOf','relay']);held.resolve();
+ if(failure)await assert.rejects(preparing,{code:'AGGREGATE_PUBLIC_READ_FAILED'});else{await preparing;assert.equal(lateFence,true);}
+});

@@ -41,10 +41,17 @@ async function pendingTime(request,anchor){
  check(time>=BigInt(anchor.timestamp),'PUBLIC_READ_FAILED');return time;
 }
 async function validState(request,preparation,strict){
- check(quantity(await request('eth_chainId',[]))===BigInt(preparation.scope.chainId),'CHAIN');
- const anchor=preparation.quoteAnchor,current=blockSnapshot(await request('eth_getBlockByNumber',[anchor.number,false]));
+ const anchor=preparation.quoteAnchor;
+ // Each signature/simulation/send boundary still checks fresh state. Its
+ // independent reads share one drained wave, not a cross-boundary cache.
+ const [chain,current,time]=await together([
+  ()=>request('eth_chainId',[]),
+  async()=>blockSnapshot(await request('eth_getBlockByNumber',[anchor.number,false])),
+  ()=>pendingTime(request,anchor),
+ ]);
+ check(quantity(chain)===BigInt(preparation.scope.chainId),'CHAIN');
  check(current.number===anchor.number&&current.hash===anchor.hash&&current.timestamp===anchor.timestamp,'QUOTE_REORG');
- const time=await pendingTime(request,anchor),deadline=BigInt(preparation.plan.deadline);
+ const deadline=BigInt(preparation.plan.deadline);
  check(strict?time>BigInt(preparation.plan.validAfter)&&time<deadline:time<=deadline,'STALE_QUOTE');
 }
 async function simulate(request,preparation,transaction,strict){
@@ -193,11 +200,13 @@ export async function prepareAggregateUsdcFunding(input,{provider}={}) {
     nonce,validAfter,deadline,relayFeeUsdc:relay.feeUsdc,authorizationSalt:a.authorizationSalt};
   const planHash=keccak256(AbiCoder.defaultAbiCoder().encode([usdcTuple],[plan]));
   const authorizationNonce=keccak256(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32'],[encodeBytes32String('ROLLING_USDC_FUNDING_V1'),s.chainId,s.router,planHash]));
-  check((await call(s.router,router,'usdcAuthorizationNonce',[plan]))[0]===authorizationNonce,'SCOPE');
-  check((await call(s.bokToken,usdcAbi,'authorizationState',[w.address,authorizationNonce]))[0]===false,'AUTHORIZATION_SPENT');
   const maximumUsdc=(BigInt(collateral.maxUsdc)+BigInt(fee.maxUsdc)+BigInt(a.bokAmount)+BigInt(relay.feeUsdc)).toString();
-  check((await call(s.bokToken,usdcAbi,'balanceOf',[w.address]))[0]>=BigInt(maximumUsdc),'INSUFFICIENT_USER_FUNDS');
-  check(quantity(await request('eth_getBalance',[relay.address,'latest']))>=BigInt(relay.gasBudgetWei),'RELAY_GAS_REQUIRED');
+  await together([
+   async()=>check((await call(s.router,router,'usdcAuthorizationNonce',[plan]))[0]===authorizationNonce,'SCOPE'),
+   async()=>check((await call(s.bokToken,usdcAbi,'authorizationState',[w.address,authorizationNonce]))[0]===false,'AUTHORIZATION_SPENT'),
+   async()=>check((await call(s.bokToken,usdcAbi,'balanceOf',[w.address]))[0]>=BigInt(maximumUsdc),'INSUFFICIENT_USER_FUNDS'),
+   async()=>check(quantity(await request('eth_getBalance',[relay.address,'latest']))>=BigInt(relay.gasBudgetWei),'RELAY_GAS_REQUIRED'),
+  ]);
   const current=blockSnapshot(await request('eth_getBlockByNumber',[tag,false]));check(current.hash===block.hash&&current.timestamp===block.timestamp,'QUOTE_REORG');
   const consent={domain:{name:'RollingCollateral',version:'1',chainId:s.chainId,verifyingContract:s.collateralPortal},types:collateralConsentTypes,value:{beneficiary:w.address,executor:s.router,amount:a.collateralWei,secretHash:a.collateralSecretHash,nonce,deadline}};
   const authorization={domain,types:usdcAuthorizationTypes,value:{from:w.address,to:s.router,value:maximumUsdc,validAfter,validBefore:deadline,nonce:authorizationNonce}};

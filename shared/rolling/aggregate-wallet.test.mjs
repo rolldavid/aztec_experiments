@@ -920,3 +920,32 @@ for(const mode of ['hash','no-hash','malformed'])test(`aggregate USDC submission
  if(mode==='malformed')await assert.rejects(work,{code:'ROLLING_FUNDING_RELAY_SCOPE'});else assert.equal((await work).pending,true);
  if(checked)await checked;assert.equal(calls,mode==='hash'?1:0);assert.equal(f.state.posts,1);
 });
+
+for(const mode of ['success','wrong-request','wrong-block','context-change'])test(`USDC reconciliation captures one exact transaction and preserves fresh authority: ${mode}`,async()=>{
+ const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();
+ let txReads=0,receiptReads=0,codeReads=0,blockReads=0;const getTx=f.options.provider.getTransaction,getReceipt=f.options.provider.getTransactionReceipt,getBlock=f.options.provider.getBlock,getCode=f.options.provider.getCode;
+ if(mode==='wrong-request')f.state.usdcTx.data='0x1234';
+ f.options.provider.getTransaction=async hash=>{txReads++;return getTx(hash);};
+ f.options.provider.getTransactionReceipt=async hash=>{receiptReads++;if(mode==='context-change')f.state.invalid=true;return getReceipt(hash);};
+ f.options.provider.getBlock=async number=>{blockReads++;const block=await getBlock(number);return mode==='wrong-block'?{...block,hash:h(999)}:block;};
+ f.options.provider.getCode=async(...args)=>{codeReads++;return getCode(...args);};
+ if(mode==='success'){
+  await app.recover();assert.equal(codeReads,1);assert.equal(blockReads,2);assert.equal(receiptReads,1);assert.equal(txReads,1);
+  await app.recover();assert.equal(txReads,2,'No reuse across separate recovery operations');
+ }else await assert.rejects(app.recover());
+ assert.equal(txReads,mode==='success'?2:1);assert.equal(f.state.posts,1);assert.equal(f.state.sends,0);
+});
+test('USDC immutable transaction snapshot is detached before the receipt await',async()=>{
+ const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();const receipt=f.options.provider.getTransactionReceipt;
+ f.options.provider.getTransactionReceipt=async hash=>{f.state.usdcTx.nonce=99;f.state.usdcTx.data='0x1234';return receipt(hash);};
+ const result=await app.recover();assert.equal(result.receipt.nonce,'42');assert.equal(f.state.posts,1);
+});
+test('USDC confirmation retains all five fresh state boundaries and exact signed simulation',async()=>{
+ const f=usdcWalletFixture(),app=await f.open();await app.prepare(f.allocation);const send=f.options.provider.send,calls=[];
+ f.options.provider.send=async(method,params)=>{calls.push({method,params,signatures:f.state.signatures});return send(method,params);};
+ await app.confirm();
+ assert.deepEqual(calls.filter(x=>x.method==='eth_chainId').map(x=>x.signatures),[0,1,2,2,2]);
+ for(const tag of ['0x10','pending'])assert.equal(calls.filter(x=>x.method==='eth_getBlockByNumber'&&x.params[0]===tag).length,5);
+ const simulations=calls.filter(x=>x.method==='eth_call'&&x.params[1]==='pending');assert.equal(simulations.length,1);assert.equal(simulations[0].signatures,2);
+ assert.equal(simulations[0].params[0].data,f.state.usdcTx.data);assert.equal(f.state.posts,1);
+});

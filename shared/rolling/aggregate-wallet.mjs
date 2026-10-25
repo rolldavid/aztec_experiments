@@ -199,7 +199,15 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   if(lookupHash!==undefined&&(!tx||tx.hash?.toLowerCase()!==hash||tx.from?.toLowerCase()!==request.from||tx.to?.toLowerCase()!==request.to||tx.data?.toLowerCase()!==request.data||String(tx.chainId)!==request.chainId||String(tx.value)!==request.value))return null;
   check(tx&&tx.hash?.toLowerCase()===hash&&Number.isSafeInteger(tx.nonce)&&tx.nonce>=0,'PENDING');
   const intent={...request,nonce:tx.nonce};
-  const verified=await read(()=>sdk.verifyEthereumIntentReceipt(provider,intent,hash));
+  // The nonce lookup already returned this exact hash. Detach only immutable
+  // transaction fields for this verification; receipt, code and canonical block
+  // remain fresh and the ordinary verifier still checks the complete request.
+  const transaction=Object.freeze(Object.fromEntries(['hash','from','to','nonce','chainId','data','value'].map(key=>[key,tx[key]])));
+  const receiptProvider={
+   getTransaction:async requested=>{check(requested===hash,'MISMATCH');return transaction;},
+   ...Object.fromEntries(['getTransactionReceipt','getBlock','getCode'].map(name=>[name,provider[name].bind(provider)])),
+  };
+  const verified=await read(()=>sdk.verifyEthereumIntentReceipt(receiptProvider,intent,hash,read));
   if(verified&&verified.outcome!=='success'&&!(allowReverted&&verified.outcome==='reverted'))throw fail(verified.outcome==='reverted'?'REVERTED':'MISMATCH');
   check(verified,'PENDING');
   if(value.intent)original(saved,intent);

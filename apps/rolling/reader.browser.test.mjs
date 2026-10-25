@@ -763,9 +763,12 @@ test('public feed hydrates saved choices once and never guesses unknown preferen
  await page.locator('#post-1 .post-more > summary').click();await bookmark().click();await page.waitForFunction(()=>window.inlineCalls===1);assert.deepEqual(await page.evaluate(()=>window.inlineAction),{type:'preference',kind:1,target:'1',enabled:false});await page.evaluate(()=>finishInline('included'));
 });
 
-for(const locked of [false,true])test(`unknown saved choice opens existing preferences retry/sign-in without sending, locked=${locked}`,async t=>{
+for(const locked of [false,true])test(`unknown saved choice delegates one inline hydration action or sign-in, locked=${locked}`,async t=>{
  const {page}=await threadRefreshFixture(t,{total:16,hydrate:true,locked}),bookmark=()=>page.locator('#post-1 [data-private-setting="Bookmark"]');
  if(!locked){await page.waitForFunction(()=>window.hydrationCalls===1);await page.evaluate(()=>finishHydration(null));await page.waitForFunction(()=>!document.querySelector('#post-1 [data-private-setting="Bookmark"]').disabled);}
- assert.equal(await bookmark().textContent(),'Bookmark');assert.equal(await bookmark().isDisabled(),false);await page.locator('#post-1 .post-more > summary').click();await bookmark().click();await page.waitForFunction(()=>window.privateOpen?.view==='preferences');assert.equal(await page.evaluate(()=>window.inlineCalls??0),0);
+ assert.equal(await bookmark().textContent(),'Bookmark');assert.equal(await bookmark().isDisabled(),false);await page.locator('#post-1 .post-more > summary').click();await bookmark().click();
+ if(locked){await page.waitForFunction(()=>window.privateOpen?.view==='preferences');assert.equal(await page.evaluate(()=>window.inlineCalls??0),0);}
+ else{await page.waitForFunction(()=>window.inlineCalls===1);assert.equal(await page.evaluate(()=>window.privateOpen),undefined);assert.deepEqual(await page.evaluate(()=>window.inlineAction),{type:'preference',kind:1,target:'1',enabled:undefined});assert.equal(await bookmark().textContent(),'Saving…');assert.equal(await bookmark().isDisabled(),true);}
  await page.evaluate(()=>refreshThread());assert.equal(await page.evaluate(()=>window.hydrationCalls??0),locked?0:1,'no automatic retry loop');
+ if(!locked){assert.equal(await bookmark().textContent(),'Saving…');assert.equal(await page.evaluate(()=>window.inlineCalls),1);await page.evaluate(()=>finishInline('failed'));}
 });

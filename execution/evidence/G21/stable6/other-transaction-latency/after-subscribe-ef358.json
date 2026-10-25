@@ -1,0 +1,738 @@
+{
+  "source": "ef358ebbbd20ea1fa362b5cc1acfba53f1e28280",
+  "operation": "subscribe-thread",
+  "thread": "post-757319001480295216893947716899893587885987273029389652721016939464878164106",
+  "clickToVisibleUsableToggleMs": 33080.40499997139,
+  "click": 13588943.620000005,
+  "visible": 13622024.024999976,
+  "timeOrigin": 1792888697209.235,
+  "phaseTrace": [
+    {
+      "duration": 1326.225000023842,
+      "name": "rolling.action.sync",
+      "startTime": 13588947.809999945
+    },
+    {
+      "duration": 1038.5950000286102,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13590553.804999948
+    },
+    {
+      "duration": 592.5650000572205,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13591593.579999924
+    },
+    {
+      "duration": 246.3049999475479,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "startTime": 13592313.774999976
+    },
+    {
+      "duration": 0.3049999475479126,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13592575.779999971
+    },
+    {
+      "duration": 1021.5299999713898,
+      "name": "rolling.proof.native.phase.sync-records",
+      "startTime": 13592560.095000029
+    },
+    {
+      "duration": 1019.3400000333786,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13592562.264999986
+    },
+    {
+      "duration": 1421.2300000190735,
+      "name": "rolling.action.contract-state",
+      "startTime": 13592313.029999971
+    },
+    {
+      "duration": 916.9900000095367,
+      "name": "rolling.action.predecessor",
+      "startTime": 13593734.389999986
+    },
+    {
+      "duration": 0.3500000238418579,
+      "name": "rolling.action.arguments",
+      "startTime": 13594651.51999998
+    },
+    {
+      "duration": 249.37000000476837,
+      "name": "rolling.action.fee-metadata",
+      "startTime": 13594651.725000024
+    },
+    {
+      "duration": 252.87999999523163,
+      "name": "rolling.action.payment-prefetch",
+      "startTime": 13594651.629999995
+    },
+    {
+      "duration": 1.4700000286102295,
+      "name": "rolling.action.fee-binding",
+      "startTime": 13594901.125
+    },
+    {
+      "duration": 2595.975000023842,
+      "name": "rolling.action.prepare",
+      "startTime": 13592313
+    },
+    {
+      "duration": 0.12999999523162842,
+      "name": "rolling.action.fee-prepare",
+      "startTime": 13594933.309999945
+    },
+    {
+      "duration": 11.72000002861023,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13594935.179999948
+    },
+    {
+      "duration": 14.06500005722046,
+      "name": "rolling.action.fee-simulate",
+      "startTime": 13594933.454999924
+    },
+    {
+      "duration": 13.445000052452087,
+      "name": "rolling.action.fee-balance",
+      "startTime": 13594933.799999952
+    },
+    {
+      "duration": 36.079999923706055,
+      "name": "rolling.transaction.estimating",
+      "startTime": 13594933.254999995
+    },
+    {
+      "duration": 0.2049999237060547,
+      "name": "rolling.transaction.submitting",
+      "startTime": 13594969.345000029
+    },
+    {
+      "duration": 37.46000003814697,
+      "name": "rolling.transaction.preparing",
+      "startTime": 13594969.549999952
+    },
+    {
+      "duration": 1.7200000286102295,
+      "name": "rolling.proof.wallet.phase.account-request",
+      "startTime": 13595006.944999931
+    },
+    {
+      "duration": 1.055000066757202,
+      "name": "rolling.proof.native.phase.queue-and-anchor",
+      "startTime": 13595008.794999955
+    },
+    {
+      "duration": 41.11500000953674,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13595029.299999952
+    },
+    {
+      "duration": 101.46000003814696,
+      "name": "rolling.proof.native.phase.private-execution",
+      "startTime": 13595009.909999968
+    },
+    {
+      "duration": 96.74000000953674,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13595012.579999924
+    },
+    {
+      "duration": 29.539999961853027,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13595075.63499999
+    },
+    {
+      "duration": 0.6550000905990601,
+      "name": "rolling.proof.native.phase.kernel-class-hints",
+      "startTime": 13595111.579999924
+    },
+    {
+      "duration": 0.33500003814697266,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "startTime": 13595120.664999962
+    },
+    {
+      "duration": 9.355000019073486,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "startTime": 13595121.014999986
+    },
+    {
+      "duration": 141.3550000190735,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "startTime": 13595130.389999986
+    },
+    {
+      "duration": 20.759999990463257,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "startTime": 13595271.764999986
+    },
+    {
+      "duration": 0.5349999666213989,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "startTime": 13595292.549999952
+    },
+    {
+      "duration": 2.494999885559082,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "startTime": 13595293.090000032
+    },
+    {
+      "duration": 0.11500000953674316,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "startTime": 13595360.495000005
+    },
+    {
+      "duration": 12.324999928474426,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "startTime": 13595360.620000005
+    },
+    {
+      "duration": 171.66500008106232,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "startTime": 13595372.95999992
+    },
+    {
+      "duration": 33.325000047683716,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "startTime": 13595544.64499998
+    },
+    {
+      "duration": 0.5199999809265137,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "startTime": 13595577.995000005
+    },
+    {
+      "duration": 5.439999938011169,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "startTime": 13595578.51999998
+    },
+    {
+      "duration": 0.125,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "startTime": 13595584.33499992
+    },
+    {
+      "duration": 5.0299999713897705,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "startTime": 13595584.465000032
+    },
+    {
+      "duration": 7.875,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "startTime": 13595589.504999995
+    },
+    {
+      "duration": 8.315000057220459,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "startTime": 13595597.399999976
+    },
+    {
+      "duration": 495.1749999523163,
+      "name": "rolling.proof.native.phase.kernel-body",
+      "startTime": 13595112.235000014
+    },
+    {
+      "duration": 0.3799999952316284,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "startTime": 13595605.735000014
+    },
+    {
+      "duration": 0.2200000286102295,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "startTime": 13595606.120000005
+    },
+    {
+      "duration": 12.105000019073486,
+      "name": "rolling.proof.native.phase.validation-transaction",
+      "startTime": 13595609.404999971
+    },
+    {
+      "duration": 334.0149999856949,
+      "name": "rolling.proof.native.phase.validation",
+      "startTime": 13595607.424999952
+    },
+    {
+      "duration": 319.8550000190735,
+      "name": "rolling.proof.native.phase.public-execution",
+      "startTime": 13595621.549999952
+    },
+    {
+      "duration": 318.9850000143051,
+      "name": "rolling.proof.native.phase.admission-check",
+      "startTime": 13595622.404999971
+    },
+    {
+      "duration": 0.7900000810623169,
+      "name": "rolling.proof.transport.circuit-ids",
+      "startTime": 13595941.454999924
+    },
+    {
+      "duration": 12.049999952316284,
+      "name": "rolling.proof.transport.dictionary",
+      "startTime": 13595942.25
+    },
+    {
+      "duration": 17.175000071525574,
+      "name": "rolling.proof.transport.serialize",
+      "startTime": 13595941.449999928
+    },
+    {
+      "duration": 4.275000095367432,
+      "name": "rolling.proof.transport.compress",
+      "startTime": 13595954.314999938
+    },
+    {
+      "duration": 810.1050000190735,
+      "name": "rolling.proof.transport.submit",
+      "startTime": 13595958.629999995
+    },
+    {
+      "duration": 2836.9150000810623,
+      "name": "rolling.proof.transport.wait",
+      "startTime": 13596768.824999928
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.persist",
+      "startTime": 13599605.424999952
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.queue-wait",
+      "startTime": 13599605.449999928
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready",
+      "startTime": 13599605.454999924
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.read",
+      "startTime": 13599605.454999924
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.decompress",
+      "startTime": 13599605.45999992
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.binding",
+      "startTime": 13599605.45999992
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.backend",
+      "startTime": 13599605.465000032
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.native-prove",
+      "startTime": 13599605.465000032
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-start",
+      "startTime": 13599605.465000032
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-load",
+      "startTime": 13599605.475000024
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-accumulate",
+      "startTime": 13599605.475000024
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-prove",
+      "startTime": 13599605.475000024
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-verify",
+      "startTime": 13599605.48000002
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-compress",
+      "startTime": 13599605.48000002
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-encode",
+      "startTime": 13599605.485000014
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.child-total",
+      "startTime": 13599605.485000014
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.ready-wait",
+      "startTime": 13599605.485000014
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.dispatch-to-result",
+      "startTime": 13599605.49000001
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready-to-snapshot",
+      "startTime": 13599605.495000005
+    },
+    {
+      "duration": 5.715000033378601,
+      "name": "rolling.proof.local.decompress",
+      "startTime": 13599606.76999998
+    },
+    {
+      "duration": 3793.5350000858302,
+      "name": "rolling.proof.native.phase.remote-proof",
+      "startTime": 13595941.439999938
+    },
+    {
+      "duration": 118.86500000953674,
+      "name": "rolling.proof.local.verify",
+      "startTime": 13599612.495000005
+    },
+    {
+      "duration": 0.31999993324279785,
+      "name": "rolling.proof.native.phase.proof-public-inputs",
+      "startTime": 13599734.995000005
+    },
+    {
+      "duration": 13.264999985694883,
+      "name": "rolling.proof.native.phase.result-and-tag-persistence",
+      "startTime": 13599735.36500001
+    },
+    {
+      "duration": 4742.314999938011,
+      "name": "rolling.proof.wallet.phase.prove-tx-with-public-validation",
+      "startTime": 13595008.715000032
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.total",
+      "startTime": 13599751.074999928
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.sync",
+      "startTime": 13599751.079999924
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.private-witness",
+      "startTime": 13599751.079999924
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.kernel-witness",
+      "startTime": 13599751.08499992
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.public-validation",
+      "startTime": 13599751.090000032
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.proof-transport",
+      "startTime": 13599751.090000032
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.unaccounted",
+      "startTime": 13599751.090000032
+    },
+    {
+      "duration": 11.984999895095823,
+      "name": "rolling.proof.wallet.phase.to-tx",
+      "startTime": 13599751.090000032
+    },
+    {
+      "duration": 0.03000009059906006,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "startTime": 13599763.08499992
+    },
+    {
+      "duration": 15.80999994277954,
+      "name": "rolling.proof.wallet.phase.guard-before-journal",
+      "startTime": 13599763.129999995
+    },
+    {
+      "duration": 35.12999999523163,
+      "name": "rolling.proof.wallet.phase.journal-prepare",
+      "startTime": 13599778.954999924
+    },
+    {
+      "duration": 4826.075000047684,
+      "name": "rolling.transaction.proving",
+      "startTime": 13595007.01999998
+    },
+    {
+      "duration": 18.84499990940094,
+      "name": "rolling.proof.wallet.phase.journal-signed",
+      "startTime": 13599814.110000014
+    },
+    {
+      "duration": 0.0549999475479126,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "startTime": 13599832.985000014
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "startTime": 13599833.039999962
+    },
+    {
+      "duration": 7.835000038146973,
+      "name": "rolling.proof.wallet.phase.signed-guard",
+      "startTime": 13599833.069999931
+    },
+    {
+      "duration": 416.2699999809265,
+      "name": "rolling.transaction.submitting",
+      "startTime": 13599833.100000024
+    },
+    {
+      "duration": 408.3700000047684,
+      "name": "rolling.proof.wallet.phase.submit-to-aztec",
+      "startTime": 13599840.924999952
+    },
+    {
+      "duration": 231.9450000524521,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13600249.549999952
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13600481.51999998
+    },
+    {
+      "duration": 238.9300000667572,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13601483.669999955
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13601722.620000005
+    },
+    {
+      "duration": 271.2549999952316,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13602723.899999976
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13602995.220000029
+    },
+    {
+      "duration": 237.52499997615817,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13603998.184999945
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13604235.75999999
+    },
+    {
+      "duration": 261.710000038147,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13605237.954999924
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13605499.684999945
+    },
+    {
+      "duration": 236.4099999666214,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13606500.725000024
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13606737.154999971
+    },
+    {
+      "duration": 243.0699999332428,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13607739.504999995
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13607982.600000024
+    },
+    {
+      "duration": 256.02499997615814,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13608985.514999986
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13609241.559999945
+    },
+    {
+      "duration": 243.37000000476837,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13610244.125
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13610487.514999986
+    },
+    {
+      "duration": 253.80000007152557,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13611489.179999948
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13611743.004999995
+    },
+    {
+      "duration": 244.4449999332428,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13612745.139999986
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13612989.610000014
+    },
+    {
+      "duration": 241.20000004768372,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13613990.649999976
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13614231.995000005
+    },
+    {
+      "duration": 276.9950000047684,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13615234.689999938
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.pending",
+      "startTime": 13615511.70999992
+    },
+    {
+      "duration": 16507.740000009537,
+      "name": "rolling.transaction.aztec-inclusion",
+      "startTime": 13600249.319999931
+    },
+    {
+      "duration": 242.875,
+      "name": "rolling.proof.receipt.phase.read",
+      "startTime": 13616513.879999995
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.proposed",
+      "startTime": 13616756.779999971
+    },
+    {
+      "duration": 1.899999976158142,
+      "name": "rolling.proof.receipt.phase.display-callback",
+      "startTime": 13616756.899999976
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.action.included",
+      "startTime": 13616757.879999995
+    },
+    {
+      "duration": 22655.81000006199,
+      "name": "rolling.action.submit",
+      "startTime": 13594909.789999962
+    },
+    {
+      "duration": 17318.78499996662,
+      "name": "rolling.transaction.confirming",
+      "startTime": 13600249.370000005
+    },
+    {
+      "duration": 474.1650000810623,
+      "name": "rolling.preference.readiness",
+      "startTime": 13617571.304999948
+    },
+    {
+      "duration": 962.875,
+      "name": "rolling.preference.sync",
+      "startTime": 13618046.039999962
+    },
+    {
+      "duration": 237.42500007152557,
+      "name": "rolling.preference.anchor",
+      "startTime": 13619008.929999948
+    },
+    {
+      "duration": 254.8099999427795,
+      "name": "rolling.preference.class",
+      "startTime": 13619246.375
+    },
+    {
+      "duration": 980.5649999380112,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13619504.590000032
+    },
+    {
+      "duration": 487.13499999046326,
+      "name": "rolling.proof.native.phase.circuit",
+      "startTime": 13620486.909999968
+    },
+    {
+      "duration": 1826.6849999427795,
+      "name": "rolling.preference.head",
+      "startTime": 13619246.370000005
+    },
+    {
+      "duration": 1.4950000047683716,
+      "name": "rolling.preference.events",
+      "startTime": 13621309.304999948
+    },
+    {
+      "duration": 230.86000001430511,
+      "name": "rolling.preference.canonical-fence",
+      "startTime": 13621553.204999924
+    },
+    {
+      "duration": 5.9100000858306885,
+      "name": "rolling.preference.persist",
+      "startTime": 13621784.074999928
+    }
+  ],
+  "measureOverflow": false,
+  "matchedBaseline": false,
+  "limitations": [
+    "This timed transaction starts with known preferences. Earlier unknown-state click opened a saved-items dialog and sent no transaction; that separate UX defect is fixed in the next source candidate.",
+    "Native inclusion was16.508s in this observation."
+  ],
+  "freshNativeProofFixture": {
+    "privateFixtureRetainedOutsideGit": true,
+    "bytes": 114384,
+    "catalogCircuits": 6,
+    "allCurrentCatalog": true
+  }
+}

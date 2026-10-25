@@ -86,7 +86,7 @@ function socialButton(label,action,attrs={}){
  // The target identity excludes the toggle value: a rerender must not offer
  // its inverse while this exact target's previous operation still owns it.
  const target=action(),key=JSON.stringify([target.type,target.post??null,target.kind??null,target.target??null,target.thread??null]);
- const node=button(label,()=>{if(attrs['data-private-setting']&&typeof action().enabled!=='boolean'){void openWallet({view:'preferences'});return;}void inlineActions.run(key,action);},{...attrs,'data-inline-action':key});
+ const node=button(label,()=>{if(attrs['data-private-setting']&&typeof action().enabled!=='boolean'&&(privatePanel?.privateStatus?.()??'locked')==='locked'){void openWallet({view:'preferences'});return;}void inlineActions.run(key,action);},{...attrs,'data-inline-action':key});
  node.renderInlineAction=({state,captured,result},notify=false)=>{
   feedback?.remove();feedback=null;
   node.disabled=['pending','unknown'].includes(state)||state==='included'&&!result;
