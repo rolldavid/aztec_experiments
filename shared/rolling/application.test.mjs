@@ -3075,8 +3075,8 @@ for(const type of ['preference','read-marker'])test(`removed on-chain ${type} ac
 });
 
 
-test('synchronized status ignores only completed ordinary history and still discovers actual native state',async()=>{
- const f=fixture(),intent=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(intent.intentId);
+for(const phase of ['included','confirmed'])test('synchronized status ignores only completed ordinary history and still discovers actual native state: '+phase,async()=>{
+ const f=phase==='included'?proposedFixture():fixture(),intent=await f.app.prepare({type:'like',post:'5'});assert.equal((await f.app.submitPrepared(intent.intentId)).status,phase);
  const scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
  let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
  const app=f.restart(),before=[...f.values.entries()],reads=f.state.privateReads.length;
@@ -3188,4 +3188,15 @@ for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'na
  await entered.promise;if(change==='scope')scope={synchronized:true};else owner.contractStateReady=Promise.resolve();
  predecessor.resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false,'the original discovery barrier still owns the wait');assert.equal(f.values.size,0);assert.equal(f.state.privateReads.length,0);
  discovery.resolve();await result;assert.equal(f.values.size,0);assert.equal(f.state.privateReads.length,0);assert.equal(f.state.sends,0);
+});
+
+for(const nativeState of ['missing-collateral','missing-credit'])test('included ordinary history never supplies rolled-back native state: '+nativeState,async()=>{
+ const f=proposedFixture(),intent=await f.app.prepare({type:'like',post:'5'});assert.equal((await f.app.submitPrepared(intent.intentId)).status,'included');
+ const scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
+ if(nativeState==='missing-collateral')f.state.responses={get_deposit_ids:Array(10).fill(0n)};
+ else f.options.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('no native credit'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
+ const current=f.restart(),before=[...f.values],status=await current.readAccountStatus();
+ assert.equal(status.status,nativeState==='missing-collateral'?'collateral-pending':'fee-needed');assert.equal(inspections,0);assert.deepEqual([...f.values],before);
+ await assert.rejects(current.prepare({type:'like',post:'6'}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(inspections,1);assert.equal(f.state.sends,1);
 });

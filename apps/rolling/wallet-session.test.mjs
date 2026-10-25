@@ -115,6 +115,7 @@ async function sessionFixture({chainId='31337'}={}){
  const pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{held('claim-membership');throw Error('fixture claim adapter must supply membership');}},registerAccount:async()=>{held('register-account');state.registrations++;if(state.failRegister)throw Error('registration failed');},registerContractClass:async()=>{held('register-class');},registerContract:async()=>{held('register-contract');},
   initializeSchnorrAccount:async(owner,key,{contextGuard})=>{held('signing-capsule');assert.equal(String(owner),account.address);assert.equal((await accountContract.getImmutablesHash()).toString(),(await poseidon2Hash([key.x,key.y])).toString());await contextGuard();},
   sync:async()=>{held('sync');state.syncs++;if(state.waitSync)await state.waitSync;if(state.failSync)throw Error('sync failed');},
+  syncForAccountStatus:async board=>{assert.equal(String(board),f.options.config.board.contractAddress);await pxe.sync();},
   prepareBoardActionState:async targets=>{held('board-state');assert.deepEqual(Object.fromEntries(Object.entries(targets).map(([key,value])=>[key,['owner','board','privateFee'].includes(key)?String(value):value])),{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress,method:targets.method});state.boardStateMethod=targets.method;if(state.waitBoardState)await state.waitBoardState;if(state.failBoardState)throw Error('board state failed');},
   prepareOrdinaryPostState:async targets=>{held('ordinary-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress});if(state.waitOrdinaryState)await state.waitOrdinaryState;if(state.failOrdinaryState)throw Error('ordinary state failed');},
   getSyncedBlockHeader:async()=>{held('preference-header');return {globalVariables:{blockNumber:10},hash:async()=>BlockHash.fromString(hex(55))};},
@@ -1729,4 +1730,16 @@ for(const phase of ['before','sync','discovery','witness'])test('composer supers
   if(phase!=='before'){await entered.promise;controller.abort();await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.state.active,true);await assert.rejects(session.application.ownedIdentities(),{code:'ROLLING_BUSY'});gate.resolve();}
   await work;assert.equal(f.state.active,false);assert.equal(f.state.sends,0);assert.equal(discoveries,['discovery','witness'].includes(phase)?1:0);assert.equal(witnesses,phase==='witness'?1:0);
  }finally{gate.resolve();await session.close();}
+});
+
+for(const changed of [false,true])test('owned names use exact Board public sync under the actual account lease, changed='+changed,async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input),entered=Promise.withResolvers(),held=Promise.withResolvers();let warmed=0,discovered=0;
+ const at=f.input.sdk.Contract.at;
+ f.input.sdk.Contract.at=(...args)=>{const contract=at(...args),method=contract.methods.owned_name_records;contract.methods.owned_name_records=(...values)=>{discovered++;return method(...values);};return contract;};
+ f.pxe.syncForAccountStatus=async board=>{assert.equal(f.state.active,true);assert.equal(String(board),f.input.config.board.contractAddress);warmed++;entered.resolve();await held.promise;};
+ const run=session.application.ownedIdentities({cursor:0}),result=run.then(value=>({value}),error=>({error}));await entered.promise;
+ assert.equal(session.busy,true);assert.equal(discovered,0);if(changed)f.state.wrongPXE=true;held.resolve();const out=await result;
+ assert.equal(warmed,1);assert.equal(f.state.syncs,0,'only the existing native Board sync runs');
+ if(changed){assert.equal(out.error.code,'ROLLING_PRIVATE_ROUTE');assert.equal(discovered,0);f.state.wrongPXE=false;}else{assert.equal(out.error,undefined);assert.equal(discovered,1);assert(Array.isArray(out.value.identities));}
+ await session.close();
 });

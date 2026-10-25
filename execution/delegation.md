@@ -1,3 +1,10 @@
+# Active continuation —26 October2026
+
+- Root: f986 static publication, exact normal-opening and real Post/Unlike measurements; one retained build and IAB. Source integration and live writes serialized.
+- pending_reply_ui: source-only native artifact serialization optimization; preserve byte identity, mutation fences and stored-artifact validation.
+- private_tips: source-only owned-name refresh overlap using existing exact-anchor native warmup.
+- pending_feed_release: independent reviews of both drafts. No agent browser or infrastructure mutations.
+
 # Active two-second opening architecture —25 October2026
 
 - Root: lightweight runtime/custody, panel integration, build/publication and actual measurement.

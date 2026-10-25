@@ -8,8 +8,9 @@ Bookmarks and follows moved off-chain in `bbf76d92`; conversation read state is 
 
 | Flow and release | Latest recorded endpoint | Comparison and qualification |
 |---|---|---|
-| Like, `fb61925c` |43.075745s click→included visible count;31.721330s was inclusion wait | Historical baseline56.933s is action return, not the same visible-count endpoint. No matched50% result. Unlike still needs current-flow evidence. |
-| Register name, `fb61925c` |23.029425s Create→new owned name selected | Historical106.844s also includes selectable-name feedback, but network/account fixtures differ. Lower observed time does not establish a controlled50% result for all identity/profile actions. |
+| Like, `a75bd5b7` |12.547165s click→native inclusion and visible count | Earlier fb61943.075745s uses same endpoint but different state/network; goal-start56.933s is canonical action return. Current observed speedup does not establish all-flow50%. Unlike now measured13.909s; no goal-start matched Unlike baseline exists. |
+| Unlike, `f9865f2d` |13.909000s click→native inclusion and visible count0 | Transaction0x1ea9af5800fca51653e57f2d52ed57d99f84c77999822f37eb328eeeba4ea8d5; block5254/hash0x191bde9c889ec03b2810f48e80f4e54133fd49d9c8b088bccd6250d0f0959f5b. No matched historical baseline; do not invent a50% result. |
+| Register name, `a75bd5b7` |17.543705s Create→new owned name selected | Historical106.844s also includes selectable-name feedback, but network/account fixtures differ. Lower observed time does not establish a controlled50% result for all identity/profile actions. |
 | ETH signup, `fb61925c` |58.075380s Confirm payment→enabled Write a post | Same endpoint was52.501800s on `0d23da65`; automatic wallet approvals and network waits are included. No improvement in these observations. Claim changes published in `8ae95b3d` have not had a new full-payment measurement. |
 | ETH-to-Bok funding, `f0dc` |39.222685s Pay→usable credit after native inclusion | Older165.094s baseline contains unmeasured wallet/tool dwell; not a matched50% denominator. A current-release full-flow run is missing. |
 | Bok request, `30fb` |43.754055s click→included visible request | Generated reply and app usability are separate required endpoints. Older reply evidence includes offscreen DOM insertion and unmeasured observer attachment; a current matched visible-response run is missing. |
@@ -34,6 +35,10 @@ Baseline UI: `74c2142c08b6a9cdeabefe6e46ebfa5ec4578836`. Baseline source: `ac27c
 Record click, preparation, fee work, private execution, kernel witness construction, public validation, proof transport/native proving, submission, actual Aztec inclusion, rendered effect, checkpoint, and required private-state refresh separately. Ethereum flows additionally record wallet response time, mined receipt and bridge-message usability. Withdrawal availability depends on native cooldown and proven Outbox membership; report these waits explicitly.
 
 An earlier pending display does not establish faster canonical settlement or spendable funds. A trace ending at inclusion cannot establish completion of a bridge claim. Match action shape, payload size, credit availability, account readiness and note fragmentation. Preserve unsuccessful and slow runs. Repeat comparisons across network inclusion phases.
+
+## Next reviewed source batch
+
+Owned-name refresh warms the existing exact-anchor Board class/initialization reads during its fresh native synchronization; actual ownership discovery remains unchanged. Account-status presentation skips the historical receipt reread for included ordinary actions, as it already did for included signup claims. Fresh native balances determine the display. Actual prepare/submit and funding authority still validate predecessor state; rollback and missing-credit cases do not obtain new send authority. Independent source review approved both changes; integrated411 session/native/wrapper checks and626 application checks pass. Publication and current-flow measurements remain outstanding; no new speedup claim from tests.
 
 ## Live flow coverage
 

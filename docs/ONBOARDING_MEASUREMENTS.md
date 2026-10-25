@@ -1,3 +1,19 @@
+## Published f986 startup and a75 posting observations
+
+Source `f9865f2dab7fec077a5661b6b652a6f3a2806195` is live and pushed to master and both application branches. Static publication succeeded without service restart. Native Board/FPC class preparation now starts during public startup, before Ethereum sign-in.
+
+| Normal funded opening | Wallet selection → enabled Write a post | Account button → same endpoint |
+|---|---:|---:|
+| First worker after latest real post | 5.224140s | 6.199870s |
+| Repeat | 3.271045s | 4.562235s |
+| Instrumented repeat | 5.065945s | 6.283190s |
+
+Same disposable test account5 and normal wallet-selection path; no explicit new-test-account shortcut. Automatic signature approval is included. Repeat2 retains endpoint evidence but no worker spans because route normalization removed the profile flag before reload. These runs do not meet2s. First run registration643ms versus a75 repeat1353ms; native class prewarm is reused. Residual artifact serialization/storage remains. Third run public deployment3072ms and fresh sync1163ms explain substantial variability; do not attribute all elapsed differences to the code change.
+
+On published a75, ordinary135-character Post took **13.992905s from click to visible included feed row and closed composer**. Native receipt: transaction `0x213d0ffed8de96dc3431df77b5c0909310c559c16a2b918171d5fc12ae5f97bb`, block5247, block hash `0x0876878e1cee7ca051b86761e09df985c32e89ad2a330025c06f8f085105bf19`. Initial visible confirmation was pending; it subsequently became confirmed automatically. This single observation meets15s, not a guaranteed latency ceiling.
+
+Raw evidence: `funded-opening-f986-run{1,2,3}.json` and `post-a75.json` in the current G21 other-transaction-latency directory. No new Ethereum funding was measured in this batch.
+
 ## Published startup and transaction reads — a75bd5b7
 
 Live UI/source `a75bd5b74094c7d6680c1ea9966246dec9671b0d`, pushed to default master and both app branches. Main browser SDK8,385,064 bytes (previous~16.6MB); six immutable native artifacts independently integrity-checked/cached, published testnet registration metadata removes repeated immutable registration reads, current native node/transaction authority remains. Like/Unlike/Name overlap independent discovery/predecessor work with exact operation/barrier captured before waiting;676 application/wrapper checks passed after race/standalone lifecycle corrections. Startup80 and inclusion27 checks plus actual worker evaluation pass. No app/proxy restart, no new infra/dependency copies; transfer archive/version cleaned.

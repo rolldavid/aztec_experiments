@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Live/pusheda75bd5b7 actualopening7.916935s cold/3.556530s cached; name17.543705s andLike12.547165s includedvisible, exactanchorssaved. Targetsallflow50%/2snotcomplete. Reviewedworker-onlyclassprewarm integratesexactnativeartifact memo atpageload;7checks+workerevalpass, nextpublication. Survivingidentity5funded; L1networkpruneconfirmedforoldrange. Rootonebuild/IAB, no service restarts, transferscleaned. SeeONBOARDING_MEASUREMENTS and correctedliveflow worklist.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Live f9865f2d; opening5.224140/3.271045/5.065945s,2s unmet; a75 Post13.992905s includedvisible, f986 Unlike13.909s block5254. Reviewed source now overlaps owned-name Board warmup and removes display-only historical receipt reread for included ordinary actions; actual admission remains fresh. Integrated411+626checks pass, awaiting bundled build/publication. Native exact-byte serializer draft ongoing. All-flow50% incomplete; one build/IAB, no service restarts, transferarchives removed.
 
 ## Ready internal work
 

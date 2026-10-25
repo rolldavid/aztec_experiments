@@ -419,7 +419,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     // determine current usability, never the saved completion label.
     const record=saved.value,owner=statusView?getOperationScope():null;
     const nativeClaimStatus=record?.action?.type==='claim-deposit'&&['included','confirmed'].includes(record.status);
-    if(owner?.synchronized===true&&(nativeClaimStatus||record?.status==='confirmed'&&
+    if(owner?.synchronized===true&&(nativeClaimStatus||['included','confirmed'].includes(record?.status)&&
       ['post','reply','quote','repost','like','unlike','name','bio','avatar','subboard'].includes(record.action?.type))&&
       !record.bok&&!record.fundingBok&&!record.bokReleaseSource&&!record.bokRequestScope&&!record.withdrawal&&!record.replacementReview&&
       !await pendingExitSummary()){

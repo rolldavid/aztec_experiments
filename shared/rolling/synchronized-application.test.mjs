@@ -289,3 +289,17 @@ for(const type of ['post','like','unlike','name'])for(const failure of ['none','
  const work=app.prepare({type},{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=failure==='none'?work:assert.rejects(work,failure==='predecessor'?/predecessor failed/:/discovery failed/);
  await started.promise;assert.equal(appStarted,true);await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await result;assert.equal(scope.contractStateReady,undefined);
 });
+
+for(const kind of ['names','unowned','other','replaced','failed'])test('owned-name warmup preserves fresh sync and operation fences: '+kind,async()=>{
+ let scope=kind==='unowned'?null:{},calls=0;const held=Promise.withResolvers(),seen=[];
+ const raw=Object.fromEntries(names.map(name=>[name,()=>{calls++;return 'native result';}]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:async options=>{seen.push(options);await held.promise;}});
+ const work=kind==='other'?app.readProfile():app.ownedIdentities({cursor:0});
+ const result=work.then(value=>({value}),error=>({error}));await new Promise(setImmediate);
+ assert.equal(calls,0);assert.equal(seen[0].ownedNames,['names','replaced','failed'].includes(kind)?true:undefined);
+ if(kind==='replaced')scope={};if(kind==='failed')held.reject(Error('sync failed'));else held.resolve();
+ const out=await result;
+ if(kind==='replaced'){assert.equal(out.error.code,'ROLLING_CONTEXT_CHANGED');assert.equal(calls,0);}
+ else if(kind==='failed'){assert.match(out.error.message,/sync failed/);assert.equal(calls,0);}
+ else{assert.equal(out.value,'native result');assert.equal(calls,1);}
+});

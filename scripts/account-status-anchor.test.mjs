@@ -82,3 +82,14 @@ test('ordinary public reads drain failed policy and preserve the actual native q
  const failed=assert.rejects(work,/policy failed/).finally(()=>ended=true);await new Promise(r=>setTimeout(r,10));const next=f.pxe.operationQueue.run(()=>{following=true;});
  await new Promise(r=>setTimeout(r,10));assert.equal(ended,false);assert.equal(following,false);f.gate.nullifier.resolve();await failed;await next;assert.equal(following,true);assert.equal(f.notes,0);
 });
+
+for(const exists of [true,false])test('native compiled owned-name records reuse public warmup without replacing ownership discovery, initialized='+exists,async()=>{
+ const f=await fixture({exists});await f.pxe.syncForAccountStatus(f.board);
+ assert.equal((await f.classRead()).toString(),profile.boardClassId);
+ if(exists){
+  await f.utility('owned_name_records');assert.equal(f.notes,1,'native owned-name note discovery still executes');
+  assert.equal(f.calls.filter(x=>x==='class').length,1);assert.equal(f.calls.filter(x=>x==='nullifier').length,1);
+  f.advance();await f.classRead();await f.utility('owned_name_records');
+  assert.equal(f.notes,2);assert.equal(f.calls.filter(x=>x==='class').length,2);assert.equal(f.calls.filter(x=>x==='nullifier').length,2,'changed anchor cannot inherit initialized status');
+ }else{await assert.rejects(f.utility('owned_name_records'),/Assertion failed/);assert.equal(f.notes,0,'absent initialization cannot reach private ownership');}
+});
