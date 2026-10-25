@@ -512,18 +512,18 @@ test('hosted recovery rejects symlink, FIFO and malformed journals without priva
 // Controlled frozen-port shape matches createPrivateBokEscrow; no chain/provider calls.
 test('hosted frozen escrow port preserves metadata and method receivers through the wallet lane',async()=>{
  const identity=Object.freeze({escrow:f(90)}),mode=Object.freeze({proofMode:'disabled'}),calls=[];
- const methods=['request','assertUsable','inspectOperation','reserve','settle','close_uncertain','reconcile','finish','publish_reply'];
+ const methods=['request','assertUsable','inspectOperation','waitForOperation','reserve','settle','close_uncertain','reconcile','finish','publish_reply','finalize_reply','replaceDroppedOperation','futureMutation'];
  const raw=Object.freeze({identity,mode,...Object.fromEntries(methods.map(method=>[method,function(...args){assert.equal(this,raw);calls.push({method,args});return method;}]))});
  let queued=0;const port=serializeHostedEscrow(raw,async fn=>{queued++;return fn();});
  assert.equal(port.identity,identity);assert.equal(port.mode,mode);
  for(const method of methods){assert.equal(port[method],port[method]);assert.equal(await port[method](1,'public'),method);}
- assert.equal(queued,methods.length);assert.deepEqual(calls,methods.map(method=>({method,args:[1,'public']})));assert(Object.isFrozen(port));
+ assert.equal(queued,methods.length-4);assert.deepEqual(calls,methods.map(method=>({method,args:[1,'public']})));assert(Object.isFrozen(port));
 });
-test('hosted frozen escrow ports share serialization and preserve the first exact rejected operation',async()=>{
+test('hosted frozen escrow mutation ports share serialization and preserve the first exact rejected operation',async()=>{
  let tail=Promise.resolve(),active=0,maximum=0;const failure=Error('controlled operation failure'),events=[];
  const lane=fn=>{const value=tail.then(fn);tail=value.catch(()=>{});return value;};
- const make=label=>serializeHostedEscrow(Object.freeze({request:async reject=>{active++;maximum=Math.max(maximum,active);events.push(label);try{await new Promise(resolve=>setImmediate(resolve));if(reject)throw failure;return label;}finally{active--;}}}),lane);
- const one=make('one'),two=make('two');const values=await Promise.allSettled([one.request(true),two.request(false),one.request(false)]);
+ const make=label=>serializeHostedEscrow(Object.freeze({reserve:async reject=>{active++;maximum=Math.max(maximum,active);events.push(label);try{await new Promise(resolve=>setImmediate(resolve));if(reject)throw failure;return label;}finally{active--;}}}),lane);
+ const one=make('one'),two=make('two');const values=await Promise.allSettled([one.reserve(true),two.reserve(false),one.reserve(false)]);
  assert.equal(values[0].reason,failure);assert.equal(values[1].value,'two');assert.equal(values[2].value,'one');assert.equal(maximum,1);assert.equal(active,0);assert.deepEqual(events,['one','two','one']);
 });
 test('hosted request reaches existing reserve paid settle reply and finish through the frozen escrow wrapper',async()=>{

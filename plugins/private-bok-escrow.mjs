@@ -106,9 +106,14 @@ export function createPrivateBokEscrowFactory(sdk) {
   const observation=()=>({network:null,blocks:new Map(),snapshots:new Map()});
   const checkedNetwork=read=>read.network??=(checkNetwork());
   const selectedBlock=async(tag,read)=>{
-   await checkedNetwork(read);
-   if(!read.blocks.has(tag))read.blocks.set(tag,node.getBlock(tag));
-   return read.blocks.get(tag);
+   // Both reads are public and independent; neither grants authority until
+   // network/proof policy and the exact selected block have both completed.
+   const reads=await Promise.allSettled([
+    ()=>checkedNetwork(read),
+    ()=>{if(!read.blocks.has(tag))read.blocks.set(tag,node.getBlock(tag));return read.blocks.get(tag);},
+   ].map(fn=>Promise.resolve().then(fn)));
+   const failure=reads.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+   return reads[1].value;
   };
   const anchored=async(tag=admissionTier,read=observation())=>{
    const b=await selectedBlock(tag,read);assert(b?.header && Number.isSafeInteger(Number(b.number)),'Canonical block unavailable');

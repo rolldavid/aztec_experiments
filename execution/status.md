@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 570d7851live/pushed;537 session/composer+221 aggregate checks and actual six-script browser build pass. Public worker/SDK/panel SHA verified; no service restart; exact transfer/archive cleaned. Browser disabled, no newUI timing. Next reviewed Bok terminal read reduction and server operator public-read queue audit.2s/all50% targets active.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 570d7851live/pushed and public hashes verified. Next integrate reviewed hosted operator queue/read-wave patch (104 peer checks), run affected suites, prepare minimal server source publication. Funding terminal shortcut narrowed pending review to direct custody only; recover journal boundary retained. Browserdisabled;2s/all50% measured targets remain open.
 
 ## Ready internal work
 

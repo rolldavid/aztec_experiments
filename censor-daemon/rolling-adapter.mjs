@@ -216,9 +216,10 @@ export async function prepareRollingRemoval({record,contract,wallet,account,conf
 /** Same before/after-proof authority checks; only independent reads overlap.
  * All storage values are hash-anchored and their numeric headers rechecked. */
 export async function assertRollingModerationAuthority({checkpoint,record,checkNetwork,node,read,address,classId,operatorAddress,layout,deriveStorageSlotInMap,Fr}){
- await checkNetwork();
- const [instance,moderator,latest]=await drained([
-  ()=>node.getContract(address,checkpoint),()=>read(layout.moderator.slot,checkpoint),()=>node.getBlock('latest'),
+ // No storage result is authority before the independent network check
+ // succeeds. Keep its error priority and drain every sibling on failure.
+ const [,instance,moderator,latest]=await drained([
+  ()=>checkNetwork(),()=>node.getContract(address,checkpoint),()=>read(layout.moderator.slot,checkpoint),()=>node.getBlock('latest'),
  ]);
  assert.equal(String(instance?.currentContractClassId),classId);
  assert.equal(String(moderator),operatorAddress);

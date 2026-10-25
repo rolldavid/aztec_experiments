@@ -1,0 +1,21 @@
+{
+  "changes": [
+    "Run independent public network and selected state reads concurrently",
+    "Per-request operation ordering with exactly four public observation methods outside global wallet mutation queue"
+  ],
+  "invariants": [
+    "Contract registration and all mutating/unknown methods keep shared wallet queue",
+    "Same-request journal methods remain ordered including after failure",
+    "Network policy and exact block/class/storage checks retained"
+  ],
+  "rootIntegratedTests": 235,
+  "failures": 0,
+  "independentReview": "private_tips approved runtime, concurrency tests and failure behavior",
+  "sourceSha256": {
+    "plugins/main.mjs": "ba8fb7b62fe69d8175a3270160803e21c25467f919a7f8e39272e8d86dd2542c",
+    "plugins/private-bok-escrow.mjs": "5bc2406260ad61a814eff2ce489a210c6348b49cc4ee0b0476d23b0bee003c5b",
+    "censor-daemon/rolling-adapter.mjs": "bcf55e771cab101511076e2c6b3e8cc169249d6cd28d1ea0ab62604683206b60"
+  },
+  "published": false,
+  "liveTiming": null
+}

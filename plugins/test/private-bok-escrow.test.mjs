@@ -581,3 +581,51 @@ test('proposed final receipt cannot survive changed canonical block or accountin
   await assert.rejects(f.port.inspectOperation(op.operationId),/mismatch|changed/);assert.deepEqual(f.counts(),{proofs:1,sends:1});
  }
 });
+
+import {serializeHostedEscrow} from '../main.mjs';
+
+for(const failure of ['none','network','block','both'])test(`operator observation wave drains held public reads: ${failure}`,{timeout:3000},async()=>{
+ const f=await fixture(),network=Promise.withResolvers(),block=Promise.withResolvers(),entered=Promise.withResolvers();let netStarted=false,blockStarted=false,done=false,storage=0;
+ const node=f.options.node,getInfo=node.getNodeInfo,getBlock=node.getBlock,getStorage=node.getPublicStorageAt;
+ const mark=()=>{if(netStarted&&blockStarted)entered.resolve();};
+ const networkFailure=Error('network observation failed'),blockFailure=Error('block observation failed');
+ node.getNodeInfo=async()=>{netStarted=true;mark();await network.promise;if(['network','both'].includes(failure))throw networkFailure;return getInfo();};
+ node.getBlock=async tag=>{if(typeof tag==='string'){blockStarted=true;mark();await block.promise;if(['block','both'].includes(failure))throw blockFailure;}return getBlock(tag);};
+ node.getPublicStorageAt=(...args)=>{storage++;return getStorage(...args);};
+ const work=f.port.request(f.id);work.then(()=>done=true,()=>done=true);await entered.promise;assert.equal(storage,0);
+ await assert.rejects(f.port.request(f.id),/already running/,'raw per-request exclusion remains');
+ if(failure==='block')block.resolve();else network.resolve();await new Promise(setImmediate);assert.equal(done,false);assert.equal(storage,0);
+ network.resolve();block.resolve();
+ if(failure==='none')assert.equal((await work).canonical,true);else await assert.rejects(work,e=>e===(failure==='block'?blockFailure:networkFailure));
+ assert.deepEqual(f.counts(),{proofs:0,sends:0});
+});
+for(const change of ['network','class','operator','canonical','lease'])test(`operator observation wave retains ${change} authority`,async()=>{
+ const f=await fixture();if(change==='network')f.set('chainId','2');if(change==='class')f.set('class',H(99));if(change==='operator')f.set('operator',H(99));if(change==='canonical')f.set('blockMismatch',true);if(change==='lease')f.set('held',false);
+ await assert.rejects(f.port.request(f.id));assert.deepEqual(f.counts(),{proofs:0,sends:0});
+});
+for(const failure of ['none','wait','lease'])test(`hosted actual escrow ports keep request journal order while other public reads bypass held native wait: ${failure}`,{timeout:3000},async()=>{
+ const a=await fixture(),b=await fixture();let tail=Promise.resolve(),queued=0;
+ const lane=fn=>{queued++;const next=tail.then(fn);tail=next.catch(()=>{});return next;};
+ const one=serializeHostedEscrow(a.port,lane),two=serializeHostedEscrow(b.port,lane),entered=Promise.withResolvers(),gate=Promise.withResolvers();
+ a.receipt.status='pending';a.sdk.waitForTx=async()=>{entered.resolve();await gate.promise;if(failure==='wait')throw Error('native observation unavailable');return a.receipt;};
+ const first=one.finish(a.id,a.op('finish',[a.id]));const observed=first.then(value=>({value}),error=>({error}));await entered.promise;
+ assert.equal((await two.request(b.id)).canonical,true,'another request can read while this transaction waits');assert.equal(queued,1);
+ let sameDone=false;const same=one.request(a.id).then(value=>{sameDone=true;return {value};},error=>{sameDone=true;return {error};});
+ const second=two.finish(b.id,b.op('finish',[b.id]));await new Promise(setImmediate);assert.equal(sameDone,false);assert.equal(b.counts().proofs,0);assert.equal(queued,2);
+ if(failure==='none')a.receipt.status='checkpointed';if(failure==='lease')a.set('held',false);gate.resolve();
+ const firstResult=await observed;if(failure==='none')assert.equal(firstResult.value.status,'succeeded');else assert(firstResult.error);
+ const sameResult=await same;if(failure==='lease')assert.match(sameResult.error.message,/lost lease/);else assert.equal(sameResult.value.canonical,true);
+ assert.equal((await second).status,'succeeded');assert.deepEqual(a.counts(),{proofs:1,sends:1});assert.deepEqual(b.counts(),{proofs:1,sends:1});
+});
+test('hosted public native waiter holds its request order without occupying the shared wallet lane',{timeout:3000},async()=>{
+ const a=await fixture(),b=await fixture();a.receipt.status='pending';const intent=a.op('finish',[a.id]);
+ assert.equal((await a.port.finish(a.id,intent)).status,'pending');
+ let tail=Promise.resolve(),queued=0;const lane=fn=>{queued++;const next=tail.then(fn);tail=next.catch(()=>{});return next;};
+ const one=serializeHostedEscrow(a.port,lane),two=serializeHostedEscrow(b.port,lane),entered=Promise.withResolvers(),held=Promise.withResolvers();
+ a.sdk.waitForTx=async()=>{entered.resolve();await held.promise;return a.receipt;};
+ const wait=one.waitForOperation(intent.operationId);await entered.promise;assert.equal(queued,0);
+ let sameDone=false;const same=one.finish(a.id,intent).then(result=>{sameDone=true;return result;});
+ assert.equal((await two.finish(b.id,b.op('finish',[b.id]))).status,'succeeded');assert.equal(sameDone,false);assert.equal(queued,1);
+ a.receipt.status='checkpointed';held.resolve();assert.equal((await wait).status,'succeeded');assert.equal((await same).status,'succeeded');
+ assert.equal(queued,2);assert.deepEqual(a.counts(),{proofs:1,sends:1},'same original transaction was inspected, never sent again');
+});

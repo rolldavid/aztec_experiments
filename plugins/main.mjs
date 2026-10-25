@@ -256,12 +256,16 @@ export async function runHostedBillingReconciliation({config,receiptFile,env=pro
  return result;
 }
 
-/** Serialize the trusted escrow port through the shared wallet lane. */
+/** Keep each request ordered; only wallet mutations share the global lane. */
 export function serializeHostedEscrow(port,walletOperation){
- // The source port is frozen: a Proxy cannot replace its non-configurable
- // method values. A distinct frozen port preserves metadata and stable methods.
+ // Observations may write their own request journal, but never mutate PXE or
+ // the shared wallet. Keep all same-port calls queued, including after failure.
+ const observations=new Set(['request','assertUsable','inspectOperation','waitForOperation']);
+ let tail=Promise.resolve();
+ const ordered=fn=>{const result=tail.then(fn);tail=result.catch(()=>{});return result;};
+ // The source port is frozen: a distinct frozen port preserves its receiver.
  return Object.freeze(Object.fromEntries(Object.entries(port).map(([key,value])=>[
-  key,typeof value==='function'?(...args)=>walletOperation(()=>Reflect.apply(value,port,args)):value,
+  key,typeof value==='function'?(...args)=>ordered(()=>observations.has(key)?Reflect.apply(value,port,args):walletOperation(()=>Reflect.apply(value,port,args))):value,
  ])));
 }
 

@@ -65,3 +65,13 @@ test('moderator development proving stays disabled and never initializes native 
  const result=await createModeratorPxeOptions({development:true,nativeProverThreads:2},{rollingPxeOptions,prepareNativeRuntime:()=>assert.fail('Native runtime disabled'),initializeHostedNativeProver:()=>assert.fail('Native prover disabled')});
  assert.equal(result.proverEnabled,false);assert.equal(result.proverOrOptions,undefined);
 });
+
+for(const failure of ['none','network','contract','both'])test(`moderator network wave overlaps and drains authority reads: ${failure}`,async()=>{
+ const f=fixture(),network=gate(),contract=gate(),networkFailure=Error('network failed'),contractFailure=Error('contract failed');let finished=false;
+ f.hooks.network=async()=>{await network.promise;if(['network','both'].includes(failure))throw networkFailure;};
+ f.hooks.contract=async value=>{await contract.promise;if(['contract','both'].includes(failure))throw contractFailure;return value;};
+ const work=f.run();work.then(()=>finished=true,()=>finished=true);await tick();
+ assert.deepEqual(f.calls,['network','contract','read:10:1','block:latest']);
+ if(failure==='contract')contract.resolve();else network.resolve();await tick();assert.equal(finished,false);assert(!f.calls.some(x=>x.startsWith('read:11:')));
+ network.resolve();contract.resolve();if(failure==='none')await work;else await assert.rejects(work,e=>e===(failure==='contract'?contractFailure:networkFailure));
+});
