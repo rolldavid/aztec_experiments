@@ -1037,7 +1037,7 @@ for(const mode of ['success','native-failure','account-change'])test(`standalone
  assert.equal(claims,1);assert.equal(reads,1);account.resolve();await new Promise(setImmediate);
 });
 
-test('withdrawal interaction timing includes private submission and separates Ethereum settlement from account refresh',{timeout:3000},async t=>{
+test('withdrawal interaction completes at Ethereum settlement before unrelated account refresh',{timeout:3000},async t=>{
  const original=globalThis.performance,measures=new Map();let now=10;
  globalThis.performance={now:()=>now,clearMeasures:name=>measures.delete(name),measure:(name,entry)=>measures.set(name,{...entry})};t.after(()=>{globalThis.performance=original;});
  const f=await exitFixture(t,'withdraw-bok','included'),submit=f.session.application.submitPrepared,held=Promise.withResolvers(),started=Promise.withResolvers();
@@ -1053,5 +1053,29 @@ test('withdrawal interaction timing includes private submission and separates Et
  const status=f.session.application.readAccountStatus;f.session.application.readAccountStatus=async()=>{refreshStarted.resolve();await refresh.promise;return status();};
  now=300;f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw to Ethereum').fire('click');await paymentStarted.promise;
  now=500;payment.resolve();await refreshStarted.promise;assert.deepEqual(measures.get('rolling.withdrawal.ethereum'),{start:300,end:500});
- now=900;refresh.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.deepEqual(measures.get('rolling.action.interaction'),{start:300,end:900});
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.deepEqual(measures.get('rolling.action.interaction'),{start:300,end:500});assert(f.document.body.textContent.includes('Withdrawn to Ethereum: 1.5 USDC.'));
+ now=900;refresh.resolve();await new Promise(setImmediate);assert.deepEqual(measures.get('rolling.action.interaction'),{start:300,end:500});
+});
+
+for(const mode of ['paid','wrong-amount','owner-change','uncertain'])test(`saved Ethereum payment completion preserves unrelated workflow and does not await inventory: ${mode}`,{timeout:3000},async t=>{
+ const f=await exitFixture(t,'withdraw-bok','included');const amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1.5';amount.fire('input');f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const nativeStatus=f.session.application.readAccountStatus,newer={intentId:'newer',action:{type:'like',post:'42'},status:'unknown',txHash:'0x'+'8'.repeat(64)};
+ f.session.application.readAccountStatus=async()=>({...await nativeStatus(),status:'recovering',intent:newer});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Back to account').fire('click');f.document.querySelectorAll('button').find(b=>b.textContent==='Refresh account').fire('click');await f.document.until(()=>f.document.body.textContent.includes('Check your action')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Pending Ethereum refund').fire('click');await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const payment=Promise.withResolvers(),started=Promise.withResolvers(),inventory=Promise.withResolvers(),inventoryStarted=Promise.withResolvers();let checks=0,inventoryReads=0;
+ f.session.withdrawal.recover=async()=>{checks++;started.resolve();return payment.promise;};
+ f.session.application.readAccountStatus=async()=>{inventoryReads++;inventoryStarted.resolve();await inventory.promise;return {...await nativeStatus(),status:'recovering',intent:newer,pendingWithdrawal:null};};
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Check existing refund').fire('click');await started.promise;assert.equal(inventoryReads,0);
+ if(mode==='owner-change')f.runtime.getAccount=()=>null;
+ payment.resolve({status:mode==='uncertain'?'unknown':'refunded',amount:mode==='wrong-amount'?'1':'1500000',txHash:'0x'+'a'.repeat(64)});
+ if(mode==='paid')await inventoryStarted.promise;
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(checks,1);assert.equal(f.submissions.length,1);
+ if(mode==='paid'){
+  assert(f.document.body.textContent.includes('The saved Ethereum refund is confirmed.'));assert(f.document.body.textContent.includes('Check your action'),'newer workflow remains present before inventory finishes');
+  assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Pending Ethereum refund'));
+ }else{assert(!f.document.body.textContent.includes('The saved Ethereum refund is confirmed.'));assert.equal(inventoryReads,0);}
+ inventory.resolve();await new Promise(setImmediate);
 });

@@ -2885,3 +2885,31 @@ for(const phase of ['prepare','submit'])for(const mode of ['success','balance-fa
  if(mode==='success'){assert.equal(result.status,phase==='prepare'?'prepared':'confirmed');assert.equal(f.state.sends,phase==='prepare'?0:1);}
  else{assert.equal(f.state.sends,0);assert.deepEqual(f.values,before);}
 });
+
+function moderationWave(f,{authority,policy}){
+ const node=f.options.accountSession.node,storage=node.getPublicStorageAt,at=f.options.sdk.Contract.at;
+ node.getPublicStorageAt=async(...args)=>{await authority();return storage(...args);};
+ f.options.sdk.Contract.at=async(...args)=>{const board=await at(...args);return {methods:new Proxy(board.methods,{get:(methods,name)=>name!=='main_policy'?methods[name]:(...values)=>({simulate:async()=>{await policy();return methods[name](...values).simulate();}})})};};
+ return f.restart();
+}
+for(const action of moderatorActions)test('moderation wave starts independent authority and policy for '+action.type,async()=>{
+ const f=moderatorFixture(),entered=Promise.withResolvers(),gate=Promise.withResolvers();let starts=0;
+ const enter=async()=>{if(++starts===2)entered.resolve();await gate.promise;};const app=moderationWave(f,{authority:enter,policy:enter});
+ const work=app.prepare(action);await entered.promise;assert.equal(starts,2);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+ await assert.rejects(app.readModeratorStatus(),{code:'ROLLING_BUSY'});gate.resolve();assert((await work).moderation);assert.equal(starts,2);
+});
+for(const phase of ['prepare','submit'])for(const failing of ['authority','policy'])test('moderation wave '+phase+' drains '+failing+' failure before releasing lease',async()=>{
+ const f=moderatorFixture(),prepared=phase==='submit'?await f.app.prepare(moderatorActions[0]):null;
+ const before=[...f.values],entered=Promise.withResolvers(),gate=Promise.withResolvers();let starts=0,done=false;
+ const branch=name=>()=>{if(++starts===2)entered.resolve();if(name===failing)throw Error(name+' unavailable');return gate.promise;};
+ const app=moderationWave(f,{authority:branch('authority'),policy:branch('policy')});
+ const work=(phase==='submit'?app.submitPrepared(prepared.intentId):app.prepare(moderatorActions[0])).then(()=>assert.fail('must reject'),error=>{done=true;assert.match(error.message,new RegExp(failing+' unavailable'));});
+ await entered.promise;assert.equal(done,false);await assert.rejects(app.readModeratorStatus(),{code:'ROLLING_BUSY'});gate.resolve();await work;
+ assert.equal(f.state.sends,0);assert.deepEqual([...f.values],before);
+});
+for(const defect of ['unauthorized','fork','owner'])test('moderation wave rejects '+defect+' while independent policy is held',async()=>{
+ const f=moderatorFixture(),entered=Promise.withResolvers(),gate=Promise.withResolvers();let done=false;
+ const app=moderationWave(f,{authority:async()=>{if(defect==='unauthorized')f.state.moderator=99n;if(defect==='fork')f.state.reorg=true;},policy:async()=>{entered.resolve();await gate.promise;}});
+ const work=app.prepare(moderatorActions[0]).then(()=>assert.fail('must reject'),()=>{done=true;});await entered.promise;if(defect==='owner')f.state.guard=false;
+ assert.equal(done,false);gate.resolve();await work;assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});

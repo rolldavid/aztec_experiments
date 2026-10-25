@@ -813,6 +813,15 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(balances.collateral.nextCursor!==null)content.append(button('More deposits',()=>void work(async()=>{const epoch=accountEpoch;const page=await session.application.readBalances({cursor:balances.collateral.nextCursor,includeBok:!!balances.bok});checkAccount(epoch);balances=page;})));
   content.append(button('Refresh balances',()=>void work(async()=>{balances=null;bokAccounting=null;const epoch=accountEpoch;const page=await session.application.readBalances({cursor:0});checkAccount(epoch);balances=page;})));
  }
+ function acceptPaidWithdrawal(saved,result){
+  const current=pendingWithdrawal??intent;
+  if(result?.status!=='refunded'||result.amount!==saved.withdrawal.amount||current?.intentId!==saved.intentId||current?.txHash!==saved.txHash||JSON.stringify(current?.withdrawal)!==JSON.stringify(saved.withdrawal))throw connectionFailure;
+  // Native Ethereum confirmation already marked this exact pending slot paid.
+  // Unrelated account inventory cannot change that payment result or its amount.
+  setPendingWithdrawal(null);balances=null;
+  if(intent?.intentId===saved.intentId&&intent?.txHash===saved.txHash)intent=null;
+  accountRefreshNeeded=true;
+ }
  async function withdrawToEthereum(saved,{resume=false}={}){
   const epoch=accountEpoch,active=session;
   const check=()=>{checkAccount(epoch);const current=pendingWithdrawal??intent;
@@ -832,7 +841,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }finally{finishEthereum();}
   note('');const bok=saved.withdrawal.kind==='bok';
   notice='Withdrawn to Ethereum: '+decimal(result.amount,bok?6:18)+(bok?' USDC.':' ETH.');
-  setPendingWithdrawal(null);balances=null;await refresh();
+  acceptPaidWithdrawal(saved,result);
  }
  function refundView(){
   const saved=pendingWithdrawal??intent;if(!saved?.withdrawal){content.append(paragraph('No pending Ethereum refund.'));return;}
@@ -842,7 +851,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(refundReadiness==='ready')content.append(paragraph('Ready to withdraw. Your wallet will show the Ethereum network fee.'),button('Withdraw to Ethereum',()=>void work(()=>withdrawToEthereum(saved),withdrawalFailure,{action:true}),true));
   else content.append(paragraph(refundReadiness==='unknown'?'The private exit is not currently verified. No refund will be sent.':saved.status==='included'?'Your exit is included on Aztec; confirmation is pending. The Ethereum refund is waiting for settlement. Your account remains available.':'The Ethereum refund is waiting for settlement. Your account remains available.'));
   const details=el('details',{},el('summary',{},'Withdrawal status'));
-  details.append(button('Check refund readiness',()=>void work(checkRefundReadiness)),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch;note('Checking your Ethereum withdrawal…');const result=await session.withdrawal.recover();note('');checkAccount(epoch);if(result.status==='refunded'){notice='The saved Ethereum refund is confirmed.';setPendingWithdrawal(null);balances=null;await refresh();}else notice='Refund '+result.status+'.';})),paragraph('If a previous wallet request was interrupted, continue that same saved withdrawal.'),button('Continue saved withdrawal',()=>void work(()=>withdrawToEthereum(saved,{resume:true}),withdrawalFailure,{action:true})));
+  details.append(button('Check refund readiness',()=>void work(checkRefundReadiness)),button('Check existing refund',()=>void work(async()=>{const epoch=accountEpoch,active=session;note('Checking your Ethereum withdrawal…');const result=await active.withdrawal.recover();note('');checkAccount(epoch);if(active!==session)throw connectionFailure;if(result.status==='refunded'){acceptPaidWithdrawal(saved,result);notice='The saved Ethereum refund is confirmed.';}else notice='Refund '+result.status+'.';})),paragraph('If a previous wallet request was interrupted, continue that same saved withdrawal.'),button('Continue saved withdrawal',()=>void work(()=>withdrawToEthereum(saved,{resume:true}),withdrawalFailure,{action:true})));
   content.append(details);
  }
  const postingTypes=new Set(['post','reply','quote','repost','bok']);

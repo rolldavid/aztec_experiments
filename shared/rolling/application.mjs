@@ -746,8 +746,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     return {authorized:field(owner,true)===moderator};
   }
   async function moderationArguments(action,board){
-    check((await moderatorStatus()).authorized,'ROLLING_MODERATOR_REQUIRED');
-    const policy=await utility(board,'main_policy',[]);check(Array.isArray(policy)&&policy.length===2,'ROLLING_POLICY_UNAVAILABLE');
+    // Canonical moderator authority and native policy reads are independent.
+    // Drain both under the existing account lease before preparing or sending.
+    const reads=await Promise.allSettled([
+      async()=>{check((await moderatorStatus()).authorized,'ROLLING_MODERATOR_REQUIRED');},
+      ()=>utility(board,'main_policy',[]),
+    ].map(read=>Promise.resolve().then(read)));
+    const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+    const policy=reads[1].value;check(Array.isArray(policy)&&policy.length===2,'ROLLING_POLICY_UNAVAILABLE');
     const mainVersion=version(String(BigInt(policy[0]))),mainDigest=field(policy[1]);
     const review={mainVersion,mainDigest};let args;
     if(action.type==='transfer-moderator'){const successor=field(action.successor,true);check(successor!==field(owner,true),'ROLLING_INVALID_ACTION');args=[new sdk.AztecAddress(new sdk.Fr(BigInt(successor)))];review.successor=successor;}
