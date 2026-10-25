@@ -163,22 +163,26 @@ export function validatedPxeProve(source){
     }
     // Public API\n`);
  source=replace(source,'    // Public API\n',`    prefetchBoardClaimWitnesses(board) {
-        const address=SyncAddress.fromStringUnsafe(board.toString());
+        return this.#prefetchClaimImmutables(SyncAddress.fromStringUnsafe(board.toString()),'${ORDINARY_POST_GAS_PROFILE.boardClassId}','RollingBoard',
+            [{slot:1n,length:1},{slot:3n,length:10}],{portal_address:1,config:3,deposits:14});
+    }
+    prefetchBokClaimWitnesses(bok, classId) {
+        return this.#prefetchClaimImmutables(SyncAddress.fromStringUnsafe(bok.toString()),SyncFr.fromString(classId.toString()).toString(),'PrivateBok',
+            [{slot:7n,length:1},{slot:9n,length:1},{slot:11n,length:1}],{board:1,operator:3,owner:5,portal:7,l1_chain:9,version:11,balances:13});
+    }
+    #prefetchClaimImmutables(address, expected, name, slots, layout) {
         return this.operationQueue.runSynced(async ctx=>{
-            const expected='${ORDINARY_POST_GAS_PROFILE.boardClassId}';
             const qualified=await allToCompletion([
                 ()=>this.contractClassService.getCurrentClassId(address,ctx.anchorBlockHeader),
                 ()=>this.contractStore.getContractArtifact(SyncFr.fromString(expected)),
             ].map(read=>Promise.resolve().then(read)));
             const artifact=qualified[1];
-            if(qualified[0]?.toString()!==expected || artifact?.name!=='RollingBoard' ||
-                !artifact.storageLayout?.portal_address?.slot?.equals(new SyncFr(1)) ||
-                !artifact.storageLayout?.config?.slot?.equals(new SyncFr(3)) ||
-                !artifact.storageLayout?.deposits?.slot?.equals(new SyncFr(14)))throw new Error('Invalid Board claim layout');
+            if(qualified[0]?.toString()!==expected || artifact?.name!==name ||
+                Object.entries(layout).some(([key,slot])=>!artifact.storageLayout?.[key]?.slot?.equals(new SyncFr(slot))))throw new Error('Invalid '+(name==='RollingBoard'?'Board':'Bok')+' claim layout');
             const anchor=await ctx.anchorBlockHeader.toBlockParameter();
             const type=syncSha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_CACHE_TYPE_ID'));
             const valueType=syncSha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_VALUE_READ'));
-            const entries=await allToCompletion([{slot:1n,length:1},{slot:3n,length:10}].map(async entry=>{
+            const entries=await allToCompletion(slots.map(async entry=>{
                 const collection=await this.factStore.getFactCollection(new SyncFactCollectionKey(address,{type:'public'},type,new SyncFr(entry.slot)),ctx.changeSetId);
                 const fact=collection?.facts.find(fact=>fact.factTypeId.equals(valueType));
                 return {...entry,hasValue:!!fact,needsInitialization:!fact || !fact.originBlock || fact.originBlock.blockNumber>ctx.anchorBlockHeader.getBlockNumber(),
@@ -186,7 +190,7 @@ export function validatedPxeProve(source){
                     leaf:await syncPublicDataLeaf(address,new SyncFr(entry.slot+BigInt(entry.length)))};
             }));
             // Native PublicImmutable remains the authority. Existing native facts
-            // avoid packed-value reads; both historical hash proofs are still
+            // avoid packed-value reads; all historical hash proofs are still
             // required even when the immutable value has already been recorded.
             const nullifiers=entries.filter(entry=>entry.needsInitialization).map(entry=>entry.nullifier);
             const reads=[...(nullifiers.length?[()=>this.node.findLeavesIndexes(anchor,SyncTreeId.NULLIFIER_TREE,nullifiers)]:[]),

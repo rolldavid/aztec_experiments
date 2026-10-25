@@ -34,6 +34,14 @@ Posting-credit top-up:100FEE credited in **134.757725s** Pay→usable credit, in
 
 The completed-workflow probe now performs its authenticated receipt check before synchronization for completed ordinary/deposit/fee/Bok claims. It no longer synchronizes only to have the bridge step invalidate that work; actual claim preparation still selects fresh native state afterward. Display-only account readiness uses fresh native collateral/credit for completed fee/Bok histories, removing historical receipt rereads that gave no new posting authority. Release/request/withdrawal/replacement and pending-exit handling remains separate. Native fee measurement now reuses the exact attested PXE node cache for immutable membership reads already performed during private simulation; every public gas simulation remains fresh and content dependent. Independent reviews approved;774 integrated application/wrapper/native measurement checks and actual six-script build pass. Publish and live measurement remain separate evidence.
 
+### Native claim and synchronization follow-up
+
+Reviewed Bok claim prefetch reuses the existing native FactStore/cache and exact anchored current class/layout checks for portal, L1 chain and version immutables. Compiled native fixtures perform7 grouped cold requests instead of9 sequential ones, then no additional immutable reads in the claim; recorded native facts require only3 hash witnesses. Actual claim still verifies initialization, values and root.
+
+Removed the application-added postcommit remote synchronization sweep. It was a later freshness veto after local commits, not a rollback mechanism. The synchronizer still checks prewrite canonical ancestry, applies native atomic rollback and verifies its final local anchor/all-tier acknowledgements against the captured plan. Actual next-sync fork tests restore spends and remove orphan notes; transaction validation remains fresh. This removes one network round trip without asserting permanent chain freshness.
+
+751 integrated native-sync/compiled-claim/application checks and actual six-script build pass. Publication and measured end-to-end savings are separate evidence. At resumption browser control reported disabled, so no new browser result is asserted. Prior c790 first changed-SDK opening6.322200s is retained; its cached run was interrupted before evidence capture.
+
 ## Remaining qualification work
 
 Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.

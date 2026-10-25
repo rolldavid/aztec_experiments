@@ -70,7 +70,7 @@ function fixture(){
   const node={getTxReceipt:async()=>({...state.outcome?.receipt,executionResult:state.outcome?.outcome==='success'?'success':'reverted'}),getBlockData:async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={prepareBoardActionState:async input=>{(state.readinessPreparations??=[]).push(input);},node:{getL1ToL2MessageMembershipWitness:async()=>{throw Error('Unexpected fixture membership read');}},getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={TxHash,poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
-    prefetchBoardClaimWitnesses:async input=>{(state.claimWitnessPrefetches??=[]).push(input);},prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
+    prefetchBokClaimWitnesses:async input=>{(state.bokClaimWitnessPrefetches??=[]).push(input);},prefetchBoardClaimWitnesses:async input=>{(state.claimWitnessPrefetches??=[]).push(input);},prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
       if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
       if(['set_bio','set_avatar'].includes(input.interaction.name)){assert.equal(input.interaction.args[1],state.profileVersion??0,'stale profile version');assert((state.profileVersion??0)<0xffffffff,'profile version exhausted');}
@@ -3345,4 +3345,24 @@ test('private-fee predecessor to Bok claim synchronizes once after bridge and re
  assert.equal(result.state,'complete');assert.equal(syncs,1);assert.equal(f.state.sends,2);assert.equal(scope.synchronized,false);
  f.state.bokCredit=123n;const before=f.state.privateReads.length,balance=await app.readBokStatus();
  assert.equal(syncs,2,'spendable balance still synchronizes after actual inclusion');assert.equal(balance.availableCredit,'123');assert(f.state.privateReads.slice(before).some(x=>x.name==='balance_of'));
+});
+
+for(const failure of ['none','witness','receipt'])test('Bok claim immutable wave joins exact receipt preparation and drains '+failure,async()=>{
+ const f=topUpFixture('bok'),scope={synchronized:true},gate=Promise.withResolvers(),entered=Promise.withResolvers();let count=0,settled=false;
+ f.options.accountSession.operationScope=()=>scope;const verify=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=async input=>{if(++count===2)entered.resolve();if(failure==='receipt')throw Error('receipt failed');await gate.promise;return verify(input);};
+ f.options.sdk.prefetchBokClaimWitnesses=async input=>{assert.equal(input.artifact,f.options.deployment.bok.artifact);assert.equal(input.wallet,f.options.accountSession.wallet);assert.equal(input.node,f.options.accountSession.node);if(++count===2)entered.resolve();if(failure==='witness')throw Error('witness failed');await gate.promise;};
+ const work=f.restart().prepare(f.action,{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=failure==='none'?work:assert.rejects(work,new RegExp(failure+' failed'));
+ await entered.promise;await new Promise(setImmediate);assert.equal(settled,false);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);gate.resolve();await result;
+ if(failure!=='none')assert.equal(f.values.size,0);
+});
+for(const change of ['scope','owner'])test('Bok claim immutable preparation rejects held '+change,async()=>{
+ const f=topUpFixture('bok'),gate=Promise.withResolvers(),entered=Promise.withResolvers();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.prefetchBokClaimWitnesses=async()=>{entered.resolve();await gate.promise;};
+ const work=f.restart().prepare(f.action,{immediate:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ if(change==='scope')scope={synchronized:true};else f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('private-fee standalone claim never prefetches unrelated Bok immutables',async()=>{
+ const f=topUpFixture('private-fee'),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.prefetchBokClaimWitnesses=()=>assert.fail('unrelated Bok');await f.restart().prepare(f.action,{immediate:true});
 });

@@ -1202,7 +1202,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce)),
           ()=>action.type==='claim-deposit'&&action.bokReceipt!==undefined?bokFundingClaim(action):undefined,
           ()=>action.type==='claim-private-fee'||action.feeReceipt!==undefined?payment(action,claimFields):undefined,
-          ()=>action.type==='claim-deposit'?measure('action.claim-witnesses',()=>sdk.prefetchBoardClaimWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact})):undefined,
+          ()=>action.type==='claim-deposit'?measure('action.claim-witnesses',()=>sdk.prefetchBoardClaimWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact})):action.type==='claim-bok'?measure('action.claim-witnesses',()=>sdk.prefetchBokClaimWitnesses({wallet:session.wallet,node:session.node,bok:deployment.bok.instance,artifact:deployment.bok.artifact})):undefined,
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkClaimOwner();

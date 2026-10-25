@@ -50,7 +50,8 @@ function withAnchorRead(source){
  // Resolve both canonical headers together before changing the native anchor.
  // The stream event already carries the selected immutable source identity;
  // checking that same selected identity twice before the write adds an RPC
- // phase, not an atomic snapshot. doSync still revalidates the completed plan.
+ // phase, not an atomic snapshot. doSync still checks local completion against
+ // the exact source plan, including all acknowledged tiers.
  replace(`        const target = await this.checkedSelectedAnchor();
         if (!this.sameAnchor(target.block, event.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');
         const current = await this.anchorBlockStore.getBlockHeader();
@@ -76,7 +77,11 @@ function withAnchorRead(source){
         const target = checks[1].value;
         if (!this.sameAnchor(target.block, event.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`);
  replace('      await this.blockStream.sync();',"      await rollingSyncPhase('native.phase.sync-stream',()=>this.blockStream.sync());");
- replace('      const selected = await this.checkedSelectedAnchor();',"      const selected = await rollingSyncPhase('native.phase.sync-postwrite-check',()=>this.checkedSelectedAnchor('postwrite'));");
+ // The stream has already applied the captured plan, including atomic rollback.
+ // A later remote freshness veto cannot undo those commits or make completion
+ // atomic with the chain. Require exact local anchor/tier acknowledgement here;
+ // the next native sync handles later forks and transaction checks stay fresh.
+ replace('      const selected = await this.checkedSelectedAnchor();',"      const selected = { block: await this.selectedAnchor() };");
  // Hash-pinned native node reads are immutable. Bound memory before this
  // explicitly owned prefetch instead of erasing it at the later anchor write.
  // Contract synchronization and private rollback still occur in their old order.

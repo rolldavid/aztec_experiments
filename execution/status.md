@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 69658 live/pushed and retained2normalopening traces. Integrated reviewed nativefee-measurement cache reuse and completedordinary/claim pre-sync funding authority + displayonlycompletedclaim status. Next focusedcombinedchecks/build/push/publish then realcachedopening andcreditclaimmeasure. 2s/50% goals remain active. Agent investigates intermittentcachedassets and nativevsbespokefences.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Resumed after usage interruption. c7900efd live/pushed774checks+actualbrowserbuild; transfercleaned. FirstchangedSDKopening6.3222s; cachedrun notcaptured browsercurrentlydisabled. Integrated independentlyreviewed nativeBokimmutableprefetch and postwritefreshnesspoll removal preservinglocalcoherence/prewrite/nativevalidation. Next focusedcombinedchecks/build/push/staticpublish; browsermeasurement pendingavailabletool. All2s/50%targets active.
 
 ## Ready internal work
 

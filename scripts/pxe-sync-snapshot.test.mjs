@@ -110,56 +110,66 @@ for(const tier of ['proposed','checkpointed','proven'])test(`parallel snapshot $
  assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);assert.equal(await f.balance(),100n);
  assert.deepEqual(f.state.prunes,[12]);await f.sync.sync();assert.deepEqual(f.state.prunes,[12]);
 });
-test('stable sync is one source-tip phase then concurrent numeric header and tier reads',async t=>{
+for(const tier of ['proposed','checkpointed','proven'])test(`sparse ${tier} rollback remains conservative and selected anchor advances coherently`,async t=>{
+ const f=await fixture(t,{tier});await f.seed();f.state.tip=12;await f.sync.sync();
+ assert.deepEqual(f.state.prunes,[10]);assert.equal(await f.balance(),0n,'sparse history must not invent rediscovered notes');
+ assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);assert.equal(await f.other.getAsync('value'),10);
+ await f.sync.sync();assert.deepEqual(f.state.prunes,[10]);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);
+});
+test('failed native rollback aborts note, anchor and acknowledgement changes atomically',async t=>{
+ const f=await fixture(t);await f.seed();const before=await f.snapshot();f.state.tip=12;f.state.failRollback=true;
+ await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_EVENT_FAILED/);assert.deepEqual(await f.snapshot(),before);
+ f.state.failRollback=false;await f.sync.sync();assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);assert.equal(await f.balance(),0n);
+});
+test('stable sync completes the exact captured source plan without a postcommit remote sweep',async t=>{
  const f=await fixture(t);await f.advance(10);f.state.tipReads=0;f.state.numberReads=0;
- let release;const blocked=new Promise(resolve=>release=resolve),get=f.node.getChainTips;let observed=false;
- f.node.getChainTips=async()=>{const tips=await get();if(f.state.tipReads===2){await blocked;}return tips;};
- f.state.onRead=async q=>{if(typeof q==='number'){observed=true;release();}};
- await f.sync.sync();assert(observed);assert.equal(f.state.tipReads,2);assert.equal(f.state.numberReads,1);
+ const before=await f.snapshot();await f.sync.sync();
+ assert.equal(f.state.tipReads,1);assert.equal(f.state.numberReads,0);
+ assert.deepEqual(await f.snapshot(),before);
 });
 for(const corruption of ['missing','hash','header','tier'])test(`changed ${corruption} rejects before native acknowledgement`,async t=>{
- const f=await fixture(t);await f.advance(10);const before=await f.snapshot();
+ const f=await fixture(t,{tier:'proposed'});await f.advance(10);const before=await f.snapshot();f.state.tip=12;let reads=0;
  const get=f.node.getChainTips;
- if(corruption==='tier')f.node.getChainTips=async()=>{const tips=await get();if(f.state.tipReads>2)tips.checkpointed.block=f.id(9);return tips;};
- else f.state.onRead=async q=>typeof q==='number'?{handled:true,value:corruption==='missing'?undefined:corruption==='hash'?{...f.chain[10],hash:f.chain[9].hash}:{...f.chain[10],header:f.chain[9].header}}:undefined;
+ if(corruption==='tier')f.node.getChainTips=async()=>{const tips=await get();if(++reads===2)tips.proposed=f.id(9);return tips;};
+ else f.state.onRead=async q=>q===12?{handled:true,value:corruption==='missing'?undefined:corruption==='hash'?{...f.chain[12],hash:f.chain[9].hash}:{...f.chain[12],header:f.chain[9].header}}:undefined;
  await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_/);assert.deepEqual(await f.snapshot(),before);
 });
 test('parallel selected-tip failure drains still-running header before releasing operation',async t=>{
- const f=await fixture(t);await f.advance(10);let release,started;const pending=new Promise(r=>release=r),entered=new Promise(r=>started=r);
+ const f=await fixture(t);await f.advance(10);f.state.tip=12;let release,started;const pending=new Promise(r=>release=r),entered=new Promise(r=>started=r);
  const get=f.node.getChainTips;let reads=0;
  f.node.getChainTips=async()=>{const tips=await get();if(++reads===2)throw Error('tip failed');return tips;};
  f.state.onRead=async q=>{if(typeof q==='number'){started();await pending;}};
  let settled=false;const run=f.sync.sync().finally(()=>settled=true);run.catch(()=>{});
- await entered;await new Promise(r=>setImmediate(r));assert.equal(settled,false);release();await assert.rejects(run,/tip failed/);
+ await entered;await new Promise(r=>setImmediate(r));assert.equal(settled,false);release();await assert.rejects(run,/PXE_REORG_ANCHOR_EVENT_FAILED/);
 });
 
 test('finalized snapshot advances; finalized rollback remains rejected',async t=>{const f=await fixture(t,{tier:'finalized'});await f.advance(10);await f.advance(12);f.state.tip=10;await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_/);});
 
 for(const fork of [false,true])test(`higher selected tip during parallel reads ${fork?'rejects orphan':'retains canonical captured anchor'}`,async t=>{
- const f=await fixture(t);await f.advance(10);const old=f.chain[10],get=f.node.getChainTips;let reads=0,headers=0;
- f.node.getChainTips=async()=>{if(++reads===2){f.state.tip=12;if(fork)f.chain[10]=await block(10,99);}return get();};
- f.state.onRead=async q=>{if(typeof q==='number'&&q===10&&++headers===1)return {handled:true,value:old};};
+ const f=await fixture(t);await f.advance(10);f.state.tip=12;const old=f.chain[12],get=f.node.getChainTips;let reads=0,headers=0;
+ f.node.getChainTips=async()=>{if(++reads===2){f.state.tip=13;if(fork)f.chain[12]=await block(12,99);}return get();};
+ f.state.onRead=async q=>{if(typeof q==='number'&&q===12&&++headers===1)return {handled:true,value:old};};
  if(fork)await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_/);
- else {await f.sync.sync();assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),10);}
+ else {await f.sync.sync();assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);}
  assert.equal(headers,2,'moving tip reauthenticates captured numeric header last');
 });
 test('higher selected tip must itself have a valid canonical header',async t=>{
- const f=await fixture(t);await f.advance(10);const get=f.node.getChainTips;let reads=0;
- f.node.getChainTips=async()=>{if(++reads===2)f.state.tip=12;return get();};
- f.state.onRead=async q=>q===12?{handled:true,value:undefined}:undefined;
+ const f=await fixture(t);await f.advance(10);f.state.tip=12;const get=f.node.getChainTips;let reads=0;
+ f.node.getChainTips=async()=>{if(++reads===2)f.state.tip=13;return get();};
+ f.state.onRead=async q=>q===13?{handled:true,value:undefined}:undefined;
  await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_/);
 });
 
 test('source-plan public read overlaps native canonical checks and is returned only after both finish',async t=>{
- const f=await fixture(t);await f.advance(10);
+ const f=await fixture(t);await f.advance(10);f.state.tip=12;
  const readGate=Promise.withResolvers(),canonicalGate=Promise.withResolvers(),started=Promise.withResolvers();let sawRead=false,sawCanonical=false,settled=false;
  f.state.onRead=async q=>{if(typeof q==='number'){sawCanonical=true;if(sawRead)started.resolve();await canonicalGate.promise;}};
- const pending=f.sync.syncWithAnchorRead(async anchor=>{assert.deepEqual(anchor,f.id(10));assert(Object.isFrozen(anchor));sawRead=true;if(sawCanonical)started.resolve();await readGate.promise;return 7;});
+ const pending=f.sync.syncWithAnchorRead(async anchor=>{assert.deepEqual(anchor,f.id(12));assert(Object.isFrozen(anchor));sawRead=true;if(sawCanonical)started.resolve();await readGate.promise;return 7;});
  pending.finally(()=>settled=true);await started.promise;canonicalGate.resolve();await new Promise(r=>setImmediate(r));assert.equal(settled,false);
- readGate.resolve();assert.deepEqual(await pending,{anchor:f.id(10),value:7});assert.equal(f.sync.anchorRead,undefined);
+ readGate.resolve();assert.deepEqual(await pending,{anchor:f.id(12),value:7});assert.equal(f.sync.anchorRead,undefined);
 });
 for(const failure of ['read','native'])test(`source-plan public read drains on ${failure} failure`,async t=>{
- const f=await fixture(t);await f.advance(10);const gate=Promise.withResolvers(),started=Promise.withResolvers();let settled=false;
+ const f=await fixture(t);await f.advance(10);f.state.tip=12;const gate=Promise.withResolvers(),started=Promise.withResolvers();let settled=false;
  f.state.onRead=async q=>{if(typeof q==='number'){started.resolve();if(failure==='native')return {handled:true,value:undefined};await gate.promise;}};
  const pending=f.sync.syncWithAnchorRead(async()=>{if(failure==='read')throw Error('read failed');await gate.promise;return 9;});
  const rejected=assert.rejects(pending,failure==='read'?/read failed/:/PXE_REORG_ANCHOR_/).finally(()=>settled=true);
@@ -224,21 +234,49 @@ for (const failure of ['none','current','selected','both']) test(`advancing anch
  }
 });
 
-test('advancing source snapshot checks the selected anchor once before commit and once at completion',async t=>{
+test('advancing source snapshot validates before commit then checks exact local completion',async t=>{
  const f=await fixture(t);await f.advance(10);f.state.tip=12;
  const checked=f.sync.checkedSelectedAnchor.bind(f.sync),update=f.sync.updateAnchorBlockHeader.bind(f.sync);
  let selectedReads=0,commits=0;
  f.sync.checkedSelectedAnchor=async()=>{selectedReads++;return checked();};
  f.sync.updateAnchorBlockHeader=async header=>{assert.equal(selectedReads,1);commits++;return update(header);};
- await f.sync.sync();assert.equal(commits,1);assert.equal(selectedReads,2);
+ await f.sync.sync();assert.equal(commits,1);assert.equal(selectedReads,1);
  assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);
 });
 
-test('fork after anchor commit is rejected by the retained completion check',async t=>{
- const f=await fixture(t);await f.advance(10);f.state.tip=12;
- const update=f.sync.updateAnchorBlockHeader.bind(f.sync);
- f.sync.updateAnchorBlockHeader=async header=>{await update(header);f.chain[12]=await block(12,999);};
- await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_/);
+test('fork after commit preserves a coherent completed plan; next native sync retracts orphan notes and spends',async t=>{
+ const f=await fixture(t,{tier:'proposed',cached:true});await f.seed(true);f.state.tip=16;
+ const old16=f.id(16),orphanNote=await f.add(16,7,1004);
+ const update=f.sync.updateAnchorBlockHeader.bind(f.sync);let forked=false;
+ f.sync.updateAnchorBlockHeader=async header=>{await update(header);if(!forked){forked=true;f.chain[16]=await block(16,999);}};
+ await f.sync.sync();
+ assert.equal((await (await f.anchor.getBlockHeader()).hash()).toString(),old16.hash);
+ assert.deepEqual((await f.tips.getL2Tips()).proposed,old16,'local anchor and acknowledgement still name the completed source plan');
+ await f.commit(async c=>{
+  const available=await f.notes.getNotes({contractAddress:f.contract,scopes:[f.owner]},c);
+  const previous=available.find(note=>note.note.items[0].toBigInt()===80n);assert(previous);
+  await f.notes.applyNullifiers([{data:previous.siloedNullifier,l2BlockNumber:16}],c);
+  await f.notes.addNotes([orphanNote],f.owner,c);
+ });
+ assert.equal(await f.balance(),17n);
+ await f.sync.sync();
+ assert.deepEqual(f.state.prunes,[15]);assert.equal(await f.balance(),90n,'rollback restores the spend and removes the orphan note');
+ assert.equal((await (await f.anchor.getBlockHeader()).hash()).toString(),f.id(16).hash);
+ assert.deepEqual((await f.tips.getL2Tips()).proposed,f.id(16));
+});
+
+for(const corrupt of ['anchor','proposed','checkpointed','proven','finalized'])test(`completion still rejects missing local ${corrupt} acknowledgement`,async t=>{
+ const f=await fixture(t);await f.advance(10);
+ if(corrupt==='anchor')f.anchor.getBlockHeader=async()=>f.chain[9].header;
+ else {const get=f.tips.getL2Tips.bind(f.tips);let calls=0;f.tips.getL2Tips=async()=>{const tips=await get();if(++calls>1){if(corrupt==='proposed')tips.proposed=f.id(9);else tips[corrupt].block=f.id(9);}return tips;};}
+ await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_INCOMPLETE/);
+});
+for(const source of ['tips','block'])test(`swallowed native ${source} source failure remains a failed sync without postcommit polling`,async t=>{
+ const f=await fixture(t);await f.advance(10);const before=await f.snapshot();
+ if(source==='tips')f.node.getChainTips=async()=>{throw Error('source failed');};
+ else {f.state.tip=12;f.state.onRead=async()=>{throw Error('source failed');};}
+ await assert.rejects(f.sync.sync(),/PXE_REORG_ANCHOR_EVENT_FAILED/);
+ assert.deepEqual(await f.snapshot(),before);
 });
 
 test('proposed private state remains usable across note spends while checkpoint lags, then native rollback retracts descendants',async t=>{
@@ -276,16 +314,17 @@ test('warm public sync keeps canonical fork rejection and drains the held siblin
  await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),10);
 });
 
-test('native sync diagnostics are opt-in and distinguish prewrite, postwrite and advancing live-tier reads',async t=>{
+test('native sync diagnostics are opt-in and retain prewrite and moving-tier checks without postwrite polling',async t=>{
  const key=Symbol.for('rolling.proof.profile'),prior=globalThis[key];t.after(()=>{if(prior===undefined)delete globalThis[key];else globalThis[key]=prior;});
  const clear=()=>{for(const x of performance.getEntriesByType('measure'))if(x.name.startsWith('rolling.proof.native.phase.sync-'))performance.clearMeasures(x.name);};
  const names=()=>performance.getEntriesByType('measure').filter(x=>x.name.startsWith('rolling.proof.native.phase.sync-'));
  const f=await fixture(t,{tier:'proposed'});clear();globalThis[key]=false;await f.advance(10);assert.equal(names().length,0);
  globalThis[key]=true;f.state.tip=12;await f.sync.sync();
- for(const name of ['source-snapshot','stream','prewrite-advance','prewrite-snapshot','postwrite-check','postwrite-snapshot'])assert(names().some(x=>x.name==='rolling.proof.native.phase.sync-'+name),name);
+ for(const name of ['source-snapshot','stream','prewrite-advance','prewrite-snapshot'])assert(names().some(x=>x.name==='rolling.proof.native.phase.sync-'+name),name);
  assert(names().every(x=>Number.isFinite(x.duration)&&x.duration>=0&&x.detail===null));
- clear();const get=f.node.getChainTips;let reads=0;f.node.getChainTips=async()=>{if(++reads===2)f.state.tip=14;return get();};
+ assert(!names().some(x=>x.name.includes('postwrite')));
+ clear();f.state.tip=13;const get=f.node.getChainTips;let reads=0;f.node.getChainTips=async()=>{if(++reads===2)f.state.tip=14;return get();};
  await f.sync.sync();
- for(const name of ['postwrite-moving-head','postwrite-recheck'])assert(names().some(x=>x.name==='rolling.proof.native.phase.sync-'+name),name);
- assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12,'diagnostics do not change the source-plan anchor');
+ for(const name of ['prewrite-moving-head','prewrite-recheck'])assert(names().some(x=>x.name==='rolling.proof.native.phase.sync-'+name),name);
+ assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),13,'diagnostics do not change the source-plan anchor');
 });

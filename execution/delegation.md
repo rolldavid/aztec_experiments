@@ -1,3 +1,10 @@
+# Resumed implementation —26 October2026
+
+- Root: integrate/publish Bok immutable prefetch and native postcommit poll removal;751 integrated checks and real browser-script build pass. Browser control currently reports disabled; no new browser timing claimed.
+- pending_feed_release: completed native Bok prefetch; isolated draft reviewed.
+- pending_reply_ui: completed postcommit polling removal with local consistency/native rollback evidence; isolated draft reviewed.
+- private_tips: independently approved both final patches; no live mutations.
+
 # Current live continuation — f16,26 October2026
 
 - Root: actual profile and funding measurements, source integration/publication; one retained build/IAB.
