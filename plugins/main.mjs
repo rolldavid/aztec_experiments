@@ -19,7 +19,7 @@ import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {validateDescriptor} from './protocol.mjs';
 import {aztecBoardPort,rollingBoardPort} from './aztec.mjs';
 import {aztecEscrowPort} from './escrow.mjs';
-import {startEscrowService,runPrivateBokRequest,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall,hostedReceivedFirstCall} from './escrow-service.mjs';
+import {startEscrowService,runPrivateBokRequest,reconcileHostedBilling,isHostedTerminalWithoutReply,hostedUnsubmittedFirstCall,hostedSubmittedFirstCall,hostedReceivedFirstCall,hostedRequestFailure} from './escrow-service.mjs';
 import {bokReceiptClaims} from './private-bok-metering.mjs';
 import {meteredModel} from './metering.mjs';
 import {veniceMeteredProvider} from './venice-metered.mjs';
@@ -370,7 +370,7 @@ export async function runRollingHostedService({config,env=process.env,onError=()
   const provider=veniceMeteredProvider({client:veniceClient({privateKey:env.VENICE_WALLET_PRIVATE_KEY}),model:env.VENICE_MODEL||undefined,autoTopUp:false});
   recoverPending=hostedRecoveryScanner({directory:config.stateDirectory,scope,pluginId:config.pluginId,board,lease});
   server=await startEscrowService({descriptor,profile:'rolling',concurrency:2,board,recoverPending,host:config.host??'127.0.0.1',port:config.port??8787,
-   onError:()=>onError(Error('Rolling hosted request requires reconciliation')),
+   onError:error=>onError(hostedRequestFailure(error)),
    canDispatch:request=>hostedRequestDispatchable({request,directory:config.stateDirectory,scope,pluginId:config.pluginId,lease,repositories,repository}),run:request=>withBokTiming(request.requestId,()=>measureBokStage('request.total',async()=>{
     await lease.assertHeld();const id=createHash('sha256').update(JSON.stringify({scope,requestId:request.requestId,target:request.target})).digest('hex');
     const store=await fileState(path.join(config.stateDirectory,id+'.json'));

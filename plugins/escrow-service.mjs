@@ -87,6 +87,11 @@ export async function isHostedTerminalWithoutReply({request,escrow,store,anchor}
  assert.equal(BigInt(observation.request.available),0n);assert.equal(BigInt(observation.request.reserved),0n);
  assert.deepEqual(store.read(),original,'Terminal journal changed during admission');return true;
 }
+/** Closed diagnostic projection: never forward provider text or request inputs. */
+export function hostedRequestFailure(error){
+ let capacity=false;try{capacity=Object.getOwnPropertyDescriptor(error,'code')?.value==='GITHUB_BROKER_POOL_EXHAUSTED';}catch{}
+ return capacity?Object.assign(Error('Bok is waiting for repository capacity'),{code:'GITHUB_BROKER_POOL_EXHAUSTED'}):Error('Rolling hosted request requires reconciliation');
+}
 /** On-chain state owns work. The bounded in-memory queue never resumes paid calls. */
 export async function startEscrowService({descriptor,escrow,board,run,host='127.0.0.1',port=8787,onError=console.error,pollMs=2000,concurrency=2,profile='legacy',recoverPending=async()=>[],canDispatch=async()=>true}){
  if(!['legacy','rolling'].includes(profile))throw Error('Invalid service profile');
@@ -95,7 +100,7 @@ export async function startEscrowService({descriptor,escrow,board,run,host='127.
  let rollingCursor=null,rollingQueue=[];
  let stopped=false,polling=false,cursor=0,inFlight=Promise.resolve(),pollFailure=null,jobFailure=null,lastSuccess=null;
  const jobs=new Map(),deferred=new Set();
- const failed=(error,source='job')=>{const failure={at:new Date().toISOString(),kind:error.name||'Error'};if(source==='poll')pollFailure=failure;else jobFailure=failure;onError(error);};
+ const failed=(error,source='job')=>{const safe=hostedRequestFailure(error),failure={at:new Date().toISOString(),kind:error.name||'Error',...(safe.code?{code:safe.code}:{})};if(source==='poll')pollFailure=failure;else jobFailure=failure;onError(error);};
  const server=http.createServer((req,res)=>{res.setHeader('Access-Control-Allow-Origin','*');res.setHeader('Content-Type','application/json');
  if(req.method==='GET'&&req.url==='/v1/descriptor')return res.end(JSON.stringify(descriptor));
  if(req.method==='GET'&&req.url==='/health'){const lastFailure=pollFailure??jobFailure;return res.end(JSON.stringify({status:lastFailure?'degraded':jobs.size?'working':'ready',active:jobs.size,lastFailure,lastSuccess}));}res.writeHead(404);res.end();});

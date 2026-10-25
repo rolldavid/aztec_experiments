@@ -879,3 +879,23 @@ test('optional moderator lookup ignores an external account replacement before r
  f.runtime.getAccount=()=>null;held.resolve({authorized:true});await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.panel.moderatorAuthorized(),false);assert(!f.document.querySelectorAll('button').some(b=>b.textContent==='Transfer moderator authority'));
 });
+
+test('included Bok funding requires fresh native Bok credit but releases before unrelated account refresh',{timeout:3000},async t=>{
+ const native=Promise.withResolvers(),nativeStarted=Promise.withResolvers(),account=Promise.withResolvers(),accountStarted=Promise.withResolvers();let claims=0;
+ const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){return {...input,phase:'deposit',maximumSwapWei:'1000'};},async confirm(){return {};},async inspect(){return null;},async advanceClaim(){claims++;return {state:'included',intent:{intentId:'claim',txHash:'0x'+'8'.repeat(64),inclusion:{blockNumber:3,blockHash:'0x'+'7'.repeat(64)},action:{type:'claim-bok'}}};}};
+ const f=await fixture(t,{topup:cap,balanceRead:count=>{if(count===1)return Promise.resolve({available:true,availableCredit:'0'});nativeStarted.resolve();return native.promise;},posting:{balanceRefresh:async()=>{accountStarted.resolve();await account.promise;}}});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();f.host.querySelectorAll('button').find(b=>b.textContent==='Add credit').fire('click');
+ const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pay'&&!b.disabled));pay.fire('click');await nativeStarted.promise;
+ assert.equal(f.core().status,1,'no unrelated account scan ahead of native Bok balance');assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');assert(!f.host.textContent.includes('1 USDC available'));
+ native.resolve({available:true,availableCredit:'1000000'});await accountStarted.promise;
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert(f.host.textContent.includes('1 USDC available'));assert.equal(f.reads(),2);assert.equal(claims,1);assert.match(f.document.body.textContent,/Confirmation pending/i);
+ account.resolve();await new Promise(resolve=>setImmediate(resolve));
+});
+
+test('top-up changes wallet prompt to Ethereum waiting after acknowledged submission, before receipt',{timeout:3000},async()=>{
+ const receipt=Promise.withResolvers(),submitted=Promise.withResolvers(),steps=[];let completed=false;
+ const cap={async confirm({onSubmitted}){onSubmitted();submitted.resolve();await receipt.promise;return {paid:true};}};
+ const pending=runTopupPayment(cap,{}, {phase:'deposit'},stage=>steps.push(stage)).then(value=>{completed=true;return value;});
+ await submitted.promise;assert.deepEqual(steps,['deposit','confirmation']);assert.equal(completed,false);
+ receipt.resolve();assert.deepEqual(await pending,{paid:true});
+});

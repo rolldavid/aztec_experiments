@@ -248,3 +248,10 @@ test('owned read drains parallel class/head work on either failure before releas
   const reader=f.restart();let done=false;const pending=invalid(reader.read()).then(()=>done=true);await started.promise;await new Promise(setImmediate);assert.equal(done,false);assert(!f.calls.includes('CAS'));await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});held.resolve();await pending;
  }
 });
+
+test('owned readiness capability is bracketed by route checks and cannot bypass reorg publication fences',async()=>{
+ const f=await fixture([changed(4)],4);let checks=0;f.input.checkReadiness=async()=>{checks++;};
+ assert.equal((await f.restart().read()).status,'complete');assert.equal(checks,1);assert.equal(f.calls.filter(x=>x==='inspect').length,0);assert.equal(f.calls.filter(x=>x==='block:4').length,3);
+ f.input.checkReadiness=async()=>{f.state.route=false;};const before=f.calls.filter(x=>x==='sync').length;
+ await invalid(f.restart().read());assert.equal(f.calls.filter(x=>x==='sync').length,before);
+});

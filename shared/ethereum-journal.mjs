@@ -180,7 +180,7 @@ export async function verifyEthereumIntentReceipt(provider,record,txHash,read=fn
   if(events.length!==1)throw unknown();
   return {outcome:'success',txHash,receipt,event:events[0]};
 }
-export async function createEthereumJournal({storage,walletSecret,walletSalt,scope,provider,signer,acknowledgeTx,contextGuard,prepareRequest,minimumNonce=0}) {
+export async function createEthereumJournal({storage,walletSecret,walletSalt,scope,provider,signer,acknowledgeTx,contextGuard,prepareRequest,minimumNonce=0,onSubmitted}) {
   const slot=await createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:validatedScope(scope),keyDomain:'AZTEC_BB_ETH_JOURNAL_KEY_V1'});
   if(!integer(minimumNonce))throw invalid();
   if(prepareRequest!==undefined&&typeof prepareRequest!=='function')throw invalid();
@@ -286,7 +286,11 @@ export async function createEthereumJournal({storage,walletSecret,walletSalt,sco
     // Wallet responses acknowledge submission; only canonical RPC data confirms intent.
     if(!hash(lower(response?.hash)))throw unknown();
     submittedResponse=response;
-    return slot.write(saved,{...record,txHash:lower(response.hash)});
+    const submitted=await slot.write(saved,{...record,txHash:lower(response.hash)});
+    // Display only: durable submission is not Ethereum confirmation. Never
+    // await or propagate observer code across transaction authority.
+    try{void Promise.resolve(onSubmitted?.()).catch(()=>{});}catch{}
+    return submitted;
   }
   async function finish(saved) {
     const read=reader();await network(read);

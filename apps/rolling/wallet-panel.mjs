@@ -168,7 +168,7 @@ export async function runTopupPayment(cap,input,quote,onStep=()=>{}){
   let stage=phase;
   try{
    await onStep(phase);
-   const result=await cap.confirm();
+   const result=await cap.confirm({onSubmitted:()=>onStep('confirmation')});
    if(phase==='deposit')return result;
    if(phase==='swap'?!result.swapped:!result.approved)throw Error('Unexpected payment result.');
    if(phase==='swap')exchanged=true;
@@ -1210,7 +1210,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(['included','complete'].includes(result.state)){
    const provisional=result.state==='included';
    if(provisional){const claimed=result.intent;includedObservation={txHash:claimed.txHash,action:claimed.action,inclusion:claimed.inclusion,observed:null};actionFeedback.textContent='Credit added: confirmation pending.';actionFeedback.hidden=false;}
-   const bokTopup=view==='topup'&&topupKind==='bok';stopFunding();await refresh();checkAccount(epoch);if(bokTopup){await loadBok();checkAccount(epoch);}
+   const bokTopup=view==='topup'&&topupKind==='bok';stopFunding();
+   if(bokTopup){
+    // Only the newly claimed native Bok balance is required here. Unrelated
+    // deposit and fee scans run after this interaction releases its busy state.
+    invalidateBokBalance();await measureRollingStage('action.required-account-refresh',loadBok);checkAccount(epoch);
+    if(bokBalance.snapshot().phase!=='ready'||bokStatus?.available!==true)throw connectionFailure;
+    intent=null;blocked=false;balances=null;bokAccounting=null;accountRefreshNeeded=true;
+   }else{await refresh();checkAccount(epoch);}
    if(view==='topup'){notice=(bokTopup?'Bok credit added.':'Posting credit added.')+(provisional?' Confirmation pending.':'');topupSaved=null;resetTopupQuote();view=draft.content?'action':'overview';}
    else{
     const account=status?.status==='fee-ready'?'Posting collateral and network fee credit were found.':status?.status==='fee-needed'?'Network fee credit is still needed.':status?.status==='collateral-pending'?'Network fee credit was found; posting collateral is not yet available.':'The account still needs a recovery check.';
@@ -1284,7 +1291,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!q||selected?.key!==topupQuoteKey)throw topupFailure(Error('Price changed'),'quote');
    topupQuote=null;
    try{
-    await runTopupPayment(cap,selected.input,q,phase=>{checkAccount(epoch);note(phase==='approval'?'Approve USDC spending in your wallet…':'Confirm your payment in your wallet…');});
+    await runTopupPayment(cap,selected.input,q,phase=>{checkAccount(epoch);note(phase==='confirmation'?'Waiting for Ethereum confirmation…':phase==='approval'?'Approve USDC spending in your wallet…':'Confirm your payment in your wallet…');});
     checkAccount(epoch);topupSaved={paymentSaved:true,phase:'deposit',...selected.input};fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw topupFailure(error,'claim');}
    }catch(failure){topupQuoteError=aggregateFundingFailure(failure)??'The payment could not complete. Refresh the price and try again.';try{topupSaved=await cap.inspect();}catch{}throw failure;}
   },aggregateFundingFailure),true);

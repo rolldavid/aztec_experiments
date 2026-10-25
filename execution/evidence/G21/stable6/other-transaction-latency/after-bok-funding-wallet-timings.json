@@ -1,0 +1,91 @@
+[
+  {
+    "method": "eth_chainId",
+    "started": 1792886551623,
+    "finished": 1792886551629,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886551723,
+    "finished": 1792886551728,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886552193,
+    "finished": 1792886552198,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886552287,
+    "finished": 1792886552291,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886552843,
+    "finished": 1792886552849,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886552942,
+    "finished": 1792886552947,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886554965,
+    "finished": 1792886554971,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886555062,
+    "finished": 1792886555067,
+    "failed": false
+  },
+  {
+    "method": "eth_blockNumber",
+    "started": 1792886555158,
+    "finished": 1792886555409,
+    "failed": false
+  },
+  {
+    "method": "eth_sendTransaction",
+    "hash": "0x67a892d2d80f88faea920188a45bb949bf46da6b93bc70251825a9032362c83d",
+    "at": 1792886555725
+  },
+  {
+    "method": "eth_sendTransaction",
+    "started": 1792886555503,
+    "finished": 1792886555732,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886555823,
+    "finished": 1792886555828,
+    "failed": false
+  },
+  {
+    "method": "eth_getTransactionByHash",
+    "started": 1792886555828,
+    "finished": 1792886555976,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886556068,
+    "finished": 1792886556074,
+    "failed": false
+  },
+  {
+    "method": "eth_chainId",
+    "started": 1792886588293,
+    "finished": 1792886588298,
+    "failed": false
+  }
+]

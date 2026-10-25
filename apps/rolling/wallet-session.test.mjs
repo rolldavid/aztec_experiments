@@ -1472,3 +1472,22 @@ for(const reorg of [false,true])test(`explicit proposed bridge readiness still r
 test('bridge readiness tip requires explicit supported policy before starting any work',()=>{
  const f=continuationFixture();for(const bridgeChainTip of ['latest','pending',null,{}])assert.throws(()=>createFundingContinuation({...f.input,bridgeChainTip}),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.calls.length,0);
 });
+
+test('preference readiness and raw head share only the held account operation attestation',async()=>{
+ const f=await sessionFixture(),inspect=f.input.sdk.inspectTrustedNode;let inspections=0;
+ f.input.sdk.inspectTrustedNode=async(...args)=>{inspections++;return inspect(...args);};
+ const session=await createRollingWalletSession(f.input);
+ for(let i=0;i<2;i++){
+  const checks=inspections,syncs=f.state.syncs;
+  assert.equal((await session.application.readPreferences()).status,'complete');
+  assert.equal(inspections-checks,1,'one readiness check for reader and head, fresh on next operation');assert.equal(f.state.syncs-syncs,1);
+ }
+ await session.close();
+});
+test('preference readiness handoff rejects account mutation before native discovery',async()=>{
+ const f=await sessionFixture(),inspect=f.input.sdk.inspectTrustedNode;let mutate=false;
+ f.input.sdk.inspectTrustedNode=async(...args)=>{const value=await inspect(...args);if(mutate)f.input.account.salt='99';return value;};
+ const session=await createRollingWalletSession(f.input);mutate=true;const syncs=f.state.syncs;
+ await assert.rejects(session.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
+ assert.equal(f.state.syncs,syncs);assert(!f.state.events.includes('preference-events'));assert.equal(session.busy,false);await session.close();
+});

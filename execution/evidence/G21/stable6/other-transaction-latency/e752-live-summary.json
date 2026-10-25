@@ -1,0 +1,17 @@
+{
+  "like": {
+    "endToEndMs": 27493.12000000477,
+    "actualAztecInclusionMs": 18874.255,
+    "baselineActionMs": 56933,
+    "actionMs": 27490.585000038147
+  },
+  "followBoard": {
+    "endToEndMs": 22795.37,
+    "baselineAvailable": false,
+    "requiredNativePreferenceRefreshMs": 6231.36
+  },
+  "fundRepeat": {
+    "sameCurrentFormatQuoteAfterUnrelatedLike": true,
+    "secondPaymentSent": false
+  }
+}

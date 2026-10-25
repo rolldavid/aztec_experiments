@@ -18,7 +18,7 @@ Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build`
 
 ## Other transaction performance — active
 
-Owner target: at least50% end-to-end reduction across all other flows. UI5df7df9d with proposed bridge readiness, preference fees, included Bok actions and sparse preference reads and the08b4 exact-anchor accounting backend are published. Bok94d1a719 is published. Like, bookmark, name, bio and Bok-funding baselines are captured. The first like after-test returned in12.199s versus56.933s baseline; included display improved only modestly. The repaired bookmark completed in22.773s versus58.264s baseline; unbookmark20.037s. Exact visible/usable endpoints and broader qualification remain in the performance record. Broader matched coverage and the overall50% acceptance remain outstanding. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
+Owner target: at least50% end-to-end reduction across all other flows. UIe752cf00 with overlapped claim checks, proposed bridge readiness, preference fees, included Bok actions and sparse preference reads and the08b4 exact-anchor accounting backend are published. Bok94d1a719 is published. Like, bookmark, name, bio and Bok-funding baselines are captured. The first like after-test returned in12.199s versus56.933s baseline; included display improved only modestly. The repaired bookmark completed in22.773s versus58.264s baseline; unbookmark20.037s. Exact visible/usable endpoints and broader qualification remain in the performance record. Broader matched coverage and the overall50% acceptance remain outstanding. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
 
 ## Current deployment
 
@@ -29,10 +29,10 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/f844b1deaddff6fe4a025295bba10dd04e483264` |
-| Browser SDK SHA256 | `9afd341487513bd23179298724447229be7d3308e00e5b972d11a3c060c2a4f9` |
+| Browser UI | `/opt/rolling-ui/releases/e752cf007f10dcb6646509e1926fa9563a8c21fe` |
+| Browser SDK SHA256 | `9d209217e53f32c56fd3d3293152a0a37109b047b284ed4ed5d922b824af5c63` |
 | Running app | `/opt/rolling-app/releases/accounting-08b4ce3364d4` |
-| Next-start app | `/opt/rolling-app/releases/ui-f844b1deaddf` |
+| Next-start app | `/opt/rolling-app/releases/ui-e752cf007f10` |
 | Prover | `/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad` |
 | Bok | `/opt/rolling-bok/releases/94d1a7198f7bd2094be66754bc3aeb8a42f657dd` |
 
@@ -62,7 +62,7 @@ All nine services are verified active. The40GiB core root filled with accumulate
 
 Health endpoints: app `/api/status` on4318; prover `/healthz` on8081; Bok service `rolling-bok-testnet.service` and `/health` on8807 returns `status: ready`. Public `/wallet/runtime.json` and `/prover/healthz` are suitable read-only checks. Do not assume every service uses a boolean `ready` or `/health`.
 
-Bok uses private repository `zac-williamson/rolling-chat-bok-pool-20261015-03`, existing GitHub App5317701/installation171412624. No new repository/access grant is needed. Generated code receives no actor keys or AWS access. Its publication requires the isolated browser validation described below.
+Bok uses private repository `zac-williamson/rolling-chat-bok-pool-20261015-03`, existing GitHub App5317701/installation171412624. Its current slot is assigned. A new root request is waiting for repository capacity; investigate unused disposable older pool slots without broadening permissions. Generated code receives no actor keys or AWS access. Its publication requires the isolated browser validation described below.
 
 ## Operations and cost
 

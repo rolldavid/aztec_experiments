@@ -146,3 +146,7 @@ Root integrates and owns the one retained build, publication and actual browser 
 ## Measured13-second posting follow-up —25October
 
 Root owns live testing, integration and cleanup. pending_reply_ui fixes proven repeated CRS downloads with manifest-pinned URLs; pending_feed_release diagnoses159KB upload arrival time; proposed_feed_design reduces operation preparation reads with fresh-anchor validation. Current2aac posts13.507s and13.836s. Source-only drafts, no dependency copies or new browser profiles.
+
+## All transaction performance — 25 October
+
+Root owns live test transactions, source integration, one retained build, publication and cleanup. pending_reply_ui owns preference readiness, funding completion/progress and duplicate-scope review; pending_feed_release owns native exit/payment boundaries and independent review; proposed_feed_design owns Bok capacity failure diagnosis and bounded obsolete test repository reuse proposal. No extra dependency trees or browser profiles. Overall per-flow50% acceptance remains open.

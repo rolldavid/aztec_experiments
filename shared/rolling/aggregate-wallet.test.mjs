@@ -596,7 +596,7 @@ test('ETH Bok purchase swaps and bridges with one wallet transaction',async()=>{
  const f=ethTopupFixture(),cap=await f.open(),quote=await cap.prepare(f.allocation),phases=[];
  assert.equal(quote.phase,'deposit');assert.equal(quote.maximumSwapWei,'303');assert.equal(f.state.sends,0);
  const result=await runTopupPayment(cap,f.allocation,quote,phase=>phases.push(phase));
- assert.deepEqual(phases,['deposit']);assert.equal(f.state.sends,1);assert.equal(result.receipt.amount,'300');
+ assert.deepEqual(phases,['deposit','confirmation']);assert.equal(f.state.sends,1);assert.equal(result.receipt.amount,'300');
  assert.deepEqual([...f.transactions.values()].map(tx=>tx.to),[f.options.scope.router]);
  assert.deepEqual([...f.transactions.values()].map(tx=>tx.value),['303']);
  const custody=await cap.loadAggregate(result.receipt.txHash);assert(custody.bridgeSecret&&custody.recipientSalt);
@@ -659,8 +659,8 @@ test('ETH credit continuation awaits native receipt completion with no second wa
  };
  const cap=await f.open(),quote=await cap.prepare(f.allocation),phases=[];
  const result=runTopupPayment(cap,f.allocation,quote,phase=>phases.push(phase));
- await started;assert.equal(f.state.sends,1);assert.deepEqual(phases,['deposit']);
- release();await result;assert.deepEqual(phases,['deposit']);assert.equal(f.state.sends,1);
+ await started;assert.equal(f.state.sends,1);assert.deepEqual(phases,['deposit','confirmation']);
+ release();await result;assert.deepEqual(phases,['deposit','confirmation']);assert.equal(f.state.sends,1);
 });
 
 test('ETH purchase completes the original private Bok claim and allows a later independent credit purchase',async()=>{
@@ -836,4 +836,12 @@ for(const kind of ['aggregate','private-fee','bok'])test(`included ${kind} claim
  f.options.reconcileClaim=async()=>{throw Error('a later ordinary action has replaced the single workflow');};
  const reopened=await f.open();await reopened.prepare(f.allocation);assert.deepEqual(await reopened.loadAggregate(receipts.receipt.txHash),original);assert.equal(f.state.sends,1);
  canonical=false;await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.state.sends,1);
+});
+
+for(const kind of ['private-fee','bok'])test(`direct ${kind} forwards durable payment submission feedback before receipt completion`,async()=>{
+ const f=topupFixture(kind);f.state.allowance=1000n;const cap=await f.open();await cap.prepare(f.allocation);
+ let observed=0,release,entered;const held=new Promise(resolve=>{release=resolve}),started=new Promise(resolve=>{entered=resolve});const receipt=f.options.provider.getTransactionReceipt;
+ f.options.provider.getTransactionReceipt=async hash=>{entered();await held;return receipt(hash);};
+ let done=false;const pending=cap.confirm({onSubmitted:()=>{observed++;assert.equal(f.state.sends,1);}}).then(value=>{done=true;return value;});
+ await started;assert.equal(observed,1);assert.equal(done,false);release();const result=await pending;assert.equal(result.receipt.amount,'300');assert.equal(observed,1);assert.equal(f.state.sends,1);
 });

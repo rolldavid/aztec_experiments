@@ -540,7 +540,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    prepared={store,saved,wallet,request,priorHash,journalPriorHash:existing?.txHash,value:{schemaVersion:1,kind,...values,fixedGasBudget:input.gasBudgetWei!==undefined,phase,exchanged,...(atomic?{purchaseRouter:topupScope.router}:{}),...(phase==='swap'?{swapRouter:swapScope.swapRouter}:{}),depositor:wallet.address,recipientSalt,bridgeSecret,bokScope:kind==='bok'?{...n,...captured}:null,intent:null,claim:null,previousTxHash:priorHash}};
    return freeze({kind,phase,...values,exchanged,maximumSwapWei:request.value,walletName:wallet.name,token:captured.token,portal:captured.portal});
   },
-  async confirm(){
+  async confirm({onSubmitted}={}){
    const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');const {wallet,request}=current;await context({fresh:true});await read(wallet.guard);
    if(current.saved.value?.intent){const prior=await verified(current.saved.value);if(prior.outcome==='success'&&current.saved.value.phase==='deposit')await completedClaim(current.saved.value);}else if(current.priorHash)await archived(current.priorHash);
    let saved=await read(()=>current.store.write(current.saved,current.value));
@@ -549,7 +549,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
     check(typeof gasLimit==='bigint'&&gasLimit>0n&&typeof price==='bigint'&&price>0n&&(!current.value.fixedGasBudget||gasLimit*price<=BigInt(current.value.gasBudgetWei)),'GAS_CHANGED');
     await read(wallet.guard);return {gasLimit,...(fees.maxFeePerGas!==undefined&&fees.maxFeePerGas!==null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})};
    };
-   const j=await sdk.createEthereumJournal({...journalOptions(current.value),signer:wallet.signer,prepareRequest,acknowledgeTx:current.journalPriorHash,contextGuard:async()=>{await contextGuard();await wallet.guard();}});
+   const j=await sdk.createEthereumJournal({...journalOptions(current.value),signer:wallet.signer,prepareRequest,onSubmitted,acknowledgeTx:current.journalPriorHash,contextGuard:async()=>{await contextGuard();await wallet.guard();}});
    try{await read(()=>j.send(async nonce=>{check(nonce===request.nonce,'NONCE_CHANGED');saved=await read(()=>current.store.write(saved,{...saved.value,intent:request}));return {data:request.data,value:request.value,expected:request.expected};}));}
    catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value'in d&&['BB_ETH_REQUEST_CANCELLED','BB_ETH_INSUFFICIENT_FUNDS','BB_ETH_PREFLIGHT_FAILED'].includes(d.value)){try{await read(()=>current.store.write(saved,current.saved.value));}catch(cleanup){throw new AggregateError([error,cleanup],'Top-up cancellation could not be saved.');}}throw error;}
    return cap.recover();

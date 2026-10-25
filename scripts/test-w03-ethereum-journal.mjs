@@ -42,6 +42,13 @@ for(const backend of ['file','indexeddb']) {
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'bb-eth-journal-'));
   try{const storage=backend==='file'?createFileJournalStorage(dir):createBrowserJournalStorage(new IDBFactory());await fn(fixture(storage,kind),{storage,dir});}finally{fs.rmSync(dir,{recursive:true,force:true});}
  }
+ for(const observerMode of ['normal','throw','reject','hang'])test(`${backend}: submission observer is display-only before held receipt (${observerMode})`,()=>use(async f=>{
+  const held=Promise.withResolvers(),entered=Promise.withResolvers(),readReceipt=f.provider.getTransactionReceipt;let calls=0,done=false;
+  f.provider.getTransactionReceipt=async hash=>{entered.resolve();await held.promise;return readReceipt(hash);};
+  const journal=await f.newSession({onSubmitted:()=>{calls++;assert.equal(f.requests.length,1);if(observerMode==='throw')throw Error('observer');if(observerMode==='reject')return Promise.reject(Error('observer'));if(observerMode==='hang')return new Promise(()=>{});}});
+  const pending=journal.send(f.intent).then(value=>{done=true;return value;});await entered.promise;
+  assert.equal(calls,1);assert.equal(done,false);held.resolve();assert.equal((await pending).outcome,'success');assert.equal(calls,1);assert.equal(f.requests.length,1);
+ }));
  for(const kind of ['request-refund','deposit-refund']){
   test(`${backend}: ${kind} exact receipt survives lost response and reopen with no resend`,()=>use(async f=>{
    f.mode('lost');await assert.rejects((await f.newSession()).send(f.intent),{code:'BB_ETH_SUBMISSION_UNKNOWN'});

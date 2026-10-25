@@ -44,8 +44,8 @@ function dense(input,max=Infinity){assert(Array.isArray(input));const length=Obj
  */
 export function createRollingPreferenceReader(input){
  try{
-  const {sdk,pxe,node,owner,deployment,readHead,contextGuard,privateStore,walletSecret,walletSalt,measure=(_stage,read)=>read()}=input;
-  assert(typeof readHead==='function'&&typeof contextGuard==='function'&&typeof measure==='function');
+  const {sdk,pxe,node,owner,deployment,readHead,checkReadiness,contextGuard,privateStore,walletSecret,walletSalt,measure=(_stage,read)=>read()}=input;
+  assert(typeof readHead==='function'&&typeof contextGuard==='function'&&typeof measure==='function'&&(checkReadiness===undefined||typeof checkReadiness==='function'));
   const phase=(name,read)=>measure('preference.'+name,read);
   const trusted=sdk.isTrustedPrivateNode.bind(sdk),routed=sdk.isPrivatePXEForNode.bind(sdk),inspect=sdk.inspectTrustedNode.bind(sdk);
   const hashFunction=sdk.poseidon2HashWithSeparator.bind(sdk);
@@ -119,7 +119,7 @@ export function createRollingPreferenceReader(input){
    }catch{throw error('ROLLING_PREFERENCE_READER_INVALID');}
    active={signal,deadlineAt,headers:new Map()};
    try{
-    await guard();await phase('readiness',()=>checked(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled})));
+    await guard();await phase('readiness',()=>checked(checkReadiness??(()=>inspect(node,{expectedNetworkScope:network,proofsEnabled}))));
     if(!slot)slot=await checked(()=>createEncryptedJournalSlot({storage:{read:key=>checked(()=>storeRead(key)),compareAndSwap:(...args)=>checked(()=>storeCAS(...args))},walletSecret,walletSalt,scopeText,keyDomain:DOMAIN}));
     if(!decoder)decoder=await checked(()=>createPreferenceEventDecoder({sdk:decoderSdk,artifact}));
     const saved=await checked(()=>slot.read());const cache=saved.value===null?null:cacheRecord(saved.value);

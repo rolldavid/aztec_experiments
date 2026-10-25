@@ -508,7 +508,9 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    readPreferences=async options=>{
     await initializeAccount();
     preferenceReader??=createRollingPreferenceReader({sdk,pxe,node,owner:instance.address,deployment,
-      readHead:app.readPreferenceHead.bind(app),contextGuard:guardRoute,privateStore,measure:measureRollingStage,
+      // Reuse this exact held operation's native readiness attestation in
+      // the raw head read. Reader route/anchor/class/reorg fences stay fresh.
+      checkReadiness:()=>app.prefetchContext(),readHead:app.readPreferenceHead.bind(app),contextGuard:guardRoute,privateStore,measure:measureRollingStage,
       walletSecret:captured.secretKey,walletSalt:captured.salt});
     return preferenceReader.read(options);
    };
