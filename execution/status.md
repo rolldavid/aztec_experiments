@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Reviewed public-action completion, withdrawal read overlap and mined Ethereum receipt reuse integrated.537 session/composer and221 aggregate checks pass; actual six-script browser build pass. Commit/push and static publication next; no browser timing because tool reports disabled.2s opening/all-flow50% goals remain active.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 570d7851live/pushed;537 session/composer+221 aggregate checks and actual six-script browser build pass. Public worker/SDK/panel SHA verified; no service restart; exact transfer/archive cleaned. Browser disabled, no newUI timing. Next reviewed Bok terminal read reduction and server operator public-read queue audit.2s/all50% targets active.
 
 ## Ready internal work
 

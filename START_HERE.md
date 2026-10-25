@@ -2,6 +2,10 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Current live update — 570d7851
+
+Live and pushed `570d7851701602d6d669fcb994da366ee87f1abb`: subboard/moderator completion no longer reloads unrelated private account state; withdrawal final checks run concurrently; funding bridge reset retains only exact mined Ethereum transaction/receipt reads within the same operation. Numbered code/call and network reads remain fresh, canonical checks remain enforced.537 session/composer plus221 aggregate checks and actual six-script browser build pass. Independent review caught and corrected number-only cache carryover before integration. Publication succeeded without app/proxy restart, public worker/SDK/panel hashes match, exact transfer version/archive removed. Browser tool still reports disabled; no new live end-to-end timing,2s opening/all-flow50% targets remain open. Next: finish reviewed terminal Bok read reduction and hosted operator queue/read audit, then measure actual flows when browser access is available.
+
 ## Current live update — b6f7554d
 
 Live and pushed `b6f7554d4a6f51d1bc12dfcb46dc5613c7c99627`: native Bok claim immutable prefetch and removal of application-added postcommit remote sync polling. Prewrite ancestry checks, atomic rollback, exact local anchor/tier acknowledgement and native transaction validation remain.751 integrated native/application checks and actual six-script browser build pass; independent review approved both. Static activation reports no app/proxy restart and successful remote payload/SDK retention cleanup. Public asset hashes are checked against the built manifest. Integrated source-only agent drafts removed; one retained build remains.

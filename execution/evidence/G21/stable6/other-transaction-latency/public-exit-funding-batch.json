@@ -22,5 +22,32 @@
   },
   "liveTiming": null,
   "timingBlocker": "Browser tool reports Local browser use is disabled in Work settings",
-  "goalStatus": "active; no 50 percent or 2 second completion claim"
+  "goalStatus": "active; no 50 percent or 2 second completion claim",
+  "publishedCommit": "570d7851701602d6d669fcb994da366ee87f1abb",
+  "publication": {
+    "activationSsm": "e01939b1-de07-4e4d-81ed-4b8e654e5c8f",
+    "activated": true,
+    "appRestarted": false,
+    "proxyRestarted": false,
+    "payloadCleaned": true,
+    "sdkRetentionCleaned": true,
+    "transferDeleted": true
+  },
+  "publicAssets": [
+    {
+      "path": "/wallet/native-worker.js",
+      "bytes": 422285,
+      "sha256": "2588ac894c4669c95a8d211f132ab9697c8f91f4db73c1f15ab5dc1ae1b24d39"
+    },
+    {
+      "path": "/wallet/aztec_bundle.js",
+      "bytes": 8392172,
+      "sha256": "fcd7eea41b84304367b100db50c2b7d1a346b827afa6491be87c9c7dc8fb3aec"
+    },
+    {
+      "path": "/wallet-panel.mjs",
+      "bytes": 165408,
+      "sha256": "f441037ece5ec1c75708681852d05a4455c15211158c4e89829fb8b5db2923b6"
+    }
+  ]
 }
