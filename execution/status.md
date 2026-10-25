@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Published+pushed33b55824.2second target NOTcomplete.1.729s was warm explicit-testshortcut, not normal acceptance. Actual normal remembered-account reopen succeeded20.476s from navigation; click4.637s after15.838s page warmup, changed SDK download.261 capsule preimage-field regression fixed with real native-store fixture7/7. Current batch removes redundant deployment/capsule/native startup work and prewarms ACVM in worker. Realpost verified17.089s click→included/rendered;15starget notmet thisrun. Next peer-approved14check normal-opening-gates.patch not integrated.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Published33b55824;2stargetNOTmet. Normalunfunded/home sign-in measured8953.660/9103.410ms walletclick→enabledConfirmPayment; approval243/238msincluded; cachedSDK33/36ms; nav12.706/13.059s. Notshortcut,nopayments,nothumanMetaMask. Normalfundedreopen20.476snav included7.802sSDKmiss. RegressionfixednativeContractStorefield;realpost17.089sincluded/rendered. Peer-approved normal-opening-gates.patch14checks stillnotintegrated. Next integratepatch and remove remaining serialstartup/sync/read/quote work, fullnormalacceptance.
 
 ## Ready internal work
 
