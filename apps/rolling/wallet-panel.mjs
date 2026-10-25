@@ -1338,6 +1338,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const capability=fundingActiveCapability=fundingCapability();render();
   let result;try{result=await capability.advanceClaim();}finally{if(fundingActiveCapability===capability)fundingActiveCapability=null;}checkAccount(epoch);
   if(['included','complete'].includes(result.state)){
+   transactionTiming.complete();
+   const finishReadiness=beginRollingMeasure('funding.readiness');
+   try{
    const provisional=result.state==='included';
    if(provisional){const claimed=result.intent;includedObservation={txHash:claimed.txHash,action:claimed.action,inclusion:claimed.inclusion,observed:null};actionFeedback.textContent='Credit added: confirmation pending.';actionFeedback.hidden=false;}
    const bokTopup=view==='topup'&&topupKind==='bok';stopFunding();
@@ -1359,6 +1362,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const account=status?.status==='fee-ready'?'Posting collateral and network fee credit were found.':status?.status==='fee-needed'?'Network fee credit is still needed.':status?.status==='collateral-pending'?'Network fee credit was found; posting collateral is not yet available.':'The account still needs a recovery check.';
     notice=status?.status==='fee-ready'?(provisional?'Your posting balance is ready. Confirmation pending.':'Your posting balance is set up.'):'Your posting balance is still being checked. Refresh your account before posting.';view=inlineCreation?'action':'overview';if(inlineCreation)await loadView();
    }
+   }finally{finishReadiness();}
   }
   else if(result.state==='review-payment'){stopFunding();topupQuote=null;notice='Token approval confirmed. Review the separate top-up payment; no deposit is sent automatically.';}
   else if(['review','review-saved','reverted','cancelled'].includes(result.state)){

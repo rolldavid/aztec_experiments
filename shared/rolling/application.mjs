@@ -1090,9 +1090,18 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     async readAccountStatus(){
       if(!session)return {status:'locked'};
       return exclusive(async()=>{const workflow=await fundingWorkflowState();if(workflow.status==='recovering')return {...workflow,pendingWithdrawal:await pendingExitSummary()};
-        const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');
-        const pendingWithdrawal=await pendingExitSummary();
-        let fee;try{fee=await payment();}catch(error){if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};throw error;}
+        // These reads share this owned operation. Native utilities retain their
+        // queue; public fee qualification can overlap collateral discovery.
+        const reads=await Promise.allSettled([
+          async()=>{const ids=await utility(await contract(),'get_deposit_ids',[session.owner,0]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;},
+          ()=>pendingExitSummary(),()=>payment(),
+        ].map(read=>Promise.resolve().then(read)));
+        // Keep collateral, pending-exit, then fee failure priority after draining.
+        for(const result of reads.slice(0,2))if(result.status==='rejected')throw result.reason;
+        await localGuard();
+        const ids=reads[0].value,pendingWithdrawal=reads[1].value;
+        if(reads[2].status==='rejected'){const error=reads[2].reason;if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};throw error;}
+        const fee=reads[2].value;
         return {status:ids.some(id=>BigInt(id)!==0n)?'fee-ready':'collateral-pending',privateFeeCredit:String(fee.availableCredit),
           depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal,postEligibility:'requires-action-simulation'};
       });

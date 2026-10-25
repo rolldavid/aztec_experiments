@@ -1709,3 +1709,9 @@ test('failed native bridge readiness drains all other incoming messages before r
  assert(f.busy);assert.equal(settled,false);assert(!f.calls.some(row=>['prepare','checkpoint','submit'].includes(row[0])));
  release();await rejected;assert.equal(f.busy,false);assert(!f.calls.some(row=>['prepare','checkpoint','submit'].includes(row[0])));
 });
+
+for(const [method,label]of [['readAccountStatus','account.sync'],['readBokStatus','account.bok-sync']])test(`native refresh timing distinguishes ${method}`,async t=>{
+ const prior=globalThis.performance,measures=[];globalThis.performance={now:()=>1,clearMeasures:()=>{},measure:name=>measures.push(name)};t.after(()=>{globalThis.performance=prior;});
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input),failure=Error('held native sync');f.pxe.sync=async()=>{throw failure;};measures.length=0;
+ try{await assert.rejects(session.application[method](),error=>error===failure);assert(measures.includes('rolling.'+label));assert(!measures.includes('rolling.'+(method==='readBokStatus'?'account.sync':'account.bok-sync')));}finally{await session.close();}
+});

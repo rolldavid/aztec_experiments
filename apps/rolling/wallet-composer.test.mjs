@@ -1257,3 +1257,16 @@ for(const completion of ['included','confirmed'])test(`successive ${completion} 
  assert.equal(effects,2,'second successful action retains its public reaction refresh');assert.equal(payments,2,'each action still enters native payment preparation');assert.equal(f.submissions.length,2);assert.equal(f.core().status,before,'neither action queues full inventory');
  f.panel.open({type:'post'});assert(f.document.querySelector('.composer-cost').textContent.includes('Balance —'));assert.equal(f.document.querySelector('.composer-cost').querySelectorAll('strong')[0].getAttribute('title'),null);await new Promise(setImmediate);
 });
+
+test('signup confirmation ends before its one authoritative readiness read, with a separate full readiness span',{timeout:3000},async t=>{
+ const prior=globalThis.performance,measures=new Map();let now=10;
+ globalThis.performance={now:()=>now,clearMeasures:name=>measures.delete(name),measure:(name,value)=>measures.set(name,{...value})};t.after(()=>{globalThis.performance=prior;});
+ const entered=Promise.withResolvers(),held=Promise.withResolvers();
+ const f=await fixture(t,{fee:'collateral-pending',balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{balanceRefresh:async()=>{entered.resolve();await held.promise;}}});
+ f.session.funding={async prepareStarter(){return {kind:'rolling-aggregate-eth-v1',privateFeeCap:'100',slippageBps:100,breakdown:{collateralWei:'100',fee:{maxEth:'20',amount:'200'},bok:{maxEth:'0',amount:'0'},gasBudgetWei:'10',maximumTotalWei:'130'}};},async confirm(){return {pending:true};},async advanceClaim(){now=100;f.progress({stage:'confirming'});now=150;return {state:'complete'};},pauseClaim(){}};
+ f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Set up posting').fire('click');
+ const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Confirm payment'&&!b.disabled));pay.fire('click');await entered.promise;
+ assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.equal(measures.has('rolling.funding.readiness'),false);assert.equal(f.core().status,2);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
+ now=999;held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(measures.get('rolling.funding.readiness'),{start:150,end:999});assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.equal(f.core().status,2);assert(!f.document.body.textContent.includes('Your posting balance is set up.'));
+});

@@ -50,6 +50,7 @@ function fixture(){
   }};
   const board={methods:new Proxy({},{get:(_,name)=>(...args)=>({name,args,simulate:async()=>{
     state.privateReads.push({name,args});
+    if(name==='get_deposit_ids'&&state.beforeDepositIds)await state.beforeDepositIds();
     if(state.responses&&Object.hasOwn(state.responses,name))return {result:state.responses[name]};
     if(name==='preference_head'&&state.preferenceHeadError)throw state.preferenceHeadError;
     if(name==='preference_head'&&state.beforePreferenceHead)await state.beforePreferenceHead();
@@ -3137,4 +3138,25 @@ test('submit consumes only journal-owned completion and reconcile still freshly 
  assert.equal(result.status,'confirmed');assert.equal(result.txHash,[...f.receipts.keys()][0]);assert.equal(reads,completionReads,'no second post-wallet receipt read');assert.equal(f.state.sends,1);
  f.receipts.set(result.txHash,new PendingTxReceipt(TxHash.fromString(result.txHash)));
  assert.equal((await app.reconcile(p.intentId)).status,'unknown');assert.equal(reads,completionReads+1,'external reconciliation remains fresh');
+});
+
+for(const mode of ['fee-ready','fee-needed','collateral-pending','deposit-error','exit-error','fee-error','owner-change'])test(`account readiness drains collateral, exit and fee wave: ${mode}`,async()=>{
+ const f=fixture(),gates=Array.from({length:3},()=>Promise.withResolvers()),entered=new Set();let reads=0,settled=false;
+ const errors=[Error('deposit'),Error('exit'),Error('fee')],original=f.options.privateStore.read;
+ f.options.privateStore.read=async key=>{if(++reads===2){entered.add(1);await gates[1].promise;if(mode==='exit-error')throw errors[1];}return original(key);};
+ f.state.beforeDepositIds=async()=>{entered.add(0);await gates[0].promise;if(mode==='deposit-error')throw errors[0];};
+ if(mode==='collateral-pending')f.state.responses={get_deposit_ids:Array(10).fill(0n)};
+ f.options.sdk.preparePrivateFeePayment=async()=>{entered.add(2);await gates[2].promise;if(mode==='fee-error'||mode==='deposit-error'||mode==='exit-error')throw errors[2];if(mode==='fee-needed')throw Object.assign(Error('empty'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});return {availableCredit:77n};};
+ const result=f.app.readAccountStatus().finally(()=>settled=true);result.catch(()=>{});
+ while(entered.size!==3)await new Promise(setImmediate);
+ await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ if(mode==='owner-change')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
+ gates[mode==='exit-error'?1:0].resolve();await new Promise(setImmediate);assert.equal(settled,false);
+ gates[2].resolve();await new Promise(setImmediate);assert.equal(settled,false,'third branch still owns the read');
+ for(const gate of gates)gate.resolve();
+ if(mode==='exit-error')await assert.rejects(result,{code:'BB_JOURNAL_INVALID'});
+ else if(mode.endsWith('-error'))await assert.rejects(result,error=>error===errors[{'deposit-error':0,'fee-error':2}[mode]]);
+ else if(mode==='owner-change')await assert.rejects(result,{code:'ROLLING_CONTEXT_CHANGED'});
+ else{const value=await result;assert.equal(value.status,mode);assert.equal(value.pendingWithdrawal,null);if(mode!=='fee-needed')assert.equal(value.privateFeeCredit,'77');assert.deepEqual(value.depositIds,mode==='collateral-pending'?[]:[hex(9)]);}
+ assert.equal(f.state.privateReads.filter(row=>row.name==='get_deposit_ids').length,1);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });

@@ -571,8 +571,8 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   await guard();
   if(!sdk.isTrustedPrivateNode(privateNode)||!sdk.isPrivatePXEForNode(pxe,privateNode)||privateWallet.aztecNode!==privateNode||privateWallet.pxe!==pxe||!routing.isPrivateWalletForNode(privateWallet,privateNode))throw fail('ROLLING_PRIVATE_ROUTE');
  }
- let refreshPhase=null;
- const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?'account.sync':'action.sync',()=>ordinaryPolicy&&typeof pxe.syncWithAnchorRead==='function'?app.prefetchPostingPolicy(read=>pxe.syncWithAnchorRead(read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
+ let refreshPhase=null,refreshSyncStage='account.sync';
+ const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?refreshSyncStage:'action.sync',()=>ordinaryPolicy&&typeof pxe.syncWithAnchorRead==='function'?app.prefetchPostingPolicy(read=>pxe.syncWithAnchorRead(read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
   if(ordinaryPost){await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress}));await guardRoute();}
  },prepareContractState:async({method})=>{await guardRoute();await measureRollingStage('action.contract-state',()=>pxe.prepareBoardActionState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress,method}));await guardRoute();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
  async function observedRead(name,call,args){
@@ -581,6 +581,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'private-refresh',step,deploymentStep:null,state,code:state==='failed'?refreshErrorCode(error):null});
   emit('started');
   try{const result=await locked(async()=>{
+   refreshSyncStage=name==='readBokStatus'?'account.bok-sync':'account.sync';
    refreshPhase=phase=>{if(phase==='context-complete'){if(contextChecks<2)return;phase='method';}if(phase==='context')contextChecks++;emit('complete');step=method+'/'+phase;emit('started');};
    try{return await call(...args);}finally{refreshPhase=null;}
   });emit('complete');return result;}catch(error){emit('failed',error);throw error;}
