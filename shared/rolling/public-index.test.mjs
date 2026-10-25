@@ -825,3 +825,27 @@ test('service-owned first bootstrap does not record provenance before complete b
  a.storage.close();f.node.getNodeInfo=getInfo;f.calls.length=0;const b=await f.openOwned();await f.drain(b.index);
  assert.notEqual(b.storage.inspect().control.generation,before.generation);assert.deepEqual(f.calls.map(([,n])=>n),[1,2,3]);
 });
+
+test('targeted saved queries bind normalized selection and publication into the existing cursor authority',async t=>{
+ const f=await persistentFixture(t);f.put(4,[await f.post(20,4)]);f.setHead(4);const {index}=await f.open();await f.drain(index);
+ const first=index.query('following',{boards:f.boardId,names:f.nameId,limit:1});assert.deepEqual(first.posts.map(p=>p.id),['20']);assert.ok(first.nextCursor);
+ assert.deepEqual(index.query('following',{boards:f.boardId,names:f.nameId,limit:1,cursor:first.nextCursor}).posts.map(p=>p.id),['10']);
+ assert.throws(()=>index.query('following',{boards:f.boardId,names:'',limit:1,cursor:first.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ const bookmark=index.query('bookmarks',{ids:'20,10',limit:1});assert.ok(bookmark.nextCursor);
+ assert.deepEqual(index.query('bookmarks',{ids:'10,20',limit:1,cursor:bookmark.nextCursor}).posts.map(p=>p.id),['10']);
+ assert.throws(()=>index.query('bookmarks',{ids:'10',limit:1,cursor:bookmark.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ f.put(4,[await f.post(30,4)],100);await index.step();await f.drain(index);
+ assert.throws(()=>index.query('bookmarks',{ids:'20,10',limit:1,cursor:bookmark.nextCursor}),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ assert.deepEqual(index.query('bookmarks',{ids:'10,20'}).posts.map(p=>p.id),['10']);
+});
+
+test('targeted HTTP routes preserve ordinary fresh-read admission and validate selection bounds',async t=>{
+ const calls=[];let syncs=0;const checkpoint={number:1,hash:hex(1)},status=()=>({state:'ready',revision:'1',scope,checkpoint});
+ const index={status,sync:async()=>{syncs++;return status();},query:(view,params)=>{calls.push([view,params]);return {schemaVersion:1,scope,complete:true,checkpoint,posts:[],revision:'1'};}};
+ const server=await startRollingPublicServer({index,pollMs:30000});t.after(()=>server.close());
+ const base=server.url??server.address;assert.equal(typeof base,'string');
+ for(const path of ['/api/following?boards=0&names=7','/api/bookmarks?ids=10,20']){const before=syncs;const res=await fetch(base+path);assert.equal(res.status,200);assert.ok(syncs>before);}
+ assert.deepEqual(calls.map(c=>c[0]),['following','bookmarks']);
+ const hundred=Array.from({length:100},(_,i)=>String(10n**75n+BigInt(i))).join(',');const complete=await fetch(base+'/api/bookmarks?ids='+encodeURIComponent(hundred));assert.equal(complete.status,200);assert.equal(calls.at(-1)[1].ids,hundred);
+ for(const query of ['ids=1,1','ids=01','ids='+Array.from({length:101},(_,i)=>i+1).join(',')])assert.equal((await fetch(base+'/api/bookmarks?'+query)).status,400);
+});

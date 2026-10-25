@@ -52,3 +52,5 @@ main h1,main h2,main h3,.post>p,.post-top>div{overflow-wrap:anywhere;min-width:0
 .account-dialog .button[hidden]{display:none!important}
 
 .post-confirmation{display:inline-block;margin-left:8px;padding:1px 7px;border:1px solid #ddc89f;border-radius:4px;background:#fff4df;color:#71501d;font-size:12px;font-weight:600;vertical-align:middle}
+
+.saved-follow-list{list-style:none;padding:0;display:grid;gap:10px}.saved-follow-list li{display:flex;align-items:center;justify-content:space-between;gap:12px}.saved-follow-list li>a{min-width:0;overflow-wrap:anywhere}.saved-follow-list .button{flex-shrink:0}

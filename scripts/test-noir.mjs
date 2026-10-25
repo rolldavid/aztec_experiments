@@ -12,7 +12,6 @@ const threads = process.env.NOIR_TEST_THREADS ?? '2';
 if (!['1','2'].includes(threads)) throw new Error('NOIR_TEST_THREADS must be 1 or 2');
 const filter = args.length ? [args[1]] : [];
 assertNodeVersion(); assertAztecPackages(); checkArtifacts();
-if (!fs.readFileSync(path.join(ROOT, 'billboard/target/billboard_contract-Billboard.json')).equals(fs.readFileSync(path.join(ROOT, 'apps/src/billboard/billboard_artifact.json')))) throw new Error('TXE target artifact differs from validated canonical artifact; rebuild contracts');
 const compiler=nargoBinary();
 const listing=execFileSync(compiler,['test',...filter,'--workspace','--list-tests','--silence-warnings'],{cwd:path.join(ROOT,'billboard'),encoding:'utf8',timeout:60000});
 const batches=noirTestBatches(listing);

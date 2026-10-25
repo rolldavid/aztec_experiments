@@ -226,11 +226,11 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
   function publication(){check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');assertOwned();return state();}
   function query(view,params={}){
     check(ready&&!busy&&!unavailable,'ROLLING_PUBLIC_NOT_READY');
-    const allowed={'bok-accounting':['blockNumber','blockHash'],home:[],feed:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
+    const allowed={'bok-accounting':['blockNumber','blockHash'],home:[],feed:[],following:['boards','names'],bookmarks:['ids'],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
     check(typeof view==='string'&&Object.hasOwn(allowed,view)&&params&&Object.getPrototypeOf(params)===Object.prototype);
     const input={};for(const [k,d] of Object.entries(Object.getOwnPropertyDescriptors(params))){
       check((k==='cursor'||k==='limit'||allowed[view].includes(k))&&Object.hasOwn(d,'value'));
-      check(d.value===null||typeof d.value==='string'&&d.value.length<=120||typeof d.value==='number'&&Number.isSafeInteger(d.value));input[k]=d.value;
+      check(d.value===null||typeof d.value==='string'&&d.value.length<=((view==='following'||view==='bookmarks')&&['boards','names','ids'].includes(k)?7800:120)||typeof d.value==='number'&&Number.isSafeInteger(d.value));input[k]=d.value;
     }
     if(view==='bok-accounting')check(scope.bok,'ROLLING_PUBLIC_ACCOUNTING_UNSUPPORTED');
     let accountingCheckpoint=confirmationCheckpoint;
@@ -238,6 +238,9 @@ export async function createRollingPersistentPublicIndex({node,artifact,bokArtif
       check(Number.isSafeInteger(input.blockNumber)&&input.blockNumber>=1&&hash(input.blockHash));
       check(BigInt(input.blockNumber)<=BigInt(control.checkpoint.number));
       accountingCheckpoint={number:String(input.blockNumber),hash:input.blockHash};
+    }
+    if(view==='following'||view==='bookmarks'){
+      let count=0;for(const k of view==='following'?['boards','names']:['ids']){input[k]??='';check(typeof input[k]==='string');const ids=input[k]===''?[]:input[k].split(',');check(ids.every(id=>field(id)&&(k==='boards'||id!=='0'))&&new Set(ids).size===ids.length);count+=ids.length;input[k]=ids.sort((a,b)=>BigInt(a)<BigInt(b)?-1:BigInt(a)>BigInt(b)?1:0).join(',');}check(count<=100);
     }
     const cursor=input.cursor??null;delete input.cursor;input.limit??=50;
     check(Number.isSafeInteger(input.limit)&&input.limit>=1&&input.limit<=100);

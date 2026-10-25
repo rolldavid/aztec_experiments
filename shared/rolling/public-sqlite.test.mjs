@@ -431,3 +431,28 @@ test('SQLite predecessor keyset spans more than64 rows without losing a later li
  assert.deepEqual(tail.rows.map(r=>r.postId),['170']);assert.equal(tail.nextAfter,null);
  assert.throws(()=>f.store.readPendingPredecessors({expectedControl:f.control,id:'171',after:'999999'}));
 });
+
+test('saved selection queries use exact point/indexed reads, merge targets and page without scanning unrelated posts',async t=>{
+ const f=await queryFixture(t),name=await f.name(),board=await f.board('saved');
+ await f.post('10',{name});await f.post('20',{board});await f.post('30',{name,board});
+ for(let i=40;i<80;i++)await f.post(String(i));
+ const first=f.read('following',{boards:board,names:name,limit:2});
+ assert.deepEqual(first.value.posts.map(p=>p.id),['30','20']);assert.equal(first.nextAfter,'20');
+ assert.equal(first.work.seeks,2);assert.equal(first.work.candidateRows,4);
+ assert.deepEqual(first.value.following.names,[{id:name,first:'John',last:'Doe'}]);
+ assert.deepEqual(f.read('following',{boards:board,names:name,limit:2},first.nextAfter).value.posts.map(p=>p.id),['10']);
+ const saved=f.read('bookmarks',{ids:'10,30,999',limit:1});assert.deepEqual(saved.value.posts.map(p=>p.id),['30']);assert.equal(saved.work.seeks,0);
+ assert.deepEqual(f.read('bookmarks',{ids:'10,30,999',limit:1},saved.nextAfter).value.posts.map(p=>p.id),['10']);
+ assert.deepEqual(f.read('following',{boards:'',names:''}).value.posts,[]);
+ assert.deepEqual(f.read('bookmarks',{ids:''}).value.posts,[]);
+ assert.throws(()=>f.read('following',{boards:board,names:'',limit:1},'10'),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+ assert.throws(()=>f.read('bookmarks',{ids:'10'},'30'),{code:'ROLLING_PUBLIC_CURSOR_STALE'});
+});
+
+test('saved selection reads retain moderation redaction and reject malformed or excessive selections',async t=>{
+ const f=await queryFixture(t),name=await f.name(),board=await f.board('saved');await f.post('10',{name,board});
+ await f.add([['PostRemoved',{id:'10',policy_version:'4294967297',penalized:true,reason_length:'3',reason:queryPack('Bad',7)}]]);
+ for(const [view,params]of [['following',{boards:board,names:name}],['bookmarks',{ids:'10'}]])assert.equal(f.read(view,params).value.posts[0].text,null);
+ for(const ids of ['01','1,1','-1','1,',Array.from({length:101},(_,i)=>String(i+1)).join(',')])assert.throws(()=>f.read('bookmarks',{ids}));
+ assert.throws(()=>f.read('following',{boards:Array.from({length:100},(_,i)=>String(i)).join(','),names:name}));
+});

@@ -8,7 +8,6 @@ import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
 import {l2JournalScopeText} from '../../shared/l2-journal.mjs';
 import {encodeDepositExitCommitment,sha256Field} from '../../shared/protocol-commitments.mjs';
 import {createAggregateWallet,starterFundingAllocation,createStandaloneTopupWallet,advanceAggregateClaim,submitWithFundingCheckpoint} from '../../shared/rolling/aggregate-wallet.mjs';
-import {createRollingPreferenceReader} from '../../shared/rolling/preference-reader.mjs';
 import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import {createRollingApplication,createPendingWithdrawalSlot} from '../../shared/rolling/application.mjs';
 import {verifyRollingDeployment,observeRollingSetup,rollingSetupErrorCode} from '../../shared/rolling/deployment.mjs';
@@ -388,7 +387,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const lockName='billboard-wallet:'+captured.address;
  let operationScope=null;
- let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,readPreferences,initializeAccount,aggregate,prepareStarter,topups,withdrawal,depositRefunds;
+ let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,initializeAccount,aggregate,prepareStarter,topups,withdrawal,depositRefunds;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
  };
@@ -486,9 +485,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     await guard();await pxe.registerContractClass(contractArtifact);
     await guard();await pxe.registerContract(contractInstance);
    }
-   // Cold preference recovery needs only registered keys and the scoped PXE
-   // cursor. The signing capsule can trigger ordinary note discovery, so create
-   // it lazily under the same account lease before an ordinary operation.
+   // Initialize the signing capsule lazily under the account lease before an ordinary operation.
    let initialized=false;
    initializeAccount=async()=>{
     await guardRoute();if(initialized)return;
@@ -546,19 +543,6 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    await guard();app=createRollingApplication({sdk:{...sdk,isPrivateWalletForNode:routing.isPrivateWalletForNode},deployment,resolveBok:ensureBok,contextGuard:guard,privateStore,funding,onProgress,measure:measureRollingStage,readBokAccountingPage:createUniformBokAccountingReader(),
     accountSession:{proposedTransactions:true,operationScope:()=>operationScope,owner:instance.address,wallet,node,journal,walletSecret:captured.secretKey,walletSalt:captured.salt,
      ...(typeof routing.createPreproofRecovery==='function'?{preproofRecovery:routing.createPreproofRecovery(wallet,node,journal)}:{})}});
-   // The reader owns synchronization, but the session owns this same account
-   // lock and PXE lifetime. Its head capability is the raw guarded application
-   // method, never the lock-taking public facade (which would nest the lock).
-   let preferenceReader;
-   readPreferences=async options=>{
-    await initializeAccount();
-    preferenceReader??=createRollingPreferenceReader({sdk,pxe,node,owner:instance.address,deployment,
-      // Reuse this exact held operation's native readiness attestation in
-      // the raw head read. Reader route/anchor/class/reorg fences stay fresh.
-      checkReadiness:()=>app.prefetchContext(),readHead:app.readPreferenceHead.bind(app),contextGuard:guardRoute,privateStore,measure:measureRollingStage,
-      walletSecret:captured.secretKey,walletSalt:captured.salt});
-    return preferenceReader.read(options);
-   };
    withdrawal=createCollateralWithdrawal({sdk,ethers,provider:funding.provider,node,application:app,scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,captureWallet:captureFundingWallet??(async()=>{throw fail('ROLLING_FUNDING_UNAVAILABLE');}),contextGuard:guardRoute,resolveBokScope:funding.resolveBokWithdrawal});
    depositRefunds=createDepositRefunds({sdk,ethers,provider:funding.provider,node,
     scope:{account:captured.address,...network,board:selected.board.contractAddress,portal:selected.board.portalAddress},
@@ -608,7 +592,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     operationScope.synchronized=false;
    }
   }));},
-  readPreferences:options=>locked(()=>readPreferences(options))});
+});
  const privateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
  const continuation=funding=>createFundingContinuation({application:synchronized,funding,sdk,node:privateNode,contextGuard:guardRoute,locked,onProgress,confirmationTier:'proposed',bridgeChainTip:nativeChainTip,invalidateSnapshot:()=>{operationScope={synchronized:false};}});
  const topup=topups?Object.freeze(Object.fromEntries(Object.entries(topups).map(([kind,cap])=>[kind,Object.freeze({ethAvailable:kind==='bok'&&selected.bokTopup!==undefined,defaultPrivateFeeCap:privateFeeCap,...continuation(cap),...Object.fromEntries(['prepare','confirm','recover','inspect','checkpointClaim','reviewRevertedClaim'].map(name=>[name,(...args)=>locked(()=>cap[name](...args))]))})]))):null;

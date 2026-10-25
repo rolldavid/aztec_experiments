@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {OperationQueue} from '../../node_modules/@aztec-labs/pxe/dest/operation_queue.js';
 import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
-const names=['readFundingState','readWithdrawalReadiness','readBokAccounting','readBalances','readWithdrawal','readModeratorStatus','readBokStatus','readPrivateFeeCredit','prepareBokPost','prepareBokRelease','readAccountStatus','readPreferenceHead','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','prepareInterrupted','resumeSaved'];
+const names=['readFundingState','readWithdrawalReadiness','readBokAccounting','readBalances','readWithdrawal','readModeratorStatus','readBokStatus','readPrivateFeeCredit','prepareBokPost','prepareBokRelease','readAccountStatus','readProfile','ownedIdentities','prepare','submitPrepared','cancelPrepared','reconcile','inspectRecovery','prepareReplacement','prepareInterrupted','resumeSaved'];
 test('explicit synchronization exposes a newly included name through the actual autoSync:false SDK queue',async()=>{
  let anchor=14,head=14,closed=0,syncs=0;
  const synchronizer={sync:async()=>{syncs++;anchor=head;}};
@@ -34,16 +34,16 @@ test('capabilities and method receivers are captured before asynchronous synchro
  await Promise.resolve();raw.prepare=()=>assert.fail('replacement');options.contextGuard=()=>assert.fail('replacement');options.synchronize=()=>assert.fail('replacement');
  release();assert.deepEqual(await pending,['exact-intent']);assert.deepEqual(order,['guard','sync','guard','call']);assert(Object.isFrozen(application));
 });
-test('preference head observes the synchronized anchor through the supported operation queue',async()=>{
+test('profile state observes the synchronized anchor through the supported operation queue',async()=>{
  let anchor=14,head=15,syncs=0,reads=0;
  const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},
   anchorBlockStore:{getBlockHeader:async()=>({number:anchor})},contributors:[],
   stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{debug(){},verbose(){},warn(){}}});queue.start();
  try{
   const raw=Object.fromEntries(names.map(name=>[name,()=>{}]));
-  raw.readPreferenceHead=()=>queue.runSynced(({anchorBlockHeader})=>{reads++;return {initialized:true,schema:1,revision:anchorBlockHeader.number>=15?'2':'1',digest:anchorBlockHeader.number>=15?'22':'11'};});
+  raw.readProfile=()=>queue.runSynced(({anchorBlockHeader})=>{reads++;return {version:anchorBlockHeader.number>=15?'2':'1'};});
   const application=createSynchronizedRollingApplication({application:raw,synchronize:()=>queue.run(()=>{syncs++;anchor=head;}),contextGuard:()=>{}});
-  assert.equal((await raw.readPreferenceHead()).revision,'1');assert.equal((await application.readPreferenceHead()).revision,'2');
+  assert.equal((await raw.readProfile()).version,'1');assert.equal((await application.readProfile()).version,'2');
   assert.equal(reads,2);assert.equal(syncs,1);
  }finally{await queue.stop();}
 });
@@ -133,16 +133,16 @@ test('captured policy read is requested only for synchronized ordinary main-boar
  }
 });
 
-const genericBoardActions={like:'set_like',unlike:'set_like',preference:'set_preference','read-marker':'mark_thread_read',name:'register_name',bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator',screen:'screen',withdraw:'withdraw'};
+const genericBoardActions={like:'set_like',unlike:'set_like',name:'register_name',bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator',screen:'screen',withdraw:'withdraw'};
 test('known generic actions prepare exact native methods after sync; other financial/Bok/post paths remain separate',async()=>{
  for(const type of [...Object.keys(genericBoardActions),'bok','claim-bok','claim-deposit','cancel-deposit','withdraw-bok','cancel-bok-request','expire-bok-request','post']){
   const seen=[],scope={};const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>seen.push('action')])),operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>seen.push('sync'),prepareContractState:({method})=>seen.push(method)});
   await app.prepare({type});assert.deepEqual(seen,genericBoardActions[type]?['sync',genericBoardActions[type],'action']:['sync','action']);
  }
 });
-test('already synchronized preference context still prepares Board state without duplicate global sync',async()=>{
+test('already synchronized profile context still prepares Board state without duplicate global sync',async()=>{
  const seen=[],scope={};const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>seen.push(name)])),operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>seen.push('sync'),prepareContractState:({method})=>seen.push(method)});
- await app.readPreferenceHead();await app.prepare({type:'preference'});assert.deepEqual(seen,['sync','readPreferenceHead','set_preference','prepare']);
+ await app.readProfile();await app.prepare({type:'bio'});assert.deepEqual(seen,['sync','readProfile','set_bio','prepare']);
 });
 for(const fail of ['discovery','scope'])test('generic preparation '+fail+' failure cannot enter application or release early',async()=>{
  const gate=Promise.withResolvers(),entered=Promise.withResolvers(),error=Error('discovery failed');let scope={},calls=0,done=false;
@@ -152,7 +152,7 @@ for(const fail of ['discovery','scope'])test('generic preparation '+fail+' failu
 
 
 test('only held immediate likes start their qualified metadata alongside native synchronization',async()=>{
- for(const type of ['like','unlike','bio','preference'])for(const immediate of [false,true]){
+ for(const type of ['like','unlike','bio','avatar'])for(const immediate of [false,true]){
   let seen;const scope={preparationReads:[]},gate=Promise.withResolvers(),entered=Promise.withResolvers();let stages=0,called=false;
   const arrive=async()=>{if(++stages===2)entered.resolve();await gate.promise;};
   const raw=Object.fromEntries(names.map(name=>[name,()=>{called=true;return {};} ]));
@@ -160,15 +160,6 @@ test('only held immediate likes start their qualified metadata alongside native 
   const work=app.prepare({type},immediate?{immediate:true}:undefined);await entered.promise;assert.equal(called,false);assert.equal(seen.likePayment,immediate&&['like','unlike'].includes(type)?true:undefined);gate.resolve();await work;assert.equal(called,true);
  }
 });
-
-test('only immediate preference mutations start qualified metadata alongside synchronization',async()=>{
- for(const type of ['preference','read-marker','bio','screen'])for(const immediate of [false,true]){
-  const scope={preparationReads:[]},gate=Promise.withResolvers(),entered=Promise.withResolvers();let starts=0,seen,called=false;const arrive=async()=>{if(++starts===2)entered.resolve();await gate.promise;};
-  const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,()=>{called=true;return{};}])),operationScope:()=>scope,contextGuard:()=>{},synchronize:arrive,prepareContext:async value=>{seen=value;await arrive();}});
-  const work=app.prepare({type},immediate?{immediate:true}:undefined);await entered.promise;assert.equal(called,false);assert.equal(seen.preferencePayment,immediate&&['preference','read-marker'].includes(type)?true:undefined);gate.resolve();await work;
- }
-});
-
 
 test('balances capture the optional Bok selection before the first context await; accounting remains cursor-only',async()=>{
  const gate=Promise.withResolvers();let guards=0;
@@ -199,70 +190,37 @@ test('invalid Bok balance options are rejected without accessors, synchronizatio
  assert.equal(reads,0);assert.equal(calls,0);
 });
 
-// Exercise the actual UI action entry point and native queue, not a duplicate
-// model of its initial preference-head ordering.
+// The exported action entry still uses the native queue for retained actions.
 import {executeRollingAction} from '../../apps/rolling/wallet-action.mjs';
-for(const type of ['preference','read-marker'])test(`immediate ${type} prepares state before its one native head read and reuses the owned anchor`,async()=>{
- let anchor=14,head=15,syncs=0,headReads=0,submitted=0;const discovered=new Set(),methods=[],contextReads=[];
- const scope={preparationReads:[]},gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers();let starts=0;
- const arrive=async index=>{if(++starts===2)entered.resolve();await gates[index].promise;};
- const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},
-  anchorBlockStore:{getBlockHeader:async()=>({number:anchor})},contributors:[],
-  stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{debug(){},verbose(){},warn(){}}});queue.start();
+test('immediate like prepares native state once and refreshes its anchor after inclusion',async()=>{
+ let anchor=14,head=15,syncs=0,submitted=0;const discovered=[],scope={preparationReads:[]};
+ const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},anchorBlockStore:{getBlockHeader:async()=>({number:anchor})},contributors:[],stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{debug(){},verbose(){},warn(){}}});queue.start();
  try{
   const raw=Object.fromEntries(names.map(name=>[name,()=>assert.fail('unexpected '+name)]));
-  raw.readPreferenceHead=(...args)=>queue.runSynced(({anchorBlockHeader})=>{
-   assert.deepEqual(args,[]);assert(discovered.has(anchorBlockHeader.number));headReads++;
-   return {revision:String(anchorBlockHeader.number)};
-  });
-  raw.prepare=(action,options)=>queue.runSynced(({anchorBlockHeader})=>{
-   assert.equal(action.expectedRevision,String(anchorBlockHeader.number));assert.equal(action.type,type);assert.deepEqual(options,{immediate:true});return {intentId:'exact'};
-  });
+  raw.prepare=(action,options)=>queue.runSynced(({anchorBlockHeader})=>{assert.equal(action.type,'like');assert.equal(anchorBlockHeader.number,head);assert.deepEqual(options,{immediate:true});return {intentId:'exact'};});
   raw.submitPrepared=id=>{assert.equal(id,'exact');submitted++;return {status:'included'};};
-  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},
-   synchronize:async()=>{syncs++;await arrive(0);await queue.run(()=>{anchor=head;});},
-   prepareContext:async options=>{contextReads.push(options);await arrive(1);},
-   prepareContractState:({method})=>queue.runSynced(({anchorBlockHeader})=>{methods.push(method);discovered.add(anchorBlockHeader.number);})});
-  const pending=executeRollingAction(app,{type});await entered.promise;
-  assert.equal(headReads,0);assert.deepEqual(contextReads,[{predecessor:true,preferencePayment:true}]);
-  gates[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(headReads,0);
-  gates[1].resolve();assert.deepEqual(await pending,{status:'included'});
-  assert.equal(syncs,1);assert.equal(headReads,1);assert.equal(submitted,1);
-  // The later native guard remains; its same-anchor discovery is already done.
-  assert.deepEqual(methods,[genericBoardActions[type],genericBoardActions[type]]);assert.deepEqual([...discovered],[15]);
-  assert.equal(scope.synchronized,false);
-  head=16;await app.readPreferenceHead({prepareAction:type});assert.equal(anchor,16);assert.equal(headReads,2);assert.equal(syncs,2);assert.deepEqual([...discovered],[15,16]);
- }finally{gates.forEach(g=>g.resolve());await queue.stop();}
+  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>queue.run(()=>{syncs++;anchor=head;}),prepareContractState:({method})=>queue.runSynced(({anchorBlockHeader})=>{assert.equal(method,'set_like');discovered.push(anchorBlockHeader.number);})});
+  assert.equal(app.readPreferenceHead,undefined);assert.deepEqual(await executeRollingAction(app,{type:'like',post:'42'}),{status:'included'});
+  assert.equal(scope.synchronized,false);assert.equal(syncs,1);assert.equal(submitted,1);assert.deepEqual(discovered,[15]);
+  head=16;await app.prepare({type:'like',post:'42'},{immediate:true});assert.equal(syncs,2);assert.deepEqual(discovered,[15,16]);
+ }finally{await queue.stop();}
 });
 
-test('preference preparation captures the action primitive and strips utility options before awaiting',async()=>{
- const gate=Promise.withResolvers(),seen=[],scope={preparationReads:[]};let guards=0;
- const raw=Object.fromEntries(names.map(name=>[name,(...args)=>{seen.push(args);return {revision:'1'};}]));
- const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{if(++guards===1)return gate.promise;},synchronize:()=>{},prepareContractState:({method})=>seen.push(method)});
- const input={prepareAction:'preference'},pending=app.readPreferenceHead(input);input.prepareAction='read-marker';gate.resolve();await pending;
- assert.deepEqual(seen,['set_preference',[]]);
- let reads=0,calls=0;const guarded=createSynchronizedRollingApplication({application:raw,contextGuard:()=>calls++,synchronize:()=>calls++});
- for(const bad of [null,undefined,{}, {prepareAction:'post'},{prepareAction:'preference',extra:true},Object.create({prepareAction:'preference'}),{get prepareAction(){reads++;return 'preference';}},{prepareAction:'preference',[Symbol('extra')]:true}]){
-  await assert.rejects(guarded.readPreferenceHead(bad),{code:'ROLLING_INVALID_ACTION'});
- }
- await assert.rejects(guarded.readPreferenceHead({prepareAction:'preference'},{}),{code:'ROLLING_INVALID_ACTION'});assert.equal(reads,0);assert.equal(calls,0);
-});
-
-for(const fail of ['sync','context'])test(`preference initial ${fail} failure drains its sibling before head or action work`,async()=>{
+for(const fail of ['sync','context'])test(`like initial ${fail} failure drains its sibling before native action work`,async()=>{
  const gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),failure=Error(fail);let starts=0,calls=0,done=false;
  const work=index=>async()=>{if(++starts===2)entered.resolve();await gates[index].promise;if(index===(fail==='sync'?0:1))throw failure;};
  const scope={preparationReads:[]},raw=Object.fromEntries(names.map(name=>[name,()=>calls++]));
  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:work(0),prepareContext:work(1),prepareContractState:()=>calls++});
- const pending=assert.rejects(executeRollingAction(app,{type:'preference'}).finally(()=>done=true),error=>error===failure);
+ const pending=assert.rejects(executeRollingAction(app,{type:'like',post:'42'}).finally(()=>done=true),error=>error===failure);
  await entered.promise;gates[fail==='sync'?0:1].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(done,false);assert.equal(calls,0);
  gates.forEach(g=>g.resolve());await pending;assert.equal(calls,0);assert.equal(scope.synchronized,undefined);
 });
 
-for(const fail of ['scope','discovery'])test(`initial preference ${fail} change prevents head consumption and intent creation`,async()=>{
+for(const fail of ['scope','discovery'])test(`initial like ${fail} change prevents intent creation`,async()=>{
  const entered=Promise.withResolvers(),gate=Promise.withResolvers(),failure=Error('discovery');let scope={preparationReads:[]},calls=0;
  const raw=Object.fromEntries(names.map(name=>[name,()=>calls++]));
  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContext:()=>{},prepareContractState:async()=>{entered.resolve();await gate.promise;if(fail==='discovery')throw failure;}});
- const pending=assert.rejects(executeRollingAction(app,{type:'read-marker'}),fail==='scope'?{code:'ROLLING_CONTEXT_CHANGED'}:error=>error===failure);
+ const pending=assert.rejects(executeRollingAction(app,{type:'like',post:'42'}),fail==='scope'?{code:'ROLLING_CONTEXT_CHANGED'}:error=>error===failure);
  await entered.promise;assert.equal(calls,0);if(fail==='scope')scope={preparationReads:[]};gate.resolve();await pending;assert.equal(calls,0);
 });
 

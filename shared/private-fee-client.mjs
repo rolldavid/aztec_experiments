@@ -100,7 +100,7 @@ export async function preparePrivateFeePayment(input) {
   try{return await prepare(input);}catch(error){if(error instanceof PrivateFeePreparationError)throw error;throw new PrivateFeePreparationError('PRIVATE_FEE_PREPARATION_FAILED');}
 }
 async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,expectedChainId,expectedVersion,gasSettings,claim,creditCheck='read-balance',measure=(_stage,operation)=>operation()}={}) {
-  check(['read-balance','ordinary-post-proof','qualified-like-proof','qualified-preference-proof'].includes(creditCheck)&&!(creditCheck!=='read-balance'&&claim!==undefined),'PRIVATE_FEE_CONFIGURATION_REQUIRED');
+  check(['read-balance','ordinary-post-proof','qualified-like-proof'].includes(creditCheck)&&!(creditCheck!=='read-balance'&&claim!==undefined),'PRIVATE_FEE_CONFIGURATION_REQUIRED');
   check(wallet?.getChainInfo&&wallet?.registerContract&&node?.getNodeInfo&&node?.getContract,'PRIVATE_FEE_PROVIDER_REQUIRED');
   check(privateFeeAddress&&privateFeeArtifact,'PRIVATE_FEE_CONFIGURATION_REQUIRED');
   const paymentPXE=wallet.pxe;
@@ -156,7 +156,7 @@ async function prepare({wallet,node,owner,privateFeeAddress,privateFeeArtifact,e
   check(canonical.currentContractClassId.toString()===PRIVATE_FEE_REFUND_PROFILE.classId,'PRIVATE_FEE_ARTIFACT_INVALID');
   const refundGasLimits=new Gas(PRIVATE_FEE_REFUND_PROFILE.daGas,PRIVATE_FEE_REFUND_PROFILE.l2Gas);
   const prepared={creditCheck,...(creditCheck!=='read-balance'?{}:{availableCredit}),networkGasLimits:{daGas:nodeInfo.txsLimits.gas.daGas,l2Gas:nodeInfo.txsLimits.gas.l2Gas},refundGasLimits,refundReservationError:PRIVATE_FEE_REFUND_PROFILE.reservationError,paymentMethod,refundSelector,gasSettings:fixed.gasSettings,metadata:{classId:canonical.currentContractClassId.toString(),maximumFee:fixed.maximumFee.toString(),feePayer:payer.toString(),mode:claim===undefined?'private-balance':'bridge-claim',refundUnusedGas:true}};
-  if(!['qualified-like-proof','qualified-preference-proof'].includes(creditCheck))return prepared;
+  if(creditCheck!=='qualified-like-proof')return prepared;
   // Metadata can overlap chain synchronization. Read credit only later, under
   // the caller's held synchronized account operation; never retain a balance.
   return {...prepared,withAvailableCredit:async()=>{

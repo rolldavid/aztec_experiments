@@ -101,8 +101,8 @@ export function createRollingReaderAssetHandler(wallet){
  };
 }
 export const serveRollingReaderAsset=createRollingReaderAssetHandler();
-export function startRollingReader({index,port=0,wallet,fundingRelay}){
- return startRollingPublicServer({index,port,fundingRelay,staticHandler:createRollingReaderAssetHandler(wallet)});
+export function startRollingReader({index,port=0,wallet,fundingRelay,savedItems,savedItemsDirectory}){
+ return startRollingPublicServer({index,port,fundingRelay,savedItems,savedItemsDirectory,staticHandler:createRollingReaderAssetHandler(wallet)});
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  try{

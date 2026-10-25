@@ -23,7 +23,7 @@ export function buildFundingRouterOnly({bokCredit=false}={}) {
     if(!Object.hasOwn(inputs,name))throw Error('Contract input removed: '+name);
   }
   const protectedFiles={
-    'apps/src/billboard/billboard_artifact.json':before.noir,
+    'billboard/target/rolling_contract-RollingBoard.json':before.rollingBoard,
     'apps/src/billboard/private_fee_artifact.json':before.privateFee,
     'plugins/adapter_artifact.json':before.pluginAdapter,
     'billboard/portal/out/PluginPortal.sol/PluginPortal.json':before.pluginPortal,

@@ -36,7 +36,6 @@ function fixture(t) {
     'shared/owner-envelope.mjs':'// fixture envelope',
     'shared/ordinary-post-fees.mjs':'// fixture fee profile',
     'shared/like-fees.mjs':'// fixture like profile',
-    'shared/preference-fees.mjs':'// fixture preference profile',
     'shared/ordinary-post-witnesses.mjs':'// fixture witness prefetch',
     'toolchain.json': '{"aztec":"5.0.0"}',
     'scripts/toolchain.mjs': '// synthetic toolchain',

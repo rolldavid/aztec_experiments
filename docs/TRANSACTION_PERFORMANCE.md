@@ -177,3 +177,7 @@ Clean fresh signup took40.797s from Confirm payment to visible enabled Write a p
 Fresh bookmark from unknown state took15.068s click to visible enabled Unbookmark after native proposed inclusion; inverse14.951s to visible enabled Bookmark. Exact receipt blocks3695/3696 succeeded. Starting bookmark action58.264s; this is74.1percent lower action completion, but baseline effect was offscreen. The b787 Like action returned in10.033s; its10.305s visible observer incorrectly targeted the permanent secondary Unlike control and is not qualified visible-count evidence. Receipt3687 checkpointed successfully.
 
 Reviewed next sourcecd798d9e removes duplicate custody receipt verification, overlaps fee metadata/custody and runs native Board/FPC readiness discovery together. Root179 aggregate,708 readiness/application and12 new fee-wave checks pass. Actual next-source speedup remains to be measured.
+
+### Deferred by owner: read request synchronization
+
+Live93954017 public server has a persistent localSQLite index, but ordinary public reads call freshRead→index.sync unless an explicit publication revision matches the ready current snapshot. Sync performs network/contract/header RPCs. Matching SSE publication reads can reuse data but wait for active verification. Owner requested diagnosis only on25October: do not fix this request-gating architecture as part of off-chain saved items. Future change should decouple indexed public reads from background indexing, retaining deliberate freshness requirements for transaction preparation.

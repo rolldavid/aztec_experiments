@@ -8,7 +8,7 @@ import {PrivateFeePaymentMethod} from './private-fee-payment.mjs';
 // protocol-wide nullifier/log bounds, including the private refund delivery.
 // Public _set_like has four finite successful branches, qualified in native AVM.
 export const LIKE_GAS_PROFILE=Object.freeze({
- boardClassId:'0x13d9206337142962dd9b067c9eaa758bf8e5ea9876857a9073bc6396a9836f29',
+ boardClassId:'0x07a75800e5daa13c5a7727ae529af69fb9b242ca15acb187615a2b556654f217',
  accountClassId:'0x222287bfcd04411264393983dd8d01ca5ea9ae305d1a10a1e6d8deef7f17659b',
  privateFeeClassId:'0x1e74f64c7ddbab25de51eb7fc667064c0713ee67e04b8589871f214aacce4df0',
  selector:'0x0ae81ba6',

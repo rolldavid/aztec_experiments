@@ -29,7 +29,7 @@ const sources={...Object.fromEntries(Object.entries(scripts).map(([name,file])=>
 };
 const invalid=()=>Error('Invalid Rolling wallet assets or public configuration');
 const requiredInputs=['apps/rolling/wallet-runtime.mjs','apps/rolling/wallet-session.mjs',
- 'shared/rolling/aggregate-wallet.mjs','shared/rolling/application.mjs','shared/rolling/synchronized-application.mjs','shared/rolling/deployment.mjs','shared/rolling/name-policy.mjs','shared/rolling/invocation.mjs',
+ 'shared/rolling/saved-items.mjs','shared/rolling/aggregate-wallet.mjs','shared/rolling/application.mjs','shared/rolling/synchronized-application.mjs','shared/rolling/deployment.mjs','shared/rolling/name-policy.mjs','shared/rolling/invocation.mjs',
  'shared/journal-record.mjs','shared/l2-journal.mjs','shared/transaction-outcomes.mjs','shared/protocol-commitments.mjs','shared/protocol-schema.mjs',
  'scripts/rolling-wallet-assets.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json'];
 const keys=(value,names)=>{if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join()!==names.sort().join())throw invalid();};
@@ -92,7 +92,9 @@ export async function buildRollingWalletAssets(){
  assertNodeVersion();
  const current=contractInputs(ROOT),manifest=JSON.parse(await fs.readFile(path.join(ROOT,'.build/contracts-manifest.json'),'utf8'));
  if(JSON.stringify(current)!==JSON.stringify(manifest.inputs))throw invalid();
- const raw=JSON.parse(await fs.readFile(path.join(ROOT,sources['/wallet/board.json']),'utf8'));
+ const boardBytes=await fs.readFile(path.join(ROOT,sources['/wallet/board.json']));
+ if(sha(boardBytes)!==manifest.rollingBoard)throw invalid();
+ const raw=JSON.parse(boardBytes);
  if(raw.name!=='RollingBoard'||raw.transpiled!==true||!raw.functions.filter(f=>f.custom_attributes?.includes('abi_private')).every(f=>f.verification_key))throw invalid();
  checkNoirEmbeddedSources(raw);
  for(const name of ['main.nr','admission.nr','profiles.nr', 'posting.nr','encoding.nr']){

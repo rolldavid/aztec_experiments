@@ -1,5 +1,4 @@
-import {projectIncludedPreference} from '../../shared/rolling/preferences.mjs';
-import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
+import {createSavedItems} from '../../shared/rolling/saved-items.mjs';
 // Public code and contract data may load in the background. Account creation,
 // wallet permissions and private sessions remain explicit user actions.
 import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
@@ -130,7 +129,15 @@ async function load(signal){
   return true;
  };
  const restoreAccount=()=>startingTestAccount()?Promise.resolve(false):account.restoreRemembered();
- return Object.freeze({signInWallet,restoreAccount,canStartTestAccount,startingTestAccount,account,selectPrivateViews,projectIncludedPreference,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
+ let savedAccount,savedPromise;
+ function savedItems(){
+  const selected=globalThis.walletState.aztec;if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
+  if(savedAccount===selected&&savedPromise)return savedPromise;
+  if(savedPromise)void savedPromise.then(value=>value.close()).catch(()=>{});savedAccount=selected;
+  const contextGuard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
+  savedPromise=createSavedItems({walletSecret:selected.secretKey,walletSalt:selected.salt,scopeText:JSON.stringify(['rolling.saved-items.v1',config.network.chainId,config.board.contractAddress]),storage:sdk.createBrowserJournalStorage(globalThis.indexedDB,{databaseName:'rolling-saved-items-v1'}),contextGuard}).catch(error=>{if(savedAccount===selected)savedPromise=null;throw error;});return savedPromise;
+ }
+ return Object.freeze({signInWallet,restoreAccount,canStartTestAccount,startingTestAccount,account,savedItems,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};

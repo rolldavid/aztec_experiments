@@ -78,10 +78,10 @@ test('shared factory constructs real decoder and bounded storage without startin
  const cacheDirectory=await mkdtemp(join(tmpdir(),'rolling-server-config-'));let owned;
  t.after(async()=>{try{await owned?.close();}finally{await rm(cacheDirectory,{recursive:true,force:true});}});
  const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
- const {index,port}=await createRollingPublicIndexFromConfig({nodeUrl:'http://127.0.0.1:1',artifactPath,cacheDirectory,port:0,homeSubboards:['17'],
+ const {index,port,savedItemsDirectory}=await createRollingPublicIndexFromConfig({nodeUrl:'http://127.0.0.1:1',artifactPath,cacheDirectory,port:0,homeSubboards:['17'],
   scope:{chainId:'31337',rollupVersion:'1',rollupAddress:'0x'+'11'.repeat(20),boardAddress:hex(42),classId},
   deployment:{blockNumber:1,blockHash:hex(1),txHash:hex(2)}});
- owned=index;assert.equal(index.storageKind,'sqlite-v3');assert.deepEqual(index.cacheStatus(),{trusted:false,control:null});
+ owned=index;assert.equal(savedItemsDirectory,cacheDirectory);assert.equal(index.storageKind,'sqlite-v3');assert.deepEqual(index.cacheStatus(),{trusted:false,control:null});
  assert.equal(index.status().schemaVersion,1);assert.equal(port,0);assert.equal(index.status().state,'authenticating');assert.throws(()=>index.query('feed'),{code:'ROLLING_PUBLIC_NOT_READY'});
 });
 

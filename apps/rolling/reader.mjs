@@ -2,13 +2,13 @@ import {createReaderUpdates} from './reader-updates.mjs';
 import {beginRollingMeasure} from './performance.mjs';
 import {createPublicReader} from './reader-client.mjs';
 import {createPublicAvatar,createPublicProfile} from './profile-view.mjs';
-import {createMessageContent as richText,createInlineActionRegistry,privatePreferenceControl} from './model.mjs';
+import {createMessageContent as richText,createInlineActionRegistry,savedPreferenceControl,savedReaderSelection,savedReaderRoute} from './model.mjs';
 import {captureRoutePosition,focusRoute,skipToContent,revealIncludedPost} from './navigation.mjs';
 
 const read=createPublicReader(),app=document.querySelector('#app'),positions=new Map();
-const currentRoute=()=>location.hash==='#/new-account'?'/home':location.hash.slice(1)||'/home';
+const currentRoute=()=>savedReaderRoute(location.hash==='#/new-account'?'/home':location.hash.slice(1)||'/home');
 let controller,sequence=0,route=currentRoute(),main,renderedRoute,loadedPages=1,loadedThreadEnd=false,renderActive=0;
-let walletPanel,privatePanel,savedItemsLoad,accountPreparation,savedItemsAttempted=false;
+let walletPanel,privatePanel,savedItemsLoad,accountPreparation,savedItemsAttempted=false,savedItemsRevision=null;
 async function preparePublicAssetCache(){
  if(!navigator.serviceWorker)return;
  try{
@@ -22,7 +22,7 @@ async function preparePublicAssetCache(){
  }catch{/* Public reading and account tools also work when browser storage is disabled. */}
 }
 function prepareAccountTools(){return accountPreparation??=preparePublicAssetCache().then(()=>import('/wallet/runtime.mjs')).then(runtime=>runtime.loadRollingWalletRuntime());}
-const privateViews=new Set(['following','bookmarks','notifications']);
+const privateViews=new Set(['following','bookmarks']);
 function loadSavedItems(){
  return savedItemsLoad??=Promise.resolve().then(()=>privatePanel.loadSavedItems()).finally(()=>{savedItemsLoad=null;updatePreferenceControls();});
 }
@@ -35,7 +35,8 @@ function hydrateSavedItems(){
 function privateChanged(){
  hydrateSavedItems();
  for(const node of app.querySelectorAll('[data-moderator-action]'))showModeratorButton(node);
- if(privateViews.has(route.split('/')[1])){controller?.abort();main?.replaceChildren();void render();}
+ const revision=JSON.stringify([privatePanel?.privateStatus?.(),privatePanel?.savedItemsSnapshot?.()??null]),changed=revision!==savedItemsRevision;savedItemsRevision=revision;
+ if(changed&&privateViews.has(route.split('/')[1])){controller?.abort();main?.replaceChildren();void render();}
  else updatePreferenceControls();
 }
 async function accountPanel(){
@@ -72,7 +73,7 @@ function removalPolicy(value){
  if(typeof value!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(value)||BigInt(value)>0xffffffffffffffffn)return null;
  const packed=BigInt(value);return policyLabel('Removal policy',String(packed&0xffffffffn),String(packed>>32n));
 }
-function preferenceControl(label,kind,target){return privatePreferenceControl(label,privatePanel?.preferenceEnabled?.(kind,target),privatePanel?.privateStatus?.()??'locked',!!savedItemsLoad);}
+function preferenceControl(label,kind,target){return savedPreferenceControl(label,privatePanel?.preferenceEnabled?.(kind,target),privatePanel?.privateStatus?.()??'locked',!!savedItemsLoad);}
 function updatePreferenceControl(node,blocked=false){const state=preferenceControl(node.dataset.privateSetting,Number(node.dataset.kind),node.dataset.target);node.textContent=state.label;node.disabled=blocked||state.disabled;if(state.busy)node.setAttribute('aria-busy','true');else node.removeAttribute('aria-busy');}
 function updatePreferenceControls(){for(const node of app.querySelectorAll('[data-private-setting]')){const retained=inlineActions.snapshot(node.dataset.inlineAction);if(retained)node.renderInlineAction(retained);else updatePreferenceControl(node);}}
 const inlineActions=createInlineActionRegistry({perform:async(captured,onIncluded)=>{
@@ -86,11 +87,11 @@ function socialButton(label,action,attrs={}){
  // The target identity excludes the toggle value: a rerender must not offer
  // its inverse while this exact target's previous operation still owns it.
  const target=action(),key=JSON.stringify([target.type,target.post??null,target.kind??null,target.target??null,target.thread??null]);
- const node=button(label,()=>{if(attrs['data-private-setting']&&typeof action().enabled!=='boolean'&&(privatePanel?.privateStatus?.()??'locked')==='locked'){void openWallet({view:'preferences'});return;}void inlineActions.run(key,action);},{...attrs,'data-inline-action':key});
+ const node=button(label,()=>{if(attrs['data-private-setting']&&typeof action().enabled!=='boolean'&&(privatePanel?.privateStatus?.()??'locked')==='locked'){void openWallet();return;}void inlineActions.run(key,action);},{...attrs,'data-inline-action':key});
  node.renderInlineAction=({state,captured,result},notify=false)=>{
   feedback?.remove();feedback=null;
   node.disabled=['pending','unknown'].includes(state)||state==='included'&&!result;
-  if(state==='pending'){node.setAttribute('aria-busy','true');node.textContent=({like:'Liking…',unlike:'Removing like…','read-marker':'Marking read…'})[captured.type]??'Saving…';return;}
+  if(state==='pending'){node.setAttribute('aria-busy','true');node.textContent=({like:'Liking…',unlike:'Removing like…'})[captured.type]??'Saving…';return;}
   if(state==='included'&&!result){node.setAttribute('aria-busy','true');node.textContent='Confirmation pending';if(notify)announce('Change included. Confirmation pending.');return;}
   node.removeAttribute('aria-busy');
   if(attrs['data-private-setting'])updatePreferenceControl(node,node.disabled);else node.textContent=label;
@@ -105,8 +106,8 @@ function socialButton(label,action,attrs={}){
  const retained=inlineActions.snapshot(key);if(retained)node.renderInlineAction(retained);
  return node;
 }
-function preferenceButton(label,kind,target){
- const node=socialButton(preferenceControl(label,kind,target).label,()=>({type:'preference',kind,target,enabled:preferenceControl(label,kind,target).enabled}),{'data-private-setting':label,'data-kind':kind,'data-target':target});
+function preferenceButton(label,kind,target,savedLabel){
+ const node=socialButton(preferenceControl(label,kind,target).label,()=>({type:'preference',kind,target,enabled:preferenceControl(label,kind,target).enabled,...(savedLabel?{label:savedLabel}:{})}),{'data-private-setting':label,'data-kind':kind,'data-target':target});
  if(!inlineActions.snapshot(node.dataset.inlineAction))updatePreferenceControl(node);return node;
 }
 function showModeratorButton(node){node.hidden=privatePanel?.moderatorAuthorized?.()!==true;node.style.display=node.hidden?'none':'';}
@@ -130,9 +131,6 @@ function postCard(post,data){
  if(field(r.reference)&&r.reference!=='0')article.append(el('p',{class:'reply-line'},r.kind==='3'?'Reposted from ':'Quoted from ',link('the original post','/post/'+r.reference)));
  const unlike=()=>socialButton('Unlike',()=>({type:'unlike',post:post.id}));
  const more=(...actions)=>el('details',{class:'post-more'},el('summary',{class:'action'},'More'),el('div',{class:'post-secondary-actions'},actions));
- // Moderation removes content, not the ability to manage private notifications.
- const threadControls=()=>[preferenceButton('Subscribe to thread',4,r.root),
-  typeof post.position?.blockNumber==='string'&&/^(0|[1-9][0-9]{0,9})$/.test(post.position.blockNumber)&&BigInt(post.position.blockNumber)<=0xffffffffn?socialButton('Mark thread read',()=>({type:'read-marker',thread:r.root,throughBlock:String(post.position.blockNumber)})):null];
  if(post.text===null||post.removal||board?.rejected===true){
   article.append(el('p',{class:'removed'},'This post is unavailable under the board’s moderation policy.'));
   // A rejected subboard also redacts posts without an individual removal event.
@@ -144,20 +142,20 @@ function postCard(post,data){
    if(text(board.rejection?.reason))article.append(el('p',{class:'removed'},'Subboard rejection reason: '+text(board.rejection.reason)));
    if(policyVersion(board.rejection?.mainVersion))article.append(el('p',{class:'quiet'},'Subboard rejected under parent policy v'+board.rejection.mainVersion));
   }
-  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),preferenceButton('Bookmark',1,post.id),more(unlike(),threadControls(),provenance)));return article;
+  article.append(el('div',{class:'post-actions'},link('View thread','/thread/'+r.root),preferenceButton('Bookmark',1,post.id),more(unlike(),provenance)));return article;
  }
  article.append(richText(post.text),el('div',{class:'post-actions'},link('View conversation','/thread/'+r.root,{class:'post-link'}),el('span',{class:'action'},`${text(post.likes)} ${post.likes==='1'?'like':'likes'}`),
   button('Reply',()=>openWallet({type:'reply',parent:post.id,root:r.root,subboard:r.subboard})),
   socialButton('Like',()=>({type:'like',post:post.id})),preferenceButton('Bookmark',1,post.id),
   more(unlike(),button('Quote',()=>openWallet({type:'quote',reference:post.id,subboard:r.subboard})),
-   button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),threadControls(),provenance)));
+   button('Repost',()=>openWallet({type:'repost',reference:post.id,subboard:r.subboard})),provenance)));
  article.append(afterConfirmation(moderatorButton('Remove this post',{type:'moderate-post',post:post.id})));
  return article;
 }
 function timestamp(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)return '';const date=new Date(n*1000);return Number.isFinite(date.getTime())?date.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';}
 function shell(title,{boardId=null}={}){
  document.title=title+' · Rolling Chat';
- const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore boards','/directory'),link('Following','/following'),link('Bookmarks','/bookmarks'),link('Notifications','/notifications')),el('p',{class:'rail-foot'},'Public conversations. Private participation.',el('br'),el('a',{href:'/archive/'},'Earlier conversations')));
+ const rail=el('aside',{class:'rail',id:'community-navigation'},link('◉ rolling.chat','/home',{class:'brand'}),el('nav',{class:'nav-group','aria-label':'Community'},link('Home','/home'),link('Main board','/board/0'),link('Explore boards','/directory'),link('Following','/following'),link('Bookmarks','/bookmarks')),el('p',{class:'rail-foot'},'Public conversations. Private participation.',el('br'),el('a',{href:'/archive/'},'Earlier conversations')));
  for(const entry of rail.querySelectorAll('nav a'))if(entry.hash.slice(1)===route||entry.hash==='#/directory'&&route.startsWith('/directory/')){entry.setAttribute('aria-current','page');entry.classList.add('active');}
  const closeMenu=()=>{rail.classList.remove('open');rail.inert=narrow.matches;document.querySelector('.workspace').inert=false;menu.setAttribute('aria-expanded','false');menu.focus();};
  const menu=button('☰',()=>{rail.inert=false;rail.classList.add('open');document.querySelector('.workspace').inert=true;menu.setAttribute('aria-expanded','true');rail.querySelector('a').focus();},{class:'menu-toggle','aria-label':'Open navigation','aria-expanded':'false','aria-controls':'community-navigation'});
@@ -210,7 +208,7 @@ async function render({live=false,publicationRevision}={}){
  // Navigation cancellation owns this sequence; each request handles transport errors.
  const restoreSignal=signal,saved=positions.get(route);let pages=1;
  const parts=route.split('/').filter(Boolean);let api='home',parameters={limit:30},title='Home',expectedRoot,privateView=null;
- if(privateViews.has(parts[0])&&parts.length===1){privateView=parts[0];api='feed';title=privateView[0].toUpperCase()+privateView.slice(1);}
+ if(privateViews.has(parts[0])&&parts.length===1){privateView=parts[0];api=privateView;title=privateView[0].toUpperCase()+privateView.slice(1);}
  else if(parts[0]==='directory'){api='directory';title='Explore boards';try{parameters.query=parts[1]?decodeURIComponent(parts[1]):'';}catch{shell('Page not found');return;}}
  else if(parts[0]==='board'){if(parts.length!==2||!field(parts[1])){shell('Page not found',{boardId:''});return;}api='board';parameters={id:parts[1],limit:30};title=parts[1]==='0'?'Main board':'Subboard';}
  else if(['thread','profile','post'].includes(parts[0])){if(!field(parts[1])||parts[2]&&!field(parts[2])){shell('Page not found');return;}api=parts[0];parameters=api==='post'?{id:parts[1]}:{limit:30,[api==='thread'?'root':'nameId']:parts[1]};title=api==='thread'?'Conversation':api==='profile'?'Profile':'Post';
@@ -219,7 +217,7 @@ async function render({live=false,publicationRevision}={}){
  else if(parts[0]!=='home'){shell('Page not found');return;}
  if(!live)shell(title,{boardId:api==='board'?parameters.id:null});
  if(privateView){
-  main.querySelector('.intro').textContent={following:'Posts from the people and boards you follow.',bookmarks:'Posts you saved for later.',notifications:'Updates from conversations you follow.'}[privateView];
+  main.querySelector('.intro').textContent={following:'Posts from the people and boards you follow.',bookmarks:'Posts you saved for later.'}[privateView];
   if(privatePanel?.privateStatus?.()!=='complete'){
    const signedIn=privatePanel?.privateStatus?.()==='recovering';
    if(signedIn&&typeof privatePanel.loadSavedItems==='function'){
@@ -228,12 +226,30 @@ async function render({live=false,publicationRevision}={}){
     void pending.then(ok=>{if(current!==sequence||signal.aborted||ok)return;state.replaceChildren(el('p',{},'Your saved items could not load.'),button('Try again',()=>render()));});
     return;
    }
-   main.append(el('div',{class:'empty'},el('h2',{},signedIn?'Load your '+title.toLowerCase():'Your '+title.toLowerCase()),el('p',{},signedIn?'Your saved items are kept with your account.':{following:'Sign in to see posts from people and boards you follow.',bookmarks:'Sign in to see the posts you have saved.',notifications:'Sign in to see updates to your conversations.'}[privateView]),button(signedIn?'Load '+title.toLowerCase():'Sign in',()=>openWallet({view:'preferences'}))));
+   main.append(el('div',{class:'empty'},el('h2',{},signedIn?'Load your '+title.toLowerCase():'Your '+title.toLowerCase()),el('p',{},signedIn?'Your saved items are kept with your account.':{following:'Sign in to see posts from people and boards you follow.',bookmarks:'Sign in to see the posts you have saved.'}[privateView]),button(signedIn?'Load '+title.toLowerCase():'Sign in',()=>openWallet())));
    focusRoute(route,positions.get(route),current===1);
    announce(title+': sign in to see your saved conversations.');return;
   }
  }
+ const savedSelection=privateView?savedReaderSelection(privateView,privatePanel.savedItemsSnapshot()):null;if(savedSelection)parameters=savedSelection.parameters;
  const contentHost=el('section',{class:'public-content'});if(!live)main.append(contentHost);
+ let followingList;
+ function showFollowing(metadata){
+  if(privateView!=='following')return;
+  const list=el('ul',{class:'saved-follow-list','aria-label':'People and boards you follow'});
+  for(const entry of savedSelection.following){
+   const current=entry.kind==='board'?metadata?.boards?.find(v=>v.id===entry.id):metadata?.names?.find(v=>v.id===entry.id);
+   const label=entry.kind==='board'?(text(current?.name)||entry.label):current&&text(current.first)?text(current.first)+' '+text(current.last):entry.label;
+   list.append(el('li',{},link(label,'/'+entry.kind+'/'+entry.id),preferenceButton(entry.kind==='board'?'Follow board':'Follow name',entry.kind==='board'?2:3,entry.id,label)));
+  }
+  const section=el('section',{'aria-label':'Following'},el('h2',{},'People and boards you follow'),list,link('Find a board','/directory'));
+  if(followingList)followingList.replaceWith(section);else contentHost.append(section);followingList=section;
+ }
+ showFollowing();
+ if(savedSelection&&(privateView==='bookmarks'?savedSelection.bookmarks.length:savedSelection.following.length)===0){
+  contentHost.append(el('div',{class:'empty'},el('h2',{},privateView==='following'?'Find your people':'Save something worth returning to'),el('p',{},privateView==='following'?'Follow a board or a named author to see their posts here.':'Select Bookmark on a post to keep it here.'),link('Browse conversations','/home')));
+  if(live)main.querySelector('.public-content')?.replaceWith(contentHost);renderedRoute=route;loadedPages=1;focusRoute(route,positions.get(route),current===1);return;
+ }
  const loading=el('p',{role:'status','aria-busy':'true'},'Loading conversations…');contentHost.append(loading);
  if(api==='directory'){
   main.querySelector('.intro').textContent='Find a community around something you care about.';contentHost.append(button('Create a board',()=>openWallet({type:'subboard'})));
@@ -270,7 +286,7 @@ async function render({live=false,publicationRevision}={}){
   if(privateView){
    // Inspect all rows before filtering, including cross-page order and duplicates.
    for(const item of items){const at=position(item);if(nextPosition&&(!descending(nextPosition,at)||nextPosition[0]===at[0]&&nextPositionHash!==item.position.blockHash))throw Error('Public order changed');nextPosition=at;nextPositionHash=item.position.blockHash;}
-   visible=privatePanel.filterPrivatePage(privateView,response).posts;
+   if(items.some(item=>privateView==='bookmarks'?!savedSelection.bookmarks.includes(item.id):!savedSelection.boards.includes(item.record?.subboard)&&!savedSelection.names.includes(item.record?.name_id)))throw Error('Unrequested saved item');
   }
   const nodes=visible.map(item=>api==='directory'?boardCard(item):postCard(item,response));
   if(nodes.length)container.querySelector('.empty')?.remove();lastPosition=nextPosition;lastPositionHash=nextPositionHash;
@@ -283,20 +299,20 @@ async function render({live=false,publicationRevision}={}){
   data=await read(api,parameters,restoreSignal,{revision:publicationRevision});if(current!==sequence)return;
   if(expectedRoot&&(!data.post||data.post.record?.root!==expectedRoot))throw Error('Linked post does not belong to this conversation');
   const finishDOM=beginRollingMeasure('reader.dom');
-  append(data);
+  append(data);showFollowing(data.following);
   let cursor=data.nextCursor;
   while(api!=='directory'&&cursor&&(pages<(saved?.pages??1)||api==='thread'&&saved?.threadEnd||saved?.anchor&&!seenIds.has(saved.anchor.id.slice(5)))){
    const page=await read(api,{...parameters,cursor},restoreSignal,{revision:data.revision});if(current!==sequence)return;append(page);cursor=page.nextCursor;pages++;
   }
   loading.remove();
   if(api==='board'){
-   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));contentHost.append(boardOverview(data),preferenceButton('Follow board',2,parameters.id));
+   main.querySelector('h1').textContent=data.board?text(data.board.name):'Main board';container.setAttribute('aria-label','Posts in '+(data.board?text(data.board.name):'Main board'));contentHost.append(boardOverview(data),preferenceButton('Follow board',2,parameters.id,data.board?.name??'Main board'));
    const compose=document.querySelector('[data-board-compose]');if(compose)compose.disabled=Boolean(data.board?.rejected);
   }
-  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);contentHost.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId),moderatorButton('Remove this avatar',{type:'moderate-avatar',name:parameters.nameId}));}
+  if(api==='profile'&&data.identity){main.querySelector('h1').textContent=text(data.identity.first)+' '+text(data.identity.last);contentHost.append(createPublicProfile(data.identity,{signal}),preferenceButton('Follow name',3,parameters.nameId,text(data.identity.first)+' '+text(data.identity.last)),moderatorButton('Remove this avatar',{type:'moderate-avatar',name:parameters.nameId}));}
   document.title=main.querySelector('h1').textContent+' · Rolling Chat';
   if(!container.childElementCount){
-   const copy=privateView?{following:['Find your people','Follow a board or a named author to see their posts here.'],bookmarks:['Save something worth returning to','Select Bookmark on a post to keep it here.'],notifications:['You’re all caught up','Follow a conversation to see new replies here.']}[privateView]:api==='directory'?['Find a board',cursor?'No matches on this page. Check the next page or try another search.':'No boards match. Try another topic or create a board.']:['Start the conversation','There are no posts here yet.'];
+   const copy=privateView?{following:['No posts from your follows yet','The people and boards above have no available posts.'],bookmarks:['Saved posts unavailable','Your saved posts are not available in the current public feed.']}[privateView]:api==='directory'?['Find a board',cursor?'No matches on this page. Check the next page or try another search.':'No boards match. Try another topic or create a board.']:['Start the conversation','There are no posts here yet.'];
    const empty=el('div',{class:'empty'},el('h2',{},copy[0]),el('p',{},copy[1]));
    if(privateView)empty.append(link(privateView==='following'?'Explore boards':'Browse conversations',privateView==='following'?'/directory':'/home',{class:'button'}));
    else if(api==='home'||api==='board'&&!data.board?.rejected)empty.append(button('Write the first post',()=>openWallet({type:'post',subboard:api==='board'?parameters.id:'0'}),{class:'button primary'}));
@@ -350,7 +366,7 @@ async function render({live=false,publicationRevision}={}){
  }catch(error){if(signal.aborted)return;if(live){announce('Conversations could not refresh.');return false;}loading.remove();contentHost.append(el('div',{class:'empty',role:'alert'},el('h2',{},error.code==='READER_SYNCING'?'Conversations are being checked':error.code==='READER_NOT_FOUND'?({board:'Board',profile:'Profile',post:'Post',thread:'Conversation'}[api]??'Page')+' not found':'Conversations could not load'),el('p',{},error.code==='READER_SYNCING'?'The feed is catching up with new posts. Try again shortly.':error.code==='READER_NOT_FOUND'?'This link does not point to an available '+({board:'board',profile:'profile',post:'post',thread:'conversation'}[api]??'page')+'.':'Check your connection, then try loading the conversations again.'),button('Try again',()=>render())));focusRoute(route,positions.get(route),current===1);}
  }finally{finishTiming();if(renderActive===current)renderActive=0;void updates.flush();}
 }
-const updates=createReaderUpdates({refresh:publicationRevision=>render({live:!!main?.querySelector('.public-content'),publicationRevision}),canRefresh:()=>!renderActive&&!document.hidden&&!privateViews.has(route.split('/')[1])&&route.split('/')[1]!=='directory'&&!!main?.querySelector('.public-content')});
+const updates=createReaderUpdates({refresh:publicationRevision=>render({live:!!main?.querySelector('.public-content'),publicationRevision}),canRefresh:()=>!renderActive&&!document.hidden&&route.split('/')[1]!=='directory'&&!!main?.querySelector('.public-content')});
 addEventListener('pagehide',()=>{sequence++;controller?.abort();updates.stop();});
 addEventListener('pageshow',event=>{updates.start();if(event.persisted)render();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void updates.flush();});

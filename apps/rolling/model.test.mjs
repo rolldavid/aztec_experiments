@@ -83,10 +83,21 @@ for(const status of ['unknown','reverted','failed','blocked'])test('reader regis
  const pending=registry.run('like:1',()=>({type:'like',post:'1'}));assert.equal(registry.snapshot('like:2'),null);gate.resolve({status});assert.equal((await pending).status,status);assert.equal(states.at(-1).state,status);assert.equal(registry.snapshot('like:1'),null);
 });
 
-import {privatePreferenceControl} from './model.mjs';
+import {savedPreferenceControl} from './model.mjs';
 test('unknown private choices retain concise labels and never supply an inverse action',()=>{
- for(const value of [null,undefined,0,'true']){const state=privatePreferenceControl('Bookmark',value,'recovering',true);assert.equal(state.disabled,true);assert.equal(state.busy,true);assert.equal(state.enabled,undefined);assert.equal(state.label,'Bookmark');}
- for(const status of ['locked','recovering'])assert.deepEqual(privatePreferenceControl('Follow board',null,status,false),{label:'Follow board',disabled:false,busy:false,enabled:undefined});
- assert.deepEqual(privatePreferenceControl('Bookmark',true,'complete'),{label:'Unbookmark',disabled:false,busy:false,enabled:false});assert.deepEqual(privatePreferenceControl('Follow board',false,'complete'),{label:'Follow board',disabled:false,busy:false,enabled:true});
- assert.equal(privatePreferenceControl('Bookmark',null,'locked',true).disabled,false,'signed out control opens sign in even during an obsolete load');
+ for(const value of [null,undefined,0,'true']){const state=savedPreferenceControl('Bookmark',value,'recovering',true);assert.equal(state.disabled,true);assert.equal(state.busy,true);assert.equal(state.enabled,undefined);assert.equal(state.label,'Bookmark');}
+ for(const status of ['locked','recovering'])assert.deepEqual(savedPreferenceControl('Follow board',null,status,false),{label:'Follow board',disabled:false,busy:false,enabled:undefined});
+ assert.deepEqual(savedPreferenceControl('Bookmark',true,'complete'),{label:'Unbookmark',disabled:false,busy:false,enabled:false});assert.deepEqual(savedPreferenceControl('Follow board',false,'complete'),{label:'Follow board',disabled:false,busy:false,enabled:true});
+ assert.equal(savedPreferenceControl('Bookmark',null,'locked',true).disabled,false,'signed out control opens sign in even during an obsolete load');
+});
+
+import {savedReaderSelection,savedReaderRoute} from './model.mjs';
+test('saved reader captures exact bounded selections and cached follow labels without RPC',()=>{
+ const source={bookmarks:['10','20'],followedBoards:['0','8'],followedNames:['7'],labels:{boards:{8:'Builders'},names:{7:'River Lane'}}};
+ const selected=savedReaderSelection('following',source);source.followedNames.push('9');source.labels.names[7]='Changed';
+ assert.deepEqual(selected.parameters,{boards:'0,8',names:'7',limit:30});assert.deepEqual(selected.following.map(v=>v.label),['Main board','Builders','River Lane']);
+ assert.deepEqual(savedReaderSelection('bookmarks',source).parameters,{ids:'10,20',limit:30});
+ const hundred=Array.from({length:100},(_,i)=>String(i+1));assert.equal(savedReaderSelection('bookmarks',{...source,bookmarks:hundred}).bookmarks.length,100);
+ assert.equal(savedReaderRoute('/notifications'),'/home');assert.equal(savedReaderRoute('/following'),'/following');
+ for(const bad of [{...source,bookmarks:['1','1']},{...source,followedNames:Array.from({length:100},(_,i)=>String(i+1))},{...source,bookmarks:['01']}])assert.throws(()=>savedReaderSelection('following',bad));
 });

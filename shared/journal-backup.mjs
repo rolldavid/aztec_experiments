@@ -9,8 +9,6 @@ const domains=new Map([
  ['AZTEC_BB_L2_JOURNAL_KEY_V1','AZTEC_BB_L2_JOURNAL_V1'],
  ['AZTEC_BB_ETH_JOURNAL_KEY_V1','AZTEC_BB_ETH_JOURNAL_V1'],
  ['ROLLING_WORKFLOW_V1','ROLLING_WORKFLOW_V1'],
- ['ROLLING_PREFERENCES_V1','ROLLING_PREFERENCES_V1'],
- ['ROLLING_COLD_PREFERENCES_V1','ROLLING_COLD_PREFERENCES_V1'],
 ]);
 const LIMIT=16*1024*1024;
 function validDescriptor(descriptor) {
@@ -31,31 +29,6 @@ function validDescriptor(descriptor) {
    const width=index===3||index===5?40:64,value=frame[index];
    if(typeof value!=='string'||!new RegExp(`^0x[0-9a-f]{${width}}$`).test(value)||BigInt(value)===0n||(width===64&&BigInt(value)>=FIELD_MODULUS))throw fail();
   }
- }
- if(descriptor.keyDomain==='ROLLING_PREFERENCES_V1') {
-  // Match preference-reader's complete canonical scope, not the decrypted cache
-  // contents. The reader separately validates and reauthenticates that cache.
-  if(!Array.isArray(frame)||frame.length!==8||frame[7]!==1||descriptor.scopeText!==JSON.stringify(frame))throw fail();
-  for(const index of [1,2]) {
-   const value=frame[index];
-   if(typeof value!=='string'||value.length>78||!/^[1-9][0-9]*$/.test(value)||BigInt(value)>=FIELD_MODULUS)throw fail();
-  }
-  for(const index of [3,4,5,6]) {
-   const value=frame[index],width=index===3?40:64;
-   if(typeof value!=='string'||!new RegExp(`^0x[0-9a-f]{${width}}$`).test(value)||BigInt(value)===0n||(index!==3&&BigInt(value)>=FIELD_MODULUS))throw fail();
-  }
- }
- if(descriptor.keyDomain==='ROLLING_COLD_PREFERENCES_V1') {
-  // Exact cold-reader AEAD scope, including artifact, proof policy and tier.
-  // This authenticates portable ciphertext, never prefix completeness: the
-  // reader must recheck its database/epoch/canonical anchor after restoration.
-  if(!Array.isArray(frame)||frame.length!==11||frame[10]!==1||descriptor.scopeText!==JSON.stringify(frame))throw fail();
-  if(!Number.isSafeInteger(frame[1])||frame[1]<1||!Number.isSafeInteger(frame[2])||frame[2]<1||frame[2]>0xffffffff)throw fail();
-  for(const index of [3,4,5,6,7]) {
-   const value=frame[index],width=index===3?40:64;
-   if(typeof value!=='string'||!new RegExp(`^0x[0-9a-f]{${width}}$`).test(value)||BigInt(value)===0n||(index!==3&&BigInt(value)>=FIELD_MODULUS))throw fail();
-  }
-  if(typeof frame[8]!=='boolean'||!['proposed','checkpointed','proven','finalized'].includes(frame[9]))throw fail();
  }
  if(descriptor.keyDomain==='ROLLING_WORKFLOW_V1') {
   // Match createRollingApplication's two-level scope exactly. The nested scope
@@ -111,10 +84,7 @@ export async function createJournalBackup({storage,walletSecret,walletSalt}) {
      if(local.descriptor.keyDomain!==incoming.descriptor.keyDomain||local.descriptor.scopeText!==incoming.descriptor.scopeText)throw fail();
      // Fresh AEAD IVs do not imply a different financial intent. Keep local
      // bytes only when the entire authenticated JSON payload is identical.
-     // Preference snapshots are derived caches, not transaction authorities;
-     // their readers revalidate canonical completeness before publishing them.
-     const cache=['ROLLING_PREFERENCES_V1','ROLLING_COLD_PREFERENCES_V1'].includes(incoming.descriptor.keyDomain);
-     if(!cache&&JSON.stringify(local.value)!==JSON.stringify(incoming.value))throw fail();
+     if(JSON.stringify(local.value)!==JSON.stringify(incoming.value))throw fail();
      retained.set(record.key,current);
     }
    }

@@ -9,8 +9,7 @@ import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon
 import {deriveStorageSlotInMap} from '@aztec-labs/stdlib/hash';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {encodeArguments,loadContractArtifact,decodeFunctionSignature} from '@aztec-labs/stdlib/abi';
-import {createRollingColdPreferenceReader} from './rolling/cold-preference-reader.mjs';
+import {encodeArguments,loadContractArtifact} from '@aztec-labs/stdlib/abi';
 import {createRollingApplication} from './rolling/application.mjs';
 import {createBrowserJournalStorage} from './journal-indexeddb.mjs';
 import {createEncryptedJournalSlot} from './journal-record.mjs';
@@ -90,174 +89,6 @@ test('authenticated but incorrectly framed Rolling descriptors are rejected befo
  }
 });
 
-const PREFERENCES='ROLLING_PREFERENCES_V1';
-const preferenceFrame=f=>[PREFERENCES,f.scope.chainId,f.scope.version,f.scope.rollup,f.scope.board,hex(10),f.scope.account,1];
-async function preferenceRecord(f,source,{scopeText=JSON.stringify(preferenceFrame(f)),keyDomain=PREFERENCES,value={privateSentinel:'Private preference sentinel',revision:'1'}}={}){
- const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText,keyDomain});
- await slot.write(await slot.read(),value);
- return {slot,record:{key:slot.storageKey,encoded:await source.read(slot.storageKey)}};
-}
-test('real AEAD preferences export and fresh restore alongside L2 and workflow records, with only encrypted scope storage',async()=>{
- const f=fixture(),source=storage(),destination=storage();
- const intent=await f.app(source).prepare({type:'name',first:'River',last:'Stone'});
- const l2=await createEncryptedJournalSlot({...f.credentials,storage:source,keyDomain:'AZTEC_BB_L2_JOURNAL_KEY_V1',scopeText:l2JournalScopeText(f.scope)});
- await l2.write(await l2.read(),{status:'prepared',privateSentinel:'L2 sentinel'});
- const {slot}=await preferenceRecord(f,source);
- const records=await (await f.backup(source)).exportRecords();assert.equal(records.length,3);
- assert.deepEqual((await source.keys()).sort(),records.map(x=>x.key).sort());
- for(const key of await source.keys())assert.match(key,/^[0-9a-f]{64}$/);
- for(const secret of [PREFERENCES,f.scope.account,f.scope.board,f.scope.rollup,'Private preference sentinel','L2 sentinel',f.credentials.walletSecret])assert.ok(!JSON.stringify(records).includes(secret));
- await (await f.backup(destination)).restoreRecords(records);
- const restored=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain:PREFERENCES,scopeText:JSON.stringify(preferenceFrame(f))});
- assert.deepEqual((await restored.read()).value,(await slot.read()).value);
- assert.deepEqual(await f.app(destination).reconcile(intent.intentId),intent);
- assert.deepEqual(await (await f.backup(destination)).exportRecords(),records);assert.equal(f.state.sends,0);
-});
-test('authenticated preference descriptors reject wrong domain, noncanonical fields, addresses and schema before any restore write',async()=>{
- const f=fixture(),frame=preferenceFrame(f),field=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
- const cases=[{keyDomain:'UNKNOWN_PRIVATE_DOMAIN'}, {scopeText:JSON.stringify(['OTHER',...frame.slice(1)])},
-  {scopeText:JSON.stringify(frame.slice(0,-1))},{scopeText:JSON.stringify([...frame,'extra'])},
-  {scopeText:' '+JSON.stringify(frame)}, {scopeText:JSON.stringify(frame).replace('31337','3133\\u0037')}];
- for(const index of [1,2])for(const value of ['0','01','+1','1.0','1e1','-1',1,null,String(field),'9'.repeat(79)]){const bad=[...frame];bad[index]=value;cases.push({scopeText:JSON.stringify(bad)});}
- for(const index of [3,4,5,6])for(const value of [null,1,'0x1','0x'+'00'.repeat(index===3?20:32),'0x'+'AB'.repeat(index===3?20:32),'0x'+'11'.repeat(index===3?32:20),...(index===3?[]:[hex(field)])]){const bad=[...frame];bad[index]=value;cases.push({scopeText:JSON.stringify(bad)});}
- for(const value of [0,2,'1',null]){const bad=[...frame];bad[7]=value;cases.push({scopeText:JSON.stringify(bad)});}
- for(const options of cases){
-  const source=storage(),destination=storage(),{record}=await preferenceRecord(f,source,options);
-  await assert.rejects((await f.backup(source)).exportRecords(),{code:'BB_JOURNAL_INVALID'});
-  await assert.rejects((await f.backup(destination)).restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
-  assert.deepEqual(await destination.keys(),[]);
- }
-});
-test('preference recovery rejects ciphertext/descriptor tamper and cross-account storage-key transplant',async()=>{
- const f=fixture(),source=storage(),{record}=await preferenceRecord(f,source),frame=preferenceFrame(f);frame[6]=hex(44);
- const other=await preferenceRecord(f,storage(),{scopeText:JSON.stringify(frame)});
- const changed=structuredClone(record),envelope=JSON.parse(record.encoded);
- const flip=s=>(s[0]==='0'?'1':'0')+s.slice(1);
- envelope.data=flip(envelope.data);changed.encoded=JSON.stringify(envelope);
- const descriptor=JSON.parse(record.encoded);descriptor.recovery.data=flip(descriptor.recovery.data);
- for(const bad of [changed,{...record,encoded:JSON.stringify(descriptor)},{...record,key:other.record.key},{...record,encoded:other.record.encoded}]){
-  const destination=storage();await assert.rejects((await f.backup(destination)).restoreRecords([bad]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
- }
- const foreign=await createJournalBackup({...f.credentials,walletSecret:hex(9),storage:source});assert.deepEqual(await foreign.exportRecords(),[]);
- const destination=storage(),foreignRestore=await createJournalBackup({...f.credentials,walletSecret:hex(9),storage:destination});
- await assert.rejects(foreignRestore.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
-});
-test('preference restore preserves newer cache, rejects duplicate records and permits identical idempotent restore',async()=>{
- const f=fixture(),source=storage(),destination=storage(),{record}=await preferenceRecord(f,source),backup=await f.backup(destination);
- await assert.rejects(backup.restoreRecords([record,record]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
- await backup.restoreRecords([record]);await backup.restoreRecords([record]);
- const slot=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain:PREFERENCES,scopeText:JSON.stringify(preferenceFrame(f))});
- await slot.write(await slot.read(),{revision:'2'});const newer=await destination.read(record.key);
- await backup.restoreRecords([record]);assert.equal(await destination.read(record.key),newer);
-});
-
-// Cold-cache framing is the production reader's full eleven-field descriptor.
-// AEAD and CAS below are real; cached contents remain labelled opaque fixtures,
-// not authenticated chain completeness or a restored PXE cursor.
-const COLD_PREFERENCES='ROLLING_COLD_PREFERENCES_V1';
-const coldPreferenceFrame=f=>[COLD_PREFERENCES,Number(f.scope.chainId),Number(f.scope.version),f.scope.rollup,
- f.scope.board,hex(10),hex(11),f.scope.account,true,'checkpointed',1];
-async function coldPreferenceRecord(f,source,{scopeText=JSON.stringify(coldPreferenceFrame(f)),keyDomain=COLD_PREFERENCES,
- value={schemaVersion:1,delivery:{complete:false,sequence:1},privateSentinel:'Cold private preference sentinel'}}={}){
- const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText,keyDomain});
- await slot.write(await slot.read(),value);
- return {slot,record:{key:slot.storageKey,encoded:await source.read(slot.storageKey)}};
-}
-test('real AEAD cold cache exports and restores without omitting old domains or promoting incomplete state',async()=>{
- const f=fixture(),source=storage(),destination=storage();
- const intent=await f.app(source).prepare({type:'name',first:'River',last:'Stone'});
- const l2=await createEncryptedJournalSlot({...f.credentials,storage:source,keyDomain:'AZTEC_BB_L2_JOURNAL_KEY_V1',scopeText:l2JournalScopeText(f.scope)});
- await l2.write(await l2.read(),{status:'prepared'});
- const ethereum=await createEncryptedJournalSlot({...f.credentials,storage:source,keyDomain:'AZTEC_BB_ETH_JOURNAL_KEY_V1',
-  scopeText:JSON.stringify(['AZTEC_BB_ETH_JOURNAL_V1',f.scope.account,f.scope.chainId,f.scope.rollup,f.scope.version,f.scope.board,f.scope.portal,'0x'+'33'.repeat(20)])});
- await ethereum.write(await ethereum.read(),{status:'prepared'});
- await preferenceRecord(f,source);
- // The production reader writes its first incomplete cache. Only SDK/chain
- // delivery/provenance are labelled doubles; descriptor/AEAD/CAS are actual.
- const blockHash=new Fr(90),node={getBlockData:async()=>({header:{globalVariables:{blockNumber:1},hash:async()=>blockHash},blockHash})};
- const delivery={schemaVersion:1,database:'a'.repeat(64),epoch:'b'.repeat(64),sequence:0,
-  anchor:{blockNumber:1,blockHash:blockHash.toString()},nextBlock:1,nextLog:0,records:[],head:null,complete:false};
- const pxe={sync:async()=>{},processRollingPreferenceRecovery:async()=>structuredClone(delivery)};
- const sdk={Fr,decodeFunctionSignature,EventSelector:{fromSignature:async()=>({toString:()=> '0x00001234'})},
-  isTrustedPrivateNode:value=>value===node,isPrivatePXEForNode:(value,n)=>value===pxe&&n===node,inspectTrustedNode:async()=>{},
-  poseidon2HashWithSeparator:async()=>assert.fail('No digest hashing is needed before any recovered event')};
- const reader=createRollingColdPreferenceReader({sdk,pxe,node,owner:new AztecAddress(Fr.fromString(f.scope.account)),
-  deployment:{board:{address:f.scope.board,artifact,instance:{currentContractClassId:new Fr(10),originalContractClassId:new Fr(10)}},
-   network:{chainId:f.scope.chainId,version:f.scope.version,rollup:f.scope.rollup},proofsEnabled:true},
-  expectedArtifactHash:hex(11),tier:'checkpointed',compact:{read:async()=>assert.fail('Initial reader call must not fetch a block')},
-  contextGuard:async()=>{},privateStore:source,...f.credentials});
- const first=await reader.read();assert.equal(first.complete,false);assert.equal(first.preferences,undefined);
- const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,keyDomain:COLD_PREFERENCES,scopeText:JSON.stringify(coldPreferenceFrame(f))});
- assert.equal((await slot.read()).value.delivery.complete,false,'Actual reader descriptor must match the complete backup frame');
- const backup=await f.backup(source),records=await backup.exportRecords();assert.equal(records.length,5);
- assert.deepEqual(records.map(r=>r.key).sort(),(await source.keys()).sort());
- for(const privateValue of [COLD_PREFERENCES,'Cold private preference sentinel',f.scope.account,f.scope.board,f.scope.rollup,f.credentials.walletSecret])assert(!JSON.stringify(records).includes(privateValue));
- const restored=await f.backup(destination);await restored.restoreRecords(records);await restored.restoreRecords(records);
- assert.deepEqual(await restored.exportRecords(),records);
- const cold=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain:COLD_PREFERENCES,scopeText:JSON.stringify(coldPreferenceFrame(f))});
- assert.deepEqual((await cold.read()).value,(await slot.read()).value);assert.equal((await cold.read()).value.delivery.complete,false);
- assert.deepEqual(await f.app(destination).reconcile(intent.intentId),intent);assert.equal(f.state.sends,0);
-});
-test('cold cache accepts every fixed tier and boolean policy with exact numeric boundaries',async()=>{
- const f=fixture();
- for(const tier of ['proposed','checkpointed','proven','finalized'])for(const proofs of [false,true]){
-  const frame=coldPreferenceFrame(f);frame[1]=Number.MAX_SAFE_INTEGER;frame[2]=0xffffffff;frame[8]=proofs;frame[9]=tier;
-  const source=storage(),destination=storage(),{record}=await coldPreferenceRecord(f,source,{scopeText:JSON.stringify(frame)});
-  assert.equal((await (await f.backup(source)).exportRecords()).length,1);
-  await (await f.backup(destination)).restoreRecords([record]);assert.equal(await destination.read(record.key),record.encoded);
- }
-});
-test('authenticated cold descriptors reject malformed complete scope before any export or restore writes',async()=>{
- const f=fixture(),frame=coldPreferenceFrame(f),modulus=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
- const cases=[{keyDomain:'UNKNOWN_COLD_DOMAIN'},{keyDomain:PREFERENCES},
-  {scopeText:JSON.stringify(['OTHER',...frame.slice(1)])},{scopeText:JSON.stringify(frame.slice(0,-1))},
-  {scopeText:JSON.stringify([...frame,'extra'])},{scopeText:' '+JSON.stringify(frame)},
-  {scopeText:JSON.stringify(frame).replace('31337','31337.0')},{scopeText:JSON.stringify(frame).replace('31337','3.1337e4')},
-  {scopeText:JSON.stringify(frame).replace('checkpointed','checkp\\u006finted')}];
- for(const index of [1,2])for(const value of [0,-1,0.5,'1',null,true,Number.MAX_SAFE_INTEGER+1,...(index===2?[0x100000000]:[])]){
-  const bad=[...frame];bad[index]=value;cases.push({scopeText:JSON.stringify(bad)});
- }
- for(const index of [3,4,5,6,7])for(const value of [null,1,'0x1','0x'+'00'.repeat(index===3?20:32),'0x'+'AB'.repeat(index===3?20:32),'0x'+'11'.repeat(index===3?32:20),...(index===3?[]:[hex(modulus)])]){
-  const bad=[...frame];bad[index]=value;cases.push({scopeText:JSON.stringify(bad)});
- }
- for(const [index,values]of [[8,[0,1,'true',null]],[9,['latest','CHECKPOINTED','',null,1]],[10,[0,2,'1',null]]])for(const value of values){const bad=[...frame];bad[index]=value;cases.push({scopeText:JSON.stringify(bad)});}
- for(const options of cases){
-  const source=storage(),destination=storage(),{record}=await coldPreferenceRecord(f,source,options);
-  await assert.rejects((await f.backup(source)).exportRecords(),{code:'BB_JOURNAL_INVALID'});
-  await assert.rejects((await f.backup(destination)).restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
- }
-});
-test('cold ciphertext and descriptor corruption or storage-key transplantation cannot restore',async()=>{
- const f=fixture(),source=storage(),{record}=await coldPreferenceRecord(f,source),frame=coldPreferenceFrame(f);frame[6]=hex(99);
- const other=await coldPreferenceRecord(f,storage(),{scopeText:JSON.stringify(frame)}),flip=s=>(s[0]==='0'?'1':'0')+s.slice(1);
- const ciphertext=JSON.parse(record.encoded);ciphertext.data=flip(ciphertext.data);
- const descriptor=JSON.parse(record.encoded);descriptor.recovery.data=flip(descriptor.recovery.data);
- for(const bad of [{...record,encoded:JSON.stringify(ciphertext)},{...record,encoded:JSON.stringify(descriptor)},
-  {...record,key:other.record.key},{...record,encoded:other.record.encoded}]){
-  const destination=storage();await assert.rejects((await f.backup(destination)).restoreRecords([bad]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
- }
- const foreign=await createJournalBackup({...f.credentials,walletSecret:hex(9),storage:source});assert.deepEqual(await foreign.exportRecords(),[]);
- const destination=storage(),foreignRestore=await createJournalBackup({...f.credentials,walletSecret:hex(9),storage:destination});
- await assert.rejects(foreignRestore.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
-});
-test('cold cache restore preserves newer records and rejects duplicate input and lost CAS',async()=>{
- const f=fixture(),source=storage(),destination=storage(),{record}=await coldPreferenceRecord(f,source),backup=await f.backup(destination);
- await assert.rejects(backup.restoreRecords([record,record]),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await destination.keys(),[]);
- await backup.restoreRecords([record]);
- const slot=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain:COLD_PREFERENCES,scopeText:JSON.stringify(coldPreferenceFrame(f))});
- await slot.write(await slot.read(),{delivery:{complete:false,sequence:2}});const newer=await destination.read(record.key);
- await backup.restoreRecords([record]);assert.equal(await destination.read(record.key),newer);
- const raced=storage(),racing=await createJournalBackup({...f.credentials,storage:{keys:raced.keys,read:raced.read,compareAndSwap:async(key,previous,next)=>{
-  await raced.compareAndSwap(key,null,newer);return raced.compareAndSwap(key,previous,next);
- }}});
- await assert.rejects(racing.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});assert.equal(await raced.read(record.key),newer);
-});
-test('cold export fails if authenticated ciphertext changes during the final snapshot readback',async()=>{
- const f=fixture(),source=storage(),{slot,record}=await coldPreferenceRecord(f,source);
- await slot.write(await slot.read(),{delivery:{complete:false,sequence:2}});const next=await source.read(record.key);let reads=0;
- const backup=await createJournalBackup({...f.credentials,storage:{keys:async()=>[record.key],read:async()=>++reads===1?record.encoded:next}});
- await assert.rejects(backup.exportRecords(),{code:'BB_JOURNAL_INVALID'});assert.equal(reads,2);
-});
 test('aggregate funding ciphertext preserves original intent and Bok secrets through backup without plaintext export',async()=>{
  const f=fixture(),source=storage(),destination=storage(),scopeText=JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1','31337','1','0x'+'11'.repeat(20),hex(1),'0x'+'22'.repeat(20),hex(3),1]);
  const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText,keyDomain:'ROLLING_AGGREGATE_FUNDING_V1'});
@@ -293,8 +124,8 @@ for(const defect of ['kind','number','zero','recipient','archive','extra','canon
  const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText:(defect==='canonical'?' ':'')+JSON.stringify(frame),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});await slot.write(await slot.read(),{});await assert.rejects((await f.backup(source)).exportRecords(),{code:'BB_JOURNAL_INVALID'});
 });
 
-// RC22/RC26: read-only cache refresh or fresh AEAD IVs must not make an
-// otherwise current backup unusable. Financial state conflicts remain fenced.
+// Fresh AEAD IVs do not change an authenticated financial intent.
+// Different financial state remains a conflict.
 test('authenticated identical financial payload with fresh ciphertext keeps local bytes',async()=>{
  const f=fixture(),source=storage(),destination=storage(),scopeText=l2JournalScopeText(f.scope),keyDomain='AZTEC_BB_L2_JOURNAL_KEY_V1';
  const a=await createEncryptedJournalSlot({...f.credentials,storage:source,scopeText,keyDomain}),b=await createEncryptedJournalSlot({...f.credentials,storage:destination,scopeText,keyDomain});
@@ -305,16 +136,6 @@ test('authenticated identical financial payload with fresh ciphertext keeps loca
  await b.write(await b.read(),{...value,status:'prepared'});const changed=await destination.read(b.storageKey);
  await assert.rejects((await f.backup(destination)).restoreRecords(records),{code:'BB_JOURNAL_INVALID'});assert.equal(await destination.read(b.storageKey),changed);
 });
-test('retaining a local derived cache still authenticates it and rejects mutation during restore',async()=>{
- const f=fixture(),source=storage(),destination=storage(),{record}=await preferenceRecord(f,source);
- await (await f.backup(destination)).restoreRecords([record]);const {record:local}=await preferenceRecord(f,destination,{value:{revision:'2'}});
- let reads=0;const racing=await createJournalBackup({...f.credentials,storage:{read:async()=>++reads===1?local.encoded:record.encoded}});
- await assert.rejects(racing.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
- const corrupted=JSON.parse(local.encoded);corrupted.data=(corrupted.data[0]==='0'?'1':'0')+corrupted.data.slice(1);
- const invalid=await createJournalBackup({...f.credentials,storage:{read:async()=>JSON.stringify(corrupted)}});
- await assert.rejects(invalid.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
-});
-
 test('local pre-proof provenance is durable, non-exported, and never initialized by read',async()=>{
  const idb=new IDBFactory(),a=createBrowserJournalStorage(idb),b=createBrowserJournalStorage(idb);
  assert.equal(await a.readRecoveryEpoch(),null);
@@ -364,4 +185,42 @@ test('portable pre-proof ciphertext cannot restore its local authority or bypass
  const records=await(await f.backup(source)).exportRecords();
  const unsupported={keys:target.keys,read:target.read,compareAndSwap:target.compareAndSwap};await assert.rejects((await f.backup(unsupported)).restoreRecords(records),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(await target.keys(),[]);
  await(await f.backup(target)).restoreRecords(records);assert.notEqual(await target.readRecoveryEpoch(),epoch);assert.deepEqual(await(await f.backup(target)).exportRecords(),records);
+});
+
+for(const keyDomain of ['ROLLING_PREFERENCES_V1','ROLLING_COLD_PREFERENCES_V1'])test(`retired ${keyDomain} cannot export or restore authenticated ciphertext`,async()=>{
+ const f=fixture(),source=storage(),destination=storage();
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,keyDomain,scopeText:JSON.stringify([keyDomain,'retired',1])});
+ await slot.write(await slot.read(),{privateSentinel:'retired cache'});
+ const records=[{key:slot.storageKey,encoded:await source.read(slot.storageKey)}];
+ await assert.rejects((await f.backup(source)).exportRecords(),{code:'BB_JOURNAL_INVALID'});
+ await assert.rejects((await f.backup(destination)).restoreRecords(records),{code:'BB_JOURNAL_INVALID'});
+ assert.deepEqual(await destination.keys(),[]);assert.equal(await destination.readRecoveryEpoch(),null);
+});
+
+async function financialRecord(f,source,value={status:'unknown',hash:hex(55)}){
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,keyDomain:'AZTEC_BB_L2_JOURNAL_KEY_V1',scopeText:l2JournalScopeText(f.scope)});
+ await slot.write(await slot.read(),value);return {slot,record:{key:slot.storageKey,encoded:await source.read(slot.storageKey)}};
+}
+test('financial export rejects changed ciphertext at its final snapshot fence',async()=>{
+ const f=fixture(),source=storage(),{slot,record}=await financialRecord(f,source);
+ await slot.write(await slot.read(),{status:'included',hash:hex(55)});const next=await source.read(record.key);let reads=0;
+ const backup=await createJournalBackup({...f.credentials,storage:{keys:async()=>[record.key],read:async()=>++reads===1?record.encoded:next}});
+ await assert.rejects(backup.exportRecords(),{code:'BB_JOURNAL_INVALID'});assert.equal(reads,2);
+});
+test('retained identical financial payload still rejects ciphertext replacement and authentication failure',async()=>{
+ const f=fixture(),source=storage(),destination=storage(),{record}=await financialRecord(f,source),{record:local}=await financialRecord(f,destination);
+ assert.notEqual(record.encoded,local.encoded);
+ let reads=0;const racing=await createJournalBackup({...f.credentials,storage:{read:async()=>++reads===1?local.encoded:record.encoded}});
+ await assert.rejects(racing.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
+ const corrupted=JSON.parse(local.encoded);corrupted.data=(corrupted.data[0]==='0'?'1':'0')+corrupted.data.slice(1);
+ const invalid=await createJournalBackup({...f.credentials,storage:{read:async()=>JSON.stringify(corrupted)}});
+ await assert.rejects(invalid.restoreRecords([record]),{code:'BB_JOURNAL_INVALID'});
+});
+test('Ethereum signed journal remains authenticated and portable without any preference backup domain',async()=>{
+ const f=fixture(),source=storage(),destination=storage(),keyDomain='AZTEC_BB_ETH_JOURNAL_KEY_V1';
+ const scopeText=JSON.stringify(['AZTEC_BB_ETH_JOURNAL_V1',f.scope.account,f.scope.chainId,f.scope.rollup,f.scope.version,f.scope.board,f.scope.portal,'0x'+'33'.repeat(20)]);
+ const slot=await createEncryptedJournalSlot({...f.credentials,storage:source,keyDomain,scopeText}),value={status:'unknown',signed:'private-signed-sentinel',hash:hex(66)};
+ await slot.write(await slot.read(),value);const records=await (await f.backup(source)).exportRecords();
+ assert(!JSON.stringify(records).includes(value.signed));await (await f.backup(destination)).restoreRecords(records);
+ const restored=await createEncryptedJournalSlot({...f.credentials,storage:destination,keyDomain,scopeText});assert.deepEqual((await restored.read()).value,value);
 });

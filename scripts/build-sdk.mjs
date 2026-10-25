@@ -6,7 +6,7 @@ import {inspectOwnerDiscovery,OWNER_DISCOVERY_PINS} from './patch-pxe-owner-disc
 import {parallelPxeAnchorSnapshot} from './pxe-sync-snapshot.mjs';
 import {zeroWindowRpcMicrotasks} from './rpc-zero-window.mjs';
 import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs';
-import {inspectPreferencePage,PREFERENCE_PAGE_PINS,PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN} from './patch-pxe-preference-page.mjs';
+import {inspectOperationGuards,PXE_OPERATION_PINS,PXE_SOURCE_PINS} from './patch-pxe-operation-guards.mjs';
 import {inspectIndexedDBAtomicity, INDEXEDDB_ATOMICITY_PINS} from './patch-indexeddb-atomicity.mjs';
 import {inspectPxeReorgAnchor,PXE_REORG_ANCHOR_PINS} from './patch-pxe-reorg-anchor.mjs';
 import {inspectPrivateEventQuery,PRIVATE_EVENT_QUERY_PINS} from './patch-private-event-query.mjs';
@@ -27,9 +27,8 @@ const pxeReorgAnchor=await inspectPxeReorgAnchor(fileURLToPath(new URL('../node_
 if(pxeReorgAnchor.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
 const indexedDBAtomicity=await inspectIndexedDBAtomicity(fileURLToPath(new URL('../node_modules/@aztec-labs/kv-store',import.meta.url)));
 if(indexedDBAtomicity.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
-const preferencePage=await inspectPreferencePage(fileURLToPath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url)));
-if(preferencePage.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
-if(createHash('sha256').update(await fs.readFile(fileURLToPath(new URL('../'+PREFERENCE_PAGE_COMPACT_PIN.source,import.meta.url)))).digest('hex')!==PREFERENCE_PAGE_COMPACT_PIN.sha256)throw new Error('SDK preference compact source mismatch');
+const operationGuards=await inspectOperationGuards(fileURLToPath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url)));
+if(operationGuards.state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
 if((await inspectOwnerDiscovery(fileURLToPath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url)))).state!=='patched')throw new Error('Run npm run bootstrap:dependencies before building the SDK');
 const portalMetadata=buildPortalRuntime();
 
@@ -143,25 +142,24 @@ const assets = [
 ];
 for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
 const inputs = [...new Set(['shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
-  ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-sync-snapshot.mjs', 'scripts/pxe-validated-prove.mjs', 'shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/like-fees.mjs', 'shared/preference-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
+  ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-sync-snapshot.mjs', 'scripts/pxe-validated-prove.mjs', 'shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/like-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
   ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),
-  'scripts/patch-pxe-preference-page.mjs',PREFERENCE_PAGE_COMPACT_PIN.source,
-  ...PREFERENCE_PAGE_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),
-  ...[PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN].map(pin=>'node_modules/@aztec-labs/pxe/'+pin.generated), 'scripts/build-portal-runtime.mjs',...Object.keys(portalMetadata.sources).map(name=>'billboard/portal/'+name)])].sort();
-const preferenceLiteralInputs = [
-  ...PREFERENCE_PAGE_PINS.map(pin=>['node_modules/@aztec-labs/pxe/'+pin.path,pin.after]),
-  ...[PREFERENCE_PAGE_COMPACT_PIN,PREFERENCE_PAGE_RECOVERY_PIN].map(pin=>['node_modules/@aztec-labs/pxe/'+pin.generated,pin.sha256]),
-  [PREFERENCE_PAGE_COMPACT_PIN.source,PREFERENCE_PAGE_COMPACT_PIN.sha256],
+  'scripts/patch-pxe-operation-guards.mjs',
+  ...[...PXE_OPERATION_PINS,...PXE_SOURCE_PINS].map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),
+  'scripts/build-portal-runtime.mjs',...Object.keys(portalMetadata.sources).map(name=>'billboard/portal/'+name)])].sort();
+const operationLiteralInputs = [
+  ...PXE_OPERATION_PINS.map(pin=>['node_modules/@aztec-labs/pxe/'+pin.path,pin.after]),
+  ...PXE_SOURCE_PINS.map(pin=>['node_modules/@aztec-labs/pxe/'+pin.path,pin.sha256]),
 ];
-const preferenceRequiredInputs=new Set(['scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),'scripts/patch-pxe-preference-page.mjs',...preferenceLiteralInputs.map(([name])=>name)]);
+const operationRequiredInputs=new Set(['scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),'scripts/patch-pxe-operation-guards.mjs',...operationLiteralInputs.map(([name])=>name)]);
 const inputHashes = {};
 for (const filename of inputs) {
   try { inputHashes[filename] = sha(await fs.readFile(path.resolve(root, filename))); }
-  catch (error) { if (error.code !== 'ENOENT'||preferenceRequiredInputs.has(filename)) throw error; }
+  catch (error) { if (error.code !== 'ENOENT'||operationRequiredInputs.has(filename)) throw error; }
 }
-for(const [name,expected] of preferenceLiteralInputs)if(inputHashes[name]!==expected)throw new Error('SDK preference page patch changed during build: '+name);
+for(const [name,expected] of operationLiteralInputs)if(inputHashes[name]!==expected)throw new Error('SDK operation patch changed during build: '+name);
 for(const pin of OWNER_DISCOVERY_PINS)if(inputHashes['node_modules/@aztec-labs/pxe/'+pin.path]!==pin.after)throw new Error('SDK owner discovery patch changed during build: '+pin.path);
 const outputs = {};
 const emitted = [...new Set([...Object.keys(main.metafile.outputs), ...Object.keys(browser.metafile.outputs), ...Object.keys(workers.metafile.outputs)].map(filename => path.basename(filename)).concat(assets.map(([, dest]) => dest), [...lazyAssets.keys()]))].sort();

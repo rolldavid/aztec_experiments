@@ -1,7 +1,8 @@
 // IndexedDB completion (not just request success) is the durability boundary.
-export function createBrowserJournalStorage(indexedDB=globalThis.indexedDB) {
+export function createBrowserJournalStorage(indexedDB=globalThis.indexedDB,{databaseName='aztec-billboard-transaction-journal-v1'}={}) {
+  if(!['aztec-billboard-transaction-journal-v1','rolling-saved-items-v1'].includes(databaseName))throw new Error('Invalid storage namespace');
   async function open() {
-    return new Promise((resolve,reject)=>{let rejected=false;const req=indexedDB.open('aztec-billboard-transaction-journal-v1',2);
+    return new Promise((resolve,reject)=>{let rejected=false;const req=indexedDB.open(databaseName,2);
       req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('records'))req.result.createObjectStore('records');if(!req.result.objectStoreNames.contains('recovery-metadata'))req.result.createObjectStore('recovery-metadata');};req.onsuccess=()=>{if(rejected)req.result.close();else resolve(req.result);};req.onerror=()=>{rejected=true;reject(new Error('Cannot open transaction journal'));};req.onblocked=()=>{rejected=true;reject(new Error('Transaction journal upgrade blocked'));};});
   }
   async function access(key,write,previous,next) {

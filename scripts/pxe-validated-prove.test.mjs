@@ -135,7 +135,7 @@ const preparationQueues=[];test.after(async()=>{await Promise.all(preparationQue
 
 const {loadContractArtifact,getAllFunctionAbis}=await import('@aztec-labs/stdlib/abi');
 const actualBoardArtifact=loadContractArtifact(JSON.parse(await fs.readFile(process.env.ROLLING_TEST_ARTIFACT??new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8')));
-const qualifiedBoardMethods=['set_like','set_preference','mark_thread_read','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
+const qualifiedBoardMethods=['set_like','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
 
 async function ordinarySyncFixture({written=false,initializationFailure=false}={}){
  const owner=AztecAddress.fromFieldUnsafe(new Fr(100)),fee=AztecAddress.fromFieldUnsafe(new Fr(200)),board=AztecAddress.fromFieldUnsafe(new Fr(300));
@@ -318,7 +318,7 @@ test('generic Board preparation pins the real artifact class and authentic nativ
  }
 });
 test('generic preparation shares actual native state cache across methods without another discovery',async()=>{
- const f=await ordinarySyncFixture();await f.prepareGeneric('set_like');await f.prepareGeneric('set_preference');await f.run();
+ const f=await ordinarySyncFixture();await f.prepareGeneric('set_like');await f.prepareGeneric('register_name');await f.run();
  assert.equal(f.events.filter(e=>e[0]==='sync-start').length,3);assert.equal(f.events.filter(e=>e[0]==='class').length,3);assert.equal(f.events.filter(e=>e[0]==='witness').length,3);
  f.service.wipe();f.advance();await f.prepareGeneric('withdraw');assert.equal(f.events.filter(e=>e[0]==='sync-start').length,6);assert.equal(f.events.filter(e=>e[0]==='class').length,6);assert.equal(f.events.filter(e=>e[0]==='witness').length,6);
 });
@@ -341,132 +341,6 @@ test('generic preparation detaches addresses and method before native queue yiel
 const {computeSiloedPrivateInitializationNullifier}=await import('@aztec-labs/stdlib/hash');
 const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');
 const {UtilityExecutionOracle}=await import('../node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js');
-async function preferenceInitHarness({selector='0xe9554592',wrongClass=false,missingInstance=false}={}){
- const address=AztecAddress.fromFieldUnsafe(new Fr(900)),initializationHash=new Fr(77),events=[];
- let number=9,waitSync,waitRead,failSync=false,failRead=false;
- const anchorBlockHeader={globalVariables:{timestamp:0n},toBlockParameter:async()=>({number,hash:BlockHash.fromString('0x'+String(number).padStart(64,'0'))})};
- const node=withCache({getContract:async()=>({currentContractClassId:Fr.fromString(wrongClass?new Fr(999).toString():syncProfile.boardClassId)}),findLeavesIndexes:async(anchor,tree,values)=>{
-  events.push(['lookup',anchor,tree,values]);if(waitRead)await waitRead.promise;if(failRead)throw Error('initialization failed');return values.map(()=>undefined);
- }});
- const store={getContractInstance:async()=>missingInstance?undefined:{initializationHash}},contractClassService=new ContractClassService(node,store),ctx={changeSetId:42,syncTime:0,anchorBlockHeader,recording:{stats:()=>({})},totalMs:()=>0};
- const service={ensureContractSynced:async()=>{events.push(['sync']);if(waitSync)await waitSync.promise;if(failSync)throw Error('sync failed');}};
- const execute=async()=>{events.push(['utility']);return {result:[Fr.ONE],offchainEffects:[]};};
- const queue={runSynced:async work=>{try{const out=await work(ctx);events.push(['commit']);return out;}catch(error){events.push(['discard']);throw error;}}};
- const Class=vm.runInNewContext(`(class {node=node;contractStore=store;contractClassService=contractClassService;contractSyncService=service;operationQueue=queue;#executeUtility=execute;#getSimulatorForTx=()=>({});
- ${method(pxe,'async #prefetchPreferenceInitialization(', '\n    prepareOrdinaryPostState(')}
- ${method(pxe,'executeUtility(call, { authwits, scopes }', '\n    /**')}
- })`,{...nativeTimingBindings,...syncBindings,node,store,contractClassService,service,queue,execute,allToCompletion,Timer});
- const instance=new Class(),call={name:'preference_head',to:address,selector:FunctionSelector.fromString(selector),args:[]};
- return {run:()=>instance.executeUtility(call,{scopes:[address]}),events,node,anchorBlockHeader,address,initializationHash,
- holdSync:()=>waitSync=Promise.withResolvers(),holdRead:()=>waitRead=Promise.withResolvers(),failSync:()=>{failSync=true;},failRead:()=>{failRead=true;},advance:()=>{number++;}};
-}
-test('preference initialization selector is the exact compiled utility and only the two write methods prime it',async()=>{
- const abi=getAllFunctionAbis(actualBoardArtifact).find(fn=>fn.name==='preference_head');assert.equal(abi.functionType,'utility');
- assert.equal((await FunctionSelector.fromNameAndParameters(abi.name,abi.parameters)).toString(),'0xe9554592');
- for(const method of ['set_preference','mark_thread_read','set_like','register_name']){
-  const f=await ordinarySyncFixture();await f.prepareGeneric(method);const rows=f.events.filter(e=>e[0]==='initialization');
-  assert.equal(rows.length,['set_preference','mark_thread_read'].includes(method)?2:0);
-  if(rows.length)assert.equal(rows[0][1][0],(await computeSiloedPrivateInitializationNullifier(f.board,new Fr(77))).toString());
- }
-});
-test('preference initialization overlaps native discovery and existing native oracle reuses the anchored cache',async()=>{
- const f=await preferenceInitHarness(),sync=f.holdSync(),lookup=f.holdRead();const work=f.run();
- for(let i=0;i<100&&!f.events.some(e=>e[0]==='lookup');i++)await new Promise(setImmediate);
- assert.deepEqual(f.events.map(e=>e[0]),['sync','lookup']);assert(!f.events.some(e=>e[0]==='utility'));
- const row=f.events.find(e=>e[0]==='lookup'),expected=await computeSiloedPrivateInitializationNullifier(f.address,f.initializationHash);
- assert.equal(row[2],MerkleTreeId.NULLIFIER_TREE);assert.equal(row[3][0].toString(),expected.toString());
- lookup.resolve();sync.resolve();await work;
- const statuses=await UtilityExecutionOracle.prototype.getSiloedNullifierStatuses.call({anchorBlockHeader:f.anchorBlockHeader,aztecNode:f.node},[expected]);
- assert.equal(statuses[0].exists,false,'prefetch never assumes initialized; native assertion still observes absence');
- assert.equal(f.events.filter(e=>e[0]==='lookup').length,1);await f.run();assert.equal(f.events.filter(e=>e[0]==='lookup').length,1);
- f.advance();await f.run();assert.equal(f.events.filter(e=>e[0]==='lookup').length,2,'new anchor fetches exact same nullifier afresh');
-});
-for(const options of [{selector:'0x418ef5da'},{wrongClass:true},{missingInstance:true}])test('preference initialization excludes '+JSON.stringify(options),async()=>{
- const f=await preferenceInitHarness(options);await f.run();assert(!f.events.some(e=>e[0]==='lookup'));assert(f.events.some(e=>e[0]==='utility'));
-});
-for(const failure of ['sync','initialization'])test('preference initialization '+failure+' failure drains sibling and blocks utility/staged commit',async()=>{
- const f=await preferenceInitHarness(),sync=f.holdSync(),lookup=f.holdRead();failure==='sync'?f.failSync():f.failRead();let settled=false;
- const work=f.run().finally(()=>settled=true),rejected=assert.rejects(work,new RegExp(failure+' failed'));
- for(let i=0;i<100&&!f.events.some(e=>e[0]==='lookup');i++)await new Promise(setImmediate);
- assert(f.events.some(e=>e[0]==='lookup'));(failure==='sync'?sync:lookup).resolve();await new Promise(setImmediate);
- assert.equal(settled,false);assert(!f.events.some(e=>['utility','discard','commit'].includes(e[0])));
- sync.resolve();lookup.resolve();await rejected;assert(!f.events.some(e=>['utility','commit'].includes(e[0])));assert.equal(f.events.at(-1)[0],'discard');
-});
-
-for(const failure of [false,true])test('preference write preparation primes during actual native scope sync and drains staged failure '+failure,async()=>{
- const f=await ordinarySyncFixture({initializationFailure:failure});f.hold();let settled=false;
- const work=f.prepareGeneric('set_preference').finally(()=>settled=true),observed=failure?assert.rejects(work,/initialization failed/):work;
- for(let i=0;i<100&&(f.pending.length<3||!f.events.some(e=>e[0]==='initialization'));i++)await new Promise(setImmediate);
- assert.equal(f.pending.length,3);assert.equal(f.events.filter(e=>e[0]==='initialization').length,1);assert.equal(settled,false);
- assert(!f.events.some(e=>['prepare-committed','prepare-discarded'].includes(e[0])));
- f.pending.forEach(p=>p.resolve());await observed;assert.equal(f.events.at(-1)[0],failure?'prepare-discarded':'prepare-committed');
-});
-
-// Run the actual qualified Noir utility against the same native oracle/cache.
-// This protects the private Noir domain separator and Owned<PrivateMutable>
-// slot formula, rather than merely comparing two JavaScript implementations.
-import {createHash} from 'node:crypto';
-import {abiEncode,abiDecode} from '@aztec-foundation/noir-noirc_abi';
-import {buildACIRCallback} from '@aztec-labs/pxe/simulator';
-import {WASMSimulator} from '@aztec-labs/simulator/client';
-import {BlockHeader,CallContext} from '@aztec-labs/stdlib/tx';
-import {SerializableContractInstance,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
-import {deriveKeys} from '@aztec-labs/stdlib/keys';
-import {KeyStore} from '@aztec-labs/key-store';
-const preferenceRaw=JSON.parse(await fs.readFile(process.env.ROLLING_TEST_ARTIFACT??new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8'));
-const preferenceNoir=preferenceRaw.functions.find(fn=>fn.name==='preference_head');
-async function ownerInitializationFixture({present=false,seed=42}={}){
- const values=new Map(),map={set:async(k,v)=>values.set(k,v),getAsync:async k=>values.get(k),entriesAsync:()=>values.entries(),keysAsync:()=>values.keys()};
- const keyStore=new KeyStore({openMap:()=>map,transactionAsync:fn=>fn()});
- const complete=await keyStore.addAccount(await deriveKeys(new Fr(seed)),new Fr(43));
- const instance=new SerializableContractInstance({version:2,salt:new Fr(1),deployer:AztecAddress.ZERO,currentContractClassId:Fr.fromString(syncProfile.boardClassId),originalContractClassId:Fr.fromString(syncProfile.boardClassId),initializationHash:new Fr(77),immutablesHash:Fr.ZERO,publicKeys:complete.publicKeys});
- const address=await computeContractAddressFromInstance(instance),header=BlockHeader.empty();header.globalVariables.blockNumber=3;
- const contractNullifier=await computeSiloedPrivateInitializationNullifier(address,instance.initializationHash);
- let accountFound=true,keyAllowed=true,classId=syncProfile.boardClassId,readFailure=false,held;const reads=[];
- const node=withCache({findLeavesIndexes:async(anchor,tree,items)=>{reads.push({anchor,tree,items});if(held)await held.promise;if(readFailure)throw Error('owner init lookup failed');return items.map(value=>value.equals(contractNullifier)||present?{data:1n,l2BlockNumber:1,l2BlockHash:BlockHash.fromString('0x'+'1'.padStart(64,'0'))}:undefined);}});
- const addressStore={getCompleteAddress:async owner=>accountFound&&owner.equals(complete.address)?complete:undefined};
- const realHasKey=keyStore.accountHasKey.bind(keyStore);keyStore.accountHasKey=async(...args)=>keyAllowed&&realHasKey(...args);
- const store={getContractInstance:async()=>instance};
- const Helper=vm.runInNewContext(`(class{node=node;contractStore=store;keyStore=keyStore;addressStore=addressStore;contractClassService={getCurrentClassId:async()=>SyncFr.fromString(currentClass())};
- ${method(pxe,'async #prefetchPreferenceInitialization(', '\n    prepareOrdinaryPostState(')}
- run(owner,artifact){return this.#prefetchPreferenceInitialization(address,header,owner,artifact);}
- })`,{...syncBindings,allToCompletion,node,store,keyStore,addressStore,address,header,currentClass:()=>classId});
- const helper=new Helper(),callContext=CallContext.empty();callContext.contractAddress=address;
- const handler=new UtilityExecutionOracle({anchorBlockHeader:header,callContext,scopes:[complete.address],addressStore,keyStore,aztecNode:node,anchoredContractData:store});
- const noteError=Error('native selected initialized note');handler.getNotes=async()=>{throw noteError;};
- const runUtility=()=>new WASMSimulator({module:'preference-owner-initialization-test'}).executeUserCircuit(abiEncode(preferenceNoir.abi,{owner:{inner:complete.address.toField().toString()}}),{...preferenceNoir,bytecode:Buffer.from(preferenceNoir.bytecode,'base64'),contractName:'RollingBoard'},buildACIRCallback(handler));
- return {prepare:()=>helper.run(complete.address,actualBoardArtifact),runUtility,reads,header,handler,complete,address,keyStore,node,noteError,contractNullifier,
- wrongClass:()=>{classId=new Fr(999).toString();},missingAccount:()=>{accountFound=false;},denyKey:()=>{keyAllowed=false;},wrongLayout:()=>helper.run(complete.address,{storageLayout:{preferences:{slot:new Fr(37)}}}),
- hold:()=>held=Promise.withResolvers(),fail:()=>{readFailure=true;},advance:()=>{header.globalVariables.blockNumber++;}};
-}
-test('owner initialization lookup formula is bound to exact native Noir sources and compiled storage',()=>{
- const pins={'/state_vars/private_mutable.nr':'58d93dd8b3fb98509c7573948eff6f2d7f76de40d2b4c503287dc6f1c6e226aa','/macros/functions/initialization_utils.nr':'945322b1ce762831642c010b366ca6a450c8bcbda2febce8363470f25f3353b4'};
- for(const [suffix,expected]of Object.entries(pins)){const source=Object.values(preferenceRaw.file_map).find(file=>file.path.endsWith(suffix))?.source;assert(source);assert.equal(createHash('sha256').update(source).digest('hex'),expected);}
- assert.equal(actualBoardArtifact.storageLayout.preferences.slot.toBigInt(),36n);
-});
-for(const present of [false,true])test(`actual compiled preference_head reuses exact native keyed lookup initialized=${present}`,async()=>{
- const f=await ownerInitializationFixture({present,seed:present?44:42});await f.prepare();assert.equal(f.reads.length,2);
- assert(f.reads.every(read=>read.tree===MerkleTreeId.NULLIFIER_TREE));
- const before=f.reads.length;
- if(present)await assert.rejects(f.runUtility(),error=>error.cause===f.noteError||error.message.includes(f.noteError.message));
- else{const result=await f.runUtility();assert.equal(abiDecode(preferenceNoir.abi,result.partialWitness).return_value.initialized,false);}
- assert.equal(f.reads.length,before,'real compiled utility generates identical contract and owner nullifiers and reuses the native cache');
- f.advance();if(present)await assert.rejects(f.runUtility());else await f.runUtility();
- assert.equal(f.reads.length,before+2,'a different native anchor must read both statuses afresh');
-});
-for(const change of ['wrongClass','missingAccount','denyKey'])test(`owner prefetch cannot access an unqualified owner key: ${change}`,async()=>{
- const f=await ownerInitializationFixture();f[change]();await f.prepare();assert.equal(f.reads.length,change==='wrongClass'?0:1);
- if(change==='denyKey')await assert.rejects(f.runUtility(),/foreign_call_handler/);
-});
-test('invalid preference layout drains started native contract lookup before rejecting',async()=>{
- const f=await ownerInitializationFixture(),held=f.hold();let settled=false;const result=f.wrongLayout().finally(()=>settled=true);const rejected=assert.rejects(result,/Invalid preference storage layout/);
- for(let i=0;i<100&&!f.reads.length;i++)await new Promise(setImmediate);assert.equal(f.reads.length,1);assert.equal(settled,false);held.resolve();await rejected;
-});
-test('both owner initialization requests drain before native preparation can settle',async()=>{
- const f=await ownerInitializationFixture(),held=f.hold();f.fail();let settled=false;const result=f.prepare().finally(()=>settled=true);const rejected=assert.rejects(result,/owner init lookup failed/);
- for(let i=0;i<100&&f.reads.length<2;i++)await new Promise(setImmediate);assert.equal(f.reads.length,2);assert.equal(settled,false);held.resolve();await rejected;
-});
-
 test('account readiness discovers only Board and FPC together without kernel hints or a second sync',async()=>{
  const f=await ordinarySyncFixture();f.hold();let settled=false;
  const work=f.prepareGeneric('get_deposit_ids').finally(()=>settled=true);

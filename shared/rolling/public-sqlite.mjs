@@ -258,11 +258,16 @@ export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=fal
  // alone earns canonical publication and authenticates opaque external cursors.
  function readPublicPage({expectedControl,view,params={},after=null,homeSubboards=[],throughBlock=null,throughHash=null}){
   const expected=captureExpected(expectedControl),input=captureExpected(params),curated=['0',...normalizeHomeSubboards(captureExpected(homeSubboards))];
-  const allowed={'bok-accounting':[],home:[],feed:[],chronological:[],pending:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
+  const allowed={'bok-accounting':[],home:[],feed:[],following:['boards','names'],bookmarks:['ids'],chronological:[],pending:[],board:['id'],directory:['query'],thread:['root'],profile:['nameId'],post:['id']};
   requireThat(typeof view==='string'&&Object.hasOwn(allowed,view));requireThat(Object.keys(input).every(k=>k==='limit'||allowed[view].includes(k)));
   const limit=input.limit??50;requireThat(bounded(limit,1,100));
   requireThat(throughBlock===null?throughHash===null:view==='bok-accounting'&&uint(throughBlock,53)&&(throughHash===null||hash(throughHash)));
   const field=v=>uint(v)&&BigInt(v)<0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
+  const selections={};let selectionCount=0;
+  if(view==='following'||view==='bookmarks')for(const k of view==='following'?['boards','names']:['ids']){
+   const text=input[k]??'';requireThat(typeof text==='string'&&text.length<=7800);const ids=text===''?[]:text.split(',');requireThat(ids.every(id=>field(id)&&(k==='boards'||id!=='0'))&&new Set(ids).size===ids.length);selectionCount+=ids.length;selections[k]=ids;
+  }
+  requireThat(selectionCount<=100);
   const idKey={board:'id',thread:'root',profile:'nameId',post:'id'}[view];if(idKey)requireThat(field(input[idKey]));
   requireThat(after===null||field(after));requireThat(view!=='post'||after===null);
   const query=input.query??'';requireThat(typeof query==='string'&&query.length<=120&&!query.includes('\0'));const q=query.trim().toLowerCase();
@@ -294,6 +299,9 @@ export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=fal
     const board=input.id==='0'?null:boardValue(input.id);requireThat(input.id==='0'||board,'ROLLING_PUBLIC_NOT_FOUND');fixed={boardId:input.id,board};
    }else if(view==='thread')requireThat(point('posts',input.root)?.record.root===input.root);
    else if(view==='profile'){requireThat(point('names',input.nameId),'ROLLING_PUBLIC_NOT_FOUND');fixed={identity:identity(input.nameId)};}
+   if(view==='following')fixed.following={
+    boards:selections.boards.map(id=>{const board=point('boards',id);return {id,name:id==='0'?'Main board':board?.name??null,slug:board?.slug??null};}),
+    names:selections.names.map(id=>{const name=point('names',id);return {id,first:name?.first??null,last:name?.last??null};})};
    const valueFor=posts=>{
     const value={...fixed,posts},names={},boards={};
     for(const p of posts){if(p.record.name_id!=='0'&&!Object.hasOwn(names,p.record.name_id))names[p.record.name_id]=identity(p.record.name_id);
@@ -339,7 +347,19 @@ export function createRollingPublicSqliteStore(directory,{scope,serviceOwned=fal
    }else{
     const prior=after===null?null:point('posts',after);requireThat(after===null||prior,'ROLLING_PUBLIC_CURSOR_STALE');
     const high='f'.repeat(64),low='';let candidates;
-    if(view==='home'){
+    if(view==='following'){
+     if(prior)requireThat(selections.boards.includes(prior.record.subboard)||selections.names.includes(prior.record.name_id),'ROLLING_PUBLIC_CURSOR_STALE');
+     const bound=prior?key(prior.order):high,found=new Map();
+     // Each target uses its existing indexed seek; at most 100*(limit+1)
+     // candidate rows, never a global feed scan. Merge duplicates before paging.
+     for(const id of selections.boards)for(const row of rows('board',[key(id),bound],limit+1))found.set(row.k,row);
+     for(const id of selections.names)for(const row of rows('profile',[key(id),bound],limit+1))found.set(row.k,row);
+     candidates=[...found.values()].sort((a,b)=>a.ord>b.ord?-1:a.ord<b.ord?1:0).slice(0,limit+1);
+    }else if(view==='bookmarks'){
+     if(prior)requireThat(selections.ids.includes(prior.id),'ROLLING_PUBLIC_CURSOR_STALE');
+     const bound=prior?BigInt(prior.order):null;
+     candidates=selections.ids.map(id=>point('posts',id)).filter(p=>p&&(bound===null||BigInt(p.order)<bound)).sort((a,b)=>BigInt(a.order)>BigInt(b.order)?-1:1).slice(0,limit+1).map(p=>({k:p.id}));
+    }else if(view==='home'){
      const order=(a,b)=>a.likes!==b.likes?(a.likes>b.likes?-1:1):a.stamp!==b.stamp?(a.stamp>b.stamp?-1:1):a.idnum<b.idnum?-1:a.idnum>b.idnum?1:0;
      if(prior)requireThat(curated.includes(prior.record.subboard)&&!point('boards',prior.record.subboard)?.rejected,'ROLLING_PUBLIC_CURSOR_STALE');
      const boundary=prior?{likes:key(prior.likes),stamp:key(prior.timestamp),idnum:key(prior.id)}:null;

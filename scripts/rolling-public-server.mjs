@@ -1,22 +1,28 @@
 import http from 'node:http';
+import {createSavedItemsStore,authorizeSavedItems,SAVED_ITEMS_MAX_BYTES} from '../shared/rolling/saved-items-store.mjs';
 import {normalizeHomeSubboards} from '../shared/rolling/public-projection.mjs';
 import {pathToFileURL} from 'node:url';
-const routes={'bok-accounting':['limit','cursor','blockNumber','blockHash'],status:[],home:['limit','cursor'],feed:['limit','cursor'],board:['id','limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
+const routes={'bok-accounting':['limit','cursor','blockNumber','blockHash'],status:[],following:['boards','names','limit','cursor'],bookmarks:['ids','limit','cursor'],home:['limit','cursor'],feed:['limit','cursor'],board:['id','limit','cursor'],directory:['query','limit','cursor'],thread:['root','limit','cursor'],profile:['nameId','limit','cursor'],post:['id']};
 const field=v=>typeof v==='string'&&/^(0|[1-9][0-9]{0,76})$/.test(v);
 const headers={'Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff','Cache-Control':'no-store',
   'Content-Security-Policy':"default-src 'none'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'};
 /** Same-origin composition: API owns /api and /api/*; lead owns an exact static
  * asset allowlist through staticHandler(req,res). No CORS, RPC proxy, wallet or
  * arbitrary operator routes. Optional USDC funding accepts only its exact signed plan. sync is one serial loop; close waits for its bounded read.
- * GET /api/{status,home,feed,board,directory,thread,profile,post}; no request bodies or extras.
+ * GET public views; GET/PUT saved-items accepts only opaque encrypted documents. Public view requests have no bodies or extras.
  */
-export async function startRollingPublicServer({index,host='127.0.0.1',port=0,staticHandler,pollMs=1000,fundingRelay}){
+export async function startRollingPublicServer({index,host='127.0.0.1',port=0,staticHandler,pollMs=1000,fundingRelay,savedItems,savedItemsDirectory}){
   if(host!=='127.0.0.1'||!Number.isInteger(port)||port<0||port>65535||!Number.isInteger(pollMs)||pollMs<100||pollMs>30000){
     const error=Error('Invalid public server configuration');
-    const failures=[error];for(const cleanup of [()=>index.close?.(),()=>fundingRelay?.close()])try{await cleanup();}catch(failure){failures.push(failure);}
+    const failures=[error];for(const cleanup of [()=>index.close?.(),()=>fundingRelay?.close(),()=>savedItems?.close()])try{await cleanup();}catch(failure){failures.push(failure);}
     if(failures.length>1)throw new AggregateError(failures,'Public reader configuration and cleanup failed');throw error;
   }
+  if(savedItemsDirectory!==undefined){
+    try{if(savedItems)throw Error('Invalid saved-items configuration');savedItems=createSavedItemsStore(savedItemsDirectory);}
+    catch(error){const failures=[error];for(const close of [()=>index.close?.(),()=>fundingRelay?.close(),()=>savedItems?.close()])try{await close();}catch(cleanup){failures.push(cleanup);}if(failures.length>1)throw new AggregateError(failures,'Saved-items startup and cleanup failed');throw error;}
+  }
   let closed=false,timer,turn,active,queued,closing;const requests=new Set();let fundingWindow=0,fundingRequests=0;
+  let savedWindow=0,savedReads=0,savedWrites=0,savedActive=0;
   const subscribers=new Set();let published=null,publishedScope=null,lastContentRevision=null;
   const eventText=value=>`event: revision\ndata: ${JSON.stringify(value)}\n\n`;
   const publish=after=>{
@@ -62,10 +68,37 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     const reply=(status,body)=>{let text=JSON.stringify(body);if(Buffer.byteLength(text)>1048576){status=503;text='{"schemaVersion":1,"error":"unavailable"}';}
       res.writeHead(status,headers);res.end(text);};
     try{
-      if(typeof req.url!=='string'||req.url.length>2048)return reply(400,{schemaVersion:1,error:'invalid-request'});
+      if(typeof req.url!=='string'||req.url.length>(/^\/api\/(following|bookmarks)\?/.test(req.url)?16384:2048))return reply(400,{schemaVersion:1,error:'invalid-request'});
       const url=new URL(req.url,'http://127.0.0.1');
       if(url.pathname!=='/api'&&!url.pathname.startsWith('/api/')){
         if(staticHandler){await staticHandler(req,res);return;}return reply(404,{schemaVersion:1,error:'not-found'});
+      }
+      if(url.pathname==='/api/saved-items'||url.pathname.startsWith('/api/saved-items/')){
+        const invalid=()=>reply(400,{schemaVersion:1,error:'invalid-request'});
+        if(!savedItems)return reply(503,{schemaVersion:1,error:'unavailable'});
+        const match=/^\/api\/saved-items\/([0-9a-f]{64})$/.exec(url.pathname);
+        if(!match||url.search||req.headers['sec-fetch-site']&&!['same-origin','none'].includes(req.headers['sec-fetch-site']))return invalid();
+        if(!['GET','PUT'].includes(req.method)){res.setHeader('Allow','GET, PUT');return reply(405,{schemaVersion:1,error:'method-not-allowed'});}
+        const now=Date.now();if(now-savedWindow>=60000){savedWindow=now;savedReads=0;savedWrites=0;}
+        if((req.method==='GET'?++savedReads>600:++savedWrites>120)||savedActive>=16)return reply(429,{schemaVersion:1,error:'unavailable'});
+        savedActive++;
+        try{
+          if(req.method==='GET'){
+            if(req.headers['transfer-encoding']||req.headers['content-length']&&req.headers['content-length']!=='0')return invalid();
+            return reply(200,{schemaVersion:1,...savedItems.read(match[1])});
+          }
+          const capability=/^Bearer ([0-9a-f]{64})$/.exec(req.headers.authorization??'')?.[1];
+          authorizeSavedItems(match[1],capability);
+          const maxBody=Math.ceil(SAVED_ITEMS_MAX_BYTES*4/3)+128;
+          if(req.headers['content-type']!=='application/json'||req.headers['content-encoding']||Number(req.headers['content-length']??0)>maxBody)return invalid();
+          let size=0;const chunks=[],timeout=setTimeout(()=>req.destroy(),10000);
+          try{for await(const chunk of req){size+=chunk.length;if(size>maxBody)return invalid();chunks.push(chunk);}}finally{clearTimeout(timeout);}
+          let input;try{input=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{return invalid();}
+          return reply(200,{schemaVersion:1,...savedItems.write(match[1],capability,input)});
+        }catch(error){
+          const mapped={SAVED_ITEMS_INVALID:[400,'invalid-request'],SAVED_ITEMS_FORBIDDEN:[403,'forbidden'],SAVED_ITEMS_CONFLICT:[409,'revision-conflict'],SAVED_ITEMS_CAPACITY:[507,'capacity']};
+          const [status,message]=mapped[error?.code]??[503,'unavailable'];return reply(status,{schemaVersion:1,error:message});
+        }finally{savedActive--;}
       }
       if(fundingRelay&&url.pathname.startsWith('/api/funding/usdc')){
         const invalid=()=>reply(400,{schemaVersion:1,error:'invalid-request'});
@@ -100,7 +133,7 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
       if(!allowed)return reply(404,{schemaVersion:1,error:'not-found'});
       let publicationRevision;
       const params={};for(const [key,value] of url.searchParams){
-        if(key==='revision'&&['home','feed','board','directory','thread','profile','post'].includes(view)){
+        if(key==='revision'&&['home','feed','board','directory','thread','profile','post','following','bookmarks'].includes(view)){
           if(publicationRevision!==undefined||!value.length||value.length>200||!/^[!-~]+$/.test(value))return reply(400,{schemaVersion:1,error:'invalid-request'});
           publicationRevision=value;continue;
         }
@@ -113,6 +146,12 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
       }
       if(params.cursor!==undefined&&(params.cursor.length>(view==='board'?200:120)||!/^[-0-9a-f:]+$/.test(params.cursor)))return reply(400,{schemaVersion:1,error:'invalid-request'});
       if(params.query!==undefined&&(params.query.length>120||params.query.includes('\0')))return reply(400,{schemaVersion:1,error:'invalid-request'});
+      if(view==='following'||view==='bookmarks'){
+        const keys=view==='following'?['boards','names']:['ids'];let count=0;
+        for(const key of keys){const value=params[key]??'';if(typeof value!=='string'||value.length>7800)return reply(400,{schemaVersion:1,error:'invalid-request'});
+          const ids=value===''?[]:value.split(',');if(ids.some(id=>!field(id)||key!=='boards'&&id==='0')||new Set(ids).size!==ids.length)return reply(400,{schemaVersion:1,error:'invalid-request'});count+=ids.length;params[key]=value;}
+        if(count>100)return reply(400,{schemaVersion:1,error:'invalid-request'});
+      }
       const idKey={board:'id',thread:'root',profile:'nameId',post:'id'}[view];if(idKey&&!field(params[idKey]))return reply(400,{schemaVersion:1,error:'invalid-request'});
       if(view==='status')return reply(200,index.status());
       // SSE already authenticated this exact publication. A synchronous query
@@ -153,6 +192,7 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
     for(const result of await pending)if(result.status==='rejected')failures.push(result.reason);
     try{await index.close?.();}catch(error){failures.push(error);}
     try{await fundingRelay?.close();}catch(error){failures.push(error);}
+    try{await savedItems?.close();}catch(error){failures.push(error);}
     if(failures.length===1)throw failures[0];if(failures.length)throw new AggregateError(failures,'Public reader cleanup failed');
   })();
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve);});}
@@ -216,7 +256,7 @@ export async function createRollingPublicIndexFromConfig(config){
     const storage=createRollingPublicSqliteStore(captured.cacheDirectory,{scope:captured.scope,serviceOwned:true});
     try{
       const persistent=await createRollingPersistentPublicIndex({node,artifact,bokArtifact,scope:captured.scope,deployment:captured.deployment,homeSubboards,storage,confirmationTier:'proposed'});
-      return {index:ownRollingPersistentPublicIndex(persistent,storage),port:captured.port};
+      return {index:ownRollingPersistentPublicIndex(persistent,storage),port:captured.port,savedItemsDirectory:captured.cacheDirectory};
     }catch(error){try{storage.close();}catch(cleanup){throw new AggregateError([error,cleanup],'Public index construction and cleanup failed');}throw error;}
 
 }
@@ -227,8 +267,8 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
     const {readFile}=await import('node:fs/promises');
     const config=JSON.parse(await readFile(process.argv[2],'utf8'));
-    const {index,port}=await createRollingPublicIndexFromConfig(config);
-    const server=await startRollingPublicServer({index,port});process.stdout.write(JSON.stringify({publicFeedUrl:server.url})+'\n');
+    const owned=await createRollingPublicIndexFromConfig(config);
+    const server=await startRollingPublicServer(owned);process.stdout.write(JSON.stringify({publicFeedUrl:server.url})+'\n');
     for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>{server.close().then(()=>process.exit(0),()=>process.exit(1));});
   }catch{process.stderr.write('Rolling public server could not start.\n');process.exitCode=1;}
 }

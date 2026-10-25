@@ -1,15 +1,15 @@
 import {beginProofSpan} from '../shared/proof-timings.mjs';
 import {createHash} from 'node:crypto';
 import {ORDINARY_POST_GAS_PROFILE} from '../shared/ordinary-post-fees.mjs';
-import {PREFERENCE_PAGE_PINS} from './patch-pxe-preference-page.mjs';
+import {PXE_SOURCE_PINS} from './patch-pxe-operation-guards.mjs';
 const sha=value=>createHash('sha256').update(value).digest('hex');
 function replace(source,before,after){if(source.split(before).length!==2)throw Error('PXE validated proof boundary mismatch');return source.replace(before,after);}
 
 // Build-time transforms for the pinned native SDK. The native queue still owns
 // sync, anchor, staged writes, failure discard and final tagging persistence.
 export function validatedPxeProve(source){
- if(sha(source)!==PREFERENCE_PAGE_PINS.find(pin=>pin.path==='dest/pxe.js').after)throw Error('PXE validated proof source mismatch');
- source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {computeSiloedPrivateInitializationNullifier as syncPrivateInitNullifier,siloNullifier as syncSiloNullifier} from '@aztec-labs/stdlib/hash';\nimport {poseidon2HashWithSeparator as syncPoseidon} from '@aztec-labs/foundation/crypto/poseidon';\nimport {FactCollectionKey as SyncFactCollectionKey} from './storage/fact_store/fact_store_keys.js';\nimport {sha256ToField as syncSha256ToField} from '@aztec-labs/foundation/crypto/sha256';\nimport {computePublicDataTreeLeafSlot as syncPublicDataLeaf} from '@aztec-labs/stdlib/hash';\nimport {MerkleTreeId as SyncTreeId} from '@aztec-labs/stdlib/trees';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
+ if(sha(source)!==PXE_SOURCE_PINS.find(pin=>pin.path==='dest/pxe.js').sha256)throw Error('PXE validated proof source mismatch');
+ source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {poseidon2HashWithSeparator as syncPoseidon} from '@aztec-labs/foundation/crypto/poseidon';\nimport {FactCollectionKey as SyncFactCollectionKey} from './storage/fact_store/fact_store_keys.js';\nimport {sha256ToField as syncSha256ToField} from '@aztec-labs/foundation/crypto/sha256';\nimport {computePublicDataTreeLeafSlot as syncPublicDataLeaf} from '@aztec-labs/stdlib/hash';\nimport {MerkleTreeId as SyncTreeId} from '@aztec-labs/stdlib/trees';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
  source=replace(source,'}, txRequest, privateExecutionResult) {\n        const { publicInputs, chonkProof, executionSteps, timings: { proving } = {} } = await this.#prove',`}, txRequest, privateExecutionResult, validatePublic = false) {
         let validationTime;
         const beforeProof = validatePublic ? async publicInputs => {
@@ -115,35 +115,6 @@ export function validatedPxeProve(source){
             anchorBlockHeader:ctx.anchorBlockHeader,changeSetId:ctx.changeSetId,scopes,triggeredBy:undefined,
         })));
     }
-    // The qualified preference utility's native initialization assertion stays
-    // authoritative. Only start its exact immutable lookup during discovery;
-    // the ordinary node cache serves the later unchanged oracle request.
-    async #prefetchPreferenceInitialization(address, anchorBlockHeader, owner, artifact) {
-        const expected='${ORDINARY_POST_GAS_PROFILE.boardClassId}';
-        if((await this.contractClassService.getCurrentClassId(address,anchorBlockHeader))?.toString()!==expected)return;
-        await allToCompletion([
-            async()=>{
-                const instance=await this.contractStore.getContractInstance(address);
-                if(!instance)return; // normal execution owns missing-instance failure
-                const nullifier=await syncPrivateInitNullifier(address,instance.initializationHash);
-                await this.node.findLeavesIndexes(await anchorBlockHeader.toBlockParameter(),SyncTreeId.NULLIFIER_TREE,[nullifier]);
-            },
-            async()=>{
-                if(!owner)return; // only the two qualified preference writes supply an owner
-                const slot=artifact?.storageLayout?.preferences?.slot;
-                if(!slot?.equals(new SyncFr(36)))throw new Error('Invalid preference storage layout');
-                const account=await this.addressStore.getCompleteAddress(owner);
-                if(!account || !await this.keyStore.accountHasKey(owner,account.publicKeys.npkMHash))return;
-                // Exact pinned PrivateMutable::compute_initialization_nullifier;
-                // its Noir-private separator has no JS export. The actual compiled
-                // preference_head parity test protects this lookup-only formula.
-                const key=await this.keyStore.getKeyValidationRequest(account.publicKeys.npkMHash,address);
-                const inner=await syncPoseidon([slot,owner.toField(),key.skApp],1653084894);
-                const nullifier=await syncSiloNullifier(address,inner);
-                await this.node.findLeavesIndexes(await anchorBlockHeader.toBlockParameter(),SyncTreeId.NULLIFIER_TREE,[nullifier]);
-            },
-        ].map(read=>Promise.resolve().then(read)));
-    }
     // Public API\n`);
  source=replace(source,'    // Public API\n',`    prepareOrdinaryPostState({owner,board,privateFee}) {
         // Detach the session's known deployed addresses before entering the queue.
@@ -202,7 +173,7 @@ export function validatedPxeProve(source){
  source=replace(source,'    // Public API\n',`    prepareBoardActionState({owner,board,privateFee,method}) {
         // No posting gas/history assumptions. Resolve the actual named ABI from
         // the registered, class-pinned Board; these are state preparation only.
-        const allowed=['get_deposit_ids','set_like','set_preference','mark_thread_read','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
+        const allowed=['get_deposit_ids','set_like','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
         if(!allowed.includes(method))throw new Error('Invalid Board state method');
         const profile=${JSON.stringify(ORDINARY_POST_GAS_PROFILE)};
         const targets=[{address:SyncAddress.fromStringUnsafe(owner.toString()),classId:profile.accountClassId},
@@ -233,7 +204,6 @@ export function validatedPxeProve(source){
             await allToCompletion([
                 this.#syncOrdinaryPostTargets(targets,this.#getSimulatorForTx(),ctx,scopes),
                 allToCompletion(privateTargets.map(target=>oracle.getUpdatedClassIdHints(target.address))),
-                ...(['set_preference','mark_thread_read'].includes(method)?[this.#prefetchPreferenceInitialization(targets[2].address,ctx.anchorBlockHeader,targets[0].address,artifact)]:[]),
             ]);
         });
     }
@@ -251,19 +221,6 @@ export function validatedPxeProve(source){
  source=replace(source,'                result,\n                offchainEffects\n', '                result,\n                offchainEffects,\n                ...(noteHashWitnessHints ? {noteHashWitnessHints} : {})\n');
  source=replace(source,'const { result: executionResult, offchainEffects } = await this.#executeUtility(', 'const { result: executionResult, offchainEffects, noteHashWitnessHints } = await this.#executeUtility(');
  source=replace(source,'                result: executionResult,\n                offchainEffects,', '                result: executionResult,\n                offchainEffects,\n                ...(noteHashWitnessHints ? {noteHashWitnessHints} : {}),');
- // The actual preference_head ABI selector is checked against the compiled
- // qualified artifact in native-transform tests. No other utility starts reads.
- const utilityStart=source.indexOf('*/ executeUtility(call, { authwits, scopes }');
- if(utilityStart<0)throw Error('PXE utility preparation boundary mismatch');
- const prefix=source.slice(0,utilityStart),utility=source.slice(utilityStart);
- const syncStart='            await this.contractSyncService.ensureContractSynced({';
- const syncEnd='                triggeredBy: undefined\n            });';
- const first=utility.indexOf(syncStart),last=utility.indexOf(syncEnd,first);
- if(first<0||last<first)throw Error('PXE utility preparation source mismatch');
- const original=utility.slice(first,last+syncEnd.length);
- const syncCall=original.replace('            await ', '                ()=>');
- const wave=`            await allToCompletion([\n${syncCall.slice(0,-1)},\n                ...(call.selector.toString()==='0xe9554592'?[()=>this.#prefetchPreferenceInitialization(call.to,anchorBlockHeader)]:[]),\n            ].map(read=>Promise.resolve().then(read)));`;
- source=prefix+utility.slice(0,first)+wave+utility.slice(last+syncEnd.length);
  source=instrumentPxePhases(source);
  return source;
 }

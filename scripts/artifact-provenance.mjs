@@ -7,6 +7,8 @@ export function contractInputs(root) {
     'billboard/portal/foundry.toml', 'scripts/build-contracts.mjs', 'scripts/build-funding-router.mjs', 'scripts/toolchain.mjs', 'scripts/artifact-provenance.mjs', 'scripts/normalize-noir.mjs', 'noir-dependencies.json', 'scripts/prepare-owner-noir.mjs', 'scripts/owner-delivery-noir-sources.json', 'scripts/fixtures/owner-noir-bootstrap/Nargo.toml', 'scripts/fixtures/owner-noir-bootstrap/src/lib.nr', 'scripts/check-noir-dependencies.mjs'];
   function scan(relative) {
     for (const entry of fs.readdirSync(path.join(root, relative), { withFileTypes: true })) {
+      // Retired Noir packages are not part of the current application workspace.
+      if (relative === 'billboard' && ['billboard_contract', 'billboard_test'].includes(entry.name)) continue;
       if (['target', 'node_modules', 'out', 'cache', 'lib'].includes(entry.name)) continue;
       const name = `${relative}/${entry.name}`;
       if (entry.isDirectory()) scan(name);

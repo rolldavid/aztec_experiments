@@ -4,8 +4,6 @@ pub mod encoding;
 pub mod admission;
 pub mod posting;
 pub mod profiles;
-pub mod preferences;
-mod preferences_tests;
 mod profiles_tests;
 mod posting_tests;
 mod tests;
@@ -19,13 +17,12 @@ pub contract RollingBoard {
         history::{note::assert_note_existed_by, storage::public_storage_historical_read},
         keys::getters::{get_nhk_app, get_public_keys, try_get_public_keys},
         macros::{events::event, functions::{external, initializer, internal, only_self, view}, notes::note, storage::storage},
-        event::event_interface::EventInterface,
         note::{note_getter_options::{NoteGetterOptions, NoteStatus}, note_viewer_options::NoteViewerOptions, note_interface::{NoteProperties, NoteHash, NoteType}, HintedNote, ConfirmedNote},
         protocol::{address::{AztecAddress, EthAddress}, abis::block_header::BlockHeader, hash::poseidon2_hash_with_separator, traits::{Deserialize, Hash, Packable, Serialize, ToField}},
-        state_vars::{Map, Owned, PrivateMutable, PrivateSet, PublicImmutable, PublicMutable, StateVariable},
+        state_vars::{Map, Owned, PrivateSet, PublicImmutable, PublicMutable, StateVariable},
         utils::comparison::Comparator,
     };
-    use owner_delivery::delivery::{deliver_note, deliver_message};
+    use owner_delivery::delivery::deliver_note;
     use crate::admission::{Config, SequenceState, compute_cooldown, checked_time_add, deposit_chain_id, deposit_decision_nullifier, post_id, post_link, get_ready_msg_hash, get_deposit_msg_hash, get_withdraw_msg_hash, get_cancel_msg_hash, get_refund_msg_hash};
     use crate::posting::{PostDraft, PostRecord, PluginRecord, validate_draft, invocation_target, InvocationRecord, invocation_key, bot_reply_id};
     use crate::profiles::{OwnedNameRecord, ProfileRecord, AvatarModerationRecord, next_version, bio_digest, avatar_digest};
@@ -60,105 +57,6 @@ pub contract RollingBoard {
         pub anchor_timestamp: u64,
         pub previous_link: Field,
         pub is_dummy: bool,
-    }
-
-    /// previous_digest is retained internally so the constrained replacement can
-    /// return it for event delivery without an unsafe hint or a second note read.
-    /// The wallet utility intentionally exposes only schema/revision/digest.
-    #[derive(Deserialize, Eq, Serialize, Packable)]
-    #[note]
-    pub struct PreferenceHeadNote {
-        pub schema: u32,
-        pub revision: u64,
-        pub digest: Field,
-        pub previous_digest: Field,
-    }
-
-    #[event]
-    pub struct PreferenceChanged {
-        pub schema: u32,
-        pub revision: u64,
-        pub kind: u8,
-        pub target: Field,
-        pub value: bool,
-        pub read_block: u32,
-        pub read_hash: Field,
-        pub previous_digest: Field,
-    }
-
-    impl PreferenceHeadNote {
-        pub fn advance(old: Option<Self>, expected_revision: u64, chain: Field, version: Field,
-            board: AztecAddress, kind: u8, target: Field, value: bool, read_block: u32, read_hash: Field) -> Self {
-            let (revision, previous_digest) = if old.is_some() {
-                let previous = old.unwrap_unchecked();
-                (crate::preferences::next_revision(previous.schema, previous.revision, previous.digest, expected_revision), previous.digest)
-            } else {
-                assert(expected_revision == 0, "Stale preference revision");
-                (1, 0)
-            };
-            let event = PreferenceChanged { schema: 1, revision, kind, target, value, read_block, read_hash, previous_digest };
-            Self { schema: 1, revision, previous_digest,
-                digest: crate::preferences::preference_digest(chain, version, board, event.serialize()) }
-        }
-    }
-
-    /// Standard v6 PrivateMutable derives its initialization nullifier from the
-    /// owner AND the kernel-authenticated app NHK (private_mutable.nr:85-105).
-    /// Its older deterministic-slot warning is not a description of that full
-    /// secret-keyed preimage. No public owner mapping or public event is emitted.
-    #[internal("private")]
-    fn _write_preference(expected_revision: u64, kind: u8, target: Field, value: bool,
-        read_block: u32, read_hash: Field) {
-        let owner = self.msg_sender();
-        let chain = self.context.chain_id();
-        let version = self.context.version();
-        let board = self.address;
-        let message = self.storage.preferences.at(owner).initialize_or_replace(|previous| {
-            PreferenceHeadNote::advance(previous, expected_revision, chain, version, board,
-                kind, target, value, read_block, read_hash)
-        });
-        let next = message.get_note();
-        let created = message.get_new_note();
-        deliver_note(self.context, created);
-        let event = self.emit(PreferenceChanged { schema: 1, revision: next.revision, kind, target, value,
-            read_block, read_hash, previous_digest: next.previous_digest }).get_plaintext();
-        deliver_message(self.context, event);
-    }
-
-    #[external("private")]
-    fn set_preference(expected_revision: u64, kind: u8, target: Field, enabled: bool) {
-        crate::preferences::validate_toggle(kind, target);
-        self.internal._write_preference(expected_revision, kind, target, enabled, 0, 0);
-    }
-
-    /// through_block is authenticated against the private call's canonical
-    /// archive/anchor. The caller cannot supply a header hash or a future marker.
-    #[external("private")]
-    fn mark_thread_read(expected_revision: u64, thread: Field, through_block: u32) {
-        assert(thread != 0, "Preference target required");
-        assert(through_block <= self.context.get_anchor_block_header().block_number(), "Future read marker");
-        let header = self.context.get_block_header_at(through_block);
-        let read_hash = header.hash();
-        assert(read_hash != 0, "Zero read marker hash");
-        self.internal._write_preference(expected_revision, crate::preferences::THREAD_READ, thread, true, through_block, read_hash);
-    }
-
-    /// Trusted scoped PXE only, never an ordinary public-reader endpoint.
-    /// is_initialized obtains the owner's NHK even for an absent head; view_note
-    /// alone would not enforce this key gate. Utility results remain local data,
-    /// not an independent chain proof or a substitute for authenticated replay.
-    #[external("utility")]
-    unconstrained fn preference_head(owner: AztecAddress) -> pub crate::preferences::PreferenceHeadState {
-        let state = self.storage.preferences.at(owner);
-        if state.is_initialized() {
-            let note = state.view_note();
-            assert(note.schema == 1, "Invalid preference schema");
-            assert((note.revision != 0) & (note.digest != 0), "Invalid preference head");
-            crate::preferences::PreferenceHeadState { initialized: true, schema: note.schema,
-                revision: note.revision, digest: note.digest }
-        } else {
-            crate::preferences::PreferenceHeadState::empty()
-        }
     }
 
     // Constructed only from the executing board, caller and selected live deposit.
@@ -278,7 +176,6 @@ pub contract RollingBoard {
         profile_state: ProfileStorageRoot,
         avatar_moderation_state: AvatarModerationStorageRoot,
         // Append only: all existing storage slots retain their positions.
-        preferences: Owned<PrivateMutable<PreferenceHeadNote, Context>, Context>,
     }
 
     #[event]

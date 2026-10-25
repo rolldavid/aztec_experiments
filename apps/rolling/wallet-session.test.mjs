@@ -110,7 +110,7 @@ async function sessionFixture({chainId='31337'}={}){
  const store={close:async()=>{held('store-close');state.closes++;if(state.failClose)throw Error('close failed');}};
  const pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{held('claim-membership');throw Error('fixture claim adapter must supply membership');}},registerAccount:async()=>{held('register-account');state.registrations++;if(state.failRegister)throw Error('registration failed');},registerContractClass:async()=>{held('register-class');},registerContract:async()=>{held('register-contract');},
   sync:async()=>{held('sync');state.syncs++;if(state.waitSync)await state.waitSync;if(state.failSync)throw Error('sync failed');},
-  prepareBoardActionState:async targets=>{held('board-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress,method:targets.method});state.boardStateMethod=targets.method;if(state.waitBoardState)await state.waitBoardState;if(state.failBoardState)throw Error('board state failed');},
+  prepareBoardActionState:async targets=>{held('board-state');assert.deepEqual(Object.fromEntries(Object.entries(targets).map(([key,value])=>[key,['owner','board','privateFee'].includes(key)?String(value):value])),{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress,method:targets.method});state.boardStateMethod=targets.method;if(state.waitBoardState)await state.waitBoardState;if(state.failBoardState)throw Error('board state failed');},
   prepareOrdinaryPostState:async targets=>{held('ordinary-state');assert.deepEqual(targets,{owner:account.address,board:f.options.config.board.contractAddress,privateFee:f.options.config.privateFee.contractAddress});if(state.waitOrdinaryState)await state.waitOrdinaryState;if(state.failOrdinaryState)throw Error('ordinary state failed');},
   getSyncedBlockHeader:async()=>{held('preference-header');return {globalVariables:{blockNumber:10},hash:async()=>BlockHash.fromString(hex(55))};},
   getPrivateEvents:async()=>{held('preference-events');if(state.waitEvents)await state.waitEvents;if(state.failEvents)throw Error('PRIVATE_SENTINEL');return [];},
@@ -252,56 +252,14 @@ test('account mutation while opening storage prevents PXE creation and closes on
 });
 
 // Real session/application/AEAD/ABI; PXE and node above are explicitly synthetic.
-async function waitForPreferenceEvents(f){
- const deadline=Date.now()+2000;
- while(!f.state.events.includes('preference-events')){assert(Date.now()<deadline,'Preference event read did not start');await new Promise(r=>setTimeout(r,1));}
-}
-test('preferences initialize lazily and read under the one existing lock with one synchronization',async()=>{
- const f=await sessionFixture(),session=await createRollingWalletSession(f.input);
- assert(!f.state.events.includes('preference-events'));const syncs=f.state.syncs,start=f.state.events.length;
- const result=await session.application.readPreferences();assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,[]);
- assert.equal(f.state.syncs,syncs+1);const events=f.state.events.slice(start);
- assert.equal(events.filter(v=>v==='lock').length,1);assert.equal(events.filter(v=>v==='unlock').length,1);
- assert(events.includes('preference-head'));assert(events.includes('preference-events'));assert.equal(f.state.sends,0);await session.close();
-});
-test('preference cancellation retains account lock until unabortable SDK read settles',async()=>{
- const f=await sessionFixture(),session=await createRollingWalletSession(f.input);let release;
- f.state.waitEvents=new Promise(r=>{release=r;});const controller=new AbortController();
- const pending=session.application.readPreferences({signal:controller.signal}),observed=assert.rejects(pending,{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
- await waitForPreferenceEvents(f);controller.abort();
- assert(session.busy&&f.state.active);await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
- await assert.rejects(session.application.readAccountStatus(),{code:'ROLLING_BUSY'});assert.equal(f.state.stops,0);
- release();await observed;assert.equal(session.busy,false);assert.equal(f.state.active,false);assert.equal(f.state.sends,0);await session.close();
-});
-test('different active tab rejects preference read before synchronization or event lookup',async()=>{
- const f=await sessionFixture(),session=await createRollingWalletSession(f.input);const syncs=f.state.syncs;
- f.state.otherTab=true;await assert.rejects(session.application.readPreferences(),{code:'ROLLING_OTHER_TAB'});
- assert.equal(f.state.syncs,syncs);assert(!f.state.events.includes('preference-events'));f.state.otherTab=false;await session.close();
-});
-test('account change during private preference event read prevents publication without a send',async()=>{
- const f=await sessionFixture(),session=await createRollingWalletSession(f.input);let release;
- f.state.waitEvents=new Promise(r=>{release=r;});const pending=session.application.readPreferences(),observed=assert.rejects(pending,{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
- await waitForPreferenceEvents(f);f.input.account.secretKey=hex(99);release();await observed;
- assert.equal(f.state.sends,0);assert.equal(f.state.active,false);await session.close();
-});
-test('failed preference read preserves session and existing prepared financial intent',async()=>{
- const f=await sessionFixture(),session=await createRollingWalletSession(f.input),intent=await session.application.prepare({type:'name',first:'Fresh',last:'Willow'});
- f.state.failEvents=true;await assert.rejects(session.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
- const restored=await session.application.readAccountStatus();assert.equal(restored.intent.intentId,intent.intentId);assert.equal(f.state.sends,0);
- f.state.failEvents=false;assert.equal((await session.application.readPreferences()).status,'complete');await session.close();
-});
 
-test('saved choices use native synchronized preference discovery without the obsolete cold extension',async()=>{
- const f=await sessionFixture(),session=await createRollingWalletSession(f.input);
- assert.equal(Object.hasOwn(session.application,'readColdPreferences'),false);
- f.pxe.processRollingPreferenceRecovery=()=>{throw Error('Obsolete recovery extension must not be called');};
- const start=f.state.events.length,result=await session.application.readPreferences();
- assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,[]);
- const events=f.state.events.slice(start);
- assert(events.indexOf('preference-head')<events.indexOf('preference-events'));
- assert.equal(events.filter(x=>x==='lock').length,1);assert.equal(events.filter(x=>x==='unlock').length,1);
- assert.equal(f.state.sends,0);await session.close();
-});
+
+
+
+
+
+
+
 
 // Labelled SDK/node failures at every constructor boundary; no live chain.
 import {ROLLING_SESSION_STAGES} from './wallet-session.mjs';
@@ -1551,39 +1509,8 @@ test('Bok public exit observation cannot initialize optional native state or aut
  await assert.rejects(cap.prepare(),error=>error===blocked);assert.equal(f.state.sends,0);assert.equal(f.state.calls,0);
 });
 
-test('preference readiness and raw head share only the held account operation attestation',async()=>{
- const f=await sessionFixture(),inspect=f.input.sdk.inspectTrustedNode;let inspections=0;
- f.input.sdk.inspectTrustedNode=async(...args)=>{inspections++;return inspect(...args);};
- const session=await createRollingWalletSession(f.input);
- for(let i=0;i<2;i++){
-  const checks=inspections,syncs=f.state.syncs;
-  assert.equal((await session.application.readPreferences()).status,'complete');
-  assert.equal(inspections-checks,1,'one readiness check for reader and head, fresh on next operation');assert.equal(f.state.syncs-syncs,1);
- }
- await session.close();
-});
-for(const when of ['before','during'])test('preference readiness account mutation '+when+' parallel synchronization cannot publish state',async()=>{
- const f=await sessionFixture(),inspect=f.input.sdk.inspectTrustedNode,entered=Promise.withResolvers(),mutated=Promise.withResolvers(),held=Promise.withResolvers();let mutate=false;
- f.input.sdk.inspectTrustedNode=async(...args)=>{const value=await inspect(...args);if(mutate){await entered.promise;f.input.account.salt='99';mutated.resolve();}return value;};
- const session=await createRollingWalletSession(f.input),sync=f.pxe.sync,syncs=f.state.syncs;
- f.pxe.sync=async()=>{entered.resolve();await sync();};
- if(when==='before')f.input.account.salt='99';else{mutate=true;f.state.waitSync=held.promise;}
- let done=false;const pending=session.application.readPreferences().finally(()=>done=true);
- const observed=assert.rejects(pending,when==='before'?{code:'ROLLING_CONTEXT_CHANGED'}:{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
- try{
-  if(when==='during'){
-   await mutated.promise;await new Promise(setImmediate);
-   assert.equal(f.state.syncs,syncs+1,'only the already-started synchronization is allowed');
-   assert.equal(done,false);assert.equal(session.busy,true);assert.equal(f.state.active,true);
-   await assert.rejects(session.close(),{code:'ROLLING_BUSY'});
-   assert(!f.state.events.includes('preference-head'));assert(!f.state.events.includes('preference-events'));
-   held.resolve();
-  }
-  await observed;assert.equal(f.state.syncs,syncs+(when==='during'?1:0));
-  assert(!f.state.events.includes('preference-head'));assert(!f.state.events.includes('preference-events'));assert.equal(f.state.sends,0);
-  assert.equal(session.busy,false);assert.equal(f.state.active,false);
- }finally{held.resolve();await observed;await session.close();}
-});
+
+
 
 import {waitForTx as nativeWaitForTx} from '@aztec-labs/aztec.js/node';
 for(const change of ['ready','abort','account','reverted'])test('pending exit native proof waiter is public-only and stops exactly: '+change,async()=>{
@@ -1715,3 +1642,5 @@ for(const [method,label]of [['readAccountStatus','account.sync'],['readBokStatus
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input),failure=Error('held native sync');f.pxe.sync=async()=>{throw failure;};measures.length=0;
  try{await assert.rejects(session.application[method](),error=>error===failure);assert(measures.includes('rolling.'+label));assert(!measures.includes('rolling.'+(method==='readBokStatus'?'account.sync':'account.bok-sync')));}finally{await session.close();}
 });
+
+test('private session no longer exposes chain saved-item recovery',async()=>{const f=await sessionFixture(),session=await createRollingWalletSession(f.input);assert.equal(Object.hasOwn(session.application,'readPreferences'),false);assert.equal(Object.hasOwn(session.application,'readColdPreferences'),false);assert(!f.state.events.includes('preference-events'));await session.close();});

@@ -59,13 +59,10 @@ unconstrained fn actual_named_post_preserves_note_count_and_restores_every_self_
     env.call_private(owner,RollingBoard::at(board).register_name(fixed("John"),4,fixed("Doe"),3));
     assert_effects(1,1);
     let name=name_id(fixed("John"),4,fixed("Doe"),3);
-    env.call_private(owner,RollingBoard::at(board).set_preference(0,1,42,true));
-    assert_effects(1,2);
     forget_private_state();
     assert_eq(env.execute_utility(PrivateFPC::at(fpc).balance_of(owner)),5000);
     assert_eq(env.execute_utility(RollingBoard::at(board).owned_names(owner,0))[0],name);
-    assert_eq(env.execute_utility(RollingBoard::at(board).preference_head(owner)).revision,1);
-    assert_event_count(1);
+    assert_event_count(0);
     env.mine_block_at(env.last_block_timestamp()+11);
     let draft=PostDraft{subboard:0,parent:0,root_reference:0,kind:1,name_id:name,reference:0,
         message:text("Hello"),length:5,expected_main_policy_version:1,expected_local_policy_version:0};
@@ -85,10 +82,7 @@ unconstrained fn actual_named_post_preserves_note_count_and_restores_every_self_
     forget_private_state();
     assert_eq(env.execute_utility(PrivateFPC::at(fpc).balance_of(owner)),5000);
     assert_eq(env.execute_utility(RollingBoard::at(board).owned_names(owner,0))[0],name);
-    assert_eq(env.execute_utility(RollingBoard::at(board).preference_head(owner)).revision,1);
-    assert_event_count(1);
+    assert_event_count(0);
     env.call_private(owner,RollingBoard::at(board).authenticate_name(name));
     assert_effects(1,1);
-    env.call_private(owner,RollingBoard::at(board).set_preference(1,1,42,false));
-    assert_eq(env.execute_utility(RollingBoard::at(board).preference_head(owner)).revision,2);
 }

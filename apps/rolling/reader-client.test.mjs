@@ -39,3 +39,10 @@ test('announced publication revision is a bounded public query hint; ordinary re
  for(const revision of ['',null,12,'\n','a'.repeat(201)])await assert.rejects(read('home',{},undefined,{revision}));
  await assert.rejects(read('status',{},undefined,{revision:'epoch:1:2'}));assert.equal(calls.length,2);
 });
+
+test('targeted saved reader sends one bounded selection request and keeps ordinary publication binding',async()=>{
+ const calls=[],read=createPublicReader({fetch:async(url,options)=>{calls.push({url,options});return Response.json(body);}});
+ await read('following',{boards:'0,4',names:'7',limit:30},undefined,{revision:'exact:1'});await read('bookmarks',{ids:'10,20',limit:30});
+ assert.equal(calls[0].url,'/api/following?boards=0%2C4&names=7&limit=30&revision=exact%3A1');assert.equal(calls[1].url,'/api/bookmarks?ids=10%2C20&limit=30');
+ assert.ok(calls.every(c=>c.options.credentials==='omit'));await assert.rejects(read('following',{owner:'secret'}));
+});

@@ -13,14 +13,13 @@ assertNodeVersion();
 // These small, synthetic artifacts exercise build-integrity checks. They are
 // deliberately not compiled contracts or cryptographic proof evidence. Every
 // test gets a disposable directory and never alters the repository artifacts.
-const canonicalPath = 'apps/src/billboard/billboard_artifact.json';
+const canonicalPath = 'billboard/target/rolling_contract-RollingBoard.json';
 const privateFeePath = 'apps/src/billboard/private_fee_artifact.json';
 const portalPath = 'billboard/portal/out/BillboardPortal.sol/BillboardPortal.json';
 const pluginAdapterPath = 'plugins/adapter_artifact.json';
 const pluginPortalPath = 'billboard/portal/out/PluginPortal.sol/PluginPortal.json';
 const fundingRouterPath = 'billboard/portal/out/RollingFundingRouter.sol/RollingFundingRouter.json';
 const manifestPath = '.build/contracts-manifest.json';
-const consumers = ['deploy', 'censor'];
 const bytecodePaths = ['apps/src/billboard/portal_bytecode.txt', 'apps/src/billboard/deploy/portal_bytecode.txt'];
 const hash = data => createHash('sha256').update(data).digest('hex');
 
@@ -64,6 +63,7 @@ function fixture(t) {
   };
   for (const [name, value] of Object.entries(inputs)) write(name, value);
   const artifact = {
+    name: 'RollingBoard',
     transpiled: true,
     functions: [{ name: 'fixture_private', custom_attributes: ['abi_private'], verification_key: 'fixture-vk' }],
   };
@@ -73,7 +73,6 @@ function fixture(t) {
   json(fundingRouterPath, {bytecode:{object:'0x60006000'},deployedBytecode:{object:'0x6000'},metadata:{sources:{'src/RollingFundingRouter.sol':{keccak256:keccak256(Buffer.from(inputs['billboard/portal/src/RollingFundingRouter.sol']))}}}});
   json(privateFeePath, { name: 'PrivateFPC', transpiled: true,
     functions: [...['mint', 'pay_fee', 'mint_and_pay_fee', 'recurse_subtract_balance_internal'].map(name => ({ name, custom_attributes: ['abi_private'], verification_key: 'fixture-vk' })), {name:'_complete_refund',custom_attributes:['abi_public','abi_only_self']}] });
-  for (const consumer of consumers) json(`apps/src/billboard/${consumer}/billboard_artifact.json`, artifact);
   const bytecode = '0x60006000';
   json(portalPath, {
     bytecode: { object: bytecode },
@@ -86,7 +85,7 @@ function fixture(t) {
   // validator's source coverage can invalidate this fixture rather than hide.
   json(manifestPath, {
     inputs: Object.fromEntries(Object.keys(inputs).sort().map(name => [name, hash(inputs[name])])),
-    noir: hash(read(canonicalPath)),
+    rollingBoard: hash(read(canonicalPath)),
     privateFee: hash(read(privateFeePath)),
     pluginAdapter: hash(read(pluginAdapterPath)),
     pluginPortal: hash(read(pluginPortalPath)),
@@ -100,34 +99,26 @@ function fixture(t) {
 test('matching synthetic artifacts and recorded sources pass', t => {
   const f = fixture(t);
   assert.deepEqual(checkArtifacts(f.root), {
-    noirSha256: hash(f.read(canonicalPath).trim()),
+    rollingBoardSha256: hash(f.read(canonicalPath).trim()),
     privateFeeSha256: hash(f.read(privateFeePath)),
     portalBytecodeSha256: hash('0x60006000'),
   });
 });
 
-for (const consumer of consumers) {
-  test(`stale ${consumer} Noir copy is rejected`, t => {
-    const f = fixture(t);
-    f.editJson(`apps/src/billboard/${consumer}/billboard_artifact.json`, a => { a.functions[0].verification_key = 'old-vk'; });
-    assert.throws(() => checkArtifacts(f.root), new RegExp(`Stale ${consumer} Noir artifact`));
-  });
-}
-
 for (const [label, mutation] of [
+  ['wrong contract identity', a => { a.name = 'Billboard'; }],
   ['missing verification key', a => { delete a.functions[0].verification_key; }],
   ['empty private function set', a => { a.functions = []; }],
   ['only public functions', a => { a.functions[0].custom_attributes = ['abi_public']; }],
   ['untranspiled artifact', a => { a.transpiled = false; }],
   ['truthy non-boolean transpilation marker', a => { a.transpiled = 'true'; }],
 ]) {
-  test(`${label} is rejected even when all consumer copies agree`, t => {
+  test(`${label} is rejected even when the manifest hash agrees`, t => {
     const f = fixture(t);
     const changed = JSON.parse(f.read(canonicalPath));
     mutation(changed);
     f.json(canonicalPath, changed);
-    for (const consumer of consumers) f.json(`apps/src/billboard/${consumer}/billboard_artifact.json`, changed);
-    f.editJson(manifestPath, m => { m.noir = hash(f.read(canonicalPath)); });
+    f.editJson(manifestPath, m => { m.rollingBoard = hash(f.read(canonicalPath)); });
     assert.throws(() => checkArtifacts(f.root), /lacks transpilation or verification keys/);
   });
 }
@@ -194,7 +185,7 @@ test('contract manifest input hash tampering is rejected', t => {
   assert.throws(() => checkArtifacts(f.root), /Contract build inputs changed/);
 });
 
-for (const key of ['noir', 'portal', 'pluginAdapter', 'pluginPortal', 'fundingRouter']) {
+for (const key of ['rollingBoard', 'portal', 'pluginAdapter', 'pluginPortal', 'fundingRouter']) {
   test(`contract manifest ${key} hash tampering is rejected`, t => {
     const f = fixture(t);
     f.editJson(manifestPath, m => { m[key] = '0'.repeat(64); });
@@ -202,12 +193,11 @@ for (const key of ['noir', 'portal', 'pluginAdapter', 'pluginPortal', 'fundingRo
   });
 }
 
-test('synchronized altered Noir artifacts still fail the recorded build hash', t => {
+test('altered RollingBoard artifact still fail the recorded build hash', t => {
   const f = fixture(t);
   const altered = JSON.parse(f.read(canonicalPath));
   altered.functions[0].verification_key = 'different-vk';
   f.json(canonicalPath, altered);
-  for (const consumer of consumers) f.json(`apps/src/billboard/${consumer}/billboard_artifact.json`, altered);
   assert.throws(() => checkArtifacts(f.root), /Contract artifact differs from build manifest/);
 });
 
@@ -256,4 +246,13 @@ test('plugin portal source must match compiler provenance',t=>{
 test('funding router source must match compiler provenance',t=>{
  const f=fixture(t);f.write('billboard/portal/src/RollingFundingRouter.sol','changed');
  assert.throws(()=>checkArtifacts(f.root),/Funding router artifact does not match/);
+});
+
+// Legacy artifacts and packages are deliberately absent from the current build.
+test('retired Billboard sources and artifact copies are not current build inputs', t => {
+ const f=fixture(t);
+ for(const name of ['billboard/billboard_contract/Nargo.toml','billboard/billboard_contract/src/main.nr','billboard/billboard_test/src/lib.nr','apps/src/billboard/billboard_artifact.json','apps/src/billboard/deploy/billboard_artifact.json'])f.write(name,'retired invalid input');
+ assert.doesNotThrow(()=>checkArtifacts(f.root));
+ f.write('billboard/rolling_contract/src/changed.nr','new current source');
+ assert.throws(()=>checkArtifacts(f.root),/Contract build inputs changed/);
 });

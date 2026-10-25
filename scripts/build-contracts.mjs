@@ -59,10 +59,6 @@ export function buildContracts() {
   prepareOwnerNoir();
   const billboard = path.join(ROOT, 'billboard');
   execFileSync(nargoBinary(), ['compile', '--force', '--silence-warnings'], { cwd: billboard, stdio: 'inherit' });
-  const raw = path.join(billboard, 'target/billboard_contract-Billboard.json');
-  processArtifact(raw, raw);
-  const canonical = path.join(ROOT, 'apps/src/billboard/billboard_artifact.json');
-  fs.copyFileSync(raw, canonical);
   const privateFeeRaw = path.join(billboard, 'target/private_fee_contract-PrivateFPC.json');
   processArtifact(privateFeeRaw, privateFeeRaw);
   // The workspace compiler also overwrites RollingBoard. Process that output
@@ -71,10 +67,6 @@ export function buildContracts() {
   processArtifact(rollingRaw, rollingRaw);
   const privateFeeCanonical = path.join(ROOT, 'apps/src/billboard/private_fee_artifact.json');
   fs.copyFileSync(privateFeeRaw, privateFeeCanonical);
-  // Keep legacy consumer copies consistent until consumers are consolidated.
-  for (const name of ['deploy', 'censor']) {
-    fs.copyFileSync(raw, path.join(ROOT, 'apps/src/billboard', name, 'billboard_artifact.json'));
-  }
   const adapterRaw = path.join(billboard, 'target/plugin_adapter-PluginAdapter.json');
   processArtifact(adapterRaw, adapterRaw, {publicOnly:true});
   fs.copyFileSync(adapterRaw, path.join(ROOT, 'plugins/adapter_artifact.json'));
@@ -93,7 +85,7 @@ export function buildContracts() {
     fs.writeFileSync(path.join(ROOT, 'apps/src/billboard', relative), portal.bytecode.object + '\n');
   }
   fs.writeFileSync(path.join(ROOT, '.build/contracts-manifest.json'), JSON.stringify({
-    inputs: contractInputs(ROOT), noir: sha(fs.readFileSync(canonical)),
+    inputs: contractInputs(ROOT), rollingBoard: sha(fs.readFileSync(rollingRaw)),
     privateFee: sha(fs.readFileSync(privateFeeCanonical)),
     pluginAdapter: sha(fs.readFileSync(path.join(ROOT, 'plugins/adapter_artifact.json'))),
     pluginPortal: sha(fs.readFileSync(path.join(portalDir, 'out/PluginPortal.sol/PluginPortal.json'))),

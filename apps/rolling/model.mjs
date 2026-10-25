@@ -81,9 +81,22 @@ export function createInlineActionRegistry({perform,onState}) {
  });
 }
 
-// Unknown private choices are never interpreted as disabled settings. Only a
+// Unknown saved choices are never interpreted as disabled settings. Only a
 // validated boolean supplies an inverse action.
-export function privatePreferenceControl(label,value,status,loading=false){
+export function savedPreferenceControl(label,value,status,loading=false){
  if(typeof value!=='boolean'){const busy=status==='recovering'&&loading;return {label,disabled:busy,busy,enabled:undefined};}
- return {label:value?({'Bookmark':'Unbookmark','Follow board':'Unfollow board','Follow name':'Unfollow name','Subscribe to thread':'Unsubscribe from thread'}[label]??'Remove '+label):label,disabled:false,busy:false,enabled:!value};
+ return {label:value?({'Bookmark':'Unbookmark','Follow board':'Unfollow board','Follow name':'Unfollow name'}[label]??'Remove '+label):label,disabled:false,busy:false,enabled:!value};
 }
+
+// Saved lists are off-chain selections. Capture bounded identifiers before a
+// public request; labels are display hints and never select a post or identity.
+export function savedReaderSelection(view,snapshot){
+ const fail=()=>{throw Error('Saved items are unavailable.');};
+ if(!snapshot||!['following','bookmarks'].includes(view))return fail();
+ const ids=key=>{const value=snapshot[key];if(!Array.isArray(value)||value.length>100||value.some(id=>typeof id!=='string'||!/^(0|[1-9][0-9]{0,76})$/.test(id)||key!=='followedBoards'&&id==='0'||BigInt(id)>=0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n)||new Set(value).size!==value.length)return fail();return [...value];};
+ const bookmarks=ids('bookmarks'),boards=ids('followedBoards'),names=ids('followedNames');if(boards.length+names.length>100)return fail();
+ const label=(kind,id)=>{const value=snapshot.labels?.[kind]?.[id];return typeof value==='string'&&value.length<=128?value:'';};
+ return {api:view,parameters:view==='bookmarks'?{ids:bookmarks.join(','),limit:30}:{boards:boards.join(','),names:names.join(','),limit:30},bookmarks,boards,names,
+  following:[...boards.map(id=>({id,kind:'board',label:label('boards',id)||(id==='0'?'Main board':'Board '+id)})),...names.map(id=>({id,kind:'profile',label:label('names',id)||'Named profile '+id}))]};
+}
+export function savedReaderRoute(route){return /^\/(notifications)(?:\/|$)/.test(route)?'/home':route;}

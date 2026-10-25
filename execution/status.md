@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 23 October: owner requests actual @bok app-generation end-to-end acceptance on restored stable6 deployment, including code in pool repository20261015-03, published app, authenticated reply and settlement. Existing test account has1USDC Bok credit. Reuse its browser/account; do not repeat signup. Root owns UI and transactions; delegated read-only runtime observation. Prior signup/post/funding results remain valid; full Bok job not yet tested.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 25 October: off-chain follows/bookmarks integrated; on-chain preference/read methods and SDK client paths removed. Current RollingBoard and Bok compiled, obsolete Billboard excluded from current build. Delivery focus: finish native SDK cleanup, build client, deploy fresh Board and dependent bindings, publish source/UI. Owner requests no further test work now. Public read freshness gate intentionally unchanged per owner; performance goal still active.
 
 ## Ready internal work
 

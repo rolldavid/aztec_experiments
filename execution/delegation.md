@@ -188,3 +188,8 @@ Root published946059, verified fresh signup and owns integration/live measuremen
 
 ## 25 October — resumed after chat payload failure
 Root integrates three reviewed patches, owns builds/live publication/browser tests. pending_feed_release adapts incremental UI packet from01cb; proposed_feed_design reviews combined claims and remaining critical path; pending_reply_ui reviews low-credit measurement and per-flow acceptance gaps. Agents use source-only drafts; no dependency copies or live mutations.
+
+## Owner scope amendment: off-chain saved items
+Root deletes Noir preference notes/events/storage/methods and obsolete SDK/application bindings, rebuilds/deploys newBoard, integrates/tests/publishes. proposed_feed_design owns encrypted saved-items API; pending_reply_ui owns browser encrypted local/background sync+wallet integration; pending_feed_release owns Following/Bookmarks UI and targetedpublicretrieval. Ordinary directrequests accepted; no OHTTP. Hide/remove notifications/subscriptions/readmarkers. No migrationofoldtestdata. Existing publicread freshnessgate is explicitly deferredbyowner; do not alter.
+
+25 October delivery continuation: reviewed off-chain saved-items/client/index routes integrated; on-chain preference and read methods removed. Retired preference SDK injection removed while retaining operation guards and indexed note lookup. Current Board/Bok/SDK/wallet builds complete; fresh Board deployment in progress. Owner explicitly stopped further test work; no additional test campaigns. UI peer prepares full config/source cutover; root owns broadcasts and activation. Existing public-read freshness gate remains deferred by owner.
