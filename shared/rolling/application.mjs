@@ -746,13 +746,19 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     return {authorized:field(owner,true)===moderator};
   }
   async function moderationArguments(action,board){
-    // Canonical moderator authority and native policy reads are independent.
-    // Drain both under the existing account lease before preparing or sending.
+    // Authority, policy and target reads share the held operation but are independent.
+    // Native utilities keep their queue ordering; drain every read before release.
     const reads=await Promise.allSettled([
       async()=>{check((await moderatorStatus()).authorized,'ROLLING_MODERATOR_REQUIRED');},
       ()=>utility(board,'main_policy',[]),
+      async()=>{
+        if(action.type==='moderate-post')return utility(board,'get_post',[field(action.post,true)]);
+        if(action.type==='moderate-avatar'){const id=field(action.name,true);return [await utility(board,'profile_state',[id]),await utility(board,'avatar_moderation',[id])];}
+        if(action.type==='reject-subboard')return utility(board,'subboard_state',[field(action.subboard,true)]);
+      },
     ].map(read=>Promise.resolve().then(read)));
-    const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
+    // Preserve authority/policy error priority even when the target finished first.
+    const failure=reads.slice(0,2).find(value=>value.status==='rejected');if(failure)throw failure.reason;
     const policy=reads[1].value;check(Array.isArray(policy)&&policy.length===2,'ROLLING_POLICY_UNAVAILABLE');
     const mainVersion=version(String(BigInt(policy[0]))),mainDigest=field(policy[1]);
     const review={mainVersion,mainDigest};let args;
@@ -760,18 +766,19 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     else if(action.type==='set-main-policy')args=text(action.rules,32);
     else{
       const reason=text(action.reason,7);
+      if(reads[2].status==='rejected')throw reads[2].reason;
       if(action.type==='moderate-post'){
-        const id=field(action.post,true),post=await utility(board,'get_post',[id]);
+        const id=field(action.post,true),post=reads[2].value;
         check(Array.isArray(post)&&post.length===5&&post[0]===true&&BigInt(post[2])===0n,'ROLLING_MODERATION_TARGET_CHANGED');
         const subboard=field(post[1].subboard),localVersion=subboard===zero?0:1;
         Object.assign(review,{target:id,localVersion});args=[id,mainVersion,localVersion,...reason];
       }else if(action.type==='moderate-avatar'){
-        const id=field(action.name,true),profile=await utility(board,'profile_state',[id]),removed=await utility(board,'avatar_moderation',[id]);
+        const id=field(action.name,true),[profile,removed]=reads[2].value;
         const avatarVersion=version(String(BigInt(profile.avatar_version)));
         check(BigInt(profile.avatar_length)>0n&&BigInt(removed.avatar_version)!==BigInt(avatarVersion),'ROLLING_MODERATION_TARGET_CHANGED');
         Object.assign(review,{target:id,avatarVersion,avatarDigest:field(profile.avatar_digest)});args=[id,avatarVersion,mainVersion,...reason];
       }else{
-        check(action.type==='reject-subboard');const id=field(action.subboard,true),state=await utility(board,'subboard_state',[id]);
+        check(action.type==='reject-subboard');const id=field(action.subboard,true),state=reads[2].value;
         check(Array.isArray(state)&&state.length===5&&state[0]===true&&state[3]===false,'ROLLING_MODERATION_TARGET_CHANGED');
         Object.assign(review,{target:id,localVersion:1});args=[id,...reason];
       }
@@ -1156,7 +1163,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const paymentScope=immediate&&(ordinaryPreparation||genericPreparation||action.type==='bok')
         ?session.operationScope?.():null;
       const paymentOwner=paymentScope&&{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
-      let args,preparedPayment;
+      let args,preparedPayment,preparedNameAvailability;
       const checkPaymentOwner=()=>check(session.operationScope()===paymentScope&&session.wallet===paymentOwner.wallet&&
         session.wallet.pxe===paymentOwner.pxe&&session.node===paymentOwner.node,'ROLLING_CONTEXT_CHANGED');
       if(paymentScope&&action.type!=='withdraw-bok'){
@@ -1171,16 +1178,17 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const values=await Promise.allSettled([
           ()=>measure('action.arguments',async()=>{if(moderationTypes.has(action.type)){moderation=await moderationArguments(action,board);return moderation.args;}return argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor,preparedPolicy:earlyPolicy?.policy,withdrawalObservation});}),
           ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:ordinaryPreparation,likeProof:['like','unlike'].includes(action.type),preferenceProof:['preference','read-marker'].includes(action.type)})),
+          ...(action.type==='name'?[()=>nameAvailability(action)]:[]),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkPaymentOwner();
-        args=plain(values[0].value);preparedPayment=values[1].value;
+        args=plain(values[0].value);preparedPayment=values[1].value;preparedNameAvailability=values[2]?.value;
       }else {moderation=moderationTypes.has(action.type)?await moderationArguments(action,board):null;args=moderation?moderation.args:plain(await measure('action.arguments',()=>argumentsFor(action,board,nonce,{atomicBok:immediate&&action.type==='bok'})));}
       // Match the rules actually displayed to this exact canonical preparation.
       // A mismatch must fail before creating an unsigned intent or estimating.
       if(postingRules)check(String(args[2].expected_main_policy_version)===postingRules.parentVersion&&String(args[2].expected_local_policy_version)===postingRules.localVersion,'ROLLING_POSTING_RULES_CHANGED');
       const record={version:1,id,action,args,method:methods[action.type],nonce,predecessor,status:'prepared',...(immediate&&['like','unlike'].includes(action.type)?{feeProfile:'like-v1'}:immediate&&['preference','read-marker'].includes(action.type)?{feeProfile:'preference-v1'}:{}),...(moderation?{moderation:moderation.review}:{})};
-      if(action.type==='name')record.nameAvailability=await nameAvailability(action);
+      if(action.type==='name')record.nameAvailability=preparedNameAvailability??await nameAvailability(action);
       if(['withdraw','withdraw-bok','cancel-deposit'].includes(action.type)){const pending=await pendingExit();check(!pending.value||pending.value.paymentStatus==='refunded','ROLLING_WITHDRAWAL_PENDING');if(pending.value){check(verifyWithdrawal&&await verifyWithdrawal(pending.value),'ROLLING_WITHDRAWAL_RECOVERY_REQUIRED');await localGuard();check(await (await pendingExitSlot()).isCurrent(pending.encoded),'ROLLING_CONTEXT_CHANGED');}}
       if(action.type==='withdraw'){const anchor=await balanceAnchor();record.withdrawal=withdrawalObservation&&same(anchor,withdrawalObservation.anchor)?clone(withdrawalObservation.info):await collateralInfo(action.deposit,board,BigInt(anchor.timestamp));check(record.withdrawal.eligible,'ROLLING_WITHDRAWAL_NOT_READY');await checkBalanceAnchor(anchor);}
       if(action.type==='cancel-deposit'){

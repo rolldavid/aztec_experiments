@@ -3000,3 +3000,62 @@ for(const type of ['cancel-bok-request','expire-bok-request'])for(const failure 
  const pending=f.app.prepare({type,requestId:hex(11)},{immediate:true}).finally(()=>done=true),rejected=assert.rejects(pending);
  await entered.promise;await new Promise(setImmediate);assert.equal(done,false);assert.deepEqual(f.values,before);assert.equal(f.state.sends,0);gate.resolve();await rejected;assert.deepEqual(f.values,before);
 });
+
+for(const mode of ['success','payment','availability','both','taken','fork','owner','scope','input-mutation'])test('name read wave overlaps and drains '+mode,{timeout:5000},async()=>{
+ const f=fixture(),entered=Promise.withResolvers(),gate=Promise.withResolvers();let scope={synchronized:true},starts=0,payments=0,settled=false;
+ const arrive=()=>{if(++starts===2)entered.resolve();};f.options.accountSession.operationScope=()=>scope;
+ f.options.sdk.preparePrivateFeePayment=()=>{payments++;arrive();if(['payment','both'].includes(mode))throw Error('payment unavailable');return gate.promise.then(()=>({availableCredit:100n}));};
+ f.state.beforeNameRead=async()=>{arrive();if(['availability','both'].includes(mode))throw Error('availability unavailable');await gate.promise;};
+ const app=f.restart(),input={type:'name',first:'River',last:'Lane'};
+ const work=app.prepare(input,{immediate:true}).finally(()=>settled=true);
+ const succeeds=['success','input-mutation'].includes(mode),observed=succeeds?work:assert.rejects(work,error=>{
+  if(['payment','both'].includes(mode))assert.equal(error.message,'payment unavailable');
+  else if(mode==='taken')assert.equal(error.code,'ROLLING_NAME_TAKEN');
+  else if(['availability','fork','owner'].includes(mode))assert.equal(error.code,'ROLLING_NAME_AVAILABILITY_UNAVAILABLE');
+  else assert.equal(error.code,'ROLLING_CONTEXT_CHANGED');return true;
+ });
+ await entered.promise;assert.equal(settled,false);assert.equal(f.values.size,0);assert.equal(f.state.estimates,0);await assert.rejects(app.readModeratorStatus(),{code:'ROLLING_BUSY'});
+ if(mode==='taken')f.state.nameRegistered=1n;
+ if(mode==='fork')f.options.accountSession.node.getBlockData=async n=>({header:{globalVariables:{blockNumber:n}},blockHash:hex(43)});
+ if(mode==='owner')f.options.accountSession.owner=new AztecAddress(new Fr(99n));
+ if(mode==='scope')scope={synchronized:true};
+ if(mode==='input-mutation')input.first='Changed';gate.resolve();const result=await observed;
+ assert.equal(starts,2);assert.equal(payments,1);assert.equal(f.state.nameReads.length,1);assert.equal(f.state.sends,0);
+ if(succeeds){assert.equal(result.action.first,'River');assert.equal(result.nameAvailability.anchor.blockHash,hex(42));assert.equal((await app.submitPrepared(result.intentId)).status,'confirmed');assert.equal(payments,1);assert.equal(f.state.nameReads.length,1);assert.equal(f.state.estimates,1);}
+ else assert.equal(f.values.size,0);
+});
+
+function moderationTargetWave(f,{authority=()=>{},policy=()=>{},target=()=>{}}={}){
+ const node=f.options.accountSession.node,storage=node.getPublicStorageAt,at=f.options.sdk.Contract.at;
+ node.getPublicStorageAt=async(...args)=>{await authority();return storage(...args);};
+ f.options.sdk.Contract.at=async(...args)=>{const board=await at(...args);return {methods:new Proxy(board.methods,{get:(methods,name)=>(...values)=>({simulate:async()=>{
+  if(name==='main_policy')await policy();else if(['get_post','profile_state','avatar_moderation','subboard_state'].includes(name))await target(name);
+  return methods[name](...values).simulate();
+ }})})};};return f.restart();
+}
+for(const phase of ['prepare','submit'])for(const action of moderatorActions.slice(0,3))test('moderation target wave '+phase+' starts '+action.type+' before authority completes',{timeout:5000},async()=>{
+ const f=moderatorFixture(),saved=phase==='submit'?await f.app.prepare(action):null,entered=Promise.withResolvers(),gate=Promise.withResolvers(),seen=[];
+ let starts=0;const first=name=>async()=>{seen.push(name);if(++starts===3)entered.resolve();await gate.promise;};
+ const app=moderationTargetWave(f,{authority:first('authority'),policy:first('policy'),target:async name=>{seen.push(name);if(name!=='avatar_moderation'){if(++starts===3)entered.resolve();await gate.promise;}}});
+ const prior=f.state.privateReads.length,work=phase==='prepare'?app.prepare(action):app.submitPrepared(saved.intentId);
+ await entered.promise;assert.equal(f.state.sends,0);await assert.rejects(app.readModeratorStatus(),{code:'ROLLING_BUSY'});gate.resolve();await work;
+ const expected=['main_policy',...(action.type==='moderate-post'?['get_post']:action.type==='moderate-avatar'?['profile_state','avatar_moderation']:['subboard_state'])];
+ const reads=f.state.privateReads.slice(prior).map(r=>r.name);for(const name of expected)assert.equal(reads.filter(v=>v===name).length,phase==='prepare'?1:2,'each existing pre-send boundary reads once');
+});
+for(const failing of ['authority','policy','target'])test('moderation target wave drains '+failing+' failure',{timeout:5000},async()=>{
+ const f=moderatorFixture(),entered=Promise.withResolvers(),gate=Promise.withResolvers();let starts=0,settled=false;
+ const branch=name=>()=>{if(++starts===3)entered.resolve();if(name===failing)throw Error(name+' failed');return gate.promise;};
+ const app=moderationTargetWave(f,{authority:branch('authority'),policy:branch('policy'),target:branch('target')});
+ const observed=assert.rejects(app.prepare(moderatorActions[0]).finally(()=>settled=true),new RegExp(failing+' failed'));
+ await entered.promise;assert.equal(settled,false);assert.equal(f.values.size,0);await assert.rejects(app.readModeratorStatus(),{code:'ROLLING_BUSY'});gate.resolve();await observed;assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+for(const defect of ['unauthorized','malformed-policy','invalid-reason','fork','owner'])test('moderation target wave preserves '+defect+' priority and fences',{timeout:5000},async()=>{
+ const f=moderatorFixture(),entered=Promise.withResolvers(),gate=Promise.withResolvers();let settled=false;
+ if(defect==='unauthorized')f.state.moderator=99n;
+ if(defect==='malformed-policy')f.state.responses.main_policy=[];
+ const action={...moderatorActions[0],...(defect==='invalid-reason'?{reason:''}:{})};
+ const app=moderationTargetWave(f,{target:async()=>{entered.resolve();await gate.promise;if(['unauthorized','malformed-policy','invalid-reason'].includes(defect))throw Error('target failure must not win');}});
+ const observed=assert.rejects(app.prepare(action).finally(()=>settled=true),error=>{assert.notEqual(error.message,'target failure must not win');if(defect==='unauthorized')assert.equal(error.code,'ROLLING_MODERATOR_REQUIRED');if(defect==='malformed-policy')assert.equal(error.code,'ROLLING_INVALID_RESPONSE');return true;});
+ await entered.promise;assert.equal(settled,false);
+ if(defect==='fork')f.state.reorg=true;if(defect==='owner')f.state.guard=false;gate.resolve();await observed;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});

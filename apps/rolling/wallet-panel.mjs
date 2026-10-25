@@ -422,7 +422,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);
   // These are feature reads, not prerequisites for opening/funding an account.
   if(loadIdentity||view==='names'||view==='action'&&['bio','avatar'].includes(draft.type)){
-   if(!namesLoaded)await loadNames();while(cursor!==null)await loadNames(true);
+   if(!namesLoaded)await loadNames();
+   // Profile edits need the selected owned name, not every remaining page.
+   // Explicit identity refresh (including new-name discovery) still exhausts it.
+   while(cursor!==null&&(loadIdentity||view!=='action'||!['bio','avatar'].includes(draft.type)||!identities.includes(draft.name)))await loadNames(true);
    if((dialog.open||inlineCreation)&&view==='action'&&['bio','avatar'].includes(draft.type)&&identities.includes(draft.name)&&!profileSnapshot)await checkProfile(draft.name);
   }
   if(view==='action'&&MODERATOR_TYPES.has(draft.type)&&moderatorStatus===null){

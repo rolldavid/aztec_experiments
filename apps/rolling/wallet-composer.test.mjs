@@ -35,8 +35,8 @@ function dom(t){
 async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,topup=null,profile=false,balanceRead=null,ordinaryLimit='1000000000000000',warm=null,depositIds=['9'],moderator=false,moderatorRead=null}={}){
  const document=dom(t),balance=Promise.withResolvers(),started=Promise.withResolvers(),account={};let reads=0,prepared=null,onProgress;const submissions=[],prepareOptions=[];const core={sessions:0,status:0,names:0,moderator:0};
  const session={...(warm?{preparePostingState:async deposit=>{session.busy=true;try{await warm(deposit);}finally{session.busy=false;}}}:{}),ordinaryPostingFeeLimit:ordinaryLimit,postingFeeLimit:'1000000000000000',bokConfigured:true,busy:false,topup:{bok:topup??{}},application:{
-  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async()=>{if(session.busy)throw Object.assign(Error('busy'),{code:'ROLLING_BUSY'});core.names++;const names=await posting?.namesRead?.(core.names);if(names)return names;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;if(!moderatorRead)return {authorized:moderator};session.busy=true;try{return await moderatorRead();}finally{session.busy=false;}},
-  readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>({name,bioVersion:'3',avatarVersion:'4'}),
+  readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async options=>{if(session.busy)throw Object.assign(Error('busy'),{code:'ROLLING_BUSY'});core.names++;const names=await posting?.namesRead?.(core.names,options);if(names)return names;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;if(!moderatorRead)return {authorized:moderator};session.busy=true;try{return await moderatorRead();}finally{session.busy=false;}},
+  readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>await posting?.profileRead?.(name)??({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
   async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{}),...(posting.inclusion?{inclusion:posting.inclusion}:{}),...(posting.nameAvailability?{nameAvailability:posting.nameAvailability}:{})};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
@@ -1106,4 +1106,44 @@ for(const failure of ['read','account','malformed'])test(`unknown preference hyd
  f.session.application.readPreferences=async()=>{entered.resolve();await held.promise;if(failure==='read')throw Error('read failed');return {status:'complete',complete:true,preferences:{bookmarks:[],followedBoards:[],followedNames:[],subscriptions:[],replyNotifications:failure==='malformed'?undefined:false}};};
  const action=f.panel.act({type:'preference',kind:5,target:'0'});await entered.promise;if(failure==='account')f.runtime.getAccount=()=>({});held.resolve();
  assert.equal((await action).status,'failed');assert.equal(f.submissions.length,0);assert.equal(f.prepared(),null);assert.equal(f.document.querySelector('dialog').open,false);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');
+});
+
+const ownedNamePage=(id,nextCursor)=>({identities:[id],records:[{id,first:'River',last:'Lane'}],nextCursor});
+for(const type of ['bio','avatar'])test(`profile pagination ${type} stops at selected owned name and preserves version through explicit load more`,{timeout:3000},async t=>{
+ const cursors=[],profiles=[];
+ const f=await fixture(t,{defaults:{type,name:'5'},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{
+  namesRead:async(_count,{cursor})=>{cursors.push(cursor);return cursor===0?ownedNamePage('5',8):ownedNamePage('6',16);},
+  profileRead:async name=>{profiles.push(name);return {name,bioVersion:'11',avatarVersion:'12'};}
+ }});
+ assert.deepEqual(cursors,[0]);assert.deepEqual(profiles,['5']);
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Load more owned names').fire('click');
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(cursors,[0,8]);assert.deepEqual(profiles,['5']);
+ assert.equal(f.document.querySelector('select[aria-label="Profile name"]').value,'5');
+ if(type==='bio'){const input=f.document.querySelector('textarea');input.value='Current profile';input.fire('input');}
+ else f.document.querySelectorAll('button').find(b=>b.textContent==='Clear avatar').fire('click');
+ f.document.querySelector('[data-action-review]').fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.submissions.length,1);assert.equal(f.prepared().name,'5');assert.equal(f.prepared().expectedVersion,type==='bio'?'11':'12');
+});
+test('profile pagination finds a requested later name without reading unrelated remaining pages',{timeout:3000},async t=>{
+ const cursors=[];
+ const f=await fixture(t,{defaults:{type:'bio',name:'7'},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{namesRead:async(_count,{cursor})=>{cursors.push(cursor);return cursor===0?ownedNamePage('5',8):ownedNamePage('7',16);}}});
+ assert.deepEqual(cursors,[0,8]);assert.equal(f.document.querySelector('select[aria-label="Profile name"]').value,'7');
+ assert(f.document.querySelectorAll('button').some(b=>b.textContent==='Load more owned names'));
+});
+test('profile pagination still discovers new names across every page after creation',{timeout:3000},async t=>{
+ const cursors=[];
+ const f=await fixture(t,{defaults:{type:'name'},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{nameAvailability:{id:'7'},namesRead:async(_count,{cursor})=>{cursors.push(cursor);return cursor===0?ownedNamePage('5',8):cursor===8?ownedNamePage('7',16):ownedNamePage('9',null);}}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);
+ const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');
+ f.document.querySelector('[data-action-review]').fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.deepEqual(cursors,[0,8,16]);assert.equal(identity.querySelector('select').value,'7');assert.equal(f.submissions.length,1);
+});
+test('profile pagination discards a held profile version after account replacement',{timeout:3000},async t=>{
+ const held=Promise.withResolvers(),started=Promise.withResolvers();
+ const f=await fixture(t,{defaults:{},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{namesRead:async()=>ownedNamePage('5',8),profileRead:async()=>{started.resolve();return held.promise;}}});
+ f.panel.close();f.panel.open({type:'bio',name:'5'});await started.promise;
+ f.runtime.getAccount=()=>null;held.resolve({name:'5',bioVersion:'11',avatarVersion:'12'});
+ await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ assert.equal(f.submissions.length,0);assert.equal(f.prepared(),null);assert.equal(f.document.querySelector('select[aria-label="Profile name"]'),null);assert.equal(f.document.querySelector('[data-action-review]'),null);
 });
