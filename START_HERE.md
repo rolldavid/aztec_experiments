@@ -2,6 +2,10 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Current live update — a75bd5b7
+
+Live/pushed `a75bd5b74094c7d6680c1ea9966246dec9671b0d`. MainSDK8.39MB, native assets cached separately, immutable deployment registration published. Actual immediate funded opening7.916935s firstassets /3.556530s cached. Name Create→included+selected17.543705s; Like→included visiblecount12.547165s, exact receipt anchors now recorded. These name/Like observations fall below half historical baselines; ALL-flow50% and2s opening remain open. FirstLikevisibleprobe had a DOM word-boundary mistake; rawpartial evidence preserved, nativeanchorrecording was correct. Source/docs identify differingfixtures/endpoints. Old0d23post5072finalized; sameEthereum test identity5 is healthy, identity6 transactions disappeared with network-wide L1pruning. No app/proxy restart. Current reviewed worker-only class-prewarm patch integrated7checks+actualworker gate, awaitingpublication/measurement. Root onebuild/IAB, no newresources; transferarchives cleaned. Full report docs/ONBOARDING_MEASUREMENTS.md.
+
 ## Current live update — d20794f6
 
 UI/source `d20794f6eaf078439857eff9a4ef214f781b14c2` is published and pushed. Composer checkpoint-restart/supersession fix only, SDK unchanged, no service restart. Latest real measurement failed during a transient node-query readiness outage; retain failure evidence, do not claim a d207 posting timing. Prior8ae/fb619 included posts now have dropped receipts; original included block hashes were not captured, so a reorg is unproven. Root cleared only disposable test transaction journal after sign-out to start a new test; same identity then reports Set up posting and insufficient ETH. No new transaction sent. See latest measurement report. All2s/15s/50% goals remain incomplete. Native artifact split and published deployment registration patches are independently approved but NOT integrated. One retained build and IAB tab; source/runtime remain separately identified. Upload versions and archives for8ae/d207 cleaned.

@@ -1,11 +1,31 @@
 # Transaction performance beyond ordinary posting
 
-## Actual live observations — 26 October, fb61925c
+## Active goal and latest evidence
 
-Fresh ETH signup58.075380s Pay→readyWrite; ordinary first135char post19.919695s Post→included+rendered; inline Like43.075745s click→included+visiblecount1 (31.721330s inclusion wait); inline name registration23.029425s Create→included+ownedname selected. Normal account opening3.256300s repeat/7.879700s first-new-asset visit. All used the published source and existing IAB, automatic test-wallet approvals where needed. [Exact stages and raw evidence](ONBOARDING_MEASUREMENTS.md). These results do not meet the all-flow50% or2s/15s targets. The name result is below half the historical100.169/106.844s observations; network/account fixtures differ. No claim that old faster results describe this current run.
+Owner goal: reduce end-to-end time by at least **50% for every other live application transaction flow**. The goal remains open. Opening has its separate2-second target and ordinary posting its15-second target. Publication, passing checks, faster preparation or earlier pending feedback do not complete these goals.
 
+Bookmarks and follows moved off-chain in `bbf76d92`; conversation read state is also off-chain. Their retired Aztec preference/read-marker implementations are not current transaction work. Preserve the historical measurements below as evidence of those releases, without restoring deleted contract paths or comparing local UI feedback with blockchain settlement.
 
-Active owner goal, 25 October 2026: reduce end-to-end time by at least 50% for every other application transaction flow. This is an acceptance target, not a completed result.
+| Flow and release | Latest recorded endpoint | Comparison and qualification |
+|---|---|---|
+| Like, `fb61925c` |43.075745s click→included visible count;31.721330s was inclusion wait | Historical baseline56.933s is action return, not the same visible-count endpoint. No matched50% result. Unlike still needs current-flow evidence. |
+| Register name, `fb61925c` |23.029425s Create→new owned name selected | Historical106.844s also includes selectable-name feedback, but network/account fixtures differ. Lower observed time does not establish a controlled50% result for all identity/profile actions. |
+| ETH signup, `fb61925c` |58.075380s Confirm payment→enabled Write a post | Same endpoint was52.501800s on `0d23da65`; automatic wallet approvals and network waits are included. No improvement in these observations. Claim changes published in `8ae95b3d` have not had a new full-payment measurement. |
+| ETH-to-Bok funding, `f0dc` |39.222685s Pay→usable credit after native inclusion | Older165.094s baseline contains unmeasured wallet/tool dwell; not a matched50% denominator. A current-release full-flow run is missing. |
+| Bok request, `30fb` |43.754055s click→included visible request | Generated reply and app usability are separate required endpoints. Older reply evidence includes offscreen DOM insertion and unmeasured observer attachment; a current matched visible-response run is missing. |
+| Off-chain bookmark, `8ae95b3d` |11.660ms click→usable Unbookmark control | Local UI readiness only; no transaction. Remote encrypted replication durability and inverse/reload behavior need separate timings. Do not compare with the old58.264s Aztec bookmark action as equivalent settlement. |
+
+[Onboarding measurements](ONBOARDING_MEASUREMENTS.md) retains exact intervals and raw evidence. The latest `d20794f6` opening attempt failed during degraded node/query readiness; it supplies no successful posting or opening result. The preceding `8ae95b3d` delayed-composer post was observed visible at18.177735s. Its and the `fb61925c` post receipts later reported dropped, and the original traces omitted inclusion block/hash. Those observations do not establish durable present inclusion; future evidence must retain the public inclusion anchor. Do not infer a reorg from dropped status alone.
+
+## Remaining qualification work
+
+Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.
+
+- Reactions: current Like and Unlike, including usable count/control feedback. Identity/profile: name registration and set/clear bio/avatar. Boards/admin: create subboard, remove post/avatar, reject board, transfer moderator and main-policy changes. No current matched evidence covers all these branches.
+- Funding: complete ETH and USDC signup, posting-credit top-up with approval present/absent, and ETH/direct-token Bok credit. Include approval/signature dwell, actual Ethereum receipt, bridge usability, Aztec inclusion and spendable native credit. Quote-only or claim-preparation timings are incomplete.
+- Exits: cancellation/refund, collateral withdrawal with/without screening, and Bok withdrawal through the mined Ethereum payout. Native cooldown/proven Outbox waits remain separately reported; Aztec inclusion alone is not completion. Current matched full-path evidence is missing.
+- Bok and moderation: request→visible usable reply, cancel/expire and genuine uncertain-provider reconciliation; inference/removal and backlog catch-up. Keep model/inference, proof, inclusion and final visible effect separate. Preserve the old observations below; do not treat them as current matched qualification.
+- Ordinary variants retain their named/main/subboard/reply/quote/repost coverage and posting endpoint. Off-chain saved items/read state retain bidirectional interaction, persistence and synchronization checks as nontransaction work. Operator setup remains separately reported without an invented everyday-user baseline.
 
 ## Measurement contract
 
@@ -15,14 +35,14 @@ Record click, preparation, fee work, private execution, kernel witness construct
 
 An earlier pending display does not establish faster canonical settlement or spendable funds. A trace ending at inclusion cannot establish completion of a bridge claim. Match action shape, payload size, credit availability, account readiness and note fragmentation. Preserve unsuccessful and slow runs. Repeat comparisons across network inclusion phases.
 
-## Coverage
+## Live flow coverage
 
 | Family | Branches to qualify | Transactions and required endpoint |
 |---|---|---|
 | Ordinary variants | Named posts, replies, quotes, reposts; main/subboard | One Aztec transaction; included visible post and checkpoint. Main-board paths already share the optimized post implementation. |
 | Reactions | Like, unlike | One Aztec transaction; included public count and checkpoint/account availability. |
-| Preferences | Bookmark, follow board, follow name, thread subscription, reply notifications; both toggle directions | One Aztec transaction; pending feedback, then canonical private preference. |
-| Read state | Mark thread read | One Aztec transaction; canonical private marker with exact acknowledged block. |
+| Saved items (off-chain) | Bookmark, follow board and follow name; both toggle directions | No Aztec transaction. Measure usable control/local persistence and encrypted replication separately. |
+| Conversation read state (off-chain) | Current read/unread behavior | No Aztec transaction. Measure the current visible/persisted behavior. Former contract subscription, notification and read-marker paths are retired, not missing transaction benchmarks. |
 | Identity/profile | Register name; set/clear bio and avatar | One Aztec transaction; included feedback, canonical profile and usable selected name. |
 | Boards/admin | Create subboard, remove post/avatar, reject board, transfer moderator, main policy | One Aztec transaction each; exact target/policy authority and included/canonical effects. |
 | Signup ETH | New account with combined collateral and fee claim | One typed consent, one Ethereum transaction, one combined Aztec claim; account ready to post. |
@@ -36,9 +56,9 @@ An earlier pending display does not establish faster canonical settlement or spe
 | Automatic moderation | Inference, removal, backlog catch-up | Measured inference and exact-authority transaction; included/canonical flag. |
 | Operator setup | Fee claim, escrow deployment/binding/registration, L1 deployment/activation | Separate infrequent operations; no invented user-flow baseline. |
 
-Detailed everyday inventory: `execution/evidence/G21/stable6/other-transaction-latency/everyday-flow-inventory.json`.
+Historical everyday inventory: `execution/evidence/G21/stable6/other-transaction-latency/everyday-flow-inventory.json`. It predates the off-chain change; the live coverage above controls current work.
 
-## Current-release observations
+## Historical goal-start observations — UI74c2142c / sourceac27cc2b
 
 | Baseline action | Actual inclusion | Effect | Canonical action returned | Qualification |
 |---|---:|---:|---:|---|
@@ -48,7 +68,11 @@ Detailed everyday inventory: `execution/evidence/G21/stable6/other-transaction-l
 
 These are single baseline observations, not medians. Evidence contains exact click origins and scoped timing spans. Never sum nested SDK/native spans into end-to-end time. The generic confirming span currently includes observer lifetime and can finish after the canonical action; use the action promise/receipt boundaries, not its label, until corrected.
 
-## First implementation batch
+## Historical release work and measurements
+
+The records below describe their named releases. Statements such as “published”, “unpublished”, “current” or “next” refer to that record, not the latest deployment. Preference/read-marker transaction records predate their retirement in `bbf76d92`.
+
+### First implementation batch
 
 - Preference reads reuse one validated head only within the same held, synchronized operation and exact PXE anchor. Different operation, account, wallet, node or anchor cannot reuse it. Normal proof guards retain journal/epoch/identity checks without synchronizing the same snapshot repeatedly. Read-marker canonical block checks and interrupted-flow checks remain fresh.
 - ETH/USDC quote metadata reads share their captured Ethereum block and run in drained parallel waves. Dependent asset quotes overlap. ETH confirmation removes one duplicate simulation and its six surrounding network checks; the final exact signed-request simulation still runs before journal/send.

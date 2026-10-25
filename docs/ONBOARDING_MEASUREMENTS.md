@@ -1,3 +1,23 @@
+## Published startup and transaction reads — a75bd5b7
+
+Live UI/source `a75bd5b74094c7d6680c1ea9966246dec9671b0d`, pushed to default master and both app branches. Main browser SDK8,385,064 bytes (previous~16.6MB); six immutable native artifacts independently integrity-checked/cached, published testnet registration metadata removes repeated immutable registration reads, current native node/transaction authority remains. Like/Unlike/Name overlap independent discovery/predecessor work with exact operation/barrier captured before waiting;676 application/wrapper checks passed after race/standalone lifecycle corrections. Startup80 and inclusion27 checks plus actual worker evaluation pass. No app/proxy restart, no new infra/dependency copies; transfer archive/version cleaned.
+
+Earlier0d23post remains finalized in block5072. Its test identity5 opens funded and supplies the new measurement fixture; rolled-back identity6 is not reused as funded. Both immediate openings below select the normal wallet as soon as visible, with automated personal_sign approval included.
+
+| Actual endpoint | Milliseconds |
+|---|---:|
+| Wallet click→readyWrite, first changed SDK/assets |7916.935|
+| Wallet click→readyWrite, cached repeat |3556.530|
+| Account button→readyWrite, cached repeat |4965.470|
+| Create name→included new owned Swift Wren selected |17543.705|
+| Second Like click→included visible count1 |12547.165|
+
+Earlier8ae opening10.753s/6.322s used a different now-pruned account; these are observed improvements, not controlled attribution. Name baseline106.844s had same selectable-name endpoint; Like baseline56.933s was canonical action return while this12.547s includes visible count. Both latest observations are below half those historical values, but no all-flow/reliability claim. Raw files carry source, click origins, exact public inclusion anchors and timing spans. Name tx0x23ec385c03a7565fbf9239035b237df866dcd768a7c3b61d1934745ddba31ab5 at block5243 hash0x04829178e59d19e46a4ee4833b012f0676896dbf7d9de5a7cdf98f5435f2cbee; Like tx0x2ee53e57bd79a397e78c7fa7ec738691a6b6472390a4a62dd0a3d46399805f2a at block5244 hash0x04226fcd17761d1c4d47b86fb9f080fcfe2b5b8e6a3dfb94f08d2e10a00084cc. Endpoints were proposed inclusion, not finality; UI automatically updates confirmation separately.
+
+First Like completed its action in~17.345s with native inclusion17.065s, but its visible endpoint observer incorrectly required word boundaries in concatenated DOM text. The inclusion evidence WAS present; there was no runtime telemetry defect. Preserve like-a75-partial.json as incomplete visible-endpoint evidence. Corrected second observer matches literal leaf text and captured12.547s normally.
+
+Warm opening still spends1176.7ms Board class derivation +159.7ms FPC derivation after sign-in (private session1540.8ms). Reviewed next worker-only fix starts the same native memo derivation on exact authenticated artifacts during page-load public preparation; keeps independent deployment/PXE/funding branches running and drains all work. Seven focused checks and worker bundle evaluation pass; not yet measured.2s opening and all-flow50% remain open.
+
 ## Latest publication and failed measurement — d20794f6
 
 Published UI/source `d20794f6eaf078439857eff9a4ef214f781b14c2`; pushed to master and both application branches. Composer-only change removes checkpoint-triggered restarts and cancels future advisory preparation phases while draining any active native phase. SDK bytes unchanged. No app or proxy restart. Seventy-four focused checks and the actual worker evaluation build gate passed. Publication is not a successful latency measurement.

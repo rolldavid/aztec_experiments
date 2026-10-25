@@ -48,18 +48,33 @@ async function preparePublic(){
  const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
  if(config.refundOnly){publicState={boardArtifact,privateFeeArtifact};return publicState;}
  const deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled,onProgress:progress,registration,artifactHashes:{board:artifacts.board.sha256,privateFee:artifacts.privateFee.sha256}});
- const {node,nodeSnapshot}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:localGuard,onProgress:progress});localGuard();
- // No account, notes or proof operation is created by public preparation.
- publicState={node,deploymentPreparation,boardArtifact,privateFeeArtifact,pxePreparation:background('pxe-native',sdk.preparePrivatePXE(node,{nodeSnapshot,artifacts:pxeArtifactsReady}))};
- if(config.aggregateFunding){
-  const provider=new ethers.JsonRpcProvider(config.network.ethRpcUrl);
-  const network={chainId:String(config.network.chainId),version:String(config.network.rollupVersion),rollup:config.network.rollupAddress};
-  // Only deployment-wide public scope is warmed. Account state, balances and
-  // quote/runtime/nonce/deadline validation remain at their existing boundaries.
-  const result=background('funding-scope',verifyRollingAggregateScope({sdk,ethers,node,provider,scope:config.aggregateFunding,network,proofsEnabled,contextGuard:localGuard,includeBok:false,asset:'ETH'}));
-  publicState.fundingProvider=provider;
-  publicState.scopePreparation=Object.freeze({sdk,ethers,node,provider,proofsEnabled,scope:JSON.stringify(config.aggregateFunding),network:JSON.stringify(network),result});
- }
+ // The published descriptor supplies registration metadata, not native class
+ // derivation. Warm the existing full-byte-bound native memo on these exact
+ // artifact objects while independent public deployment reads are in flight.
+ // This remains owned by public preparation and drains before account readiness.
+ const prepared=await Promise.allSettled([
+  async()=>{
+   const {node,nodeSnapshot}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:localGuard,onProgress:progress});localGuard();
+   // No account, notes or proof operation is created by public preparation.
+   publicState={node,deploymentPreparation,boardArtifact,privateFeeArtifact,pxePreparation:background('pxe-native',sdk.preparePrivatePXE(node,{nodeSnapshot,artifacts:pxeArtifactsReady}))};
+   if(config.aggregateFunding){
+    const provider=new ethers.JsonRpcProvider(config.network.ethRpcUrl);
+    const network={chainId:String(config.network.chainId),version:String(config.network.rollupVersion),rollup:config.network.rollupAddress};
+    // Only deployment-wide public scope is warmed. Account state, balances and
+    // quote/runtime/nonce/deadline validation remain at their existing boundaries.
+    const result=background('funding-scope',verifyRollingAggregateScope({sdk,ethers,node,provider,scope:config.aggregateFunding,network,proofsEnabled,contextGuard:localGuard,includeBok:false,asset:'ETH'}));
+    publicState.fundingProvider=provider;
+    publicState.scopePreparation=Object.freeze({sdk,ethers,node,provider,proofsEnabled,scope:JSON.stringify(config.aggregateFunding),network:JSON.stringify(network),result});
+   }
+   return publicState;
+  },
+  ()=>background('application-classes',(async()=>{
+   const classes=await Promise.allSettled([boardArtifact,privateFeeArtifact].map(artifact=>Promise.resolve().then(()=>sdk.getContractClassFromArtifact(artifact))));
+   const failed=classes.find(value=>value.status==='rejected');if(failed)throw failed.reason;
+  })()),
+ ].map(read=>Promise.resolve().then(read)));
+ const failed=prepared.find(value=>value.status==='rejected');if(failed)throw failed.reason;
+ localGuard();
  return publicState;
 }
 function metadata(){return {bokConfigured:settings.config.bok!==undefined,bokEthAvailable:settings.config.bokTopup!==undefined,usdcAvailable:settings.config.aggregateFunding?.usdcRelayAddress!==undefined,privateFeeCap:sdk.normalizePrivateFeeGasSettings(settings.config.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString(),ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(settings.config.privateFee.gasSettings).toString(),refundOnly:settings.config.refundOnly===true};}

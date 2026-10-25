@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Candidateverified: mainSDK8.39MB vs16.6MB; sixnativeassetcache split; testnetpublishedimmutable registration withfreshnodeauthority; Like/Unlike/Name owned predecessor/discovery overlap; exact public inclusion anchors.80+27+676checks andactualsixscriptworkergate pass. Preparingcommit/push/publication. Priorrollbackconfirmed L1PrunedPending3822..3886 andindependentnodes. Old0d23post5072finalized, testaccount5restoredReadyfornewmeasurement. Goals2s/15s/50%open.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Live/pusheda75bd5b7 actualopening7.916935s cold/3.556530s cached; name17.543705s andLike12.547165s includedvisible, exactanchorssaved. Targetsallflow50%/2snotcomplete. Reviewedworker-onlyclassprewarm integratesexactnativeartifact memo atpageload;7checks+workerevalpass, nextpublication. Survivingidentity5funded; L1networkpruneconfirmedforoldrange. Rootonebuild/IAB, no service restarts, transferscleaned. SeeONBOARDING_MEASUREMENTS and correctedliveflow worklist.
 
 ## Ready internal work
 

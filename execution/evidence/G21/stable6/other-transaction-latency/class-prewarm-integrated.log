@@ -1,0 +1,15 @@
+✔ public class warmup shares exact artifacts and drains independent work: none (2.719959ms)
+✔ public class warmup shares exact artifacts and drains independent work: board (0.596375ms)
+✔ public class warmup shares exact artifacts and drains independent work: fee (0.773417ms)
+✔ public class warmup shares exact artifacts and drains independent work: deployment (0.261583ms)
+✔ public class warmup shares exact artifacts and drains independent work: both (0.265459ms)
+✔ late context invalidation cannot publish prewarmed public state (0.269667ms)
+✔ refund-only opening does not derive unused application classes (0.085584ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 65.927875
