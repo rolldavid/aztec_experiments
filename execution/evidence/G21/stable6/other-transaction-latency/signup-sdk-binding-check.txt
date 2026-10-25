@@ -1,0 +1,12 @@
+BEFORE rejected: SDK transform introduced unresolved bindings in node_modules/@aztec-labs/pxe/dest/pxe.js: syncSiloNullifier
+PASS node_modules/@aztec-labs/pxe/dest/pxe.js
+PASS node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js
+PASS node_modules/@aztec-foundation/bb.js/dest/browser/barretenberg_wasm/barretenberg_wasm_main/factory/browser/main.worker.js
+PASS node_modules/@aztec-labs/pxe/dest/contract_function_simulator/contract_function_simulator.js
+PASS node_modules/@aztec-labs/aztec.js/dest/contract/contract_function_interaction.js
+PASS node_modules/@aztec-labs/bb-prover/dest/prover/client/bb_private_kernel_prover.js
+PASS node_modules/@aztec-labs/noir-protocol-circuits-types/dest/execution/client.js
+PASS node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js
+PASS node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js
+PASS node_modules/@aztec-labs/pxe/dest/block_synchronizer/block_synchronizer.js
+Complete real native modules audited: 10

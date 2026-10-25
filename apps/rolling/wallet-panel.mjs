@@ -10,6 +10,8 @@ const deploymentSteps=new Set(['config','node-readiness','artifact-layout','boar
 const initializationCodes=new Set(['unknown','BB_TRUSTED_NODE_CONFIG','BB_TRUSTED_NODE_IDENTITY','BB_TRUSTED_NODE_UNAVAILABLE','BB_TRUSTED_NODE_UNSYNCED','BB_TRUSTED_NODE_STALE','BB_BROWSER_PROVER_CONFIGURATION','ROLLING_SESSION_CONFIG','ROLLING_OTHER_TAB','ROLLING_CONTEXT_CHANGED','ROLLING_ACCOUNT_MISMATCH','ROLLING_PRIVATE_ROUTE','ROLLING_DEPLOYMENT_INVALID']);
 const refreshSteps=new Set(['account-status','owned-names','moderator-status','bok-status'].flatMap(method=>['lock','context','pxe-sync','account-initialize','method'].map(phase=>method+'/'+phase)));
 const refreshCodes=new Set(['ROLLING_BUSY','ROLLING_LOCKED','ROLLING_INVALID_RESPONSE','ROLLING_ABI_MISMATCH','ROLLING_RECOVERY_REQUIRED','PRIVATE_FEE_PREPARATION_FAILED','PRIVATE_FEE_PROVIDER_REQUIRED','PRIVATE_FEE_CONFIGURATION_REQUIRED','PRIVATE_FEE_OWNER_IS_PAYER','PRIVATE_FEE_CHAIN_MISMATCH','PRIVATE_FEE_CAP_TOO_LOW','PRIVATE_FEE_NONCANONICAL_ADDRESS','PRIVATE_FEE_NOT_PUBLISHED','PRIVATE_FEE_CLASS_MISMATCH','PRIVATE_FEE_ARTIFACT_INVALID','PRIVATE_FEE_INVALID_VALUE','PRIVATE_FEE_INVALID_ADDRESS','PRIVATE_FEE_INVALID_GAS','PRIVATE_FEE_BALANCE_INSUFFICIENT']);
+const fundingPaymentStates=new Set(['unknown','saved','submitted','confirmed','credited']);
+const fundingExtraCodes=new Set(['PRIVATE_FEE_INVALID_CLAIM','PRIVATE_FEE_CLAIM_INSUFFICIENT','PRIVATE_FEE_CLAIM_SECRET_MISMATCH','PRIVATE_FEE_CONTEXT_CHANGED','BB_ETH_SUBMISSION_UNKNOWN','BB_ETH_CONFIRMATION_UNKNOWN','BB_ETH_RECOVERY_REQUIRED']);
 const fundingSteps=new Set(['inspect','recover','account-status','prepare','checkpoint','submit','reconcile']);
 export function fundingProgressMessage({step,state},kind='posting'){
  const credit=kind==='bok'?'Bok credit':'posting balance';
@@ -142,6 +144,8 @@ function fundingFailureText(failure){
 }
 
 export function aggregateFundingFailure(failure){
+ const paymentState=Object.getOwnPropertyDescriptor(failure??{},'fundingPaymentState')?.value;
+ if(fundingPaymentStates.has(paymentState))return paymentState==='unknown'?'Payment status is uncertain. Continue checking this payment.':paymentState==='credited'?'Credit received. Account setup could not finish.':paymentState==='confirmed'?'Payment received. Account setup could not finish.':'Payment is still being checked. Account setup could not finish.';
  const message=fundingFailureText(failure);
  const exchanged=Object.getOwnPropertyDescriptor(failure??{},'topupExchanged')?.value===true;
  const stage=Object.getOwnPropertyDescriptor(failure??{},'topupStage')?.value;
@@ -156,7 +160,7 @@ export function aggregateFundingFailure(failure){
 function topupFailure(error,stage,exchanged=false){
  const code=Object.getOwnPropertyDescriptor(error??{},'code')?.value,providerCode=Object.getOwnPropertyDescriptor(error??{},'providerCode')?.value,ethereumStage=Object.getOwnPropertyDescriptor(error??{},'ethereumStage')?.value;
  const safeProvider=['ACTION_REJECTED','INSUFFICIENT_FUNDS','CALL_EXCEPTION','NETWORK_ERROR','SERVER_ERROR','TIMEOUT','UNKNOWN_ERROR','NONCE_EXPIRED','REPLACEMENT_UNDERPRICED','UNSUPPORTED_OPERATION','BAD_DATA','4001','4100','4900','4901','-32002'].includes(providerCode),safeStage=['read','preflight','wallet','confirmation'].includes(ethereumStage);
- return Object.assign(new Error('Credit purchase could not be completed.',{cause:error}),{code:typeof code==='string'?code:'ROLLING_TOPUP_FAILED',topupStage:stage,topupExchanged:exchanged,...(safeProvider?{providerCode}:{}),...(safeStage?{ethereumStage}:{})});
+ return Object.assign(new Error('Credit purchase could not be completed.',{cause:error}),{code:typeof code==='string'?code:'ROLLING_TOPUP_FAILED',...(fundingPaymentStates.has(Object.getOwnPropertyDescriptor(error??{},'fundingPaymentState')?.value)?{fundingPaymentState:Object.getOwnPropertyDescriptor(error,'fundingPaymentState').value}:{}),topupStage:stage,topupExchanged:exchanged,...(safeProvider?{providerCode}:{}),...(safeStage?{ethereumStage}:{})});
 }
 
 // Continue only after each preceding Ethereum transaction is confirmed. Each
@@ -232,6 +236,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   includedObservationPending=reading;
  }
  let savedClient=null,savedLoading=null,savedUnsubscribe=null,accountIdentity=null,recoveryInspection=null;
+ let fundingAttempt=null,fundingFailureStep=null;
  let fundingQuote=null,fundingQuoteRequested=false,fundingAutomatic=false,fundingActiveCapability=null,fundingInputs={asset:'ETH'};
  let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='overview',namesLoaded=false,actionsLoaded=false;const previewURLs=new Set();
  const dialog=el('dialog',{class:'account-dialog','aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
@@ -326,7 +331,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function releasePreviews(){updateBokForm=()=>{};renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
  function clearSavedItems(){savedUnsubscribe?.();savedUnsubscribe=null;savedClient?.close();savedClient=null;savedLoading=null;onPrivateChange();}
- function clearPrivateView(){pendingPostReveal=null;stopRefundWatch();pendingWithdrawal=null;refundReadiness=null;includedObservation=null;includedRevision=null;actionFeedback.textContent='';actionFeedback.hidden=true;composerAttempt=null;composerCheckpoint='open';ownBokPosts.clear();bokRefreshNeeded=false;selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearSavedItems();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
+ function clearPrivateView(){pendingPostReveal=null;stopRefundWatch();pendingWithdrawal=null;refundReadiness=null;includedObservation=null;includedRevision=null;actionFeedback.textContent='';actionFeedback.hidden=true;composerAttempt=null;composerCheckpoint='open';ownBokPosts.clear();bokRefreshNeeded=false;selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingAttempt=null;fundingFailureStep=null;dialog.removeAttribute('data-rolling-funding');fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearSavedItems();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked())return 'locked';return savedClient?.snapshot()?'complete':'recovering';}
  function savedItemsSnapshot(){return unlocked()?savedClient?.snapshot()??null:null;}
@@ -495,6 +500,11 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!busy&&(bokBalance.pending||accountRefreshPending)&&diagnostic?.stage==='private-refresh')return;
    const fundingKind=view==='topup'&&topupKind==='bok'||intent?.action?.type==='claim-bok'?'bok':'posting',credit=fundingKind==='bok'?'Bok credit':'posting balance';
    if(diagnostic?.stage==='funding-claim'){
+    if(fundingAttempt?.epoch===epoch&&fundingAttempt.session===session){
+     if(diagnostic.state==='failed')fundingFailureStep=diagnostic;
+     if(diagnostic.step==='recover'&&diagnostic.state==='complete'&&fundingAttempt.paymentState!=='credited')fundingAttempt.paymentState='confirmed';
+     fundingAttempt.step=diagnostic.step;
+    }
     // The continuation's actual stage supersedes the earlier Ethereum notice.
     notice='';for(const node of content.querySelectorAll('[data-operation-feedback]'))if(node.getAttribute('role')!=='alert')node.remove();
    }
@@ -1277,11 +1287,44 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(typeof value!=='string'||!new RegExp('^(0|[1-9][0-9]{0,30})(?:\\.[0-9]{1,'+decimals+'})?$').test(value))throw connectionFailure;
   const [whole,fraction='']=value.split('.');const result=BigInt(whole)*10n**BigInt(decimals)+BigInt(fraction.padEnd(decimals,'0'));if(result<=0n)throw connectionFailure;return result.toString();
  }
+ function currentFundingAttempt(capability=session?.funding){
+  return fundingAttempt?.epoch===accountEpoch&&fundingAttempt.session===session&&fundingAttempt.capability===capability?fundingAttempt:null;
+ }
+ function beginFundingAttempt(capability){
+  fundingFailureStep=null;dialog.removeAttribute('data-rolling-funding');
+  return fundingAttempt={epoch:accountEpoch,session,capability,paymentState:null,step:'payment'};
+ }
+ function fundingErrorShape(failure){
+  try{
+  const one=value=>{
+   let code;try{code=Object.getOwnPropertyDescriptor(value??{},'code')?.value;}catch{}
+   const kind=value instanceof AggregateError?'AggregateError':value instanceof ReferenceError?'ReferenceError':value instanceof TypeError?'TypeError':value instanceof RangeError?'RangeError':value instanceof Error?'Error':'unknown';
+   return {kind,code:fundingCodes.has(code)||fundingExtraCodes.has(code)||initializationCodes.has(code)?code:'unknown'};
+  };
+  const result=one(failure);
+  if(result.kind==='AggregateError'){
+   const errors=Object.getOwnPropertyDescriptor(failure,'errors')?.value;
+   if(Array.isArray(errors))result.causes=errors.slice(0,4).map(one);
+  }
+  return result;
+  }catch{return {kind:'unknown',code:'unknown'};}
+ }
+ function fundingProblem(failure,attempt){
+  if(!attempt||attempt!==fundingAttempt||attempt.epoch!==accountEpoch||attempt.session!==session)return failure;
+  if(Object.getOwnPropertyDescriptor(failure??{},'fundingDiagnostic')?.value===attempt.failure&&attempt.failure)return failure;
+  const shape=fundingErrorShape(failure),step=fundingFailureStep?.step??attempt.step;
+  const diagnostic={stage:'funding',step:fundingSteps.has(step)||['payment','readiness'].includes(step)?step:'payment',state:'failed',...shape,paymentState:fundingPaymentStates.has(attempt.paymentState)?attempt.paymentState:'unconfirmed'};
+  dialog.setAttribute('data-rolling-funding',JSON.stringify(diagnostic));attempt.failure=diagnostic;
+  if(!fundingPaymentStates.has(attempt.paymentState))return failure;
+  return Object.assign(new Error('Funding could not finish.'),{code:shape.code,fundingDiagnostic:diagnostic,fundingPaymentState:attempt.paymentState});
+ }
  async function advanceFunding(){
   const epoch=accountEpoch;checkAccount(epoch);
-  const capability=fundingActiveCapability=fundingCapability();render();
+  const capability=fundingActiveCapability=fundingCapability();const attempt=currentFundingAttempt(capability)??beginFundingAttempt(capability);fundingFailureStep=null;attempt.step='inspect';render();
+  try{
   let result;try{result=await capability.advanceClaim();}finally{if(fundingActiveCapability===capability)fundingActiveCapability=null;}checkAccount(epoch);
   if(['included','complete'].includes(result.state)){
+   attempt.paymentState='credited';attempt.step='readiness';
    transactionTiming.complete();
    const finishReadiness=beginRollingMeasure('funding.readiness');
    try{
@@ -1306,6 +1349,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     const account=status?.status==='fee-ready'?'Posting collateral and network fee credit were found.':status?.status==='fee-needed'?'Network fee credit is still needed.':status?.status==='collateral-pending'?'Network fee credit was found; posting collateral is not yet available.':'The account still needs a recovery check.';
     notice=status?.status==='fee-ready'?(provisional?'Your posting balance is ready. Confirmation pending.':'Your posting balance is set up.'):'Your posting balance is still being checked. Refresh your account before posting.';view=inlineCreation?'action':'overview';if(inlineCreation)await loadView();
    }
+   if(fundingAttempt===attempt)fundingAttempt=null;dialog.removeAttribute('data-rolling-funding');
    }finally{finishReadiness();}
   }
   else if(result.state==='review-payment'){stopFunding();topupQuote=null;notice='Token approval confirmed. Review the separate top-up payment; no deposit is sent automatically.';}
@@ -1316,6 +1360,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    stopFunding();
    notice=result.state==='paused'?'Funding checks paused. Your saved payment and claim records are preserved.':result.state==='waiting'?(result.phase==='payment'?'The saved payment is not yet confirmed. Resume recovery to check its original transaction; no payment will be repeated.':'The bridge is not yet ready. Resume saved funding to check delivery; no payment will be repeated.'):'The saved private claim remains unresolved. Resume to check its original transaction; it will not be submitted again.';
   }
+  }catch(failure){throw fundingProblem(failure,attempt);}
  }
  function fundingCapability(){
   const type=intent?.action?.type;if(type==='claim-private-fee')return session?.topup?.['private-fee'];if(type==='claim-bok')return session?.topup?.bok;
@@ -1401,6 +1446,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  function fundingSummary(labelText,amount,explanation){return el('div',{class:'funding-line'},el('div',{},el('strong',{},labelText),el('p',{class:'quiet'},explanation)),el('strong',{},amount));}
  function aggregateFundingView(){
   if(!session.funding){content.append(paragraph('Account funding is currently unavailable. Try again later.'));return;}
+  const savedAttempt=currentFundingAttempt();
+  if(savedAttempt&&fundingPaymentStates.has(savedAttempt.paymentState)){
+   content.append(el('h3',{},'Finish account setup'));
+   if(!fundingAutomatic)content.append(button('Continue setup',()=>void work(()=>advanceFunding(),aggregateFundingFailure),true));
+   else content.append(paragraph('Keep this page open while setup continues.'));
+   return;
+  }
   if(!fundingAutomatic&&session.funding.usdcAvailable){const asset=el('select',{'aria-label':'Pay with'});for(const [value,text]of [['ETH','ETH'],['USDC','USDC — no ETH needed']])asset.append(el('option',{value},text));asset.value=fundingInputs.asset;asset.addEventListener('change',()=>{clearOperationFeedback();fundingInputs.asset=asset.value;fundingQuote=null;fundingQuoteRequested=false;render();});content.append(label('Pay with',asset));}
   if(fundingQuote){
    const q=fundingQuote,b=q.breakdown,isUsdc=q.kind==='rolling-aggregate-usdc-v1',currency=isUsdc?' USDC':' ETH';
@@ -1418,8 +1470,18 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     paragraph(isUsdc?'Your wallet will ask for two signatures to approve this payment.':'Approve the payment in your wallet.'));
    const details=el('details',{class:'account-details'},el('summary',{},'Payment details'),paragraph('Deposit held: '+decimal(isUsdc?b.collateral.amount:b.collateralWei,18)+' ETH.'),paragraph('Posting balance: '+decimal(b.fee.amount,18)+' fee tokens. Account setup can use up to '+decimal(q.privateFeeCap,18)+' of these tokens.'),paragraph('Exchange price tolerance: '+(q.slippageBps/100)+'%. Unused exchange funds are returned to the paying wallet.'));content.append(details);
    content.append(button('Confirm payment',()=>void work(async()=>{
-    const epoch=accountEpoch;checkAccount(epoch);fundingQuote=null;fundingAutomatic=true;notice='Approve the payment in your wallet…';render();const payment=await session.funding.confirm({onSubmitted:()=>{checkAccount(epoch);note('Waiting for Ethereum confirmation…');}});note('');checkAccount(epoch);
-    fundingAutomatic=true;notice=payment?.pending?'Payment submitted. Waiting for confirmation…':'Payment confirmed. Setting up posting…';await advanceFunding();
+    const epoch=accountEpoch,capability=session.funding;checkAccount(epoch);const attempt=beginFundingAttempt(capability);fundingQuote=null;fundingAutomatic=true;notice='Approve the payment in your wallet…';render();
+    try{
+     const payment=await capability.confirm({onSubmitted:()=>{checkAccount(epoch);attempt.paymentState='submitted';note('Waiting for Ethereum confirmation…');}});note('');checkAccount(epoch);
+     attempt.paymentState=payment?.pending?'submitted':'confirmed';fundingAutomatic=true;notice=payment?.pending?'Payment submitted. Waiting for confirmation…':'Payment confirmed. Setting up posting…';await advanceFunding();
+    }catch(failure){
+     checkAccount(epoch);
+     // The existing authenticated local payment summary is the only fallback
+     // when a wallet acknowledgment was lost. It cannot authorize another send.
+     const code=Object.getOwnPropertyDescriptor(failure??{},'code')?.value;if(!attempt.paymentState&&['BB_ETH_SUBMISSION_UNKNOWN','BB_ETH_CONFIRMATION_UNKNOWN'].includes(code))attempt.paymentState='unknown';
+     if(!attempt.paymentState){try{const saved=await capability.inspect();checkAccount(epoch);if(saved?.paymentSaved)attempt.paymentState='saved';}catch{checkAccount(epoch);}}
+     throw fundingProblem(failure,attempt);
+    }
    },aggregateFundingFailure),true));
   }else if(!fundingAutomatic){
    content.append(el('h3',{},'Set up posting'),paragraph('A refundable deposit discourages spam. Your posting balance pays for posts and account updates.'));
@@ -1525,7 +1587,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    content.append(button('Sign out',()=>void signOut()));
   }
   controlsBusy(busy);renderBokControls();requestBokBalance();watchPendingRefund();if(view==='topup'&&!busy&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected))queueMicrotask(requestTopupQuote);
-  if(view==='funding'&&session?.funding&&!busy&&!blocked&&!intent&&!fundingQuote&&!fundingQuoteRequested&&!fundingAutomatic&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected)){
+  if(view==='funding'&&!fundingPaymentStates.has(currentFundingAttempt()?.paymentState)&&session?.funding&&!busy&&!blocked&&!intent&&!fundingQuote&&!fundingQuoteRequested&&!fundingAutomatic&&(!runtime.fundingWalletStatus||runtime.fundingWalletStatus().connected)){
    queueMicrotask(()=>{if((dialog.open||inlineCreation)&&view==='funding'&&!busy&&!fundingQuoteRequested)void work(prepareFundingQuote,aggregateFundingFailure);});
   }
   if(dialog.open&&(!busy||previousFocus?.dataset.recoveryStop==='true'||previousFocus?.dataset.accountingStop==='true'||previousFocus?.dataset.fundingStop==='true')&&(hadFocus||document.activeElement===document.body)){
