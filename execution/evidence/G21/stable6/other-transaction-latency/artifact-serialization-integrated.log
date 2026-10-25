@@ -1,0 +1,60 @@
+{"artifact":"Board","bytes":8060278,"sha256":"b2d9119f31d81b7eb221dd1a0ccadea9b52fcbd2dae1ef2e445613128b0a234f","nativeMs":39.393583999999976,"fastMs":25.269250000000028}
+✔ actual native Board serialized bytes remain exact, with bytecode and metadata mutation detection (255.011125ms)
+{"artifact":"FPC","bytes":1775356,"sha256":"aaa52972e39c36492ba173876c35deebdc98e9e1d5d88ea4092c42f068222091","nativeMs":7.874167,"fastMs":5.065125000000023}
+✔ actual native FPC serialized bytes remain exact, with bytecode and metadata mutation detection (53.804458ms)
+✔ native Fr mutation, nested buffers, missing values and shared references retain exact bytes (0.259042ms)
+✔ custom serialization and accessors retain unmodified native execution semantics (0.22275ms)
+✔ unknown object/prototype and cycles do not become an accepted immutable shortcut (0.240833ms)
+✖ actual browser Buffer and native serializer source preserve Board bytes without numeric-array expansion (515.701292ms)
+✔ non-enumerable array indices, holes and accessors retain native array semantics (0.696625ms)
+✔ Buffer subclass and custom prototype serialization use the unchanged native path (0.190541ms)
+✔ one construction shares one exact-node snapshot and revokes it afterward (0.645625ms)
+✔ native class memo binds complete artifact bytes and detaches every result (2.896709ms)
+✔ six pinned native built-ins seed the memo; changed artifact or class bytes reject (63.081709ms)
+✔ actual native Fr, selector, bytes and full artifact serializer survive detached memo reuse (0.630917ms)
+✔ mutation during asynchronous digest never installs a class record (0.172375ms)
+✔ persisted registration requires both exact full blobs, never just matching class ID (0.085792ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/entrypoints/client/lazy/utils.js (9.558708ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/pxe.js (26.408417ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/storage/contract_store/contract_store.js (6.377209ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/stdlib/dest/contract/contract_class.js (1.584ms)
+✔ actual transformed ContractStore reuses authenticated persisted blobs and repairs changed bytes (2.717833ms)
+✔ failed native registration does not publish an in-memory success cache (0.786417ms)
+✔ actual transformed ContractStore reuses authenticated selectors but validates caller-supplied classes (7.896042ms)
+✔ actual trusted readiness snapshot supplies construction metadata without a second node-info RPC (0.843709ms)
+✔ native prewarm hands identical built-ins and genesis to construction without account/store work (79.588083ms)
+✔ prewarmed built-in mutation rejects and failed preparation drains genesis (60.313625ms)
+✔ actual native genesis expression skips only an authenticated construction prewarm (46.57025ms)
+✔ immutable preparation starts without a node and node binding does not serialize genesis behind it (89.049458ms)
+✔ authenticated registration uses two full serializations and fixed numeric subspans (0.985167ms)
+✔ mutation during stored reads rejects without poisoning the authenticated persisted snapshot (0.517417ms)
+✔ fixed Board and fee registration subspans survive sequential registration (0.882ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 28
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1288.086125
+
+✖ failing tests:
+
+test at scripts/test-artifact-serialization.mjs:42:1
+✖ actual browser Buffer and native serializer source preserve Board bytes without numeric-array expansion (515.701292ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'b2d9119f31d81b7eb221dd1a0ccadea9b52fcbd2dae1ef2e445613128b0a234f'
+  - 'f494ea360d132ac8afce2a4c5c77cadaa11d782b669e4fb36f9211a6b08badfe'
+  
+      at TestContext.<anonymous> (file:///private/tmp/rolling-browser-proof-spans-build/scripts/test-artifact-serialization.mjs:53:43)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'b2d9119f31d81b7eb221dd1a0ccadea9b52fcbd2dae1ef2e445613128b0a234f',
+    expected: 'f494ea360d132ac8afce2a4c5c77cadaa11d782b669e4fb36f9211a6b08badfe',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

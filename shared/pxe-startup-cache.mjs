@@ -111,3 +111,50 @@ export function sameRegisteredBytes(artifact,classData,storedArtifact,storedClas
  if(!storedArtifact||!storedClass||artifact.length!==storedArtifact.length||classData.length!==storedClass.length)return false;
  return equal(artifact,storedArtifact)&&equal(classData,storedClass);
 }
+
+// Native jsonStringify first calls Buffer.toJSON(), materializing one number
+// per byte, then reconstructs that Buffer solely to encode it as base64. Avoid
+// only that roundtrip. The native serializer still owns JSON/Fr semantics and
+// both registration mutation fences still serialize the entire artifact.
+export function createStartupArtifactSerializer(serialize,BufferType,FrType){
+ const prototype=BufferType.prototype,toJSON=prototype.toJSON,toString=prototype.toString,from=BufferType.from;
+ const fieldPrototype=FrType.prototype,fieldJSON=fieldPrototype.toJSON,fieldString=fieldPrototype.toString;
+ return artifact=>{
+  if(prototype.toJSON!==toJSON||prototype.toString!==toString||BufferType.from!==from||fieldPrototype.toJSON!==fieldJSON||fieldPrototype.toString!==fieldString)return serialize(artifact);
+  const seen=new WeakMap();let unsupported=false;
+  const project=value=>{
+   if(typeof value==='function'){unsupported=true;return value;}
+   if(value===null||typeof value!=='object')return value;
+   const proto=Object.getPrototypeOf(value);
+   if(BufferType.isBuffer(value)){
+    if(proto!==prototype||Object.hasOwn(value,'toJSON')){unsupported=true;return value;}
+    return toString.call(value,'base64');
+   }
+   // The pinned native Fr serializer is pure and retains its native semantics.
+   // Unknown objects/accessors/custom serializers use the unmodified path.
+   if(proto===fieldPrototype){
+    const fields=Reflect.ownKeys(value),number=Object.getOwnPropertyDescriptor(value,'asBigInt');
+    if(fields.length!==1||fields[0]!=='asBigInt'||!number||!Object.hasOwn(number,'value')||typeof number.value!=='bigint')unsupported=true;
+    return value;
+   }
+   if(proto!==Object.prototype&&proto!==null&&proto!==Array.prototype){unsupported=true;return value;}
+   if('toJSON' in value){unsupported=true;return value;}
+   const type=Object.getOwnPropertyDescriptor(value,'type'),data=Object.getOwnPropertyDescriptor(value,'data');
+   if(type?.value==='Buffer'&&Array.isArray(data?.value)){unsupported=true;return value;}
+   if(seen.has(value))return seen.get(value);
+   const array=Array.isArray(value),out=array?new Array(value.length):Object.create(proto);seen.set(value,out);
+   // JSON arrays visit every index, including non-enumerable values. Holes
+   // stay holes; inherited values/accessors retain native lookup semantics.
+   const keys=array?Array.from({length:value.length},(_,index)=>String(index)):Object.keys(value);
+   for(const key of keys){
+    const descriptor=Object.getOwnPropertyDescriptor(value,key);
+    if(!descriptor){if(key in value)unsupported=true;continue;}
+    if(!Object.hasOwn(descriptor,'value')){unsupported=true;return value;}
+    Object.defineProperty(out,key,{value:project(descriptor.value),enumerable:true,writable:true,configurable:true});
+   }
+   return out;
+  };
+  const projected=project(artifact);
+  return serialize(unsupported?artifact:projected);
+ };
+}

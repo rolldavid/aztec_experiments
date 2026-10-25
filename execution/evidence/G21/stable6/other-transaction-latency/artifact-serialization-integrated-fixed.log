@@ -1,0 +1,40 @@
+{"artifact":"Board","bytes":8060278,"sha256":"b2d9119f31d81b7eb221dd1a0ccadea9b52fcbd2dae1ef2e445613128b0a234f","nativeMs":37.525874999999985,"fastMs":24.67470800000001}
+✔ actual native Board serialized bytes remain exact, with bytecode and metadata mutation detection (260.462042ms)
+{"artifact":"FPC","bytes":1775356,"sha256":"aaa52972e39c36492ba173876c35deebdc98e9e1d5d88ea4092c42f068222091","nativeMs":6.2046249999999645,"fastMs":5.811916999999994}
+✔ actual native FPC serialized bytes remain exact, with bytecode and metadata mutation detection (50.716875ms)
+✔ native Fr mutation, nested buffers, missing values and shared references retain exact bytes (0.23625ms)
+✔ custom serialization and accessors retain unmodified native execution semantics (0.202792ms)
+✔ unknown object/prototype and cycles do not become an accepted immutable shortcut (0.406583ms)
+{"artifact":"Board-browser-Buffer","bytes":8060278,"sha256":"b2d9119f31d81b7eb221dd1a0ccadea9b52fcbd2dae1ef2e445613128b0a234f","nativeMs":288.14987500000007,"fastMs":214.11958300000003}
+✔ actual browser Buffer and native serializer source preserve Board bytes without numeric-array expansion (560.173125ms)
+✔ non-enumerable array indices, holes and accessors retain native array semantics (0.266334ms)
+✔ Buffer subclass and custom prototype serialization use the unchanged native path (0.136125ms)
+✔ one construction shares one exact-node snapshot and revokes it afterward (0.710167ms)
+✔ native class memo binds complete artifact bytes and detaches every result (3.992042ms)
+✔ six pinned native built-ins seed the memo; changed artifact or class bytes reject (63.543083ms)
+✔ actual native Fr, selector, bytes and full artifact serializer survive detached memo reuse (0.719625ms)
+✔ mutation during asynchronous digest never installs a class record (0.226292ms)
+✔ persisted registration requires both exact full blobs, never just matching class ID (0.118541ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/entrypoints/client/lazy/utils.js (9.775625ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/pxe.js (25.791333ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/pxe/dest/storage/contract_store/contract_store.js (5.535125ms)
+✔ pinned native transform keeps complete binding closure: node_modules/@aztec-labs/stdlib/dest/contract/contract_class.js (1.243083ms)
+✔ actual transformed ContractStore reuses authenticated persisted blobs and repairs changed bytes (2.599667ms)
+✔ failed native registration does not publish an in-memory success cache (0.884542ms)
+✔ actual transformed ContractStore reuses authenticated selectors but validates caller-supplied classes (9.215542ms)
+✔ actual trusted readiness snapshot supplies construction metadata without a second node-info RPC (0.723ms)
+✔ native prewarm hands identical built-ins and genesis to construction without account/store work (82.556958ms)
+✔ prewarmed built-in mutation rejects and failed preparation drains genesis (62.237333ms)
+✔ actual native genesis expression skips only an authenticated construction prewarm (39.545417ms)
+✔ immutable preparation starts without a node and node binding does not serialize genesis behind it (90.486625ms)
+✔ authenticated registration uses two full serializations and fixed numeric subspans (0.942292ms)
+✔ mutation during stored reads rejects without poisoning the authenticated persisted snapshot (0.504917ms)
+✔ fixed Board and fee registration subspans survive sequential registration (0.705292ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1288.773792

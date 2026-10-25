@@ -1,3 +1,9 @@
+## Reviewed serialization source change
+
+Native artifact serialization no longer expands each byte Buffer into numeric JSON data and reconstructs it just to emit base64. The native JSON serializer, field serialization, full initial/final byte snapshots, SHA binding and persisted-byte comparisons remain. Fixed Board/FPC subspan names retain per-contract registration attribution. Unknown custom serialization uses the unchanged native path.
+
+Independent review approved;29 integrated parity/native-storage checks pass, including current Board and FPC artifacts, browser Buffer versus unmodified native Node output, byte/metadata mutation and array accessor cases. Initial integration failed only a draft test's hardcoded SHA for a different Board fixture; exact browser byte equality had passed. The corrected test derives expected bytes independently with the native serializer for the actual artifact. Both run logs are retained. This is a local work reduction, not an end-to-end target claim.
+
 ## Published f986 startup and a75 posting observations
 
 Source `f9865f2dab7fec077a5661b6b652a6f3a2806195` is live and pushed to master and both application branches. Static publication succeeded without service restart. Native Board/FPC class preparation now starts during public startup, before Ethereum sign-in.

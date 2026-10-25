@@ -1,3 +1,4 @@
+import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {inspectTrustedNode} from '../shared/trusted-private-node.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {Buffer} from 'node:buffer';
 import {efficientPxeStartup,PXE_STARTUP_PINS} from './pxe-startup.mjs';
 import {assertTransformBindings} from './check-transform-bindings.mjs';
-import {beginPXEConstruction,readPXEConstruction,endPXEConstruction,retainedContractClass,rememberContractClass,startupProtocolProvider,startupPreloadedContracts,sameRegisteredBytes,nativeClassBytes,preparePXEStartup,preparePXEArtifacts,readPXEStartup} from '../shared/pxe-startup-cache.mjs';
+import {beginPXEConstruction,readPXEConstruction,endPXEConstruction,retainedContractClass,rememberContractClass,startupProtocolProvider,startupPreloadedContracts,sameRegisteredBytes,createStartupArtifactSerializer,nativeClassBytes,preparePXEStartup,preparePXEArtifacts,readPXEStartup} from '../shared/pxe-startup-cache.mjs';
 import {fileURLToPath} from 'node:url';
 import {restoreNativePxe} from './patch-pxe-operation-guards.mjs';
 const nativeRoot=fileURLToPath(new URL('../',import.meta.url));
@@ -84,7 +85,7 @@ function contractStoreFixture(){
  const source=efficientPxeStartup(nativeSource(name),name).replace(/^import .*;\n/gm,'').replace(/export /g,'');
  let derivations=0,writes=0,selectorCalls=0,serializations=0,reads=0,readHook=()=>{},fail=false;const maps=new Map();
  const kv={openMap(name){const values=maps.get(name)??new Map();maps.set(name,values);return{getAsync:async key=>{reads++;readHook();return values.get(key);},set:async(key,value)=>{if(fail){fail=false;throw Error('write failed');}writes++;values.set(key,Buffer.from(value));}};},async transactionAsync(fn){const backups=[...maps].map(([k,v])=>[k,new Map(v)]);try{return await fn();}catch(e){for(const [k,v]of backups){maps.get(k).clear();for(const [a,b]of v)maps.get(k).set(a,b);}throw e;}}};
- const args={Buffer,rollingRetainedClass:retainedContractClass,rollingRegisteredBytes:sameRegisteredBytes,contractArtifactToBuffer:value=>{serializations++;return serialize(value);},getContractClassFromArtifact:async()=>{derivations++;return classValue();},FunctionType:{PRIVATE:'private'},allToCompletion:values=>Promise.all(values),FunctionSelector:{fromNameAndParameters:async name=>{selectorCalls++;return {toString:()=>name};}},numToUInt8:n=>n,serializeToBuffer:(...values)=>serialize(values),SerializableContractInstancePreimage:class{constructor(value){this.value=value;}toBuffer(){return serialize(this.value);}}};
+ const args={Buffer,Fr,rollingCreateArtifactSerializer:createStartupArtifactSerializer,rollingRetainedClass:retainedContractClass,rollingRegisteredBytes:sameRegisteredBytes,contractArtifactToBuffer:value=>{serializations++;return serialize(value);},getContractClassFromArtifact:async()=>{derivations++;return classValue();},FunctionType:{PRIVATE:'private'},allToCompletion:values=>Promise.all(values),FunctionSelector:{fromNameAndParameters:async name=>{selectorCalls++;return {toString:()=>name};}},numToUInt8:n=>n,serializeToBuffer:(...values)=>serialize(values),SerializableContractInstancePreimage:class{constructor(value){this.value=value;}toBuffer(){return serialize(this.value);}}};
  const ContractStore=Function(...Object.keys(args),source+'\nreturn ContractStore;')(...Object.values(args));
  return {maps,create:()=>new ContractStore(kv),counts:()=>({derivations,writes}),selectorCalls:()=>selectorCalls,serializations:()=>serializations,reads:()=>reads,onRead:fn=>{readHook=fn;},fail:()=>{fail=true;}};
 }
@@ -208,4 +209,14 @@ test('mutation during stored reads rejects without poisoning the authenticated p
  assert.deepEqual(f.maps.get('contract_artifacts').get('class'),original);
  f.onRead(()=>{});artifact.utility='original';const before=f.serializations(),beforeReads=f.reads();await store.addContractArtifact(artifact);
  assert.equal(f.serializations()-before,2);assert.equal(f.reads()-beforeReads,2,'failed publication did not install the memory cache');assert.equal(f.counts().writes,2);
+});
+test('fixed Board and fee registration subspans survive sequential registration',async()=>{
+ for(const name of ['RollingBoard','PrivateFPC']){
+  const artifact={name,functions:[]},f=contractStoreFixture();await rememberContractClass(artifact,serialize(artifact),classValue(),serialize);
+  await f.create().addContractArtifact(artifact);
+ }
+ for(const role of ['board','fee'])for(const part of ['serialize','class-cache','stored-read','stored-write']){
+  const entries=performance.getEntriesByName('rolling.proof.native.phase.registration-'+role+'-'+part);
+  assert.equal(entries.length,1);assert(Number.isFinite(entries[0].duration)&&entries[0].duration>=0);assert.equal(entries[0].detail,null);
+ }
 });

@@ -36,13 +36,20 @@ export function efficientPxeStartup(original,name){
   source=replace(source,'const initialBlockHash = (await node.getBlock(BlockNumber.ZERO))?.hash ?? GENESIS_BLOCK_HEADER_HASH;',`const rollingStartup=rollingConstruction?rollingCreationStartup(rollingConstruction,node):undefined;
         const initialBlockHash = rollingStartup ? rollingStartup.initialBlockHash : (await node.getBlock(BlockNumber.ZERO))?.hash ?? GENESIS_BLOCK_HEADER_HASH;`);
  }else if(name.endsWith('/storage/contract_store/contract_store.js')){
-  source="import {retainedContractClass as rollingRetainedClass,sameRegisteredBytes as rollingRegisteredBytes} from 'rolling:pxe-startup';\n"+source;
-  source+=`\nconst rollingRegistrationSpan=${beginProofSpan.toString()};
-function rollingRegistrationBytes(artifact){const finish=rollingRegistrationSpan('native.phase.registration-serialize');try{return contractArtifactToBuffer(artifact);}finally{finish();}}
-async function rollingRegistrationRead(stage,operation){const finish=rollingRegistrationSpan(stage);try{return await operation();}finally{finish();}}\n`;
+  source="import {retainedContractClass as rollingRetainedClass,sameRegisteredBytes as rollingRegisteredBytes,createStartupArtifactSerializer as rollingCreateArtifactSerializer} from 'rolling:pxe-startup';\n"+source;
+  source+=`\nconst rollingRegistrationBaseSpan=${beginProofSpan.toString()};
+function rollingRegistrationSpan(stage,artifact){
+ let role;try{const name=Object.getOwnPropertyDescriptor(artifact,'name')?.value;role=name==='RollingBoard'?'board':name==='PrivateFPC'?'fee':undefined;}catch{}
+ const finish=rollingRegistrationBaseSpan(stage);
+ const finishRole=role?rollingRegistrationBaseSpan(stage.replace('registration-','registration-'+role+'-')):()=>{};
+ return ()=>{finish();finishRole();};
+}
+const rollingArtifactToBuffer=rollingCreateArtifactSerializer(contractArtifactToBuffer,Buffer,Fr);
+function rollingRegistrationBytes(artifact){const finish=rollingRegistrationSpan('native.phase.registration-serialize',artifact);try{return rollingArtifactToBuffer(artifact);}finally{finish();}}
+async function rollingRegistrationRead(stage,operation,artifact){const finish=rollingRegistrationSpan(stage,artifact);try{return await operation();}finally{finish();}}\n`;
   source=replace(source,'const contractClass = contractClassWithIdAndPreimage ?? await getContractClassFromArtifact(contract);',`const artifactBytes = rollingRegistrationBytes(contract);
-        const rollingCachedClass = contractClassWithIdAndPreimage ? undefined : await rollingRegistrationRead('native.phase.registration-class-cache',()=>rollingRetainedClass(contract,artifactBytes));
-        const contractClass = contractClassWithIdAndPreimage ?? rollingCachedClass ?? await rollingRegistrationRead('native.phase.registration-class-derive',()=>getContractClassFromArtifact(contract));
+        const rollingCachedClass = contractClassWithIdAndPreimage ? undefined : await rollingRegistrationRead('native.phase.registration-class-cache',()=>rollingRetainedClass(contract,artifactBytes),contract);
+        const contractClass = contractClassWithIdAndPreimage ?? rollingCachedClass ?? await rollingRegistrationRead('native.phase.registration-class-derive',()=>getContractClassFromArtifact(contract),contract);
         // A memo hit authenticates the original snapshot, including utility code.
         // Store that same snapshot/class; the final fence still rejects mutation.
         if(!rollingCachedClass && !rollingRegistrationBytes(contract).equals(artifactBytes))throw Error('PXE artifact changed during registration');`);
@@ -65,12 +72,12 @@ async function rollingRegistrationRead(stage,operation){const finish=rollingRegi
         });`, `const classBytes = new SerializableContractClassData(contractClass).toBuffer();
         const [storedArtifact,storedClass] = await rollingRegistrationRead('native.phase.registration-stored-read',()=>this.#store.transactionAsync(async ()=>[
             await this.#contractArtifacts.getAsync(key),await this.#contractClassData.getAsync(key)
-        ]));
+        ]),contract);
         if (!rollingRegisteredBytes(artifactBytes,classBytes,storedArtifact,storedClass)) {
             await rollingRegistrationRead('native.phase.registration-stored-write',()=>this.#store.transactionAsync(async ()=>{
                 await this.#contractArtifacts.set(key,artifactBytes);
                 await this.#contractClassData.set(key,classBytes);
-            }));
+            }),contract);
         }
         if(!rollingRegistrationBytes(contract).equals(artifactBytes))throw Error('PXE artifact changed during registration');
         this.#contractArtifactCache.set(key, contract);`);
@@ -78,11 +85,13 @@ async function rollingRegistrationRead(stage,operation){const finish=rollingRegi
             const stored=await this.#contractInstances.getAsync(key);
             if (!stored || !bytes.equals(stored)) await this.#contractInstances.set(key,bytes);`);
  }else if(name.endsWith('/contract/contract_class.js')){
-  source="import {retainedContractClass as rollingRetainedClass,rememberContractClass as rollingRememberClass,forgetContractClass as rollingForgetClass} from 'rolling:pxe-startup';\n"+source;
+  source="import {retainedContractClass as rollingRetainedClass,rememberContractClass as rollingRememberClass,forgetContractClass as rollingForgetClass,createStartupArtifactSerializer as rollingCreateArtifactSerializer} from 'rolling:pxe-startup';\n"+source;
   source=replace(source,"import { FunctionSelector, FunctionType } from '../abi/index.js';","import { FunctionSelector, FunctionType, contractArtifactToBuffer } from '../abi/index.js';");
+  source="import { Fr } from '@aztec-labs/foundation/curves/bn254';\n"+source;
+  source+=`\nconst rollingArtifactToBuffer=rollingCreateArtifactSerializer(contractArtifactToBuffer,Buffer,Fr);\n`;
   source=replace(source,'export async function getContractClassFromArtifact(artifact) {',`export async function getContractClassFromArtifact(artifact) {
-    const rollingBytes=contractArtifactToBuffer(artifact),rollingCached=await rollingRetainedClass(artifact,rollingBytes);
-    if(rollingCached){if(!contractArtifactToBuffer(artifact).equals(rollingBytes)){rollingForgetClass(artifact);throw Error('PXE artifact changed during class reuse');}return rollingCached;}`);
+    const rollingBytes=rollingArtifactToBuffer(artifact),rollingCached=await rollingRetainedClass(artifact,rollingBytes);
+    if(rollingCached){if(!rollingArtifactToBuffer(artifact).equals(rollingBytes)){rollingForgetClass(artifact);throw Error('PXE artifact changed during class reuse');}return rollingCached;}`);
   source=replace(source,`return {
         ...contractClass,
         ...await computeContractClassIdWithPreimage(contractClass)
@@ -90,9 +99,9 @@ async function rollingRegistrationRead(stage,operation){const finish=rollingRegi
         ...contractClass,
         ...await computeContractClassIdWithPreimage(contractClass)
     };
-    if(!contractArtifactToBuffer(artifact).equals(rollingBytes))throw Error('PXE artifact changed during class derivation');
-    await rollingRememberClass(artifact,rollingBytes,rollingDerived,contractArtifactToBuffer);
-    if(!contractArtifactToBuffer(artifact).equals(rollingBytes)){rollingForgetClass(artifact);throw Error('PXE artifact changed during class derivation');}
+    if(!rollingArtifactToBuffer(artifact).equals(rollingBytes))throw Error('PXE artifact changed during class derivation');
+    await rollingRememberClass(artifact,rollingBytes,rollingDerived,rollingArtifactToBuffer);
+    if(!rollingArtifactToBuffer(artifact).equals(rollingBytes)){rollingForgetClass(artifact);throw Error('PXE artifact changed during class derivation');}
     return rollingDerived;`);
  }else throw Error('PXE startup input not supported');
  return source;
