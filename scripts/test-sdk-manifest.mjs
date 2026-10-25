@@ -32,6 +32,9 @@ function fixture(t) {
   const read = name => fs.readFileSync(path.join(root, name));
   const inputs = {
     'scripts/check-transform-bindings.mjs':'// fixture binding verifier',
+    'scripts/native-wasm-assets.mjs':'// fixture native wasm binding',
+    'node_modules/@aztec-foundation/noir-acvm_js/web/acvm_js.js':'// fixture acvm loader',
+    'node_modules/@aztec-foundation/noir-noirc_abi/web/noirc_abi_wasm.js':'// fixture abi loader',
     'scripts/pxe-log-projection.mjs':fs.readFileSync(new URL('./pxe-log-projection.mjs',import.meta.url),'utf8'),
     'node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js':fs.readFileSync(new URL('../node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js',import.meta.url),'utf8'),
     'scripts/pxe-sync-snapshot.mjs':'// fixture sync transform',
@@ -129,6 +132,8 @@ for (const [label, filename, error] of [
   ['PXE schema source', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js', /SDK input changed/],
   ['imported dependency source', 'node_modules/fixture-module/index.js', /SDK input changed/],
   ['toolchain helper', 'scripts/toolchain.mjs', /SDK input changed/],
+  ['native WASM binding', 'scripts/native-wasm-assets.mjs', /SDK input changed/],
+  ['native WASM loader', 'node_modules/@aztec-foundation/noir-acvm_js/web/acvm_js.js', /SDK input changed/],
   ['runtime asset source', 'node_modules/@aztec-foundation/noir-acvm_js/web/acvm_js_bg.wasm', /SDK input changed/],
   ['bundle output', '.build/sdk/aztec_bundle.js', /SDK output changed/],
   ['browser output', '.build/sdk/aztec_browser.js', /SDK output changed/],

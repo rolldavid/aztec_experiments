@@ -4,8 +4,8 @@ import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {webcrypto,createHash} from 'node:crypto';
 const source=await readFile(new URL('./wallet-cache-worker.mjs',import.meta.url),'utf8');
-function fixture({body='public sdk',quota=false,holdPut}={}){
- const handlers={},saved=new Map(),lifetimes=[];let requests=0;
+function fixture({body='public sdk',quota=false,holdPut,saved=new Map()}={}){
+ const handlers={},lifetimes=[];let requests=0;
  const cache={match:async key=>saved.get(key)?.clone(),put:async(key,value)=>{if(holdPut)await holdPut;if(quota)throw Error('Quota');saved.set(key,value);},keys:async()=>[...saved.keys()].map(url=>({url})),delete:async({url})=>saved.delete(url)};
  vm.runInNewContext(source,{self:{location:{origin:'https://board.test'},addEventListener:(name,handler)=>handlers[name]=handler},URL,Headers,Response,Uint8Array,performance,crypto:webcrypto,caches:{open:async()=>cache},fetch:async request=>{requests++;const r=new Response(body);Object.defineProperty(r,'url',{value:request.url});return r;}});
  return {saved,settle:()=>Promise.allSettled(lifetimes),get requests(){return requests;},request(path,options={}){let result;handlers.fetch({request:new Request('https://board.test'+path,options),respondWith:p=>result=p,waitUntil:p=>lifetimes.push(p)});return result;}};
@@ -38,4 +38,18 @@ test('verified bytes return before cache writes and concurrent callers still sha
  const first=await f.request(path);assert.equal(await first.text(),'public sdk');assert.match(first.headers.get('server-timing'),/^rolling-asset-miss;/);assert.equal(f.saved.size,0);
  const second=await f.request(path);assert.equal(await second.text(),'public sdk');assert.equal(f.requests,1);release();await f.settle();
  const cached=await f.request(path);assert.match(cached.headers.get('server-timing'),/^rolling-asset-hit;/);assert.equal(f.requests,1);
+});
+
+for(const name of ['acvm_js_bg.wasm','noirc_abi_wasm_bg.wasm'])test('verified '+name+' persists across worker lifetimes without another download',async()=>{
+ const body=new Uint8Array([0,97,115,109,1,0,0,0]),path='/wallet/'+name+'?sha256='+hash(body),first=fixture({body});
+ const response=await first.request(path);assert.deepEqual(new Uint8Array(await response.arrayBuffer()),body);await first.settle();assert.equal(first.requests,1);
+ const next=fixture({body:'must not fetch',saved:first.saved}),cached=await next.request(path);
+ assert.deepEqual(new Uint8Array(await cached.arrayBuffer()),body);assert.equal(next.requests,0);assert.match(cached.headers.get('server-timing'),/^rolling-asset-hit;/);
+ assert.equal((await next.request('/wallet/'+name+'?sha256='+'0'.repeat(64))).type,'error');await next.settle();assert.equal(next.saved.size,1);
+});
+test('only exact content-addressed native WASM paths are cached',async()=>{
+ const f=fixture(),suffix='?sha256='+hash('public sdk');
+ for(const path of ['/wallet/unknown.wasm','/wallet/sqlite3.wasm','/crs/acvm_js_bg.wasm'])assert.equal(f.request(path+suffix),undefined);
+ assert.equal(f.request('/wallet/acvm_js_bg.wasm'),undefined);assert.equal(f.request('/wallet/acvm_js_bg.wasm'+suffix+'&extra=1'),undefined);
+ const body=new Uint8Array(2*1024*1024+1),large=fixture({body});assert.equal((await large.request('/wallet/noirc_abi_wasm_bg.wasm?sha256='+hash(body))).type,'error');await large.settle();assert.equal(large.saved.size,0);
 });

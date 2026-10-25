@@ -1,5 +1,6 @@
 import {efficientPxeStartup,PXE_STARTUP_PINS} from './pxe-startup.mjs';
 import {assertTransformBindings} from './check-transform-bindings.mjs';
+import {prepareNativeWasmAssets,relocateNativeWasm,verifyNativeWasmCopy} from './native-wasm-assets.mjs';
 import {BB_WORKER_TIMING_PINS,instrumentBrowserWorker} from './bb-worker-timings.mjs';
 import {selectedNoteWitnesses,SELECTED_NOTE_PINS} from './selected-note-witnesses.mjs';
 import {efficientKernelWitnessWork,KERNEL_WORK_PINS} from './kernel-witness-work.mjs';
@@ -42,6 +43,7 @@ await fs.mkdir(out, { recursive: true });
 
 // Patch only URL relocation at pinned source boundaries. Actual upstream worker
 // entrypoints are built separately, preserving their initialization and exports.
+const nativeWasmAssets=await prepareNativeWasmAssets(root);
 const relocations = new Map([
   [`${bb}/barretenberg_wasm_main/factory/browser/index.js`, ['./main.worker.js', './bb-main.worker.js']],
   [`${bb}/barretenberg_wasm_thread/factory/browser/index.js`, ['./thread.worker.js', './bb-thread.worker.js']],
@@ -54,6 +56,10 @@ const relocationPlugin = {
     builder.onResolve({filter:/^rolling:pxe-startup$/},()=>({path:path.join(root,'shared/pxe-startup-cache.mjs')}));
     builder.onLoad({ filter: /\.js$/ }, async ({ path: filename }) => {
       const relative = path.relative(root, filename).split(path.sep).join('/');
+      if(nativeWasmAssets.has(relative)){
+        const original=await fs.readFile(filename,'utf8');
+        return {contents:assertTransformBindings(original,relocateNativeWasm(original,nativeWasmAssets.get(relative)),relative),loader:'js'};
+      }
       const transform = Object.hasOwn(PXE_STARTUP_PINS,relative) ? source => efficientPxeStartup(source,relative)
         : Object.hasOwn(BB_WORKER_TIMING_PINS,relative) ? source => instrumentBrowserWorker(source,relative)
         : Object.hasOwn(SELECTED_NOTE_PINS,relative) ? source => selectedNoteWitnesses(source,relative)
@@ -153,8 +159,12 @@ const assets = [
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3.wasm', 'sqlite3.wasm'],
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js', 'sqlite3-opfs-async-proxy.js'],
 ];
-for (const [src, dest] of assets) await fs.copyFile(path.join(root, src), path.join(out, dest));
-const inputs = [...new Set(['scripts/pxe-startup.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS),'shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
+for (const [src, dest] of assets) {
+  const record=[...nativeWasmAssets.values()].find(value=>value.input===src);
+  if(record){const bytes=await fs.readFile(path.join(root,src));verifyNativeWasmCopy(bytes,record);await fs.writeFile(path.join(out,dest),bytes);}
+  else await fs.copyFile(path.join(root,src),path.join(out,dest));
+}
+const inputs = [...new Set(['scripts/native-wasm-assets.mjs',...nativeWasmAssets.keys(),'scripts/pxe-startup.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS),'shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
   ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-sync-snapshot.mjs', 'scripts/pxe-validated-prove.mjs', 'scripts/check-transform-bindings.mjs', 'shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/like-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
