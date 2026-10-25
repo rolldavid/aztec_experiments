@@ -1,5 +1,5 @@
 import {BlockHash} from '@aztec-labs/stdlib/block';
-import {gunzip as decompressGzip} from 'node:zlib';
+import {gunzip as decompressGzip,gzip as compressGzip} from 'node:zlib';
 import {promisify} from 'node:util';
 import {getTrustedNodeFailureDiagnostic,getTrustedNodeCanonicalBlock} from '../shared/trusted-private-node.mjs';
 import {createSafeJsonRpcClient} from '@aztec-labs/foundation/json-rpc/client';
@@ -10,7 +10,24 @@ import {getVersioningResponseHandler} from '@aztec-labs/stdlib/versioning';
 import {COMPACT_GATEWAY_ROUTE,COMPACT_NATIVE_ROUTE,COMPACT_TRANSPORT_LIMITS,validateCompactTier,validateCompactRequest,readCompactResponse} from '../shared/rolling/compact-client.mjs';
 
 export const QUERY_LIMITS = Object.freeze({bodyBytes: 8 * 1024 ** 2, responseBytes: 32 * 1024 ** 2, batch: 8, concurrent: 8, timeoutMs: 10000});
-const gunzip=promisify(decompressGzip);
+const gunzip=promisify(decompressGzip),gzip=promisify(compressGzip);
+// Standard content negotiation only: no alternate RPC representation or cache.
+function jsonEncoding(header,size){
+ if(typeof header!=='string'||header.trim()==='')return 'identity';
+ const weights=new Map();
+ for(const part of header.split(',')){
+  const [name,...parameters]=part.trim().toLowerCase().split(';').map(value=>value.trim());
+  if(!name)continue;
+  const valid=parameters.length===0||parameters.length===1&&/^q=(?:0(?:\.[0-9]{0,3})?|1(?:\.0{0,3})?)$/.test(parameters[0]);
+  const weight=valid?(parameters.length?Number(parameters[0].slice(2)):1):0;
+  // Conflicting duplicates are conservatively interpreted as least permissive.
+  weights.set(name,Math.min(weights.get(name)??1,weight));
+ }
+ const compressed=weights.get('gzip')??weights.get('*')??0;
+ const identity=weights.get('identity')??(weights.get('*')===0?0:1);
+ if(compressed>0&&(size>1024||identity===0)&&(!weights.has('identity')||compressed>=identity))return 'gzip';
+ return identity>0?'identity':null;
+}
 // Fixed rc3 deployment/PXE surface. Schema additions are not automatically
 // exposed to an authenticated operator. sendTx is an effect, not a read.
 export const OPERATOR_NODE_METHODS = Object.freeze([
@@ -223,6 +240,8 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
     if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] ?? '')) {reply(415, errorResponse(null)); return;}
     const encoding=req.headers['content-encoding'];
     if(encoding!==undefined&&encoding!=='gzip'){reply(415,errorResponse(null));return;}
+    // Reject impossible response negotiation before dispatch, especially sendTx.
+    if(jsonEncoding(req.headers['accept-encoding'],1025)===null){res.setHeader('Vary','Accept-Encoding');reply(406,errorResponse(null));return;}
     if (active >= QUERY_LIMITS.concurrent) {reply(429, errorResponse(null)); return;}
     active++;
     try {
@@ -337,8 +356,14 @@ export function createPrivateQueryWithInspector({queryNode, chainId, rollupVersi
         }
       }catch{reply(503,errorResponse(null));return;}}
       const encoded = jsonStringify(batch ? results : results[0]);
-      if (Buffer.byteLength(encoded) > QUERY_LIMITS.responseBytes) {reply(502, errorResponse(null)); return;}
-      res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(encoded);
+      const responseSize=Buffer.byteLength(encoded);
+      if (responseSize > QUERY_LIMITS.responseBytes) {reply(502, errorResponse(null)); return;}
+      const responseEncoding=jsonEncoding(req.headers['accept-encoding'],responseSize);
+      if(responseEncoding===null){res.setHeader('Vary','Accept-Encoding');reply(406,errorResponse(null));return;}
+      // Bound decoded bytes before compression, retaining admission until the
+      // native asynchronous compressor completes. Small replies stay unencoded.
+      const compressed=responseEncoding==='gzip'?await gzip(encoded,{level:1}):null;
+      res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Vary':'Accept-Encoding',...(compressed?{'Content-Encoding':'gzip'}:{})}); res.end(compressed??encoded);
     } catch {if (!res.writableEnded) reply(400, errorResponse(null));}
     finally {active--;}
   };

@@ -1,6 +1,6 @@
 // Development fakes/local HTTP only: these do not qualify node privacy or sync.
 import {createHash} from 'node:crypto';
-import {gzipSync} from 'node:zlib';
+import {gzipSync,gunzipSync} from 'node:zlib';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {BlockHeader,GlobalVariables} from '@aztec-labs/stdlib/tx';
@@ -659,4 +659,27 @@ for(const change of ['regress','reorg','prune'])test('anchored RPC: proposed esc
  Object.assign(f.ready,{latestBlockNumber:8,latestBlockHash:historyHash(8)});
  const response=await f.post(call('aztec_findLeavesIndexes',[{number:8,hash:historyHash(8)},MerkleTreeId.NULLIFIER_TREE,[historyHash(19)]]));
  assert.equal(response.status,503);assert(!f.operations.includes('findLeavesIndexes'));
+});
+
+const rawNodePost=(url,body,encoding)=>new Promise((resolve,reject)=>{
+ const req=http.request(url+'/v1/node',{method:'POST',headers:{'content-type':'application/json',...(encoding===undefined?{}:{'accept-encoding':encoding})}},res=>{
+  const chunks=[];res.on('data',chunk=>chunks.push(chunk));res.on('error',reject);res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,body:Buffer.concat(chunks)}));
+ });req.on('error',reject);req.end(JSON.stringify(body));
+});
+for(const [encoding,compressed] of [[undefined,false],['',false],['gzip',true],['GZip;Q=0.5',true],['br, gzip;q=0.8',true],['gzip;q=0',false],['*;q=0.5',true],['gzip;q=0, *;q=1',false],['gzip;q=0.4, identity;q=0.8',false],['gzip;q=0.8, identity;q=0.4',true],['gzip;q=bogus',false],['gzip;q=1.1',false],['gzip;q=0.1234',false],['gzip;q=1, gzip;q=0',false],['gzip;q=0.5,*;q=0',true]])test('large native JSON response negotiates '+String(encoding),async t=>{
+ const f=await historyFixture(t),body=call('aztec_getBlockData',[6]);const identity=await rawNodePost(f.url,body,'identity');const response=await rawNodePost(f.url,body,encoding);
+ assert.equal(response.status,200);assert(identity.body.length>1024);assert.equal(response.headers['content-encoding'],compressed?'gzip':undefined);assert.equal(response.headers.vary,'Accept-Encoding');assert.equal(response.headers['cache-control'],'no-store');assert.equal(response.headers['content-type'],'application/json');
+ assert.deepEqual(compressed?gunzipSync(response.body):response.body,identity.body);if(compressed)assert(response.body.length<identity.body.length);
+});
+test('small native replies avoid compression unless identity explicitly forbidden; unacceptable encodings return406',async t=>{
+ const f=await fixture(t);for(const [encoding,expected]of [['gzip',undefined],['gzip, identity;q=0','gzip']]){
+  const response=await rawNodePost(f.url,call(),encoding);assert.equal(response.status,200);assert.equal(response.headers['content-encoding'],expected);assert.deepEqual(JSON.parse((expected?gunzipSync(response.body):response.body).toString()),{jsonrpc:'2.0',id:1,result:7});
+ }
+ for(const encoding of ['identity;q=0','*;q=0','gzip;q=0,identity;q=0','br,identity;q=0']){const before=f.received.length;const response=await rawNodePost(f.url,call(),encoding);assert.equal(f.received.length,before,'unacceptable negotiation dispatches nothing');assert.equal(response.status,406);assert.equal(response.headers.vary,'Accept-Encoding');assert.equal(response.headers['content-encoding'],undefined);}
+});
+test('gzip negotiation cannot bypass final canonical rejection or decoded upstream response limit',async t=>{
+ const fork=await historyFixture(t,{change:({method,result,final})=>method==='getBlockData'&&final?{...result,blockHash:historyHash(99)}:result});
+ const response=await rawNodePost(fork.url,call('aztec_getBlockData',[6]),'gzip');assert.equal(response.status,503);assert.equal(response.headers['content-encoding'],undefined);
+ const huge=await fixture(t,{upstreamReply:(_req,res)=>{res.setHeader('content-type','application/json');res.end(' '.repeat(QUERY_LIMITS.responseBytes+1));}});
+ const rejected=await rawNodePost(huge.url,call(),'gzip');assert.equal(rejected.headers['content-encoding'],undefined);const value=JSON.parse(rejected.body.toString());assert(value.error);assert(!Object.hasOwn(value,'result'));assert.equal(huge.received.length,1);
 });
