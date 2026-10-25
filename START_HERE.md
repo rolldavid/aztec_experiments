@@ -2,6 +2,14 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Published release — 25 October, bbf76d92
+
+UI, application, Bok and prover now run source `bbf76d92c0520f3e2192887b555b3a62d2fa4dcc`. Follows, bookmarks and conversation read state are off-chain; their obsolete contract paths have been removed. The replacement Bok portal uses the explicitly authorized deployment-operator assertion on Sepolia, avoiding an epoch-proof wait during deployment. Withdrawals still require native Outbox proofs.
+
+A live Follow board click updated the visible button in 11.8ms. The two saved-items requests returned HTTP200; the second response finished 1.041s after the click. Reload retained Unfollow board. This measures one warm-account follow, not cold sign-in or cross-browser restoration. The overall 50% goal remains incomplete.
+
+The next contract deployment must merge signup funding and Bok top-ups into one router and delete the standalone BokCreditRouter paths. The reviewed single-router draft and private-tips work remain separate from this published release.
+
 ## Posting performance acceptance — 25 October
 
 **UI source `74c2142c` is published and pushed. Two current-release real-proof posts,228 and600characters, took11.095s and11.894s from clicking Post to rendering in the feed, including proving, submission and verified Aztec inclusion.** Both automatically checkpointed without refresh. Complete preparation836/814ms; fee ready from click769/755ms; full private execution through kernel completion1243/1218ms; encoding through upload acceptance848/810ms. Independent review confirms both observed cases meet every target. This is measured acceptance, not a guaranteed ceiling on external network inclusion. Earlier13.859s/24.654s/27.190s/28.189s results remain in evidence.
@@ -35,24 +43,22 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/b7870f5c0d967a4f0e0da00e049c2829d8931313` |
-| Browser SDK | Verified3de SDK and b787 funding/profile wallet runtime |
-| Running app | `/opt/rolling-app/releases/93954017009d4d9b53529d09956347682a1069ea` |
-| Next-start app | `/opt/rolling-app/releases/ui-b7870f5c0d96` |
-| Prover | `/opt/board-prover/releases/node-gzip-17121ddedb9129828c226b1de45899788b06422a` |
-| Bok | `/opt/rolling-bok/releases/repair-30fbdee60ddc4a094d9f5b7c87d6f1255d4fd753` |
+| Browser UI | `/opt/rolling-ui/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
+| Running application | `/opt/rolling-app/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
+| Prover | `/opt/board-prover/releases/fresh-board-bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
+| Bok | `/opt/rolling-bok/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 
 | Contract | Current address |
 | --- | --- |
-| Board | `0x19ee03e617512ca48271634629d9b48e815ab1ba46c3eef3b7edaafc345d7be6` |
+| Board | `0x20283bc7ab7d5bd5dd325a5aab82d8f9b3c62b79328c2e8417e119b66e789028` |
 | Private fee contract | `0x2fff4f1bed0f240982804499d6693530343bd3f9236fe82851fb7d46be990b3c` |
-| Bok | `0x1011f5939cca40b7e3409aecc7aa38cd8cb8f587ed5ef3445b38c75ec66a4ab7` |
-| Posting deposit portal | `0x237ce50c8418c812d564b34be84f0174fd4072a2` |
-| Signup payment router | `0x01ec53587bafbeb8d4a6ae8d800744ea51f83c9e` |
-| Bok portal | `0xb83f9165d6535da5a6c5b1b1f22279302452d1eb` |
-| Bok credit router | `0x5da2789703de37bf79ce786f65d795a35d57549a` |
+| Bok | `0x0319568b28b770c8ae772be9ba0f40eaaf21fdc9b5910d6284cce317ab000428` |
+| Posting deposit portal | `0xa50c167ddd8f87f2e20a7f3206cf2077db0a4d0d` |
+| Signup payment router | `0x5d51072ce94eb0eaba3e1f2c4516fc0ad8b33a68` |
+| Bok portal | `0x5055956c605555c348cf4bdbd978bbed34eac95a` |
+| Bok credit router | `0x97a013a22c4472a16d6a8693e3883ac09a6d1ffa` |
 
-Canonical Bok plugin ID is `0x00000000000000000000000000000000000000000000000000000000626f6b03`. The9395 deployment uses owner-only note delivery; current browser funding, claim and worker reply have been exercised against this contract.
+Canonical Bok plugin ID is `0x0000000000000000000000000000000000000000000000000000000000626f6b`. This fresh contract scope has replaced the old test board; previous performance results are historical until repeated on the current scope.
 
 Owner-only discovery is deployed: unconstrained AES256-GCM delivery with native note authorization/nullification and zero extra notes or logs. The rejected counter-note journal must never ship. Empty-store restoration and partial-refund behavior have focused native checks. The signature-derived account root remains quantum-vulnerable as previously disclosed; this change does not claim post-quantum confidentiality.
 
@@ -92,4 +98,4 @@ Bok now uses one hosting policy for generation guidance, public headers and mand
 
 Core disk cleanup complete:1.179GB→5.814GB free. Removed obsolete transfer archives, unreferenced assets/generated SDK outputs,80 stopped retired containers and one unused image; running services/containers unchanged. New publisher prunes obsolete generated SDK outputs after activation. Node launcher now removes exact stopped container without volume deletion instead of retaining every retired container; live launcher+attestor SHA pin amended successfully, no node restart. Do not restart broad disk cleanup.
 
-Current measured signup40.797s, bookmark15.068s, inverse14.951s. Goal50percent across all other flows remains active; signup not yet passing. Next sourcecd798d9e reviewed/tested, publishing. One retained build and one browser tab.
+Last measured pre-release signup40.797s, bookmark15.068s, inverse14.951s. Published bbf76 removes on-chain saved-item transactions. Goal50percent across all other flows remains active; signup not yet passing. One retained build and one browser tab.

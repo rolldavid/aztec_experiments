@@ -1,0 +1,26 @@
+{
+  "source": "bbf76d92c0520f3e2192887b555b3a62d2fa4dcc",
+  "recordedAt": "2026-10-25T11:51:28.308124+00:00",
+  "flow": "follow-board",
+  "environment": "published testnet, in-app browser, warm account",
+  "clickToVisibleMs": 11.799999952316284,
+  "resourceResponses": [
+    {
+      "startFromClickMs": 9.4249999523,
+      "durationMs": 523.914999961853,
+      "status": 200
+    },
+    {
+      "startFromClickMs": 538.0299999714,
+      "durationMs": 503.0349999666214,
+      "status": 200
+    }
+  ],
+  "lastResponseFromClickMs": 1041.064999938,
+  "reloadRetainedUnfollow": true,
+  "limits": [
+    "Response methods inferred from saved-items GET/PUT source sequence; resource timing does not record HTTP method.",
+    "No cross-browser restoration measurement.",
+    "This single result does not complete the all-flows performance goal."
+  ]
+}
