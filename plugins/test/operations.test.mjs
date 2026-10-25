@@ -1,3 +1,9 @@
+import {after} from 'node:test';
+import {BarretenbergSync} from '@aztec-foundation/bb.js';
+import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
+import {computeSiloedPublicInitializationNullifier} from '@aztec-labs/stdlib/hash';
+const constructorInitialization=await computeSiloedPublicInitializationNullifier(AztecAddress.fromBigIntUnsafe(3n));
+after(async()=>{await BarretenbergSync.destroySingleton();});
 import test from 'node:test';import assert from 'node:assert/strict';
 import {recordedTransaction} from '../operations.mjs';
 test('hosted billing CLI accepts only one local receipt command and leaves service invocation unchanged',async()=>{
@@ -106,7 +112,7 @@ function reconciliation(){
  const expected={version:2,address:field(3),deployer:field(4),originalContractClassId:field(5),currentContractClassId:field(5),salt:field(6),initializationHash:field(7),immutablesHash:field(0),storage:{board:field(1),operator:field(2),owner:field(4),l1_chain:field(31337),version:field(9)}};
  const record={...signed,phase:'submission-unknown',deployment:structuredClone(expected)};
  const receipt={txHash:signed.hash,status:'finalized',executionResult:'success',blockNumber:8,blockHash:field(8)};
- const effect={l2BlockHash:field(8),l2BlockNumber:8,data:{txHash:signed.hash,revertCode:{isOK:()=>true}}};
+ const effect={l2BlockHash:field(8),l2BlockNumber:8,data:{txHash:signed.hash,revertCode:{isOK:()=>true},nullifiers:[constructorInitialization]}};
  const reads={signed:async()=>true,receipt:async()=>receipt,effect:async()=>effect,block:async()=>({hash:field(8)}),head:async()=>({number:8,hash:field(8)}),instance:async()=>expected,address:async()=>expected.address,storage:async(_,key)=>expected.storage[key]};
  return {record,expected,receipt,effect,reads,development:false};
 }
@@ -118,9 +124,9 @@ test('old deployment remains reconcilable after historical world-state pruning',
  const f=reconciliation(),before=JSON.stringify(f.record),seen=[];
  f.reads.head=async tag=>{assert.equal(tag,'checkpointed');return {number:100,hash:field(100)};};
  f.reads.block=async number=>({hash:field(number)});
- f.reads.instance=async(_,anchor)=>{seen.push(anchor.number);return f.expected;};
+ f.reads.instance=async(_,anchor)=>{seen.push(anchor.number);if(anchor.number===8)throw Error('Historical world-state pruned');return f.expected;};
  f.reads.storage=async(_,key,anchor)=>{assert.deepEqual(anchor,{number:100,hash:field(100)});return f.expected.storage[key];};
- assert.equal((await reconcileRollingOperation(f)).status,'succeeded');assert.deepEqual(seen,[8,100]);assert.equal(JSON.stringify(f.record),before);
+ assert.equal((await reconcileRollingOperation(f)).status,'succeeded');assert.deepEqual(seen,[100]);assert.equal(JSON.stringify(f.record),before);
 });
 test('current immutable anchor cannot predate deployment, change class, lose finality, or reorg',async()=>{
  for(const defect of ['older','missing','invalid','changed-class','changed-anchor','original-reorg']){
@@ -1001,4 +1007,18 @@ test('bootstrap SDK claim and witness preserve exact payer, amount, secret and l
  let reads=0;const node={getL1ToL2MessageMembershipWitness:async(tag,hash)=>{reads++;assert.equal(tag,'latest');assert.equal(hash.toString(),field(5));return [12n,{}];}};
  assert.equal((await getL1ToL2MessageWitness(node,new Fr(5)))[0],12n);assert.equal(reads,1);
  node.getL1ToL2MessageMembershipWitness=async()=>undefined;await assert.rejects(getL1ToL2MessageWitness(node,new Fr(5)),/No L1 to L2 message/);
+});
+
+test('constructor requires exact native public initializer in original canonical effect',async()=>{
+ const other=await computeSiloedPublicInitializationNullifier(AztecAddress.fromBigIntUnsafe(99n));
+ for(const nullifiers of [undefined,[],[other],[constructorInitialization,constructorInitialization]]){
+  const f=reconciliation();f.effect.data.nullifiers=nullifiers;let instanceReads=0;f.reads.instance=async()=>{instanceReads++;return f.expected;};
+  const before=JSON.stringify(f.record);assert.equal((await reconcileRollingOperation(f)).status,'unresolved');assert.equal(instanceReads,0);assert.equal(JSON.stringify(f.record),before);
+ }
+ const f=reconciliation();f.effect.data.nullifiers=[other,constructorInitialization];assert.equal((await reconcileRollingOperation(f)).status,'succeeded');
+});
+test('pruned constructor still rejects unavailable current instance and never falls back to old snapshot',async()=>{
+ const f=reconciliation(),seen=[];f.reads.head=async()=>({number:100,hash:field(100)});f.reads.block=async n=>({hash:field(n)});
+ f.reads.instance=async(_,anchor)=>{seen.push(anchor.number);throw Error('Current world-state unavailable');};
+ assert.equal((await reconcileRollingOperation(f)).status,'unresolved');assert.deepEqual(seen,[100]);
 });

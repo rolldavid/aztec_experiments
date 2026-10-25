@@ -4,6 +4,8 @@ import {constants as fsConstants} from 'node:fs';
 import {dirname} from 'node:path';
 import {randomBytes,createHash} from 'node:crypto';
 import {Semaphore} from '@aztec-labs/foundation/queue';
+import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
+import {computeSiloedPublicInitializationNullifier} from '@aztec-labs/stdlib/hash';
 
 /** Local operator input only. Never pass parser/OS messages or receipt contents
  * to a public service. The hash binds supplied evidence, not provider attestation. */
@@ -236,14 +238,17 @@ export async function reconcileRollingOperation({record,development,expected,rea
     for(const field of ['address','deployer','originalContractClassId','currentContractClassId','salt','initializationHash','immutablesHash'])if(String(instance?.[field])!==expected[field])return false;
     return instance.version===expected.version&&await reads.address(instance)===expected.address;
    };
-   if(!await matchesInstance(anchor))return unknown();
+   // The public initializer must belong to this exact canonical transaction.
+   // Its nullifier persists in the effect after historical world-state pruning.
+   const initialization=String(await computeSiloedPublicInitializationNullifier(AztecAddress.fromStringUnsafe(expected.address)));
+   if(!Array.isArray(effect.data.nullifiers)||effect.data.nullifiers.filter(value=>String(value)===initialization).length!==1)return unknown();
    // PublicImmutable constructor fields survive pruning of the deployment's world-state
    // snapshot. Bind their current value to a checkpointed instance and recheck that anchor;
    // transaction inclusion/effects remain bound to the original receipt above.
    const head=await reads.head('checkpointed');
    if(!Number.isSafeInteger(head?.number)||head.number<anchor.number||!/^0x[0-9a-f]{64}$/.test(String(head.hash)))return unknown();
    const immutableAnchor={number:head.number,hash:String(head.hash)};
-   if(immutableAnchor.number!==anchor.number||immutableAnchor.hash!==anchor.hash){if(!await matchesInstance(immutableAnchor))return unknown();}
+   if(!await matchesInstance(immutableAnchor))return unknown();
    for(const [field,value] of Object.entries(expected.storage))if(await reads.storage(expected.address,field,immutableAnchor)!==value)return unknown();
    if(String((await reads.block(immutableAnchor.number))?.hash)!==immutableAnchor.hash)return unknown();
   }
