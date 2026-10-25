@@ -85,7 +85,7 @@ function fixture(t) {
     const native=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
     inputs[name]=pin.sha256?restoreNativePxe(native,pin.path):native;
   }
-  for(const name of ['scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','shared/pxe-startup-cache.mjs'])inputs[name]=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
+  for(const name of ['scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs'])inputs[name]=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
   for(const name of Object.keys(PXE_STARTUP_PINS)){
     const source=fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
     inputs[name]=name.endsWith('/dest/pxe.js')?restoreNativePxe(source,'dest/pxe.js'):source;
@@ -309,7 +309,7 @@ for (const [section, name, file] of [
   assert.throws(() => checkSdk(f.root), /SDK path escapes its directory/);
 });
 
-for(const name of ['scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','shared/pxe-startup-cache.mjs',...Object.keys(PXE_STARTUP_PINS)])test('PXE startup input is mandatory: '+name,t=>{
+for(const name of ['scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS)])test('PXE startup input is mandatory: '+name,t=>{
  const f=fixture(t);delete f.manifest.inputs[name];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input|operation patch mismatch/);
 });
 for(const name of Object.keys(PXE_STARTUP_PINS))test('PXE startup native pin cannot be rebound: '+name,t=>{

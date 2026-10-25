@@ -93,11 +93,12 @@ export async function fundingUsdEstimate({ethers,provider,chainId,wei}){
 
 // One held account operation. These public reads never prepare custody or imply
 // an empty account; the native result remains the only signup decision.
-export async function prepareRollingFundingOpening({asset,readStatus,readAllocation,readRate,prepareQuote,guard}){
+export async function prepareRollingFundingOpening({asset,readStatus,readAllocation,readRate,prepareQuote,constructQuote,installQuote,guard}){
    await guard();if(!['ETH','USDC'].includes(asset))throw fail('ROLLING_FUNDING_INVALID');
+   const overlap=asset==='ETH'&&typeof constructQuote==='function'&&typeof installQuote==='function';
    const reads=await Promise.allSettled([
     readStatus,
-    readAllocation,
+    async()=>{const allocation=await readAllocation();return overlap?{allocation,token:await constructQuote(allocation)}:allocation;},
     readRate,
    ].map(read=>Promise.resolve().then(read)));
    await guard();if(reads[0].status==='rejected')throw reads[0].reason;
@@ -107,7 +108,10 @@ export async function prepareRollingFundingOpening({asset,readStatus,readAllocat
    if(status?.intent||!['fee-needed','collateral-pending'].includes(status?.status)||!Array.isArray(status.depositIds)||status.depositIds.length!==0)return {status};
    try{
     for(const result of reads.slice(1))if(result.status==='rejected')throw result.reason;
-    const quote=await prepareQuote(reads[1].value);await guard();
+    let quote;
+    if(overlap){const {allocation,token}=reads[1].value;quote=token===null?await prepareQuote(allocation):await installQuote(token);}
+    else quote=await prepareQuote(reads[1].value);
+    await guard();
     return {status,quote:asset==='USDC'?quote:Object.freeze({...quote,usdEstimate:usdAmount(reads[2].value,quote.breakdown.maximumTotalWei)})};
    }catch(quoteError){await guard();return {status,quoteError};}
 }
@@ -123,7 +127,9 @@ export function withRollingFundingLease(aggregate,{owner,locks,contextGuard}){
   return [method,(...args)=>{
    // Capture mutable caller data before waiting. Only confirm's presentation
    // callback is a capability; it stays local and retains its existing isolation.
-   const captured=method==='confirm'?args.map(value=>value===undefined?undefined:{onSubmitted:value.onSubmitted}):structuredClone(args);
+   // The opaque one-use quote token likewise stays local; its issuing aggregate
+   // authenticates identity in a WeakMap. It is never accepted over worker RPC.
+   const captured=method==='installPreparedQuote'?args.slice():method==='confirm'?args.map(value=>value===undefined?undefined:{onSubmitted:value.onSubmitted}):structuredClone(args);
    return locks.request(name,{mode:'exclusive'},async()=>{
     await contextGuard();const result=await call(...captured);await contextGuard();return result;
    });
@@ -187,7 +193,9 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
    return prepareRollingFundingOpening({asset,readStatus,guard,
     readAllocation:()=>timeFundingPreparation(onProgress,'allocation',()=>starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap:defaultPrivateFeeCap,provider:fundingProvider})),
     readRate:()=>asset==='USDC'?null:fundingUsdRate({ethers,provider:fundingProvider,chainId:network.chainId}),
-    prepareQuote:allocation=>aggregate.prepare(allocation)});
+    prepareQuote:allocation=>aggregate.prepare(allocation),
+    constructQuote:allocation=>aggregate.prepareReadOnly(allocation),
+    installQuote:token=>aggregate.installPreparedQuote(token)});
   },
   async prepareStarter({asset}){
    await guard();

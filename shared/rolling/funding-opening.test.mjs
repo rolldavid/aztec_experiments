@@ -17,3 +17,33 @@ for(const failed of ['native','allocation'])test('opening '+failed+' failure dra
 test('funded account survives irrelevant public quote failure without creating custody',async()=>{const f=fixture({status:'fee-ready',depositIds:['1']}),p=prepareRollingFundingOpening(f.options);f.allocation.reject(Error('gas'));f.finish();assert.equal((await p).status.status,'fee-ready');assert(!f.seen.includes('quote'));});
 test('account replacement after public reads prevents quote preparation',async()=>{const f=fixture(),p=prepareRollingFundingOpening(f.options);await tick();f.invalidate();f.finish();await assert.rejects(p,/owner changed/);assert(!f.seen.includes('quote'));});
 test('quote failure keeps actual connected status and preserves the original error',async()=>{const f=fixture(),error=Object.assign(Error('private'),{code:'AGGREGATE_LIQUIDITY_UNAVAILABLE'});f.options.prepareQuote=async()=>{throw error;};const p=prepareRollingFundingOpening(f.options);f.finish();assert.deepEqual(await p,{status:empty,quoteError:error});});
+
+function overlapFixture(status=empty){
+ const f=fixture(status),construction=defer(),token=Object.freeze({});
+ f.options.constructQuote=async allocation=>{f.seen.push('construct');assert.deepEqual(allocation,{amount:'200'});return construction.promise;};
+ f.options.installQuote=async actual=>{f.seen.push('install');assert.equal(actual,token);return {breakdown:{maximumTotalWei:'1000000000000000000'}};};
+ return {...f,construction,token};
+}
+test('opening overlaps readonly construction with held native status and installs only after both',async()=>{
+ const f=overlapFixture(),pending=prepareRollingFundingOpening(f.options);await tick();f.allocation.resolve({amount:'200'});f.rate.resolve({price:2000n,decimals:0});await tick();
+ assert(f.seen.includes('construct'));assert(!f.seen.includes('install'));f.construction.resolve(f.token);await tick();assert(!f.seen.includes('install'));
+ f.native.resolve(empty);assert.equal((await pending).quote.usdEstimate,'2000.00');assert.equal(f.seen.filter(x=>x==='install').length,1);assert(!f.seen.includes('quote'));
+});
+for(const status of [{status:'fee-ready',depositIds:['1']},{status:'recovering',intent:{intentId:'saved'}}])test('opening discards readonly construction for native '+status.status,async()=>{
+ const f=overlapFixture(status),pending=prepareRollingFundingOpening(f.options);f.finish();f.construction.resolve(f.token);
+ assert.deepEqual(await pending,{status});assert(f.seen.includes('construct'));assert(!f.seen.includes('install'));assert(!f.seen.includes('quote'));
+});
+for(const failed of ['native','construction'])test('opening '+failed+' failure drains the held other branch and never installs',async()=>{
+ const f=overlapFixture(),error=Error(failed);let settled=false;const pending=prepareRollingFundingOpening(f.options).finally(()=>{settled=true;});pending.catch(()=>{});
+ f.allocation.resolve({amount:'200'});f.rate.resolve(null);await tick();f[failed].reject(error);await tick();assert.equal(settled,false);assert(!f.seen.includes('install'));
+ if(failed==='native'){f.construction.resolve(f.token);await assert.rejects(pending,e=>e===error);}else{f.native.resolve(empty);assert.equal((await pending).quoteError,error);}
+ assert(!f.seen.includes('install'));
+});
+test('opening owner replacement after construction prevents install',async()=>{
+ const f=overlapFixture(),pending=prepareRollingFundingOpening(f.options);f.allocation.resolve({amount:'200'});f.rate.resolve(null);f.construction.resolve(f.token);await tick();f.invalidate();f.native.resolve(empty);
+ await assert.rejects(pending,/owner changed/);assert(!f.seen.includes('install'));
+});
+test('opening saved-custody fallback performs original preparation only after native eligibility',async()=>{
+ const f=overlapFixture(),pending=prepareRollingFundingOpening(f.options);f.allocation.resolve({amount:'200'});f.rate.resolve(null);f.construction.resolve(null);await tick();assert(!f.seen.includes('quote'));
+ f.native.resolve(empty);assert((await pending).quote);assert.equal(f.seen.filter(x=>x==='quote').length,1);assert(!f.seen.includes('install'));
+});

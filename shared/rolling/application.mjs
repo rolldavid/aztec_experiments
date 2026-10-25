@@ -1030,22 +1030,41 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(emptyOnly)check(exactData(options,['emptyOnly']).emptyOnly===true,'ROLLING_INVALID_ACTION');
       if(!session)return {status:'locked'};return exclusive(()=>fundingWorkflowState(emptyOnly));
     },
-    async readAccountStatus(){
+    async readAccountStatus(options){
+      const opening=options!==undefined;
+      if(opening)check(exactData(options,['opening']).opening===true,'ROLLING_INVALID_ACTION');
       if(!session)return {status:'locked'};
       return exclusive(()=>measure('account.status',async()=>{const workflow=await measure('account.status.workflow',()=>fundingWorkflowState(false,true));if(workflow.status==='recovering')return {...workflow,pendingWithdrawal:await pendingExitSummary()};
         const operation=getOperationScope(),context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
         await localGuard();
-        // Enqueue discovery first, then overlap independent public fee metadata.
-        // Fee utilities retain the same native queue behind this discovery.
+        const checkContext=async()=>{
+          await localGuard();
+          check(getOperationScope()===operation&&session.wallet===context.wallet&&context.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
+        };
+        const readIds=async(collateralOnly=false)=>{
+          if(operation?.synchronized===true){
+            await measure('account.status.discovery-queued',()=>context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids',...(collateralOnly?{collateralOnly:true}:{})}));
+            await checkContext();check(operation.synchronized===true,'ROLLING_CONTEXT_CHANGED');
+          }
+          const ids=await measure('account.status.deposit-ids-queued',async()=>utility(await contract(),'get_deposit_ids',[session.owner,0]));check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;
+        };
+        let openingIds,openingExit;
+        if(opening&&operation?.synchronized===true){
+          openingExit=await pendingExitSummary();await checkContext();
+          if(!openingExit){
+            openingIds=await readIds(true);await checkContext();
+            // Native Board notes, never local custody or an Ethereum nonce,
+            // decide whether collateral is absent. Starter signup buys the same
+            // incoming fee amount regardless of existing private fee credit.
+            if(openingIds.every(id=>BigInt(id)===0n))return {status:'collateral-pending',depositIds:[],pendingWithdrawal:null,postEligibility:'requires-action-simulation'};
+          }
+        }
+        // Ordinary status keeps its existing parallel Board/FPC discovery.
+        // After a nonempty opening read, the fee utility discovers FPC normally
+        // at this same native anchor; Board IDs are not read a second time.
         const reads=await Promise.allSettled([
-          async()=>{
-            if(operation?.synchronized===true){
-              await measure('account.status.discovery-queued',()=>context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'}));
-              await localGuard();check(getOperationScope()===operation&&operation.synchronized===true&&session.wallet===context.wallet&&context.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
-            }
-            const ids=await measure('account.status.deposit-ids-queued',async()=>utility(await contract(),'get_deposit_ids',[session.owner,0]));check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;
-          },
-          ()=>pendingExitSummary(),()=>payment(),
+          ()=>openingIds??readIds(),
+          ()=>openingExit===undefined?pendingExitSummary():openingExit,()=>payment(),
         ].map(read=>Promise.resolve().then(read)));
         // Keep collateral, pending-exit, then fee failure priority after draining.
         for(const result of reads.slice(0,2))if(result.status==='rejected')throw result.reason;

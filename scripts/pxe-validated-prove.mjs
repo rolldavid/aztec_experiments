@@ -196,11 +196,11 @@ export function validatedPxeProve(source){
         });
     }
     // Public API\n`);
- source=replace(source,'    // Public API\n',`    prepareBoardActionState({owner,board,privateFee,method}) {
+ source=replace(source,'    // Public API\n',`    prepareBoardActionState({owner,board,privateFee,method,collateralOnly=false}) {
         // No posting gas/history assumptions. Resolve the actual named ABI from
         // the registered, class-pinned Board; these are state preparation only.
         const allowed=['get_deposit_ids','set_like','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
-        if(!allowed.includes(method))throw new Error('Invalid Board state method');
+        if(!allowed.includes(method)||typeof collateralOnly!=='boolean'||collateralOnly&&method!=='get_deposit_ids')throw new Error('Invalid Board state method');
         const profile=${JSON.stringify(ORDINARY_POST_GAS_PROFILE)};
         const targets=[{address:SyncAddress.fromStringUnsafe(owner.toString()),classId:profile.accountClassId},
             {address:SyncAddress.fromStringUnsafe(privateFee.toString()),classId:profile.privateFeeClassId,selector:SyncSelector.fromString('0xc8772dde')},
@@ -217,7 +217,7 @@ export function validatedPxeProve(source){
                 // their notes together in the native changeset; subsequent
                 // unchanged utilities consume the normal anchor-scoped cache.
                 targets[2].selector=await SyncSelector.fromNameAndParameters(fn.name,fn.parameters);
-                await this.#syncOrdinaryPostTargets(targets.slice(1),this.#getSimulatorForTx(),ctx,scopes);
+                await this.#syncOrdinaryPostTargets(collateralOnly?[targets[2]]:targets.slice(1),this.#getSimulatorForTx(),ctx,scopes);
                 return;
             }
             const accountAbi=new SyncAccountEntrypoint(targets[0].address,undefined).getEntrypointAbi();

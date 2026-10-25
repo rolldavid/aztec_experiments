@@ -252,3 +252,11 @@ test('funding callers cannot forward an internal empty-only probe through the sy
  const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{reads++;},synchronize:()=>{reads++;}});
  await assert.rejects(app.readFundingState({emptyOnly:true}),{code:'ROLLING_INVALID_ACTION'});assert.equal(reads,0);
 });
+
+test('opening account status captures exact option before held synchronization',async()=>{
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers(),scope={};let seen,calls=0;
+ const app=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(name=>[name,options=>{calls++;seen=options;return 'ready';}])),contextGuard:()=>{},operationScope:()=>scope,synchronize:async()=>{entered.resolve();await gate.promise;}});
+ const input={opening:true},work=app.readAccountStatus(input);await entered.promise;input.opening=false;input.extra=true;gate.resolve();assert.equal(await work,'ready');assert.deepEqual(seen,{opening:true});assert.equal(calls,1);
+ for(const invalid of [{opening:false},{opening:true,extra:true},null])await assert.rejects(app.readAccountStatus(invalid),{code:'ROLLING_INVALID_ACTION'});
+ assert.equal(calls,1);
+});

@@ -3099,3 +3099,37 @@ test('pending withdrawal keeps ordinary history on the canonical status path',as
  let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
  const status=await f.restart().readAccountStatus();assert.equal(status.status,'recovering');assert.equal(inspections,1);assert.equal(status.pendingWithdrawal.intentId,exit.intentId);
 });
+
+for(const mode of ['empty','funded','unsynchronized','pending-exit','recovering'])test('opening collateral classification '+mode,async()=>{
+ const f=mode==='pending-exit'?collateralFixture():fixture();
+ if(mode==='pending-exit'){const exit=await f.app.prepare({type:'withdraw',deposit:'9'});await f.app.submitPrepared(exit.intentId);}
+ if(mode==='recovering')await f.app.prepare({type:'like',post:'5'});
+ const scope={synchronized:mode!=='unsynchronized'};f.options.accountSession.operationScope=()=>scope;
+ if(mode!=='funded')f.state.responses={get_deposit_ids:Array(10).fill(0n)};
+ let fees=0;f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};
+ const app=f.restart(),before=[...f.values.entries()],readStart=f.state.privateReads.length;
+ const result=await app.readAccountStatus({opening:true});
+ assert.equal(result.status,mode==='recovering'?'recovering':mode==='funded'?'fee-ready':'collateral-pending');
+ assert.equal(fees,['empty','recovering'].includes(mode)?0:1);
+ assert.equal(f.state.privateReads.slice(readStart).filter(row=>row.name==='get_deposit_ids').length,mode==='recovering'?0:1);
+ if(mode==='empty'){assert.equal(Object.hasOwn(result,'privateFeeCredit'),false);assert.deepEqual(result.depositIds,[]);assert.equal(f.state.readinessPreparations.at(-1).collateralOnly,true);assert.deepEqual([...f.values.entries()],before);}
+ if(mode==='pending-exit'){assert(result.pendingWithdrawal);assert.equal(f.state.readinessPreparations.at(-1).collateralOnly,undefined);}
+ if(mode==='funded'){assert.equal(result.privateFeeCredit,'77');assert.deepEqual(result.depositIds,[hex(9)]);}
+});
+for(const change of ['scope','wallet','pxe','owner'])test('opening collateral classification rejects held-read '+change,async()=>{
+ const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let scope={synchronized:true},fees=0;
+ f.options.accountSession.operationScope=()=>scope;f.state.responses={get_deposit_ids:Array(10).fill(0n)};
+ f.state.beforeDepositIds=async()=>{entered.resolve();await gate.promise;};
+ f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};const app=f.restart();
+ const work=app.readAccountStatus({opening:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ await assert.rejects(app.readAccountStatus(),{code:'ROLLING_BUSY'});
+ if(change==='scope')scope={synchronized:true};if(change==='wallet')f.options.accountSession.wallet={...f.options.accountSession.wallet};
+ if(change==='pxe')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};if(change==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
+ gate.resolve();await rejected;assert.equal(fees,0);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('opening collateral classification rejects failed native discovery without fee reads',async()=>{
+ const f=fixture();f.options.accountSession.operationScope=()=>scope;const scope={synchronized:true};let fees=0;
+ f.options.accountSession.wallet.pxe.prepareBoardActionState=async()=>{throw Error('native discovery failed');};
+ f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};
+ await assert.rejects(f.restart().readAccountStatus({opening:true}),/native discovery failed/);assert.equal(fees,0);assert.equal(f.state.privateReads.length,0);
+});

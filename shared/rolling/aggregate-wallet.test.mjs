@@ -1066,3 +1066,53 @@ test('aggregate archived predecessor uses the exact verifier final canonical rea
  assert.equal(verified,1);assert.equal(canonicalReads,2,'initial and final canonical checks in real receipt verifier remain');assert.equal(duplicateReads,0);
  fork=true;await assert.rejects((await f.open()).prepare(f.allocation));assert.equal(verified,1);assert.equal(f.state.sends,1);
 });
+
+// Actual SDK quote, encrypted slots and journal; no speculative custody writes.
+const openingAllocation=f=>({...f.allocation,bokAmount:'0',bokPoolFee:0});
+test('opening readonly quote is opaque, writes nothing, then installs once and confirms normally',async()=>{
+ const f=fixture(),app=await f.open(),token=await app.prepareReadOnly(openingAllocation(f));
+ assert.deepEqual(token,{});assert.equal(f.records.size,0);assert.equal(f.state.signatures,0);assert.equal(f.state.sends,0);
+ await assert.rejects(app.confirm(),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});
+ const quote=await app.installPreparedQuote(token);assert.equal(quote.ethereumNonce,7);assert.equal(f.records.size,1);
+ await assert.rejects(app.installPreparedQuote(token),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});
+ const result=await app.confirm();assert.equal(result.feeReceipt.amount,'200');assert.equal(result.bokReceipt,undefined);assert.equal(f.state.sends,1);
+});
+test('opening readonly quote rejects forged, cloned and other-instance tokens',async()=>{
+ const f=fixture(),app=await f.open(),other=await f.open(),token=await app.prepareReadOnly(openingAllocation(f));
+ for(const value of [{},structuredClone(token)])await assert.rejects(app.installPreparedQuote(value),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});
+ await assert.rejects(other.installPreparedQuote(token),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});assert.equal(f.records.size,0);
+ await app.installPreparedQuote(token);assert.equal(f.records.size,1);
+});
+for(const changed of ['nonce','expired','fork','chain','owner','wallet'])test('opening readonly quote rechecks '+changed+' before saving',async()=>{
+ const f=fixture(),app=await f.open(),token=await app.prepareReadOnly(openingAllocation(f)),send=f.options.provider.send;
+ if(changed==='nonce')f.state.nonce++;
+ if(changed==='expired')f.state.pendingTime=1901;
+ if(changed==='owner')f.state.invalid=true;
+ if(changed==='wallet')f.state.connected=false;
+ if(changed==='fork'||changed==='chain')f.options.provider.send=async(method,params)=>{
+  const result=await send(method,params);
+  return changed==='chain'&&method==='eth_chainId'?'0x1':changed==='fork'&&method==='eth_getBlockByNumber'&&params[0]!=='pending'?{...result,hash:h(90)}:result;
+ };
+ await assert.rejects(app.installPreparedQuote(token));assert.equal(f.records.size,0);assert.equal(f.state.sends,0);assert.equal(f.state.signatures,0);
+});
+test('opening readonly quote refuses replaced custody and leaves saved bytes intact',async()=>{
+ const f=fixture(),app=await f.open(),token=await app.prepareReadOnly(openingAllocation(f)),other=await f.open();
+ await other.prepare(openingAllocation(f));const saved=[...f.records.entries()];
+ await assert.rejects(app.installPreparedQuote(token),{code:'ROLLING_FUNDING_MISMATCH'});assert.deepEqual([...f.records.entries()],saved);
+ assert.equal(await app.prepareReadOnly(openingAllocation(f)),null);assert.deepEqual([...f.records.entries()],saved);
+});
+test('opening readonly quote installation drains failed validity and held wallet before releasing',async()=>{
+ const f=fixture(),app=await f.open(),token=await app.prepareReadOnly(openingAllocation(f)),held=Promise.withResolvers(),entered=Promise.withResolvers(),failure=Error('quote invalid');
+ f.wallet.guard=async()=>{entered.resolve();await held.promise;};f.options.sdk.validateAggregateFundingQuote=async()=>{throw failure;};
+ let settled=false;const pending=app.installPreparedQuote(token).finally(()=>{settled=true;});pending.catch(()=>{});
+ await entered.promise;await new Promise(setImmediate);assert.equal(settled,false);assert.equal(f.records.size,0);
+ held.resolve();await assert.rejects(pending,e=>e===failure);assert.equal(f.records.size,0);
+});
+test('opening readonly quote capability preserves issuing identity across the common funding lease',async()=>{
+ const {withRollingFundingLease}=await import('./funding-session.mjs');
+ const f=fixture(),raw=await f.open();let tail=Promise.resolve(),held=false;const names=[];
+ const locks={request(name,options,run){names.push(name);const next=tail.then(async()=>{assert.equal(held,false);held=true;try{return await run();}finally{held=false;}});tail=next.catch(()=>{});return next;}};
+ const app=withRollingFundingLease(raw,{owner:f.options.owner,locks,contextGuard:f.options.contextGuard});
+ const token=await app.prepareReadOnly(openingAllocation(f));assert.equal(held,false);assert.equal(f.records.size,0);
+ await app.installPreparedQuote(token);assert.equal(held,false);assert.equal(new Set(names).size,1);assert.equal(f.records.size,1);
+});

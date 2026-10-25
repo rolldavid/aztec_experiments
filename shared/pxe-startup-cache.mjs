@@ -1,4 +1,4 @@
-import {getTrustedNodeSnapshotInfo} from './trusted-private-node.mjs';
+import {getTrustedNodeSnapshotInfo} from './trusted-node-snapshot.mjs';
 // Owned by one SDK realm. Construction metadata is never a node-wide cache.
 const constructions=new WeakMap(),classes=new WeakMap();
 const invalid=()=>Error('PXE startup provenance mismatch');

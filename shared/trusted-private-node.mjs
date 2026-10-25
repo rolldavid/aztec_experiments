@@ -1,3 +1,5 @@
+import {detachedInfo,recordTrustedNodeSnapshot} from './trusted-node-snapshot.mjs';
+export {getTrustedNodeCanonicalBlock,getTrustedNodeSnapshotInfo} from './trusted-node-snapshot.mjs';
 import {createSafeJsonRpcClient} from '@aztec-labs/foundation/json-rpc/client';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
 import {retry,makeBackoff,NoRetryError} from '@aztec-labs/foundation/retry';
@@ -11,29 +13,6 @@ const failures = new WeakSet();
 // Internal observation only. Forged errors, getters and raw upstream failures
 // never acquire diagnostics; HTTP callers still receive the original code.
 const diagnostics = new WeakMap();
-// Headers belong only to this readiness result, never to a node-wide cache.
-// The caller may reuse its final canonical reads during the same request; a
-// later inspection always performs fresh reads and gets a different snapshot.
-const canonicalBlocks = new WeakMap();
-export function getTrustedNodeCanonicalBlock(snapshot, number, hash) {
-  if(number === undefined && hash === undefined)return undefined;
-  return canonicalBlocks.get(snapshot)?.blocks.find(record =>
-    (number === undefined || record.number === number) &&
-    (hash === undefined || record.hash === hash))?.data;
-}
-// Only a successful inspection's exact node can supply construction metadata.
-// Return detached native values: callers cannot mutate the recorded identity.
-function detachedInfo(value){
- if(value===null||typeof value!=='object')return value;
- if(ArrayBuffer.isView(value))return value.constructor.from(value);
- if(value instanceof ArrayBuffer)return value.slice(0);
- const result=Array.isArray(value)?[]:Object.create(Object.getPrototypeOf(value));
- for(const key of Object.keys(value))result[key]=detachedInfo(value[key]);return result;
-}
-export function getTrustedNodeSnapshotInfo(snapshot,node){
- const record=canonicalBlocks.get(snapshot);if(!record||record.node!==node)throw fail('IDENTITY');
- return detachedInfo(record.info);
-}
 export function getTrustedNodeFailureDiagnostic(error) { return diagnostics.get(error) ?? null; }
 function snapshotDiagnostic(tips,state,stamp) {
   const tip=value=>Object.freeze({number:value.number,hash:value.hash});
@@ -174,7 +153,7 @@ export async function inspectTrustedNode(node, options) {
       ...(historical?{readinessTier:p.readinessTier,readinessBlockNumber:selected.number,readinessBlockHash:selected.hash}:{}),
       finalizedBlockNumber:finalized.number,oldestHistoricBlockNumber:oldest,
       syncedL1Timestamp:String(stamp),checkedAtSeconds:now,lagSeconds:lag});
-    canonicalBlocks.set(result,{node,info,blocks:finalBlocks});return result;
+    recordTrustedNodeSnapshot(result,{node,info,blocks:finalBlocks});return result;
     }
   } catch(error) { throw failures.has(error) ? error : fail('UNAVAILABLE'); }
 }

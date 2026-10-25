@@ -11,7 +11,8 @@ import {Gas,GasSettings} from '@aztec-labs/stdlib/gas';
 import {ScopedReadRequest,ReadRequest,ClaimedLengthArray,ScopedNoteHash,NoteHash,ScopedNullifier,Nullifier,getNoteHashReadRequestResetActions,getNullifierReadRequestResetActions,ReadRequestActionEnum,PrivateKernelTailCircuitPublicInputs,PartialPrivateTailPublicInputsForPublic} from '@aztec-labs/stdlib/kernel';
 import {collectNested,PrivateSimulationResult,TxProvingResult} from '@aztec-labs/stdlib/tx';
 import {validatedPxeProve,validatedKernelProve} from './pxe-validated-prove.mjs';
-const pxeSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url),'utf8');
+import {restoreNativePxe} from './patch-pxe-operation-guards.mjs';
+const pxeSource=restoreNativePxe(await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url),'utf8'),'dest/pxe.js');
 const kernelSource=await fs.readFile(new URL('../node_modules/@aztec-labs/pxe/dest/private_kernel/private_kernel_execution_prover.js',import.meta.url),'utf8');
 const pxe=validatedPxeProve(pxeSource),kernel=validatedKernelProve(kernelSource);
 const nativeTimingBindings=vm.runInNewContext(pxe.slice(0,pxe.indexOf("import "))+';({beginRollingProofSpan,measureRollingProofPhase})',{performance});
@@ -368,4 +369,24 @@ test('account readiness native anchor change requires both contracts again',asyn
  const f=await ordinarySyncFixture();await f.prepareGeneric('get_deposit_ids');f.service.wipe();f.advance();await f.prepareGeneric('get_deposit_ids');
  assert.equal(f.events.filter(x=>x[0]==='sync-start').length,4);assert.equal(f.events.filter(x=>x[0]==='class').length,4);
  assert.equal(f.events.filter(x=>x[0]==='witness').length,0);
+});
+
+test('opening collateral native discovery visits Board only and later full readiness discovers FPC',async()=>{
+ const f=await ordinarySyncFixture(),targets={owner:f.owner,board:f.board,privateFee:f.fee,collateralOnly:true};
+ await f.prepareGeneric('get_deposit_ids',targets);
+ assert.deepEqual(f.events.filter(x=>x[0]==='sync-start').map(x=>x[1]),[f.board.toString()]);
+ assert.deepEqual(f.events.filter(x=>x[0]==='class').map(x=>x[1]),[f.board.toString()]);assert.equal(f.events.filter(x=>x[0]==='witness').length,0);
+ await f.prepareGeneric('get_deposit_ids');
+ assert.deepEqual(f.events.filter(x=>x[0]==='sync-start').map(x=>x[1]),[f.board.toString(),f.fee.toString()]);
+ f.service.wipe();f.advance();await f.prepareGeneric('get_deposit_ids',targets);
+ assert.equal(f.events.filter(x=>x[0]==='sync-start'&&x[1]===f.board.toString()).length,2);
+});
+for(const mode of ['class','discovery'])test('opening collateral native discovery rejects '+mode,async()=>{
+ const f=await ordinarySyncFixture();if(mode==='class')f.classes.set(f.board.toString(),new Fr(999).toString());else f.fail(f.board.toString());
+ await assert.rejects(f.prepareGeneric('get_deposit_ids',{owner:f.owner,board:f.board,privateFee:f.fee,collateralOnly:true}),mode==='class'?/Invalid ordinary sync class/:/native sync failed/);
+ assert.equal(f.events.at(-1)[0],'prepare-discarded');assert.equal(f.service.syncedContracts.size,0);
+});
+test('opening collateral native option cannot bypass action discovery',async()=>{
+ const f=await ordinarySyncFixture();for(const method of ['set_like','register_name','withdraw'])assert.throws(()=>f.prepareGeneric(method,{owner:f.owner,board:f.board,privateFee:f.fee,collateralOnly:true}),/Invalid Board state method/);
+ assert.throws(()=>f.prepareGeneric('get_deposit_ids',{owner:f.owner,board:f.board,privateFee:f.fee,collateralOnly:'true'}),/Invalid Board state method/);assert.equal(f.events.length,0);
 });

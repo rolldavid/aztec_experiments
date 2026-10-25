@@ -61,6 +61,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  const slot=await openSlot(scopeText);
  const archiveSlot=txHash=>{check(typeof txHash==='string'&&/^0x[0-9a-f]{64}$/.test(txHash));const frame=JSON.parse(scopeText);frame.splice(-1,0,txHash);return openSlot(JSON.stringify(frame));};
  let prepared=null,pendingJournal=null;
+ const readOnlyQuotes=new WeakMap();
  const read=async fn=>{await contextGuard();const result=await fn();await contextGuard();return result;};
  // A refused signature has no broadcast ambiguity. Normalize it only at
  // this signing boundary; transaction/relay failures keep their journal fences.
@@ -240,10 +241,9 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   if(verified.outcome==='success'&&!allowReverted&&(!value.intent||value.relay.transactionHash!==hash))await read(()=>slot.write(saved,{...value,intent,relay:{...value.relay,transactionHash:hash}}));
   return {saved,result:{...verified,request:intent}};
  }
- return Object.freeze({
-  async prepare(allocation){
-   const values=clone(allocation);prepared=null;check(typeof verifyFeeCredit==='function','UNAVAILABLE');check(typeof values.bokAmount==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(values.bokAmount),'INVALID');
-   const recheckScope=await timeFundingPreparation(onProgress,'qualification',async()=>{
+ async function qualify(values){
+   check(typeof verifyFeeCredit==='function','UNAVAILABLE');check(typeof values.bokAmount==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(values.bokAmount),'INVALID');
+   return timeFundingPreparation(onProgress,'qualification',async()=>{
    const qualification=await Promise.allSettled([
     ()=>read(()=>verifyFeeCredit(values.feeAmount)),
     ()=>read(()=>verifyScope({includeBok:BigInt(values.bokAmount)>0n,asset:values.asset})),
@@ -251,12 +251,13 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const failure=qualification.find(result=>result.status==='rejected');if(failure)throw failure.reason;
    const recheckScope=qualification[1].value;check(typeof recheckScope==='function');return recheckScope;
    });
-   if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
-   const {previous,priorPayment}=await timeFundingPreparation(onProgress,'journal',async()=>{const previous=await stored();return {previous,priorPayment:await archivePrevious(previous)};});
+ }
+ async function constructEth(values,recheckScope,previous,priorPayment,readOnly=false){
    // Production capture resolves only after checking the live wallet and chain.
    const wallet=await timeFundingPreparation(onProgress,'wallet',()=>read(captureWallet));
    const depositor=wallet.address;
-   const existing=await read(async()=> (await journal(depositor)).inspectSummary());check(existing===null||priorPayment&&existing.txHash===priorPayment.txHash&&existing.outcome===priorPayment.outcome,'RECOVERY_REQUIRED');
+   const existing=readOnly?null:await read(async()=> (await journal(depositor)).inspectSummary());
+   check(existing===null||priorPayment&&existing.txHash===priorPayment.txHash&&existing.outcome===priorPayment.outcome,'RECOVERY_REQUIRED');
    let nonce=await timeFundingPreparation(onProgress,'nonce',()=>read(()=>provider.getTransactionCount(depositor,'pending')));if(priorPayment?.request.from===depositor)nonce=Math.max(nonce,priorPayment.request.nonce+1);check(Number.isSafeInteger(nonce)&&nonce>=0);
    const {collateral,fee,recipientSalt,bridgeSecret,bokScope,bokSecretHash,bokCommitment}=await timeFundingPreparation(onProgress,'secrets',async()=>{
    const collateral=await read(()=>sdk.deriveBoardDepositSecret({walletSecret,walletSalt,owner,
@@ -270,11 +271,46 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     wallet:{address:depositor,chainId:n.chainId,canSendTransaction:true,canSignTypedData:true,gasBudgetWei}},
     {provider:{request:({method,params})=>read(()=>provider.send(method,params))}})));
    await read(wallet.guard);
+   return {values,recheckScope,previous,wallet,depositor,existing,nonce,recipientSalt,bridgeSecret,bokScope,privateFeeCap,quote};
+ }
+ async function installEth(candidate){
+   const {values,recheckScope,previous,wallet,depositor,existing,nonce,recipientSalt,bridgeSecret,bokScope,privateFeeCap,quote}=candidate;
    const saved=await timeFundingPreparation(onProgress,'save',()=>read(()=>slot.write(previous,{schemaVersion:1,depositor,nonce,recipientSalt,bridgeSecret,bokScope,intent:null,privateFeeCap,claim:null,previousTxHash:existing?.txHash??null})));
    prepared={wallet,quote,saved,nonce,recheckScope,feeAmount:values.feeAmount};
    // Never return the original secrets or calldata to the renderer.
    return freeze({kind:quote.kind,breakdown:clone(quote.breakdown),deadline:quote.plan.deadline,beneficiary:depositor,router:s.router,
     walletName:wallet.name,privateFeeCap,slippageBps:values.slippageBps,consentNonce:quote.plan.nonce,ethereumNonce:nonce});
+ }
+ return Object.freeze({
+  async prepare(allocation){
+   const values=clone(allocation);prepared=null;
+   const recheckScope=await qualify(values);
+   if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
+   const {previous,priorPayment}=await timeFundingPreparation(onProgress,'journal',async()=>{const previous=await stored();return {previous,priorPayment:await archivePrevious(previous)};});
+   return installEth(await constructEth(values,recheckScope,previous,priorPayment));
+  },
+  // Internal opening capability, never a renderer quote or payment authority.
+  // Existing custody always takes the ordinary post-status preparation path.
+  async prepareReadOnly(allocation){
+   const values=clone(allocation);check(values.asset==='ETH'&&values.bokAmount==='0','INVALID');
+   const previous=await stored();if(previous.value!==null)return null;
+   const recheckScope=await qualify(values);
+   const candidate=await constructEth(values,recheckScope,previous,null,true);
+   const token=Object.freeze({});readOnlyQuotes.set(token,candidate);return token;
+  },
+  async installPreparedQuote(token){
+   const candidate=readOnlyQuotes.get(token);check(candidate,'QUOTE_REQUIRED');readOnlyQuotes.delete(token);
+   const previous=await stored();check(previous.encoded===candidate.previous.encoded&&previous.value===null,'MISMATCH');
+   // Waiting for native status grants no Ethereum freshness. Recheck the exact
+   // wallet, derivation nonce and quote anchor/deadline before the custody CAS.
+   const checks=await Promise.allSettled([
+    ()=>read(candidate.wallet.guard),
+    async()=>check(await read(()=>provider.getTransactionCount(candidate.depositor,'pending'))===candidate.nonce,'NONCE_CHANGED'),
+    ()=>read(()=>sdk.validateAggregateFundingQuote(candidate.quote)),
+    async()=>check(await read(async()=>(await journal(candidate.depositor)).inspectSummary())===null,'RECOVERY_REQUIRED'),
+   ].map(check=>Promise.resolve().then(check)));
+   for(const result of checks)if(result.status==='rejected')throw result.reason;
+   await contextGuard();return installEth(candidate);
   },
   async confirm({onSubmitted}={}){
    const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');
