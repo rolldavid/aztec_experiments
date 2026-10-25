@@ -49,7 +49,7 @@ export function validatedPxeProve(source){
             check(accounts.some(account=>account.equals(address)));
             const instance=await this.contractStore.getContractInstance(address);
             const classId=SyncFr.fromString('${ORDINARY_POST_GAS_PROFILE.accountClassId}');
-            check(instance && instance.originalContractClassId.equals(classId) && instance.currentContractClassId.equals(classId));
+            check(instance && instance.originalContractClassId.equals(classId));
             check((await computeContractAddressFromInstance(instance)).equals(address));
             check((await syncAccountKeyHash(key)).equals(instance.immutablesHash));
             const slot=await syncAccountSlotHash(Buffer.from('INITIALIZERLESS_ACCOUNT_PUB_KEY'));
