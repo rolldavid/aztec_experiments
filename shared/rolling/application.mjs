@@ -426,8 +426,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   // Inspect only the authenticated current workflow. Funding needs this fence
   // before a claim, not unrelated deposit and private fee balance utilities.
-  async function fundingWorkflowState(){
+  async function fundingWorkflowState(emptyOnly=false){
     await guard();const saved=await (await slot()).read();await localGuard();
+    // A genuinely empty authenticated workflow has no native state to inspect.
+    // Every saved record still takes the normal synchronized authority path.
+    if(emptyOnly)return saved.value===null?{status:'ready'}:null;
     if(saved.value&&saved.value.status!=='cancelled'){
       if(!terminalHistory(saved.value))await checkBokRecord(saved.value);
       if(!usableStatus(saved.value.status))return {status:'recovering',intent:summary(saved.value)};
@@ -1108,7 +1111,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       return {availableCredit:String(available),anchor};
     });},
     async readBokStatus(){return exclusive(async()=>{await ensureBok();if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
-    async readFundingState(){if(!session)return {status:'locked'};return exclusive(fundingWorkflowState);},
+    async readFundingState(options){
+      const emptyOnly=options!==undefined;
+      if(emptyOnly)check(exactData(options,['emptyOnly']).emptyOnly===true,'ROLLING_INVALID_ACTION');
+      if(!session)return {status:'locked'};return exclusive(()=>fundingWorkflowState(emptyOnly));
+    },
     async readAccountStatus(){
       if(!session)return {status:'locked'};
       return exclusive(async()=>{const workflow=await fundingWorkflowState();if(workflow.status==='recovering')return {...workflow,pendingWithdrawal:await pendingExitSummary()};

@@ -49,11 +49,20 @@ export function createSynchronizedRollingApplication({application,synchronize,co
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
   return [name,async(...args)=>{
+   if(name==='readFundingState'&&args.length!==0)throw Object.assign(Error('Invalid Rolling action'),{code:'ROLLING_INVALID_ACTION'});
    const preferenceAction=name==='readPreferenceHead'?preferencePreparation(args):undefined;
    const captured=name==='readPreferenceHead'?[]:name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args,name==='readBalances'):args;
    const stateMethod=preferenceAction?boardStateMethods[preferenceAction]:name==='prepare'&&Object.hasOwn(boardStateMethods,captured[0]?.type)?boardStateMethods[captured[0].type]:undefined;
    await contextGuard();
    const scope=operationScope();
+   if(name==='readFundingState'&&(!scope||!scope.synchronized)){
+    const empty=await call({emptyOnly:true});
+    await contextGuard();
+    if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
+    // Do not mark this operation synchronized: bridge readiness and the next
+    // real preparation still require their normal fresh native anchor.
+    if(empty?.status==='ready')return empty;
+   }
    // Moderator identity is public storage; it needs no private-state sync.
    if(name!=='readModeratorStatus'&&(!scope||!scope.synchronized)){
     // The native sync and public readiness reads are independent. Neither

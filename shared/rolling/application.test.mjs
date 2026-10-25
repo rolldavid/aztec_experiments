@@ -23,6 +23,7 @@ import {prepareFundingClaim as verifyFundingClaim} from './funding-receipts.mjs'
 import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
 import {createRollingApplication,createPendingWithdrawalSlot} from './application.mjs';
+import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
 import {executeRollingAction} from '../../apps/rolling/wallet-action.mjs';
 import {executeAutomaticWithdrawal} from '../../apps/rolling/automatic-withdrawal.mjs';
 const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
@@ -3195,4 +3196,48 @@ test('Board claim immutable read failure drains receipt reads without creating a
 for(const kind of ['private-fee','bok'])test('Board claim immutable reads exclude standalone '+kind,async()=>{
  const f=topUpFixture(kind);f.options.accountSession.operationScope=()=>scope;const scope={synchronized:true};
  f.options.sdk.prefetchBoardClaimWitnesses=()=>assert.fail('standalone claim must not read Board immutables');await f.restart().prepare(f.action,{immediate:true});assert.equal(f.state.sends,0);
+});
+
+
+function synchronizedFundingFixture(){
+ const f=fixture(),scope={};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ let syncs=0,contexts=0;
+ const app=createSynchronizedRollingApplication({application:f.app,operationScope:()=>scope,contextGuard:f.options.contextGuard,synchronize:async()=>{syncs++;},prepareContext:async()=>{contexts++;}});
+ return {...f,wrapped:app,scope,counts:()=>({syncs,contexts})};
+}
+test('empty funding workflow authenticates local storage without a native sync, then preparation takes a fresh anchor',async()=>{
+ const f=synchronizedFundingFixture();assert.deepEqual(await f.wrapped.readFundingState(),{status:'ready'});
+ assert.deepEqual(f.counts(),{syncs:0,contexts:0});assert.equal(f.scope.synchronized,undefined);assert.equal(f.state.privateReads.length,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ const prepared=await f.wrapped.prepare({type:'like',post:'5'});assert.equal(prepared.status,'prepared');assert.deepEqual(f.counts(),{syncs:1,contexts:1});assert.equal(f.scope.synchronized,true);assert.equal(f.state.sends,0);
+});
+for(const status of ['prepared','cancelled','confirmed','unknown'])test(`empty funding probe never bypasses a saved ${status} workflow`,async()=>{
+ const f=synchronizedFundingFixture(),prepared=await f.app.prepare({type:'like',post:'5'});
+ if(status==='cancelled')await f.app.cancelPrepared(prepared.intentId);
+ if(['confirmed','unknown'].includes(status))await f.app.submitPrepared(prepared.intentId);
+ if(status==='unknown')f.state.outcome=null;
+ const sends=f.state.sends,priorPrivateReads=f.state.privateReads.length;
+ assert.equal(await f.app.readFundingState({emptyOnly:true}),null);
+ const result=await f.wrapped.readFundingState();assert.deepEqual(f.counts(),{syncs:1,contexts:1});assert.equal(f.state.sends,sends);assert.equal(f.state.privateReads.length,priorPrivateReads);
+ assert.equal(result.status,['prepared','unknown'].includes(status)?'recovering':'ready');
+ if(status==='unknown')assert.equal(result.intent.status,'unknown');
+});
+test('empty funding probe retains the encrypted-slot lease and rejects owner replacement before readiness',async()=>{
+ const f=synchronizedFundingFixture(),entered=Promise.withResolvers(),held=Promise.withResolvers(),read=f.options.privateStore.read;
+ f.options.privateStore.read=async key=>{entered.resolve();await held.promise;return read(key);};
+ const pending=f.wrapped.readFundingState();await entered.promise;await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);held.resolve();await assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});
+ assert.deepEqual(f.counts(),{syncs:0,contexts:0});assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+test('empty funding readiness does not authorize overwriting a subsequently saved workflow',async()=>{
+ const f=synchronizedFundingFixture();assert.deepEqual(await f.wrapped.readFundingState(),{status:'ready'});
+ const prior=await f.app.prepare({type:'like',post:'5'}),saved=[...f.values];
+ await assert.rejects(f.wrapped.prepare({type:'unlike',post:'6'}),{code:'ROLLING_RECOVERY_REQUIRED'});
+ assert.deepEqual(f.counts(),{syncs:1,contexts:1});assert.deepEqual([...f.values],saved);assert.equal(f.state.sends,0);
+ assert.equal((await f.app.readFundingState()).intent.intentId,prior.intentId);
+});
+test('empty funding probe rejects storage failure and invalid probe options without native reads or writes',async()=>{
+ const f=synchronizedFundingFixture();let invoked=0;
+ for(const option of [{emptyOnly:false},{get emptyOnly(){invoked++;return true;}},{emptyOnly:true,extra:1}])await assert.rejects(f.app.readFundingState(option),{code:'ROLLING_INVALID_ACTION'});
+ assert.equal(invoked,0);const error=Error('encrypted storage unavailable');f.options.privateStore.read=async()=>{throw error;};
+ await assert.rejects(f.wrapped.readFundingState(),{code:'BB_JOURNAL_INVALID'});assert.deepEqual(f.counts(),{syncs:0,contexts:0});assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });

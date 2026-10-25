@@ -20,10 +20,10 @@ test('explicit synchronization exposes a newly included name through the actual 
 test('failed synchronization and context changes prevent every private operation without retry',async()=>{
  for(const name of names.filter(name=>name!=='readModeratorStatus'))for(const failure of ['before','sync','after']){
   let guards=0,syncs=0,calls=0;const error=Error(failure);
-  const application=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(n=>[n,()=>{calls++;}])),
+  const application=createSynchronizedRollingApplication({application:Object.fromEntries(names.map(n=>[n,options=>{if(n==='readFundingState'&&options?.emptyOnly)return null;calls++;}])),
    contextGuard:()=>{guards++;if(failure==='before'||failure==='after'&&guards===2)throw error;},
    synchronize:()=>{syncs++;if(failure==='sync')throw error;}});
-  await assert.rejects(application[name](...(name==='resumeSaved'?['intent',{expectedTxHash:'0x'+'11'.repeat(32)}]:name==='prepareBokRelease'?['intent',{type:'cancel-bok-request'}]:[])),value=>value===error);assert.equal(calls,0);assert.equal(syncs,failure==='before'?0:1);
+  await assert.rejects(application[name](...(name==='resumeSaved'?['intent',{expectedTxHash:'0x'+'11'.repeat(32)}]:name==='prepareBokRelease'?['intent',{type:'cancel-bok-request'}]:[])),value=>value===error);assert.equal(calls,0);assert.equal(syncs,failure==='before'||name==='readFundingState'&&failure==='after'?0:1);
  }
 });
 test('capabilities and method receivers are captured before asynchronous synchronization',async()=>{
@@ -264,4 +264,33 @@ for(const fail of ['scope','discovery'])test(`initial preference ${fail} change 
  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContext:()=>{},prepareContractState:async()=>{entered.resolve();await gate.promise;if(fail==='discovery')throw failure;}});
  const pending=assert.rejects(executeRollingAction(app,{type:'read-marker'}),fail==='scope'?{code:'ROLLING_CONTEXT_CHANGED'}:error=>error===failure);
  await entered.promise;assert.equal(calls,0);if(fail==='scope')scope={preparationReads:[]};gate.resolve();await pending;assert.equal(calls,0);
+});
+
+
+test('empty funding workflow does not qualify a native snapshot and the next preparation still synchronizes',async()=>{
+ const scope={},calls=[];let syncs=0,contexts=0;
+ const raw=Object.fromEntries(names.map(name=>[name,(...args)=>{calls.push([name,...args]);return {status:name==='readFundingState'?'ready':'prepared'};}]));
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},operationScope:()=>scope,synchronize:()=>{syncs++;},prepareContext:()=>{contexts++;}});
+ assert.deepEqual(await app.readFundingState(),{status:'ready'});assert.deepEqual(calls,[['readFundingState',{emptyOnly:true}]]);
+ assert.equal(syncs,0);assert.equal(contexts,0);assert.equal(scope.synchronized,undefined);
+ await app.prepare({type:'claim-deposit'});assert.equal(syncs,1);assert.equal(contexts,1);assert.equal(scope.synchronized,true);
+});
+test('nonempty funding workflow uses the original synchronized read without forwarding the internal probe option',async()=>{
+ const scope={},seen=[];const raw=Object.fromEntries(names.map(name=>[name,()=>{}]));
+ raw.readFundingState=(...args)=>{seen.push(['read',args,scope.synchronized]);return args.length?null:{status:'recovering'};};
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},operationScope:()=>scope,synchronize:()=>seen.push(['sync']),prepareContext:()=>seen.push(['context'])});
+ assert.deepEqual(await app.readFundingState(),{status:'recovering'});
+ assert.deepEqual(seen,[['read',[{emptyOnly:true}],undefined],['sync'],['context'],['read',[],true]]);
+});
+for(const failure of ['probe','context','scope'])test(`empty funding probe rejects ${failure} before exposing readiness`,async()=>{
+ let scope={},valid=true;const entered=Promise.withResolvers(),held=Promise.withResolvers(),error=Error('probe failed');
+ const raw=Object.fromEntries(names.map(name=>[name,()=>{}]));raw.readFundingState=async()=>{entered.resolve();await held.promise;if(failure==='probe')throw error;return {status:'ready'};};
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{if(!valid)throw error;},synchronize:()=>assert.fail('no native operation from failed empty probe')});
+ const pending=app.readFundingState();await entered.promise;if(failure==='context')valid=false;if(failure==='scope')scope={};held.resolve();
+ await assert.rejects(pending,failure==='scope'?{code:'ROLLING_CONTEXT_CHANGED'}:e=>e===error);assert.equal(scope.synchronized,undefined);
+});
+test('funding callers cannot forward an internal empty-only probe through the synchronized public method',async()=>{
+ let reads=0;const raw=Object.fromEntries(names.map(name=>[name,()=>{reads++;}]));
+ const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{reads++;},synchronize:()=>{reads++;}});
+ await assert.rejects(app.readFundingState({emptyOnly:true}),{code:'ROLLING_INVALID_ACTION'});assert.equal(reads,0);
 });
