@@ -137,7 +137,7 @@ const {loadContractArtifact,getAllFunctionAbis}=await import('@aztec-labs/stdlib
 const actualBoardArtifact=loadContractArtifact(JSON.parse(await fs.readFile(process.env.ROLLING_TEST_ARTIFACT??new URL('../billboard/target/rolling_contract-RollingBoard.json',import.meta.url),'utf8')));
 const qualifiedBoardMethods=['set_like','set_preference','mark_thread_read','register_name','set_bio','set_avatar','create_subboard','remove_post','remove_avatar','reject_subboard','set_main_policy','transfer_moderator','screen','withdraw'];
 
-async function ordinarySyncFixture({written=false}={}){
+async function ordinarySyncFixture({written=false,initializationFailure=false}={}){
  const owner=AztecAddress.fromFieldUnsafe(new Fr(100)),fee=AztecAddress.fromFieldUnsafe(new Fr(200)),board=AztecAddress.fromFieldUnsafe(new Fr(300));
  const calls=[FunctionCall.from({name:'pay_fee',to:fee,selector:FunctionSelector.fromString('0xc8772dde'),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(5)]}),FunctionCall.from({name:'post',to:board,selector:FunctionSelector.fromString(syncProfile.postSelector),type:'private',hideMsgSender:false,isStatic:false,args:[new Fr(6)]})];
  const entrypoint=new DefaultAccountEntrypoint(owner,{createAuthWit:async hash=>new AuthWitness(hash,[])});
@@ -147,8 +147,8 @@ async function ordinarySyncFixture({written=false}={}){
  const anchorBlockHeader={toBlockParameter:async()=>({number:anchorNumber,hash:BlockHash.fromString('0x'+String(anchorNumber).padStart(64,'0'))})};
  const node=withCache({getContract:async(address,anchor)=>{events.push(['class',address.toString(),anchor]);if(holdClass)await new Promise(resolve=>classGates.push(resolve));return {currentContractClassId:Fr.fromString(classes.get(address.toString()))};},
  getPublicDataWitness:async(anchor,slot)=>{events.push(['witness',slot.toString(),anchor]);if(holdWitness)await new Promise((resolve,reject)=>witnesses.push({resolve,reject}));if(failWitness)throw Error('witness unavailable');const value=PublicDataWitness.random();value.leafPreimage.leaf.slot=written?slot:Fr.ZERO;return value;},
- getPublicStorageAt:async(anchor,address,slot)=>{events.push(['storage',slot.toString(),anchor]);return Fr.ZERO;}});
- const store={getContractArtifact:async classId=>{assert.equal(classId.toString(),syncProfile.boardClassId);return actualBoardArtifact;},getContractInstance:async()=>assert.fail('All classes served by canonical fixture'),getFunctionCall:async(name,args,address)=>({name,args,to:address,selector:FunctionSelector.fromString('0x418ef5da')})};
+ getPublicStorageAt:async(anchor,address,slot)=>{events.push(['storage',slot.toString(),anchor]);return Fr.ZERO;},findLeavesIndexes:async(anchor,tree,values)=>{events.push(['initialization',values.map(String),anchor]);if(initializationFailure)throw Error('initialization failed');return values.map(()=>undefined);}});
+ const store={getContractArtifact:async classId=>{assert.equal(classId.toString(),syncProfile.boardClassId);return actualBoardArtifact;},getContractInstance:async address=>{assert.equal(address.toString(),board.toString());return {initializationHash:new Fr(77)};},getFunctionCall:async(name,args,address)=>({name,args,to:address,selector:FunctionSelector.fromString('0x418ef5da')})};
  const classService=new ContractClassService(node,store);
  const noteStore={getNotes:async(_filter,id)=>{assert.equal(id,42);return [];}};
  const service=new ContractSyncService(node,store,classService,noteStore,{debug(){},warn(){}},{concurrentContractSyncEnabled:false});
@@ -336,4 +336,68 @@ test('generic native discovery failure drains siblings, discards and does not ca
 test('generic preparation detaches addresses and method before native queue yields',async()=>{
  const f=await ordinarySyncFixture(),held=Promise.withResolvers();const original=f.store.getContractArtifact;f.store.getContractArtifact=async id=>{await held.promise;return original(id);};
  const targets={owner:f.owner,board:f.board,privateFee:f.fee};const run=f.prepareGeneric('set_like',targets);targets.board=AztecAddress.ZERO;held.resolve();await run;assert(f.events.some(e=>e[0]==='sync-start'&&e[1]===f.board.toString()));
+});
+
+const {computeSiloedPrivateInitializationNullifier}=await import('@aztec-labs/stdlib/hash');
+const {MerkleTreeId}=await import('@aztec-labs/stdlib/trees');
+const {UtilityExecutionOracle}=await import('../node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js');
+async function preferenceInitHarness({selector='0xe9554592',wrongClass=false,missingInstance=false}={}){
+ const address=AztecAddress.fromFieldUnsafe(new Fr(900)),initializationHash=new Fr(77),events=[];
+ let number=9,waitSync,waitRead,failSync=false,failRead=false;
+ const anchorBlockHeader={globalVariables:{timestamp:0n},toBlockParameter:async()=>({number,hash:BlockHash.fromString('0x'+String(number).padStart(64,'0'))})};
+ const node=withCache({getContract:async()=>({currentContractClassId:Fr.fromString(wrongClass?new Fr(999).toString():syncProfile.boardClassId)}),findLeavesIndexes:async(anchor,tree,values)=>{
+  events.push(['lookup',anchor,tree,values]);if(waitRead)await waitRead.promise;if(failRead)throw Error('initialization failed');return values.map(()=>undefined);
+ }});
+ const store={getContractInstance:async()=>missingInstance?undefined:{initializationHash}},contractClassService=new ContractClassService(node,store),ctx={changeSetId:42,syncTime:0,anchorBlockHeader,recording:{stats:()=>({})},totalMs:()=>0};
+ const service={ensureContractSynced:async()=>{events.push(['sync']);if(waitSync)await waitSync.promise;if(failSync)throw Error('sync failed');}};
+ const execute=async()=>{events.push(['utility']);return {result:[Fr.ONE],offchainEffects:[]};};
+ const queue={runSynced:async work=>{try{const out=await work(ctx);events.push(['commit']);return out;}catch(error){events.push(['discard']);throw error;}}};
+ const Class=vm.runInNewContext(`(class {node=node;contractStore=store;contractClassService=contractClassService;contractSyncService=service;operationQueue=queue;#executeUtility=execute;#getSimulatorForTx=()=>({});
+ ${method(pxe,'async #prefetchPreferenceInitialization(', '\n    prepareOrdinaryPostState(')}
+ ${method(pxe,'executeUtility(call, { authwits, scopes }', '\n    /**')}
+ })`,{...nativeTimingBindings,...syncBindings,node,store,contractClassService,service,queue,execute,allToCompletion,Timer});
+ const instance=new Class(),call={name:'preference_head',to:address,selector:FunctionSelector.fromString(selector),args:[]};
+ return {run:()=>instance.executeUtility(call,{scopes:[address]}),events,node,anchorBlockHeader,address,initializationHash,
+ holdSync:()=>waitSync=Promise.withResolvers(),holdRead:()=>waitRead=Promise.withResolvers(),failSync:()=>{failSync=true;},failRead:()=>{failRead=true;},advance:()=>{number++;}};
+}
+test('preference initialization selector is the exact compiled utility and only the two write methods prime it',async()=>{
+ const abi=getAllFunctionAbis(actualBoardArtifact).find(fn=>fn.name==='preference_head');assert.equal(abi.functionType,'utility');
+ assert.equal((await FunctionSelector.fromNameAndParameters(abi.name,abi.parameters)).toString(),'0xe9554592');
+ for(const method of ['set_preference','mark_thread_read','set_like','register_name']){
+  const f=await ordinarySyncFixture();await f.prepareGeneric(method);const rows=f.events.filter(e=>e[0]==='initialization');
+  assert.equal(rows.length,['set_preference','mark_thread_read'].includes(method)?1:0);
+  if(rows.length)assert.equal(rows[0][1][0],(await computeSiloedPrivateInitializationNullifier(f.board,new Fr(77))).toString());
+ }
+});
+test('preference initialization overlaps native discovery and existing native oracle reuses the anchored cache',async()=>{
+ const f=await preferenceInitHarness(),sync=f.holdSync(),lookup=f.holdRead();const work=f.run();
+ for(let i=0;i<100&&!f.events.some(e=>e[0]==='lookup');i++)await new Promise(setImmediate);
+ assert.deepEqual(f.events.map(e=>e[0]),['sync','lookup']);assert(!f.events.some(e=>e[0]==='utility'));
+ const row=f.events.find(e=>e[0]==='lookup'),expected=await computeSiloedPrivateInitializationNullifier(f.address,f.initializationHash);
+ assert.equal(row[2],MerkleTreeId.NULLIFIER_TREE);assert.equal(row[3][0].toString(),expected.toString());
+ lookup.resolve();sync.resolve();await work;
+ const statuses=await UtilityExecutionOracle.prototype.getSiloedNullifierStatuses.call({anchorBlockHeader:f.anchorBlockHeader,aztecNode:f.node},[expected]);
+ assert.equal(statuses[0].exists,false,'prefetch never assumes initialized; native assertion still observes absence');
+ assert.equal(f.events.filter(e=>e[0]==='lookup').length,1);await f.run();assert.equal(f.events.filter(e=>e[0]==='lookup').length,1);
+ f.advance();await f.run();assert.equal(f.events.filter(e=>e[0]==='lookup').length,2,'new anchor fetches exact same nullifier afresh');
+});
+for(const options of [{selector:'0x418ef5da'},{wrongClass:true},{missingInstance:true}])test('preference initialization excludes '+JSON.stringify(options),async()=>{
+ const f=await preferenceInitHarness(options);await f.run();assert(!f.events.some(e=>e[0]==='lookup'));assert(f.events.some(e=>e[0]==='utility'));
+});
+for(const failure of ['sync','initialization'])test('preference initialization '+failure+' failure drains sibling and blocks utility/staged commit',async()=>{
+ const f=await preferenceInitHarness(),sync=f.holdSync(),lookup=f.holdRead();failure==='sync'?f.failSync():f.failRead();let settled=false;
+ const work=f.run().finally(()=>settled=true),rejected=assert.rejects(work,new RegExp(failure+' failed'));
+ for(let i=0;i<100&&!f.events.some(e=>e[0]==='lookup');i++)await new Promise(setImmediate);
+ assert(f.events.some(e=>e[0]==='lookup'));(failure==='sync'?sync:lookup).resolve();await new Promise(setImmediate);
+ assert.equal(settled,false);assert(!f.events.some(e=>['utility','discard','commit'].includes(e[0])));
+ sync.resolve();lookup.resolve();await rejected;assert(!f.events.some(e=>['utility','commit'].includes(e[0])));assert.equal(f.events.at(-1)[0],'discard');
+});
+
+for(const failure of [false,true])test('preference write preparation primes during actual native scope sync and drains staged failure '+failure,async()=>{
+ const f=await ordinarySyncFixture({initializationFailure:failure});f.hold();let settled=false;
+ const work=f.prepareGeneric('set_preference').finally(()=>settled=true),observed=failure?assert.rejects(work,/initialization failed/):work;
+ for(let i=0;i<100&&(f.pending.length<3||!f.events.some(e=>e[0]==='initialization'));i++)await new Promise(setImmediate);
+ assert.equal(f.pending.length,3);assert.equal(f.events.filter(e=>e[0]==='initialization').length,1);assert.equal(settled,false);
+ assert(!f.events.some(e=>['prepare-committed','prepare-discarded'].includes(e[0])));
+ f.pending.forEach(p=>p.resolve());await observed;assert.equal(f.events.at(-1)[0],failure?'prepare-discarded':'prepare-committed');
 });
