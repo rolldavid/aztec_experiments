@@ -9845,8 +9845,8 @@
     "request": "Owner25October: apply all proven posting optimizations across ALL other application transaction flows; new goal at least50% end-to-end reduction for every flow against currentpublished74c baseline. Cover Ethereum/Aztec user and operator paths, preservevalidation and genuine usable completion.",
     "status": "active",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
-    "checkpoint": "25 October: root live funding regression repair: d4cfeee0 renamed persisted confirmedClaim, ignoring completed topups. Browser reproduced ROLLING_INTENT_NOT_FOUND with confirmedClaim present. Remove gratuitous persisted-field rename, verify successive payments, publish, then resume measured 50% other-flow latency goal. Root sole source/live writer; pending_reply_ui independent review.",
-    "next_action": "Fix exact operator native hashing initialization; complete credit-router and config staging, native proof qualification and coherent9395 publication. Integrate subsequent reviewed read-reuse changes separately; measure actual browser flows and clean owned transfer data."
+    "checkpoint": "25 October: f0dc funding-field regression repair published; real fee topup and ETH-to-Bok claim succeeded. Bok funding39.223s click-to-usable credit (historical165.094s baseline has unmeasured wallet dwell). Integrating reviewed completion deduplication and parallel preference anchor/head/class reads; real Bok request and published reply observed.",
+    "next_action": "Test and publish focused completion/preference changes, measure remaining flows, investigate observed Bok request kernel9.48s/local verification11.08s, update live inventory and clean owned release transfers."
   },
   "completed_operating_requests": [
     {

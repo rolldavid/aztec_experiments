@@ -832,7 +832,7 @@ for(const kind of ['aggregate','private-fee','bok'])test(`included ${kind} claim
  f.options.verifyClaim=async txHash=>{verified++;return verifyRollingTopupClaim({sdk:{TxHash:{fromString:value=>value},boundedTransactionRead:fn=>fn(),requireSuccessfulReceipt},node:{getTxReceipt:async()=>({txHash:h(70),status:'proposed',executionResult:'success',blockNumber:3,blockHash:h(60)}),getBlock:async()=>({hash:canonical?h(60):h(61)})},txHash,contextGuard:f.options.contextGuard,confirmationTier:'proposed'});};
  const funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();workflow=durableClaimApplication(f,funding,{proposed:true});
  const result=await advanceAggregateClaim({application:workflow.open(),funding,waits:{claim:async()=>assert.fail('included claim must not wait for checkpoint')}});
- assert.equal(result.state,'included');assert.equal(result.intent.status,'included');assert.equal(workflow.state.sends,1);assert.equal(f.state.sends,1);assert(verified>0);
+ assert.equal(result.state,'included');assert.equal(result.intent.status,'included');assert.equal(workflow.state.sends,1);assert.equal(f.state.sends,1);assert.equal(verified,0,'fresh application reconciliation is the sole completion check');
  const original=await funding.loadAggregate(receipts.receipt.txHash);
  // The completion field must remain stable when the confirmation tier changes.
  // Otherwise an already completed payment is mistaken for a pending workflow.
@@ -844,7 +844,7 @@ for(const kind of ['aggregate','private-fee','bok'])test(`included ${kind} claim
  await completed.slot.write(completed.saved,value);
  if(kind!=='aggregate')assert.equal((await funding.inspect()).completed,true);
  f.options.reconcileClaim=async()=>{throw Error('a later ordinary action has replaced the single workflow');};
- const reopened=await f.open();await reopened.prepare(f.allocation);assert.deepEqual(await reopened.loadAggregate(receipts.receipt.txHash),original);assert.equal(f.state.sends,1);
+ const reopened=await f.open();await reopened.prepare(f.allocation);assert(verified>0,'a later payment independently rechecks the completed claim');assert.deepEqual(await reopened.loadAggregate(receipts.receipt.txHash),original);assert.equal(f.state.sends,1);
  canonical=false;await assert.rejects((await f.open()).prepare(f.allocation),{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.state.sends,1);
 });
 
@@ -986,4 +986,14 @@ test('terminal reuse: final canonical read stays held before returning deposit r
  const f=topupFixture();f.state.allowance=1000n;const native=f.options.sdk.createEthereumJournal,held=Promise.withResolvers(),entered=Promise.withResolvers();
  f.options.sdk.createEthereumJournal=async options=>{const j=await native(options);return {...j,send:async(...args)=>{const result=await j.send(...args),block=f.options.provider.getBlock;f.options.provider.getBlock=async n=>{entered.resolve();await held.promise;return block(n);};return result;}};};
  const cap=await f.open();await cap.prepare(f.allocation);let done=false;const work=cap.confirm().finally(()=>{done=true;});await entered.promise;assert.equal(done,false);held.resolve();assert.equal((await work).receipt.amount,'300');
+});
+
+for(const kind of ['private-fee','bok'])test(`direct ${kind} completion binds the exact receipt and holds custody through final reconciliation`,async()=>{
+ const f=topupFixture(kind);f.state.allowance=1000n;let workflow,hold=false;const gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ f.options.reconcileClaim=async id=>{if(hold){entered.resolve();await gate.promise;}return workflow.open().reconcile(id);};
+ const funding=await f.open();await funding.prepare(f.allocation);const receipts=await funding.confirm();workflow=durableClaimApplication(f,funding,{proposed:true});
+ const app=workflow.open(),prepared=await app.prepare({type:kind==='bok'?'claim-bok':'claim-private-fee',...receipts});await funding.checkpointClaim({intentId:prepared.intentId,attempted:true});const done=await app.submitPrepared(prepared.intentId);
+ await assert.rejects(funding.recordClaimCompletion({...done,action:{...done.action,receipt:{...done.action.receipt,amount:'999'}}}),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal((await funding.inspect()).completed,false);
+ hold=true;const pending=funding.recordClaimCompletion(done);await entered.promise;assert.equal((await funding.inspect()).completed,false);
+ workflow.state.outcome={...workflow.state.outcome,outcome:'reverted'};const rejected=assert.rejects(pending,{code:'ROLLING_FUNDING_MISMATCH'});gate.resolve();await rejected;assert.equal((await funding.inspect()).completed,false);
 });

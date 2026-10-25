@@ -170,3 +170,7 @@ Root integrates initial preference preparation overlap and owns core staging/liv
 ## Continuing all-flow performance publication
 
 Root owns reviewed funding-terminal integration, candidate9395 publication and actual browser measurements. proposed_feed_design diagnoses the sampled native hashing IPC stall in the read-only deployment check. pending_reply_ui independently approved the config transfer and terminal-reuse changes. pending_feed_release audits remaining same-operation Bok metadata and portal read overlap. No dependency copies or new browser profiles; all services remain running.
+
+##25October completion and preference follow-up
+
+Root integrates/publishes the completion and preference read-wave changes, owns the single IAB test account and retained build. pending_reply_ui reviews completion authority and incremental static publication; pending_feed_release supplies preference concurrency/failure tests and cleanup; proposed_feed_design measures the real funded Bok job and investigates browser kernel/verifier delays. No dependency copies or service restart.163 aggregate checks,5 targeted updated completion checks,4 actual-journal checks and389 preference/session checks pass. Overall per-flow50% acceptance remains active.

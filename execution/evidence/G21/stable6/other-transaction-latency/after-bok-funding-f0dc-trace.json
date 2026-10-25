@@ -1,0 +1,958 @@
+{
+  "release": "f0dcf539c525188f6123ca1f14e9661a002c1ec0",
+  "saved": {
+    "amount": "1000000",
+    "asset": "ETH",
+    "claim": {
+      "attempted": true,
+      "intentId": "0x095a35c433cc16da2c347649d80ec9b1bae4cbb62e9447f30a3bdf8fe283e9f3"
+    },
+    "claimAction": "claim-bok",
+    "completed": true,
+    "explicitClaimReview": false,
+    "paymentSaved": true,
+    "phase": "deposit",
+    "privateFeeCap": "13923754136387220000"
+  },
+  "status": "included",
+  "trace": {
+    "events": [
+      {
+        "at": 451551.38499999046,
+        "type": "click"
+      },
+      {
+        "at": 451552.63499999046,
+        "text": "Add Bok credit\nClose account panel\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPay up to 0.00002617 ETH\n\nPlus the Ethereum fee shown in your wallet.\n\nPay\nBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 451553.1699999571,
+        "text": "Add Bok credit\nClose account panel\n\nConfirm your payment in your wallet…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPay up to 0.00002617 ETH\n\nPlus the Ethereum fee shown in your wallet.\n\nPay\nBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 456154.41499996185,
+        "text": "Add Bok credit\nClose account panel\n\nWaiting for Ethereum confirmation…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPay up to 0.00002617 ETH\n\nPlus the Ethereum fee shown in your wallet.\n\nPay\nBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 463323.1849999428,
+        "text": "Add Bok credit\nClose account panel\n\nWaiting for Ethereum confirmation…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 463326.5449999571,
+        "text": "Add Bok credit\nClose account panel\n\nChecking your payment…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 464692.14999997616,
+        "text": "Add Bok credit\nClose account panel\n\nWaiting for your payment to confirm…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 465855.9549999237,
+        "text": "Add Bok credit\nClose account panel\n\nPayment checked. Continuing…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 465856.6449999809,
+        "text": "Add Bok credit\nClose account panel\n\nPayment confirmed. Checking your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 467573.2199999094,
+        "text": "Add Bok credit\nClose account panel\n\nPayment confirmed. Adding your Bok credit on Aztec…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 469746.125,
+        "text": "Add Bok credit\nClose account panel\n\nPreparing your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 469751.8700000048,
+        "text": "Add Bok credit\nClose account panel\n\nAdding your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 471226.5699999333,
+        "text": "Add Bok credit\nClose account panel\n\nChecking the cost of adding your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 472679.2699999809,
+        "text": "Add Bok credit\nClose account panel\n\nAdding your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 472679.35000002384,
+        "text": "Add Bok credit\nClose account panel\n\nPreparing your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 481274.2849999666,
+        "text": "Add Bok credit\nClose account panel\n\nAdding your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 481648.38499999046,
+        "text": "Add Bok credit\nClose account panel\n\nWaiting for your Bok credit to confirm…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 486607.625,
+        "text": "Add Bok credit\nClose account panel\n\nAdding your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 486607.71499991417,
+        "text": "Add Bok credit\nClose account panel\n\nPreparing your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 0 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 488607.3249999285,
+        "text": "Add Bok credit\nClose account panel\n\nPreparing your Bok credit…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance —\nPayment —\n\nEnter an amount to see the price.\n\nContinue paymentPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 488607.49000000954,
+        "text": "Add Bok credit\nClose account panel\n\nLoading your account…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance —\nPayment —\n\nEnter an amount to see the price.\n\nContinue paymentPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 490772.27499997616,
+        "text": "Add Bok credit\nClose account panel\n\nLoading your account…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 1 USDC\nPayment —\n\nEnter an amount to see the price.\n\nContinue paymentPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 490772.5699999333,
+        "text": "Add Bok credit\nClose account panel\n\nLoading your account…\n\n✓\nRolling test wallet 0x8d83…1CA4\n\nUse Bok credit when you ask @bok to reply.\n\nAmount (USD)\n$1\n$5\n$10\nPay with\nETH\nUSDC\nBalance 1 USDC\nPayment —\n\nEnter an amount to see the price.\n\nPay\nPause checksBack to accountSign out",
+        "type": "ui"
+      },
+      {
+        "at": 490774.0699999333,
+        "text": "Your account\nClose account panel\n\nBok credit added. Confirmation pending.\n\nReady for a conversation?\n\nPost anonymously, or choose a name when you write.\n\nWrite a post\nAccount settings\nRefresh accountYour namesFollows and bookmarksBalance and withdrawalsCreate a boardAdd posting credit\nStart new test accountSign out",
+        "type": "ui"
+      }
+    ],
+    "measures": [
+      {
+        "duration": 470.25,
+        "name": "rolling.reader.update",
+        "start": 460011.7049999237
+      },
+      {
+        "duration": 10.039999961853027,
+        "name": "rolling.reader.dom",
+        "start": 460471.89999997616
+      },
+      {
+        "duration": 1091.539999961853,
+        "name": "rolling.action.sync",
+        "start": 465856.8550000191
+      },
+      {
+        "duration": 384.5900000333786,
+        "name": "rolling.action.predecessor",
+        "start": 467573.30499994755
+      },
+      {
+        "duration": 235.6950000524521,
+        "name": "rolling.action.claim-receipt",
+        "start": 468766.2999999523
+      },
+      {
+        "duration": 158.8199999332428,
+        "name": "rolling.action.claim-initial-canonical",
+        "start": 469002.8700000048
+      },
+      {
+        "duration": 159.09500002861023,
+        "name": "rolling.action.claim-bindings",
+        "start": 469002.88499999046
+      },
+      {
+        "duration": 4.414999961853027,
+        "name": "rolling.action.claim-effects",
+        "start": 469161.9950000048
+      },
+      {
+        "duration": 246.18500006198883,
+        "name": "rolling.action.claim-membership",
+        "start": 469166.4199999571
+      },
+      {
+        "duration": 1783.6999999284744,
+        "name": "rolling.action.arguments",
+        "start": 467957.99000000954
+      },
+      {
+        "duration": 328.8199999332428,
+        "name": "rolling.action.claim-final-canonical",
+        "start": 469412.6299999952
+      },
+      {
+        "duration": 235.20000004768372,
+        "name": "rolling.action.claim-receipt",
+        "start": 470585.42999994755
+      },
+      {
+        "duration": 172.71000003814697,
+        "name": "rolling.action.claim-initial-canonical",
+        "start": 470820.66499996185
+      },
+      {
+        "duration": 232.28999996185303,
+        "name": "rolling.action.claim-final-canonical",
+        "start": 470993.3949999809
+      },
+      {
+        "duration": 230.64999997615817,
+        "name": "rolling.action.fee-metadata",
+        "start": 471226.7300000191
+      },
+      {
+        "duration": 4.440000057220459,
+        "name": "rolling.action.fee-binding",
+        "start": 471457.4549999237
+      },
+      {
+        "duration": 1432.085000038147,
+        "name": "rolling.action.fee-prepare",
+        "start": 471226.0449999571
+      },
+      {
+        "duration": 1196.0650000572205,
+        "name": "rolling.action.fee-balance",
+        "start": 471461.9249999523
+      },
+      {
+        "duration": 0.2849999666213989,
+        "name": "rolling.action.fee-simulate",
+        "start": 472658.1399999857
+      },
+      {
+        "duration": 1452.9950000047684,
+        "name": "rolling.transaction.estimating",
+        "start": 471225.95999991894
+      },
+      {
+        "duration": 0.315000057220459,
+        "name": "rolling.transaction.submitting",
+        "start": 472678.96499991417
+      },
+      {
+        "duration": 32.77999997138977,
+        "name": "rolling.transaction.preparing",
+        "start": 472679.2799999714
+      },
+      {
+        "duration": 1.6349999904632568,
+        "name": "rolling.proof.wallet.phase.account-request",
+        "start": 472712.0199999809
+      },
+      {
+        "duration": 1.625,
+        "name": "rolling.proof.native.phase.queue-and-anchor",
+        "start": 472713.6999999285
+      },
+      {
+        "duration": 3704.3450000286102,
+        "name": "rolling.proof.native.phase.private-execution",
+        "start": 472715.39999997616
+      },
+      {
+        "duration": 258.875,
+        "name": "rolling.proof.native.phase.kernel-class-hints",
+        "start": 476419.9850000143
+      },
+      {
+        "duration": 452.99000000953674,
+        "name": "rolling.proof.native.phase.kernel-body",
+        "start": 476678.91499996185
+      },
+      {
+        "duration": 12.014999985694883,
+        "name": "rolling.proof.native.phase.validation-transaction",
+        "start": 477133.67999994755
+      },
+      {
+        "duration": 320.79499995708466,
+        "name": "rolling.proof.native.phase.validation",
+        "start": 477131.9249999523
+      },
+      {
+        "duration": 306.9099999666214,
+        "name": "rolling.proof.native.phase.public-execution",
+        "start": 477145.7300000191
+      },
+      {
+        "duration": 305.9800000190735,
+        "name": "rolling.proof.native.phase.admission-check",
+        "start": 477146.625
+      },
+      {
+        "duration": 2.0500000715255737,
+        "name": "rolling.proof.transport.circuit-ids",
+        "start": 477452.80499994755
+      },
+      {
+        "duration": 20.460000038146973,
+        "name": "rolling.proof.transport.dictionary",
+        "start": 477454.9249999523
+      },
+      {
+        "duration": 27.825000047683716,
+        "name": "rolling.proof.transport.serialize",
+        "start": 477452.7799999714
+      },
+      {
+        "duration": 5.129999995231628,
+        "name": "rolling.proof.transport.compress",
+        "start": 477475.4199999571
+      },
+      {
+        "duration": 514.039999961853,
+        "name": "rolling.proof.transport.submit",
+        "start": 477480.6100000143
+      },
+      {
+        "duration": 2993.275000095367,
+        "name": "rolling.proof.transport.wait",
+        "start": 477994.7199999094
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.persist",
+        "start": 480986.7999999523
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.queue-wait",
+        "start": 480986.89999997616
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.result-ready",
+        "start": 480986.91499996185
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.read",
+        "start": 480986.92999994755
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.decompress",
+        "start": 480986.9349999428
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.binding",
+        "start": 480986.9449999333
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.backend",
+        "start": 480986.9499999285
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.native-prove",
+        "start": 480986.95999991894
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.bb-start",
+        "start": 480986.96499991417
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.bb-load",
+        "start": 480986.97500002384
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.bb-accumulate",
+        "start": 480986.99000000954
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.bb-prove",
+        "start": 480987
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.bb-verify",
+        "start": 480987.0149999857
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.bb-compress",
+        "start": 480987.0299999714
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.result-encode",
+        "start": 480987.0449999571
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.child-total",
+        "start": 480987.05499994755
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.ready-wait",
+        "start": 480987.0699999333
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.dispatch-to-result",
+        "start": 480987.08499991894
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.server.result-ready-to-snapshot",
+        "start": 480987.1050000191
+      },
+      {
+        "duration": 37.60000002384186,
+        "name": "rolling.proof.local.decompress",
+        "start": 480991.189999938
+      },
+      {
+        "duration": 3720.0349999666214,
+        "name": "rolling.proof.native.phase.remote-proof",
+        "start": 477452.75999999046
+      },
+      {
+        "duration": 139.92000007629397,
+        "name": "rolling.proof.local.verify",
+        "start": 481028.8249999285
+      },
+      {
+        "duration": 0.36000001430511475,
+        "name": "rolling.proof.native.phase.proof-public-inputs",
+        "start": 481172.8099999428
+      },
+      {
+        "duration": 13.25,
+        "name": "rolling.proof.native.phase.result-and-tag-persistence",
+        "start": 481173.21499991417
+      },
+      {
+        "duration": 8477.370000004768,
+        "name": "rolling.proof.wallet.phase.prove-tx-with-public-validation",
+        "start": 472713.6849999428
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.native.total",
+        "start": 481191.0799999237
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.native.sync",
+        "start": 481191.08499991894
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.native.private-witness",
+        "start": 481191.08499991894
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.native.kernel-witness",
+        "start": 481191.08999991417
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.native.public-validation",
+        "start": 481191.08999991417
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.native.proof-transport",
+        "start": 481191.0949999094
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.aggregate.native.unaccounted",
+        "start": 481191.0949999094
+      },
+      {
+        "duration": 12,
+        "name": "rolling.proof.wallet.phase.to-tx",
+        "start": 481191.10000002384
+      },
+      {
+        "duration": 0.014999985694885254,
+        "name": "rolling.proof.wallet.phase.context-guard",
+        "start": 481203.1299999952
+      },
+      {
+        "duration": 20.384999990463257,
+        "name": "rolling.proof.wallet.phase.guard-before-journal",
+        "start": 481203.16499996185
+      },
+      {
+        "duration": 34.83500003814697,
+        "name": "rolling.proof.wallet.phase.journal-prepare",
+        "start": 481223.5699999333
+      },
+      {
+        "duration": 8561.945000052452,
+        "name": "rolling.transaction.proving",
+        "start": 472712.064999938
+      },
+      {
+        "duration": 15.43500006198883,
+        "name": "rolling.proof.wallet.phase.journal-signed",
+        "start": 481258.4249999523
+      },
+      {
+        "duration": 0.019999980926513672,
+        "name": "rolling.proof.wallet.phase.context-guard",
+        "start": 481273.8799999952
+      },
+      {
+        "duration": 0.004999995231628418,
+        "name": "rolling.proof.wallet.phase.context-guard",
+        "start": 481273.89999997616
+      },
+      {
+        "duration": 3.6549999713897705,
+        "name": "rolling.proof.wallet.phase.signed-guard",
+        "start": 481273.9950000048
+      },
+      {
+        "duration": 374.09500002861023,
+        "name": "rolling.transaction.submitting",
+        "start": 481274.00999999046
+      },
+      {
+        "duration": 370.36500000953674,
+        "name": "rolling.proof.wallet.phase.submit-to-aztec",
+        "start": 481277.6749999523
+      },
+      {
+        "duration": 331.31499993801117,
+        "name": "rolling.proof.receipt.phase.read",
+        "start": 481648.39999997616
+      },
+      {
+        "duration": 0.009999990463256836,
+        "name": "rolling.proof.receipt.phase.pending",
+        "start": 481979.8099999428
+      },
+      {
+        "duration": 356.2450000047684,
+        "name": "rolling.proof.receipt.phase.read",
+        "start": 482981.46499991417
+      },
+      {
+        "duration": 0.004999995231628418,
+        "name": "rolling.proof.receipt.phase.pending",
+        "start": 483337.75
+      },
+      {
+        "duration": 233.64999997615817,
+        "name": "rolling.proof.receipt.phase.read",
+        "start": 484338.9199999571
+      },
+      {
+        "duration": 0,
+        "name": "rolling.proof.receipt.phase.pending",
+        "start": 484572.61500000954
+      },
+      {
+        "duration": 4167.009999990463,
+        "name": "rolling.transaction.aztec-inclusion",
+        "start": 481648.05499994755
+      },
+      {
+        "duration": 240.67000007629397,
+        "name": "rolling.proof.receipt.phase.read",
+        "start": 485574.30499994755
+      },
+      {
+        "duration": 0.004999995231628418,
+        "name": "rolling.proof.receipt.phase.proposed",
+        "start": 485815.00999999046
+      },
+      {
+        "duration": 0.08000004291534424,
+        "name": "rolling.proof.receipt.phase.display-callback",
+        "start": 485815.0499999523
+      },
+      {
+        "duration": 573.9750000238419,
+        "name": "rolling.account.sync",
+        "start": 488608.6949999333
+      },
+      {
+        "duration": 9125.669999957085,
+        "name": "rolling.transaction.confirming",
+        "start": 481648.1050000191
+      },
+      {
+        "duration": 2165.460000038147,
+        "name": "rolling.action.required-account-refresh",
+        "start": 488606.8299999237
+      },
+      {
+        "duration": 496.3000000715256,
+        "name": "rolling.account.sync",
+        "start": 490776.189999938
+      },
+      {
+        "duration": 231.3549998998642,
+        "name": "rolling.action.fee-metadata",
+        "start": 493103.60000002384
+      },
+      {
+        "duration": 1.8549998998641968,
+        "name": "rolling.action.fee-binding",
+        "start": 493334.9800000191
+      },
+      {
+        "duration": 4120.3949999809265,
+        "name": "rolling.account.status-refresh",
+        "start": 490773.7999999523
+      },
+      {
+        "duration": 1557.130000114441,
+        "name": "rolling.action.fee-balance",
+        "start": 493336.8449999094
+      },
+      {
+        "duration": 558.5950000286102,
+        "name": "rolling.action.sync",
+        "start": 523219.91499996185
+      }
+    ],
+    "timeOrigin": 1792906329465.185
+  },
+  "txHash": "0x2451320088b699df0c44d729f9039c08dc68294f84420ed5ef30b73c66b466f3",
+  "ethereum": [
+    {
+      "hash": "0xc7be38f17c847a63d3d1e7e3dd6fb12f7df746295de8da1aa29af38732f7fa7e",
+      "method": "buyCredit",
+      "at": 1792906785285
+    }
+  ],
+  "walletRequests": [
+    {
+      "method": "eth_accounts",
+      "at": 1792906487475,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "at": 1792906515476,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "at": 1792906517567,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906580418,
+      "finished": 1792906580423,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906582065,
+      "finished": 1792906582069,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906582371,
+      "finished": 1792906582376,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906583053,
+      "finished": 1792906583057,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906583064,
+      "finished": 1792906583067,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906583072,
+      "finished": 1792906583076,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906584605,
+      "finished": 1792906584609,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906584615,
+      "finished": 1792906584617,
+      "failed": false
+    },
+    {
+      "method": "eth_blockNumber",
+      "started": 1792906584623,
+      "finished": 1792906584983,
+      "failed": false
+    },
+    {
+      "method": "eth_sendTransaction",
+      "started": 1792906584989,
+      "finished": 1792906585576,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906585584,
+      "finished": 1792906585587,
+      "failed": false
+    },
+    {
+      "method": "eth_getTransactionByHash",
+      "started": 1792906585587,
+      "finished": 1792906585888,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906585905,
+      "finished": 1792906585910,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906598721,
+      "finished": 1792906598725,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906617296,
+      "finished": 1792906617300,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906617306,
+      "finished": 1792906617310,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906619075,
+      "finished": 1792906619079,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906620553,
+      "finished": 1792906620560,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906621481,
+      "finished": 1792906621486,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906621786,
+      "finished": 1792906621793,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906622379,
+      "finished": 1792906622383,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906622393,
+      "finished": 1792906622398,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906622699,
+      "finished": 1792906622704,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906622711,
+      "finished": 1792906622715,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906624491,
+      "finished": 1792906624495,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906624502,
+      "finished": 1792906624507,
+      "failed": false
+    },
+    {
+      "method": "eth_blockNumber",
+      "started": 1792906624516,
+      "finished": 1792906624719,
+      "failed": false
+    },
+    {
+      "method": "eth_sendTransaction",
+      "started": 1792906624725,
+      "finished": 1792906625071,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906625079,
+      "finished": 1792906625083,
+      "failed": false
+    },
+    {
+      "method": "eth_getTransactionByHash",
+      "started": 1792906625083,
+      "finished": 1792906625257,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906625265,
+      "finished": 1792906625269,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906633453,
+      "finished": 1792906633459,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906750450,
+      "finished": 1792906750459,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906750474,
+      "finished": 1792906750478,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906751901,
+      "finished": 1792906751908,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906782468,
+      "finished": 1792906782472,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906782480,
+      "finished": 1792906782484,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906782827,
+      "finished": 1792906782830,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906782836,
+      "finished": 1792906782839,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906783003,
+      "finished": 1792906783006,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906783012,
+      "finished": 1792906783016,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906784299,
+      "finished": 1792906784303,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906784309,
+      "finished": 1792906784311,
+      "failed": false
+    },
+    {
+      "method": "eth_blockNumber",
+      "started": 1792906784316,
+      "finished": 1792906784647,
+      "failed": false
+    },
+    {
+      "method": "eth_sendTransaction",
+      "started": 1792906784656,
+      "finished": 1792906785290,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906785296,
+      "finished": 1792906785299,
+      "failed": false
+    },
+    {
+      "method": "eth_getTransactionByHash",
+      "started": 1792906785299,
+      "finished": 1792906785620,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906785635,
+      "finished": 1792906785638,
+      "failed": false
+    },
+    {
+      "method": "eth_chainId",
+      "started": 1792906791967,
+      "finished": 1792906791972,
+      "failed": false
+    }
+  ]
+}

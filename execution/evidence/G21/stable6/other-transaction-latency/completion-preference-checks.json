@@ -1,0 +1,29 @@
+{
+  "sourceParent": "f0dcf539c525188f6123ca1f14e9661a002c1ec0",
+  "changes": [
+    "one fresh signed-journal reconciliation without note sync or signing capsule initialization",
+    "parallel initial preference anchor/head/class reads"
+  ],
+  "checks": {
+    "aggregateWallet": 163,
+    "updatedCompletionBinding": 5,
+    "actualEncryptedJournal": 4,
+    "preferenceAndWalletSession": 389,
+    "sdkManifest": {
+      "inputs": 2106,
+      "outputs": 65
+    },
+    "walletBuild": {
+      "files": 82,
+      "inputs": 114
+    },
+    "finalRawReconciliationSession": 45
+  },
+  "newCoverage": [
+    "reported receipt cannot replace authenticated claim receipt",
+    "pending final reconciliation cannot store completion after native result changes",
+    "same-operation canonical permit cannot hide changed receipt or fork",
+    "parallel read failures drain siblings before releasing preference operation"
+  ],
+  "wallTimeClaim": null
+}

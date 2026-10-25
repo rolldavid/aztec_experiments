@@ -18,7 +18,7 @@ Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build`
 
 ## Other transaction performance — active
 
-Owner target: at least50% end-to-end reduction across all other flows. UIef358ebb adds visible exact-transaction completion, single-action Ethereum withdrawal, valid Bok balance selection and automatic private-choice hydration and independent pending withdrawals, alongside parallel portal bindings, shorter Bok completion, honest Ethereum progress, overlapped claim checks, proposed bridge readiness, preference fees, included Bok actions and sparse preference reads and the08b4 exact-anchor accounting backend are published. Bok94d1a719 is published. Like, bookmark, name, bio and Bok-funding baselines are captured. The first like after-test returned in12.199s versus56.933s baseline; included display improved only modestly. The repaired bookmark completed in22.773s versus58.264s baseline; unbookmark20.037s. Exact visible/usable endpoints and broader qualification remain in the performance record. Broader matched coverage and the overall50% acceptance remain outstanding. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
+Owner target: at least50% end-to-end reduction across all other flows; still active. Published f0dc includes shared read waves, native included completion and the completed-payment regression fix. Fresh fee topup succeeded. ETH-to-Bok took39.223s from Pay click to usable credit after native inclusion, versus the historical165.094s run (unmeasured baseline wallet dwell limits that comparison). A real funded @bok request published a working updated app and its reply automatically appeared in the conversation. Remaining matched coverage and browser kernel/proof-verification latency are under investigation. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
 
 ## Current deployment
 
@@ -29,24 +29,24 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/ef358ebbbd20ea1fa362b5cc1acfba53f1e28280` |
-| Browser SDK SHA256 | `d244ae0de0ca1b25487d7b553905307c5a2f0c0aa62ec5ad8497e682fe7e0b80` |
-| Running app | `/opt/rolling-app/releases/accounting-08b4ce3364d4` |
-| Next-start app | `/opt/rolling-app/releases/ui-ef358ebbbd20` |
-| Prover | `/opt/board-prover/releases/bb-timings-702c153c5c2e65099a66d7d8288d052f19aa51ad` |
-| Bok | `/opt/rolling-bok/releases/94d1a7198f7bd2094be66754bc3aeb8a42f657dd` |
+| Browser UI | `/opt/rolling-ui/releases/f0dcf539c525188f6123ca1f14e9661a002c1ec0` |
+| Browser SDK | Verified9395 artifact; wallet runtime updated in f0dc |
+| Running app | `/opt/rolling-app/releases/93954017009d4d9b53529d09956347682a1069ea` |
+| Next-start app | `/opt/rolling-app/releases/ui-f0dcf539c525` |
+| Prover | `/opt/board-prover/releases/bok-owner-93954017009d4d9b53529d09956347682a1069ea` |
+| Bok | `/opt/rolling-bok/releases/93954017009d4d9b53529d09956347682a1069ea` |
 
 | Contract | Current address |
 | --- | --- |
 | Board | `0x19ee03e617512ca48271634629d9b48e815ab1ba46c3eef3b7edaafc345d7be6` |
 | Private fee contract | `0x2fff4f1bed0f240982804499d6693530343bd3f9236fe82851fb7d46be990b3c` |
-| Bok | `0x18fc6cbfced589411864ae3b2551f0c1c37e80da11445cb839588db2d68f358a` |
+| Bok | `0x1011f5939cca40b7e3409aecc7aa38cd8cb8f587ed5ef3445b38c75ec66a4ab7` |
 | Posting deposit portal | `0x237ce50c8418c812d564b34be84f0174fd4072a2` |
-| Signup payment router | `0x39f3aba2180b75c18080ee2c4687553a3e250645` |
-| Bok portal | `0x340d8c7e17e7c23d247d1f66d2b8753f32bd561a` |
-| Bok credit router | `0x6bcd002949bbb3ff053790691f0771f227c8eeb7` |
+| Signup payment router | `0x01ec53587bafbeb8d4a6ae8d800744ea51f83c9e` |
+| Bok portal | `0xb83f9165d6535da5a6c5b1b1f22279302452d1eb` |
+| Bok credit router | `0x5da2789703de37bf79ce786f65d795a35d57549a` |
 
-Canonical Bok plugin ID is `0x0000000000000000000000000000000000000000000000000000000000626f6b`. Rollout templates previously copied a different ID; both live configs and their producers are corrected. Registration was already successful; no replacement transaction was needed. Main-page balance now displays0USDC instead of unavailable. See owner-plugin-configuration.json in the evidence folder.
+Canonical Bok plugin ID is `0x00000000000000000000000000000000000000000000000000000000626f6b03`. The9395 deployment uses owner-only note delivery; current browser funding, claim and worker reply have been exercised against this contract.
 
 Owner-only discovery is deployed: unconstrained AES256-GCM delivery with native note authorization/nullification and zero extra notes or logs. The rejected counter-note journal must never ship. Empty-store restoration and partial-refund behavior have focused native checks. The signature-derived account root remains quantum-vulnerable as previously disclosed; this change does not claim post-quantum confidentiality.
 

@@ -79,11 +79,16 @@ export function createRollingPreferenceReader(input){
    const block=await checked(()=>getBlock(height));
    assert(block&&Number(block.header?.globalVariables?.blockNumber)===height);const hash=hex(block.blockHash);if(!fresh)active.headers.set(height,hash);return hash;
   }
-  async function captureAnchor(){
+  async function localAnchor(){
    const value=await checked(header),blockNumber=natural(Number(value?.globalVariables?.blockNumber));
    const typedHash=await checked(()=>value.hash()),blockHash=hex(typedHash);
-   assert(await canonical(blockNumber,{fresh:true})===blockHash);
    const anchor=Object.freeze({blockNumber,blockHash});anchorHashes.set(anchor,typedHash);return anchor;
+  }
+  async function checkAnchorHash(anchor){
+   assert(await canonical(anchor.blockNumber,{fresh:true})===anchor.blockHash);
+  }
+  async function captureAnchor(){
+   const anchor=await localAnchor();await checkAnchorHash(anchor);return anchor;
   }
   async function captureHead(){
    const head=Object.freeze(exact(await checked(readHead),['initialized','schema','revision','digest']));
@@ -130,9 +135,16 @@ export function createRollingPreferenceReader(input){
     if(!slot)slot=await checked(()=>createEncryptedJournalSlot({storage:{read:key=>checked(()=>storeRead(key)),compareAndSwap:(...args)=>checked(()=>storeCAS(...args))},walletSecret,walletSalt,scopeText,keyDomain:DOMAIN}));
     if(!decoder)decoder=await checked(()=>createPreferenceEventDecoder({sdk:decoderSdk,artifact}));
     const saved=await checked(()=>slot.read());const cache=saved.value===null?null:cacheRecord(saved.value);
-    const anchor=await phase('anchor',captureAnchor);
-    const reads=await Promise.allSettled([phase('head',captureHead),phase('class',()=>checkClass(anchor))]);
-    const failure=reads.find(read=>read.status==='rejected');if(failure)throw failure.reason;const head=reads[0].value;
+    const anchor=await localAnchor();
+    // The held native anchor identifies all three reads. Authenticate its
+    // canonical hash alongside the immutable class/head, then drain every
+    // sibling before accepting events or releasing this account operation.
+    const reads=await Promise.allSettled([
+     ()=>phase('anchor',()=>checkAnchorHash(anchor)),
+     ()=>phase('head',captureHead),
+     ()=>phase('class',()=>checkClass(anchor)),
+    ].map(read=>Promise.resolve().then(read)));
+    const failure=reads.find(read=>read.status==='rejected');if(failure)throw failure.reason;const head=reads[1].value;
     active.headers.set(anchor.blockNumber,anchor.blockHash);
     let epoch=cache?.epoch??0,fromBlock=1,fold,markers=null;
     if(cache){

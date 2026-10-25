@@ -3059,3 +3059,14 @@ for(const defect of ['unauthorized','malformed-policy','invalid-reason','fork','
  await entered.promise;assert.equal(settled,false);
  if(defect==='fork')f.state.reorg=true;if(defect==='owner')f.state.guard=false;gate.resolve();await observed;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });
+
+for(const change of ['receipt','canonical-block'])test(`explicit reconciliation ignores same-operation permit after ${change} changes`,async()=>{
+ const owner={},base=fixture();base.options.accountSession.operationScope=()=>owner;
+ const f=await realJournalFixture(base),prepared=await f.app.prepare({type:'like',post:'5'});await f.app.submitPrepared(prepared.intentId);
+ const journal=f.options.accountSession.journal;await journal.inspectOutcome({reuse:false});
+ const node=f.options.accountSession.node,read=node.getTxReceipt;let reads=0;node.getTxReceipt=async hash=>{reads++;return read(hash);};
+ await journal.inspectOutcome({reuse:true});assert.equal(reads,0,'fixture holds a canonical permit under the same operation');
+ if(change==='canonical-block'){node.getBlock=async()=>({hash:{toString:()=>hex(999)}});await assert.rejects(f.app.reconcile(prepared.intentId),{code:'BB_SUBMISSION_UNKNOWN'});}
+ else{const hash=[...f.receipts.keys()][0];f.receipts.set(hash,new PendingTxReceipt(TxHash.fromString(hash)));assert.notEqual((await f.app.reconcile(prepared.intentId)).status,'confirmed');}
+ assert.equal(reads,1,'explicit reconciliation reads the exact signed transaction again');
+});

@@ -308,15 +308,17 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
   },
   async recordClaimCompletion(result){
    if(!['included','confirmed'].includes(result?.status)||result.action?.type!=='claim-deposit')return;
-   const saved=await stored();if(saved.value?.claim?.intentId!==result.intentId)return;
+   const reported=freeze(clone(result));
+   const saved=await stored();if(saved.value?.claim?.intentId!==reported.intentId)return;
    check(saved.value.claim.attempted&&typeof reconcileClaim==='function'&&typeof verifyClaim==='function','RECOVERY_REQUIRED');
-   const original=await read(()=>reconcileClaim(result.intentId));
-   check(['included','confirmed'].includes(original.status)&&original.intentId===result.intentId&&original.txHash===result.txHash&&/^0x[0-9a-f]{64}$/.test(original.txHash),'MISMATCH');
    const payment=await reconcile();await terminalPayment(payment.result);
-   const expected=receipts(payment.result);check(sameReceipts(original.action,expected)&&sameReceipts(result.action,expected),'MISMATCH');
+   // The trusted application reopens the exact signed journal and checks its
+   // receipt canonically without reuse. Keep this L2 fence after payment reads.
+   const original=await read(async()=>freeze(clone(await reconcileClaim(reported.intentId))));
+   check(['included','confirmed'].includes(original.status)&&original.intentId===reported.intentId&&original.txHash===reported.txHash&&/^0x[0-9a-f]{64}$/.test(original.txHash),'MISMATCH');
+   const expected=receipts(payment.result);check(sameReceipts(original.action,expected)&&sameReceipts(reported.action,expected),'MISMATCH');
    const confirmed=saved.value.confirmedClaim;
    if(confirmed)check(confirmed.intentId===original.intentId&&confirmed.txHash===original.txHash,'MISMATCH');
-   await read(()=>verifyClaim(original.txHash));
    await read(()=>slot.write(saved,{...saved.value,confirmedClaim:{intentId:original.intentId,txHash:original.txHash,status:original.status}}));
   },
   async recover({wait=false}={}){
@@ -588,10 +590,15 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
   },
   async recordClaimCompletion(result){
    if(!['included','confirmed'].includes(result?.status)||result.action?.type!==(kind==='bok'?'claim-bok':'claim-private-fee'))return;
-   const {store,saved}=await stored();if(!saved.value?.claim||saved.value.claim.intentId!==result.intentId)return;
+   const reported=freeze(clone(result));
+   const {store,saved}=await stored();if(!saved.value?.claim||saved.value.claim.intentId!==reported.intentId)return;
    check(saved.value.claim.attempted&&typeof reconcileClaim==='function'&&typeof verifyClaim==='function','RECOVERY_REQUIRED');
-   const original=await read(()=>reconcileClaim(result.intentId));check(['included','confirmed'].includes(original.status)&&original.intentId===result.intentId&&original.txHash===result.txHash&&/^0x[0-9a-f]{64}$/.test(original.txHash),'MISMATCH');
-   await read(()=>verifyClaim(original.txHash));await read(()=>store.write(saved,{...saved.value,confirmedClaim:{intentId:original.intentId,txHash:original.txHash,status:original.status}}));
+   // One fresh authoritative application reconciliation; the reported result
+   // supplies identity only, never an alternative receipt or completion proof.
+   const original=await read(async()=>freeze(clone(await reconcileClaim(reported.intentId))));check(['included','confirmed'].includes(original.status)&&original.intentId===reported.intentId&&original.txHash===reported.txHash&&/^0x[0-9a-f]{64}$/.test(original.txHash),'MISMATCH');
+   const receipt=original.action?.receipt,reportedReceipt=reported.action.receipt;
+   check(original.action?.type===reported.action.type&&receipt&&reportedReceipt&&Object.keys(receipt).sort().join()===Object.keys(reportedReceipt).sort().join()&&Object.keys(receipt).every(key=>receipt[key]===reportedReceipt[key]),'MISMATCH');
+   await read(()=>store.write(saved,{...saved.value,confirmedClaim:{intentId:original.intentId,txHash:original.txHash,status:original.status}}));
   },
   async reviewRevertedClaim(){const {store,saved}=await stored();check(saved.value?.claim&&typeof reconcileClaim==='function','RECOVERY_REQUIRED');const result=await read(()=>reconcileClaim(saved.value.claim.intentId));check(result.status==='cancelled'||result.status==='reverted'&&saved.value.claim.attempted,'RECOVERY_REQUIRED');await read(()=>store.write(saved,{...saved.value,claim:null,explicitClaimReview:true}));},
   async loadAggregate(hash){check(/^0x[0-9a-f]{64}$/.test(hash));if(kind!=='bok')return null;const {saved}=await stored();let value;

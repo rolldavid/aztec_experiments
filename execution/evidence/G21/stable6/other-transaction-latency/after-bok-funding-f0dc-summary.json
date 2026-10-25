@@ -1,0 +1,18 @@
+{
+  "source": "f0dcf539c525188f6123ca1f14e9661a002c1ec0",
+  "ethereumTransactions": [
+    {
+      "hash": "0xc7be38f17c847a63d3d1e7e3dd6fb12f7df746295de8da1aa29af38732f7fa7e",
+      "method": "buyCredit",
+      "at": 1792906785285
+    }
+  ],
+  "aztecTxHash": "0x2451320088b699df0c44d729f9039c08dc68294f84420ed5ef30b73c66b466f3",
+  "statusAtInspection": "included",
+  "amountMicroUsdc": "1000000",
+  "clickToUsableMs": 39222.685,
+  "baselineMs": 165094,
+  "reductionPercent": 76.24,
+  "boundary": "Pay click to rendered credit-added confirmation after native Aztec inclusion",
+  "note": "Single measured run; test-only EIP6963 wallet signed actual Sepolia payment; includes wallet handling and real Aztec proof. Previous baseline wallet dwell not separately measured."
+}

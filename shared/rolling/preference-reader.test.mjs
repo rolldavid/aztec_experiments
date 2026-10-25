@@ -285,3 +285,65 @@ for(const change of ['abort','account'])test(`refresh ${change} during parallel 
  gates[0].resolve();await new Promise(setImmediate);assert.equal(done,false);await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});
  gates[1].resolve();await pending;assert(!f.calls.includes('head'));assert(!f.calls.includes('CAS'));assert.equal(f.values.size,0);
 });
+
+// Hold the actual fixture capabilities independently; later canonical fences
+// still call the original node method without these first-wave gates.
+function heldAnchorWave(f,{failing,synchronous=false}={}){
+ const names=['anchor','head','class'],gates=names.map(()=>Promise.withResolvers()),entered=Promise.withResolvers(),starts=[];
+ const originalBlock=f.input.node.getBlockData,originalHead=f.input.readHead,originalClass=f.input.node.getContract;
+ let firstBlock=true;
+ function read(index,original,args){
+  starts.push(names[index]);if(starts.length===3)entered.resolve();
+  if(synchronous&&names[index]===failing)throw Error('PRIVATE_SENTINEL');
+  return gates[index].promise.then(()=>{if(names[index]===failing)throw Error('PRIVATE_SENTINEL');return original(...args);});
+ }
+ f.input.node.getBlockData=(...args)=>{if(!firstBlock)return originalBlock(...args);firstBlock=false;assert.equal(args[0],4);return read(0,originalBlock,args);};
+ f.input.readHead=(...args)=>read(1,originalHead,args);
+ f.input.node.getContract=(...args)=>{
+  assert(BlockHash.isBlockHash(args[1].hash));assert.equal(args[1].hash.toString(),h(104),'class lookup uses captured typed native anchor');
+  return read(2,originalClass,args);
+ };
+ return {gates,entered:entered.promise,starts};
+}
+
+test('anchor wave starts canonical/head/class together and retains both publication fences',{timeout:5000},async()=>{
+ const f=await fixture([changed(4)],4),wave=heldAnchorWave(f),reader=f.restart();let done=false;
+ const pending=reader.read().then(value=>{done=true;return value;});await wave.entered;
+ assert.deepEqual([...wave.starts].sort(),['anchor','class','head']);
+ assert(!f.calls.includes('events'));assert(!f.calls.includes('CAS'));
+ wave.gates[1].resolve();wave.gates[2].resolve();await new Promise(setImmediate);
+ assert.equal(done,false);await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});
+ assert(!f.calls.includes('events'));assert(!f.calls.includes('CAS'));
+ wave.gates[0].resolve();const result=await pending;
+ assert.equal(result.status,'complete');assert.deepEqual(result.preferences.bookmarks,['2']);
+ assert.equal(f.calls.filter(x=>x==='head').length,1);assert.equal(f.calls.filter(x=>x==='class').length,1);
+ assert.equal(f.calls.filter(x=>x==='block:4').length,3,'initial canonical read and fresh pre/post-CAS fences');
+});
+
+for(const failing of ['anchor','head','class'])for(const synchronous of [false,true])test(`anchor wave ${failing} ${synchronous?'synchronous':'asynchronous'} failure drains both siblings and preserves ciphertext`,{timeout:5000},async()=>{
+ const f=await fixture([changed(4)],4);await f.reader.read();const saved=[...f.values.entries()];f.calls.length=0;
+ const wave=heldAnchorWave(f,{failing,synchronous}),reader=f.restart();let done=false;
+ const pending=invalid(reader.read()).then(()=>done=true);await wave.entered;
+ const index=['anchor','head','class'].indexOf(failing),siblings=[0,1,2].filter(i=>i!==index);wave.gates[index].resolve();
+ await new Promise(setImmediate);assert.equal(done,false);await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});
+ wave.gates[siblings[0]].resolve();await new Promise(setImmediate);assert.equal(done,false);
+ await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});assert(!f.calls.includes('events'));assert(!f.calls.includes('CAS'));
+ wave.gates[siblings[1]].resolve();await pending;
+ assert.deepEqual([...f.values.entries()],saved);assert(!f.calls.includes('events'));assert(!f.calls.includes('CAS'));
+});
+
+for(const change of ['canonical-fork','native-anchor','account','abort'])test(`anchor wave ${change} cannot publish preferences or overwrite prior ciphertext`,{timeout:5000},async()=>{
+ const f=await fixture([changed(4)],4);await f.reader.read();const saved=[...f.values.entries()];f.calls.length=0;
+ const wave=heldAnchorWave(f),reader=f.restart(),controller=new AbortController();let done=false;
+ const pending=invalid(reader.read({signal:controller.signal})).then(()=>done=true);await wave.entered;
+ if(change==='canonical-fork')f.state.hashOverrides.set(4,h(999));
+ else if(change==='native-anchor')f.state.height=5;
+ else if(change==='account')f.state.guard=false;
+ else controller.abort();
+ wave.gates[0].resolve();await new Promise(setImmediate);assert.equal(done,false);
+ wave.gates[1].resolve();await new Promise(setImmediate);assert.equal(done,false);
+ await assert.rejects(reader.read(),{code:'ROLLING_PREFERENCE_READER_BUSY'});
+ wave.gates[2].resolve();await pending;
+ assert(!f.calls.includes('CAS'));assert.deepEqual([...f.values.entries()],saved);
+ assert(!f.calls.includes('events'),'no fresh event range is read from this retained completed prefix');
+});
