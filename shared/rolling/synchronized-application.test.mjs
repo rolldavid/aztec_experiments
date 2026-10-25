@@ -217,11 +217,17 @@ for(const fail of ['sync','context'])test(`like initial ${fail} failure drains i
 });
 
 for(const fail of ['scope','discovery'])test(`initial like ${fail} change prevents intent creation`,async()=>{
- const entered=Promise.withResolvers(),gate=Promise.withResolvers(),failure=Error('discovery');let scope={preparationReads:[]},calls=0;
- const raw=Object.fromEntries(names.map(name=>[name,()=>calls++]));
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers(),failure=Error('discovery');let scope={preparationReads:[]},predecessorStarts=0,intentWrites=0;
+ const raw=Object.fromEntries(names.map(name=>[name,()=>assert.fail('unexpected '+name)]));
+ raw.prepare=async()=>{
+  const owner=scope,ready=owner.contractStateReady;predecessorStarts++;
+  await ready;if(scope!==owner||owner.contractStateReady!==ready)throw Object.assign(Error('changed'),{code:'ROLLING_CONTEXT_CHANGED'});
+  intentWrites++;return {intentId:'new-intent'};
+ };
  const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContext:()=>{},prepareContractState:async()=>{entered.resolve();await gate.promise;if(fail==='discovery')throw failure;}});
  const pending=assert.rejects(executeRollingAction(app,{type:'like',post:'42'}),fail==='scope'?{code:'ROLLING_CONTEXT_CHANGED'}:error=>error===failure);
- await entered.promise;assert.equal(calls,0);if(fail==='scope')scope={preparationReads:[]};gate.resolve();await pending;assert.equal(calls,0);
+ await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(predecessorStarts,1);assert.equal(intentWrites,0);
+ if(fail==='scope')scope={preparationReads:[]};gate.resolve();await pending;assert.equal(intentWrites,0);
 });
 
 
@@ -276,10 +282,10 @@ test('opening public sync completion cannot authorize a replaced operation',asyn
  const work=app.readAccountStatus({opening:true});await new Promise(r=>setImmediate(r));scope={};held.resolve();await assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(calls,0);
 });
 
-for(const failure of ['none','predecessor','discovery','both'])test('ordinary discovery overlaps predecessor and drains both before return: '+failure,async()=>{
+for(const type of ['post','like','unlike','name'])for(const failure of ['none','predecessor','discovery','both'])test(type+' discovery overlaps predecessor and drains both before return: '+failure,async()=>{
  const scope={synchronized:false},gate=Promise.withResolvers(),started=Promise.withResolvers();let appStarted=false,settled=false;
- const raw=Object.fromEntries(names.map(name=>[name,async()=>{}]));raw.prepare=async()=>{appStarted=true;started.resolve();if(failure==='predecessor'||failure==='both')throw Error('predecessor failed');await scope.ordinaryStateReady;return 'prepared';};
- const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContractState:async({method})=>{assert.equal(method,'post');assert.equal(scope.synchronized,true);await gate.promise;if(failure==='discovery'||failure==='both')throw Error('discovery failed');}});
- const work=app.prepare({type:'post'},{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=failure==='none'?work:assert.rejects(work,failure==='predecessor'?/predecessor failed/:/discovery failed/);
- await started.promise;assert.equal(appStarted,true);await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await result;assert.equal(scope.ordinaryStateReady,undefined);
+ const raw=Object.fromEntries(names.map(name=>[name,async()=>{}]));raw.prepare=async()=>{appStarted=true;started.resolve();if(failure==='predecessor'||failure==='both')throw Error('predecessor failed');await scope.contractStateReady;return 'prepared';};
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},prepareContractState:async({method})=>{assert.equal(method,type==='name'?'register_name':type==='post'?'post':'set_like');assert.equal(scope.synchronized,true);await gate.promise;if(failure==='discovery'||failure==='both')throw Error('discovery failed');}});
+ const work=app.prepare({type},{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=failure==='none'?work:assert.rejects(work,failure==='predecessor'?/predecessor failed/:/discovery failed/);
+ await started.promise;assert.equal(appStarted,true);await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await result;assert.equal(scope.contractStateReady,undefined);
 });

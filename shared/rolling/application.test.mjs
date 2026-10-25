@@ -3163,11 +3163,29 @@ for(const mode of ['unsynchronized','missing-native-notes','fee-failure'])test('
 });
 
 for(const failure of [false,true])test('ordinary arguments wait for owned discovery while predecessor proceeds: '+failure,async()=>{
- const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),scope={synchronized:true,ordinaryStateReady:gate.promise};
+ const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),scope={synchronized:true,contractStateReady:gate.promise};
  f.options.accountSession.operationScope=()=>scope;f.options.accountSession.journal.assertCanStart=async()=>{entered.resolve();};f.app=f.restart();
  let settled=false;const work=f.app.prepare({type:'post',deposit:'9',content:'Wait safely for fresh notes'},{immediate:true});work.then(()=>settled=true,()=>settled=true);
  const result=failure?assert.rejects(work,/native discovery failed/):work;
  await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(f.state.privateReads.length,0);assert.equal(f.values.size,0);assert.equal(settled,false);
  if(failure)gate.reject(Error('native discovery failed'));else gate.resolve();await result;
  assert.equal(f.state.sends,0);if(failure)assert.equal(f.values.size,0);else assert(f.state.privateReads.length>0);
+});
+
+for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'name',first:'Fresh',last:'Willow'}])test(action.type+' predecessor cannot enter arguments or write an intent before native discovery',async()=>{
+ const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),scope={synchronized:true,contractStateReady:gate.promise};
+ f.options.accountSession.operationScope=()=>scope;f.options.accountSession.journal.assertCanStart=async()=>{entered.resolve();};f.app=f.restart();
+ let settled=false;const work=f.app.prepare(action,{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=assert.rejects(work,/native discovery failed/);
+ await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(f.state.privateReads.length,0);assert.equal(f.values.size,0);assert.equal(settled,false);
+ gate.reject(Error('native discovery failed'));await result;assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+
+for(const action of [{type:'like',post:'42'},{type:'unlike',post:'42'},{type:'name',first:'Fresh',last:'Willow'}])for(const change of ['scope','barrier'])test(action.type+' captures discovery owner before held predecessor: '+change,async()=>{
+ const f=fixture(),predecessor=Promise.withResolvers(),entered=Promise.withResolvers(),discovery=Promise.withResolvers();
+ let scope={synchronized:true,contractStateReady:discovery.promise};const owner=scope;
+ f.options.accountSession.operationScope=()=>scope;f.options.accountSession.journal.assertCanStart=async()=>{entered.resolve();await predecessor.promise;};f.app=f.restart();
+ let settled=false;const work=f.app.prepare(action,{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});
+ await entered.promise;if(change==='scope')scope={synchronized:true};else owner.contractStateReady=Promise.resolve();
+ predecessor.resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false,'the original discovery barrier still owns the wait');assert.equal(f.values.size,0);assert.equal(f.state.privateReads.length,0);
+ discovery.resolve();await result;assert.equal(f.values.size,0);assert.equal(f.state.privateReads.length,0);assert.equal(f.state.sends,0);
 });

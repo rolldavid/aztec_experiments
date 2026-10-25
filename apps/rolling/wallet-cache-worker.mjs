@@ -1,13 +1,20 @@
 // Persist only content-addressed public account tools across visits.
 const cacheName='rolling-public-assets-v1',pending=new Map(),MiB=1024*1024;
 const limits=new Map([
+ ...['ContractClassRegistry','ContractInstanceRegistry','FeeJuice','MultiCallEntrypoint','AuthRegistry','HandshakeRegistry'].map(name=>['/wallet/native-contract-'+name+'.json',8*MiB]),
  ...['ethers.js','crs-client.js','wallet-providers.js','ethereum-account-session.js','claim-secret-store.js','account.js','engine.js'].map(name=>['/wallet/'+name,MiB]),
- ['/wallet/aztec_bundle.js',128*MiB],...['board.json','private-fee.json','bok.json'].map(name=>['/wallet/'+name,32*MiB]),['/crs/crs-manifest.json',65536],
+ ['/wallet/aztec_bundle.js',128*MiB],...['board.json','private-fee.json','bok.json'].map(name=>['/wallet/'+name,32*MiB]),['/crs/crs-manifest.json',65536],['/wallet/deployment-registration.json',65536],
  ['/wallet/native-worker.js',8*MiB],
  ['/wallet/acvm_js_bg.wasm',8*MiB],['/wallet/noirc_abi_wasm_bg.wasm',2*MiB]
 ]);
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+// A one-shot capability reply prevents old or uncontrolled pages from starting
+// a second advisory download. This does not install/wait for/replace a worker.
+self.addEventListener('message',event=>{
+ if(event.data!=='rolling-native-artifacts-v1'||event.ports?.length!==1)return;
+ event.ports[0].postMessage('rolling-native-artifacts-v1');event.ports[0].close();
+});
 self.addEventListener('fetch',event=>{
  const request=event.request,url=new URL(request.url),hash=/^\?sha256=([a-f0-9]{64})$/.exec(url.search)?.[1],limit=limits.get(url.pathname);
  if(request.method!=='GET'||request.headers.has('range')||request.headers.has('authorization')||url.origin!==self.location.origin||!hash||!limit)return;

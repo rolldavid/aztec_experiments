@@ -1,3 +1,4 @@
+import {NATIVE_CONTRACT_FILES} from './native-contract-assets.mjs';
 import {PXE_STARTUP_PINS} from './pxe-startup.mjs';
 import {PXE_OPERATION_PINS,PXE_SOURCE_PINS,restoreNativePxe} from './patch-pxe-operation-guards.mjs';
 import {BB_WORKER_TIMING_PINS} from './bb-worker-timings.mjs';
@@ -31,6 +32,7 @@ function fixture(t) {
   };
   const read = name => fs.readFileSync(path.join(root, name));
   const inputs = {
+    'scripts/native-contract-assets.mjs':'// fixture native contract binding',
     'scripts/check-transform-bindings.mjs':'// fixture binding verifier',
     'scripts/native-wasm-assets.mjs':'// fixture native wasm binding',
     'node_modules/@aztec-foundation/noir-acvm_js/web/acvm_js.js':'// fixture acvm loader',
@@ -104,6 +106,7 @@ function fixture(t) {
     'sqlite3.wasm': 'synthetic sqlite asset',
     'sqlite3-opfs-async-proxy.js': 'synthetic sqlite proxy',
   };
+  for(const [loader,input,output] of NATIVE_CONTRACT_FILES){inputs[loader]='// fixture native provider';inputs[input]='{"fixture":true}';outputs[output]=inputs[input];}
   for (const [name, data] of Object.entries(inputs)) write(name, data);
   for (const [name, data] of Object.entries(outputs)) write(`.build/sdk/${name}`, data);
   write('package-lock.json', '{"fixture":"lock"}');
@@ -319,4 +322,14 @@ for(const name of ['scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','
 });
 for(const name of Object.keys(PXE_STARTUP_PINS))test('PXE startup native pin cannot be rebound: '+name,t=>{
  const f=fixture(t);f.write(name,'changed native startup');f.manifest.inputs[name]=hash(f.read(name));f.save();assert.throws(()=>checkSdk(f.root),/operation patch mismatch/);
+});
+
+for(const [loader,input,output] of NATIVE_CONTRACT_FILES)test('native contract output remains byte-identical to pinned input: '+output,t=>{
+ const f=fixture(t);f.write('.build/sdk/'+output,'{"changed":true}');f.manifest.outputs[output]=hash(f.read('.build/sdk/'+output));f.save();
+ assert.throws(()=>checkSdk(f.root),/runtime asset differs from source/);
+});
+test('native contract loader and transport helper are mandatory SDK inputs',t=>{
+ for(const input of ['scripts/native-contract-assets.mjs',NATIVE_CONTRACT_FILES[0][0]]){
+  const f=fixture(t);delete f.manifest.inputs[input];f.save();assert.throws(()=>checkSdk(f.root),/Missing SDK input/);
+ }
 });

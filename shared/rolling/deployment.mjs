@@ -1,3 +1,4 @@
+import {validateRollingRegistration,decodeRollingRegistration,encodeRollingRegistration} from './deployment-registration.mjs';
 import {encodeConfigCommitment} from '../protocol-commitments.mjs';
 
 // Fixed diagnostic vocabulary only. Never inspect exception text or invoke a
@@ -60,10 +61,10 @@ const preparedDeployments=new WeakMap();
  * on readiness. Native registration may share its metadata; consumers seeking
  * current admission use consumeRollingDeploymentPreparation below.
  */
-export function createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled=true,onProgress}){
+export function createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled=true,onProgress,registration,artifactHashes}){
  const fixed={sdk,ethers,config:detach(config),boardArtifact,privateFeeArtifact,proofsEnabled};
  const handle=Object.freeze({});
- preparedDeployments.set(handle,{fixed,boardArtifact,privateFeeArtifact,query:detach(trustedQuery),onProgress,pending:null,result:null});
+ preparedDeployments.set(handle,{fixed,boardArtifact,privateFeeArtifact,query:detach(trustedQuery),onProgress,registration:registration===undefined?null:structuredClone(validateRollingRegistration(registration,{config,artifactHashes,proofsEnabled})),artifactHashes:artifactHashes?{...artifactHashes}:null,pending:null,result:null});
  return handle;
 }
 
@@ -71,11 +72,35 @@ export async function prepareRollingDeployment(preparation,{contextGuard,onProgr
  const state=preparedDeployments.get(preparation);check(state&&typeof contextGuard==='function');
  await contextGuard();
  if(!state.pending){
-  const pending=verifyDeployment({...state.fixed,contextGuard,onProgress:onProgress??state.onProgress},state);
+  const pending=state.registration?preparePublishedRegistration(state,contextGuard):verifyDeployment({...state.fixed,contextGuard,onProgress:onProgress??state.onProgress},state);
   state.pending=pending;pending.then(result=>{if(state.pending===pending)state.result=result;},()=>{});pending.catch(()=>{if(state.pending===pending)state.pending=null;});
  }
  const result=await state.pending;await contextGuard();
  return Object.freeze({node:result.node,nodeSnapshot:result.nodeSnapshot,deployment:result.deployment,preparation});
+}
+
+// Only release capture can emit a descriptor from a completed full verification.
+export function exportRollingDeploymentRegistration(preparation,artifactHashes){
+ const state=preparedDeployments.get(preparation);check(state?.result&&!state.registration);
+ return encodeRollingRegistration({...state.fixed,sdk:state.fixed.sdk,artifactHashes,deployment:state.result.deployment});
+}
+async function preparePublishedRegistration(state,contextGuard){
+ try{
+ const {sdk,config,boardArtifact,privateFeeArtifact,proofsEnabled}=state.fixed;
+ check(state.query&&state.artifactHashes&&typeof sdk.createTrustedPrivateNode==='function');
+ sdk.normalizePrivateFeeGasSettings(config.privateFee.gasSettings);
+ const network={chainId:config.network.chainId,version:config.network.rollupVersion,rollup:config.network.rollupAddress};
+ let nodeSnapshot;
+ const [node,metadata]=await together([
+  ()=>sdk.createTrustedPrivateNode({...state.query,expectedNetworkScope:network,proofsEnabled,readinessTier:'checkpointed',onReady:value=>{nodeSnapshot=value;}}),
+  ()=>decodeRollingRegistration(sdk,state.registration,{config,artifactHashes:state.artifactHashes,proofsEnabled,boardArtifact,privateFeeArtifact}),
+ ]);
+ check(sdk.isTrustedPrivateNode(node)&&nodeSnapshot);await contextGuard();
+ // The snapshot is the actual fresh node inspection, never the operator record.
+ // Old publication references describe metadata provenance only. Native/account
+ // operations and funding retain their own current class/anchor/admission checks.
+ return Object.freeze({node,nodeSnapshot,deployment:deploymentRecord(metadata)});
+ }catch{throw failure();}
 }
 
 // Identity/provenance only. This synchronous assertion does not grant readiness.
@@ -114,6 +139,7 @@ export async function consumeRollingDeploymentPreparation(preparation,{sdk,ether
  let provider;
  try{
   const state=preparedDeployments.get(preparation);
+  check(!state?.registration); // Registration metadata cannot grant current deployment admission.
   check(typeof contextGuard==='function');
   assertRollingDeploymentPreparation(preparation,{sdk,ethers,config,boardArtifact,privateFeeArtifact,node,proofsEnabled});
   await contextGuard();const cached=await state.pending;

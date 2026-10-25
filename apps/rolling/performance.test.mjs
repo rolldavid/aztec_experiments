@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {rollingResourceTiming,observeRollingPerformance,observeRollingWorkerPerformance,receiveRollingWorkerPerformance} from './performance.mjs';
+import {rollingResourceTiming,recordRollingInclusion,observeRollingPerformance,observeRollingWorkerPerformance,receiveRollingWorkerPerformance} from './performance.mjs';
 const origin='https://board.example';
 const resource=(path,extras={})=>({name:origin+path,initiatorType:'fetch',startTime:10,duration:20,fetchStart:11,domainLookupStart:12,domainLookupEnd:13,connectStart:14,secureConnectionStart:15,connectEnd:16,requestStart:17,responseStart:28,responseEnd:30,transferSize:321,encodedBodySize:123,decodedBodySize:456,nextHopProtocol:'h2',...extras});
 function observers({unsupported=[],onEntries=()=>{}}={}){
@@ -212,4 +212,28 @@ test('individual worker resource timings survive repeated endpoints with a bound
  // Ordinary operation spans retain their existing name and replacement rules.
  receiveRollingWorkerPerformance({type:'performance',timeOrigin:1000,entries:[{kind:'measure',name:'rolling.action.sync',start:2000,duration:3}]},{enabled:true,timing});
  assert.equal(entries.size,129);assert.equal(entries.get('rolling.action.sync').duration,3);
+});
+
+const inclusionHash=n=>'0x'+n.repeat(64);
+const inclusionProgress={stage:'included',txHash:inclusionHash('a'),blockNumber:42,blockHash:inclusionHash('b'),status:'proposed'};
+test('optional inclusion evidence records exact public anchor and strips private fields',()=>{
+ const values=[],timing={now:()=>123,clearMeasures(){},measure:(name,options)=>values.push({name,...options})};
+ recordRollingInclusion({...inclusionProgress,intentId:'DO_NOT_RECORD',account:'PRIVATE',content:'PRIVATE'},{enabled:true,timing});
+ assert.deepEqual(values,[{name:'rolling.transaction.inclusion',start:123,end:123,detail:{kind:'inclusion',source:'native-receipt',txHash:inclusionHash('a'),blockNumber:42,blockHash:inclusionHash('b'),status:'proposed'}}]);
+ let latest;const h=observers({onEntries:entries=>latest=entries});
+ h.emit('measure',values.map(v=>({name:v.name,startTime:v.start,duration:0,detail:{...v.detail,secret:'NEVER_RECORD'}})));
+ assert.deepEqual(latest,[{name:'rolling.transaction.inclusion',start:123,duration:0,...values[0].detail}]);h.stop();
+});
+test('inclusion evidence is opt-in, rejects malformed anchors/accessors and cannot interrupt progress',()=>{
+ const timing={now:()=>0,clearMeasures(){assert.fail('Must not record');}};
+ recordRollingInclusion(inclusionProgress,{enabled:false,timing});
+ for(const patch of [{stage:'submitting'},{status:'dropped'},{status:'success'},{txHash:7},{txHash:'bad'},{blockHash:{}},{blockNumber:0},{blockNumber:1.1},{blockNumber:Infinity},{get status(){assert.fail('Accessor invoked');}}]){
+  const value=Object.defineProperties({},Object.getOwnPropertyDescriptors(inclusionProgress));Object.defineProperties(value,Object.getOwnPropertyDescriptors(patch));recordRollingInclusion(value,{enabled:true,timing});
+ }
+ assert.doesNotThrow(()=>recordRollingInclusion(inclusionProgress,{enabled:true,timing:{now(){throw Error('optional');}}}));
+});
+test('inclusion evidence uses existing bounded measure ring and fixed name',()=>{
+ let latest;const h=observers({onEntries:entries=>latest=entries});
+ h.emit('measure',Array.from({length:600},(_,i)=>({name:'rolling.transaction.inclusion',startTime:i,duration:0,detail:{...inclusionProgress,secret:'PRIVATE'}})));
+ assert.equal(latest.filter(x=>x.kind==='inclusion').length,512);assert.equal(latest.find(x=>x.kind==='inclusion').start,88);assert(!JSON.stringify(latest).includes('PRIVATE'));h.stop();
 });

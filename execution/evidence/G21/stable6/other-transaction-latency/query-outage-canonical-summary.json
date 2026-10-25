@@ -1,0 +1,29 @@
+{
+  "rollup": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+  "fromBlock": 11991984,
+  "toBlock": 11992984,
+  "events": [
+    {
+      "blockNumber": 11992935,
+      "blockHash": "0x3c8e89f114867ac67a3b448e038dbbd7406f3a42532428b5ea5652544c4c1614",
+      "transactionHash": "0xf752316b70da0f5feda773b589919b08aa1bd809ec2e4152da6aaab35914cdd4",
+      "utc": "2026-10-25T19:27:48.000Z",
+      "provenCheckpointNumber": "3822",
+      "pendingCheckpointNumber": "3886"
+    }
+  ],
+  "assessment": {
+    "independentNodesAgree": true,
+    "postReceipts": [
+      "0x146f2bd0f01d5793722a6bb2012305e31496f5542562e99c08f1b754ebf3c1de",
+      "0x198a3749ddc168188ef8c9c50d5270f95603737be734b866efb3afc192ad0024"
+    ],
+    "bothReceipts": "dropped",
+    "bothEffects": null,
+    "commonFinalizedL2Block": 5079,
+    "commonFinalizedL2Hash": "0x09e36f13daad15e54c74db558312f2b5c19e01832291f47e587e56edfeb3a0fa",
+    "publicHistoryOldestBlock": 1,
+    "localHistoryOldestBlock": 4742,
+    "limitation": "Original transaction inclusion block/hash not retained; event proves pending chain prune, but exact per-transaction prune membership and transient query rejection cause remain unproven."
+  }
+}

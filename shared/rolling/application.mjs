@@ -1105,7 +1105,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         check(field(expected.toString(),true)===id,'ROLLING_INVALID_RESPONSE');seen.add(id);records.push({id,first,last});
       }}catch{throw fail('ROLLING_INVALID_RESPONSE');}
       await guard();return {identities:records.map(record=>record.id),records,nextCursor:empty?null:cursor+8};});},
-    async prepare(input,options){return exclusive(async()=>{
+    async prepare(input,options){
+      // Bind the operation and its discovery barrier before exclusive/guards or
+      // predecessor reads can yield to a replacement operation.
+      const externalScope=typeof session?.operationScope==='function';
+      const capturedOwner=externalScope?getOperationScope():null,capturedReady=capturedOwner?.contractStateReady;
+      return exclusive(async()=>{
+      // Standalone applications allocate their local scope inside exclusive.
+      const stateOwner=externalScope?capturedOwner:getOperationScope(),stateReady=externalScope?capturedReady:stateOwner?.contractStateReady;
       const immediate=options!==undefined;let postingRules;
       if(immediate){
         const values=exactData(options,Object.hasOwn(options??{},'postingRules')?['immediate','postingRules']:['immediate']);
@@ -1148,9 +1155,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const failure=reads.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         checkPolicyOwner();[history,earlyPolicy]=reads.map(value=>value.value);
       }else history=await measure('action.predecessor',readPredecessor);
-      if(immediate&&['post','reply','quote','repost'].includes(action.type)){
-        const stateOwner=getOperationScope(),ready=stateOwner?.ordinaryStateReady;
-        if(ready){await ready;await localGuard();check(getOperationScope()===stateOwner&&stateOwner.ordinaryStateReady===ready,'ROLLING_CONTEXT_CHANGED');}
+      if(immediate&&['post','reply','quote','repost','like','unlike','name'].includes(action.type)){
+        if(stateReady)await stateReady;
+        await localGuard();check(getOperationScope()===stateOwner&&stateOwner?.contractStateReady===stateReady,'ROLLING_CONTEXT_CHANGED');
       }
       const {store,prior,predecessor}=history;
       const nonce=field(sdk.Fr.random().toString(),true),id=field(sdk.Fr.random().toString(),true),board=earlyPolicy?.board??await contract();

@@ -2,17 +2,18 @@ import {inspectTrustedNode as actualInspect,getTrustedNodeCanonicalBlock,getTrus
 // Labelled RPC doubles: real processed artifacts/class/instance hashes, SDK
 // commitment hash and complete compiler portal runtime. No chain or wallet call.
 import test from 'node:test';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {loadContractArtifact} from '@aztec-labs/stdlib/abi';
-import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance} from '@aztec-labs/stdlib/contract';
+import {getContractClassFromArtifact,getContractInstanceFromInstantiationParams,computeContractAddressFromInstance,SerializableContractInstance} from '@aztec-labs/stdlib/contract';
 import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {derivePrivateFeeInstance,normalizePrivateFeeGasSettings} from '../private-fee-client.mjs';
 import {expectedPortalRuntime,verifyPortalRuntime} from '../portal-runtime.mjs';
 import {encodeConfigCommitment} from '../protocol-commitments.mjs';
-import {verifyRollingDeployment,createRollingDeploymentPreparation,prepareRollingDeployment,assertRollingDeploymentPreparation,consumeRollingDeploymentPreparation,readRollingDeploymentRegistration} from './deployment.mjs';
+import {verifyRollingDeployment,createRollingDeploymentPreparation,prepareRollingDeployment,assertRollingDeploymentPreparation,consumeRollingDeploymentPreparation,readRollingDeploymentRegistration,exportRollingDeploymentRegistration} from './deployment.mjs';
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 const feeArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../apps/src/billboard/private_fee_artifact.json',import.meta.url))));
 const metadata=JSON.parse(fs.readFileSync(new URL('../portal-runtime.json',import.meta.url)));
@@ -33,7 +34,7 @@ async function fixture(){
   getL1ContractAddresses:async()=>({rollupAddress:rollup,inboxAddress:eth(33),outboxAddress:eth(44)})};
  const provider={getNetwork:async()=>({chainId:31337n}),getBlock:async n=>({number:20,hash:hex(66)}),getCode:async(address,n)=>{state.ethReads.push(n);return expectedPortalRuntime(metadata,immutables);},destroy:()=>{state.destroyed++;}};
  const ethers={JsonRpcProvider:class{constructor(){return provider;}},Contract:class{constructor(){return {...Object.fromEntries(Object.keys(immutables).map(name=>[name,async opts=>{state.ethReads.push(opts.blockTag);return immutables[name];}])),depositsEnabled:async opts=>{state.ethReads.push(opts.blockTag);return state.enabled;}};}}};
- const sdk={Fr,AztecAddress,getContractClassFromArtifact,computeContractAddressFromInstance,derivePrivateFeeInstance,normalizePrivateFeeGasSettings,sha256ToField,verifyPortalRuntime,portalRuntimeMetadata:metadata,
+ const sdk={Fr,AztecAddress,SerializableContractInstance,getContractClassFromArtifact,computeContractAddressFromInstance,derivePrivateFeeInstance,normalizePrivateFeeGasSettings,sha256ToField,verifyPortalRuntime,portalRuntimeMetadata:metadata,
   isTrustedPrivateNode:n=>n===node,inspectTrustedNode:async(n,opts)=>{state.inspection++;assert.deepEqual(opts.expectedNetworkScope,{chainId:'31337',version:'1',rollup});assert.equal(opts.proofsEnabled,true);}};
  const options={sdk,node,ethers,config,boardArtifact:artifact,privateFeeArtifact:feeArtifact,contextGuard:async()=>{state.guards++;}};
  return {options,state,node,provider,board,fee,storage,immutables,configHash,economics};
@@ -135,7 +136,7 @@ for(const [step,inject]of Object.entries(diagnosticDeploymentFailures))test('lab
 test('deployment diagnostic success visits fixed stages and throwing observers cannot change result',async()=>{
  const f=await fixture(),observed=[];f.options.onProgress=record=>{observed.push(record);if(record.state==='started')throw Error('PRIVATE_SENTINEL');return Promise.reject(Error('PRIVATE_SENTINEL'));};
  const result=await verifyRollingDeployment(f.options);assert.equal(result.configHash,String(f.configHash));assert.equal(f.state.destroyed,1);
- const stages=ROLLING_DEPLOYMENT_STAGES.filter(step=>step!=='prepared-refresh');
+ const stages=ROLLING_DEPLOYMENT_STAGES.filter(step=>!['prepared-refresh','prepared-registration'].includes(step));
  assert.deepEqual(observed.filter(r=>r.state==='started').map(r=>r.step).sort(),[...stages].sort());
  assert.deepEqual(observed.filter(r=>r.state==='complete').map(r=>r.step).sort(),[...stages].sort());
  for(const step of stages)assert(observed.findIndex(r=>r.step===step&&r.state==='started')<observed.findIndex(r=>r.step===step&&r.state==='complete'));
@@ -264,4 +265,61 @@ test('deployment instance fetch drains a held read when independent class deriva
  f.options.sdk.getContractClassFromArtifact=async()=>{throw Error('class failed');};
  f.node.getContract=async(...args)=>{if(args[0].equals(f.board.address)){entered.resolve();await gate.promise;}return read(...args);};
  let done=false;const pending=verifyRollingDeployment(f.options).catch(error=>{done=true;return error;});await entered.promise;await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.state.destroyed,0);gate.resolve();assert.equal((await pending).code,'ROLLING_DEPLOYMENT_INVALID');assert.equal(f.state.destroyed,1);
+});
+
+
+const registrationHashes={board:createHash('sha256').update(fs.readFileSync(new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))).digest('hex'),privateFee:createHash('sha256').update(fs.readFileSync(new URL('../../apps/src/billboard/private_fee_artifact.json',import.meta.url))).digest('hex')};
+async function registrationFixture(){
+ const f=await snapshotFixture();await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ const registration=exportRollingDeploymentRegistration(f.preparation,registrationHashes);
+ const options={...f.options,trustedQuery:{url:'http://127.0.0.1:1'},registration,artifactHashes:registrationHashes};
+ return {...f,registration,registrationOptions:options};
+}
+test('published registration uses native instance roundtrip and a fresh actual node snapshot without immutable RPC replay',async()=>{
+ const f=await registrationFixture();f.state.reads=[];f.state.ethReads=[];const before=f.calls.length;
+ f.node.getContract=()=>assert.fail('No deployment instance RPC');f.node.getPublicStorageAt=()=>assert.fail('No immutable storage RPC');f.provider.getCode=()=>assert.fail('No portal RPC');
+ const handle=createRollingDeploymentPreparation(f.registrationOptions),result=await prepareRollingDeployment(handle,{contextGuard:f.options.contextGuard});
+ assert.equal(f.calls.length,before+1);assert.equal(result.nodeSnapshot,f.initial());assert.equal(result.node,f.node);assert(getTrustedNodeSnapshotInfo(result.nodeSnapshot,f.node));
+ assert.equal(result.deployment.board.instance.address.toString(),f.board.address.toString());assert.equal(result.deployment.privateFee.instance.address.toString(),f.fee.address.toString());
+ assert.deepEqual(result.deployment.economics,f.economics);assert.equal(f.state.ethReads.length,0);assert.equal(f.state.reads.length,0);
+ assert.equal((await readRollingDeploymentRegistration(handle,f.options)).deployment.board.artifact,artifact);
+ await assert.rejects(consumeRollingDeploymentPreparation(handle,f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
+ assert.throws(()=>exportRollingDeploymentRegistration(handle,registrationHashes),{code:'ROLLING_DEPLOYMENT_INVALID'});
+});
+for(const mutation of ['config','artifact','network','proofs','class','address','instance','extra'])test(`published registration rejects ${mutation} mismatch`,async()=>{
+ const f=await registrationFixture(),r=f.registration;
+ if(mutation==='config')r.config.board.portalAddress=eth(99);
+ if(mutation==='artifact')r.artifactHashes.board='f'.repeat(64);
+ if(mutation==='network')r.config.network.chainId='1';
+ if(mutation==='proofs')r.proofsEnabled=false;
+ if(mutation==='class')r.instances.board.classId=hex(99);
+ if(mutation==='address')r.instances.board.address=hex(99);
+ if(mutation==='instance')r.instances.board.bytes+='00';
+ if(mutation==='extra')r.authorizedToPay=true;
+ await assert.rejects(async()=>prepareRollingDeployment(createRollingDeploymentPreparation(f.registrationOptions),{contextGuard:f.options.contextGuard}));
+});
+test('published registration still rejects real node network mismatch and stale canonical readiness',async()=>{
+ for(const mutation of ['network','fork']){
+  const f=await registrationFixture();
+  if(mutation==='network'){const read=f.node.getNodeInfo;f.node.getNodeInfo=async()=>({...await read(),l1ChainId:1});}
+  else {const read=f.node.getBlockData;f.node.getBlockData=async ref=>{const block=await read(ref);return {...block,blockHash:Fr.fromString(hex(999))};};}
+  await assert.rejects(prepareRollingDeployment(createRollingDeploymentPreparation(f.registrationOptions),{contextGuard:f.options.contextGuard}),{code:'ROLLING_DEPLOYMENT_INVALID'});
+ }
+});
+test('published registration drains native initialization before changed account context can publish metadata',async()=>{
+ const f=await registrationFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),create=f.options.sdk.createTrustedPrivateNode;let valid=true,settled=false;
+ f.options.sdk.createTrustedPrivateNode=async options=>{entered.resolve();await gate.promise;return create(options);};
+ const work=prepareRollingDeployment(createRollingDeploymentPreparation(f.registrationOptions),{contextGuard:async()=>{if(!valid)throw Error('changed account');}}).finally(()=>settled=true),rejected=assert.rejects(work);
+ await entered.promise;valid=false;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);gate.resolve();await rejected;
+});
+
+for(const defect of ['stale-node','l1-reorg','portal-binding'])test(`published registration does not replace fresh financial authority: ${defect}`,async()=>{
+ const f=await registrationFixture(),handle=createRollingDeploymentPreparation(f.registrationOptions);
+ const {deployment,node}=await prepareRollingDeployment(handle,{contextGuard:f.options.contextGuard});
+ const scope={feePortal:eth(31),feeToken:eth(32)},iface=new Interface(['function UNDERLYING() view returns(address)','function decimals() view returns(uint8)']);let reads=0;
+ node.getL1ContractAddresses=async()=>({feeJuicePortalAddress:scope.feePortal});
+ if(defect==='stale-node')node.getSyncedL1Timestamp=async()=>0n;
+ const provider={getBlock:async tag=>{reads++;return {number:20,hash:defect==='l1-reorg'&&tag===20?hex(67):hex(66)};},call:async request=>{reads++;const name=iface.parseTransaction(request).name;return iface.encodeFunctionResult(name,[name==='UNDERLYING'?defect==='portal-binding'?eth(99):scope.feeToken:18]);}};
+ await assert.rejects(verifyRollingAggregateScope({sdk:f.options.sdk,ethers:{Interface},node,provider,scope,network:deployment.network,proofsEnabled:true,contextGuard:async()=>{},includeBok:false,asset:'ETH'}));
+ assert(reads>=3,'current financial reads still run and drain after registration');
 });

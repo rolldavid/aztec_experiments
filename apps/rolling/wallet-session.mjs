@@ -33,7 +33,9 @@ export function projectRollingTransactionProgress(stage,details){
   if(!match||!/^0x[0-9a-f]{64}$/.test(value.txHash))return invalid();
   if(stage==='submitting')return {stage,intentId:match[1],txHash:value.txHash};
   if(!/^0x[0-9a-f]{64}$/.test(value.blockHash)||!Number.isSafeInteger(value.blockNumber)||value.blockNumber<1)return invalid();
-  return {stage,intentId:match[1],txHash:value.txHash,blockNumber:value.blockNumber,blockHash:value.blockHash};
+  const status=Object.getOwnPropertyDescriptor(details,'status');
+  return {stage,intentId:match[1],txHash:value.txHash,blockNumber:value.blockNumber,blockHash:value.blockHash,
+   ...(status&&Object.hasOwn(status,'value')&&['proposed','checkpointed','proven','finalized'].includes(status.value)?{status:status.value}:{})};
  }catch{return invalid();}
 }
 const silent=()=>{};

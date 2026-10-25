@@ -223,3 +223,7 @@ Root measured published fb619 normal opening3.256s repeat/7.880s cold-asset, fre
 ## 26 October immediate-opening correction
 
 Live8ae immediate funded opening10.753s cold/6.322s warm; delayedpost18.178s. Root identified3.053s composer prewarm wait before realaction; pending_reply_ui implements checkpoint-restart removal/cooperative supersession, private_tips independently approved; root74checks and actualworker build pass. Composer-only publish next keeps SDK unchanged. private_tips drafts native artifact boundaries; pending_feed_release drafts SHA-bound public registration-only descriptor; peer reviews ongoing. No all-flow completion, no skipped current authority.
+
+## 26 October — active performance continuation
+
+Root integrates/publishes one retained build. private_tips reviewed native artifact/cache split and drafted Like/Unlike/Name overlap; pending_reply_ui reviewed exact owner/barrier capture and drafted public inclusion-anchor evidence; pending_feed_release reviewed anchors and independently confirmed L1 PrunedPending plus two-node receipt absence. All reviewed patches now integrated;80 startup/cache/deployment checks,27 anchor checks,676 application/wrapper checks and actual worker bundle evaluation pass. Earlier failed fixture/race tests were corrected before publication. No agent owns live browser or signing. No new server/build/dependency copies.

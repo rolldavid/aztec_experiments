@@ -1,4 +1,5 @@
 // Measurements observe progress; they never control it. No account IDs or content.
+// Opt-in inclusion evidence additionally records already-public receipt identities.
 export function beginRollingMeasure(stage, timing=globalThis.performance){
  let start;try{start=timing?.now?.();}catch{}let finished=false;
  return ()=>{
@@ -25,6 +26,29 @@ export async function measureRollingStage(stage,operation,{nativeUtility=false}=
   return result;
  }finally{finish();}
 }
+// Use the existing public progress event, never an extra receipt query. The
+// timestamp is page receipt-delivery time, not a claim of canonical settlement.
+function inclusionEvidence(value){
+ try{
+  if(!value||Object.getPrototypeOf(value)!==Object.prototype)return null;
+  const out={};for(const key of ['txHash','blockNumber','blockHash','status']){
+   const descriptor=Object.getOwnPropertyDescriptor(value,key);if(!descriptor||!Object.hasOwn(descriptor,'value'))return null;out[key]=descriptor.value;
+  }
+  if(typeof out.txHash!=='string'||!/^0x[0-9a-f]{64}$/.test(out.txHash)||typeof out.blockHash!=='string'||!/^0x[0-9a-f]{64}$/.test(out.blockHash)||
+   !Number.isSafeInteger(out.blockNumber)||out.blockNumber<1||!['proposed','checkpointed','proven','finalized'].includes(out.status))return null;
+  return {kind:'inclusion',source:'native-receipt',...out};
+ }catch{return null;}
+}
+export function recordRollingInclusion(progress,{enabled=globalThis[Symbol.for('rolling.proof.profile')]===true,timing=globalThis.performance}={}){
+ if(!enabled)return;
+ try{
+  if(Object.getOwnPropertyDescriptor(progress,'stage')?.value!=='included')return;
+  const detail=inclusionEvidence(progress);if(!detail)return;
+  const start=timing.now();if(!Number.isFinite(start)||start<0)return;
+  const name='rolling.transaction.inclusion';timing.clearMeasures(name);timing.measure(name,{start,end:start,detail});
+ }catch{/* Optional public evidence cannot affect transaction progress. */}
+}
+
 export function rollingStageObserver(){
  let stage,finish=()=>{};
  return Object.freeze({
@@ -172,6 +196,7 @@ export function observeRollingPerformance({PerformanceObserver:Observer=globalTh
     else if(Number.isFinite(entry.startTime)&&entry.startTime>=0&&Number.isFinite(entry.duration)&&entry.duration>=0){
      if(type==='measure'&&/^rolling\.[a-z.-]{1,96}$/.test(entry.name)){
       value={name:entry.name,start:entry.startTime,duration:entry.duration};
+      if(entry.name==='rolling.transaction.inclusion'){const detail=inclusionEvidence(entry.detail);if(detail)value={...value,...detail};}
       if(entry.detail?.realm==='worker')value.realm='worker';
       if(entry.detail?.kind==='aggregate'&&Number.isFinite(entry.detail.durationMs)&&entry.detail.durationMs>=0)value.aggregateMs=entry.detail.durationMs;
      }

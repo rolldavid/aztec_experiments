@@ -1,0 +1,35 @@
+✔ resource trace preserves phase times and native response sizes without URL or account data (1.665292ms)
+✔ only exact same-origin fetch/XHR endpoint classes are recorded (0.135292ms)
+✔ non-finite metrics and unrecognized protocol strings cannot enter diagnostic output (0.107167ms)
+✔ trace bounds each entry type, keeps phase records ordered and excludes long-task attribution (3.005917ms)
+✔ unsupported long-task observation and diagnostic callbacks cannot affect other observations (0.260542ms)
+✔ normal visits create no observers or diagnostic UI (0.438542ms)
+✔ opt-in panel shows sanitized resource and long-task records alongside measures (0.702584ms)
+✔ native utility timing is opt-in, duration-only and never changes action outcomes (0.993875ms)
+✔ wallet and proof asset contention is observable without filenames or hash queries (0.220791ms)
+✔ visibility diagnostics use fixed states and monotonic timestamps with a bounded buffer (0.459625ms)
+✔ proof admission records only fixed numeric server phase durations (0.10525ms)
+✔ aggregate timings retain duration without inventing a browser interval or exposing other detail (0.129084ms)
+✔ oracle detail cannot evict coarse phases and overflow retains numeric totals (1.824875ms)
+✔ lazy diagnostics append without sorting or reading the clock until a snapshot is requested (0.096458ms)
+✔ proof upload reports exact body bytes and bounded numeric server arrival observations (0.099375ms)
+✔ proof result stream records numeric delivery phases without job capabilities or query data (0.057666ms)
+✔ worker timings translate once and resource phases retain numeric meanings (0.262416ms)
+✔ worker timing receiver rejects malformed batches and keeps valid neighbours (0.098958ms)
+✔ worker observer is opt-in, bounds batches, removes private data and stops on close (0.686291ms)
+✔ public asset timing distinguishes service-worker hit and miss without assuming zero transfer means hit (0.129666ms)
+✔ individual worker resource timings survive repeated endpoints with a bounded lifetime (2.932792ms)
+✔ optional inclusion evidence records exact public anchor and strips private fields (0.23525ms)
+✔ inclusion evidence is opt-in, rejects malformed anchors/accessors and cannot interrupt progress (0.145042ms)
+✔ inclusion evidence uses existing bounded measure ring and fixed name (1.096667ms)
+✔ native proposed receipt reaches optional profile evidence through existing worker progress (158.295709ms)
+✔ native checkpointed receipt reaches optional profile evidence through existing worker progress (0.595583ms)
+✔ progress projection never reads a status accessor or forwards unknown status (0.107584ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 459.556625

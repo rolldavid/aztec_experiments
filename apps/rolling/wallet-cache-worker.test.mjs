@@ -8,7 +8,7 @@ function fixture({body='public sdk',quota=false,holdPut,saved=new Map()}={}){
  const handlers={},lifetimes=[];let requests=0;
  const cache={match:async key=>saved.get(key)?.clone(),put:async(key,value)=>{if(holdPut)await holdPut;if(quota)throw Error('Quota');saved.set(key,value);},keys:async()=>[...saved.keys()].map(url=>({url})),delete:async({url})=>saved.delete(url)};
  vm.runInNewContext(source,{self:{location:{origin:'https://board.test'},addEventListener:(name,handler)=>handlers[name]=handler},URL,Headers,Response,Uint8Array,performance,crypto:webcrypto,caches:{open:async()=>cache},fetch:async request=>{requests++;const r=new Response(body);Object.defineProperty(r,'url',{value:request.url});return r;}});
- return {saved,settle:()=>Promise.allSettled(lifetimes),get requests(){return requests;},request(path,options={}){let result;handlers.fetch({request:new Request('https://board.test'+path,options),respondWith:p=>result=p,waitUntil:p=>lifetimes.push(p)});return result;}};
+ return {message:event=>handlers.message(event),saved,settle:()=>Promise.allSettled(lifetimes),get requests(){return requests;},request(path,options={}){let result;handlers.fetch({request:new Request('https://board.test'+path,options),respondWith:p=>result=p,waitUntil:p=>lifetimes.push(p)});return result;}};
 }
 const hash=value=>createHash('sha256').update(value).digest('hex');
 test('verified SDK persists, concurrent requests join, changed hash replaces old bytes',async()=>{
@@ -52,4 +52,31 @@ test('only exact content-addressed native WASM paths are cached',async()=>{
  for(const path of ['/wallet/unknown.wasm','/wallet/sqlite3.wasm','/crs/acvm_js_bg.wasm'])assert.equal(f.request(path+suffix),undefined);
  assert.equal(f.request('/wallet/acvm_js_bg.wasm'),undefined);assert.equal(f.request('/wallet/acvm_js_bg.wasm'+suffix+'&extra=1'),undefined);
  const body=new Uint8Array(2*1024*1024+1),large=fixture({body});assert.equal((await large.request('/wallet/noirc_abi_wasm_bg.wasm?sha256='+hash(body))).type,'error');await large.settle();assert.equal(large.saved.size,0);
+});
+
+for(const name of ['ContractClassRegistry','ContractInstanceRegistry','FeeJuice','MultiCallEntrypoint','AuthRegistry','HandshakeRegistry'])test('verified native '+name+' survives application releases without refetch',async()=>{
+ const body='{"native":"'+name+'"}',path='/wallet/native-contract-'+name+'.json?sha256='+hash(body),first=fixture({body});
+ assert.equal(await(await first.request(path)).text(),body);await first.settle();
+ const next=fixture({body:'changed',saved:first.saved});assert.equal(await(await next.request(path)).text(),body);assert.equal(next.requests,0);
+ assert.equal((await next.request(path.replace(hash(body),'0'.repeat(64)))).type,'error');await next.settle();assert.equal(next.saved.size,1);
+});
+test('native contract cache allows only six bounded pinned JSON paths',async()=>{
+ const f=fixture(),suffix='?sha256='+hash('public sdk');
+ for(const name of ['Unknown','SchnorrAccount','HandshakeRegistry.json/extra'])assert.equal(f.request('/wallet/native-contract-'+name+'.json'+suffix),undefined);
+ assert.equal(f.request('/wallet/native-contract-FeeJuice.json'),undefined);
+ const body=new Uint8Array(8*1024*1024+1),large=fixture({body});assert.equal((await large.request('/wallet/native-contract-FeeJuice.json?sha256='+hash(body))).type,'error');await large.settle();assert.equal(large.saved.size,0);
+});
+
+test('published registration descriptor uses the existing bounded verified public cache',async()=>{
+ const body='{"schemaVersion":1}',url='/wallet/deployment-registration.json?sha256='+hash(body),first=fixture({body});
+ assert.equal(await(await first.request(url)).text(),body);await first.settle();
+ const next=fixture({body:'changed',saved:first.saved});assert.equal(await(await next.request(url)).text(),body);assert.equal(next.requests,0);
+ const oversized='x'.repeat(65537),large=fixture({body:oversized});assert.equal((await large.request('/wallet/deployment-registration.json?sha256='+hash(oversized))).type,'error');await large.settle();assert.equal(large.saved.size,0);
+});
+
+test('cache capability reply is exact and owns only its one transferred port',()=>{
+ const f=fixture(),sent=[];let closed=0;const port={postMessage:value=>sent.push(value),close:()=>closed++};
+ f.message({data:'rolling-native-artifacts-v1',ports:[port]});assert.deepEqual(sent,['rolling-native-artifacts-v1']);assert.equal(closed,1);
+ for(const event of [{data:'unknown',ports:[port]},{data:'rolling-native-artifacts-v1',ports:[]},{data:'rolling-native-artifacts-v1',ports:[port,port]}])f.message(event);
+ assert.equal(sent.length,1);assert.equal(closed,1);
 });

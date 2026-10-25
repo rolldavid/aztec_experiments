@@ -1,3 +1,4 @@
+import {NATIVE_CONTRACT_FILES} from './native-contract-assets.mjs';
 import {NATIVE_WASM_FILES} from './native-wasm-assets.mjs';
 import {PXE_STARTUP_PINS} from './pxe-startup.mjs';
 import {BB_WORKER_TIMING_PINS} from './bb-worker-timings.mjs';
@@ -20,13 +21,13 @@ export const SDK_ASSETS = [
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3.wasm', 'sqlite3.wasm'],
   ['node_modules/@aztec-labs/sqlite3mc-wasm/vendor/jswasm/sqlite3-opfs-async-proxy.js', 'sqlite3-opfs-async-proxy.js'],
 ];
-const requiredOutputs = ['aztec_bundle.js', 'aztec_browser.js', 'bb-main.worker.js', 'bb-thread.worker.js', 'sqlite.worker.js', ...SDK_ASSETS.map(([, output]) => output)];
+const requiredOutputs = [...NATIVE_CONTRACT_FILES.map(([, , output])=>output),'aztec_bundle.js', 'aztec_browser.js', 'bb-main.worker.js', 'bb-thread.worker.js', 'sqlite.worker.js', ...SDK_ASSETS.map(([, output]) => output)];
 const operationInputs = [
   ...Object.entries(PXE_STARTUP_PINS),
   ...PXE_OPERATION_PINS.map(pin=>['node_modules/@aztec-labs/pxe/'+pin.path,pin.after]),
   ...PXE_SOURCE_PINS.map(pin=>['node_modules/@aztec-labs/pxe/'+pin.path,pin.sha256]),
 ];
-const requiredInputs = ['scripts/native-wasm-assets.mjs',...NATIVE_WASM_FILES.map(([loader])=>loader),'scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS),'scripts/check-transform-bindings.mjs','shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),'scripts/pxe-sync-snapshot.mjs','shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/like-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs','node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js','scripts/patch-pxe-operation-guards.mjs',...operationInputs.map(([name])=>name),'scripts/patch-indexeddb-atomicity.mjs', ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs', ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-private-event-query.mjs', ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'shared/sdk-entry.mjs', 'shared/sdk-store.mjs', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js', 'scripts/toolchain.mjs', 'toolchain.json', ...SDK_ASSETS.map(([input]) => input)];
+const requiredInputs = ['scripts/native-contract-assets.mjs',...NATIVE_CONTRACT_FILES.flatMap(([loader,input])=>[loader,input]),'scripts/native-wasm-assets.mjs',...NATIVE_WASM_FILES.map(([loader])=>loader),'scripts/pxe-startup.mjs','scripts/pxe-validated-prove.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS),'scripts/check-transform-bindings.mjs','shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),'scripts/pxe-sync-snapshot.mjs','shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/like-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs','node_modules/@aztec-labs/foundation/dest/json-rpc/client/safe_json_rpc_client.js','scripts/patch-pxe-operation-guards.mjs',...operationInputs.map(([name])=>name),'scripts/patch-indexeddb-atomicity.mjs', ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs', ...PXE_REORG_ANCHOR_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-private-event-query.mjs', ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'shared/sdk-entry.mjs', 'shared/sdk-store.mjs', 'node_modules/@aztec-labs/pxe/dest/storage/metadata.js', 'scripts/toolchain.mjs', 'toolchain.json', ...SDK_ASSETS.map(([input]) => input)];
 const sha = data => createHash('sha256').update(data).digest('hex');
 const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -88,7 +89,7 @@ export function checkSdk(root = ROOT, sdkDir = path.join(root, '.build/sdk')) {
   }
   for (const [name, digest] of Object.entries(manifest.inputs)) verify(root, name, digest, 'input');
   for (const [name, digest] of Object.entries(manifest.outputs)) verify(sdkDir, name, digest, 'output', true);
-  for (const [input, output] of SDK_ASSETS) {
+  for (const [input, output] of [...SDK_ASSETS,...NATIVE_CONTRACT_FILES.map(([,input,output])=>[input,output])]) {
     if (manifest.inputs[input] !== manifest.outputs[output]) throw new Error(`SDK runtime asset differs from source: ${output}`);
   }
   return manifest;

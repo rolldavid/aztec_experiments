@@ -41,13 +41,13 @@ async function jsonAsset(asset,limit){
 }
 async function preparePublic(){
  const {config,trustedQuery,proofsEnabled,artifacts}=settings;
- const values=await Promise.allSettled([()=>jsonAsset(artifacts.board,32*1024*1024),()=>jsonAsset(artifacts.privateFee,32*1024*1024)].map(read=>Promise.resolve().then(read)));
+ const values=await Promise.allSettled([()=>jsonAsset(artifacts.board,32*1024*1024),()=>jsonAsset(artifacts.privateFee,32*1024*1024),()=>config.refundOnly?null:jsonAsset(settings.deploymentRegistration,65536)].map(read=>Promise.resolve().then(read)));
  const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
- const [boardRaw,feeRaw]=values.map(value=>value.value);
+ const [boardRaw,feeRaw,registration]=values.map(value=>value.value);
  await cryptoReady;localGuard();
  const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
  if(config.refundOnly){publicState={boardArtifact,privateFeeArtifact};return publicState;}
- const deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled,onProgress:progress});
+ const deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled,onProgress:progress,registration,artifactHashes:{board:artifacts.board.sha256,privateFee:artifacts.privateFee.sha256}});
  const {node,nodeSnapshot}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:localGuard,onProgress:progress});localGuard();
  // No account, notes or proof operation is created by public preparation.
  publicState={node,deploymentPreparation,boardArtifact,privateFeeArtifact,pxePreparation:background('pxe-native',sdk.preparePrivatePXE(node,{nodeSnapshot,artifacts:pxeArtifactsReady}))};

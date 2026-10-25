@@ -1,3 +1,4 @@
+import {prepareNativeContractAssets,relocateNativeContract,verifyNativeContractCopy,browserSdkEntry,browserSchnorrEntry} from './native-contract-assets.mjs';
 import {efficientPxeStartup,PXE_STARTUP_PINS} from './pxe-startup.mjs';
 import {assertTransformBindings} from './check-transform-bindings.mjs';
 import {prepareNativeWasmAssets,relocateNativeWasm,verifyNativeWasmCopy} from './native-wasm-assets.mjs';
@@ -101,6 +102,7 @@ const main = await build({ ...options, entryPoints: ['shared/sdk-entry.mjs'],
 // Keep the synchronous CLI bundle above unchanged. Browser builds preserve the
 // SDK's existing lazy artifact imports rather than embedding every circuit and
 // both WASM variants into the account tools' initial download.
+const nativeContractAssets=await prepareNativeContractAssets(root);
 const lazyAssets = new Map();
 const lazyInputs = new Set();
 const circuitImporter = path.join(root, 'node_modules/@aztec-labs/noir-protocol-circuits-types/dest/client_artifacts_helper.js');
@@ -109,7 +111,12 @@ const wasmImporter = path.join(root, bb, 'fetch_code/browser/index.js');
 const browserLazyAssets = {
   name: 'aztec-browser-lazy-assets',
   setup(builder) {
+    builder.onLoad({filter:/shared[\\/]sdk-entry\.mjs$/},async({path:filename})=>({contents:browserSdkEntry(await fs.readFile(filename,'utf8')),loader:'js'}));
     builder.onLoad({filter: /\.js$/}, async args => {
+      const relative=path.relative(root,args.path).split(path.sep).join('/'),nativeContract=nativeContractAssets.get(relative);
+      if(relative==='node_modules/@aztec-labs/accounts/dest/schnorr/index.js')return {contents:browserSchnorrEntry(await fs.readFile(args.path,'utf8')),loader:'js'};
+      if(nativeContract){const source=await fs.readFile(args.path,'utf8');return {contents:assertTransformBindings(source,relocateNativeContract(source,nativeContract),relative),loader:'js'};}
+
       if (args.path !== circuitImporter && args.path !== wasmImporter) return;
       let contents = await fs.readFile(args.path, 'utf8');
       const imports = [...contents.matchAll(/import\((['"])([^'"]+)\1\)/g)];
@@ -145,6 +152,9 @@ if (![...lazyInputs].some(name => name.startsWith(path.relative(root, circuitDir
   throw new Error('Expected native SDK lazy boundaries were not preserved');
 }
 for (const [name, contents] of lazyAssets) await fs.writeFile(path.join(out, name), contents);
+for(const record of nativeContractAssets.values()){const bytes=await fs.readFile(path.join(root,record.input));verifyNativeContractCopy(bytes,record);await fs.writeFile(path.join(out,record.output),bytes);}
+// Browser-only exports must not reintroduce eager copies of these native artifacts.
+if(Object.values(browser.metafile.outputs).some(output=>Object.entries(output.inputs).some(([name,value])=>value.bytesInOutput>0&&(name.endsWith('/artifacts/SchnorrAccount.json')||name.includes('/artifacts/FeeJuice.json')))))throw Error('Browser SDK contains an obsolete or duplicate eager native artifact');
 const workers = await build({ ...options, format: 'esm', outdir: out,
   entryPoints: {
     'bb-main.worker': `${bb}/barretenberg_wasm_main/factory/browser/main.worker.js`,
@@ -164,7 +174,7 @@ for (const [src, dest] of assets) {
   if(record){const bytes=await fs.readFile(path.join(root,src));verifyNativeWasmCopy(bytes,record);await fs.writeFile(path.join(out,dest),bytes);}
   else await fs.copyFile(path.join(root,src),path.join(out,dest));
 }
-const inputs = [...new Set(['scripts/native-wasm-assets.mjs',...nativeWasmAssets.keys(),'scripts/pxe-startup.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS),'shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
+const inputs = [...new Set(['scripts/native-contract-assets.mjs',...nativeContractAssets.keys(),...[...nativeContractAssets.values()].map(value=>value.input),'scripts/native-wasm-assets.mjs',...nativeWasmAssets.keys(),'scripts/pxe-startup.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS),'shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
   ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-sync-snapshot.mjs', 'scripts/pxe-validated-prove.mjs', 'scripts/check-transform-bindings.mjs', 'shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/like-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',
@@ -183,10 +193,11 @@ for (const filename of inputs) {
   try { inputHashes[filename] = sha(await fs.readFile(path.resolve(root, filename))); }
   catch (error) { if (error.code !== 'ENOENT'||operationRequiredInputs.has(filename)) throw error; }
 }
+for(const [loader,record] of nativeContractAssets)if(inputHashes[loader]!==record.sourceSha||inputHashes[record.input]!==record.sha256)throw Error('Native contract input changed during build: '+loader);
 for(const [name,expected] of operationLiteralInputs)if(inputHashes[name]!==expected)throw new Error('SDK operation patch changed during build: '+name);
 for(const pin of OWNER_DISCOVERY_PINS)if(inputHashes['node_modules/@aztec-labs/pxe/'+pin.path]!==pin.after)throw new Error('SDK owner discovery patch changed during build: '+pin.path);
 const outputs = {};
-const emitted = [...new Set([...Object.keys(main.metafile.outputs), ...Object.keys(browser.metafile.outputs), ...Object.keys(workers.metafile.outputs)].map(filename => path.basename(filename)).concat(assets.map(([, dest]) => dest), [...lazyAssets.keys()]))].sort();
+const emitted = [...new Set([...Object.keys(main.metafile.outputs), ...Object.keys(browser.metafile.outputs), ...Object.keys(workers.metafile.outputs)].map(filename => path.basename(filename)).concat(assets.map(([, dest]) => dest), [...lazyAssets.keys()],[...nativeContractAssets.values()].map(value=>value.output)))].sort();
 for (const name of emitted) outputs[name] = sha(await fs.readFile(path.join(out, name)));
 await fs.writeFile(path.join(out, 'sdk-manifest.json'), JSON.stringify({
   aztecVersion: pins.aztec, lockfile: sha(await fs.readFile(path.join(root, 'package-lock.json'))),

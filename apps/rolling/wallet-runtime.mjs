@@ -67,7 +67,7 @@ async function load(signal){
  if(!isSecureContext||!navigator.locks?.request||!crossOriginIsolated)throw failed();
  const metadata=await boundedJSON('/wallet/runtime.json',65536,undefined,{signal});
  if(metadata?.schemaVersion!==1||!Array.isArray(metadata.scripts)||metadata.scripts.length!==8||
-  Object.keys(metadata).sort().join()!=='artifacts,config,crs,proofsEnabled,remoteProver,schemaVersion,scripts,trustedQuery,worker')throw failed();
+  Object.keys(metadata).sort().join()!=='artifacts,config,crs,deploymentRegistration,nativeArtifacts,proofsEnabled,remoteProver,schemaVersion,scripts,trustedQuery,worker')throw failed();
  const config=structuredClone(metadata.config),query=structuredClone(metadata.trustedQuery),remote=metadata.remoteProver?structuredClone(metadata.remoteProver):undefined;
  if(typeof metadata.proofsEnabled!=='boolean'||(!metadata.proofsEnabled&&config.network?.chainId!=='31337'))throw failed();
  // Host pins exact script ordering and hashes. Reject repeated or unexpected
@@ -81,10 +81,29 @@ async function load(signal){
  const workerAssets=new AbortController(),workerSignal=AbortSignal.any([signal,workerAssets.signal]);
  let workerClient,workerURL,workerAccount,workerClosed=false,progressObserver=()=>{};
  const workerGuard=()=>{if(workerClosed||globalThis.walletState?.invalidated||workerAccount&&globalThis.walletState?.aztec!==workerAccount)throw failed();};
+ // Advisory preload is useful only when this already-controlling cache worker
+ // can coalesce these exact URLs. Old/uncontrolled pages use native loading alone.
+ const nativeNames=['ContractClassRegistry','ContractInstanceRegistry','FeeJuice','MultiCallEntrypoint','AuthRegistry','HandshakeRegistry'];
+ if(!Array.isArray(metadata.nativeArtifacts)||metadata.nativeArtifacts.length!==nativeNames.length||metadata.nativeArtifacts.some((asset,i)=>descriptor(asset).url!=='/wallet/native-contract-'+nativeNames[i]+'.json'||asset.bytes>8*1024*1024))throw failed();
+ let nativePreloadChannel;
+ const closeNativePreload=()=>{nativePreloadChannel?.port1.close();nativePreloadChannel?.port2.close();nativePreloadChannel=undefined;};
+ const cacheController=navigator.serviceWorker?.controller;
+ if(cacheController?.state==='activated'&&cacheController.scriptURL===new URL('/wallet-cache-worker.mjs',location.href).href&&typeof MessageChannel==='function'){
+  nativePreloadChannel=new MessageChannel();
+  nativePreloadChannel.port1.onmessage=event=>{
+   if(!nativePreloadChannel)return;closeNativePreload();
+   if(event.data!=='rolling-native-artifacts-v1'||navigator.serviceWorker?.controller!==cacheController||workerSignal.aborted)return;
+   const nativeAssetsReady=Promise.allSettled(metadata.nativeArtifacts.map(asset=>verifiedScriptBytes(asset,workerSignal).catch(error=>{
+    if(!workerSignal.aborted){workerAssets.abort();workerClient?.terminate();}throw error;
+   }))).then(results=>{if(results.some(value=>value.status==='rejected'))throw failed();});
+   nativeAssetsReady.catch(()=>{});
+  };
+  try{cacheController.postMessage('rolling-native-artifacts-v1',[nativePreloadChannel.port2]);}catch{closeNativePreload();}
+ }
  const workerReady=(async()=>{
   const names=['ethers.js','aztec_bundle.js','crs-client.js','claim-secret-store.js','engine.js'];
   const parts=await Promise.all([...names.map(name=>metadata.scripts.find(asset=>asset.url==='/wallet/'+name)),metadata.worker].map(asset=>verifiedScriptBytes(asset,workerSignal)));
-  if(signal.aborted||workerClosed)throw failed();
+  closeNativePreload();if(workerSignal.aborted||workerClosed)throw failed();
   const prefix='globalThis.__rollingWalletAssetBase='+JSON.stringify(new URL('/wallet/',location.href).href)+';\n';
   workerURL=URL.createObjectURL(new Blob([prefix,...parts.flatMap(bytes=>[bytes,'\n;\n'])],{type:'text/javascript'}));
   const worker=new Worker(workerURL,{name:'rolling-private-wallet'});
@@ -94,12 +113,12 @@ async function load(signal){
    onProgress:value=>progressObserver(value)});
   // Do not make wallet discovery wait for SDK parsing or deployment preparation.
   // Each worker command waits only for its own actual prerequisites.
-  const initialized=workerClient.initialize({profile,config,trustedQuery:query,remoteProver:remote,proofsEnabled:metadata.proofsEnabled,artifacts:metadata.artifacts,crs:metadata.crs});
+  const initialized=workerClient.initialize({profile,config,trustedQuery:query,remoteProver:remote,proofsEnabled:metadata.proofsEnabled,artifacts:metadata.artifacts,crs:metadata.crs,deploymentRegistration:config.refundOnly?null:descriptor(metadata.deploymentRegistration)});
   initialized.catch(()=>{});
   return workerClient;
- })();
+ })().finally(closeNativePreload);
  workerReady.catch(()=>{});
- const terminateWorker=()=>{workerClosed=true;workerAssets.abort();workerClient?.terminate();if(workerURL){URL.revokeObjectURL(workerURL);workerURL=undefined;}};
+ const terminateWorker=()=>{closeNativePreload();workerClosed=true;workerAssets.abort();workerClient?.terminate();if(workerURL){URL.revokeObjectURL(workerURL);workerURL=undefined;}};
  globalThis.addEventListener('pagehide',terminateWorker,{once:true});
  try{
  globalThis._getPublicConfig=()=>structuredClone(config);

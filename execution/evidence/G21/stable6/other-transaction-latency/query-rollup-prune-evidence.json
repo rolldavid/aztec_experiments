@@ -1,0 +1,15 @@
+{
+  "rollup": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+  "fromBlock": 11991984,
+  "toBlock": 11992984,
+  "events": [
+    {
+      "blockNumber": 11992935,
+      "blockHash": "0x3c8e89f114867ac67a3b448e038dbbd7406f3a42532428b5ea5652544c4c1614",
+      "transactionHash": "0xf752316b70da0f5feda773b589919b08aa1bd809ec2e4152da6aaab35914cdd4",
+      "utc": "2026-10-25T19:27:48.000Z",
+      "provenCheckpointNumber": "3822",
+      "pendingCheckpointNumber": "3886"
+    }
+  ]
+}

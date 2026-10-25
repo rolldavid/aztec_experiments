@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Published/pushed d20794f6 composer-only fix, SDK unchanged/no service restart;74 checks and actualworker gate pass. Latest realopening failed during transient queryreadiness outage19:24-19:26 UTC. Prior8ae/fb619 includedpost receipts now dropped; originalincludedblockhash omitted, reorg unproven. Testjournal cleared aftersignout; sameidentity nowneedssetup/insufficientETH, no newtxsent. No d207 post timing or targetacceptance. Nativeartifact/publishedregistration patches approved notintegrated. Read latest ONBOARDING_MEASUREMENTS; all2s/15s/50% goals active. Uploadarchives cleaned.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Candidateverified: mainSDK8.39MB vs16.6MB; sixnativeassetcache split; testnetpublishedimmutable registration withfreshnodeauthority; Like/Unlike/Name owned predecessor/discovery overlap; exact public inclusion anchors.80+27+676checks andactualsixscriptworkergate pass. Preparingcommit/push/publication. Priorrollbackconfirmed L1PrunedPending3822..3886 andindependentnodes. Old0d23post5072finalized, testaccount5restoredReadyfornewmeasurement. Goals2s/15s/50%open.
 
 ## Ready internal work
 

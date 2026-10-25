@@ -85,7 +85,7 @@ export async function waitForCanonicalReceipt(node,tx,{timeoutMs=0,intervalMs,on
         const identity=observed.blockNumber+':'+blockHash;
         if(identity!==lastInclusion){
           lastInclusion=identity;
-          const inclusion=Object.freeze({txHash:includedHash,blockNumber:observed.blockNumber,blockHash});
+          const inclusion=Object.freeze({txHash:includedHash,blockNumber:observed.blockNumber,blockHash,status:observed.status});
           void Promise.resolve().then(()=>measureProofPhase('receipt.phase.display-callback',()=>onIncluded(inclusion))).catch(()=>{});
         }
       }

@@ -75,15 +75,16 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     if(scope)scope.synchronized=true;
    }
    await contextGuard();
-   if(scope&&stateMethod&&prepareContractState){
+   const overlapMethod=ordinaryPost?'post':scope&&captured[1]?.immediate===true&&['like','unlike','name'].includes(captured[0]?.type)?stateMethod:undefined;
+   if(scope&&stateMethod&&prepareContractState&&!overlapMethod){
     await prepareContractState({method:stateMethod});
     if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
     await contextGuard();
    }
    let result;
-   if(ordinaryPost&&prepareContractState){
-    const ready=Promise.resolve().then(()=>prepareContractState({method:'post'}));
-    scope.ordinaryStateReady=ready;
+   if(overlapMethod&&prepareContractState){
+    const ready=Promise.resolve().then(()=>prepareContractState({method:overlapMethod}));
+    scope.contractStateReady=ready;
     // Predecessor authority can run during native discovery. The application
     // awaits this exact owned barrier before arguments or a new intent write.
     try{
@@ -91,7 +92,7 @@ export function createSynchronizedRollingApplication({application,synchronize,co
      const failed=results.find(value=>value.status==='rejected');if(failed)throw failed.reason;
      await contextGuard();if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
      result=results[1].value;
-    }finally{if(scope.ordinaryStateReady===ready)delete scope.ordinaryStateReady;}
+    }finally{if(scope.contractStateReady===ready)delete scope.contractStateReady;}
    }else result=await call(...captured);
    if(scope&&['submitPrepared','resumeSaved'].includes(name)&&['included','confirmed','authorized','reverted','bok-post-reverted','bok-release-reverted'].includes(result?.status))scope.synchronized=false;
    return result;
