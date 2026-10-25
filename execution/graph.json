@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Prior3b live. Integrated reviewed nativeUTF8+profile/board overlap+fundedopening discovery overlap+Bok duplicate receipt removal.33+925+49checks pass, actualsixscriptbuild passes. Current3b bio14.560285s included/editorclosed and publicprofileverified; name16.385s/opening3.502s. Testfaucetmint1000FEE then500FEE\u2192ETH completed, fixture500FEE/.000478ETH enables actualfunding tests. Next commit/push/staticpublishbatch and actualbio/funding/opening measurements. All50%/2s goals active.",
+      "checkpoint": "f16ff3d7 committed/pushed/live. Static publish no restarts; transfer and retention cleaned. Opening5.734s first/3.559s cached;2s unmet. Bio15.299s nativeincluded/editorclosed and publicprofileverified, prepare1.870s but lowcredit added2.170s estimation. Current actual100FEE topup submitted approval+deposit; bounded test signer provider fixed, adapterdwell recorded so not clean total. Next complete usablecredit and ETH-to-Bok measurement. Agents draft startup node/asset overlap and exact-anchor FPCclass warmup. All50% goal active.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",

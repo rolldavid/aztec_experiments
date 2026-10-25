@@ -1,3 +1,10 @@
+# Current live continuation — f16,26 October2026
+
+- Root: actual profile and funding measurements, source integration/publication; one retained build/IAB.
+- pending_reply_ui: exact-anchor FPC class prefetch during existing opening sync; isolated draft.
+- pending_feed_release: trusted node startup concurrent with authenticated artifact loading; isolated draft, no service/browser actions.
+- private_tips: completed reviewed profile/board patch integrated in f16; idle.
+
 # Active next batch —26 October2026
 
 - Root: integrate reviewed native UTF8 encoding, build/publish, actual profile/board flow measurements; sole shared writer/browser/operator.

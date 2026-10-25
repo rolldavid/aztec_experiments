@@ -1,5 +1,10 @@
 ## Live3b032339 measurements
 
+## f16 normal funded opening — 26 October 2026
+
+Live/pushed `f16ff3d778a31563c66b1169708b6d353efa8cfa`. Exact wallet selection→visible enabled Write a post: first changed SDK5.734270s, cached3.558800s. Account-button click→ready first7.791065s, cached4.866170s. Automatic test signature approval included (241/240ms); no explicit new-test shortcut. Cached private session~642ms, sync~1198ms, status~1207ms; nested timings are not additive with parents. Two-second target remains unmet. Raw `funded-opening-f16-run1.json` and `funded-opening-f16-run2.json` live in the G21 transaction-latency evidence directory.
+
+
 Published and pushed `3b0323399e39767a7c4f9ea11372cce85088b535`; no app/proxy restart. Normal account opening used the same funded test identity5, immediate wallet selection, and automatic sign-in approval included. First changed-SDK visit6.544245s; cached repeat3.502170s. Account-button intervals7.643835s/4.592940s. Neither reaches2s. Do not compare changed-SDK download with cached initialization as the same condition.
 
 Cached private session652ms (Board class178ms, total registration247ms); original cached a75 private session1541ms/Board1177ms. Overall improvement is smaller because public deployment completion and native state synchronization vary. Latest sync1203ms includes source snapshot341ms, prewrite advance235ms and postwrite check240ms; subsequent discovery405ms, fee metadata248ms and FPC private-log scan378ms. Nested spans overlap and must not be summed as sequential work. Full raw timings are retained.

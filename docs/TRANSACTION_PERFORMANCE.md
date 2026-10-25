@@ -18,6 +18,12 @@ Bookmarks and follows moved off-chain in `bbf76d92`; conversation read state is 
 
 [Onboarding measurements](ONBOARDING_MEASUREMENTS.md) retains exact intervals and raw evidence. The latest `d20794f6` opening attempt failed during degraded node/query readiness; it supplies no successful posting or opening result. The preceding `8ae95b3d` delayed-composer post was observed visible at18.177735s. Its and the `fb61925c` post receipts later reported dropped, and the original traces omitted inclusion block/hash. Those observations do not establish durable present inclusion; future evidence must retain the public inclusion anchor. Do not infer a reorg from dropped status alone.
 
+## Live f16 measurements — 26 October 2026
+
+Published and pushed `f16ff3d778a31563c66b1169708b6d353efa8cfa`. Same34-character bio shape on Clear Finch succeeded in15.299050s from Save bio to native inclusion/editor closed; public profile then displayed the exact new text. Previous3b observation14.560285s. Preparation fell3.177420s→1.870050s, but depleted test credit triggered2.169740s fee estimation absent from the earlier run. Proof6.808930s vs6.927570s. The differing credit state prevents a matched end-to-end improvement claim. Current inclusion: transaction`0x115249ed7cf0cbe554c9d2f601439871b71b5f607f5cd07e0057e435c5159568`, block5291/hash`0x1948798d660936526bebb350cce9f13764565bb2c138a68b1d2a513eb6008625`.
+
+Normal immediate account-opening wallet→ready5.734270s first changed SDK and3.558800s cached. All targets remain open. Raw traces are in the current transaction-latency evidence directory. Actual standalone credit top-ups are being exercised; a test-signer provider-binding repair introduced recorded wallet dwell in the posting-credit test and must not be counted as application latency or hidden from total wall time.
+
 ## Remaining qualification work
 
 Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.
