@@ -101,33 +101,44 @@ export async function prepareAggregateFunding(input,{provider}={}) {
   check(w.chainId===s.chainId && w.canSendTransaction===true && w.canSignTypedData===true,'WALLET_CAPABILITY');check(uint(w.gasBudgetWei)>0n,'USER_GAS_REQUIRED');
   check(provider && typeof provider.request==='function');
   const request=async(method,params)=>{try{return await provider.request({method,params});}catch{fail('PUBLIC_READ_FAILED');}};
-  check(quantity(await request('eth_chainId',[]))===BigInt(s.chainId),'CHAIN');
-  const block=blockSnapshot(await request('eth_getBlockByNumber',['latest',false]));
+  const [,block]=await together([
+    async()=>check(quantity(await request('eth_chainId',[]))===BigInt(s.chainId),'CHAIN'),
+    async()=>blockSnapshot(await request('eth_getBlockByNumber',['latest',false])),
+  ]);
   const tag=block.number;
   const call=async(address,abi,name,args=[])=>{const data=await request('eth_call',[{to:address,data:abi.encodeFunctionData(name,args)},tag]);try{return abi.decodeFunctionResult(name,data);}catch{fail('PUBLIC_READ_FAILED');}};
-  const [,,minimum,maximum,nonce]=await together([
-    ()=>together([[s.router,s.routerCodeHash],[s.quoter,s.quoterCodeHash]].map(([address,expected])=>async()=>{
-      const code=await request('eth_getCode',[address,tag]);check(typeof code==='string' && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak256(code)===expected,'RUNTIME');
-    })),
-    ()=>together(['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'].map(key=>async()=>check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE'))),
-    async()=>(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0],
-    async()=>(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0],
-    async()=>(await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0].toString(),
-    async()=>check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true,'PORTAL_NOT_READY'),
-    async()=>{if(hasBok)check((await call(s.bokPortal,bok,'active'))[0]===true,'PORTAL_NOT_READY');},
-  ]);
-  check(BigInt(a.collateralWei)>=minimum && BigInt(a.collateralWei)<=maximum,'COLLATERAL_BOUNDS');
   const quote=async(token,amount,poolFee)=>{
     const q=(await call(s.quoter,quoter,'quoteExactOutputSingle',[[s.weth,token,amount,poolFee,0]]))[0];
     check(q>0n,'LIQUIDITY_UNQUALIFIED');return {amount,maxEth:((q*BigInt(10000+a.slippageBps)+9999n)/10000n).toString(),poolFee,quotedEth:q.toString()};
   };
-  const [fee,credit]=await together([()=>quote(s.feeToken,a.feeAmount,a.feePoolFee),()=>hasBok?quote(s.bokToken,a.bokAmount,a.bokPoolFee):{amount:'0',maxEth:'0',poolFee:0,quotedEth:'0'}]);
-  const deadline=((await pendingTime(request,block))+FUNDING_AUTHORIZATION_SECONDS).toString();
+  // Every read uses the same captured quote scope. Drain all branches before
+  // returning, then retain the fresh validity fence before publishing the quote.
+  const [nonce,[fee,credit],time,balance]=await together([
+    async()=>{
+      const [,,minimum,maximum,nonce]=await together([
+        ()=>together([[s.router,s.routerCodeHash],[s.quoter,s.quoterCodeHash]].map(([address,expected])=>async()=>{
+          const code=await request('eth_getCode',[address,tag]);check(typeof code==='string' && /^0x(?:[0-9a-f]{2})+$/.test(code) && keccak256(code)===expected,'RUNTIME');
+        })),
+        ()=>together(['collateralPortal','feePortal','bokPortal','weth','swapRouter','feeToken','bokToken','privateFpc','chainId'].map(key=>async()=>check(String((await call(s.router,router,key))[0]).toLowerCase()===s[key],'SCOPE'))),
+        async()=>(await call(s.collateralPortal,portal,'MIN_DEPOSIT'))[0],
+        async()=>(await call(s.collateralPortal,portal,'MAX_DEPOSIT'))[0],
+        async()=>(await call(s.collateralPortal,portal,'depositNonces',[w.address]))[0].toString(),
+        async()=>check((await call(s.collateralPortal,portal,'depositsEnabled'))[0]===true,'PORTAL_NOT_READY'),
+        async()=>{if(hasBok)check((await call(s.bokPortal,bok,'active'))[0]===true,'PORTAL_NOT_READY');},
+      ]);
+      check(BigInt(a.collateralWei)>=minimum && BigInt(a.collateralWei)<=maximum,'COLLATERAL_BOUNDS');
+      return nonce;
+    },
+    ()=>together([()=>quote(s.feeToken,a.feeAmount,a.feePoolFee),()=>hasBok?quote(s.bokToken,a.bokAmount,a.bokPoolFee):{amount:'0',maxEth:'0',poolFee:0,quotedEth:'0'}]),
+    ()=>pendingTime(request,block),
+    ()=>request('eth_getBalance',[w.address,'latest']),
+  ]);
+  const deadline=(time+FUNDING_AUTHORIZATION_SECONDS).toString();
   const plan={beneficiary:w.address,collateral:a.collateralWei,collateralSecretHash:a.collateralSecretHash,
     fee:{amount:fee.amount,maxEth:fee.maxEth,poolFee:fee.poolFee},feeSecretHash:a.feeSecretHash,
     bok:{amount:credit.amount,maxEth:credit.maxEth,poolFee:credit.poolFee},bokCommitment:a.bokCommitment,bokSecretHash:a.bokSecretHash,nonce,deadline};
   const value=(BigInt(plan.collateral)+BigInt(fee.maxEth)+BigInt(credit.maxEth)).toString();
-  const balance=await request('eth_getBalance',[w.address,'latest']);check(quantity(balance)>=BigInt(value)+BigInt(w.gasBudgetWei),'INSUFFICIENT_USER_FUNDS');
+  check(quantity(balance)>=BigInt(value)+BigInt(w.gasBudgetWei),'INSUFFICIENT_USER_FUNDS');
   const consent={domain:{name:'RollingCollateral',version:'1',chainId:s.chainId,verifyingContract:s.collateralPortal},types:collateralConsentTypes,
     value:{beneficiary:w.address,executor:s.router,amount:plan.collateral,secretHash:plan.collateralSecretHash,nonce,deadline}};
   const result=freeze({kind:'rolling-aggregate-eth-v1',scope:s,plan,value,quoteAnchor:{number:tag,hash:block.hash,timestamp:block.timestamp},

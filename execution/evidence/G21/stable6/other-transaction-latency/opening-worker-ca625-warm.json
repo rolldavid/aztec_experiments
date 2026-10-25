@@ -1,0 +1,19 @@
+{
+  "commit": "ca625ce5c03cac878aa871962bd54dbed360293b",
+  "kind": "warm-page explicit fresh test account; automated test wallet",
+  "mainSdk": "undefined",
+  "timing": {
+    "click": 44552.37999999523,
+    "elapsed": 6349.629999995232,
+    "label": "Confirm payment",
+    "ready": 50902.00999999046,
+    "wallet": [
+      {
+        "end": 44917.20000004768,
+        "id": 1,
+        "method": "personal_sign",
+        "start": 44905.86500000954
+      }
+    ]
+  }
+}

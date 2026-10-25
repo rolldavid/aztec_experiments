@@ -142,7 +142,9 @@ for(const [asset,make]of [['ETH',fixture],['USDC',usdcFixture]]){
   await started.promise;await new Promise(resolve=>setImmediate(resolve));
   assert(maximum>=10,'Independent metadata must overlap');assert.equal(finished,false,'Failure cannot escape while sibling read remains active');
   held.resolve();await assert.rejects(result,{code:'AGGREGATE_PUBLIC_READ_FAILED'});assert.equal(active,0);
-  assert(!f.calls.some(call=>call.method==='eth_call'&&call.params[0].to===f.input.scope.quoter),'No dependent quote after failed metadata');
+  const quotes=f.calls.filter(call=>call.method==='eth_call'&&call.params[0].to===f.input.scope.quoter);
+  if(asset==='ETH')assert.equal(quotes.length,2,'Independent public quotes drain with metadata; failed authority still rejects the result');
+  else assert.equal(quotes.length,0,'USDC retains its existing dependent quote ordering');
  });
  test(`${asset} independent asset quotes overlap at the captured block and reject a later reorg`,async()=>{
   const options={},f=make(options),original=f.provider.request,held=deferred(),both=deferred();let started=0,finished=false;

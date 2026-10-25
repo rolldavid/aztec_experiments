@@ -1,0 +1,123 @@
+{
+  "commit": "ca625ce5c03cac878aa871962bd54dbed360293b",
+  "background": [
+    {
+      "duration": 235.10999989509585,
+      "stage": "worker-initialization",
+      "start": 263.9950000047684,
+      "state": "complete",
+      "step": "cryptography",
+      "timeOrigin": 1792936074813.56
+    },
+    {
+      "duration": 854.5899999141693,
+      "stage": "worker-initialization",
+      "start": 264.3700000047684,
+      "state": "complete",
+      "step": "prover",
+      "timeOrigin": 1792936074813.56
+    },
+    {
+      "duration": 1998.25,
+      "stage": "worker-initialization",
+      "start": 264.43999993801117,
+      "state": "complete",
+      "step": "deployment",
+      "timeOrigin": 1792936074813.56
+    },
+    {
+      "duration": 27.894999980926514,
+      "stage": "worker-initialization",
+      "start": 264.4499999284744,
+      "state": "complete",
+      "step": "kernels",
+      "timeOrigin": 1792936074813.56
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "config"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "artifact-layout"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "node-readiness"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "board-class"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "checkpoint"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "board-instance"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "public-config"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "config-commitment"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "fee-instance"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "l1-context"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "portal-code-and-immutables"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "canonical-recheck"
+    },
+    {
+      "code": null,
+      "stage": "deployment-initialization",
+      "state": "complete",
+      "step": "final-readiness-and-context"
+    }
+  ],
+  "crossOriginIsolated": true,
+  "mainSdk": "undefined",
+  "observedAt": "2026-10-25T13:53:43.685Z",
+  "opening": {
+    "click": 27173.830000042915,
+    "ready": null
+  },
+  "url": "https://d30njln0kead8n.cloudfront.net"
+}

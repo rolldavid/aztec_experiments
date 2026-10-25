@@ -176,3 +176,7 @@ notify the owner before a projected overrun. Do not rely on this laptop or chat
 renewing time-limited leases to keep the app running. No mainnet or production
 release authority is added. Existing provider credentials and secret handling
 requirements remain unchanged.
+
+## Retained Sepolia browser test signer (25 October 2026)
+
+The disposable browser fixture uses Ethereum address `0x8d83fed116a7542934ca2e968055555317f91ca4`. Its retained private credential is referenced by `deployKey` in `/private/tmp/rolling-saved-items-20261025/providers.json`, currently under `~/Library/Application Support/AnonymousMessageBoard/V6/private/rolling-bok-owner-20261025/ethereum-deployer.json`. Read it through the existing local signer; never print or copy its contents into source or evidence. Old `/private/tmp/rolling-g21-fresh-account-*/control.json` references are obsolete. Cleanup must retain the credential even when deleting disposable browser state.

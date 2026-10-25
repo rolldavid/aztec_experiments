@@ -1,6 +1,6 @@
 import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
 import {createRollingDeploymentPreparation,prepareRollingDeployment} from '../../shared/rolling/deployment.mjs';
-import {createRollingFundingSession} from '../../shared/rolling/funding-session.mjs';
+import {createRollingFundingSession,verifyRollingAggregateScope} from '../../shared/rolling/funding-session.mjs';
 import {APPLICATION_METHODS,FUNDING_METHODS,TOPUP_METHODS,WITHDRAWAL_METHODS,DEPOSIT_METHODS,CALLBACKS,errorRecord,restoreError,workerFailure} from './wallet-worker-protocol.mjs';
 
 const sdk=globalThis.__aztec,ethers=globalThis.ethers,routing=globalThis.BillboardPrivateFeeRouting;
@@ -47,7 +47,17 @@ async function preparePublic(){
  const deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config,boardArtifact,privateFeeArtifact,trustedQuery,proofsEnabled,onProgress:progress});
  const {node}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:localGuard,onProgress:progress});localGuard();
  // No account, notes or proof operation is created by public preparation.
- publicState={node,deploymentPreparation,boardArtifact,privateFeeArtifact};return publicState;
+ publicState={node,deploymentPreparation,boardArtifact,privateFeeArtifact};
+ if(config.aggregateFunding){
+  const provider=new ethers.JsonRpcProvider(config.network.ethRpcUrl);
+  const network={chainId:String(config.network.chainId),version:String(config.network.rollupVersion),rollup:config.network.rollupAddress};
+  // Only deployment-wide public scope is warmed. Account state, balances and
+  // quote/runtime/nonce/deadline validation remain at their existing boundaries.
+  const result=background('funding-scope',verifyRollingAggregateScope({sdk,ethers,node,provider,scope:config.aggregateFunding,network,proofsEnabled,contextGuard:localGuard,includeBok:false,asset:'ETH'}));
+  publicState.fundingProvider=provider;
+  publicState.scopePreparation=Object.freeze({sdk,ethers,node,provider,proofsEnabled,scope:JSON.stringify(config.aggregateFunding),network:JSON.stringify(network),result});
+ }
+ return publicState;
 }
 function metadata(){return {bokConfigured:settings.config.bok!==undefined,bokEthAvailable:settings.config.bokTopup!==undefined,usdcAvailable:settings.config.aggregateFunding?.usdcRelayAddress!==undefined,privateFeeCap:sdk.normalizePrivateFeeGasSettings(settings.config.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString(),ordinaryPostingFeeLimit:sdk.ordinaryPostFeeLimit(settings.config.privateFee.gasSettings).toString(),refundOnly:settings.config.refundOnly===true};}
 function initialize(value){
@@ -87,7 +97,7 @@ async function openAccount(raw){
  const captured=structuredClone(raw);const derived=await deriveAccount(captured);await guard();
  if(account)throw workerFailure('ROLLING_BUSY');account=Object.freeze({secretKey:captured.secretKey,salt:String(captured.salt),address:derived.address});
  opening=(async()=>{const state=await warming;await guard();
-  if(settings.config.aggregateFunding&&!settings.config.refundOnly)funding=await createRollingFundingSession({sdk,ethers,config:settings.config,account,deploymentPreparation:state.deploymentPreparation,boardArtifact:state.boardArtifact,privateFeeArtifact:state.privateFeeArtifact,node:state.node,contextGuard:guard,captureWallet,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),relay:relay(),proofsEnabled:settings.proofsEnabled});
+  if(settings.config.aggregateFunding&&!settings.config.refundOnly)funding=await createRollingFundingSession({sdk,ethers,config:settings.config,account,deploymentPreparation:state.deploymentPreparation,boardArtifact:state.boardArtifact,privateFeeArtifact:state.privateFeeArtifact,node:state.node,contextGuard:guard,captureWallet,claimStore:globalThis.makeClaimSecretStore(account.secretKey,account.salt),relay:relay(),provider:state.fundingProvider,scopePreparation:state.scopePreparation,onProgress:progress,proofsEnabled:settings.proofsEnabled});
   if(!settings.config.refundOnly)startSession();
   return metadata();})();return opening;
 }
@@ -111,7 +121,7 @@ async function earlyFunding(name,args){
 }
 async function invoke(method,args){
  if(method==='initialize')return initialize(args[0]);if(method==='deriveAccount')return deriveAccount(args[0]);if(method==='openAccount')return openAccount(args[0]);
- if(method==='close'){if(fundingBusy||session?.busy)throw workerFailure('ROLLING_BUSY');closing=true;await Promise.allSettled([opening,creating].filter(Boolean));for(const controller of operations.values())controller.abort();if(session)await session.close();funding?.close();if(refundSession)await refundSession.close();derivedIdentity=undefined;account=undefined;closed=true;return true;}
+ if(method==='close'){if(fundingBusy||session?.busy)throw workerFailure('ROLLING_BUSY');closing=true;await Promise.allSettled([warming,opening,creating].filter(Boolean));await Promise.allSettled([publicState?.scopePreparation?.result].filter(Boolean));for(const controller of operations.values())controller.abort();if(session)await session.close();funding?.close();publicState?.fundingProvider?.destroy();if(refundSession)await refundSession.close();derivedIdentity=undefined;account=undefined;closed=true;return true;}
  if(!account)throw workerFailure('ROLLING_LOCKED');await guard();
  if(method==='ensureSession'){await ensureSession();return metadata();}
  if(method==='ensureRefundSession'){await ensureRefundSession();return metadata();}

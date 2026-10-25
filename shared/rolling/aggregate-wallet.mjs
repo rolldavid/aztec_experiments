@@ -1,6 +1,22 @@
 import {observeRollingSetup,rollingSetupErrorCode} from './deployment.mjs';
 // Thin composition of the existing quote, custody and Ethereum journal APIs.
 // Only the owning private session calls this capability, under its account lock.
+export const FUNDING_PREPARATION_STAGES = Object.freeze([
+ 'allocation', 'qualification', 'journal', 'wallet', 'nonce', 'secrets', 'quote', 'save',
+]);
+export async function timeFundingPreparation(observer, step, operation) {
+ const start = performance.now();
+ try {
+  const result = await operation();
+  observeRollingSetup(observer, {stage:'funding-preparation', step, state:'complete', start,
+   timeOrigin:performance.timeOrigin, duration:performance.now()-start});
+  return result;
+ } catch (error) {
+  observeRollingSetup(observer, {stage:'funding-preparation', step, state:'failed', start,
+   timeOrigin:performance.timeOrigin, duration:performance.now()-start, code:rollingSetupErrorCode(error)});
+  throw error;
+ }
+}
 const fail=code=>Object.assign(Error('Funding is unavailable. Preserve saved recovery records.'),{code:'ROLLING_FUNDING_'+code});
 const check=(value,code='INVALID')=>{if(!value)throw fail(code);};
 const errorValue=(error,key)=>{try{const d=error!=null?Object.getOwnPropertyDescriptor(error,key):null;return d&&'value'in d?d.value:undefined;}catch{return undefined;}};
@@ -27,7 +43,7 @@ export const AGGREGATE_USDC_SCOPE_KEYS=Object.freeze([...AGGREGATE_SCOPE_KEYS,'u
 export function aggregateWalletScope(scope,network,board,owner){
  return JSON.stringify(['ROLLING_AGGREGATE_FUNDING_V1',network.chainId,network.version,network.rollup,board,scope.router,owner,1]);
 }
-export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,verifyScope,verifyFeeCredit,reconcileClaim,verifyClaim,claimStore,relay}){
+export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,verifyScope,verifyFeeCredit,reconcileClaim,verifyClaim,claimStore,relay,onProgress}){
  const captured=freeze(clone(scope)),n=freeze(clone(network));
  const usdc=captured?.usdcRelayAddress!==undefined;
  check(captured&&Object.keys(captured).sort().join()===Array.from(usdc?AGGREGATE_USDC_SCOPE_KEYS:AGGREGATE_SCOPE_KEYS).sort().join());
@@ -217,29 +233,33 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  return Object.freeze({
   async prepare(allocation){
    const values=clone(allocation);prepared=null;check(typeof verifyFeeCredit==='function','UNAVAILABLE');check(typeof values.bokAmount==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(values.bokAmount),'INVALID');
+   const recheckScope=await timeFundingPreparation(onProgress,'qualification',async()=>{
    const qualification=await Promise.allSettled([
     ()=>read(()=>verifyFeeCredit(values.feeAmount)),
     ()=>read(()=>verifyScope({includeBok:BigInt(values.bokAmount)>0n,asset:values.asset})),
    ].map(qualify=>Promise.resolve().then(qualify)));
    const failure=qualification.find(result=>result.status==='rejected');if(failure)throw failure.reason;
-   const recheckScope=qualification[1].value;check(typeof recheckScope==='function');
+   const recheckScope=qualification[1].value;check(typeof recheckScope==='function');return recheckScope;
+   });
    if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
-   const previous=await stored(),priorPayment=await archivePrevious(previous);
-   const wallet=await read(captureWallet);await read(wallet.guard);
+   const {previous,priorPayment}=await timeFundingPreparation(onProgress,'journal',async()=>{const previous=await stored();return {previous,priorPayment:await archivePrevious(previous)};});
+   const wallet=await timeFundingPreparation(onProgress,'wallet',async()=>{const wallet=await read(captureWallet);await read(wallet.guard);return wallet;});
    const depositor=wallet.address;
    const existing=await read(async()=> (await journal(depositor)).inspectSummary());check(existing===null||priorPayment&&existing.txHash===priorPayment.txHash&&existing.outcome===priorPayment.outcome,'RECOVERY_REQUIRED');
-   let nonce=await read(()=>provider.getTransactionCount(depositor,'pending'));if(priorPayment?.request.from===depositor)nonce=Math.max(nonce,priorPayment.request.nonce+1);check(Number.isSafeInteger(nonce)&&nonce>=0);
+   let nonce=await timeFundingPreparation(onProgress,'nonce',()=>read(()=>provider.getTransactionCount(depositor,'pending')));if(priorPayment?.request.from===depositor)nonce=Math.max(nonce,priorPayment.request.nonce+1);check(Number.isSafeInteger(nonce)&&nonce>=0);
+   const {collateral,fee,recipientSalt,bridgeSecret,bokScope,bokSecretHash,bokCommitment}=await timeFundingPreparation(onProgress,'secrets',async()=>{
    const collateral=await read(()=>sdk.deriveBoardDepositSecret({walletSecret,walletSalt,owner,
     scope:{l1ChainId:n.chainId,rollupVersion:n.version,rollupAddress:n.rollup,boardAddress:board,portalAddress:s.collateralPortal,depositor},nonce}));
    const fee=await read(()=>sdk.claimSecrets({walletSecret,owner,record:{chainId:n.chainId,version:n.version,privateFeeAddress:s.privateFpc,sender:depositor,nonce}}));
-   const {recipientSalt,bridgeSecret,bokScope,bokSecretHash,bokCommitment}=await bokCustody(values.bokAmount);
+   const bok=await bokCustody(values.bokAmount);return {collateral,fee,...bok};
+   });
    check(Object.keys(values).sort().join()==='asset,bokAmount,bokPoolFee,collateralWei,feeAmount,feePoolFee,gasBudgetWei,privateFeeCap,slippageBps');
    const {gasBudgetWei,privateFeeCap,...amounts}=values;check(typeof privateFeeCap==='string'&&/^[1-9][0-9]{0,76}$/.test(privateFeeCap));
-   const quote=await read(()=>sdk.prepareAggregateFunding({scope:s,allocation:{...amounts,collateralSecretHash:collateral.secretHash,feeSecretHash:fee.secretHash.toString(),bokCommitment,bokSecretHash},
+   const quote=await timeFundingPreparation(onProgress,'quote',()=>read(()=>sdk.prepareAggregateFunding({scope:s,allocation:{...amounts,collateralSecretHash:collateral.secretHash,feeSecretHash:fee.secretHash.toString(),bokCommitment,bokSecretHash},
     wallet:{address:depositor,chainId:n.chainId,canSendTransaction:true,canSignTypedData:true,gasBudgetWei}},
-    {provider:{request:({method,params})=>read(()=>provider.send(method,params))}}));
+    {provider:{request:({method,params})=>read(()=>provider.send(method,params))}})));
    await read(wallet.guard);
-   const saved=await read(()=>slot.write(previous,{schemaVersion:1,depositor,nonce,recipientSalt,bridgeSecret,bokScope,intent:null,privateFeeCap,claim:null,previousTxHash:existing?.txHash??null}));
+   const saved=await timeFundingPreparation(onProgress,'save',()=>read(()=>slot.write(previous,{schemaVersion:1,depositor,nonce,recipientSalt,bridgeSecret,bokScope,intent:null,privateFeeCap,claim:null,previousTxHash:existing?.txHash??null})));
    prepared={wallet,quote,saved,nonce,recheckScope,feeAmount:values.feeAmount};
    // Never return the original secrets or calldata to the renderer.
    return freeze({kind:quote.kind,breakdown:clone(quote.breakdown),deadline:quote.plan.deadline,beneficiary:depositor,router:s.router,

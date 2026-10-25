@@ -1,5 +1,5 @@
 import {assertRollingDeploymentPreparation,prepareRollingDeployment,consumeRollingDeploymentPreparation} from './deployment.mjs';
-import {createAggregateWallet,starterFundingAllocation} from './aggregate-wallet.mjs';
+import {createAggregateWallet,starterFundingAllocation,timeFundingPreparation} from './aggregate-wallet.mjs';
 const fail=code=>Object.assign(Error('Funding is unavailable.'),{code});
 
 // Admission for a new payment, never a gate on recovery of an existing one.
@@ -113,7 +113,7 @@ export function withRollingFundingLease(aggregate,{owner,locks,contextGuard}){
 // Owns the existing payment capability before PXE construction. The caller owns
 // native operation serialization; native callbacks are bound once the private session
 // is ready, never initialized recursively while a funding lease is held.
-export async function createRollingFundingSession({sdk,ethers,config,account,deploymentPreparation,boardArtifact,privateFeeArtifact,node,contextGuard,captureWallet,claimStore,relay,storage,provider,locks=globalThis.navigator?.locks,proofsEnabled=true}){
+export async function createRollingFundingSession({sdk,ethers,config,account,deploymentPreparation,boardArtifact,privateFeeArtifact,node,contextGuard,captureWallet,claimStore,relay,storage,provider,scopePreparation,onProgress,locks=globalThis.navigator?.locks,proofsEnabled=true}){
  const selected=structuredClone(config),captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const network={chainId:String(selected.network.chainId),version:String(selected.network.rollupVersion),rollup:selected.network.rollupAddress};
  await contextGuard();
@@ -121,21 +121,33 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
  const {deployment}=await prepareRollingDeployment(deploymentPreparation,{contextGuard});
  const scope=selected.aggregateFunding;
  if(typeof contextGuard!=='function'||typeof captureWallet!=='function'||!scope||scope.chainId!==network.chainId||scope.collateralPortal!==deployment.portal||scope.privateFpc!==deployment.privateFee.address.toString()||deployment.board.address.toString()!==selected.board.contractAddress||deployment.proofsEnabled!==proofsEnabled||Object.keys(network).some(key=>deployment.network?.[key]!==network[key])||!sdk.isTrustedPrivateNode(node))throw fail('ROLLING_SESSION_CONFIG');
+ // This optional preparation is constructed only inside the same worker from
+ // verified deployment state; it is never accepted over the worker protocol.
+ if(scopePreparation&&(scopePreparation.sdk!==sdk||scopePreparation.ethers!==ethers||scopePreparation.node!==node||scopePreparation.provider!==provider||scopePreparation.proofsEnabled!==proofsEnabled||scopePreparation.scope!==JSON.stringify(scope)||scopePreparation.network!==JSON.stringify(network)))throw fail('ROLLING_SESSION_CONFIG');
+ let initialScope=scopePreparation?.result;
  let closed=false,privateContext=null,ownedProvider;
  const guard=async()=>{
   const check=()=>{if(closed||account.secretKey!==captured.secretKey||String(account.salt)!==captured.salt||String(account.address)!==captured.address)throw fail('ROLLING_CONTEXT_CHANGED');};
   check();await contextGuard();check();
  };
- const fundingProvider=provider??Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','send','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{
-  await guard();ownedProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);const value=await ownedProvider[name](...args);await guard();return value;
+ const fundingProvider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','send','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{
+  await guard();const currentProvider=provider??(ownedProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl));const value=await currentProvider[name](...args);await guard();return value;
  }]));
  const requirePrivate=()=>{if(!privateContext)throw fail('ROLLING_FUNDING_PRIVATE_SESSION_REQUIRED');return privateContext;};
  const defaultPrivateFeeCap=sdk.normalizePrivateFeeGasSettings(selected.privateFee.gasSettings).gasSettings.getFeeLimit().toBigInt().toString();
  await guard();
  const rawAggregate=await createAggregateWallet({sdk,ethers,scope,network,board:deployment.board.address.toString(),bok:selected.bok?.contractAddress,owner:captured.address,
-  walletSecret:captured.secretKey,walletSalt:captured.salt,storage:storage??sdk.createBrowserJournalStorage(),provider:fundingProvider,captureWallet,contextGuard:guard,claimStore,relay,
+  walletSecret:captured.secretKey,walletSalt:captured.salt,storage:storage??sdk.createBrowserJournalStorage(),provider:fundingProvider,captureWallet,contextGuard:guard,claimStore,relay,onProgress,
   verifyFeeCredit:incomingAmount=>verifyRollingFundingCredit({sdk,node,gasSettings:selected.privateFee.gasSettings,incomingAmount,contextGuard:guard,readExistingCredit:()=>requirePrivate().readExistingCredit()}),
   verifyScope:async({includeBok,asset})=>{
+   if(!includeBok&&asset==='ETH'&&initialScope){
+    // Consume once, retaining the original fresh L1 recheck for confirmation.
+    // Subsequent quotes and every other funding mode take the ordinary path.
+    const pending=initialScope;initialScope=undefined;
+    await guard();const recheck=await pending;await guard();
+    if(typeof recheck!=='function')throw fail('ROLLING_SESSION_CONFIG');
+    return async()=>{await guard();await recheck();await guard();};
+   }
    const bok=includeBok?await requirePrivate().ensureBok():undefined;
    return verifyRollingAggregateScope({sdk,ethers,node,provider:fundingProvider,scope,bok,bokArtifact:bok?.artifact,network,proofsEnabled,contextGuard:guard,includeBok,asset});
   },
@@ -155,7 +167,7 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
    // The fiat reference does not depend on the payment amount or authorize it.
    // Fetch it while gas/allocation/quote checks run, and drain both branches.
    const results=await Promise.allSettled([
-    async()=>{const allocation=await starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap:defaultPrivateFeeCap,provider:fundingProvider});await guard();return aggregate.prepare(allocation);},
+    async()=>{const allocation=await timeFundingPreparation(onProgress,'allocation',()=>starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap:defaultPrivateFeeCap,provider:fundingProvider}));await guard();return aggregate.prepare(allocation);},
     ()=>asset==='USDC'?null:fundingUsdRate({ethers,provider:fundingProvider,chainId:network.chainId}),
    ].map(read=>Promise.resolve().then(read)));
    await guard();const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;

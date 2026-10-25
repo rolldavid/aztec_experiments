@@ -1,3 +1,4 @@
+import {FUNDING_PREPARATION_STAGES} from '../../shared/rolling/aggregate-wallet.mjs';
 import {ROLLING_DEPLOYMENT_STAGES} from '../../shared/rolling/deployment.mjs';
 import {APPLICATION_METHODS,FUNDING_METHODS,TOPUP_METHODS,WITHDRAWAL_METHODS,DEPOSIT_METHODS,CALLBACKS,CUSTODY_METHODS,errorRecord,restoreError,workerFailure} from './wallet-worker-protocol.mjs';
 
@@ -29,7 +30,7 @@ export function createRollingWorkerClient({worker,contextGuard=()=>{},captureFun
   const message=event.data;if(closed||!message||typeof message!=='object')return;
   if(message.type==='guard'){Promise.resolve().then(check).then(()=>worker.postMessage({type:'guard-result',id:message.id,value:true}),error=>{if(!closed)worker.postMessage({type:'guard-result',id:message.id,error:errorRecord(error)});});return;}
   if(message.type==='custody'){void custody(message);return;}
-  if(message.type==='background-progress'){const value=message.value;if((value?.stage==='worker-initialization'&&['cryptography','prover','deployment','kernels','private-session'].includes(value.step)||value?.stage==='deployment-initialization'&&ROLLING_DEPLOYMENT_STAGES.includes(value.step))&&['started','complete','failed'].includes(value.state))backgroundState.set(value.stage+':'+value.step,structuredClone(value));return;}
+  if(message.type==='background-progress'){const value=message.value;if((value?.stage==='worker-initialization'&&['cryptography','prover','deployment','kernels','private-session','funding-scope'].includes(value.step)||value?.stage==='deployment-initialization'&&ROLLING_DEPLOYMENT_STAGES.includes(value.step)||value?.stage==='funding-preparation'&&FUNDING_PREPARATION_STAGES.includes(value.step))&&['started','complete','failed'].includes(value.state))backgroundState.set(value.stage+':'+value.step,structuredClone(value));return;}
   if(message.type==='progress'){try{progress(message.value);}catch{}return;}
   const request=requests.get(message.id);if(!request)return;
   if(message.type==='callback'){
