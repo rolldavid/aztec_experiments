@@ -1080,10 +1080,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     // Confirmation finishes the interaction. Feed and affected balance reads
     // update independently, without holding the composer open or its busy state.
     intent=null;
-    if(['preference','read-marker'].includes(result.action.type)){
-     // Only posting credit changed outside the private preference projection.
+    if(['preference','read-marker','like','unlike'].includes(result.action.type)){
+     // Only posting credit changed outside preference/public reaction state.
      // Do not queue unrelated collateral/account reads before the next action.
-     // Hide the old amount; an explicit balance view reads native credit again.
+     // Composer preparation or an explicit balance view reads native credit again.
      if(status){status={...status};delete status.privateFeeCredit;}balances=null;
     }else accountRefreshNeeded=true;
     onPrivateChange();

@@ -1246,3 +1246,14 @@ for(const outcome of ['success','failure','account-change'])test(`opening compos
  if(outcome==='account-change')f.runtime.getAccount=()=>({});gate.resolve();await new Promise(setImmediate);await new Promise(setImmediate);
  assert.equal(f.core().status,1);assert.equal(feeReads,1);assert.equal(f.submissions.length,1);assert.equal(f.document.querySelector('.composer-cost')?.textContent.includes('Balance 0.7')??false,outcome==='success');
 });
+
+for(const completion of ['included','confirmed'])test(`successive ${completion} like and unlike preserve reaction refresh without full account reads`,{timeout:3000},async t=>{
+ let effects=0,payments=0;const entered=Promise.withResolvers(),gate=Promise.withResolvers();
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:completion,txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},effect:()=>effects++,prepare:async()=>{payments++;},submit:async()=>{if(payments===1){entered.resolve();await gate.promise;}},balanceRefresh:async()=>{throw Error('unexpected account inventory read');}}});
+ await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();const before=f.core().status;
+ const first=f.panel.act({type:'like',post:'42'});await entered.promise;assert.equal(effects,0);assert.equal(f.core().status,before);assert.deepEqual(await f.panel.act({type:'unlike',post:'42'}),{status:'blocked',reason:'busy'});
+ f.progress(includedPost());await new Promise(setImmediate);assert.equal(effects,1,'receipt-bound inclusion refresh retained');gate.resolve();assert.equal((await first).status,completion);await new Promise(setImmediate);assert.equal(effects,1,'same inclusion is not refreshed twice');
+ assert.equal((await f.panel.act({type:'unlike',post:'42'})).status,completion);await new Promise(setImmediate);
+ assert.equal(effects,2,'second successful action retains its public reaction refresh');assert.equal(payments,2,'each action still enters native payment preparation');assert.equal(f.submissions.length,2);assert.equal(f.core().status,before,'neither action queues full inventory');
+ f.panel.open({type:'post'});assert(f.document.querySelector('.composer-cost').textContent.includes('Balance —'));assert.equal(f.document.querySelector('.composer-cost').querySelectorAll('strong')[0].getAttribute('title'),null);await new Promise(setImmediate);
+});
