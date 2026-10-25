@@ -158,8 +158,20 @@ async function invoke(method,args){
  if(method==='ensureSession'){await ensureSession();return metadata();}
  if(method==='ensureRefundSession'){await ensureRefundSession();return metadata();}
  if(method==='prepareOpening'){
-  const result=await(await ensureSession()).prepareOpening(...args);
-  return {...result,...(result.quoteError?{quoteError:errorRecord(result.quoteError)}:{})};
+  const options=structuredClone(args[0]);await opening;await guard();
+  if(closing)throw workerFailure('ROLLING_CONTEXT_CHANGED');
+  if(!funding)throw workerFailure('ROLLING_SESSION_CONFIG');
+  if(fundingBusy)throw workerFailure('ROLLING_BUSY');
+  fundingBusy=true;let drained,preparation;fundingCompletion=new Promise(resolve=>{drained=resolve;});
+  try{
+   preparation=funding.beginOpening(options);
+   // This invocation owns fundingCompletion; ensureSession would wait on itself.
+   // Other private requests keep waiting for this entire opening operation.
+   const ready=await startSession();await guard();
+   const result=await ready.prepareOpening(options,preparation);
+   return {...result,...(result.quoteError?{quoteError:errorRecord(result.quoteError)}:{})};
+  }catch(error){if(preparation)await funding.discardOpening(preparation,error);throw error;}
+  finally{fundingBusy=false;drained();}
  }
  if(['preparePostingState','observeIncluded'].includes(method))return(await ensureSession())[method](...args);
  const parts=method.split('.');

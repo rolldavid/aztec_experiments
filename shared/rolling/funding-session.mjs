@@ -198,6 +198,7 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
  if(scopePreparation&&(scopePreparation.sdk!==sdk||scopePreparation.ethers!==ethers||scopePreparation.node!==node||scopePreparation.provider!==provider||scopePreparation.proofsEnabled!==proofsEnabled||scopePreparation.scope!==JSON.stringify(scope)||scopePreparation.network!==JSON.stringify(network)))throw fail('ROLLING_SESSION_CONFIG');
  let initialScope=scopePreparation?.result;
  let closed=false,privateContext=null,ownedProvider;
+ const openingPreparations=new WeakMap();
  const guard=async()=>{
   const check=()=>{if(closed||account.secretKey!==captured.secretKey||String(account.salt)!==captured.salt||String(account.address)!==captured.address)throw fail('ROLLING_CONTEXT_CHANGED');};
   check();await contextGuard();check();
@@ -231,16 +232,39 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
  const assertContext=async({config,account,node:currentNode,proofsEnabled:currentProofs})=>{
   await guard();if(JSON.stringify(config)!==JSON.stringify(selected)||account.secretKey!==captured.secretKey||String(account.salt)!==captured.salt||String(account.address)!==captured.address||currentNode!==node||currentProofs!==proofsEnabled)throw fail('ROLLING_CONTEXT_CHANGED');
  };
+ function prepareOpening(readStatus,asset){
+  return prepareRollingFundingOpening({asset,readStatus,guard,
+   readAllocation:()=>timeFundingPreparation(onProgress,'allocation',()=>starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap:defaultPrivateFeeCap,provider:fundingProvider})),
+   readRate:()=>asset==='USDC'?null:fundingUsdRate({ethers,provider:fundingProvider,chainId:network.chainId}),
+   prepareQuote:allocation=>aggregate.prepare(allocation),
+   constructQuote:allocation=>aggregate.prepareReadOnly(allocation),
+   installQuote:token=>aggregate.installPreparedQuote(token)});
+ }
  return Object.freeze({aggregate,node,defaultPrivateFeeCap,usdcAvailable:scope.usdcRelayAddress!==undefined,assertContext,
   async registrationDeployment(options){await guard();const result=await readRollingDeploymentRegistration(deploymentPreparation,options);await guard();return result;},
   async bindPrivateContext(context){await guard();if(privateContext||!context||['readExistingCredit','ensureBok','reconcileClaim'].some(key=>typeof context[key]!=='function')||(context.readFunding!==undefined&&typeof context.readFunding!=='function'))throw fail('ROLLING_SESSION_CONFIG');privateContext=Object.freeze({...context});},
-  prepareOpening(readStatus,{asset='ETH'}={}){
-   return prepareRollingFundingOpening({asset,readStatus,guard,
-    readAllocation:()=>timeFundingPreparation(onProgress,'allocation',()=>starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap:defaultPrivateFeeCap,provider:fundingProvider})),
-    readRate:()=>asset==='USDC'?null:fundingUsdRate({ethers,provider:fundingProvider,chainId:network.chainId}),
-    prepareQuote:allocation=>aggregate.prepare(allocation),
-    constructQuote:allocation=>aggregate.prepareReadOnly(allocation),
-    installQuote:token=>aggregate.installPreparedQuote(token)});
+  // Internal one-use opening work, never a renderer capability or cached quote.
+  // Public reads may run during native construction; status and installation
+  // still run together under the private session's account lease.
+  beginOpening({asset='ETH'}={}){
+   if(!['ETH','USDC'].includes(asset))throw fail('ROLLING_FUNDING_INVALID');
+   let resolve,reject;const status=new Promise((yes,no)=>{resolve=yes;reject=no;});
+   status.catch(()=>{});
+   const token=Object.freeze({}),result=prepareOpening(()=>status,asset);
+   // Native construction can fail before this result has a consumer.
+   result.catch(()=>{});openingPreparations.set(token,{asset,resolve,reject,result});return token;
+  },
+  async discardOpening(token,error){
+   const ready=openingPreparations.get(token);if(!ready)return;
+   openingPreparations.delete(token);ready.reject(error);await Promise.allSettled([ready.result]);
+  },
+  async prepareOpening(readStatus,{asset='ETH'}={},token){
+   if(token===undefined)return prepareOpening(readStatus,asset);
+   const ready=openingPreparations.get(token);
+   if(!ready||ready.asset!==asset)throw fail('ROLLING_CONTEXT_CHANGED');
+   openingPreparations.delete(token);
+   try{await guard();ready.resolve(await readStatus());}catch(error){ready.reject(error);}
+   return ready.result;
   },
   async prepareStarter({asset}){
    await guard();
