@@ -284,6 +284,24 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const value=utilityPlain(out.result??out,abi.returnType??abi.returnTypes?.[0]);
     return includeWitnessHints?{value,noteHashWitnessHints:out.noteHashWitnessHints}:value;
   }
+  function shareAggregateClaim(action){
+    const operation=getOperationScope();
+    if(action.type!=='claim-deposit'||!loadAggregate||!callScope||callScope.aggregateClaim||operation?.synchronized!==true)return;
+    const receipts=[action.receipt,action.feeReceipt,action.bokReceipt].filter(Boolean),identity=['txHash','blockHash','blockNumber','sender','nonce'];
+    if(receipts.length<2||!identity.every(key=>receipts.every(receipt=>receipt[key]===receipts[0][key])))return;
+    const wallet=session.wallet,pxe=wallet.pxe,node=session.node,cachedNode=pxe.node,secret=session.walletSecret,salt=session.walletSalt;
+    const checkOwner=()=>check(getOperationScope()===operation&&operation.synchronized===true&&session.wallet===wallet&&wallet.pxe===pxe&&session.node===node&&pxe.node===cachedNode&&session.walletSecret===secret&&session.walletSalt===salt,'ROLLING_CONTEXT_CHANGED');
+    let pending;
+    // The existing exclusive call owns this context. Submission creates a new
+    // context and recovers custody afresh after checkpointClaim changed storage.
+    callScope.aggregateClaim={...Object.fromEntries(identity.map(key=>[key,receipts[0][key]])),anchor:null,read:async(kind)=>{
+      await localGuard();checkOwner();
+      pending??=Promise.resolve().then(()=>loadAggregate(receipts[0].txHash));
+      let value=await pending;await localGuard();checkOwner();
+      if(value===null)value=await loadAggregate(receipts[0].txHash,kind);
+      await localGuard();checkOwner();return value===null?null:clone(value);
+    }};
+  }
   async function fundingClaim(kind,metadata){
     check(fundingProvider&&typeof sdk.prepareFundingClaim==='function','ROLLING_FUNDING_UNAVAILABLE');
     if(kind==='bok')await ensureBok();
@@ -291,7 +309,10 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const receipt=exactData(metadata,['txHash','blockHash','blockNumber','sender','nonce','amount','leafIndex','messageKey','secretHash',...(cancellation ? ['depositId'] : [])]);
     await guard();const header=await session.wallet.pxe.getSyncedBlockHeader();await localGuard();
     const anchor={number:Number(header.globalVariables.blockNumber),hash:(await header.hash()).toString(),root:header.state.l1ToL2MessageTree.root.toString()};
-    const aggregate=!cancellation&&loadAggregate?await loadAggregate(receipt.txHash,kind):null;await localGuard();
+    const shared=callScope?.aggregateClaim;
+    if(shared&&shared.anchor===null)shared.anchor=clone(anchor);
+    const sameAggregate=!cancellation&&shared&&same(shared.anchor,anchor)&&shared.txHash===receipt.txHash&&shared.blockHash===receipt.blockHash&&shared.blockNumber===receipt.blockNumber&&shared.sender===receipt.sender&&shared.nonce===receipt.nonce;
+    const aggregate=!cancellation&&loadAggregate?await (sameAggregate?shared.read(kind):loadAggregate(receipt.txHash,kind)):null;await localGuard();
     let claimScope={...fixed.network,portal:fixed.portal,recipient:fixed.board};
     let secrets=cancellation ? undefined : {walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})};
     if(kind==='bok'){
@@ -584,6 +605,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   // Reuse the original submission checks at recovery boundaries; none of these
   // checks grants permission to resend without the exact authenticated journal.
   async function checkActionSubmission(record){
+      shareAggregateClaim(record.action);
       if(record.withdrawal?.kind==='bok'){
         const anchor=await balanceAnchor();
         const reads=await Promise.allSettled([
@@ -1199,10 +1221,12 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         // Each receipt is independently bound to this operation's native anchor.
         // Drain every validation before saving any claim or unsigned intent.
         checkClaimOwner();
+        shareAggregateClaim(action);
         const values=await Promise.allSettled([
           ()=>measure('action.arguments',()=>argumentsFor(action,board,nonce)),
           ()=>action.type==='claim-deposit'&&action.bokReceipt!==undefined?bokFundingClaim(action):undefined,
           ()=>action.type==='claim-private-fee'||action.feeReceipt!==undefined?payment(action,claimFields):undefined,
+          ()=>action.type==='claim-deposit'?measure('action.claim-witnesses',()=>sdk.prefetchBoardClaimWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact})):undefined,
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkClaimOwner();

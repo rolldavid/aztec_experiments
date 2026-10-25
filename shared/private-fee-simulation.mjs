@@ -28,6 +28,12 @@ export function createPrivateFeeSimulator(wallet, node) {
     measurements.set(result,{pxe,payload,from:from.toString(),settings,fingerprint,anchor});
     return result;
   }
+  async function validateMeasurement(payload,from,measurement){
+    const binding=measurements.get(measurement);
+    const verify=()=>{if(!binding||binding.pxe!==wallet.pxe||binding.payload!==payload||binding.from!==from.toString()||
+      binding.fingerprint!==snapshotPrivateFeeSimulationInput(payload,from,binding.settings))throw changed();};
+    verify();if(binding.anchor!==await anchorHash(await binding.pxe.getSyncedBlockHeader()))throw changed();verify();
+  }
   async function publicFromMeasurement(payload,from,gasSettings,measurement){
     const binding=measurements.get(measurement);
     const verify=()=>{if(!binding||binding.pxe!==wallet.pxe||binding.payload!==payload||binding.from!==from.toString()||
@@ -55,6 +61,7 @@ export function createPrivateFeeSimulator(wallet, node) {
   return {
     detachedMeasurement: reusableMeasurements,
     private: privateSimulation,
+    validateMeasurement,
     async public(payload, from, gasSettings, enforce=false, measurement) {
       if(enforce)return wallet.simulateTx(payload, {from, fee:{gasSettings}, skipTxValidation:false, skipFeeEnforcement:false});
       if(measurement!==undefined&&reusableMeasurements)return publicFromMeasurement(payload,from,gasSettings,measurement);

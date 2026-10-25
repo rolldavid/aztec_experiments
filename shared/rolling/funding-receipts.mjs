@@ -211,7 +211,25 @@ export async function prepareFundingClaim(input) {
         const portalKey={collateral:'collateralPortal','private-fee':'feePortal',bok:'bokPortal'}[kind];
         requireThat(aggregateIntent.from===r.sender && aggregateIntent.nonce===Number(r.nonce) && aggregateIntent.chainId===s.chainId
           && aggregateIntent.expected[portalKey]===s.portal && (!aggregateIntent.txHash || aggregateIntent.txHash===r.txHash));
-        let verified;try{verified=await verifyEthereumIntentReceipt(provider,aggregateIntent,r.txHash);}catch{throw fail(readFailed?'UNKNOWN':'MISMATCH');}
+        // One aggregate transaction authenticates all legs. Reuse only its
+        // immutable effects in this exact owned operation/custody/anchor; each
+        // leg still reads its own fresh receipt and final canonical boundaries.
+        const aggregateKey='aggregate:'+JSON.stringify([s.chainId,s.version,s.rollup,owner,a,
+          r.txHash,r.blockHash,r.blockNumber,r.sender,r.nonce,aggregateIntent,aggregateCustody]);
+        await read(()=>Promise.resolve());
+        let entries=operation&&operationClaims.get(operation);
+        if(operation&&!entries){entries=new Map();operationClaims.set(operation,entries);}
+        const existing=entries?.get(aggregateKey);
+        const shares=existing&&existing.node===suppliedNode&&existing.provider===suppliedProvider&&existing.store===suppliedStore&&
+          existing.capabilities.length===capabilities.length&&capabilities.every((value,index)=>value===existing.capabilities[index]);
+        const verify=async()=>{
+          let value;try{value=await verifyEthereumIntentReceipt(provider,aggregateIntent,r.txHash);}catch{throw fail(readFailed?'UNKNOWN':'MISMATCH');}
+          requireThat(value?.outcome==='success'&&value.receipt.blockNumber===r.blockNumber&&equal(value.receipt.blockHash,r.blockHash));
+          return frozen({outcome:value.outcome,receipt:{blockNumber:value.receipt.blockNumber,blockHash:value.receipt.blockHash},event:structuredClone(value.event)});
+        };
+        let pending=shares?existing.pending:null;
+        if(!pending){pending=Promise.resolve().then(verify);void pending.catch(()=>{});if(entries&&entries.size<4){const entry={node:suppliedNode,provider:suppliedProvider,store:suppliedStore,capabilities,pending};entries.set(aggregateKey,entry);void pending.catch(()=>{if(entries.get(aggregateKey)===entry)entries.delete(aggregateKey);});}}
+        const verified=await pending;await read(()=>Promise.resolve());
         requireThat(verified?.outcome==='success' && verified.receipt.blockNumber===r.blockNumber && equal(verified.receipt.blockHash,r.blockHash));
         if(aggregateCustody)requireThat(verified.event.beneficiary===aggregateCustody.beneficiary);
         aggregate=verified.event[kind==='private-fee'?'privateFee':kind];

@@ -2,7 +2,7 @@ import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {PrivateCircuitPublicInputs,PrivateLogData,PublicCallRequest,ReadRequest} from '@aztec-labs/stdlib/kernel';
+import {PrivateCircuitPublicInputs,PrivateLogData,PublicCallRequest,CountedPublicCallRequest,ReadRequest} from '@aztec-labs/stdlib/kernel';
 import {PrivateLog} from '@aztec-labs/stdlib/logs';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
 import {PrivateSimulationResult,TxSimulationResult,ExecutionPayload,HashedValues} from '@aztec-labs/stdlib/tx';
@@ -99,4 +99,30 @@ test('reusable adapter rejects a replacement PXE before taking another private m
  const h=await fixture();h.wallet.pxe={...h.pxe};delete h.wallet.pxe.proveTxWithPublicValidation;
  await assert.rejects(h.adapter.private(h.payload,address,privateSettings),{code:'BB_SIMULATION_CHANGED'});
  assert.equal(h.privateCalls(),1);assert.equal(h.seen.length,0);
+});
+
+for(const change of ['none','payload','reservation','owner','pxe','anchor'])test('local measurement validation preserves exact candidate guard without public RPC: '+change,async()=>{
+ const h=await fixture();let payload=h.payload,from=address;
+ if(change==='payload')payload=new ExecutionPayload([],[],[],[]);
+ if(change==='reservation')h.payload.calls.push({name:'pay_fee',args:[new Fr(99)]});
+ if(change==='owner')from=AztecAddress.fromFieldUnsafe(new Fr(321));
+ if(change==='pxe')h.wallet.pxe={...h.pxe};
+ if(change==='anchor')h.pxe.getSyncedBlockHeader=async()=>({hash:async()=>new Fr(999)});
+ if(change==='none')await h.adapter.validateMeasurement(payload,from,h.measured);
+ else await assert.rejects(h.adapter.validateMeasurement(payload,from,h.measured),{code:'BB_SIMULATION_CHANGED'});
+ assert.equal(h.seen.length,0);assert.equal(h.privateCalls(),1);assert.deepEqual(snapshot(h.source),h.pristine);
+});
+for(const publicCall of [false,true])test('native low-credit private metering includes each startup once; Board public call='+publicCall,async()=>{
+ const refund=new Gas(192,27510),publicBody=publicCall?new Gas(384,92440):Gas.empty();
+ async function meter(teardown){
+  const publicInputs=PrivateCircuitPublicInputs.empty();publicInputs.callContext.contractAddress=address;publicInputs.txContext.gasSettings=probeSettings(teardown);
+  publicInputs.publicTeardownCallRequest=new PublicCallRequest(address,address,false,new Fr(7));
+  const calldata=[new HashedValues([new Fr(9)],new Fr(7))];
+  if(publicCall){publicInputs.publicCallRequests.array[0]=new CountedPublicCallRequest(new PublicCallRequest(address,address,false,new Fr(8)),3);publicInputs.publicCallRequests.claimedLength=1;calldata.push(new HashedValues([new Fr(10)],new Fr(8)));}
+  const entrypoint={publicInputs,contractClassLogs:[],nestedExecutionResults:[],noteHashNullifierCounterMap:new Map(),partialWitness:new Map(),acir:Buffer.alloc(0),vk:Buffer.alloc(0)};
+  const result=await generateSimulatedProvingResult({entrypoint,firstNullifier:Fr.ONE,publicFunctionCalldata:calldata},async()=> 'native low-credit accounting',new Proxy({},{get(){assert.fail('No external reads');}}));return result.publicInputs.gasUsed;
+ }
+ const zero=await meter(Gas.empty()),full=await meter(refund);
+ assert.deepEqual(zero,new Gas(128,540000+30800+20000*(publicCall?2:1)));
+ assert.deepEqual(zero.add(refund).add(publicBody),full.add(publicBody));
 });

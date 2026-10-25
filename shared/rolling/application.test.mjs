@@ -71,7 +71,7 @@ function fixture(){
   const node={getTxReceipt:async()=>({...state.outcome?.receipt,executionResult:state.outcome?.outcome==='success'?'success':'reverted'}),getBlockData:async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={node:{getL1ToL2MessageMembershipWitness:async()=>{throw Error('Unexpected fixture membership read');}},getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
   const sdk={TxHash,poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
-    prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},preferenceFeeBudget:()=>({maximumFee:100n}),likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
+    prefetchBoardClaimWitnesses:async input=>{(state.claimWitnessPrefetches??=[]).push(input);},prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},preferenceFeeBudget:()=>({maximumFee:100n}),likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
       if(['set_preference','mark_thread_read'].includes(input.interaction.name)&&state.preferenceError)throw state.preferenceError;
       if(input.interaction.name==='screen'&&state.screenError)throw state.screenError;
@@ -137,7 +137,7 @@ function aggregateClaimFixture(usdc=false){
  f.options.accountSession.node.getNodeInfo=async()=>({l1ContractAddresses:{feeJuicePortalAddress:'0x'+'55'.repeat(20),feeJuiceAddress:'0x'+'66'.repeat(20)}});
  f.options.sdk.BatchCall=class {constructor(wallet,interactions){assert.equal(wallet,f.options.accountSession.wallet);this.name='batch';this.interactions=interactions;}};
  f.options.sdk.prepareFundingClaim=async input=>{
-  f.state.claimReads.push(input);assert.equal(input.aggregateIntent,retained.intent);assert.equal(input.aggregateCustody,retained.aggregateCustody);
+  f.state.claimReads.push(input);assert.deepEqual(input.aggregateIntent,retained.intent);assert.deepEqual(input.aggregateCustody,retained.aggregateCustody);
   if(input.kind==='collateral')return {status:'claim-ready',claim:{contract:hex(1),method:'claim_deposit',args:[f.receipt.sender,'100',hex(46),'2']}};
   if(input.kind==='private-fee')return {status:'claim-ready',claim:{contract:hex(2),kind:'private-fee-bridge',bridgeClaim:{amount:'200',salt:hex(90),leafIndex:'3'}}};
   assert.deepEqual(input.secrets,{recipientSalt:hex(91),bridgeSecret:hex(92)});assert.deepEqual(input.scope,retained.bokScope);
@@ -3159,4 +3159,40 @@ for(const mode of ['fee-ready','fee-needed','collateral-pending','deposit-error'
  else if(mode==='owner-change')await assert.rejects(result,{code:'ROLLING_CONTEXT_CHANGED'});
  else{const value=await result;assert.equal(value.status,mode);assert.equal(value.pendingWithdrawal,null);if(mode!=='fee-needed')assert.equal(value.privateFeeCredit,'77');assert.deepEqual(value.depositIds,mode==='collateral-pending'?[]:[hex(9)]);}
  assert.equal(f.state.privateReads.filter(row=>row.name==='get_deposit_ids').length,1);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+
+for(const usdc of [false,true])for(const includeBok of [false,true])test(`aggregate custody recovered once per owned prepare and submit: USDC=${usdc}, Bok=${includeBok}`,async()=>{
+ const f=aggregateClaimFixture(usdc),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;if(!includeBok)delete f.action.bokReceipt;
+ let loads=0;const load=f.options.funding.loadAggregate;f.options.funding.loadAggregate=async(...args)=>{loads++;return load(...args);};
+ const app=f.restart(),prepared=await app.prepare(f.action,{immediate:true});assert.equal(loads,1);assert.equal(f.state.claimReads.length,includeBok?3:2);
+ assert.equal((await app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(loads,2,'submission freshly recovers custody once, then shares its exact immutable context');assert.equal(f.state.claimReads.length,includeBok?6:4);assert.equal(f.state.sends,1);
+});
+for(const change of ['scope','owner','failure'])test(`shared aggregate custody never escapes held ${change}`,async()=>{
+ const f=aggregateClaimFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let scope={synchronized:true},loads=0;
+ f.options.accountSession.operationScope=()=>scope;f.options.funding.loadAggregate=async()=>{loads++;entered.resolve();await gate.promise;if(change==='failure')throw Error('custody unavailable');return f.retained;};
+ const work=f.restart().prepare(f.action,{immediate:true}),rejected=assert.rejects(work,change==='failure'?/custody unavailable/:{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ if(change==='scope')scope={synchronized:true};if(change==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);gate.resolve();await rejected;assert.equal(loads,1);assert.equal(f.state.claimReads.length,0);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+
+for(const includeBok of [false,true])test('Board claim immutable reads join the receipt wave '+includeBok,async()=>{
+ const f=aggregateClaimFixture(),scope={synchronized:true},gate=Promise.withResolvers(),started=Promise.withResolvers();let count=0,seen;
+ f.options.accountSession.operationScope=()=>scope;if(!includeBok)delete f.action.bokReceipt;
+ const verify=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=async input=>{if(++count===(includeBok?4:3))started.resolve();await gate.promise;return verify(input);};
+ f.options.sdk.prefetchBoardClaimWitnesses=async input=>{seen=input;if(++count===(includeBok?4:3))started.resolve();await gate.promise;};
+ const work=f.restart().prepare(f.action,{immediate:true});await started.promise;
+ assert.equal(f.values.size,0);assert.equal(f.state.sends,0);assert.equal(seen.wallet,f.options.accountSession.wallet);assert.equal(seen.node,f.options.accountSession.node);
+ gate.resolve();await work;assert.equal(count,includeBok?4:3);
+});
+test('Board claim immutable read failure drains receipt reads without creating an intent',async()=>{
+ const f=aggregateClaimFixture(),scope={synchronized:true},gate=Promise.withResolvers(),started=Promise.withResolvers();let count=0,settled=false;
+ f.options.accountSession.operationScope=()=>scope;const verify=f.options.sdk.prepareFundingClaim;
+ f.options.sdk.prepareFundingClaim=async input=>{if(++count===3)started.resolve();await gate.promise;return verify(input);};
+ f.options.sdk.prefetchBoardClaimWitnesses=()=>{throw Error('immutable read failed');};
+ const work=f.restart().prepare(f.action,{immediate:true}).finally(()=>settled=true),rejected=assert.rejects(work,/immutable read failed/);
+ await started.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+for(const kind of ['private-fee','bok'])test('Board claim immutable reads exclude standalone '+kind,async()=>{
+ const f=topUpFixture(kind);f.options.accountSession.operationScope=()=>scope;const scope={synchronized:true};
+ f.options.sdk.prefetchBoardClaimWitnesses=()=>assert.fail('standalone claim must not read Board immutables');await f.restart().prepare(f.action,{immediate:true});assert.equal(f.state.sends,0);
 });

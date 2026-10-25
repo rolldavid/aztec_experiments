@@ -1,6 +1,7 @@
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import {performance} from 'node:perf_hooks';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
 import {ExecutionPayload,HashedValues} from '@aztec-labs/stdlib/tx';
@@ -14,7 +15,8 @@ import {generateSimulatedProvingResult} from '@aztec-labs/pxe/simulator';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {PrivateFeePaymentMethod,PrivateMintAndPayFeePaymentMethod} from '../shared/private-fee-payment.mjs';
 import {PRIVATE_FEE_REFUND_PROFILE} from '../shared/private-fee-client.mjs';
-import {estimatePrivateFeeTransaction} from '../shared/private-fee-estimation.mjs';
+import {estimatePrivateFeeTransaction,sendPrivateFeeTransaction} from '../shared/private-fee-estimation.mjs';
+import {RevertCode} from '@aztec-labs/stdlib/avm';
 import {LIKE_GAS_PROFILE as profile,likeFeeBudget,likeFeeLimit} from '../shared/like-fees.mjs';
 after(()=>BarretenbergSync.destroySingleton());
 const address=n=>AztecAddress.fromFieldUnsafe(new Fr(n)),from=address(3),boardAddress=address(4),feeAddress=address(5);
@@ -125,12 +127,12 @@ for(const metadata of [false,true])test(`like below conservative bound uses meas
  f.prepared.refundGasLimits=Gas.from(profile.teardownGas);
  if(metadata){delete f.prepared.availableCredit;f.prepared.creditCheck='qualified-like-proof';f.prepared.withAvailableCredit=async()=>{balances++;return {...f.prepared,creditCheck:'read-balance',availableCredit:available};};}
  f.input.interaction.request=async()=>{requests++;return f.application;};
- f.input.simulator={detachedMeasurement:true,
+ f.input.simulator={detachedMeasurement:true,validateMeasurement:async()=>{},
   private:async(payload)=>{privateCalls++;assert.equal(payload.calls[1],f.application.calls[0]);return {gasUsed:{totalGas:new Gas(1200,700000)}};},
   public:async(payload,_from,_gas,strict)=>{publicCalls++;assert.equal(strict,false);assert.equal(payload.calls[1],f.application.calls[0]);return {publicInputs:{},gasUsed:{totalGas:new Gas(3000,1200000),teardownGas:Gas.from(profile.teardownGas)}};}};
  const result=await estimatePrivateFeeTransaction(f.input);
  assert(result.maximumFee<=available);assert(result.reservation<=available);assert(result.maximumFee<bound.maximumFee);assert(result.reservation!==available);
- assert.equal(result.atomicSimulation,true);assert.equal(result.simulationValidation,undefined);assert.equal(requests,1);assert.equal(balances,Number(metadata));assert.equal(privateCalls,2);assert.equal(publicCalls,1);
+ assert.equal(result.atomicSimulation,true);assert.equal(result.simulationValidation,undefined);assert.equal(requests,1);assert.equal(balances,Number(metadata));assert.equal(privateCalls,2);assert.equal(publicCalls,0);
  assert.equal(result.payload.calls[0].args[0].toBigInt(),result.reservation);assert.equal(result.payload.calls[1],f.application.calls[0]);
 });
 test('like credit enrichment failure or zero credit never starts simulation/proof',async()=>{
@@ -139,4 +141,53 @@ test('like credit enrichment failure or zero credit never starts simulation/proo
   const failure=Error('credit read failed');f.prepared.withAvailableCredit=async()=>{if(!zero)throw failure;return {...f.prepared,creditCheck:'read-balance',availableCredit:0n};};
   await assert.rejects(estimatePrivateFeeTransaction(f.input),zero?{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'}:e=>e===failure);
  }
+});
+
+for(const failure of [false,true])test(`low-credit like below branch maximum reuses exact candidate for affordable native measurement; revert=${failure}`,async()=>{
+ const f=fixture(850000n);f.prepared.gasSettings.maxFeesPerGas=new GasFees(0n,1n);f.prepared.refundGasLimits=Gas.from(profile.teardownGas);
+ const measured=new Map(),requests=[];let count=0;const rejected=Error('native like rejected');
+ f.input.simulator={detachedMeasurement:true,validateMeasurement:async()=>assert.fail('Unaffordable bound must use actual public branch'),
+  private:async(payload)=>{count++;const result={gasUsed:{totalGas:new Gas(1200,800000)}};measured.set(payload,result);return result;},
+  public:async(payload,_from,_gas,strict,prior)=>{assert.equal(strict,false);assert.equal(prior,measured.get(payload));requests.push(payload);
+   return {publicInputs:{forPublic:{}},publicOutput:{txEffect:{revertCode:failure?RevertCode.REVERTED:RevertCode.OK},...(failure?{revertReason:rejected}:{})},gasUsed:{totalGas:new Gas(1500,830000),teardownGas:Gas.from(profile.teardownGas)}};}};
+ if(failure){await assert.rejects(estimatePrivateFeeTransaction(f.input),error=>error===rejected);assert.equal(requests.length,1);}
+ else {const result=await estimatePrivateFeeTransaction(f.input);assert(result.maximumFee<=850000n);assert.equal(result.maximumFee,830000n);assert.equal(result.reservation,830000n);assert.equal(result.payload,requests.at(-1));assert.equal(requests.length,2);assert.equal(count,3);}
+});
+for(const change of ['anchor','owner','profile','payload'])test('qualified low-credit arithmetic still validates measurement and ownership: '+change,async()=>{
+ const f=fixture(4500000000000000000n);f.prepared.refundGasLimits=Gas.from(profile.teardownGas);const rejected=Object.assign(Error('changed'),{code:'BB_SIMULATION_CHANGED'});
+ f.input.simulator={detachedMeasurement:true,private:async()=>({gasUsed:{totalGas:new Gas(1200,700000)}}),public:()=>assert.fail('No public probe'),validateMeasurement:async()=>{
+  if(change==='anchor')throw rejected;if(change==='owner')f.account.address=address(99);if(change==='profile')f.board.currentContractClassId=Fr.ONE;if(change==='payload')f.application.calls[0].args[1]=new Fr(9);
+ }};
+ // The guard belongs to the captured operation, independent of mutable input options.
+
+ await assert.rejects(estimatePrivateFeeTransaction(f.input),change!=='anchor'?{code:'BB_LIKE_FEE_PROFILE_MISMATCH'}:error=>error===rejected);
+});
+
+for(const failure of [null,'BB_SIMULATION_FAILED','TX_INVALID'])test('qualified low-credit handoff retains actual wallet final public validation: '+(failure??'success'),async()=>{
+ const f=fixture(4500000000000000000n),calls=[],tx={getTxHash:()=>new Fr(77)};f.prepared.refundGasLimits=Gas.from(profile.teardownGas);
+ class WalletBoundary {constructor(pxe){this.pxe=pxe;}completeFeeOptions(opts){return {gasSettings:opts.gasSettings};}createTxExecutionRequestFromPayloadAndFee(payload,from,fee){return {payload,from,gasSettings:fee.gasSettings};}scopesFrom(from){return [from];}senderForTagsFrom(from){return from;}simulateViaEntrypoint(){assert.fail('No duplicate final simulation');}}
+ const ctx=vm.createContext({performance,console,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});vm.runInContext(fs.readFileSync(new URL('../apps/src/billboard/user/engine.js',import.meta.url),'utf8'),ctx);
+ const sdk={BaseWallet:WalletBoundary,GasSettings,submitOnceWithReconciliation:async()=>calls.push('send'),waitForSuccessfulReceipt:async()=>({status:'checkpointed',transactionFee:1n})};
+ const pxe={proveTx:()=>assert.fail('Unvalidated proof forbidden'),proveTxWithPublicValidation:async(request)=>{calls.push('validate');assert(request.payload.calls[0].args[0].toBigInt()>=request.gasSettings.getFeeLimit().toBigInt());if(failure)throw Object.assign(Error(failure),{code:failure});calls.push('prove');return {toTx:async()=>tx};}};
+ const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(sdk,pxe,{},{},()=>{},Fr.ONE);wallet._accountManager=f.wallet._accountManager;f.input.wallet=wallet;
+ f.input.simulator={detachedMeasurement:true,private:async()=>({gasUsed:{totalGas:new Gas(1200,700000)}}),validateMeasurement:async()=>{},public:()=>assert.fail('No public measurement probe')};
+ if(failure){await assert.rejects(sendPrivateFeeTransaction(f.input),{code:failure});assert.deepEqual(calls,['validate']);}
+ else {await sendPrivateFeeTransaction(f.input);assert.deepEqual(calls,['validate','prove','send']);}
+});
+
+test('affordable like maximum cannot grow reservation across a fee-note cliff instead of measuring its cheap branch',async()=>{
+ const f=fixture(1700000n);f.prepared.gasSettings.maxFeesPerGas=new GasFees(0n,1n);f.prepared.refundGasLimits=Gas.from(profile.teardownGas);const privateCalls=[],publicCalls=[];
+ f.input.simulator={detachedMeasurement:true,validateMeasurement:async()=>assert.fail('Current candidate does not cover conservative maximum'),private:async payload=>{
+  const reservation=payload.calls[0].args[0].toBigInt(),gas=reservation===1n?300000:reservation<=600001n?500000:900000;
+  const result={gasUsed:{totalGas:new Gas(1200,gas)}};privateCalls.push({payload,result});return result;
+ },public:async(payload,_from,_settings,strict,prior)=>{assert.equal(strict,false);assert.equal(prior,privateCalls.at(-1).result);assert.equal(payload,privateCalls.at(-1).payload);publicCalls.push(payload);return {publicInputs:{},gasUsed:{totalGas:new Gas(1500,527510),teardownGas:Gas.from(profile.teardownGas)}};}};
+ const result=await estimatePrivateFeeTransaction(f.input);assert.equal(result.reservation,600001n);assert.equal(privateCalls.length,2);assert.equal(publicCalls.length,1);assert.equal(result.payload,publicCalls[0]);
+});
+
+test('qualified low-credit return rechecks operation ownership after a held native anchor read',async()=>{
+ const f=fixture(4500000000000000000n);f.prepared.refundGasLimits=Gas.from(profile.teardownGas);const entered=Promise.withResolvers(),release=Promise.withResolvers(),failure=Object.assign(Error('operation replaced'),{code:'ROLLING_CONTEXT_CHANGED'});let owned=true,settled=false;
+ f.input.guard=()=>{if(!owned)throw failure;};
+ f.wallet.pxe.getSyncedBlockHeader=async()=>{entered.resolve();await release.promise;return {hash:async()=>Fr.ONE};};
+ f.input.simulator={detachedMeasurement:true,private:async()=>({gasUsed:{totalGas:new Gas(1200,700000)}}),public:()=>assert.fail('No public measurement'),validateMeasurement:async()=>{await (await f.wallet.pxe.getSyncedBlockHeader()).hash();}};
+ const pending=estimatePrivateFeeTransaction(f.input).finally(()=>{settled=true;});await entered.promise;owned=false;assert.equal(settled,false);release.resolve();await assert.rejects(pending,error=>error===failure);
 });

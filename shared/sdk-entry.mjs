@@ -18,6 +18,7 @@ globalThis.Buffer ??= Buffer;
 export { createTrustedPrivateNode, inspectTrustedNode, isTrustedPrivateNode } from './trusted-private-node.mjs';
 export { createPXE, isPrivatePXEForNode, initializeBrowserProver, initializeCliProver } from './private-pxe.mjs';
 export { recordProofTimings, beginProofSpan, measureProofPhase } from './proof-timings.mjs';
+export {prefetchBoardClaimWitnesses} from './board-claim-witnesses.mjs';
 export {prefetchOrdinaryPostWitnesses} from './ordinary-post-witnesses.mjs';
 export { boundedTransactionRead, requireSuccessfulReceipt, submitOnceWithReconciliation, classifyDroppedTransaction, waitForSuccessfulReceipt } from './transaction-outcomes.mjs';
 export { openPXEStore, getPXEStoreIdentity, PXE_DATA_SCHEMA_VERSION } from './sdk-store.mjs';

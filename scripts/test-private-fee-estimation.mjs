@@ -108,7 +108,7 @@ test('actual wallet consumes the strict estimation once without extra simulation
  }
  const ctx=vm.createContext({performance,console,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});vm.runInContext(await fs.readFile(new URL('../apps/src/billboard/user/engine.js',import.meta.url),'utf8'),ctx);
  const a={BaseWallet:SDKWalletBoundary,GasSettings,consumePrivateFeeSimulationValidation,submitOnceWithReconciliation:async(_node,value)=>submitted.push(value),waitForSuccessfulReceipt:async()=>({status:'checkpointed',transactionFee:1n})};
- const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,{getSyncedBlockHeader:async()=>anchorBlockHeader,proveTx:async request=>{proved.push(request);return {toTx:async()=>tx};}},{},{},()=>{},Fr.ONE,{transactionJournal:{assertCanStart:async()=>null,prepare:async value=>journaled.push(value),confirmed(){}}});h.input.wallet=wallet;
+ const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,{getSyncedBlockHeader:async()=>anchorBlockHeader,proveTx:async request=>{proved.push(request);return {toTx:async()=>tx};}},{},{},()=>{},Fr.ONE,{transactionJournal:{assertCanStart:async()=>null,prepare:async value=>journaled.push(value),waitForCompletion:(_hash,options)=>a.waitForSuccessfulReceipt(null,tx,options),confirmed(){}}});h.input.wallet=wallet;
  await sendPrivateFeeTransaction(h.input);assert.equal(proved.length,1);assert.equal(journaled.length,1);assert.equal(submitted.length,1);assert.equal(journaled[0],submitted[0]);
  const enforced=h.calls.filter(c=>c.enforce);assert.equal(enforced.length,1);for(const c of enforced){assert.deepEqual(c.gas,proved[0].gasSettings);assert.equal(c.payload,proved[0].payload);}assert(proved[0].payload.calls[0].args[0].toBigInt()>=proved[0].gasSettings.getFeeLimit().toBigInt());
 });
@@ -224,7 +224,7 @@ for(const failure of [null,'BB_SIMULATION_FAILED','BB_GAS_LIMIT_EXCEEDED','TX_IN
   observed.push('prove');return {toTx:async()=>tx};
  }};
  const a={BaseWallet:SDKWalletBoundary,GasSettings,submitOnceWithReconciliation:async(_node,value)=>submitted.push(value),waitForSuccessfulReceipt:async()=>({status:'checkpointed',transactionFee:1n})};
- const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,pxe,{},{},()=>{},Fr.ONE,{transactionJournal:{assertCanStart:async()=>null,prepare:async value=>journaled.push(value),confirmed(){}}});
+ const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,pxe,{},{},()=>{},Fr.ONE,{transactionJournal:{assertCanStart:async()=>null,prepare:async value=>journaled.push(value),waitForCompletion:(_hash,options)=>a.waitForSuccessfulReceipt(null,tx,options),confirmed(){}}});
  const send=wallet.sendTx.bind(wallet);wallet.sendTx=(payload,options)=>{handedPayload=payload;handedOptions=options;return send(payload,options);};h.input.wallet=wallet;
  const pending=sendPrivateFeeTransaction({...h.input,deferSimulation:true});
  if(failure){await assert.rejects(pending,{code:failure});assert.deepEqual(observed,['validate']);assert.equal(journaled.length,0);assert.equal(submitted.length,0);}
@@ -250,7 +250,7 @@ test('wallet inclusion progress preserves exact workflow and waits before confir
  const ctx=vm.createContext({performance,console,TextEncoder,TextDecoder,Uint8Array,setTimeout,clearTimeout});vm.runInContext(await fs.readFile(new URL('../apps/src/billboard/user/engine.js',import.meta.url),'utf8'),ctx);
  const identity={txHash:String(tx.getTxHash()),blockNumber:12,blockHash:String(new Fr(78))},operation='ROLLING_WORKFLOW_V1:'+String(new Fr(79));
  const a={BaseWallet:SDKWalletBoundary,GasSettings,consumePrivateFeeSimulationValidation,submitOnceWithReconciliation:async()=>{assert.equal(submitted.length,1);sendEntered.resolve();await sendAck.promise;acknowledged=true;},waitForSuccessfulReceipt:async(_node,_tx,options)=>{options.onIncluded(identity);notify();return checkpoint;}};
- const journal={setOperation:value=>assert.equal(value,operation),assertCanStart:async()=>null,prepare:async()=>{},confirmed(){confirmed++;}};
+ const journal={setOperation:value=>assert.equal(value,operation),assertCanStart:async()=>null,prepare:async()=>{},waitForCompletion:(_hash,options)=>a.waitForSuccessfulReceipt(null,tx,options),confirmed(){confirmed++;}};
  const wallet=ctx.BillboardPrivateFeeRouting.createAztecWallet(a,{getSyncedBlockHeader:async()=>anchorBlockHeader,proveTx:async()=>({toTx:async()=>tx})},{},{},()=>{},Fr.ONE,{transactionJournal:journal,progress:(stage,details)=>{if(stage==='included')progress.push({...details});if(stage==='submitting'){assert.equal(acknowledged,false);submitted.push({...details});}}});
  const send=wallet.sendTx.bind(wallet);wallet.sendTx=(payload,options)=>send(payload,{...options,journalOperation:operation});h.input.wallet=wallet;
  const waiting=sendPrivateFeeTransaction(h.input).then(value=>{resolved=true;return value;});

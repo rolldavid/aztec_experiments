@@ -9,7 +9,7 @@ function replace(source,before,after){if(source.split(before).length!==2)throw E
 // sync, anchor, staged writes, failure discard and final tagging persistence.
 export function validatedPxeProve(source){
  if(sha(source)!==PREFERENCE_PAGE_PINS.find(pin=>pin.path==='dest/pxe.js').after)throw Error('PXE validated proof source mismatch');
- source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {computeSiloedPrivateInitializationNullifier as syncPrivateInitNullifier,siloNullifier as syncSiloNullifier} from '@aztec-labs/stdlib/hash';\nimport {poseidon2HashWithSeparator as syncPoseidon} from '@aztec-labs/foundation/crypto/poseidon';\nimport {MerkleTreeId as SyncTreeId} from '@aztec-labs/stdlib/trees';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
+ source="import {DefaultAccountEntrypoint as SyncAccountEntrypoint} from '@aztec-labs/entrypoints/account';\nimport {EncodedAppEntrypointCalls as SyncEncodedCalls} from '@aztec-labs/entrypoints/encoding';\nimport {FunctionCall as SyncFunctionCall,FunctionSelector as SyncSelector,encodeArguments as syncEncodeArguments,decodeEachFromAbi as syncDecodeArguments,getAllFunctionAbis as syncFunctionAbis} from '@aztec-labs/stdlib/abi';\nimport {HashedValues as SyncHashedValues} from '@aztec-labs/stdlib/tx';\nimport {AztecAddress as SyncAddress} from '@aztec-labs/stdlib/aztec-address';\nimport {Fr as SyncFr} from '@aztec-labs/foundation/curves/bn254';\nimport {computeSiloedPrivateInitializationNullifier as syncPrivateInitNullifier,siloNullifier as syncSiloNullifier} from '@aztec-labs/stdlib/hash';\nimport {poseidon2HashWithSeparator as syncPoseidon} from '@aztec-labs/foundation/crypto/poseidon';\nimport {FactCollectionKey as SyncFactCollectionKey} from './storage/fact_store/fact_store_keys.js';\nimport {sha256ToField as syncSha256ToField} from '@aztec-labs/foundation/crypto/sha256';\nimport {computePublicDataTreeLeafSlot as syncPublicDataLeaf} from '@aztec-labs/stdlib/hash';\nimport {MerkleTreeId as SyncTreeId} from '@aztec-labs/stdlib/trees';\nimport {CircuitKind} from '@aztec-foundation/bb.js';\n"+source;
  source=replace(source,'}, txRequest, privateExecutionResult) {\n        const { publicInputs, chonkProof, executionSteps, timings: { proving } = {} } = await this.#prove',`}, txRequest, privateExecutionResult, validatePublic = false) {
         let validationTime;
         const beforeProof = validatePublic ? async publicInputs => {
@@ -162,6 +162,40 @@ export function validatedPxeProve(source){
                 this.#syncOrdinaryPostTargets(targets,this.#getSimulatorForTx(),ctx,scopes),
                 allToCompletion(targets.map(target=>oracle.getUpdatedClassIdHints(target.address))),
             ]);
+        });
+    }
+    // Public API\n`);
+ source=replace(source,'    // Public API\n',`    prefetchBoardClaimWitnesses(board) {
+        const address=SyncAddress.fromStringUnsafe(board.toString());
+        return this.operationQueue.runSynced(async ctx=>{
+            const expected='${ORDINARY_POST_GAS_PROFILE.boardClassId}';
+            const qualified=await allToCompletion([
+                ()=>this.contractClassService.getCurrentClassId(address,ctx.anchorBlockHeader),
+                ()=>this.contractStore.getContractArtifact(SyncFr.fromString(expected)),
+            ].map(read=>Promise.resolve().then(read)));
+            const artifact=qualified[1];
+            if(qualified[0]?.toString()!==expected || artifact?.name!=='RollingBoard' ||
+                !artifact.storageLayout?.portal_address?.slot?.equals(new SyncFr(1)) ||
+                !artifact.storageLayout?.config?.slot?.equals(new SyncFr(3)) ||
+                !artifact.storageLayout?.deposits?.slot?.equals(new SyncFr(14)))throw new Error('Invalid Board claim layout');
+            const anchor=await ctx.anchorBlockHeader.toBlockParameter();
+            const type=syncSha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_CACHE_TYPE_ID'));
+            const valueType=syncSha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_VALUE_READ'));
+            const entries=await allToCompletion([{slot:1n,length:1},{slot:3n,length:10}].map(async entry=>{
+                const collection=await this.factStore.getFactCollection(new SyncFactCollectionKey(address,{type:'public'},type,new SyncFr(entry.slot)),ctx.changeSetId);
+                const fact=collection?.facts.find(fact=>fact.factTypeId.equals(valueType));
+                return {...entry,hasValue:!!fact,needsInitialization:!fact || !fact.originBlock || fact.originBlock.blockNumber>ctx.anchorBlockHeader.getBlockNumber(),
+                    nullifier:await syncSiloNullifier(address,await syncPoseidon([new SyncFr(entry.slot)],1653084894)),
+                    leaf:await syncPublicDataLeaf(address,new SyncFr(entry.slot+BigInt(entry.length)))};
+            }));
+            // Native PublicImmutable remains the authority. Existing native facts
+            // avoid packed-value reads; both historical hash proofs are still
+            // required even when the immutable value has already been recorded.
+            const nullifiers=entries.filter(entry=>entry.needsInitialization).map(entry=>entry.nullifier);
+            const reads=[...(nullifiers.length?[()=>this.node.findLeavesIndexes(anchor,SyncTreeId.NULLIFIER_TREE,nullifiers)]:[]),
+                ...entries.flatMap(entry=>[()=>this.node.getPublicDataWitness(anchor,entry.leaf),
+                    ...(!entry.hasValue?Array.from({length:entry.length},(_,i)=>()=>this.node.getPublicStorageAt(anchor,address,new SyncFr(entry.slot+BigInt(i)))):[])])];
+            await allToCompletion(reads.map(read=>Promise.resolve().then(read)));
         });
     }
     // Public API\n`);

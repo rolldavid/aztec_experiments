@@ -1,5 +1,5 @@
-import {preferenceFeeBudget,assertPreferencePayload} from './preference-fees.mjs';
-import {likeFeeBudget,assertLikePayload} from './like-fees.mjs';
+import {PREFERENCE_GAS_PROFILE,preferenceFeeBudget,assertPreferencePayload} from './preference-fees.mjs';
+import {LIKE_GAS_PROFILE,likeFeeBudget,assertLikePayload} from './like-fees.mjs';
 import {ordinaryPostFeeBudget,assertOrdinaryPostPayload} from './ordinary-post-fees.mjs';
 import {MAX_PROCESSABLE_L2_GAS,MAX_TX_DA_GAS} from '@aztec-labs/constants';
 import {Gas,GasFees,GasSettings} from '@aztec-labs/stdlib/gas';
@@ -34,7 +34,7 @@ function allocate(budget,lower,caps,prices){
  return new Gas(...values);
 }
 export async function estimatePrivateFeeTransaction({wallet,node,interaction,prepared,from,guard=()=>{},deferSimulation=false,ordinaryPost,qualifiedLike,qualifiedPreference,measure=(_stage,operation)=>operation(),simulator=createPrivateFeeSimulator(wallet,node)}){
- let qualifiedApplication;
+ let qualifiedApplication,qualifiedProfile,checkQualified;
  if(qualifiedLike!==undefined||qualifiedPreference!==undefined){
   const isLike=qualifiedLike!==undefined,mismatch=isLike?'BB_LIKE_FEE_PROFILE_MISMATCH':'BB_PREFERENCE_FEE_PROFILE_MISMATCH';
   if(qualifiedLike!==undefined&&qualifiedPreference!==undefined||ordinaryPost!==undefined||!deferSimulation||typeof wallet.pxe?.proveTxWithPublicValidation!=='function')throw fail(mismatch);
@@ -53,7 +53,8 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
    const payload=mergeExecutionPayloads([await prepared.paymentMethod.withReservation(budget.reservation).getExecutionPayload(),application]);
    await guard();return {payload,...budget,passes:0,atomicSimulation:true};
   }
-  qualifiedApplication=application;
+  qualifiedApplication=application;qualifiedProfile=isLike?LIKE_GAS_PROFILE:PREFERENCE_GAS_PROFILE;
+  checkQualified=()=>{(isLike?likeFeeBudget:preferenceFeeBudget)({wallet,prepared,board});(isLike?assertLikePayload:assertPreferencePayload)({wallet,from,application,board});};
  }
  if(ordinaryPost!==undefined){
   if(!deferSimulation||typeof wallet.pxe?.proveTxWithPublicValidation!=='function')throw fail('BB_POST_FEE_PROFILE_MISMATCH');
@@ -110,6 +111,27 @@ export async function estimatePrivateFeeTransaction({wallet,node,interaction,pre
   if(measuredReservations.has(reservation))throw fail(measuredFeeExceedsCredit?'BB_FEE_RESERVATION_UNAFFORDABLE':'BB_FEE_ESTIMATION_UNSTABLE');
   measuredReservations.add(reservation);const payload=await payloadFor(reservation);
   const privateResult=await measure('action.fee-private-candidate',()=>simulator.private(payload,from,privateSettings)),lower=privateResult.gasUsed.totalGas;
+  // The already-qualified like/preference public bound can price this exact
+  // private candidate without an AVM probe. Native private metering already
+  // includes every public startup, including teardown; its zero-priced probe
+  // reserves zero teardown gas, so add only the full refund body and Board body.
+  // A conservative bound that is unaffordable still uses the measured route
+  // below with this same private result (e.g. a cheaper unlike branch).
+  if(qualifiedProfile&&simulator.detachedMeasurement&&typeof simulator.validateMeasurement==='function'){
+   if(!refundLimits.equals(Gas.from(qualifiedProfile.teardownGas)))throw fail('BB_GAS_LIMIT_EXCEEDED');
+   const measured={totalGas:lower.add(Gas.from(qualifiedProfile.publicGas)).add(refundLimits),teardownGas:refundLimits};
+   let limits=getGasLimits(measured,caps,0.1);limits.teardownGasLimits=refundLimits;
+   if(cost(limits.gasLimits,ceiling.maxFeesPerGas)>available){limits=getGasLimits(measured,caps,0);limits.teardownGasLimits=refundLimits;}
+   const gasSettings=settings(limits.gasLimits,limits.teardownGasLimits),required=gasSettings.getFeeLimit().toBigInt();
+   // Like's maximum must not select extra fee notes when its actual branch
+   // could use the current candidate. Only preferences have an exact zero body.
+   const covered=required<=reservation&&(!reservationFromBalance||required===reservation);
+   if(required<=available&&(qualifiedPreference!==undefined||covered)){
+    await simulator.validateMeasurement(payload,from,privateResult);await guard();checkQualified();
+    if(required>reservation||(reservationFromBalance&&required!==reservation)){reservation=required||1n;reservationFromBalance=false;continue;}
+    return {payload,gasSettings,reservation,maximumFee:required,passes:pass+1,atomicSimulation:true};
+   }
+  }
   // The patched SDK regenerates a detached synthetic kernel solely for measurement.
   // Full caps avoid guessing how credit should be split across DA and L2. This
   // synthetic context is never accepted as a proof or handed to sendTx.

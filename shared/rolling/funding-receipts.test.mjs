@@ -536,3 +536,61 @@ for(const side of ['l1','l2','class'])test(`reused fee claim single final wave s
  await prepareFundingClaim(f.input);armed=true;const work=prepareFundingClaim(f.input).finally(()=>settled=true),rejected=assert.rejects(work);
  await started.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);assert.equal(calls,3);held.resolve();await rejected;
 });
+
+async function combinedAggregateFixture(){
+ const f=await aggregateFixture(),fee=await fixture('private-fee'),r=fee.input.receipt;
+ fee.input.scope.portal=addr(61);r.leafIndex='10';
+ const message=new L1ToL2Message(new L1Actor(EthAddress.fromString(addr(3)),31337),new L2Actor(ProtocolContractAddress.FeeJuice,2),Fr.fromString(fee.content),Fr.fromString(r.secretHash),new Fr(10));r.messageKey=message.hash().toString();
+ const leaves=new Map([[9n,Fr.fromString(f.input.receipt.messageKey)],[10n,message.hash()]]),paths=[[],[]];let level=leaves;
+ for(let depth=0;depth<L1_TO_L2_MSG_TREE_HEIGHT;depth++){
+  for(const [index,leaf]of [9n,10n].entries())paths[index].push(level.get((leaf>>BigInt(depth))^1n)??Fr.ZERO);
+  const next=new Map();for(const parent of new Set([...level.keys()].map(key=>key>>1n)))next.set(parent,await poseidon2HashWithSeparator([level.get(parent*2n)??Fr.ZERO,level.get(parent*2n+1n)??Fr.ZERO],DomainSeparator.MERKLE_HASH));level=next;
+ }
+ f.input.anchor.root=level.get(0n).toString();f.state.root=f.input.anchor.root;fee.input.anchor={...f.input.anchor};
+ f.plan.feeSecretHash=r.secretHash;const abi=f.routerAbi,hash=keccak256(AbiCoder.defaultAbiCoder().encode([abi.getFunction('fund').inputs[0]],[f.plan]));
+ f.state.tx.data=abi.encodeFunctionData('fund',[f.plan,'0x1234']).toLowerCase();f.input.aggregateIntent.data=f.state.tx.data;f.input.aggregateIntent.expected.planHash=hash;
+ f.state.receipt.logs[0]={address:addr(63),...abi.encodeEventLog(abi.getEvent('Funded'),[r.sender,hash,5000,5000,5000,50,100,150])};
+ f.state.receipt.logs[2]={address:addr(61),...feeAbi.encodeEventLog(feeAbi.getEvent('DepositToAztecPublic'),[canonical.address.toString(),5000,r.secretHash,r.messageKey,10])};
+ const info=f.backend.getNodeInfo;f.backend.getNodeInfo=async()=>{const value=await info();value.l1ContractAddresses.feeJuicePortalAddress=EthAddress.fromString(addr(61));return value;};
+ f.backend.getL1ToL2MessageMembershipWitness=async(_ref,key)=>{const index=key.toString()===f.input.receipt.messageKey?0:1;assert.equal(key.toString(),index===0?f.input.receipt.messageKey:r.messageKey);f.state.reads.push('witness');return [index===0?9n:10n,new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,paths[index].map(v=>v.toBuffer()))];};
+ const call=f.input.ethProvider.call,feeCall=fee.input.ethProvider.call;f.input.ethProvider.call=request=>request.to===addr(61)?feeCall(request):call(request);
+ Object.assign(fee.input,{node:f.input.node,ethProvider:f.input.ethProvider,aggregateIntent:structuredClone(f.input.aggregateIntent)});
+ const operation={};f.input.operationScope=operation;fee.input.operationScope=operation;
+ return {f,fee,inputs:[f.input,fee.input]};
+}
+test('combined aggregate effects share one exact verification while every native leg stays canonical',async()=>{
+ const {f,inputs}=await combinedAggregateFixture(),counts={};
+ for(const name of ['getCode','getTransactionReceipt','getBlock']){const original=f.input.ethProvider[name];f.input.ethProvider[name]=async(...args)=>{counts[name]=(counts[name]??0)+1;return original(...args);};}
+ const results=await Promise.all(inputs.map(prepareFundingClaim));assert(results.every(value=>value.status==='claim-ready'));assert.equal(counts.getCode,1);assert.equal(counts.getTransactionReceipt,2);assert.equal(counts.getBlock,6);assert.equal(f.state.reads.filter(v=>v==='witness').length,2);
+});
+for(const mutation of ['new-operation','new-capability','fork'])test(`aggregate effects reuse preserves ${mutation} boundary`,async()=>{
+ const {f,fee}=await combinedAggregateFixture();let codes=0;const original=f.input.ethProvider.getCode;f.input.ethProvider.getCode=async(...args)=>{codes++;return original(...args);};
+ assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
+ if(mutation==='new-operation')fee.input.operationScope={};
+ if(mutation==='new-capability'){const current=f.input.ethProvider.getCode;f.input.ethProvider.getCode=(...args)=>current(...args);}
+ if(mutation==='fork')f.state.blockHash=h(999);
+ if(mutation==='fork')await assert.rejects(prepareFundingClaim(fee.input),{code:'ROLLING_FUNDING_REORG'});else assert.equal((await prepareFundingClaim(fee.input)).status,'claim-ready');
+ assert.equal(codes,mutation==='fork'?1:2);
+});
+for(const changed of ['anchor','intent','transaction','custody'])test(`aggregate effects never reuse changed ${changed}`,async()=>{
+ const f=await (changed==='custody'?usdcAggregateFixture('private-fee'):aggregateFixture());f.input.operationScope={};let codes=0;const code=f.input.ethProvider.getCode;f.input.ethProvider.getCode=(...args)=>{codes++;return code(...args);};
+ assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');
+ if(changed==='anchor'){f.input.anchor.hash=h(888);f.state.l2Hash=h(888);assert.equal((await prepareFundingClaim(f.input)).status,'claim-ready');assert.equal(codes,2);return;}
+ if(changed==='intent')f.input.aggregateIntent.expected.routerCodeHash=keccak256('0x6001');
+ if(changed==='transaction'){f.input.receipt.txHash=h(888);f.state.tx={...f.state.tx,hash:h(888)};f.state.receipt={...f.state.receipt,hash:h(888)};}
+ if(changed==='custody')f.input.aggregateCustody.privateFeeSalt=h(888);
+ await assert.rejects(prepareFundingClaim(f.input));assert.equal(codes,changed==='transaction'?1:2);
+});
+test('common aggregate verification rejection drains both consumers and is not retained',async()=>{
+ const {f,inputs}=await combinedAggregateFixture(),entered=Promise.withResolvers(),held=Promise.withResolvers();let calls=0,settled=false,fail=true;
+ f.input.ethProvider.getCode=async()=>{calls++;entered.resolve();await held.promise;if(fail)throw Error('PRIVATE transport');return '0x6000';};
+ const work=Promise.allSettled(inputs.map(prepareFundingClaim)).finally(()=>settled=true);await entered.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(calls,1);assert.equal(settled,false);assert.equal(f.state.reads.filter(v=>v==='witness').length,0);
+ held.resolve();const failed=await work;assert(failed.every(v=>v.status==='rejected'&&v.reason.code==='ROLLING_FUNDING_UNKNOWN'));fail=false;
+ assert((await Promise.all(inputs.map(prepareFundingClaim))).every(v=>v.status==='claim-ready'));assert.equal(calls,2,'failed shared verification is evicted');
+});
+test('held shared aggregate work drains before revoked owners settle and emits no native claim',async()=>{
+ const {f,inputs}=await combinedAggregateFixture(),entered=Promise.withResolvers(),held=Promise.withResolvers();let settled=false;
+ f.input.ethProvider.getCode=async()=>{entered.resolve();await held.promise;return '0x6000';};
+ inputs[1].contextGuard=inputs[0].contextGuard;
+ const work=Promise.allSettled(inputs.map(prepareFundingClaim)).finally(()=>settled=true);await entered.promise;f.state.guardError=true;await new Promise(resolve=>setImmediate(resolve));assert.equal(settled,false);held.resolve();assert((await work).every(v=>v.status==='rejected'));assert.equal(f.state.reads.filter(v=>v==='witness').length,0);
+});

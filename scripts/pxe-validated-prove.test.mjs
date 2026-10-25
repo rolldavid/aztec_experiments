@@ -116,7 +116,7 @@ for(const failure of [null,'public','validate'])test(`public execution and admis
 const syncBindings={};
 for(const line of pxe.split('\n').filter(line=>/^import .* as (Sync|sync)/.test(line))){
  const match=line.match(/^import \{(.+)\} from '([^']+)';$/);assert(match);
- const module=await import(match[2]);for(const item of match[1].split(',')){const [name,alias]=item.trim().split(' as ');syncBindings[alias??name]=module[name];}
+ const module=await import(match[2].startsWith('.')?new URL(match[2],new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url)):match[2]);for(const item of match[1].split(',')){const [name,alias]=item.trim().split(' as ');syncBindings[alias??name]=module[name];}
 }
 const {DefaultAccountEntrypoint}=await import('@aztec-labs/entrypoints/account');
 const {FunctionCall,FunctionSelector}=await import('@aztec-labs/stdlib/abi');

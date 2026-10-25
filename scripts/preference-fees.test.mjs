@@ -83,9 +83,17 @@ for(const method of ['set_preference','mark_thread_read'])test(`low-credit ${met
  const f=fixture(method,7n,4500000000000000000n),available=f.prepared.availableCredit,bound=preferenceFeeBudget({wallet:f.wallet,prepared:f.prepared,board:f.board});assert(available<bound.reservation);
  f.prepared.refundGasLimits=Gas.from(profile.teardownGas);delete f.prepared.availableCredit;f.prepared.creditCheck='qualified-preference-proof';let reads=0,requests=0,measurements=0;
  f.prepared.withAvailableCredit=async()=>{reads++;return {...f.prepared,creditCheck:'read-balance',availableCredit:available};};f.input.interaction.request=async()=>{requests++;return f.application;};
- f.input.simulator={detachedMeasurement:true,private:async()=>({gasUsed:{totalGas:new Gas(1200,700000)}}),public:async(payload,_from,_gas,strict)=>{measurements++;assert.equal(strict,false);assert.equal(payload.calls[1],f.application.calls[0]);return {publicInputs:{},gasUsed:{totalGas:new Gas(3000,1200000),teardownGas:Gas.from(profile.teardownGas)}};}};
- const result=await estimatePrivateFeeTransaction(f.input);assert(result.maximumFee<=available);assert(result.reservation<=available);assert(result.maximumFee<bound.maximumFee);assert(result.reservation!==available);assert.equal(reads,1);assert.equal(requests,1);assert.equal(measurements,1);assert.equal(result.atomicSimulation,true);
+ f.input.simulator={detachedMeasurement:true,validateMeasurement:async()=>{},private:async()=>({gasUsed:{totalGas:new Gas(1200,700000)}}),public:async(payload,_from,_gas,strict)=>{measurements++;assert.equal(strict,false);assert.equal(payload.calls[1],f.application.calls[0]);return {publicInputs:{},gasUsed:{totalGas:new Gas(3000,1200000),teardownGas:Gas.from(profile.teardownGas)}};}};
+ const result=await estimatePrivateFeeTransaction(f.input);assert(result.maximumFee<=available);assert(result.reservation<=available);assert(result.maximumFee<bound.maximumFee);assert(result.reservation!==available);assert.equal(reads,1);assert.equal(requests,1);assert.equal(measurements,0);assert.equal(result.atomicSimulation,true);
 });
 for(const [da,l2]of [[0n,11n],[7n,0n],[7n,11n]])test(`preference maxfee uses current DA/L2caps and retains priority (${da}/${l2})`,async()=>{
  const f=fixture();f.prepared.gasSettings.maxFeesPerGas=new GasFees(da,l2);f.prepared.gasSettings.maxPriorityFeesPerGas=new GasFees(da?da-1n:0n,l2?l2-1n:0n);const result=await estimatePrivateFeeTransaction(f.input);assert.equal(result.maximumFee,37216n*da+2757260n*l2);assert(result.gasSettings.maxPriorityFeesPerGas.equals(f.prepared.gasSettings.maxPriorityFeesPerGas));
+});
+
+test('changed reservation remeasures private notes before qualified low-credit return',async()=>{
+ const f=fixture('set_preference',7n,1700000n);f.prepared.gasSettings.maxFeesPerGas=new GasFees(0n,1n);f.prepared.refundGasLimits=Gas.from(profile.teardownGas);const seen=[];
+ f.input.simulator={detachedMeasurement:true,validateMeasurement:async()=>{},public:()=>assert.fail('Qualified branch needs no AVM probe'),private:async payload=>{
+  const reservation=payload.calls[0].args[0].toBigInt();seen.push({payload,reservation});return {gasUsed:{totalGas:new Gas(1200,reservation===1n?300000:reservation<1000000n?900000:1000000)}};
+ }};
+ const result=await estimatePrivateFeeTransaction(f.input);assert(seen.length>=4);assert.equal(new Set(seen.map(x=>x.reservation)).size,seen.length);assert.equal(result.payload,seen.at(-1).payload);assert(result.maximumFee<=result.reservation);assert(result.reservation<f.prepared.availableCredit);
 });
