@@ -86,7 +86,10 @@ test('auth and wallet counters preserve receiver, arguments, promise identity an
  }finally{await actor.close();}
 });
 test('actual encrypted workflow survives journal reopen without proof or resend and wallet journal follows replacement',async t=>{
- const f=await fixture(t),actor=await createRollingApplicationActor(f.input);try{
+ const f=await fixture(t);Object.assign(f.input.sdk,{poseidon2HashWithSeparator,deriveStorageSlotInMap});
+ f.input.node.getBlockData=async()=>({blockHash:hex(3),header:{globalVariables:{blockNumber:1}}});
+ f.input.node.getPublicStorageAt=async()=>Fr.ZERO;
+ const actor=await createRollingApplicationActor(f.input);try{
   const intent=await actor.application.prepare({type:'name',first:'River',last:'Stone'}),before=actor.activity(),old=actor.journal;
   const bytes=(await Promise.all((await fs.readdir(f.input.storageDirectory)).map(n=>fs.readFile(path.join(f.input.storageDirectory,n),'utf8')))).join('');assert(!bytes.includes('River'));
   const syncs=f.state.calls.filter(c=>c==='sync').length;await actor.reopenJournal();assert.notEqual(actor.journal,old);assert.equal(actor.wallet._transactionJournal,actor.journal);
@@ -183,7 +186,8 @@ async function confirmationFixture(t){
  f.input.node.getTxReceipt=async()=>{events.push('receipt');f.state.onReceipt?.();if(f.state.readWait)await f.state.readWait;return new PendingTxReceipt(tx.getTxHash());};
  f.input.node.getBlock=async()=>assert.fail('Pending receipt must not read a block');
  Object.assign(f.input.sdk,outcomes,{BaseWallet,GasSettings});
- f.input.sdk.waitForSuccessfulReceipt=async(...args)=>{try{return await outcomes.waitForSuccessfulReceipt(...args);}finally{events.push('confirmation-settled');}};
+ const createJournal=f.input.sdk.createL2Journal;f.input.sdk.createL2Journal=async options=>{const journal=await createJournal(options),wait=journal.waitForCompletion;
+  journal.waitForCompletion=async(...args)=>{try{return await wait(...args);}finally{events.push('confirmation-settled');}};return journal;};
  f.input.sdk.estimatePrivateFeeTransaction=async()=>({maximumFee:settings.getFeeLimit().toBigInt(),payload:{},gasSettings:settings});
  f.input.routing=engine.BillboardPrivateFeeRouting;
  f.input.sdk.AccountManager={async create(wallet,secret,contract){assert.equal(wallet.pxe,f.pxe);assert.equal(contract,f.state.contract);return {address:f.account.address};}};
@@ -262,12 +266,13 @@ test('actor preference API is lazy, reads raw guarded head without nested sync, 
   const text=await fs.readFile(path.join(f.input.storageDirectory,files[0]),'utf8');const envelope=JSON.parse(text);assert.equal(envelope.version,1);assert(envelope.recovery);assert(!text.includes('bookmarks'));assert(!text.includes('ROLLING_PREFERENCES_V1'));
  }finally{await actor.close();}
 });
-test('reopen rebuilds reader against new raw app and reauthenticates genuine AEAD prefix before next page',async t=>{
+test('reopen rebuilds reader against new raw app and reauthenticates genuine AEAD prefix before next event tail',async t=>{
  const f=await preferenceFixture(t);f.state.height=40;await f.replace([{block:2},{block:38,kind:3,target:9n}]);
  const actor=await createRollingApplicationActor(f.input);
  try{
-  const first=await actor.application.readPreferences();assert.equal(first.status,'recovering');assert(!('preferences' in first));assert.deepEqual(f.state.ranges,[[1,33]]);
-  await actor.reopenJournal();const second=await actor.application.readPreferences();assert.equal(second.status,'complete');assert.deepEqual(second.preferences.followedNames,['9']);assert.deepEqual(f.state.ranges,[[1,33],[33,41]]);
+  const first=await actor.application.readPreferences();assert.equal(first.status,'complete');assert.deepEqual(first.preferences.bookmarks,['2']);assert.deepEqual(first.preferences.followedNames,['9']);assert.deepEqual(f.state.ranges,[[1,41]]);
+  f.state.height=41;await f.replace([{block:2},{block:38,kind:3,target:9n},{block:41,kind:1,target:2n,value:false}]);
+  await actor.reopenJournal();const second=await actor.application.readPreferences();assert.equal(second.status,'complete');assert.deepEqual(second.preferences.bookmarks,[]);assert.deepEqual(second.preferences.followedNames,['9']);assert.deepEqual(f.state.ranges,[[1,41],[41,42]],'reopen authenticates saved prefix and reads only the new native event tail');
   const file=path.join(f.input.storageDirectory,(await fs.readdir(f.input.storageDirectory)).find(x=>x.endsWith('.json'))),prior=JSON.parse(await fs.readFile(file,'utf8'));
   prior.data=(prior.data[0]==='0'?'1':'0')+prior.data.slice(1);await fs.writeFile(file,JSON.stringify(prior),{mode:0o600});
   await actor.reopenJournal();await assert.rejects(actor.application.readPreferences(),{code:'ROLLING_PREFERENCE_READER_UNAVAILABLE'});
@@ -316,7 +321,7 @@ test('metrics captures construction and owned calls before reader binding withou
   assert.equal(constructionCalls,1);assert.equal(actor.pxe,f.pxe);assert.equal(actor.wallet.pxe,f.pxe);assert.equal(actor.wallet.aztecNode,f.input.node);
   let report=metrics.snapshot();assert.equal(report.phases['pxe-construct'].calls,1);assert.equal(report.phases['block-sync'].calls,1);assert.equal(report.phases.events.calls,0);assert.equal(report.phases['head-utility'].calls,0);
   assert.equal((await actor.application.readPreferences()).status,'complete');
-  report=metrics.snapshot();assert.equal(report.phases['block-sync'].calls,2);assert.equal(report.phases.events.calls,1);assert(report.phases['head-utility'].calls>=2);assert.equal(report.counters.eventRows,1);
+  report=metrics.snapshot();assert.equal(report.phases['block-sync'].calls,2);assert.equal(report.phases.events.calls,1);assert.equal(report.phases['head-utility'].calls,1,'one native head selection per owned preference read');assert.equal(report.counters.eventRows,1);
   for(const phase of ['discovery','fold']){assert.equal(report.phases[phase].calls,0);assert(report.unobservedPhases.includes(phase));}
   assert.equal(report.transportBytesObserved,false);assert.equal(report.endToEndWorkBoundQualified,false);assert.equal(report.encryptedRecoveryQualified,false);
   assert.deepEqual(actor.activity(),{authWitnesses:0,proofJobs:0,walletSubmissions:0,transportSends:0});
@@ -433,6 +438,7 @@ function rootHookFixture(){
   async prepare(...args){assert.equal(this,journal);state.prepareArgs=args;events.push('prepare');if(state.prepareWait)await state.prepareWait;state.prepared=true;return state.prepareResult;},
   inspect(){assert.equal(this,journal);assert(state.prepared);events.push('inspect');return {operation,txHash};},
   confirmed(value){assert.equal(this,journal);state.receipt=value;events.push('confirmed');},
+  waitForCompletion(...args){assert.equal(this,journal);state.completionArgs=args;return state.completionResult;},
  };
  const hook={journalPrepared(value){assert.equal(this,hook);assert(state.prepared);events.push('observed');state.observed=value;},async beforeSubmit(value){assert.equal(this,hook);events.push('hook');state.before=value;if(state.hookWait)await state.hookWait;}};
  const capability={select(value){assert.equal(this,capability);assert.equal(value,operation);return hook;}};
@@ -447,6 +453,7 @@ test('root adapter observes real journal completion and preserves receivers, arg
  assert.deepEqual(f.state.prepareArgs,[f.tx,previous,options]);assert.deepEqual(f.state.observed,{operation:f.operation,txHash:f.txHash,bytes:f.bytes});
  f.state.observed.bytes.fill(0);assert.equal(f.tx.toBuffer().toString(),'PRIVATE_BYTES');
  await selected[1].beforeSubmit(f.txHash);assert.deepEqual(f.state.before,{operation:f.operation,txHash:f.txHash});
+ const waitOptions={onIncluded:()=>{}};f.state.completionResult={};assert.equal(j.waitForCompletion(f.txHash,waitOptions),f.state.completionResult);assert.deepEqual(f.state.completionArgs,[f.txHash,waitOptions]);
  const receipt={};j.confirmed(receipt);assert.equal(f.state.receipt,receipt);assert.deepEqual(f.events,['set','previous','prepare','inspect','observed','hook','confirmed']);
 });
 for(const fault of ['hook-collision','wait-collision','unprepared','wrong-hash','context-after-hook','mutated-tx'])test('root adapter rejects '+fault+' without replacing engine safeguards',async()=>{
