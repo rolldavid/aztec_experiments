@@ -434,7 +434,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
   actionsLoaded=true;note('');
  }
- function viewReady(){return rollingViewReady({view,type:draft.type,identityAttached:!!identityHost,namesLoaded,cursor,moderatorStatus,actionsLoaded});}
+ function viewReady(){return rollingViewReady({view,type:draft.type,identityAttached:!!identityHost,namesLoaded,cursor,moderatorStatus,actionsLoaded})&&!(view==='action'&&['bio','avatar'].includes(draft.type)&&(!profileSnapshot||profileSnapshot.name!==draft.name));}
  function rememberBalances(value){balances=value;if(status&&typeof value?.fee?.available==='string'&&/^(0|[1-9][0-9]*)$/.test(value.fee.available))status={...status,privateFeeCredit:value.fee.available};}
  function selectView(next){if(busy)return;clearOperationFeedback();view=next;if(next==='balances'&&!balances){void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0});checkAccount(epoch);rememberBalances(value);});return;}if(next==='preferences'&&!preferences)void work(recoverPreferences);else if(viewReady())render();else void work(loadView);}
  let composerPreparation=null,composerCheckpoint='open',composerAttempt=null,composerOpening=0;
@@ -1069,7 +1069,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    }
    if(result.action?.type==='name'){
     // Only owned-name discovery is required to use a newly included name.
-    // Fee/deposit balances refresh separately after this interaction releases.
+    // Posting credit is invalidated below; unrelated inventory is not required.
     namesLoaded=false;identities=[];identityRecords=[];cursor=0;
     await measureRollingStage('action.required-account-refresh',()=>loadView({loadIdentity:true}));
     const registered=result.nameAvailability?.id;
@@ -1080,8 +1080,10 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     // Confirmation finishes the interaction. Feed and affected balance reads
     // update independently, without holding the composer open or its busy state.
     intent=null;
-    if(['preference','read-marker','like','unlike'].includes(result.action.type)){
-     // Only posting credit changed outside preference/public reaction state.
+    if(['preference','read-marker','like','unlike','name','bio','avatar'].includes(result.action.type)){
+     // Name completion already loaded native ownership above. Profile edits
+     // retain their fresh-version/public refresh path; none changes collateral
+     // or Bok credit. Only the displayed posting-credit amount needs invalidation.
      // Do not queue unrelated collateral/account reads before the next action.
      // Composer preparation or an explicit balance view reads native credit again.
      if(status){status={...status};delete status.privateFeeCredit;}balances=null;

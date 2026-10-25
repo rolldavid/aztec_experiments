@@ -802,7 +802,7 @@ for(const preference of [false,true])test(`qualified ${preference?'preference':'
  assert.equal((await f.panel.act(action)).status,'confirmed');assert.equal(tries,2);assert.equal(f.document.querySelector('dialog').open,false);
 });
 
-for(const completion of ['included','confirmed'])test(`new ${completion} name becomes selectable before unrelated account refresh completes`,{timeout:3000},async t=>{
+for(const completion of ['included','confirmed'])test(`new ${completion} name becomes selectable without unrelated account refresh and survives explicit refresh`,{timeout:3000},async t=>{
  const names=Promise.withResolvers(),namesStarted=Promise.withResolvers(),balance=Promise.withResolvers(),balanceStarted=Promise.withResolvers();
  const f=await fixture(t,{defaults:{type:'name'},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{status:completion,txHash:includedPost().txHash,inclusion:includedPost(),nameAvailability:{id:'7'},namesRead:()=>{namesStarted.resolve();return names.promise;},balanceRefresh:()=>{balanceStarted.resolve();return balance.promise;}}});
  const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);
@@ -810,9 +810,9 @@ for(const completion of ['included','confirmed'])test(`new ${completion} name be
  f.document.querySelector('[data-action-review]').fire('click');await namesStarted.promise;
  assert.equal(identity.querySelector('select').value,'0');assert.equal(f.core().status,1,'no fee/deposit refresh before owned-name discovery');
  assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
- names.resolve({identities:['7'],records:[{id:'7',first:'River',last:'Moss'}],nextCursor:null});await balanceStarted.promise;
+ names.resolve({identities:['7'],records:[{id:'7',first:'River',last:'Moss'}],nextCursor:null});await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await new Promise(setImmediate);assert.equal(f.core().status,1);
  assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.equal(identity.querySelector('select').disabled,false);assert.equal(identity.querySelector('select').value,'7');
- identity.querySelector('select').value='0';identity.querySelector('select').fire('change');balance.resolve();await new Promise(setImmediate);
+ identity.querySelector('select').value='0';identity.querySelector('select').fire('change');f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Refresh account').fire('click');await balanceStarted.promise;balance.resolve();await new Promise(setImmediate);
  assert.equal(identity.querySelector('select').value,'0','later balance refresh does not restore the old selection');assert.equal(f.core().names,1);assert.equal(f.core().status,2);
 });
 
@@ -821,9 +821,9 @@ test('inline name completion reveals its verified selected identity once, not on
  const f=await fixture(t,{defaults:{},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{nameAvailability:{id:'7'},namesRead:async()=>({identities:['7'],records:[{id:'7',first:'River',last:'Moss'}],nextCursor:null}),balanceRefresh:()=>{balanceStarted.resolve();return balance.promise;}}});
  const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);f.panel.close();
  const select=identity.querySelector('select');select.value='create';select.fire('change');await f.document.until(()=>f.document.querySelector('[data-action-review]')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
- const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');f.document.querySelector('[data-action-review]').fire('click');await balanceStarted.promise;
+ const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');f.document.querySelector('[data-action-review]').fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await new Promise(setImmediate);assert.equal(f.core().status,1);
  const selected=identity.querySelector('select');assert.equal(selected.value,'7');assert.equal(f.document.activeElement,selected);assert.equal(selected.scrollCount,1);assert.equal(f.document.querySelector('dialog').open,false);
- selected.value='0';selected.fire('change');const changed=identity.querySelector('select'),scrolls=changed.scrollCount??0;balance.resolve();await new Promise(setImmediate);assert.equal(identity.querySelector('select').value,'0');assert.equal(selected.scrollCount,1);assert.equal(changed.scrollCount??0,scrolls);
+ selected.value='0';selected.fire('change');const changed=identity.querySelector('select'),scrolls=changed.scrollCount??0;f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Refresh account').fire('click');await balanceStarted.promise;balance.resolve();await new Promise(setImmediate);assert.equal(identity.querySelector('select').value,'0');assert.equal(selected.scrollCount,1);assert.equal(changed.scrollCount??0,scrolls);
 });
 
 async function bokAccountingActionFixture(t,posting){
@@ -1269,4 +1269,25 @@ test('signup confirmation ends before its one authoritative readiness read, with
  assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.equal(measures.has('rolling.funding.readiness'),false);assert.equal(f.core().status,2);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
  now=999;held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
  assert.deepEqual(measures.get('rolling.funding.readiness'),{start:150,end:999});assert.deepEqual(measures.get('rolling.transaction.confirming'),{start:100,end:150});assert.equal(f.core().status,2);assert(!f.document.body.textContent.includes('Your posting balance is set up.'));
+});
+
+for(const type of ['bio','avatar'])for(const completion of ['included','confirmed'])test(`successive ${completion} ${type} edits retain fresh profile versions without full inventory`,{timeout:3000},async t=>{
+ let effects=0,version=3,feeReads=0;const feeEntered=Promise.withResolvers(),feeHeld=Promise.withResolvers(),profiles=[];
+ const f=await fixture(t,{defaults:{type,name:'5'},profile:true,balanceRead:async()=>({available:true,availableCredit:'0'}),warm:async(_deposit,options)=>{assert.equal(options.refreshFeeCredit,true);feeReads++;feeEntered.resolve();await feeHeld.promise;return {availableCredit:'700000000000000000'};},posting:{status:completion,txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},effect:()=>effects++,profileRead:async name=>{profiles.push(name);return {name,bioVersion:String(version),avatarVersion:String(version)};},balanceRefresh:async()=>assert.fail('Profile changes do not need collateral/account inventory')}});
+ async function save(){if(type==='bio'){const input=f.document.querySelector('textarea');input.value='Fresh biography '+version;input.fire('input');}else f.document.querySelectorAll('button').find(b=>b.textContent==='Clear avatar').fire('click');f.document.querySelector('[data-action-review]').fire('click');await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await new Promise(setImmediate);}
+ await save();assert.equal(f.submissions.length,1);assert.equal(f.prepared().expectedVersion,'3');assert.equal(effects,1);assert.equal(f.core().status,1);
+ version=4;f.panel.close();f.panel.open({type,name:'5'});await f.document.until(()=>profiles.length===2&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert.equal(f.document.querySelectorAll('button').some(b=>b.textContent==='Load profile'),false,'opening the next edit loads its native version automatically');await save();
+ assert.equal(f.submissions.length,2);assert.equal(f.prepared().expectedVersion,'4');assert.equal(effects,2);assert.deepEqual(profiles,['5','5']);assert.equal(f.core().status,1);
+ f.panel.open({type:'post'});await feeEntered.promise;assert(f.document.querySelector('.composer-cost').textContent.includes('Balance —'));assert.equal(f.document.querySelector('textarea').disabled,false);assert.equal(f.core().status,1);
+ feeHeld.resolve();await f.document.until(()=>f.document.querySelector('.composer-cost')?.textContent.includes('Balance 0.7'));assert.equal(feeReads,1);assert.equal(f.core().status,1);
+});
+for(const completion of ['included','confirmed'])test(`${completion} name creation still awaits native ownership but queues no unrelated inventory`,{timeout:3000},async t=>{
+ const namesEntered=Promise.withResolvers(),namesHeld=Promise.withResolvers();let effects=0;
+ const f=await fixture(t,{defaults:{type:'name'},balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{status:completion,txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},nameAvailability:{id:'7'},effect:()=>effects++,namesRead:async()=>{namesEntered.resolve();await namesHeld.promise;return ownedNamePage('7',null);},balanceRefresh:async()=>assert.fail('Name completion does not need collateral/account inventory')}});
+ const identity=f.document.createElement('section');f.document.body.append(identity);f.panel.attachIdentityControls(identity);
+ const inputs=f.document.querySelectorAll('input').filter(n=>n.getAttribute('type')==='text');inputs[0].value='River';inputs[0].fire('input');inputs[1].value='Moss';inputs[1].fire('input');f.document.querySelector('[data-action-review]').fire('click');
+ await namesEntered.promise;assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');assert.notEqual(identity.querySelector('select')?.value,'7');assert.equal(f.core().status,1);
+ namesHeld.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');await new Promise(setImmediate);
+ assert.equal(identity.querySelector('select').value,'7');assert.equal(f.core().names,1);assert.equal(f.core().status,1);assert.equal(effects,1);
+ assert.equal((await f.panel.act({type:'like',post:'42'})).status,completion);await new Promise(setImmediate);assert.equal(f.submissions.length,2);assert.equal(f.core().status,1);assert.equal(effects,2);
 });
