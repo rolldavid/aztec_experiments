@@ -181,3 +181,7 @@ Root integrates/publishes the completion and preference read-wave changes, owns 
 - pending_reply_ui: exact authenticated included preference projection removing4–6s completion rescan; retains native next-action validation and durable cross-browser reader.
 - pending_feed_release: moderator startup full-history replay diagnosis and existing owned-store resume; no remote mutations.
 - proposed_feed_design: numeric opt-in BB worker timing to distinguish actual WASM execution from message delay; main CPU profile alone cannot attribute worker slowness.
+
+## Current funding performance follow-up after946059
+
+Root published946059, verified fresh signup and owns integration/live measurements/cleanup. pending_reply_ui removes duplicate Ethereum presend calls and overlaps read-only simulation; pending_feed_release removes duplicate post-claim account refresh; proposed_feed_design investigates duplicate claim preparation and private witness RPC chain. Native preference prefetch ae3148 is reviewed/tested, pending next SDK publication. All agents use source-only scratch; no extra browser/dependency copies.

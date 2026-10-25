@@ -1,0 +1,5235 @@
+{
+  "entries": [
+    {
+      "duration": 612.5950000286102,
+      "name": "rolling.reader.load",
+      "start": 1067.6449999809265
+    },
+    {
+      "duration": 57,
+      "kind": "longtask",
+      "start": 2840.439999938011
+    },
+    {
+      "duration": 940,
+      "kind": "longtask",
+      "start": 8273.919999957085
+    },
+    {
+      "duration": 87,
+      "kind": "longtask",
+      "start": 9217.049999952316
+    },
+    {
+      "duration": 351,
+      "kind": "longtask",
+      "start": 9332.71499991417
+    },
+    {
+      "duration": 74,
+      "kind": "longtask",
+      "start": 9727.439999938011
+    },
+    {
+      "duration": 440,
+      "kind": "longtask",
+      "start": 11535.65499997139
+    },
+    {
+      "duration": 74,
+      "kind": "longtask",
+      "start": 13088.054999947548
+    },
+    {
+      "duration": 437,
+      "kind": "longtask",
+      "start": 15901.204999923706
+    },
+    {
+      "duration": 352,
+      "kind": "longtask",
+      "start": 19065.319999933243
+    },
+    {
+      "duration": 125,
+      "kind": "longtask",
+      "start": 19427.514999985695
+    },
+    {
+      "duration": 62,
+      "kind": "longtask",
+      "start": 19557.22500002384
+    },
+    {
+      "duration": 54,
+      "kind": "longtask",
+      "start": 19623.22500002384
+    },
+    {
+      "duration": 73,
+      "kind": "longtask",
+      "start": 19681.429999947548
+    },
+    {
+      "duration": 187,
+      "kind": "longtask",
+      "start": 19759.194999933243
+    },
+    {
+      "duration": 95,
+      "kind": "longtask",
+      "start": 19971.444999933243
+    },
+    {
+      "duration": 1297,
+      "kind": "longtask",
+      "start": 20072.47000002861
+    },
+    {
+      "duration": 219,
+      "kind": "longtask",
+      "start": 21385.674999952316
+    },
+    {
+      "duration": 92,
+      "kind": "longtask",
+      "start": 26715.759999990463
+    },
+    {
+      "duration": 95,
+      "kind": "longtask",
+      "start": 31127.644999980927
+    },
+    {
+      "duration": 412,
+      "kind": "longtask",
+      "start": 32798.87999999523
+    },
+    {
+      "duration": 622.9850000143051,
+      "name": "rolling.preference.readiness",
+      "start": 35349.30499994755
+    },
+    {
+      "duration": 628.920000076294,
+      "name": "rolling.preference.sync",
+      "start": 35349.31999993324
+    },
+    {
+      "duration": 321.6749999523163,
+      "name": "rolling.preference.anchor",
+      "start": 35982.16499996185
+    },
+    {
+      "duration": 338.36500000953674,
+      "name": "rolling.preference.head",
+      "start": 35982.25999999046
+    },
+    {
+      "duration": 321.3700000047684,
+      "name": "rolling.preference.class",
+      "start": 35982.294999957085
+    },
+    {
+      "duration": 3.544999957084656,
+      "name": "rolling.preference.events",
+      "start": 36631.77499997616
+    },
+    {
+      "connectEnd": 36636.110000014305,
+      "connectStart": 36636.110000014305,
+      "decodedBodySize": 1789,
+      "domainLookupEnd": 36636.110000014305,
+      "domainLookupStart": 36636.110000014305,
+      "duration": 314.15500009059906,
+      "encodedBodySize": 1789,
+      "endpoint": "node",
+      "fetchStart": 36636.110000014305,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 36636.93499994278,
+      "responseEnd": 36949.98000001907,
+      "responseStart": 36949.41499996185,
+      "secureConnectionStart": 36636.110000014305,
+      "start": 36635.824999928474,
+      "transferSize": 2089
+    },
+    {
+      "connectEnd": 36954.33499991894,
+      "connectStart": 36954.33499991894,
+      "decodedBodySize": 1789,
+      "domainLookupEnd": 36954.33499991894,
+      "domainLookupStart": 36954.33499991894,
+      "duration": 309.7450000047684,
+      "encodedBodySize": 1789,
+      "endpoint": "node",
+      "fetchStart": 36954.33499991894,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 36955.62000000477,
+      "responseEnd": 37263.63499999046,
+      "responseStart": 37263.04999995232,
+      "secureConnectionStart": 36954.33499991894,
+      "start": 36953.889999985695,
+      "transferSize": 2089
+    },
+    {
+      "connectEnd": 37267.71499991417,
+      "connectStart": 37267.71499991417,
+      "decodedBodySize": 1789,
+      "domainLookupEnd": 37267.71499991417,
+      "domainLookupStart": 37267.71499991417,
+      "duration": 435.9800000190735,
+      "encodedBodySize": 1789,
+      "endpoint": "node",
+      "fetchStart": 37267.71499991417,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 37268.83999991417,
+      "responseEnd": 37703.42499995232,
+      "responseStart": 37702.824999928474,
+      "secureConnectionStart": 37267.71499991417,
+      "start": 37267.44499993324,
+      "transferSize": 2089
+    },
+    {
+      "duration": 3.3700000047683716,
+      "name": "rolling.preference.persist",
+      "start": 37705.60500001907
+    },
+    {
+      "duration": 311.15499997138977,
+      "name": "rolling.preference.canonical-fence",
+      "start": 37708.99000000954
+    },
+    {
+      "connectEnd": 37711.58499991894,
+      "connectStart": 37711.58499991894,
+      "decodedBodySize": 1789,
+      "domainLookupEnd": 37711.58499991894,
+      "domainLookupStart": 37711.58499991894,
+      "duration": 307.35000002384186,
+      "encodedBodySize": 1789,
+      "endpoint": "node",
+      "fetchStart": 37711.58499991894,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 37712.42499995232,
+      "responseEnd": 38018.64499998093,
+      "responseStart": 38017.71499991417,
+      "secureConnectionStart": 37711.58499991894,
+      "start": 37711.294999957085,
+      "transferSize": 2089
+    },
+    {
+      "connectEnd": 64788.28499996662,
+      "connectStart": 64788.28499996662,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 64788.28499996662,
+      "domainLookupStart": 64788.28499996662,
+      "duration": 630.9150000810623,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 64788.28499996662,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 64790.23000001907,
+      "responseEnd": 65418.47000002861,
+      "responseStart": 65283.60000002384,
+      "secureConnectionStart": 64788.28499996662,
+      "start": 64787.55499994755,
+      "transferSize": 12132
+    },
+    {
+      "duration": 16689.634999990463,
+      "name": "rolling.action.interaction",
+      "start": 85318.2350000143
+    },
+    {
+      "duration": 1470.414999961853,
+      "name": "rolling.action.sync",
+      "start": 85321.41499996185
+    },
+    {
+      "duration": 454.9450000524521,
+      "name": "rolling.action.payment-prefetch",
+      "start": 85322.66999995708
+    },
+    {
+      "duration": 451.3249999284744,
+      "name": "rolling.action.fee-metadata",
+      "start": 85322.99500000477
+    },
+    {
+      "connectEnd": 85323.6399999857,
+      "connectStart": 85323.6399999857,
+      "decodedBodySize": 3007,
+      "domainLookupEnd": 85323.6399999857,
+      "domainLookupStart": 85323.6399999857,
+      "duration": 443.60000002384186,
+      "encodedBodySize": 3007,
+      "endpoint": "node",
+      "fetchStart": 85323.6399999857,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 85324.39999997616,
+      "responseEnd": 85767.01999998093,
+      "responseStart": 85766.65499997139,
+      "secureConnectionStart": 85323.6399999857,
+      "start": 85323.41999995708,
+      "transferSize": 3307
+    },
+    {
+      "connectEnd": 85324.22500002384,
+      "connectStart": 85324.22500002384,
+      "decodedBodySize": 2793,
+      "domainLookupEnd": 85324.22500002384,
+      "domainLookupStart": 85324.22500002384,
+      "duration": 449.3799999952316,
+      "encodedBodySize": 2793,
+      "endpoint": "node",
+      "fetchStart": 85324.22500002384,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 85324.64499998093,
+      "responseEnd": 85773.5,
+      "responseStart": 85771.15499997139,
+      "secureConnectionStart": 85324.22500002384,
+      "start": 85324.12000000477,
+      "transferSize": 3093
+    },
+    {
+      "connectEnd": 85346.5149999857,
+      "connectStart": 85346.5149999857,
+      "decodedBodySize": 799,
+      "domainLookupEnd": 85346.5149999857,
+      "domainLookupStart": 85346.5149999857,
+      "duration": 318.5699999332428,
+      "encodedBodySize": 799,
+      "endpoint": "node",
+      "fetchStart": 85346.5149999857,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 85347.0149999857,
+      "responseEnd": 85664.93999993801,
+      "responseStart": 85664.41999995708,
+      "secureConnectionStart": 85346.5149999857,
+      "start": 85346.37000000477,
+      "transferSize": 1099
+    },
+    {
+      "connectEnd": 85366.87999999523,
+      "connectStart": 85366.87999999523,
+      "decodedBodySize": 362,
+      "domainLookupEnd": 85366.87999999523,
+      "domainLookupStart": 85366.87999999523,
+      "duration": 460.5149999856949,
+      "encodedBodySize": 362,
+      "endpoint": "node",
+      "fetchStart": 85366.87999999523,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 85367.46499991417,
+      "responseEnd": 85827.16499996185,
+      "responseStart": 85826.92999994755,
+      "secureConnectionStart": 85366.87999999523,
+      "start": 85366.64999997616,
+      "transferSize": 662
+    },
+    {
+      "connectEnd": 85683.35000002384,
+      "connectStart": 85683.35000002384,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 85683.35000002384,
+      "domainLookupStart": 85683.35000002384,
+      "duration": 305.4649999141693,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 85683.35000002384,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 85684.17999994755,
+      "responseEnd": 85988.57499992847,
+      "responseStart": 85988.19499993324,
+      "secureConnectionStart": 85683.35000002384,
+      "start": 85683.1100000143,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 85687.11500000954,
+      "connectStart": 85687.11500000954,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 85687.11500000954,
+      "domainLookupStart": 85687.11500000954,
+      "duration": 314.8600000143051,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 85687.11500000954,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 85688.2049999237,
+      "responseEnd": 85998.27499997616,
+      "responseStart": 85997.16999995708,
+      "secureConnectionStart": 85687.11500000954,
+      "start": 85683.41499996185,
+      "transferSize": 2098
+    },
+    {
+      "duration": 3.125,
+      "name": "rolling.action.fee-binding",
+      "start": 85774.37000000477
+    },
+    {
+      "connectEnd": 85776.6100000143,
+      "connectStart": 85776.6100000143,
+      "decodedBodySize": 3577,
+      "domainLookupEnd": 85776.6100000143,
+      "domainLookupStart": 85776.6100000143,
+      "duration": 381.625,
+      "encodedBodySize": 3577,
+      "endpoint": "node",
+      "fetchStart": 85776.6100000143,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 85777.375,
+      "responseEnd": 86158.0149999857,
+      "responseStart": 86157.37000000477,
+      "secureConnectionStart": 85776.6100000143,
+      "start": 85776.3899999857,
+      "transferSize": 3877
+    },
+    {
+      "connectEnd": 85834.46499991417,
+      "connectStart": 85834.46499991417,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 85834.46499991417,
+      "domainLookupStart": 85834.46499991417,
+      "duration": 319.5349999666214,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 85834.46499991417,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 85835.11500000954,
+      "responseEnd": 86153.69499993324,
+      "responseStart": 86150.22500002384,
+      "secureConnectionStart": 85834.46499991417,
+      "start": 85834.15999996662,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 86009.06999993324,
+      "connectStart": 86009.06999993324,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 86009.06999993324,
+      "domainLookupStart": 86009.06999993324,
+      "duration": 309.4850000143051,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 86009.06999993324,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 86009.89999997616,
+      "responseEnd": 86318.28499996662,
+      "responseStart": 86317.875,
+      "secureConnectionStart": 86009.06999993324,
+      "start": 86008.79999995232,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 86009.30499994755,
+      "connectStart": 86009.30499994755,
+      "decodedBodySize": 2596,
+      "domainLookupEnd": 86009.30499994755,
+      "domainLookupStart": 86009.30499994755,
+      "duration": 452.7300000190735,
+      "encodedBodySize": 2596,
+      "endpoint": "node",
+      "fetchStart": 86009.30499994755,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 86010.25499999523,
+      "responseEnd": 86461.79999995232,
+      "responseStart": 86457.3600000143,
+      "secureConnectionStart": 86009.30499994755,
+      "start": 86009.06999993324,
+      "transferSize": 2896
+    },
+    {
+      "duration": 112,
+      "kind": "longtask",
+      "start": 86164.27499997616
+    },
+    {
+      "connectEnd": 86473.63499999046,
+      "connectStart": 86473.63499999046,
+      "decodedBodySize": 2596,
+      "domainLookupEnd": 86473.63499999046,
+      "domainLookupStart": 86473.63499999046,
+      "duration": 312.7649999856949,
+      "encodedBodySize": 2596,
+      "endpoint": "node",
+      "fetchStart": 86473.63499999046,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 86474.84500002861,
+      "responseEnd": 86785.14499998093,
+      "responseStart": 86783.54999995232,
+      "secureConnectionStart": 86473.63499999046,
+      "start": 86472.37999999523,
+      "transferSize": 2896
+    },
+    {
+      "connectEnd": 86795.7350000143,
+      "connectStart": 86795.7350000143,
+      "decodedBodySize": 2460,
+      "domainLookupEnd": 86795.7350000143,
+      "domainLookupStart": 86795.7350000143,
+      "duration": 465.6949999332428,
+      "encodedBodySize": 2460,
+      "endpoint": "node",
+      "fetchStart": 86795.7350000143,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 86796.53499996662,
+      "responseEnd": 87261.03999996185,
+      "responseStart": 87260.61500000954,
+      "secureConnectionStart": 86795.7350000143,
+      "start": 86795.34500002861,
+      "transferSize": 2760
+    },
+    {
+      "connectEnd": 86796.68499994278,
+      "connectStart": 86796.68499994278,
+      "decodedBodySize": 6176,
+      "domainLookupEnd": 86796.68499994278,
+      "domainLookupStart": 86796.68499994278,
+      "duration": 317.8600000143051,
+      "encodedBodySize": 6176,
+      "endpoint": "node",
+      "fetchStart": 86796.68499994278,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 86797.14499998093,
+      "responseEnd": 87113.81499993801,
+      "responseStart": 87111.99500000477,
+      "secureConnectionStart": 86796.68499994278,
+      "start": 86795.9549999237,
+      "transferSize": 6476
+    },
+    {
+      "connectEnd": 87282.875,
+      "connectStart": 87282.875,
+      "decodedBodySize": 160,
+      "domainLookupEnd": 87282.875,
+      "domainLookupStart": 87282.875,
+      "duration": 314.09999990463257,
+      "encodedBodySize": 160,
+      "endpoint": "node",
+      "fetchStart": 87282.875,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 87283.77999997139,
+      "responseEnd": 87596.69499993324,
+      "responseStart": 87595.95999991894,
+      "secureConnectionStart": 87282.875,
+      "start": 87282.59500002861,
+      "transferSize": 460
+    },
+    {
+      "connectEnd": 87305.37000000477,
+      "connectStart": 87305.37000000477,
+      "decodedBodySize": 74,
+      "domainLookupEnd": 87305.37000000477,
+      "domainLookupStart": 87305.37000000477,
+      "duration": 488.7650001049042,
+      "encodedBodySize": 74,
+      "endpoint": "node",
+      "fetchStart": 87305.37000000477,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 87305.88499999046,
+      "responseEnd": 87793.98000001907,
+      "responseStart": 87793.83999991417,
+      "secureConnectionStart": 87305.37000000477,
+      "start": 87305.21499991417,
+      "transferSize": 374
+    },
+    {
+      "connectEnd": 87312.4850000143,
+      "connectStart": 87312.4850000143,
+      "decodedBodySize": 164,
+      "domainLookupEnd": 87312.4850000143,
+      "domainLookupStart": 87312.4850000143,
+      "duration": 473.34500002861023,
+      "encodedBodySize": 164,
+      "endpoint": "node",
+      "fetchStart": 87312.4850000143,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 87312.91499996185,
+      "responseEnd": 87785.4850000143,
+      "responseStart": 87782.31999993324,
+      "secureConnectionStart": 87312.4850000143,
+      "start": 87312.1399999857,
+      "transferSize": 464
+    },
+    {
+      "connectEnd": 87328.35000002384,
+      "connectStart": 87328.35000002384,
+      "decodedBodySize": 192835,
+      "domainLookupEnd": 87328.35000002384,
+      "domainLookupStart": 87328.35000002384,
+      "duration": 1027.375,
+      "encodedBodySize": 192835,
+      "endpoint": "node",
+      "fetchStart": 87328.35000002384,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 87328.9549999237,
+      "responseEnd": 88355.55499994755,
+      "responseStart": 87823.33499991894,
+      "secureConnectionStart": 87328.35000002384,
+      "start": 87328.17999994755,
+      "transferSize": 193135
+    },
+    {
+      "connectEnd": 87338.30499994755,
+      "connectStart": 87338.30499994755,
+      "decodedBodySize": 147755,
+      "domainLookupEnd": 87338.30499994755,
+      "domainLookupStart": 87338.30499994755,
+      "duration": 907.9350000619888,
+      "encodedBodySize": 147755,
+      "endpoint": "node",
+      "fetchStart": 87338.30499994755,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 87338.93999993801,
+      "responseEnd": 88245.8600000143,
+      "responseStart": 87784.81999993324,
+      "secureConnectionStart": 87338.30499994755,
+      "start": 87337.92499995232,
+      "transferSize": 148055
+    },
+    {
+      "connectEnd": 89002.55499994755,
+      "connectStart": 88673.92499995232,
+      "decodedBodySize": 160,
+      "domainLookupEnd": 88673.92499995232,
+      "domainLookupStart": 88673.91999995708,
+      "duration": 779.4249999523163,
+      "encodedBodySize": 160,
+      "endpoint": "node",
+      "fetchStart": 88673.37999999523,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 89002.70999991894,
+      "responseEnd": 89452.57499992847,
+      "responseStart": 89451.96499991417,
+      "secureConnectionStart": 88833.47500002384,
+      "start": 88673.14999997616,
+      "transferSize": 460
+    },
+    {
+      "duration": 379.4249999523163,
+      "name": "rolling.action.prepare",
+      "start": 89460.87000000477
+    },
+    {
+      "duration": 1.4049999713897705,
+      "name": "rolling.action.contract-state",
+      "start": 89460.8899999857
+    },
+    {
+      "duration": 372.5349999666214,
+      "name": "rolling.action.predecessor",
+      "start": 89463.2350000143
+    },
+    {
+      "connectEnd": 89508.47000002861,
+      "connectStart": 89508.47000002861,
+      "decodedBodySize": 3595,
+      "domainLookupEnd": 89508.47000002861,
+      "domainLookupStart": 89508.47000002861,
+      "duration": 321.3799999952316,
+      "encodedBodySize": 3595,
+      "endpoint": "node",
+      "fetchStart": 89508.47000002861,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 89509.11500000954,
+      "responseEnd": 89829.66999995708,
+      "responseStart": 89825.90999996662,
+      "secureConnectionStart": 89508.47000002861,
+      "start": 89508.28999996185,
+      "transferSize": 3895
+    },
+    {
+      "duration": 0.43999993801116943,
+      "name": "rolling.action.arguments",
+      "start": 89836.34500002861
+    },
+    {
+      "duration": 12166.355000019072,
+      "name": "rolling.action.submit",
+      "start": 89840.37999999523
+    },
+    {
+      "duration": 32.92999994754791,
+      "name": "rolling.transaction.estimating",
+      "start": 89858.125
+    },
+    {
+      "duration": 0.10000002384185792,
+      "name": "rolling.action.fee-prepare",
+      "start": 89858.17499995232
+    },
+    {
+      "duration": 13.235000014305117,
+      "name": "rolling.action.fee-simulate",
+      "start": 89858.28499996662
+    },
+    {
+      "duration": 12.450000047683716,
+      "name": "rolling.action.fee-balance",
+      "start": 89858.82499992847
+    },
+    {
+      "duration": 32.99500000476837,
+      "name": "rolling.transaction.preparing",
+      "start": 89891.54499995708
+    },
+    {
+      "duration": 4.225000023841858,
+      "name": "rolling.proof.wallet.phase.account-request",
+      "start": 89924.46499991417
+    },
+    {
+      "duration": 7464.080000042915,
+      "name": "rolling.transaction.proving",
+      "start": 89924.54499995708
+    },
+    {
+      "duration": 7367.474999904633,
+      "name": "rolling.proof.wallet.phase.prove-tx-with-public-validation",
+      "start": 89928.74000000954
+    },
+    {
+      "duration": 0.5700000524520874,
+      "name": "rolling.proof.native.phase.queue-and-anchor",
+      "start": 89928.79499995708
+    },
+    {
+      "duration": 109.39999997615814,
+      "name": "rolling.proof.native.phase.private-execution",
+      "start": 89929.40499997139
+    },
+    {
+      "duration": 0.6649999618530273,
+      "name": "rolling.proof.native.phase.oracle-get-capsule",
+      "start": 89944.39999997616
+    },
+    {
+      "duration": 0.05500006675720215,
+      "name": "rolling.proof.native.phase.oracle-get-auth-witness",
+      "start": 89946.18499994278
+    },
+    {
+      "duration": 0.039999961853027344,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "start": 89991.01999998093
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "start": 89991.06999993324
+    },
+    {
+      "duration": 0.15999996662139893,
+      "name": "rolling.proof.native.phase.oracle-notify-revertible-phase-start",
+      "start": 89991.6399999857
+    },
+    {
+      "duration": 35.90499997138977,
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "start": 89997.50999999046
+    },
+    {
+      "duration": 0.125,
+      "name": "rolling.proof.native.phase.oracle-is-nullifier-pending",
+      "start": 90004.10000002384
+    },
+    {
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "start": 90016.08999991417
+    },
+    {
+      "duration": 0.060000061988830566,
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "start": 90016.43499994278
+    },
+    {
+      "duration": 0.10000002384185792,
+      "name": "rolling.proof.native.phase.oracle-notify-created-nullifier",
+      "start": 90027.04499995708
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "start": 90030.00999999046
+    },
+    {
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "start": 90030.18499994278
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "start": 90030.34500002861
+    },
+    {
+      "duration": 0.6100000143051147,
+      "name": "rolling.proof.native.phase.kernel-class-hints",
+      "start": 90039.28999996185
+    },
+    {
+      "connectEnd": 90039.77499997616,
+      "connectStart": 90039.77499997616,
+      "decodedBodySize": 7703,
+      "domainLookupEnd": 90039.77499997616,
+      "domainLookupStart": 90039.77499997616,
+      "duration": 326.18999993801117,
+      "encodedBodySize": 7703,
+      "endpoint": "node",
+      "fetchStart": 90039.77499997616,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 90040.27499997616,
+      "responseEnd": 90365.80499994756,
+      "responseStart": 90361.5299999714,
+      "secureConnectionStart": 90039.77499997616,
+      "start": 90039.61500000954,
+      "transferSize": 8003
+    },
+    {
+      "duration": 1214.75,
+      "name": "rolling.proof.native.phase.kernel-body",
+      "start": 90039.91499996185
+    },
+    {
+      "duration": 190,
+      "kind": "longtask",
+      "start": 90070.56499993801
+    },
+    {
+      "duration": 760,
+      "kind": "longtask",
+      "start": 90369.03999996184
+    },
+    {
+      "duration": 0.930000066757202,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "start": 91164.79999995232
+    },
+    {
+      "connectEnd": 91165.25999999046,
+      "connectStart": 91165.25999999046,
+      "decodedBodySize": 140230,
+      "domainLookupEnd": 91165.25999999046,
+      "domainLookupStart": 91165.25999999046,
+      "duration": 0,
+      "encodedBodySize": 28656,
+      "endpoint": "wallet-asset",
+      "fetchStart": 91165.25999999046,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 91165.25999999046,
+      "responseEnd": 91165.25999999046,
+      "responseStart": 91165.25999999046,
+      "secureConnectionStart": 91165.25999999046,
+      "start": 91165.25999999046,
+      "transferSize": 0
+    },
+    {
+      "duration": 85,
+      "kind": "longtask",
+      "start": 91165.39999997616
+    },
+    {
+      "duration": 15.259999990463257,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "start": 91165.75499999525
+    },
+    {
+      "duration": 33.47000002861023,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "start": 91181.04499995708
+    },
+    {
+      "duration": 36.394999980926514,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "start": 91214.54499995708
+    },
+    {
+      "duration": 1.8149999380111697,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "start": 91250.99500000475
+    },
+    {
+      "duration": 96,
+      "kind": "longtask",
+      "start": 91251.33499991894
+    },
+    {
+      "duration": 0.5150001049041748,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "start": 91252.83499991894
+    },
+    {
+      "duration": 490.81500005722046,
+      "name": "rolling.proof.native.phase.validation",
+      "start": 91254.689999938
+    },
+    {
+      "duration": 65.79999995231628,
+      "name": "rolling.proof.native.phase.validation-transaction",
+      "start": 91261.60000002384
+    },
+    {
+      "duration": 417.8399999141693,
+      "name": "rolling.proof.native.phase.public-execution",
+      "start": 91327.60500001907
+    },
+    {
+      "duration": 414.00999999046326,
+      "name": "rolling.proof.native.phase.admission-check",
+      "start": 91331.39999997616
+    },
+    {
+      "connectEnd": 91352.02499997616,
+      "connectStart": 91352.02499997616,
+      "decodedBodySize": 6758,
+      "domainLookupEnd": 91352.02499997616,
+      "domainLookupStart": 91352.02499997616,
+      "duration": 390.1999999284744,
+      "encodedBodySize": 6758,
+      "endpoint": "node",
+      "fetchStart": 91352.02499997616,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 91352.625,
+      "responseEnd": 91741.80499994756,
+      "responseStart": 91738.88499999046,
+      "secureConnectionStart": 91352.02499997616,
+      "start": 91351.60500001907,
+      "transferSize": 7058
+    },
+    {
+      "duration": 5438.965000033379,
+      "name": "rolling.proof.native.phase.remote-proof",
+      "start": 91745.51999998093
+    },
+    {
+      "duration": 50.605000019073486,
+      "name": "rolling.proof.transport.serialize",
+      "start": 91745.814999938
+    },
+    {
+      "duration": 2.0299999713897705,
+      "name": "rolling.proof.transport.circuit-ids",
+      "start": 91745.8450000286
+    },
+    {
+      "duration": 39.35000002384186,
+      "name": "rolling.proof.transport.dictionary",
+      "start": 91748.0299999714
+    },
+    {
+      "duration": 8.825000047683716,
+      "name": "rolling.proof.transport.compress",
+      "start": 91787.42999994756
+    },
+    {
+      "duration": 1134.625,
+      "name": "rolling.proof.transport.submit",
+      "start": 91796.44999992847
+    },
+    {
+      "connectEnd": 92136.20999991894,
+      "connectStart": 91799.69999992847,
+      "decodedBodySize": 73,
+      "domainLookupEnd": 91799.69999992847,
+      "domainLookupStart": 91799.689999938,
+      "duration": 1132.804999947548,
+      "encodedBodySize": 73,
+      "endpoint": "prover-submit",
+      "fetchStart": 91798.03499996662,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 92136.50999999046,
+      "responseEnd": 92930.189999938,
+      "responseStart": 92929.75499999525,
+      "secureConnectionStart": 91970.87000000475,
+      "serverBody": 495.785,
+      "serverBodyBytes": 114830,
+      "serverBodyChunks": 58,
+      "serverBodyFirst": 156.994,
+      "serverBodyGap": 156.994,
+      "serverQueue": 0.518,
+      "serverValidate": 0.158,
+      "start": 91797.38499999046,
+      "transferSize": 373
+    },
+    {
+      "duration": 2975.100000023842,
+      "name": "rolling.proof.transport.wait",
+      "start": 92931.189999938
+    },
+    {
+      "connectEnd": 92932.05999994278,
+      "connectStart": 92932.05999994278,
+      "decodedBodySize": 149492,
+      "domainLookupEnd": 92932.05999994278,
+      "domainLookupStart": 92932.05999994278,
+      "duration": 2971.804999947548,
+      "encodedBodySize": 149492,
+      "endpoint": "prover-result",
+      "fetchStart": 92932.05999994278,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 92933.08999991415,
+      "responseEnd": 95903.53499996662,
+      "responseStart": 93227.0799999237,
+      "secureConnectionStart": 92932.05999994278,
+      "start": 92931.73000001907,
+      "transferSize": 149792
+    },
+    {
+      "aggregateMs": 0.34972199983894825,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.persist",
+      "start": 95905.12000000475
+    },
+    {
+      "aggregateMs": 0.008930000476539135,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.queue-wait",
+      "start": 95905.24500000475
+    },
+    {
+      "aggregateMs": 2427.6995609998703,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready",
+      "start": 95905.2649999857
+    },
+    {
+      "aggregateMs": 0.6163040000246838,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.read",
+      "start": 95905.2799999714
+    },
+    {
+      "aggregateMs": 65.99181199999293,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.decompress",
+      "start": 95905.29499995708
+    },
+    {
+      "aggregateMs": 27.25989099999424,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.binding",
+      "start": 95905.3600000143
+    },
+    {
+      "aggregateMs": 25.758980999991763,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.backend",
+      "start": 95905.439999938
+    },
+    {
+      "aggregateMs": 2306.244651000015,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.native-prove",
+      "start": 95905.47500002384
+    },
+    {
+      "aggregateMs": 0.4357029999955558,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-start",
+      "start": 95905.49500000475
+    },
+    {
+      "aggregateMs": 224.5795550001203,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-load",
+      "start": 95905.5149999857
+    },
+    {
+      "aggregateMs": 1017.8439859999926,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-accumulate",
+      "start": 95905.53499996662
+    },
+    {
+      "aggregateMs": 1012.83324300003,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-prove",
+      "start": 95905.54499995708
+    },
+    {
+      "aggregateMs": 46.304599999974016,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-verify",
+      "start": 95905.55999994278
+    },
+    {
+      "aggregateMs": 2.0463229999877512,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-compress",
+      "start": 95905.6399999857
+    },
+    {
+      "aggregateMs": 0.23805099999299273,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-encode",
+      "start": 95905.66499996184
+    },
+    {
+      "aggregateMs": 2426.1805809999933,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.child-total",
+      "start": 95905.67499995232
+    },
+    {
+      "aggregateMs": 0.006670000031590462,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.ready-wait",
+      "start": 95905.689999938
+    },
+    {
+      "aggregateMs": 2427.6226500002667,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.dispatch-to-result",
+      "start": 95905.69999992847
+    },
+    {
+      "aggregateMs": 0.06096000038087368,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready-to-snapshot",
+      "start": 95905.71499991415
+    },
+    {
+      "connectEnd": 95906.36500000954,
+      "connectStart": 95906.36500000954,
+      "decodedBodySize": 21,
+      "domainLookupEnd": 95906.36500000954,
+      "domainLookupStart": 95906.36500000954,
+      "duration": 297.29499995708466,
+      "encodedBodySize": 21,
+      "endpoint": "prover-job",
+      "fetchStart": 95906.36500000954,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 95907.50999999046,
+      "responseEnd": 96203.28999996184,
+      "responseStart": 96202.54999995232,
+      "secureConnectionStart": 95906.36500000954,
+      "start": 95905.99500000475,
+      "transferSize": 321
+    },
+    {
+      "duration": 46.4099999666214,
+      "name": "rolling.proof.local.decompress",
+      "start": 95908.60000002384
+    },
+    {
+      "duration": 1217.3700000047684,
+      "name": "rolling.proof.local.verify",
+      "start": 95955.24500000475
+    },
+    {
+      "duration": 34.56001949310303,
+      "name": "rolling.proof.native.phase.worker-verify-before-entry",
+      "start": 95955.35500001907
+    },
+    {
+      "duration": 1182.3450000286102,
+      "name": "rolling.proof.native.phase.worker-verify-cbind",
+      "start": 95989.91501951218
+    },
+    {
+      "duration": 1182.1949999332428,
+      "name": "rolling.proof.native.phase.worker-verify-wasm",
+      "start": 95990.00001955032
+    },
+    {
+      "duration": 117,
+      "kind": "longtask",
+      "start": 97172.21499991415
+    },
+    {
+      "duration": 0.24998044967651367,
+      "name": "rolling.proof.native.phase.worker-verify-after-exit",
+      "start": 97172.2600195408
+    },
+    {
+      "duration": 0.8200000524520874,
+      "name": "rolling.proof.native.phase.proof-public-inputs",
+      "start": 97184.5299999714
+    },
+    {
+      "duration": 107.39499998092651,
+      "name": "rolling.proof.native.phase.result-and-tag-persistence",
+      "start": 97185.49000000954
+    },
+    {
+      "aggregateMs": 7256.575000047684,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.total",
+      "start": 97296.38499999046
+    },
+    {
+      "aggregateMs": 0,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.sync",
+      "start": 97296.39999997616
+    },
+    {
+      "aggregateMs": 105.64499986171722,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.private-witness",
+      "start": 97296.39999997616
+    },
+    {
+      "aggregateMs": 1084.6150000095367,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.kernel-witness",
+      "start": 97296.40999996662
+    },
+    {
+      "aggregateMs": 484.02999997138977,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.public-validation",
+      "start": 97296.40999996662
+    },
+    {
+      "aggregateMs": 5439.009999990463,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.proof-transport",
+      "start": 97296.41499996184
+    },
+    {
+      "aggregateMs": 143.27500021457672,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.unaccounted",
+      "start": 97296.41499996184
+    },
+    {
+      "duration": 15.34500002861023,
+      "name": "rolling.proof.wallet.phase.to-tx",
+      "start": 97296.42499995232
+    },
+    {
+      "duration": 22.8199999332428,
+      "name": "rolling.proof.wallet.phase.guard-before-journal",
+      "start": 97311.875
+    },
+    {
+      "duration": 30.979999899864197,
+      "name": "rolling.proof.wallet.phase.journal-prepare",
+      "start": 97334.72500002384
+    },
+    {
+      "duration": 22.68499994277954,
+      "name": "rolling.proof.wallet.phase.journal-signed",
+      "start": 97365.75
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "start": 97388.50499999525
+    },
+    {
+      "duration": 2.459999918937683,
+      "name": "rolling.proof.wallet.phase.signed-guard",
+      "start": 97388.60000002384
+    },
+    {
+      "duration": 592.0649999380112,
+      "name": "rolling.transaction.submitting",
+      "start": 97388.625
+    },
+    {
+      "duration": 589.1550000905991,
+      "name": "rolling.proof.wallet.phase.submit-to-aztec",
+      "start": 97391.064999938
+    },
+    {
+      "connectEnd": 97396.2350000143,
+      "connectStart": 97396.2350000143,
+      "decodedBodySize": 42,
+      "domainLookupEnd": 97396.2350000143,
+      "domainLookupStart": 97396.2350000143,
+      "duration": 583.5599999427795,
+      "encodedBodySize": 42,
+      "endpoint": "node",
+      "fetchStart": 97396.2350000143,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 97397.05999994278,
+      "responseEnd": 97979.30999994278,
+      "responseStart": 97978.9850000143,
+      "secureConnectionStart": 97396.2350000143,
+      "start": 97395.75,
+      "transferSize": 342
+    },
+    {
+      "duration": 3007.4099999666214,
+      "name": "rolling.transaction.aztec-inclusion",
+      "start": 97980.25499999525
+    },
+    {
+      "duration": 4026.254999995232,
+      "name": "rolling.transaction.confirming",
+      "start": 97980.69999992847
+    },
+    {
+      "connectEnd": 97991.83499991894,
+      "connectStart": 97991.83499991894,
+      "decodedBodySize": 136,
+      "domainLookupEnd": 97991.83499991894,
+      "domainLookupStart": 97991.83499991894,
+      "duration": 329.90500009059906,
+      "encodedBodySize": 136,
+      "endpoint": "node",
+      "fetchStart": 97991.83499991894,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 97992.689999938,
+      "responseEnd": 98321.2200000286,
+      "responseStart": 98303.2799999714,
+      "secureConnectionStart": 97991.83499991894,
+      "start": 97991.314999938,
+      "transferSize": 436
+    },
+    {
+      "connectEnd": 99324.9700000286,
+      "connectStart": 99324.9700000286,
+      "decodedBodySize": 136,
+      "domainLookupEnd": 99324.9700000286,
+      "domainLookupStart": 99324.9700000286,
+      "duration": 328.2150000333786,
+      "encodedBodySize": 136,
+      "endpoint": "node",
+      "fetchStart": 99324.9700000286,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 99326.28499996662,
+      "responseEnd": 99652.79499995708,
+      "responseStart": 99652.44499993324,
+      "secureConnectionStart": 99324.9700000286,
+      "start": 99324.5799999237,
+      "transferSize": 436
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.receipt.phase.pending",
+      "start": 99653.99000000954
+    },
+    {
+      "duration": 332.33000004291534,
+      "name": "rolling.proof.receipt.phase.read",
+      "start": 100655.04499995708
+    },
+    {
+      "connectEnd": 100656.39999997616,
+      "connectStart": 100656.39999997616,
+      "decodedBodySize": 359,
+      "domainLookupEnd": 100656.39999997616,
+      "domainLookupStart": 100656.39999997616,
+      "duration": 330.2300000190735,
+      "encodedBodySize": 359,
+      "endpoint": "node",
+      "fetchStart": 100656.39999997616,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 100658.49500000475,
+      "responseEnd": 100985.88499999046,
+      "responseStart": 100985.33999991415,
+      "secureConnectionStart": 100656.39999997616,
+      "start": 100655.6549999714,
+      "transferSize": 659
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.proposed",
+      "start": 100987.42499995232
+    },
+    {
+      "duration": 1.375,
+      "name": "rolling.proof.receipt.phase.display-callback",
+      "start": 100987.55999994278
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.action.included",
+      "start": 100988.25999999046
+    },
+    {
+      "connectEnd": 100990.12999999525,
+      "connectStart": 100990.12999999525,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 100990.12999999525,
+      "domainLookupStart": 100990.12999999525,
+      "duration": 328.7849999666214,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 100990.12999999525,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 100991.69999992847,
+      "responseEnd": 101318.44999992847,
+      "responseStart": 101317.51999998093,
+      "secureConnectionStart": 100990.12999999525,
+      "start": 100989.66499996184,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 101359.6549999714,
+      "connectStart": 101359.6549999714,
+      "decodedBodySize": 359,
+      "domainLookupEnd": 101359.6549999714,
+      "domainLookupStart": 101359.6549999714,
+      "duration": 310.75999999046326,
+      "encodedBodySize": 359,
+      "endpoint": "node",
+      "fetchStart": 101359.6549999714,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 101360.19499993324,
+      "responseEnd": 101670.14499998093,
+      "responseStart": 101669.66999995708,
+      "secureConnectionStart": 101359.6549999714,
+      "start": 101359.38499999046,
+      "transferSize": 659
+    },
+    {
+      "connectEnd": 101672.625,
+      "connectStart": 101672.625,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 101672.625,
+      "domainLookupStart": 101672.625,
+      "duration": 310.55999994277954,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 101672.625,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 101674.1549999714,
+      "responseEnd": 101982.69499993324,
+      "responseStart": 101980.89999997616,
+      "secureConnectionStart": 101672.625,
+      "start": 101672.13499999046,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 111641.94999992847,
+      "connectStart": 111641.94999992847,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 111641.94999992847,
+      "domainLookupStart": 111641.94999992847,
+      "duration": 576.1850000619888,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 111641.94999992847,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 111643.10500001907,
+      "responseEnd": 112217.23000001907,
+      "responseStart": 112082.5149999857,
+      "secureConnectionStart": 111641.94999992847,
+      "start": 111641.04499995708,
+      "transferSize": 12132
+    },
+    {
+      "connectEnd": 112232.29499995708,
+      "connectStart": 112232.29499995708,
+      "decodedBodySize": 359,
+      "domainLookupEnd": 112232.29499995708,
+      "domainLookupStart": 112232.29499995708,
+      "duration": 322.9800000190735,
+      "encodedBodySize": 359,
+      "endpoint": "node",
+      "fetchStart": 112232.29499995708,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 112233.8450000286,
+      "responseEnd": 112554.53499996662,
+      "responseStart": 112553.6100000143,
+      "secureConnectionStart": 112232.29499995708,
+      "start": 112231.55499994756,
+      "transferSize": 659
+    },
+    {
+      "connectEnd": 112558.03499996662,
+      "connectStart": 112558.03499996662,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 112558.03499996662,
+      "domainLookupStart": 112558.03499996662,
+      "duration": 320.45500004291534,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 112558.03499996662,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 112559.39499998093,
+      "responseEnd": 112878.2350000143,
+      "responseStart": 112877.76999998093,
+      "secureConnectionStart": 112558.03499996662,
+      "start": 112557.7799999714,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 146498.92999994755,
+      "connectStart": 146498.92999994755,
+      "decodedBodySize": 3084,
+      "domainLookupEnd": 146498.92999994755,
+      "domainLookupStart": 146498.92999994755,
+      "duration": 521.9500000476837,
+      "encodedBodySize": 3084,
+      "endpoint": "public-read",
+      "fetchStart": 146498.92999994755,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 146499.58499991894,
+      "responseEnd": 147018.1100000143,
+      "responseStart": 147014.60500001907,
+      "secureConnectionStart": 146498.92999994755,
+      "start": 146496.15999996662,
+      "transferSize": 3384
+    },
+    {
+      "duration": 1703.0649999380112,
+      "name": "rolling.account.sync",
+      "start": 146506.9700000286
+    },
+    {
+      "connectEnd": 146508.05499994755,
+      "connectStart": 146508.05499994755,
+      "decodedBodySize": 2793,
+      "domainLookupEnd": 146508.05499994755,
+      "domainLookupStart": 146508.05499994755,
+      "duration": 454.02500009536743,
+      "encodedBodySize": 2793,
+      "endpoint": "node",
+      "fetchStart": 146508.05499994755,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 146508.6549999714,
+      "responseEnd": 146961.8450000286,
+      "responseStart": 146961.44999992847,
+      "secureConnectionStart": 146508.05499994755,
+      "start": 146507.81999993324,
+      "transferSize": 3093
+    },
+    {
+      "connectEnd": 146508.85000002384,
+      "connectStart": 146508.85000002384,
+      "decodedBodySize": 799,
+      "domainLookupEnd": 146508.85000002384,
+      "domainLookupStart": 146508.85000002384,
+      "duration": 453.27999997138977,
+      "encodedBodySize": 799,
+      "endpoint": "node",
+      "fetchStart": 146508.85000002384,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 146509.33999991417,
+      "responseEnd": 146961.8899999857,
+      "responseStart": 146961.54499995708,
+      "secureConnectionStart": 146508.85000002384,
+      "start": 146508.6100000143,
+      "transferSize": 1099
+    },
+    {
+      "connectEnd": 146966.12000000477,
+      "connectStart": 146966.12000000477,
+      "decodedBodySize": 3577,
+      "domainLookupEnd": 146966.12000000477,
+      "domainLookupStart": 146966.12000000477,
+      "duration": 460.4850000143051,
+      "encodedBodySize": 3577,
+      "endpoint": "node",
+      "fetchStart": 146966.12000000477,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 146966.73000001907,
+      "responseEnd": 147426.30999994278,
+      "responseStart": 147426.04999995232,
+      "secureConnectionStart": 146966.12000000477,
+      "start": 146965.82499992847,
+      "transferSize": 3877
+    },
+    {
+      "connectEnd": 146968.24500000477,
+      "connectStart": 146968.24500000477,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 146968.24500000477,
+      "domainLookupStart": 146968.24500000477,
+      "duration": 453.38499999046326,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 146968.24500000477,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 146968.7200000286,
+      "responseEnd": 147421.50999999046,
+      "responseStart": 147418.08499991894,
+      "secureConnectionStart": 146968.24500000477,
+      "start": 146968.125,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 146968.5149999857,
+      "connectStart": 146968.5149999857,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 146968.5149999857,
+      "domainLookupStart": 146968.5149999857,
+      "duration": 449.7350000143051,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 146968.5149999857,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 146968.89999997616,
+      "responseEnd": 147417.9850000143,
+      "responseStart": 147416.60000002384,
+      "secureConnectionStart": 146968.5149999857,
+      "start": 146968.25,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 147424.0799999237,
+      "connectStart": 147424.0799999237,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 147424.0799999237,
+      "domainLookupStart": 147424.0799999237,
+      "duration": 311.09499990940094,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 147424.0799999237,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 147425.02499997616,
+      "responseEnd": 147734.94499993324,
+      "responseStart": 147732.33499991894,
+      "secureConnectionStart": 147424.0799999237,
+      "start": 147423.85000002384,
+      "transferSize": 2098
+    },
+    {
+      "connectEnd": 147424.28499996662,
+      "connectStart": 147424.28499996662,
+      "decodedBodySize": 2596,
+      "domainLookupEnd": 147424.28499996662,
+      "domainLookupStart": 147424.28499996662,
+      "duration": 457.6299999952316,
+      "encodedBodySize": 2596,
+      "endpoint": "node",
+      "fetchStart": 147424.28499996662,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 147425.314999938,
+      "responseEnd": 147881.69999992847,
+      "responseStart": 147881.4700000286,
+      "secureConnectionStart": 147424.28499996662,
+      "start": 147424.06999993324,
+      "transferSize": 2896
+    },
+    {
+      "connectEnd": 147888.20999991894,
+      "connectStart": 147888.20999991894,
+      "decodedBodySize": 2596,
+      "domainLookupEnd": 147888.20999991894,
+      "domainLookupStart": 147888.20999991894,
+      "duration": 318.0199999809265,
+      "encodedBodySize": 2596,
+      "endpoint": "node",
+      "fetchStart": 147888.20999991894,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 147888.689999938,
+      "responseEnd": 148206.0299999714,
+      "responseStart": 148204.80499994755,
+      "secureConnectionStart": 147888.20999991894,
+      "start": 147888.00999999046,
+      "transferSize": 2896
+    },
+    {
+      "connectEnd": 148211.28499996662,
+      "connectStart": 148211.28499996662,
+      "decodedBodySize": 211,
+      "domainLookupEnd": 148211.28499996662,
+      "domainLookupStart": 148211.28499996662,
+      "duration": 313.04500007629395,
+      "encodedBodySize": 211,
+      "endpoint": "node",
+      "fetchStart": 148211.28499996662,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 148211.97500002384,
+      "responseEnd": 148524.0950000286,
+      "responseStart": 148523.78999996185,
+      "secureConnectionStart": 148211.28499996662,
+      "start": 148211.04999995232,
+      "transferSize": 511
+    },
+    {
+      "connectEnd": 148525.74000000954,
+      "connectStart": 148525.74000000954,
+      "decodedBodySize": 1789,
+      "domainLookupEnd": 148525.74000000954,
+      "domainLookupStart": 148525.74000000954,
+      "duration": 441.06500005722046,
+      "encodedBodySize": 1789,
+      "endpoint": "node",
+      "fetchStart": 148525.74000000954,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 148526.25,
+      "responseEnd": 148966.49000000954,
+      "responseStart": 148965.10500001907,
+      "secureConnectionStart": 148525.74000000954,
+      "start": 148525.42499995232,
+      "transferSize": 2089
+    },
+    {
+      "connectEnd": 148969.58999991417,
+      "connectStart": 148969.58999991417,
+      "decodedBodySize": 1210,
+      "domainLookupEnd": 148969.58999991417,
+      "domainLookupStart": 148969.58999991417,
+      "duration": 347.06000006198883,
+      "encodedBodySize": 1210,
+      "endpoint": "node",
+      "fetchStart": 148969.58999991417,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 148970.13499999046,
+      "responseEnd": 149316.4850000143,
+      "responseStart": 149297.2049999237,
+      "secureConnectionStart": 148969.58999991417,
+      "start": 148969.42499995232,
+      "transferSize": 1510
+    },
+    {
+      "connectEnd": 148971.5149999857,
+      "connectStart": 148971.5149999857,
+      "decodedBodySize": 64,
+      "domainLookupEnd": 148971.5149999857,
+      "domainLookupStart": 148971.5149999857,
+      "duration": 460.1450001001358,
+      "encodedBodySize": 64,
+      "endpoint": "node",
+      "fetchStart": 148971.5149999857,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 148971.85000002384,
+      "responseEnd": 149431.4850000143,
+      "responseStart": 149431.2799999714,
+      "secureConnectionStart": 148971.5149999857,
+      "start": 148971.33999991417,
+      "transferSize": 364
+    },
+    {
+      "connectEnd": 149367.939999938,
+      "connectStart": 149367.939999938,
+      "decodedBodySize": 21315,
+      "domainLookupEnd": 149367.939999938,
+      "domainLookupStart": 149367.939999938,
+      "duration": 604.8400000333786,
+      "encodedBodySize": 21315,
+      "endpoint": "node",
+      "fetchStart": 149367.939999938,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 149368.67499995232,
+      "responseEnd": 149972.5299999714,
+      "responseStart": 149832.49000000954,
+      "secureConnectionStart": 149367.939999938,
+      "start": 149367.689999938,
+      "transferSize": 21615
+    },
+    {
+      "connectEnd": 149984.60500001907,
+      "connectStart": 149984.60500001907,
+      "decodedBodySize": 45,
+      "domainLookupEnd": 149984.60500001907,
+      "domainLookupStart": 149984.60500001907,
+      "duration": 306.875,
+      "encodedBodySize": 45,
+      "endpoint": "node",
+      "fetchStart": 149984.60500001907,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 149985.0799999237,
+      "responseEnd": 150291.33499991894,
+      "responseStart": 150291.0950000286,
+      "secureConnectionStart": 149984.60500001907,
+      "start": 149984.45999991894,
+      "transferSize": 345
+    },
+    {
+      "connectEnd": 149984.74000000954,
+      "connectStart": 149984.74000000954,
+      "decodedBodySize": 45,
+      "domainLookupEnd": 149984.74000000954,
+      "domainLookupStart": 149984.74000000954,
+      "duration": 458.4500000476837,
+      "encodedBodySize": 45,
+      "endpoint": "node",
+      "fetchStart": 149984.74000000954,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 149985.189999938,
+      "responseEnd": 150443.12999999523,
+      "responseStart": 150442.8299999237,
+      "secureConnectionStart": 149984.74000000954,
+      "start": 149984.67999994755,
+      "transferSize": 345
+    },
+    {
+      "connectEnd": 150461.1549999714,
+      "connectStart": 150461.1549999714,
+      "decodedBodySize": 160,
+      "domainLookupEnd": 150461.1549999714,
+      "domainLookupStart": 150461.1549999714,
+      "duration": 316.3250000476837,
+      "encodedBodySize": 160,
+      "endpoint": "node",
+      "fetchStart": 150461.1549999714,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 150461.83499991894,
+      "responseEnd": 150776.75,
+      "responseStart": 150776.50499999523,
+      "secureConnectionStart": 150461.1549999714,
+      "start": 150460.42499995232,
+      "transferSize": 460
+    },
+    {
+      "connectEnd": 150799.10000002384,
+      "connectStart": 150799.10000002384,
+      "decodedBodySize": 2793,
+      "domainLookupEnd": 150799.10000002384,
+      "domainLookupStart": 150799.10000002384,
+      "duration": 315.8700000047684,
+      "encodedBodySize": 2793,
+      "endpoint": "node",
+      "fetchStart": 150799.10000002384,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 150799.75,
+      "responseEnd": 151114.74000000954,
+      "responseStart": 151113.91499996185,
+      "secureConnectionStart": 150799.10000002384,
+      "start": 150798.87000000477,
+      "transferSize": 3093
+    },
+    {
+      "connectEnd": 150799.42999994755,
+      "connectStart": 150799.42999994755,
+      "decodedBodySize": 799,
+      "domainLookupEnd": 150799.42999994755,
+      "domainLookupStart": 150799.42999994755,
+      "duration": 317.1999999284744,
+      "encodedBodySize": 799,
+      "endpoint": "node",
+      "fetchStart": 150799.42999994755,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 150799.9850000143,
+      "responseEnd": 151116.44999992847,
+      "responseStart": 151115.39999997616,
+      "secureConnectionStart": 150799.42999994755,
+      "start": 150799.25,
+      "transferSize": 1099
+    },
+    {
+      "connectEnd": 151126.1549999714,
+      "connectStart": 151126.1549999714,
+      "decodedBodySize": 3577,
+      "domainLookupEnd": 151126.1549999714,
+      "domainLookupStart": 151126.1549999714,
+      "duration": 502.1299999952316,
+      "encodedBodySize": 3577,
+      "endpoint": "node",
+      "fetchStart": 151126.1549999714,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 151126.7350000143,
+      "responseEnd": 151618.3899999857,
+      "responseStart": 151615.314999938,
+      "secureConnectionStart": 151126.1549999714,
+      "start": 151116.25999999046,
+      "transferSize": 3877
+    },
+    {
+      "connectEnd": 151127.44999992847,
+      "connectStart": 151127.44999992847,
+      "decodedBodySize": 2596,
+      "domainLookupEnd": 151127.44999992847,
+      "domainLookupStart": 151127.44999992847,
+      "duration": 313.4800000190735,
+      "encodedBodySize": 2596,
+      "endpoint": "node",
+      "fetchStart": 151127.44999992847,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 151127.81999993324,
+      "responseEnd": 151440.689999938,
+      "responseStart": 151440.4549999237,
+      "secureConnectionStart": 151127.44999992847,
+      "start": 151127.20999991894,
+      "transferSize": 2896
+    },
+    {
+      "connectEnd": 151629.35500001907,
+      "connectStart": 151629.35500001907,
+      "decodedBodySize": 2460,
+      "domainLookupEnd": 151629.35500001907,
+      "domainLookupStart": 151629.35500001907,
+      "duration": 330.9950000047684,
+      "encodedBodySize": 2460,
+      "endpoint": "node",
+      "fetchStart": 151629.35500001907,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 151629.83499991894,
+      "responseEnd": 151960.189999938,
+      "responseStart": 151959.6399999857,
+      "secureConnectionStart": 151629.35500001907,
+      "start": 151629.19499993324,
+      "transferSize": 2760
+    },
+    {
+      "connectEnd": 151629.5799999237,
+      "connectStart": 151629.5799999237,
+      "decodedBodySize": 6176,
+      "domainLookupEnd": 151629.5799999237,
+      "domainLookupStart": 151629.5799999237,
+      "duration": 349.77499997615814,
+      "encodedBodySize": 6176,
+      "endpoint": "node",
+      "fetchStart": 151629.5799999237,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 151630.03999996185,
+      "responseEnd": 151979.15999996662,
+      "responseStart": 151978.89499998093,
+      "secureConnectionStart": 151629.5799999237,
+      "start": 151629.38499999046,
+      "transferSize": 6476
+    },
+    {
+      "connectEnd": 151988.1549999714,
+      "connectStart": 151988.1549999714,
+      "decodedBodySize": 306,
+      "domainLookupEnd": 151988.1549999714,
+      "domainLookupStart": 151988.1549999714,
+      "duration": 327.0500000715256,
+      "encodedBodySize": 306,
+      "endpoint": "node",
+      "fetchStart": 151988.1549999714,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 151988.62999999523,
+      "responseEnd": 152314.99000000954,
+      "responseStart": 152314.66999995708,
+      "secureConnectionStart": 151988.1549999714,
+      "start": 151987.939999938,
+      "transferSize": 606
+    },
+    {
+      "connectEnd": 151995.74500000477,
+      "connectStart": 151995.74500000477,
+      "decodedBodySize": 280,
+      "domainLookupEnd": 151995.74500000477,
+      "domainLookupStart": 151995.74500000477,
+      "duration": 319.5750000476837,
+      "encodedBodySize": 280,
+      "endpoint": "node",
+      "fetchStart": 151995.74500000477,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 151996.25499999523,
+      "responseEnd": 152315.10500001907,
+      "responseStart": 152314.93499994278,
+      "secureConnectionStart": 151995.74500000477,
+      "start": 151995.5299999714,
+      "transferSize": 580
+    },
+    {
+      "duration": 1085.405000090599,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 151997.5799999237
+    },
+    {
+      "connectEnd": 152012.14999997616,
+      "connectStart": 152012.14999997616,
+      "decodedBodySize": 196875,
+      "domainLookupEnd": 152012.14999997616,
+      "domainLookupStart": 152012.14999997616,
+      "duration": 1026.4700000286102,
+      "encodedBodySize": 196875,
+      "endpoint": "node",
+      "fetchStart": 152012.14999997616,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 152012.689999938,
+      "responseEnd": 153038.35000002384,
+      "responseStart": 152491.48000001907,
+      "secureConnectionStart": 152012.14999997616,
+      "start": 152011.87999999523,
+      "transferSize": 197175
+    },
+    {
+      "connectEnd": 152021.51999998093,
+      "connectStart": 152021.51999998093,
+      "decodedBodySize": 151795,
+      "domainLookupEnd": 152021.51999998093,
+      "domainLookupStart": 152021.51999998093,
+      "duration": 895.5950000286102,
+      "encodedBodySize": 151795,
+      "endpoint": "node",
+      "fetchStart": 152021.51999998093,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 152022.12000000477,
+      "responseEnd": 152916.85500001907,
+      "responseStart": 152369.16499996185,
+      "secureConnectionStart": 152021.51999998093,
+      "start": 152021.25999999046,
+      "transferSize": 152095
+    },
+    {
+      "connectEnd": 152964.189999938,
+      "connectStart": 152964.189999938,
+      "decodedBodySize": 44,
+      "domainLookupEnd": 152964.189999938,
+      "domainLookupStart": 152964.189999938,
+      "duration": 311.125,
+      "encodedBodySize": 44,
+      "endpoint": "node",
+      "fetchStart": 152964.189999938,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 152964.79999995232,
+      "responseEnd": 153275.1399999857,
+      "responseStart": 153274.8899999857,
+      "secureConnectionStart": 152964.189999938,
+      "start": 152964.0149999857,
+      "transferSize": 344
+    },
+    {
+      "duration": 0.08000004291534424,
+      "name": "rolling.proof.native.phase.oracle-openv",
+      "start": 153090.01999998093
+    },
+    {
+      "duration": 1.5499999523162842,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 153090.74500000477
+    },
+    {
+      "duration": 321.6749999523163,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 153094.14999997616
+    },
+    {
+      "connectEnd": 153094.54999995232,
+      "connectStart": 153094.54999995232,
+      "decodedBodySize": 1165,
+      "domainLookupEnd": 153094.54999995232,
+      "domainLookupStart": 153094.54999995232,
+      "duration": 318.81500005722046,
+      "encodedBodySize": 1165,
+      "endpoint": "node",
+      "fetchStart": 153094.54999995232,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 153095.00499999523,
+      "responseEnd": 153413.23000001907,
+      "responseStart": 153413.00999999046,
+      "secureConnectionStart": 153094.54999995232,
+      "start": 153094.41499996185,
+      "transferSize": 1465
+    },
+    {
+      "connectEnd": 153094.78999996185,
+      "connectStart": 153094.78999996185,
+      "decodedBodySize": 42,
+      "domainLookupEnd": 153094.78999996185,
+      "domainLookupStart": 153094.78999996185,
+      "duration": 318.6299999952316,
+      "encodedBodySize": 42,
+      "endpoint": "node",
+      "fetchStart": 153094.78999996185,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 153095.19999992847,
+      "responseEnd": 153413.19499993324,
+      "responseStart": 153412.94499993324,
+      "secureConnectionStart": 153094.78999996185,
+      "start": 153094.564999938,
+      "transferSize": 342
+    },
+    {
+      "duration": 0.1499999761581421,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 153430.50999999046
+    },
+    {
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-record-fact",
+      "start": 153430.79499995708
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 153431.9549999237
+    },
+    {
+      "duration": 315.539999961853,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 153431.9700000286
+    },
+    {
+      "connectEnd": 153432.64499998093,
+      "connectStart": 153432.64499998093,
+      "decodedBodySize": 49,
+      "domainLookupEnd": 153432.64499998093,
+      "domainLookupStart": 153432.64499998093,
+      "duration": 313.6750000715256,
+      "encodedBodySize": 49,
+      "endpoint": "node",
+      "fetchStart": 153432.64499998093,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 153433.26999998093,
+      "responseEnd": 153746.10000002384,
+      "responseStart": 153744.85500001907,
+      "secureConnectionStart": 153432.64499998093,
+      "start": 153432.42499995232,
+      "transferSize": 349
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 153747.62999999523
+    },
+    {
+      "connectEnd": 154031.4850000143,
+      "connectStart": 154031.4850000143,
+      "decodedBodySize": 160,
+      "domainLookupEnd": 154031.4850000143,
+      "domainLookupStart": 154031.4850000143,
+      "duration": 335.2549999952316,
+      "encodedBodySize": 160,
+      "endpoint": "node",
+      "fetchStart": 154031.4850000143,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 154032.20999991894,
+      "responseEnd": 154366.51999998093,
+      "responseStart": 154364.12999999523,
+      "secureConnectionStart": 154031.4850000143,
+      "start": 154031.2649999857,
+      "transferSize": 460
+    },
+    {
+      "connectEnd": 154389.8600000143,
+      "connectStart": 154389.8600000143,
+      "decodedBodySize": 10111,
+      "domainLookupEnd": 154389.8600000143,
+      "domainLookupStart": 154389.8600000143,
+      "duration": 330.99000000953674,
+      "encodedBodySize": 10111,
+      "endpoint": "node",
+      "fetchStart": 154389.8600000143,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 154390.4850000143,
+      "responseEnd": 154720.44999992847,
+      "responseStart": 154711.48000001907,
+      "secureConnectionStart": 154389.8600000143,
+      "start": 154389.45999991894,
+      "transferSize": 10411
+    },
+    {
+      "connectEnd": 154723.5,
+      "connectStart": 154723.5,
+      "decodedBodySize": 2060,
+      "domainLookupEnd": 154723.5,
+      "domainLookupStart": 154723.5,
+      "duration": 326.9300000667572,
+      "encodedBodySize": 2060,
+      "endpoint": "node",
+      "fetchStart": 154723.5,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 154724.03499996662,
+      "responseEnd": 155050.13499999046,
+      "responseStart": 155049.88499999046,
+      "secureConnectionStart": 154723.5,
+      "start": 154723.2049999237,
+      "transferSize": 2360
+    },
+    {
+      "connectEnd": 155063.98000001907,
+      "connectStart": 155063.98000001907,
+      "decodedBodySize": 1789,
+      "domainLookupEnd": 155063.98000001907,
+      "domainLookupStart": 155063.98000001907,
+      "duration": 306.0199999809265,
+      "encodedBodySize": 1789,
+      "endpoint": "node",
+      "fetchStart": 155063.98000001907,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 155064.625,
+      "responseEnd": 155369.76999998093,
+      "responseStart": 155369.54499995708,
+      "secureConnectionStart": 155063.98000001907,
+      "start": 155063.75,
+      "transferSize": 2089
+    },
+    {
+      "connectEnd": 208234.40999996665,
+      "connectStart": 208234.40999996665,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 208234.40999996665,
+      "domainLookupStart": 208234.40999996665,
+      "duration": 616.9449999332428,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 208234.40999996665,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 208236.04999995232,
+      "responseEnd": 208845.32499992847,
+      "responseStart": 208678.67499995232,
+      "secureConnectionStart": 208234.40999996665,
+      "start": 208228.37999999523,
+      "transferSize": 12132
+    },
+    {
+      "duration": 945.9350000619888,
+      "name": "rolling.composer.prepare",
+      "start": 208868.03999996185
+    },
+    {
+      "connectEnd": 208869.564999938,
+      "connectStart": 208869.564999938,
+      "decodedBodySize": 363,
+      "domainLookupEnd": 208869.564999938,
+      "domainLookupStart": 208869.564999938,
+      "duration": 493.835000038147,
+      "encodedBodySize": 363,
+      "endpoint": "node",
+      "fetchStart": 208869.564999938,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 208870.96499991417,
+      "responseEnd": 209362.9900000095,
+      "responseStart": 209360.4700000286,
+      "secureConnectionStart": 208869.564999938,
+      "start": 208869.1549999714,
+      "transferSize": 663
+    },
+    {
+      "connectEnd": 208877.8450000286,
+      "connectStart": 208877.8450000286,
+      "decodedBodySize": 2793,
+      "domainLookupEnd": 208877.8450000286,
+      "domainLookupStart": 208877.8450000286,
+      "duration": 474.10000002384186,
+      "encodedBodySize": 2793,
+      "endpoint": "node",
+      "fetchStart": 208877.8450000286,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 208878.875,
+      "responseEnd": 209351.75499999523,
+      "responseStart": 209351.39499998093,
+      "secureConnectionStart": 208877.8450000286,
+      "start": 208877.6549999714,
+      "transferSize": 3093
+    },
+    {
+      "connectEnd": 208879.33999991417,
+      "connectStart": 208879.33999991417,
+      "decodedBodySize": 799,
+      "domainLookupEnd": 208879.33999991417,
+      "domainLookupStart": 208879.33999991417,
+      "duration": 444.61500000953674,
+      "encodedBodySize": 799,
+      "endpoint": "node",
+      "fetchStart": 208879.33999991417,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 208880.125,
+      "responseEnd": 209323.67999994755,
+      "responseStart": 209323.30499994755,
+      "secureConnectionStart": 208879.33999991417,
+      "start": 208879.064999938,
+      "transferSize": 1099
+    },
+    {
+      "connectEnd": 209330.5299999714,
+      "connectStart": 209330.5299999714,
+      "decodedBodySize": 2596,
+      "domainLookupEnd": 209330.5299999714,
+      "domainLookupStart": 209330.5299999714,
+      "duration": 451.70500004291534,
+      "encodedBodySize": 2596,
+      "endpoint": "node",
+      "fetchStart": 209330.5299999714,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 209331.1549999714,
+      "responseEnd": 209781.97500002384,
+      "responseStart": 209778.31999993324,
+      "secureConnectionStart": 209330.5299999714,
+      "start": 209330.26999998093,
+      "transferSize": 2896
+    },
+    {
+      "connectEnd": 209355.5,
+      "connectStart": 209355.5,
+      "decodedBodySize": 1789,
+      "domainLookupEnd": 209355.5,
+      "domainLookupStart": 209355.5,
+      "duration": 308.83000004291534,
+      "encodedBodySize": 1789,
+      "endpoint": "node",
+      "fetchStart": 209355.5,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 209356.14499998093,
+      "responseEnd": 209663.9700000286,
+      "responseStart": 209663.01999998093,
+      "secureConnectionStart": 209355.5,
+      "start": 209355.1399999857,
+      "transferSize": 2089
+    },
+    {
+      "connectEnd": 209364.875,
+      "connectStart": 209364.875,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 209364.875,
+      "domainLookupStart": 209364.875,
+      "duration": 442.6599999666214,
+      "encodedBodySize": 1798,
+      "endpoint": "node",
+      "fetchStart": 209364.875,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 209365.24500000477,
+      "responseEnd": 209807.30499994755,
+      "responseStart": 209807.0950000286,
+      "secureConnectionStart": 209364.875,
+      "start": 209364.64499998093,
+      "transferSize": 2098
+    },
+    {
+      "duration": 1.2349998950958252,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "start": 209786.35000002384
+    },
+    {
+      "duration": 0.06499993801116943,
+      "name": "rolling.proof.native.phase.sync-records",
+      "start": 209787.5950000286
+    },
+    {
+      "duration": 26.139999985694885,
+      "name": "rolling.composer.posting-witnesses",
+      "start": 209787.80499994755
+    },
+    {
+      "duration": 25.195000052452087,
+      "name": "rolling.action.screening",
+      "start": 209787.91999995708
+    },
+    {
+      "duration": 22.550000071525577,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 209790.20999991897
+    },
+    {
+      "duration": 0.039999961853027344,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 209791.625
+    },
+    {
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 209791.69499993324
+    },
+    {
+      "duration": 0.33000004291534424,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 209791.79999995232
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 209793.0599999428
+    },
+    {
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 209793.08999991417
+    },
+    {
+      "duration": 0.125,
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "start": 209793.1349999905
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 209793.27499997616
+    },
+    {
+      "duration": 1.125,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 209801.57499992847
+    },
+    {
+      "duration": 1.559999942779541,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 209802.76999998093
+    },
+    {
+      "duration": 8.075000047683716,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 209804.39499998093
+    },
+    {
+      "duration": 0.7599999904632568,
+      "name": "rolling.action.history-witnesses",
+      "start": 209813.14999997616
+    },
+    {
+      "connectEnd": 254932.9349999428,
+      "connectStart": 254932.9349999428,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 254932.9349999428,
+      "domainLookupStart": 254932.9349999428,
+      "duration": 576.7999999523163,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 254932.9349999428,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 254933.9700000286,
+      "responseEnd": 255505.5799999237,
+      "responseStart": 255367.16999995708,
+      "secureConnectionStart": 254932.9349999428,
+      "start": 254928.7799999714,
+      "transferSize": 12132
+    },
+    {
+      "connectEnd": 327564.9249999523,
+      "connectStart": 327564.9249999523,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 327564.9249999523,
+      "domainLookupStart": 327564.9249999523,
+      "duration": 623.8199999332428,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 327564.9249999523,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 327566.564999938,
+      "responseEnd": 328180.3099999428,
+      "responseStart": 328045.35000002384,
+      "secureConnectionStart": 327564.9249999523,
+      "start": 327556.49000000954,
+      "transferSize": 12132
+    },
+    {
+      "connectEnd": 399090.55499994755,
+      "connectStart": 399090.55499994755,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 399090.55499994755,
+      "domainLookupStart": 399090.55499994755,
+      "duration": 641.835000038147,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 399090.55499994755,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 399092.13499999046,
+      "responseEnd": 399722.625,
+      "responseStart": 399590.92999994755,
+      "secureConnectionStart": 399090.55499994755,
+      "start": 399080.78999996185,
+      "transferSize": 12132
+    },
+    {
+      "connectEnd": 446496.6449999809,
+      "connectStart": 446185.4349999428,
+      "decodedBodySize": 4229,
+      "domainLookupEnd": 446185.4349999428,
+      "domainLookupStart": 446185.42999994755,
+      "duration": 737.25,
+      "encodedBodySize": 2004,
+      "endpoint": "wallet-asset",
+      "fetchStart": 446184.63499999046,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 446496.7300000191,
+      "responseEnd": 446917.9049999714,
+      "responseStart": 446916.6699999571,
+      "secureConnectionStart": 446338.0449999571,
+      "start": 446180.6549999714,
+      "transferSize": 2304
+    },
+    {
+      "connectEnd": 446967.1749999523,
+      "connectStart": 446967.1749999523,
+      "decodedBodySize": 361,
+      "domainLookupEnd": 446967.1749999523,
+      "domainLookupStart": 446967.1749999523,
+      "duration": 485.1200000047684,
+      "encodedBodySize": 361,
+      "endpoint": "node",
+      "fetchStart": 446967.1749999523,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 446971.38499999046,
+      "responseEnd": 447451.6299999952,
+      "responseStart": 447450.61500000954,
+      "secureConnectionStart": 446967.1749999523,
+      "start": 446966.50999999046,
+      "transferSize": 661
+    },
+    {
+      "connectEnd": 471711.5199999809,
+      "connectStart": 471711.5199999809,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 471711.5199999809,
+      "domainLookupStart": 471711.5199999809,
+      "duration": 607.1549999713898,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 471711.5199999809,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 471713.064999938,
+      "responseEnd": 472317.0799999237,
+      "responseStart": 472187.0950000286,
+      "secureConnectionStart": 471711.5199999809,
+      "start": 471709.9249999523,
+      "transferSize": 12132
+    },
+    {
+      "connectEnd": 543286.0449999571,
+      "connectStart": 543286.0449999571,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 543286.0449999571,
+      "domainLookupStart": 543286.0449999571,
+      "duration": 634.454999923706,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 543286.0449999571,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 543299.4349999428,
+      "responseEnd": 543897.8399999142,
+      "responseStart": 543769.9850000143,
+      "secureConnectionStart": 543286.0449999571,
+      "start": 543263.3849999905,
+      "transferSize": 12132
+    },
+    {
+      "connectEnd": 614920.2999999523,
+      "connectStart": 614920.2999999523,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 614920.2999999523,
+      "domainLookupStart": 614920.2999999523,
+      "duration": 674.0900000333786,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 614920.2999999523,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 614922.4499999285,
+      "responseEnd": 615583.4099999666,
+      "responseStart": 615450.5449999571,
+      "secureConnectionStart": 614920.2999999523,
+      "start": 614909.3199999332,
+      "transferSize": 12132
+    },
+    {
+      "duration": 698.3200000524521,
+      "name": "rolling.reader.update",
+      "start": 687566.3399999142
+    },
+    {
+      "connectEnd": 687575.8349999189,
+      "connectStart": 687575.8349999189,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 687575.8349999189,
+      "domainLookupStart": 687575.8349999189,
+      "duration": 679.4299999475479,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 687575.8349999189,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 687577.7599999905,
+      "responseEnd": 688249.2149999142,
+      "responseStart": 688096.7300000191,
+      "secureConnectionStart": 687575.8349999189,
+      "start": 687569.7849999666,
+      "transferSize": 12132
+    },
+    {
+      "duration": 12.125,
+      "name": "rolling.reader.dom",
+      "start": 688252.4750000238
+    },
+    {
+      "duration": 15860.99499988556,
+      "name": "rolling.action.interaction",
+      "start": 714281.4700000286
+    },
+    {
+      "duration": 4336.549999952316,
+      "name": "rolling.action.prepare",
+      "start": 714288.9750000238
+    },
+    {
+      "duration": 1793.3799999952316,
+      "name": "rolling.action.sync",
+      "start": 714289.189999938
+    },
+    {
+      "duration": 538.8149999380112,
+      "name": "rolling.action.payment-prefetch",
+      "start": 714290.0149999857
+    },
+    {
+      "duration": 535.2749999761581,
+      "name": "rolling.action.fee-metadata",
+      "start": 714290.4900000095
+    },
+    {
+      "connectEnd": 714291.3849999905,
+      "connectStart": 714291.3849999905,
+      "decodedBodySize": 3007,
+      "domainLookupEnd": 714291.3849999905,
+      "domainLookupStart": 714291.3849999905,
+      "duration": 533.414999961853,
+      "encodedBodySize": 1496,
+      "endpoint": "node",
+      "fetchStart": 714291.3849999905,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 714292.1599999666,
+      "responseEnd": 714824.5699999332,
+      "responseStart": 714824.4049999714,
+      "secureConnectionStart": 714291.3849999905,
+      "start": 714291.1549999714,
+      "transferSize": 1796
+    },
+    {
+      "connectEnd": 714292.4349999428,
+      "connectStart": 714292.4349999428,
+      "decodedBodySize": 2793,
+      "domainLookupEnd": 714292.4349999428,
+      "domainLookupStart": 714292.4349999428,
+      "duration": 529.7649999856949,
+      "encodedBodySize": 1305,
+      "endpoint": "node",
+      "fetchStart": 714292.4349999428,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 714292.875,
+      "responseEnd": 714822.0299999714,
+      "responseStart": 714821.6699999571,
+      "secureConnectionStart": 714292.4349999428,
+      "start": 714292.2649999857,
+      "transferSize": 1605
+    },
+    {
+      "connectEnd": 714311.6499999762,
+      "connectStart": 714311.6499999762,
+      "decodedBodySize": 799,
+      "domainLookupEnd": 714311.6499999762,
+      "domainLookupStart": 714311.6499999762,
+      "duration": 526.7949999570847,
+      "encodedBodySize": 799,
+      "endpoint": "node",
+      "fetchStart": 714311.6499999762,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 714312.1150000095,
+      "responseEnd": 714838.2799999714,
+      "responseStart": 714838.0799999237,
+      "secureConnectionStart": 714311.6499999762,
+      "start": 714311.4850000143,
+      "transferSize": 1099
+    },
+    {
+      "connectEnd": 714330.1699999571,
+      "connectStart": 714330.1699999571,
+      "decodedBodySize": 363,
+      "domainLookupEnd": 714330.1699999571,
+      "domainLookupStart": 714330.1699999571,
+      "duration": 542.085000038147,
+      "encodedBodySize": 363,
+      "endpoint": "node",
+      "fetchStart": 714330.1699999571,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 714330.7350000143,
+      "responseEnd": 714871.9149999619,
+      "responseStart": 714871.6649999619,
+      "secureConnectionStart": 714330.1699999571,
+      "start": 714329.8299999237,
+      "transferSize": 663
+    },
+    {
+      "connectEnd": 714824.9800000191,
+      "connectStart": 714824.9800000191,
+      "decodedBodySize": 1789,
+      "domainLookupEnd": 714824.9800000191,
+      "domainLookupStart": 714824.9800000191,
+      "duration": 310.0049999952316,
+      "encodedBodySize": 789,
+      "endpoint": "node",
+      "fetchStart": 714824.9800000191,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 714825.4950000048,
+      "responseEnd": 715134.8299999237,
+      "responseStart": 715134.1749999523,
+      "secureConnectionStart": 714824.9800000191,
+      "start": 714824.8249999285,
+      "transferSize": 1089
+    },
+    {
+      "duration": 2.7200000286102295,
+      "name": "rolling.action.fee-binding",
+      "start": 714825.9599999189
+    },
+    {
+      "connectEnd": 714840.5,
+      "connectStart": 714840.5,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 714840.5,
+      "domainLookupStart": 714840.5,
+      "duration": 442.0199999809265,
+      "encodedBodySize": 793,
+      "endpoint": "node",
+      "fetchStart": 714840.5,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 714841,
+      "responseEnd": 715282.3849999905,
+      "responseStart": 715281.4199999571,
+      "secureConnectionStart": 714840.5,
+      "start": 714840.3650000095,
+      "transferSize": 1093
+    },
+    {
+      "connectEnd": 714840.7450000048,
+      "connectStart": 714840.7450000048,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 714840.7450000048,
+      "domainLookupStart": 714840.7450000048,
+      "duration": 461.60000002384186,
+      "encodedBodySize": 835,
+      "endpoint": "node",
+      "fetchStart": 714840.7450000048,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 714841.1949999332,
+      "responseEnd": 715302.1000000238,
+      "responseStart": 715301.2999999523,
+      "secureConnectionStart": 714840.7450000048,
+      "start": 714840.5,
+      "transferSize": 1135
+    },
+    {
+      "connectEnd": 714875.0449999571,
+      "connectStart": 714875.0449999571,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 714875.0449999571,
+      "domainLookupStart": 714875.0449999571,
+      "duration": 324.38499999046326,
+      "encodedBodySize": 835,
+      "endpoint": "node",
+      "fetchStart": 714875.0449999571,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 714875.5349999666,
+      "responseEnd": 715199.1699999571,
+      "responseStart": 715197.1549999714,
+      "secureConnectionStart": 714875.0449999571,
+      "start": 714874.7849999666,
+      "transferSize": 1135
+    },
+    {
+      "connectEnd": 715307.7599999905,
+      "connectStart": 715307.7599999905,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 715307.7599999905,
+      "domainLookupStart": 715307.7599999905,
+      "duration": 322.5199999809265,
+      "encodedBodySize": 835,
+      "endpoint": "node",
+      "fetchStart": 715307.7599999905,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 715309.3550000191,
+      "responseEnd": 715629.7899999619,
+      "responseStart": 715628.6499999762,
+      "secureConnectionStart": 715307.7599999905,
+      "start": 715307.2699999809,
+      "transferSize": 1135
+    },
+    {
+      "connectEnd": 715308.0399999619,
+      "connectStart": 715308.0399999619,
+      "decodedBodySize": 2596,
+      "domainLookupEnd": 715308.0399999619,
+      "domainLookupStart": 715308.0399999619,
+      "duration": 439.8599998950958,
+      "encodedBodySize": 986,
+      "endpoint": "node",
+      "fetchStart": 715308.0399999619,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 715309.6499999762,
+      "responseEnd": 715747.5849999189,
+      "responseStart": 715746.7099999189,
+      "secureConnectionStart": 715308.0399999619,
+      "start": 715307.7250000238,
+      "transferSize": 1286
+    },
+    {
+      "connectEnd": 715765.1649999619,
+      "connectStart": 715765.1649999619,
+      "decodedBodySize": 2596,
+      "domainLookupEnd": 715765.1649999619,
+      "domainLookupStart": 715765.1649999619,
+      "duration": 311.15499997138977,
+      "encodedBodySize": 986,
+      "endpoint": "node",
+      "fetchStart": 715765.1649999619,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 715765.7699999809,
+      "responseEnd": 716076,
+      "responseStart": 716074.064999938,
+      "secureConnectionStart": 715765.1649999619,
+      "start": 715764.8450000286,
+      "transferSize": 1286
+    },
+    {
+      "duration": 1958.969999909401,
+      "name": "rolling.action.contract-state",
+      "start": 716082.7400000095
+    },
+    {
+      "duration": 332,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "start": 716084.8600000143
+    },
+    {
+      "connectEnd": 716086.5149999857,
+      "connectStart": 716086.5149999857,
+      "decodedBodySize": 2460,
+      "domainLookupEnd": 716086.5149999857,
+      "domainLookupStart": 716086.5149999857,
+      "duration": 324.0049999952316,
+      "encodedBodySize": 785,
+      "endpoint": "node",
+      "fetchStart": 716086.5149999857,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 716087.6100000143,
+      "responseEnd": 716410.1349999905,
+      "responseStart": 716409.2949999571,
+      "secureConnectionStart": 716086.5149999857,
+      "start": 716086.1299999952,
+      "transferSize": 1085
+    },
+    {
+      "connectEnd": 716087.0599999428,
+      "connectStart": 716087.0599999428,
+      "decodedBodySize": 6176,
+      "domainLookupEnd": 716087.0599999428,
+      "domainLookupStart": 716087.0599999428,
+      "duration": 323.17000007629395,
+      "encodedBodySize": 2523,
+      "endpoint": "node",
+      "fetchStart": 716087.0599999428,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 716088.1150000095,
+      "responseEnd": 716409.9950000048,
+      "responseStart": 716409.0149999857,
+      "secureConnectionStart": 716087.0599999428,
+      "start": 716086.8249999285,
+      "transferSize": 2823
+    },
+    {
+      "duration": 1295.7549999952316,
+      "name": "rolling.proof.native.phase.sync-records",
+      "start": 716416.9049999714
+    },
+    {
+      "duration": 1232.024999976158,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 716428.7799999714
+    },
+    {
+      "duration": 1283.8150000572205,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 716428.8249999285
+    },
+    {
+      "duration": 3.3499999046325684,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 716432.6000000238
+    },
+    {
+      "duration": 0.04999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 716435.9149999619
+    },
+    {
+      "duration": 0.19999992847442627,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 716435.9950000048
+    },
+    {
+      "duration": 0.18499994277954104,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 716436.0099999905
+    },
+    {
+      "duration": 0.16999995708465576,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 716436.2350000143
+    },
+    {
+      "duration": 0.13999998569488523,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 716436.2649999857
+    },
+    {
+      "duration": 2.330000042915344,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 716436.4349999428
+    },
+    {
+      "duration": 4.5,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 716436.5049999952
+    },
+    {
+      "duration": 35.425000071525574,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 716439.8099999428
+    },
+    {
+      "duration": 34.699999928474426,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 716441.7649999857
+    },
+    {
+      "connectEnd": 716466.0349999666,
+      "connectStart": 716466.0349999666,
+      "decodedBodySize": 74,
+      "domainLookupEnd": 716466.0349999666,
+      "domainLookupStart": 716466.0349999666,
+      "duration": 455.7699999809265,
+      "encodedBodySize": 74,
+      "endpoint": "node",
+      "fetchStart": 716466.0349999666,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 716466.6849999428,
+      "responseEnd": 716921.5849999189,
+      "responseStart": 716921.3249999285,
+      "secureConnectionStart": 716466.0349999666,
+      "start": 716465.814999938,
+      "transferSize": 374
+    },
+    {
+      "duration": 0.3049999475479126,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 716466.5099999905
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 716466.6499999762
+    },
+    {
+      "duration": 0.05500006675720215,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 716466.6999999285
+    },
+    {
+      "connectEnd": 716474.0749999285,
+      "connectStart": 716474.0749999285,
+      "decodedBodySize": 164,
+      "domainLookupEnd": 716474.0749999285,
+      "domainLookupStart": 716474.0749999285,
+      "duration": 307.65000009536743,
+      "encodedBodySize": 164,
+      "endpoint": "node",
+      "fetchStart": 716474.0749999285,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 716474.6050000191,
+      "responseEnd": 716781.4850000143,
+      "responseStart": 716781.2300000191,
+      "secureConnectionStart": 716474.0749999285,
+      "start": 716473.8349999189,
+      "transferSize": 464
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 716475.3500000238
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 716475.3899999857
+    },
+    {
+      "duration": 1178.4800000190735,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 716475.4349999428
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 716476.5499999523
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 716476.5799999237
+    },
+    {
+      "duration": 1234.3899999856949,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 716476.6200000048
+    },
+    {
+      "connectEnd": 716490.1499999762,
+      "connectStart": 716490.1499999762,
+      "decodedBodySize": 196875,
+      "domainLookupEnd": 716490.1499999762,
+      "domainLookupStart": 716490.1499999762,
+      "duration": 781.2050000429153,
+      "encodedBodySize": 74319,
+      "endpoint": "node",
+      "fetchStart": 716490.1499999762,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 716490.5849999189,
+      "responseEnd": 717271.1050000191,
+      "responseStart": 716974.1999999285,
+      "secureConnectionStart": 716490.1499999762,
+      "start": 716489.8999999762,
+      "transferSize": 74619
+    },
+    {
+      "connectEnd": 716499.4950000048,
+      "connectStart": 716499.4950000048,
+      "decodedBodySize": 151795,
+      "domainLookupEnd": 716499.4950000048,
+      "domainLookupStart": 716499.4950000048,
+      "duration": 732.4700000286102,
+      "encodedBodySize": 57692,
+      "endpoint": "node",
+      "fetchStart": 716499.4950000048,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 716500.0799999237,
+      "responseEnd": 717231.6050000191,
+      "responseStart": 716959.5199999809,
+      "secureConnectionStart": 716499.4950000048,
+      "start": 716499.1349999905,
+      "transferSize": 57992
+    },
+    {
+      "connectEnd": 717251.5699999332,
+      "connectStart": 717251.5699999332,
+      "decodedBodySize": 57,
+      "domainLookupEnd": 717251.5699999332,
+      "domainLookupStart": 717251.5699999332,
+      "duration": 446.3400000333786,
+      "encodedBodySize": 57,
+      "endpoint": "node",
+      "fetchStart": 717251.5699999332,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 717252.6549999714,
+      "responseEnd": 717697.3849999905,
+      "responseStart": 717693.375,
+      "secureConnectionStart": 717251.5699999332,
+      "start": 717251.0449999571,
+      "transferSize": 357
+    },
+    {
+      "connectEnd": 717318.9850000143,
+      "connectStart": 717318.9850000143,
+      "decodedBodySize": 57,
+      "domainLookupEnd": 717318.9850000143,
+      "domainLookupStart": 717318.9850000143,
+      "duration": 317.8050000667572,
+      "encodedBodySize": 57,
+      "endpoint": "node",
+      "fetchStart": 717318.9850000143,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 717320.2649999857,
+      "responseEnd": 717636.3700000048,
+      "responseStart": 717636.1349999905,
+      "secureConnectionStart": 717318.9850000143,
+      "start": 717318.564999938,
+      "transferSize": 357
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717653.9850000143
+    },
+    {
+      "duration": 2.4450000524520874,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 717654.0449999571
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717656.5399999619
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717656.564999938
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717656.5950000286
+    },
+    {
+      "duration": 0.039999961853027344,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717656.6499999762
+    },
+    {
+      "duration": 0.0700000524520874,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717656.6999999285
+    },
+    {
+      "duration": 0.040000081062316895,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717656.8049999475
+    },
+    {
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717656.8700000048
+    },
+    {
+      "duration": 0.040000081062316895,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717656.939999938
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717656.9950000048
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717657.0399999619
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.0749999285
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717657.1200000048
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717657.1599999666
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717657.1799999475
+    },
+    {
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.1949999332
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717657.2450000048
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717657.2599999905
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.2799999714
+    },
+    {
+      "duration": 0.0700000524520874,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.3199999332
+    },
+    {
+      "duration": 0.05000007152557373,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717657.4499999285
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717657.5149999857
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.5349999666
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717657.5749999285
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717657.5950000286
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.6150000095
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.6549999714
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717657.6949999332
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717657.7250000238
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.7400000095
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717657.7699999809
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717657.7849999666
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.7949999571
+    },
+    {
+      "duration": 0.015000104904174805,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.8299999237
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717657.8550000191
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717657.8949999809
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.9049999714
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717657.939999938
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717657.9499999285
+    },
+    {
+      "duration": 0.015000104904174805,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.9599999189
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717657.9900000095
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717658.0149999857
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.0449999571
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.0549999475
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717658.0849999189
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.0950000286
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.1100000143
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.1349999905
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717658.1599999666
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.1849999428
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717658.1999999285
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.2099999189
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.2200000286
+    },
+    {
+      "duration": 0.15999996662139893,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 717658.25
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.4249999523
+    },
+    {
+      "duration": 0.060000061988830566,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 717658.4549999237
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 717658.5249999762
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.5449999571
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.5549999475
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.564999938
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.5799999237
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.5950000286
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717658.6399999857
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.6499999762
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.6599999666
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.6949999332
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717658.7350000143
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.7599999905
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717658.7699999809
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.7849999666
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.8199999332
+    },
+    {
+      "duration": 0.08999991416931152,
+      "name": "rolling.proof.native.phase.oracle-delete-fact-collection",
+      "start": 717658.8600000143
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717658.9599999189
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717658.9950000048
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.0099999905
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.0199999809
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.0549999475
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717659.0950000286
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.125
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.1399999857
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.1599999666
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.1949999332
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.2300000191
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717659.2699999809
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.439999938
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.4549999237
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.4950000048
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717659.5299999714
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.5599999428
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.5749999285
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.5950000286
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.6200000048
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.6549999714
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717659.689999938
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.7049999237
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.7149999142
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.7549999952
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717659.7949999571
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.8249999285
+    },
+    {
+      "duration": 0.005000114440917969,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717659.8399999142
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.8550000191
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.8849999905
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-delete-fact-collection",
+      "start": 717659.9199999571
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717659.9599999189
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717659.9950000048
+    },
+    {
+      "duration": 0.12999999523162842,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717660.0099999905
+    },
+    {
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717660.1599999666
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717660.2149999142
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 717660.2549999952
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717660.2899999619
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717660.314999938
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717660.3299999237
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 717660.3600000143
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-delete-fact-collection",
+      "start": 717660.3999999762
+    },
+    {
+      "duration": 0.2850000858306885,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 717660.439999938
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 717660.7350000143
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 717660.75
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717711.0749999285
+    },
+    {
+      "duration": 0.9049999713897704,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 717711.1449999809
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717712.0749999285
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.1000000238
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717712.1200000048
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.1349999905
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 717712.1599999666
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.1749999523
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.1949999332
+    },
+    {
+      "duration": 0.13499999046325684,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 717712.2300000191
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.3700000048
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 717712.3849999905
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 717712.4249999523
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.4349999428
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.4499999285
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.4549999237
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 717712.4700000286
+    },
+    {
+      "duration": 0.09999990463256836,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 717712.4800000191
+    },
+    {
+      "duration": 0.010000109672546388,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 717712.5849999189
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 717712.6000000238
+    },
+    {
+      "duration": 577.7649999856949,
+      "name": "rolling.action.predecessor",
+      "start": 718041.8700000048
+    },
+    {
+      "connectEnd": 718084.1200000048,
+      "connectStart": 718084.1200000048,
+      "decodedBodySize": 3595,
+      "domainLookupEnd": 718084.1200000048,
+      "domainLookupStart": 718084.1200000048,
+      "duration": 535.6000000238419,
+      "encodedBodySize": 1070,
+      "endpoint": "node",
+      "fetchStart": 718084.1200000048,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 718088.7250000238,
+      "responseEnd": 718616.6849999428,
+      "responseStart": 718615.9249999523,
+      "secureConnectionStart": 718084.1200000048,
+      "start": 718081.0849999189,
+      "transferSize": 1370
+    },
+    {
+      "duration": 0.07999992370605469,
+      "name": "rolling.action.arguments",
+      "start": 718619.9750000238
+    },
+    {
+      "duration": 11513.689999938011,
+      "name": "rolling.action.submit",
+      "start": 718625.6449999809
+    },
+    {
+      "duration": 34.78999996185303,
+      "name": "rolling.transaction.estimating",
+      "start": 718647.6000000238
+    },
+    {
+      "duration": 0.11500000953674316,
+      "name": "rolling.action.fee-prepare",
+      "start": 718647.6549999714
+    },
+    {
+      "duration": 15.4650000333786,
+      "name": "rolling.action.fee-simulate",
+      "start": 718647.7799999714
+    },
+    {
+      "duration": 14.835000038146973,
+      "name": "rolling.action.fee-balance",
+      "start": 718648.1799999475
+    },
+    {
+      "duration": 13.324999928474426,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 718649.5049999952
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 718649.939999938
+    },
+    {
+      "duration": 0.07999992370605469,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 718649.9850000143
+    },
+    {
+      "duration": 12.349999904632568,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 718650.2350000143
+    },
+    {
+      "duration": 0.2450000047683716,
+      "name": "rolling.transaction.submitting",
+      "start": 718682.3999999762
+    },
+    {
+      "duration": 30.99500000476837,
+      "name": "rolling.transaction.preparing",
+      "start": 718682.6499999762
+    },
+    {
+      "duration": 2.009999990463257,
+      "name": "rolling.proof.wallet.phase.account-request",
+      "start": 718713.5950000286
+    },
+    {
+      "duration": 6895.409999966621,
+      "name": "rolling.transaction.proving",
+      "start": 718713.6549999714
+    },
+    {
+      "duration": 6793.695000052452,
+      "name": "rolling.proof.wallet.phase.prove-tx-with-public-validation",
+      "start": 718715.6549999714
+    },
+    {
+      "duration": 0.5100001096725464,
+      "name": "rolling.proof.native.phase.queue-and-anchor",
+      "start": 718715.7149999142
+    },
+    {
+      "duration": 73.32499992847443,
+      "name": "rolling.proof.native.phase.private-execution",
+      "start": 718716.25
+    },
+    {
+      "duration": 69.63999998569489,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 718718.1349999905
+    },
+    {
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 718726.8299999237
+    },
+    {
+      "duration": 0.2999999523162842,
+      "name": "rolling.proof.native.phase.oracle-get-capsule",
+      "start": 718727.4700000286
+    },
+    {
+      "duration": 0.2399998903274536,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 718727.8500000238
+    },
+    {
+      "duration": 0.039999961853027344,
+      "name": "rolling.proof.native.phase.oracle-get-auth-witness",
+      "start": 718728.7200000286
+    },
+    {
+      "duration": 46.84499990940094,
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "start": 718729.2200000286
+    },
+    {
+      "duration": 42.22000002861023,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 718730.6649999619
+    },
+    {
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 718739.3849999905
+    },
+    {
+      "duration": 9.214999914169312,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 718739.7300000191
+    },
+    {
+      "duration": 0.7150000333786011,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 718750.4449999332
+    },
+    {
+      "duration": 1.165000081062317,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 718751.5599999428
+    },
+    {
+      "duration": 0.06499993801116943,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "start": 718752.7699999809
+    },
+    {
+      "duration": 0.6850000619888306,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 718752.9149999619
+    },
+    {
+      "duration": 0.0549999475479126,
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "start": 718754.0349999666
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 718754.1799999475
+    },
+    {
+      "duration": 0.13499999046325684,
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "start": 718754.3500000238
+    },
+    {
+      "duration": 0.7749999761581421,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 718754.5049999952
+    },
+    {
+      "duration": 1.649999976158142,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 718755.7350000143
+    },
+    {
+      "duration": 8.795000076293945,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "start": 718757.4649999142
+    },
+    {
+      "duration": 0.12000000476837158,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "start": 718766.4649999142
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 718766.6999999285
+    },
+    {
+      "duration": 0.060000061988830566,
+      "name": "rolling.proof.native.phase.oracle-notify-created-nullifier",
+      "start": 718766.7949999571
+    },
+    {
+      "duration": 0.684999942779541,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 718766.8799999952
+    },
+    {
+      "duration": 1.1999999284744265,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 718768.0149999857
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "start": 718769.2849999666
+    },
+    {
+      "duration": 0.0849999189376831,
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "start": 718769.4750000238
+    },
+    {
+      "duration": 0.04499995708465576,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "start": 718769.7899999619
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "start": 718769.8450000286
+    },
+    {
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "start": 718769.8799999952
+    },
+    {
+      "duration": 0.1549999713897705,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 718770.0249999762
+    },
+    {
+      "duration": 0.17500007152557373,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 718770.2999999523
+    },
+    {
+      "duration": 0.12999999523162842,
+      "name": "rolling.proof.native.phase.oracle-notify-revertible-phase-start",
+      "start": 718770.4900000095
+    },
+    {
+      "duration": 9.729999899864197,
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "start": 718776.1000000238
+    },
+    {
+      "duration": 5.375,
+      "name": "rolling.proof.native.phase.circuit",
+      "start": 718778.814999938
+    },
+    {
+      "duration": 0.010000109672546388,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 718779.5849999189
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "start": 718779.6299999952
+    },
+    {
+      "duration": 0.8949999809265137,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 718779.6499999762
+    },
+    {
+      "duration": 0.059999942779541016,
+      "name": "rolling.proof.native.phase.oracle-is-nullifier-pending",
+      "start": 718781.0199999809
+    },
+    {
+      "duration": 0.7799999713897705,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 718781.1000000238
+    },
+    {
+      "duration": 1.065000057220459,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 718782.2949999571
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "start": 718783.5499999523
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "start": 718783.5799999237
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "start": 718783.6000000238
+    },
+    {
+      "duration": 0.5750000476837158,
+      "name": "rolling.proof.native.phase.kernel-class-hints",
+      "start": 718789.7749999762
+    },
+    {
+      "connectEnd": 718790.1849999428,
+      "connectStart": 718790.1849999428,
+      "decodedBodySize": 5828,
+      "domainLookupEnd": 718790.1849999428,
+      "domainLookupStart": 718790.1849999428,
+      "duration": 462.3250000476837,
+      "encodedBodySize": 3056,
+      "endpoint": "node",
+      "fetchStart": 718790.1849999428,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 718790.8650000095,
+      "responseEnd": 719252.3650000095,
+      "responseStart": 719251.4499999285,
+      "secureConnectionStart": 718790.1849999428,
+      "start": 718790.0399999619,
+      "transferSize": 3356
+    },
+    {
+      "duration": 1874.7649999856949,
+      "name": "rolling.proof.native.phase.kernel-body",
+      "start": 718790.3550000191
+    },
+    {
+      "duration": 0.059999942779541016,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "start": 718797.1000000238
+    },
+    {
+      "duration": 174,
+      "kind": "longtask",
+      "start": 718797.1399999857
+    },
+    {
+      "duration": 11.820000052452087,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "start": 718797.1649999619
+    },
+    {
+      "duration": 141.3399999141693,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "start": 718809
+    },
+    {
+      "duration": 20.899999976158146,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "start": 718950.3600000143
+    },
+    {
+      "duration": 2.450000047683716,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "start": 718971.2849999666
+    },
+    {
+      "duration": 7.014999985694885,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "start": 718973.7699999809
+    },
+    {
+      "duration": 0.3549998998641968,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "start": 719257.4750000238
+    },
+    {
+      "duration": 1267,
+      "kind": "longtask",
+      "start": 719257.7549999952
+    },
+    {
+      "duration": 67.46499991416931,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "start": 719257.8650000095
+    },
+    {
+      "duration": 1008.0099999904633,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "start": 719325.3799999952
+    },
+    {
+      "duration": 191.6050000190735,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "start": 720333.4249999523
+    },
+    {
+      "duration": 2.1850000619888306,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "start": 720525.0549999475
+    },
+    {
+      "duration": 29.704999923706055,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "start": 720527.2599999905
+    },
+    {
+      "duration": 0.5,
+      "name": "rolling.proof.native.phase.kernel-artifact",
+      "start": 720557.9800000191
+    },
+    {
+      "duration": 102,
+      "kind": "longtask",
+      "start": 720558.4299999475
+    },
+    {
+      "duration": 22.475000023841854,
+      "name": "rolling.proof.native.phase.kernel-input-abi",
+      "start": 720558.4950000048
+    },
+    {
+      "duration": 42.12999999523163,
+      "name": "rolling.proof.native.phase.kernel-acvm",
+      "start": 720581.0249999762
+    },
+    {
+      "duration": 37.16500008106232,
+      "name": "rolling.proof.native.phase.kernel-output-abi",
+      "start": 720623.2149999142
+    },
+    {
+      "duration": 1.950000047683716,
+      "name": "rolling.proof.native.phase.kernel-verification-key",
+      "start": 720660.4249999523
+    },
+    {
+      "duration": 129,
+      "kind": "longtask",
+      "start": 720660.8049999475
+    },
+    {
+      "duration": 1.4199999570846558,
+      "name": "rolling.proof.native.phase.kernel-bytecode",
+      "start": 720662.3949999809
+    },
+    {
+      "duration": 588.6599999666214,
+      "name": "rolling.proof.native.phase.validation",
+      "start": 720665.1649999619
+    },
+    {
+      "duration": 94.93999993801116,
+      "name": "rolling.proof.native.phase.validation-transaction",
+      "start": 720676.1200000048
+    },
+    {
+      "duration": 482.5049999952316,
+      "name": "rolling.proof.native.phase.public-execution",
+      "start": 720771.2649999857
+    },
+    {
+      "duration": 476.5500000715256,
+      "name": "rolling.proof.native.phase.admission-check",
+      "start": 720777.1999999285
+    },
+    {
+      "connectEnd": 720794.75,
+      "connectStart": 720794.75,
+      "decodedBodySize": 5137,
+      "domainLookupEnd": 720794.75,
+      "domainLookupStart": 720794.75,
+      "duration": 456.5550000667572,
+      "encodedBodySize": 2304,
+      "endpoint": "node",
+      "fetchStart": 720794.75,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 720797.6799999475,
+      "responseEnd": 721250.7699999809,
+      "responseStart": 721249.8700000048,
+      "secureConnectionStart": 720794.75,
+      "start": 720794.2149999142,
+      "transferSize": 2604
+    },
+    {
+      "duration": 4209.390000104904,
+      "name": "rolling.proof.native.phase.remote-proof",
+      "start": 721253.8399999142
+    },
+    {
+      "duration": 42.02499997615814,
+      "name": "rolling.proof.transport.serialize",
+      "start": 721253.8550000191
+    },
+    {
+      "duration": 1.8600000143051147,
+      "name": "rolling.proof.transport.circuit-ids",
+      "start": 721253.8650000095
+    },
+    {
+      "duration": 31.830000042915344,
+      "name": "rolling.proof.transport.dictionary",
+      "start": 721255.9149999619
+    },
+    {
+      "duration": 7.995000004768372,
+      "name": "rolling.proof.transport.compress",
+      "start": 721287.7899999619
+    },
+    {
+      "duration": 1052.1299999952316,
+      "name": "rolling.proof.transport.submit",
+      "start": 721295.8949999809
+    },
+    {
+      "connectEnd": 721541.6849999428,
+      "connectStart": 721299.1549999714,
+      "decodedBodySize": 73,
+      "domainLookupEnd": 721299.1549999714,
+      "domainLookupStart": 721299.1449999809,
+      "duration": 1049.6349999904633,
+      "encodedBodySize": 73,
+      "endpoint": "prover-submit",
+      "fetchStart": 721298.1649999619,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 721541.9099999666,
+      "responseEnd": 722346.9449999332,
+      "responseStart": 722346.4900000095,
+      "secureConnectionStart": 721426.5599999428,
+      "serverBody": 586.321,
+      "serverBodyBytes": 112906,
+      "serverBodyChunks": 45,
+      "serverBodyFirst": 108.182,
+      "serverBodyGap": 108.182,
+      "serverQueue": 1.104,
+      "serverValidate": 0.481,
+      "start": 721297.3099999428,
+      "transferSize": 373
+    },
+    {
+      "duration": 2621.2200000286102,
+      "name": "rolling.proof.transport.wait",
+      "start": 722348.1449999809
+    },
+    {
+      "connectEnd": 722350.1050000191,
+      "connectStart": 722350.1050000191,
+      "decodedBodySize": 149488,
+      "domainLookupEnd": 722350.1050000191,
+      "domainLookupStart": 722350.1050000191,
+      "duration": 2619.539999961853,
+      "encodedBodySize": 149488,
+      "endpoint": "prover-result",
+      "fetchStart": 722350.1050000191,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 722351.2250000238,
+      "responseEnd": 724967.8299999237,
+      "responseStart": 722560.5899999142,
+      "secureConnectionStart": 722350.1050000191,
+      "start": 722348.2899999619,
+      "transferSize": 149788
+    },
+    {
+      "aggregateMs": 0.32875200000125915,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.persist",
+      "start": 724968.1549999714
+    },
+    {
+      "aggregateMs": 0.14343100000405684,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.queue-wait",
+      "start": 724968.2799999714
+    },
+    {
+      "aggregateMs": 2257.992094999994,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready",
+      "start": 724968.314999938
+    },
+    {
+      "aggregateMs": 0.5508030000200961,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.read",
+      "start": 724968.3399999142
+    },
+    {
+      "aggregateMs": 62.098391000006814,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.decompress",
+      "start": 724968.3500000238
+    },
+    {
+      "aggregateMs": 28.55573399999412,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.binding",
+      "start": 724968.3700000048
+    },
+    {
+      "aggregateMs": 30.7931390000158,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.backend",
+      "start": 724968.3849999905
+    },
+    {
+      "aggregateMs": 2133.7080120000173,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.native-prove",
+      "start": 724968.4049999714
+    },
+    {
+      "aggregateMs": 0.3571529999899212,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-start",
+      "start": 724968.4149999619
+    },
+    {
+      "aggregateMs": 237.98364600000787,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-load",
+      "start": 724968.4249999523
+    },
+    {
+      "aggregateMs": 915.656438999984,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-accumulate",
+      "start": 724968.439999938
+    },
+    {
+      "aggregateMs": 933.0659110000124,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-prove",
+      "start": 724968.4449999332
+    },
+    {
+      "aggregateMs": 42.32639400000335,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-verify",
+      "start": 724968.4700000286
+    },
+    {
+      "aggregateMs": 2.122383999987506,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.bb-compress",
+      "start": 724968.4800000191
+    },
+    {
+      "aggregateMs": 0.2355209999950603,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-encode",
+      "start": 724968.5
+    },
+    {
+      "aggregateMs": 2255.9863610000175,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.child-total",
+      "start": 724968.5049999952
+    },
+    {
+      "aggregateMs": 0.007809999980963767,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.ready-wait",
+      "start": 724968.5149999857
+    },
+    {
+      "aggregateMs": 2257.5643820000114,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.dispatch-to-result",
+      "start": 724968.5249999762
+    },
+    {
+      "aggregateMs": 0.1203910000040196,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.server.result-ready-to-snapshot",
+      "start": 724968.5399999619
+    },
+    {
+      "connectEnd": 724969.4950000048,
+      "connectStart": 724969.4950000048,
+      "decodedBodySize": 21,
+      "domainLookupEnd": 724969.4950000048,
+      "domainLookupStart": 724969.4950000048,
+      "duration": 211.67000007629397,
+      "encodedBodySize": 21,
+      "endpoint": "prover-job",
+      "fetchStart": 724969.4950000048,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 724971.1150000095,
+      "responseEnd": 725180.6000000238,
+      "responseStart": 725179.9800000191,
+      "secureConnectionStart": 724969.4950000048,
+      "start": 724968.9299999475,
+      "transferSize": 321
+    },
+    {
+      "duration": 31.705000042915344,
+      "name": "rolling.proof.local.decompress",
+      "start": 724971.1699999571
+    },
+    {
+      "duration": 449.2099999189377,
+      "name": "rolling.proof.local.verify",
+      "start": 725002.9950000048
+    },
+    {
+      "duration": 38.62001955509186,
+      "name": "rolling.proof.native.phase.worker-verify-before-entry",
+      "start": 725003.1699999571
+    },
+    {
+      "duration": 410.039999961853,
+      "name": "rolling.proof.native.phase.worker-verify-cbind",
+      "start": 725041.7900195122
+    },
+    {
+      "duration": 409.9300000667572,
+      "name": "rolling.proof.native.phase.worker-verify-wasm",
+      "start": 725041.8600194454
+    },
+    {
+      "duration": 53,
+      "kind": "longtask",
+      "start": 725451.7899999619
+    },
+    {
+      "duration": 0.2699805498123169,
+      "name": "rolling.proof.native.phase.worker-verify-after-exit",
+      "start": 725451.830019474
+    },
+    {
+      "duration": 1.100000023841858,
+      "name": "rolling.proof.native.phase.proof-public-inputs",
+      "start": 725463.2699999809
+    },
+    {
+      "duration": 42.17499995231629,
+      "name": "rolling.proof.native.phase.result-and-tag-persistence",
+      "start": 725464.5099999905
+    },
+    {
+      "aggregateMs": 6748.679999947548,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.total",
+      "start": 725509.5499999523
+    },
+    {
+      "aggregateMs": 0,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.sync",
+      "start": 725509.5699999332
+    },
+    {
+      "aggregateMs": 70.92499995231628,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.private-witness",
+      "start": 725509.5749999285
+    },
+    {
+      "aggregateMs": 1590.2100001573565,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.kernel-witness",
+      "start": 725509.5749999285
+    },
+    {
+      "aggregateMs": 577.704999923706,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.public-validation",
+      "start": 725509.5849999189
+    },
+    {
+      "aggregateMs": 4209.435000061989,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.proof-transport",
+      "start": 725509.5849999189
+    },
+    {
+      "aggregateMs": 300.4049998521805,
+      "duration": 0,
+      "name": "rolling.proof.aggregate.native.unaccounted",
+      "start": 725509.5950000286
+    },
+    {
+      "duration": 25.239999890327457,
+      "name": "rolling.proof.wallet.phase.to-tx",
+      "start": 725509.6000000238
+    },
+    {
+      "duration": 0.0549999475479126,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "start": 725534.8849999905
+    },
+    {
+      "duration": 23.0349999666214,
+      "name": "rolling.proof.wallet.phase.guard-before-journal",
+      "start": 725534.9700000286
+    },
+    {
+      "duration": 34.71000003814697,
+      "name": "rolling.proof.wallet.phase.journal-prepare",
+      "start": 725558.0349999666
+    },
+    {
+      "duration": 16.105000019073486,
+      "name": "rolling.proof.wallet.phase.journal-signed",
+      "start": 725592.7749999762
+    },
+    {
+      "duration": 0.034999966621398926,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "start": 725608.9049999714
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.wallet.phase.context-guard",
+      "start": 725608.9449999332
+    },
+    {
+      "duration": 1.950000047683716,
+      "name": "rolling.proof.wallet.phase.signed-guard",
+      "start": 725609.0349999666
+    },
+    {
+      "duration": 529.0400000810623,
+      "name": "rolling.transaction.submitting",
+      "start": 725609.0699999332
+    },
+    {
+      "duration": 526.954999923706,
+      "name": "rolling.proof.wallet.phase.submit-to-aztec",
+      "start": 725610.9950000048
+    },
+    {
+      "connectEnd": 725615.5849999189,
+      "connectStart": 725615.5849999189,
+      "decodedBodySize": 42,
+      "domainLookupEnd": 725615.5849999189,
+      "domainLookupStart": 725615.5849999189,
+      "duration": 522.0800000429153,
+      "encodedBodySize": 42,
+      "endpoint": "node",
+      "fetchStart": 725615.5849999189,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 725616.1999999285,
+      "responseEnd": 726137.2350000143,
+      "responseStart": 726136.939999938,
+      "secureConnectionStart": 725615.5849999189,
+      "start": 725615.1549999714,
+      "transferSize": 342
+    },
+    {
+      "duration": 2969.139999985695,
+      "name": "rolling.transaction.aztec-inclusion",
+      "start": 726137.9900000095
+    },
+    {
+      "duration": 4001.314999938011,
+      "name": "rolling.transaction.confirming",
+      "start": 726138.1150000095
+    },
+    {
+      "duration": 313.8199999332428,
+      "name": "rolling.proof.receipt.phase.read",
+      "start": 726138.4850000143
+    },
+    {
+      "connectEnd": 726138.9499999285,
+      "connectStart": 726138.9499999285,
+      "decodedBodySize": 136,
+      "domainLookupEnd": 726138.9499999285,
+      "domainLookupStart": 726138.9499999285,
+      "duration": 311.7350000143051,
+      "encodedBodySize": 136,
+      "endpoint": "node",
+      "fetchStart": 726138.9499999285,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 726139.6549999714,
+      "responseEnd": 726450.4499999285,
+      "responseStart": 726449.6150000095,
+      "secureConnectionStart": 726138.9499999285,
+      "start": 726138.7149999142,
+      "transferSize": 436
+    },
+    {
+      "duration": 0.015000104904174805,
+      "name": "rolling.proof.receipt.phase.pending",
+      "start": 726452.3399999142
+    },
+    {
+      "duration": 321.6950000524521,
+      "name": "rolling.proof.receipt.phase.read",
+      "start": 727454.564999938
+    },
+    {
+      "connectEnd": 727455.5199999809,
+      "connectStart": 727455.5199999809,
+      "decodedBodySize": 136,
+      "domainLookupEnd": 727455.5199999809,
+      "domainLookupStart": 727455.5199999809,
+      "duration": 319.6100000143051,
+      "encodedBodySize": 136,
+      "endpoint": "node",
+      "fetchStart": 727455.5199999809,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 727457.1949999332,
+      "responseEnd": 727774.6549999714,
+      "responseStart": 727773.9199999571,
+      "secureConnectionStart": 727455.5199999809,
+      "start": 727455.0449999571,
+      "transferSize": 436
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.receipt.phase.pending",
+      "start": 727776.3500000238
+    },
+    {
+      "duration": 329.4099999666214,
+      "name": "rolling.proof.receipt.phase.read",
+      "start": 728777.4149999619
+    },
+    {
+      "connectEnd": 728778.8099999428,
+      "connectStart": 728778.8099999428,
+      "decodedBodySize": 359,
+      "domainLookupEnd": 728778.8099999428,
+      "domainLookupStart": 728778.8099999428,
+      "duration": 327.1750000715256,
+      "encodedBodySize": 359,
+      "endpoint": "node",
+      "fetchStart": 728778.8099999428,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 728780.7549999952,
+      "responseEnd": 729105.375,
+      "responseStart": 729104.8999999762,
+      "secureConnectionStart": 728778.8099999428,
+      "start": 728778.1999999285,
+      "transferSize": 659
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.receipt.phase.proposed",
+      "start": 729106.8700000048
+    },
+    {
+      "duration": 1.1399999856948853,
+      "name": "rolling.proof.receipt.phase.display-callback",
+      "start": 729106.9850000143
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.action.included",
+      "start": 729107.6449999809
+    },
+    {
+      "duration": 723.1950000524521,
+      "name": "rolling.reader.update",
+      "start": 729108.4299999475
+    },
+    {
+      "connectEnd": 729110.5,
+      "connectStart": 729110.5,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 729110.5,
+      "domainLookupStart": 729110.5,
+      "duration": 713.5949999094009,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 729110.5,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 729111.8249999285,
+      "responseEnd": 729823.3199999332,
+      "responseStart": 729685.6000000238,
+      "secureConnectionStart": 729110.5,
+      "start": 729109.7250000238,
+      "transferSize": 12132
+    },
+    {
+      "connectEnd": 729111,
+      "connectStart": 729111,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 729111,
+      "domainLookupStart": 729111,
+      "duration": 312.72000002861023,
+      "encodedBodySize": 838,
+      "endpoint": "node",
+      "fetchStart": 729111,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 729112.2149999142,
+      "responseEnd": 729423.2649999857,
+      "responseStart": 729421.4299999475,
+      "secureConnectionStart": 729111,
+      "start": 729110.5449999571,
+      "transferSize": 1138
+    },
+    {
+      "connectEnd": 729469.2599999905,
+      "connectStart": 729469.2599999905,
+      "decodedBodySize": 359,
+      "domainLookupEnd": 729469.2599999905,
+      "domainLookupStart": 729469.2599999905,
+      "duration": 317.664999961853,
+      "encodedBodySize": 359,
+      "endpoint": "node",
+      "fetchStart": 729469.2599999905,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 729469.8199999332,
+      "responseEnd": 729786.6699999571,
+      "responseStart": 729785.9850000143,
+      "secureConnectionStart": 729469.2599999905,
+      "start": 729469.0049999952,
+      "transferSize": 659
+    },
+    {
+      "connectEnd": 729789.6649999619,
+      "connectStart": 729789.6649999619,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 729789.6649999619,
+      "domainLookupStart": 729789.6649999619,
+      "duration": 310.27499997615814,
+      "encodedBodySize": 838,
+      "endpoint": "node",
+      "fetchStart": 729789.6649999619,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 729791.2300000191,
+      "responseEnd": 730099.3799999952,
+      "responseStart": 730098.4149999619,
+      "secureConnectionStart": 729789.6649999619,
+      "start": 729789.1050000191,
+      "transferSize": 1138
+    },
+    {
+      "duration": 6.395000100135803,
+      "name": "rolling.reader.dom",
+      "start": 729825.1999999285
+    },
+    {
+      "duration": 653.6299999952316,
+      "name": "rolling.reader.update",
+      "start": 759731.1599999666
+    },
+    {
+      "connectEnd": 759733.0399999619,
+      "connectStart": 759733.0399999619,
+      "decodedBodySize": 11832,
+      "domainLookupEnd": 759733.0399999619,
+      "domainLookupStart": 759733.0399999619,
+      "duration": 643.4350000619888,
+      "encodedBodySize": 11832,
+      "endpoint": "public-read",
+      "fetchStart": 759733.0399999619,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 759734.2250000238,
+      "responseEnd": 760375.8500000238,
+      "responseStart": 760252.3849999905,
+      "secureConnectionStart": 759733.0399999619,
+      "start": 759732.4149999619,
+      "transferSize": 12132
+    },
+    {
+      "duration": 7.060000061988831,
+      "name": "rolling.reader.dom",
+      "start": 760377.7099999189
+    },
+    {
+      "connectEnd": 760394.6549999714,
+      "connectStart": 760394.6549999714,
+      "decodedBodySize": 363,
+      "domainLookupEnd": 760394.6549999714,
+      "domainLookupStart": 760394.6549999714,
+      "duration": 322.4099999666214,
+      "encodedBodySize": 363,
+      "endpoint": "node",
+      "fetchStart": 760394.6549999714,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 760396.6699999571,
+      "responseEnd": 760716.4249999523,
+      "responseStart": 760715.5599999428,
+      "secureConnectionStart": 760394.6549999714,
+      "start": 760394.0149999857,
+      "transferSize": 663
+    },
+    {
+      "connectEnd": 760721.8999999762,
+      "connectStart": 760721.8999999762,
+      "decodedBodySize": 1798,
+      "domainLookupEnd": 760721.8999999762,
+      "domainLookupStart": 760721.8999999762,
+      "duration": 336.27999997138977,
+      "encodedBodySize": 838,
+      "endpoint": "node",
+      "fetchStart": 760721.8999999762,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 760723.8399999142,
+      "responseEnd": 761056.7599999905,
+      "responseStart": 761055.4950000048,
+      "secureConnectionStart": 760721.8999999762,
+      "start": 760720.4800000191,
+      "transferSize": 1138
+    },
+    {
+      "category": "resource",
+      "count": 77,
+      "duration": 0,
+      "kind": "trace-overflow",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 2,
+      "duration": 0,
+      "inclusiveMs": 0.9649999141693116,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-capsule",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 2,
+      "duration": 0,
+      "inclusiveMs": 0.09500002861022948,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-auth-witness",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 0.10499989986419678,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-set-hash-preimage",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 0.05500006675720215,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-assert-valid-public-calldata",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 2,
+      "duration": 0,
+      "inclusiveMs": 0.28999996185302734,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-notify-revertible-phase-start",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 92.47999978065492,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-call-private-function",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 2,
+      "duration": 0,
+      "inclusiveMs": 0.18499994277954104,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-is-nullifier-pending",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 0.19499993324279785,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-notify-nullified-note",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 2,
+      "duration": 0,
+      "inclusiveMs": 0.1950000524520874,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-notify-created-note",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 2,
+      "duration": 0,
+      "inclusiveMs": 0.16000008583068848,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-notify-created-nullifier",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 8.850000023841858,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-next-tagging-index",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 0.2799999713897705,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-sealv",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 4,
+      "duration": 0,
+      "inclusiveMs": 0.0549999475479126,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-is-execution-in-revertible-phase",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 3498.275000095367,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 1,
+      "duration": 0,
+      "inclusiveMs": 0.08000004291534424,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-openv",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 4.899999976158142,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 321.7649999856949,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 5,
+      "duration": 0,
+      "inclusiveMs": 0.7749999761581421,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 1,
+      "duration": 0,
+      "inclusiveMs": 0.07500004768371582,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-record-fact",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 46,
+      "duration": 0,
+      "inclusiveMs": 0.4999998807907105,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 315.9249999523163,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 7,
+      "duration": 0,
+      "inclusiveMs": 0.05500006675720215,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 8,
+      "duration": 0,
+      "inclusiveMs": 3.569999933242798,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 7,
+      "duration": 0,
+      "inclusiveMs": 0.904999852180481,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 1.4649999141693115,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 21,
+      "duration": 0,
+      "inclusiveMs": 0.19999992847442627,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 18,
+      "duration": 0,
+      "inclusiveMs": 0.535000205039978,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 1,
+      "duration": 0,
+      "inclusiveMs": 0.125,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 46,
+      "duration": 0,
+      "inclusiveMs": 1.1250004768371582,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 8,
+      "duration": 0,
+      "inclusiveMs": 11.59500002861023,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 7,
+      "duration": 0,
+      "inclusiveMs": 76.76499998569489,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 29.639999866485596,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 763476.1050000191
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 0.14999985694885254,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-delete-fact-collection",
+      "start": 763476.1050000191
+    }
+  ],
+  "trace": {
+    "clicked": 714280.6949999332,
+    "events": [
+      {
+        "name": "click",
+        "start": 714280.6949999332
+      },
+      {
+        "name": "effect-dom",
+        "start": 729836.2599999905
+      },
+      {
+        "name": "effect-frame",
+        "start": 729837.8600000143
+      }
+    ],
+    "frame": 729837.8600000143,
+    "initialVisibility": "visible",
+    "label": "2f43-gzip-unlike",
+    "timeOrigin": 1792911214392.09,
+    "visible": 729836.2599999905
+  }
+}

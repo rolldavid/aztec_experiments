@@ -1,0 +1,31 @@
+{
+  "readOnly": true,
+  "sourceCommit": "bb97c2ae26f6aa59789ca2e828c503f8e25bec70",
+  "pid": 72387,
+  "observedAtEpochMs": 1792911422169,
+  "state": "active/running",
+  "generation": 7,
+  "checkpoint": 3564,
+  "checkpointHash": "0x01ca33a5681184b7d17cb1dece7c939e7bdbf45ce4f679aba5624b4ed7d588bb",
+  "ownedProvenancePresent": true,
+  "jobs": {
+    "evaluated-ok": 25
+  },
+  "successfulCycles": [
+    {
+      "checkpoint": 3564,
+      "ingestionAgeMs": 12,
+      "cycleFailed": false
+    },
+    {
+      "checkpoint": 3564,
+      "ingestionAgeMs": 8,
+      "cycleFailed": false
+    }
+  ],
+  "activationCommandId": "5e8d9f6a-e433-4c96-ae41-96803adaeed4",
+  "readyObservationCommandId": "dc2da279-9831-4064-a0db-2a661898a762",
+  "earlierFailureObservationCommandId": "2f047826-48be-4415-9918-f8d6fa23cb3b",
+  "boundedNativeDiagnosticCommandId": "f6397c60-4c29-426f-8693-f8e16457d079",
+  "finding": "Earlier ROLLING_PUBLIC_UNAVAILABLE recovered in place. Same PID advanced authenticated prefix from 3356 to 3564. No permanent failure cause or transport tuning established."
+}

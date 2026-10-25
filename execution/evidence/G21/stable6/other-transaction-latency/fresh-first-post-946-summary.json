@@ -1,0 +1,10 @@
+{
+  "uiCommit": "946059022eef1f9300b62ba3266529a1e9f71748",
+  "clickToIncludedVisibleMs": 13631.514999985695,
+  "characters": 151,
+  "articleId": "post-17750037427258515524771298973991109935551832161754925286622813402709899858809",
+  "nativeInclusionMs": 4348.235,
+  "confirmation": "Native proposed inclusion, not Ethereum checkpoint; exact receipt saved separately",
+  "fixture": "Fresh same-Ethereum-wallet signup in immediately preceding test",
+  "trace": "fresh-first-post-946-trace.json"
+}

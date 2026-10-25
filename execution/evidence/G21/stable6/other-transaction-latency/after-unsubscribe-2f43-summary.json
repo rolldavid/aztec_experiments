@@ -1,0 +1,52 @@
+{
+  "commit": "2f43c5abec247dc1bfc5ca1faf6477ff923ae574",
+  "flow": "unfollow-conversation",
+  "clickToUsableFrameMs": 16694.45000004767,
+  "receipt": {
+    "blockHash": "0x057088388b8cffc82bed53bb47b2c01210bc22afaaa67aff6a7b2abf8269052c",
+    "blockNumber": 3565,
+    "executionResult": "success",
+    "status": "checkpointed",
+    "txHash": "0x1ebaa35337a25b7aef1658702623e576b91321e61b2b3f5c5632dbe69fe5f152"
+  },
+  "accountRefreshCount": 0,
+  "stages": [
+    {
+      "duration": 16689.634999990463,
+      "name": "rolling.action.interaction",
+      "start": 85318.2350000143
+    },
+    {
+      "duration": 1217.3700000047684,
+      "name": "rolling.proof.local.verify",
+      "start": 95955.24500000475
+    },
+    {
+      "duration": 34.56001949310303,
+      "name": "rolling.proof.native.phase.worker-verify-before-entry",
+      "start": 95955.35500001907
+    },
+    {
+      "duration": 1182.3450000286102,
+      "name": "rolling.proof.native.phase.worker-verify-cbind",
+      "start": 95989.91501951218
+    },
+    {
+      "duration": 1182.1949999332428,
+      "name": "rolling.proof.native.phase.worker-verify-wasm",
+      "start": 95990.00001955032
+    },
+    {
+      "duration": 0.24998044967651367,
+      "name": "rolling.proof.native.phase.worker-verify-after-exit",
+      "start": 97172.2600195408
+    },
+    {
+      "duration": 3007.4099999666214,
+      "name": "rolling.transaction.aztec-inclusion",
+      "start": 97980.25499999525
+    }
+  ],
+  "balanceDisplay": "Opening composer automatically refreshed Balance to19.8618; no fullaccount refresh queued after preference.",
+  "claims": "Real included state, later checkpointed; not a50% all-flow claim."
+}

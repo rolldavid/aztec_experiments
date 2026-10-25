@@ -1,0 +1,23 @@
+{
+  "uiCommit": "946059022eef1f9300b62ba3266529a1e9f71748",
+  "functionalResult": "Fresh account from same Ethereum fixture; deposit and fee balance available; Write a post enabled",
+  "ethereumTx": "0x592e942089b5c712ba072680be3081a6ffdc524b4f9fe7b242532a5362a136f0",
+  "aztecReceiptFile": "after-signup-946-receipt.json",
+  "ethereumPayments": 1,
+  "combinedAztecClaims": 1,
+  "cleanEndToEndMeasurement": false,
+  "limitations": [
+    "Test adapter initially compared hexadecimal chain id with decimal string; first two attempts sent no transaction.",
+    "Final successful signature was inspected manually; wallet dwell is not representative.",
+    "Ready-frame observer used role attribute but actual native dialog lacked it; no exact DOM completion claim."
+  ],
+  "measuredStagesMs": {
+    "privateWitness": 4276.425,
+    "kernelWitness": 2148.615,
+    "proofUploadAcceptance": 569.845,
+    "nativeServerProof": 2652.384,
+    "aztecInclusion": 2990.635,
+    "postInclusionUntilActionComplete": 7384.665
+  },
+  "next": "Remove duplicate claim preparation and account refresh; repeat normal fresh signup with corrected adapter and native dialog observer."
+}

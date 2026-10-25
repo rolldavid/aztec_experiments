@@ -1,0 +1,80 @@
+{
+  "commit": "563609224b067c900d3e0951e4417c2f65ed375e",
+  "flow": "follow-conversation",
+  "clickToUsableFrameMs": 16322.29999995233,
+  "txHash": "0x0feac3042d12e9f66b7e3717a9317d3cc2cbdac8f54ee8c0af6f030c3079b46f",
+  "receipt": {
+    "status": "checkpointed",
+    "executionResult": "success",
+    "blockNumber": 3559,
+    "blockHash": "0x05e5c553a69392a0e9d2990c9f57ea572066d4647a4552b097e95271dc312804"
+  },
+  "stages": [
+    {
+      "duration": 16319.65999996662,
+      "name": "rolling.action.interaction",
+      "start": 88722.05999994278
+    },
+    {
+      "duration": 1619.2900000810623,
+      "name": "rolling.action.sync",
+      "start": 88724.84999990463
+    },
+    {
+      "duration": 1654.5750000476835,
+      "name": "rolling.action.contract-state",
+      "start": 90344.29499995708
+    },
+    {
+      "duration": 370.05999994277954,
+      "name": "rolling.action.prepare",
+      "start": 92335.53999996184
+    },
+    {
+      "duration": 1.4950000047683716,
+      "name": "rolling.action.contract-state",
+      "start": 92335.55999994278
+    },
+    {
+      "duration": 7799.935000061989,
+      "name": "rolling.transaction.proving",
+      "start": 92792.97499990465
+    },
+    {
+      "duration": 104.8400000333786,
+      "name": "rolling.proof.native.phase.private-execution",
+      "start": 92797.97499990465
+    },
+    {
+      "duration": 1500.2599999904633,
+      "name": "rolling.proof.native.phase.kernel-body",
+      "start": 92903.90999996662
+    },
+    {
+      "duration": 2040.905000090599,
+      "name": "rolling.proof.transport.submit",
+      "start": 94910.21499991415
+    },
+    {
+      "duration": 804.1750000715256,
+      "name": "rolling.proof.local.verify",
+      "start": 99589.8449999094
+    },
+    {
+      "duration": 2955.8799999952316,
+      "name": "rolling.transaction.aztec-inclusion",
+      "start": 101080.12999999525
+    },
+    {
+      "duration": 6490.254999995232,
+      "name": "rolling.account.status-refresh",
+      "start": 105041.72499990465
+    }
+  ],
+  "requiredPreferenceCompletionRead": false,
+  "notes": [
+    "Actual click through native Aztec inclusion to enabled inverse action; no optimistic completion.",
+    "Background full account refresh still present on563; removed by follow-up2f43.",
+    "No matched all-flow50% claim; network/local CPU variance remains."
+  ]
+}

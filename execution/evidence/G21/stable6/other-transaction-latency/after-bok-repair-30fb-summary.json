@@ -1,0 +1,184 @@
+{
+  "health": {
+    "status": "ready",
+    "active": 0,
+    "hasFailure": false
+  },
+  "journal": {
+    "phase": "finished",
+    "newEscrowAccepted": true,
+    "modifiedAt": "2026-10-25T06:30:14.724819+00:00",
+    "callCount": 9,
+    "callPhases": {
+      "settled": 9
+    },
+    "finished": true,
+    "operations": []
+  },
+  "timingTotals": {
+    "escrow.open": {
+      "count": 24,
+      "durationMs": 4783.374,
+      "maxMs": 260.835
+    },
+    "board.readRequest": {
+      "count": 59,
+      "durationMs": 4247.601000000001,
+      "maxMs": 1176.863
+    },
+    "escrow.request": {
+      "count": 3,
+      "durationMs": 490.225,
+      "maxMs": 172.809
+    },
+    "conversation.load": {
+      "count": 1,
+      "durationMs": 338.737,
+      "maxMs": 338.737
+    },
+    "conversation.assertCurrent": {
+      "count": 11,
+      "durationMs": 445.49899999999997,
+      "maxMs": 134.196
+    },
+    "repository.admit": {
+      "count": 1,
+      "durationMs": 1055.231,
+      "maxMs": 1055.231
+    },
+    "agent.history": {
+      "count": 1,
+      "durationMs": 0.058,
+      "maxMs": 0.058
+    },
+    "agent.open": {
+      "count": 1,
+      "durationMs": 0.282,
+      "maxMs": 0.282
+    },
+    "tool.list_files": {
+      "count": 1,
+      "durationMs": 37.369,
+      "maxMs": 37.369
+    },
+    "tool.read_file": {
+      "count": 5,
+      "durationMs": 2.1790000000000003,
+      "maxMs": 0.743
+    },
+    "agent.context": {
+      "count": 1,
+      "durationMs": 38.78,
+      "maxMs": 38.78
+    },
+    "provider.catalogue": {
+      "count": 10,
+      "durationMs": 60.477,
+      "maxMs": 60.302
+    },
+    "provider.balance": {
+      "count": 9,
+      "durationMs": 442.6549999999999,
+      "maxMs": 442.587
+    },
+    "provider.credits": {
+      "count": 9,
+      "durationMs": 442.93499999999995,
+      "maxMs": 442.728
+    },
+    "escrow.assertUsable": {
+      "count": 9,
+      "durationMs": 1732.477,
+      "maxMs": 205.914
+    },
+    "provider.completion": {
+      "count": 9,
+      "durationMs": 54849.179000000004,
+      "maxMs": 21310.974
+    },
+    "agent.model": {
+      "count": 9,
+      "durationMs": 58501.784999999996,
+      "maxMs": 21633.652
+    },
+    "tool.edit_file": {
+      "count": 4,
+      "durationMs": 255.146,
+      "maxMs": 65.635
+    },
+    "tool.edit_browser_plan": {
+      "count": 1,
+      "durationMs": 64.693,
+      "maxMs": 64.693
+    },
+    "tool.finish_workspace": {
+      "count": 3,
+      "durationMs": 12927.873,
+      "maxMs": 5895.592
+    },
+    "publication.static": {
+      "count": 1,
+      "durationMs": 42.531,
+      "maxMs": 42.531
+    },
+    "publication.mirror": {
+      "count": 1,
+      "durationMs": 4491.341,
+      "maxMs": 4491.341
+    },
+    "agent.accept": {
+      "count": 1,
+      "durationMs": 4613.207,
+      "maxMs": 4613.207
+    },
+    "agent.close": {
+      "count": 1,
+      "durationMs": 2.131,
+      "maxMs": 2.131
+    },
+    "escrow.inspectOperation": {
+      "count": 24,
+      "durationMs": 6883.352999999999,
+      "maxMs": 340.392
+    },
+    "escrow.prove": {
+      "count": 1,
+      "durationMs": 3425.16,
+      "maxMs": 3425.16
+    },
+    "escrow.send": {
+      "count": 1,
+      "durationMs": 354.636,
+      "maxMs": 354.636
+    },
+    "escrow.wait": {
+      "count": 1,
+      "durationMs": 3111.62,
+      "maxMs": 3111.62
+    },
+    "escrow.finalize_reply": {
+      "count": 1,
+      "durationMs": 7628.274,
+      "maxMs": 7628.274
+    },
+    "request.total": {
+      "count": 24,
+      "durationMs": 101464.13700000002,
+      "maxMs": 87712.144
+    }
+  },
+  "source": "30fbdee60ddc4a094d9f5b7c87d6f1255d4fd753",
+  "requestPost": "8868098984854317029023041905143859792923751622342495981156250014282182654451",
+  "replyPost": "21378022953747689599898193951968266410600980145952492458355478606373520902608",
+  "actualWorkMs": 87712.144,
+  "matchedSpeedupClaim": false,
+  "hostedAppControlsVerified": [
+    "Start",
+    "Pause",
+    "Resume",
+    "Reset timer"
+  ],
+  "browserClickToReply": "Not captured: exact reply was already present before observer attachment",
+  "browserClickToPostVisibleMs": 43754.055,
+  "profiledRun": true
+}

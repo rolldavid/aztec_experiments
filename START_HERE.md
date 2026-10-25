@@ -20,6 +20,10 @@ Root owns one retained build at `/private/tmp/rolling-browser-proof-spans-build`
 
 Owner target: at least50% end-to-end reduction across all other flows; still active. Published589b5f2f includes shared read waves, native included completion and the completed-payment regression fix. Fresh fee topup succeeded. ETH-to-Bok took39.223s from Pay click to usable credit after native inclusion, versus the historical165.094s run (unmeasured baseline wallet dwell limits that comparison). A real funded @bok request published a working updated app and its reply automatically appeared in the conversation. Remaining matched coverage and browser kernel/proof-verification latency are under investigation. See [transaction performance](docs/TRANSACTION_PERFORMANCE.md).
 
+Published2f43 removes redundant account refresh after preferences and reactions; fresh balance display uses existing composer preparation. Real563 follow-conversation click-to-usable16.322s with actual inclusion, required preference completion reread absent; the subsequent6.490s full-account tail is removed by2f43. Opt-in worker timings now distinguish native verification from surrounding transport/scheduling. Bok30fb completed an app update in87.712s versus229.141s for a different prompt; not a matched50% claim. Moderatorbb97 PID72387 completed its retained-history authentication and two successful ingestion cycles at checkpoint3564, without another restart.
+
+Published946059 parallelizes same-operation claim receipt verification and hands the verified native completion receipt to the immediate outcome reader, removing duplicate receipt/block reads. Fresh same-Ethereum-wallet signup succeeded: one Ethereum payment and one combined Aztec claim, checkpoint3590. This run had test-adapter signature delays and missed the precise ready-frame endpoint, so it is functional evidence, not a clean click-to-ready performance measurement. Trace exposes duplicate claim preparation and post-inclusion account refresh for the next changes. Gzip17121 reduced real node responses197KB→74KB and152KB→58KB.
+
 ## Current deployment
 
 Website: https://d30njln0kead8n.cloudfront.net
@@ -29,11 +33,11 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/79af02f26c81be81273c398fda9be5b7d6b71247` |
-| Browser SDK | Verified9395 artifact; wallet runtime updated in79af |
+| Browser UI | `/opt/rolling-ui/releases/946059022eef1f9300b62ba3266529a1e9f71748` |
+| Browser SDK | Verified946059 claim verification/completion SDK and wallet runtime |
 | Running app | `/opt/rolling-app/releases/93954017009d4d9b53529d09956347682a1069ea` |
-| Next-start app | `/opt/rolling-app/releases/ui-79af02f26c81` |
-| Prover | `/opt/board-prover/releases/bok-owner-93954017009d4d9b53529d09956347682a1069ea` |
+| Next-start app | `/opt/rolling-app/releases/ui-946059022eef` |
+| Prover | `/opt/board-prover/releases/node-gzip-17121ddedb9129828c226b1de45899788b06422a` |
 | Bok | `/opt/rolling-bok/releases/repair-30fbdee60ddc4a094d9f5b7c87d6f1255d4fd753` |
 
 | Contract | Current address |
@@ -58,7 +62,7 @@ Accounts derive from the Ethereum wallet signature, with no password/backup impo
 
 Read workspace `INFRASTRUCTURE_ACCESS.md` before credentials or service work. Existing AWS profile `message-board-deploy`; management through SSM. Core `i-0a9b5b9ba55815cda`, m7a.4xlarge; Bok `i-0a7d9957f2b3d7f19`, m8a.xlarge. Main CloudFront `E3BMCK3MOVYK1K`; artifact CloudFront `E1M12FHGQ0S5ST` (`dy2q03rao3se7.cloudfront.net`).
 
-All nine services are verified active. The40GiB core root filled with accumulated release/upload copies; the separate1TiB chain volume was unaffected. Root was cleaned offline using the existing Bok host, restored to core /dev/sda1, and all seven core services restarted. A further2.967GB of authenticated obsolete public artifacts was removed, leaving over4GB free. No new infrastructure/security changes. Publisher now checks operating reserve and removes successful upload payloads automatically. Active runtimes/configs/credentials remain. Pruned historical releases are explicitly unusable; never choose one as a rollback source. See server-root-recovery.json and server-public-artifact-prune.json. Query actual current PIDs before intervention.
+All nine services have running processes. Moderatorbb97 completed bootstrap and two successful ingestion cycles at checkpoint3564. The40GiB core root filled with accumulated release/upload copies; the separate1TiB chain volume was unaffected. Root was cleaned offline using the existing Bok host, restored to core /dev/sda1, and all seven core services restarted. A further2.967GB of authenticated obsolete public artifacts was removed, leaving over4GB free. No new infrastructure/security changes. Publisher now checks operating reserve and removes successful upload payloads automatically. Active runtimes/configs/credentials remain. Pruned historical releases are explicitly unusable; never choose one as a rollback source. See server-root-recovery.json and server-public-artifact-prune.json. Query actual current PIDs before intervention.
 
 Health endpoints: app `/api/status` on4318; prover `/healthz` on8081; Bok service `rolling-bok-testnet.service` and `/health` on8807 returns `status: ready`. Public `/wallet/runtime.json` and `/prover/healthz` are suitable read-only checks. Do not assume every service uses a boolean `ready` or `/health`.
 
