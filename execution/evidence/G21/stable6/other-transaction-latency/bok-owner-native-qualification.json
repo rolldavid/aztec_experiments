@@ -1,0 +1,18 @@
+{
+  "status": "native-qualified-not-deployed",
+  "fullSuitePassed": 78,
+  "coldScenarioPassed": 1,
+  "classId": "0x0736b5e15cdb39de37ec3be6b9ff83609f848c10aff802a1a19cb636f80dc8c8",
+  "artifactSha256": "223822236881279c5da6ee23c35a3a245d6cc5475697cda706d981f48097fdb3",
+  "constraints": [
+    "zero additional notes or logs",
+    "native spending authority unchanged",
+    "same owner keys restore from empty native store",
+    "unconstrained symmetric owner encryption"
+  ],
+  "requiredNext": [
+    "coherent new Bok-only contract/portal/router/configuration release",
+    "fresh browser funding, request, cancellation, withdrawal and restoration",
+    "real-proof latency comparison"
+  ]
+}

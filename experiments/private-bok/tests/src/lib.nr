@@ -579,3 +579,77 @@ unconstrained fn activation_locks_full_authorized_budget_without_operator_transa
     env.call_public(op, PrivateBok::at(a).finish(10));
     assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
 }
+
+
+// Cold native store means a second browser with the same registered owner keys:
+// on-chain logs remain; note/fact/event data and discovery indexes are discarded.
+#[oracle(rolling_test_forget_private_state)]
+unconstrained fn forget_private_state() {}
+#[oracle(rolling_test_assert_effects)]
+unconstrained fn assert_effects(notes: u32, logs: u32) {}
+
+#[test]
+unconstrained fn owner_delivery_cold_claim_authorize_cancel_and_withdraw() {
+    let (env, a, user, other, _) = funded();
+    assert_effects(1, 1);
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(other)), 0);
+    env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 600));
+    // Exactly change + control notes and their logs plus two partial messages.
+    assert_effects(2, 4);
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 400);
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 0)), [10, 0, 0, 0, 0, 0, 0, 0]);
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(other, 0)), [0; 8]);
+    env.call_private(user, PrivateBok::at(a).cancel(10));
+    // Retained control plus one completed public refund; no extra discovery note.
+    assert_effects(2, 1);
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
+    assert_eq(env.execute_utility(PrivateBok::at(a).owned_requests(user, 0)), [10, 0, 0, 0, 0, 0, 0, 0]);
+    env.call_private(user, PrivateBok::at(a).withdraw(200, EthAddress::from_field(456), 401));
+    assert_effects(1, 1);
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 800);
+    env.call_private(user, PrivateBok::at(a).withdraw(800, EthAddress::from_field(456), 402));
+    assert_effects(0, 0);
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 0);
+}
+
+#[test]
+unconstrained fn owner_delivery_cold_primary_then_late_secondary_refund() {
+    let (env, a, user, op, _) = active();
+    env.call_public(op, PrivateBok::at(a).settle(10, 0, 120, 301));
+    env.call_public(op, PrivateBok::at(a).reserve(10, 1, 100));
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 400);
+    env.call_public(op, PrivateBok::at(a).close_uncertain(10));
+    assert_effects(1, 0);
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 780);
+    // Secondary channel completes after the first channel was already discovered.
+    env.call_public(op, PrivateBok::at(a).reconcile(10, 1, 40, 302));
+    assert_effects(1, 0);
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 840);
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 840);
+    let r = env.view_public(PrivateBok::at(a).request(10));
+    assert_eq(r.state, 4); assert_eq(r.charged, 160); assert_eq(r.refunded, 440);
+    assert(r.primary_done & r.secondary_done);
+    env.call_private(user, PrivateBok::at(a).withdraw(840, EthAddress::from_field(456), 403));
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 0);
+}
+
+#[test]
+unconstrained fn owner_delivery_exact_budget_emits_no_change_note() {
+    let (env, a, user, _, _) = funded();
+    env.call_private(user, PrivateBok::at(a).authorize_request(10, 42, 1000));
+    assert_effects(1, 3);
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 0);
+    env.call_private(user, PrivateBok::at(a).cancel(10));
+    forget_private_state();
+    assert_eq(env.execute_utility(PrivateBok::at(a).balance_of(user)), 1000);
+}

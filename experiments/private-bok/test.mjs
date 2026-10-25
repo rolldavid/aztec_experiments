@@ -62,7 +62,7 @@ try {
   await runWithService({
     service: {
       command: process.execPath,
-      args: ['--preserve-symlinks', 'scripts/txe-c01-service.mjs'],
+      args: ['--preserve-symlinks', 'experiments/owner-state/txe-service.mjs'],
       options: {cwd: ROOT, stdio: 'inherit', env: {...process.env, TXE_PORT: String(port), TXE_WORKERS: '1', NODE_BACKEND: 'js'}},
     },
     tests: {

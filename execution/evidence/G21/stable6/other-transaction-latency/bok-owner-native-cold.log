@@ -1,0 +1,88 @@
+{"sourceRevision":"23e6cde5432dfd5110762bd63fd2a3009bdb6775","suite":"private_bok_test","tests":["owner_delivery_cold_claim_authorize_cancel_and_withdraw"],"artifactSha256":"223822236881279c5da6ee23c35a3a245d6cc5475697cda706d981f48097fdb3","boardArtifactSha256":"8b5ee9a1bf02730de41c63a8cba14a47d3fe89ca9a631756e1c97e5ca6bb3b58","helperSha256":"eedb3ce6bb93560263f7a470df8e4d24cf3f44466a9269d21f3fe2212bb32db2","realProofs":false,"evidenceKind":"TXE protocol tests"}
+{"role":"service","pid":10649,"port":60621,"realProofs":false}
+{"profile":"Owner-only v6 TXE","chain":1,"version":1,"originalPublicVersion":2,"realProofs":false,"port":60621}
+{"role":"tests","pid":10658,"port":60621,"realProofs":false}
+[05:51:32.328] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+warning: unused variable op
+    ┌─ tests/src/lib.nr:177:24
+    │
+177 │     let (env, a, user, op, _) = active(); env.call_private(user, PrivateBok::at(a).cancel(10));
+    │                        -- unused variable
+    │
+
+warning: unused variable op
+    ┌─ tests/src/lib.nr:333:24
+    │
+333 │     let (env, a, user, op, _) = active(); env.call_public(user, PrivateBok::at(a).settle(10, 0, 1, 99));
+    │                        -- unused variable
+    │
+
+warning: unused variable op
+    ┌─ tests/src/lib.nr:438:24
+    │
+438 │     let (env, a, user, op, _) = active();
+    │                        -- unused variable
+    │
+
+warning: unused variable op
+    ┌─ tests/src/lib.nr:454:24
+    │
+454 │     let (env, a, user, op, _) = active();
+    │                        -- unused variable
+    │
+
+warning: unused variable user
+    ┌─ tests/src/lib.nr:460:18
+    │
+460 │     let (env, a, user, op, _) = active();
+    │                  ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ tests/src/lib.nr:466:18
+    │
+466 │     let (env, a, user, op, _) = active();
+    │                  ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ tests/src/lib.nr:472:18
+    │
+472 │     let (env, a, user, op, _) = active();
+    │                  ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ tests/src/lib.nr:479:18
+    │
+479 │     let (env, a, user, op, _) = active();
+    │                  ---- unused variable
+    │
+
+warning: unused variable user
+    ┌─ tests/src/lib.nr:486:18
+    │
+486 │     let (env, a, user, op, _) = active();
+    │                  ---- unused variable
+    │
+
+[private_bok_test] Running 1 test function
+[05:51:41.620] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[05:51:41.621] INFO: kv-store:lmdb-v2 Starting data store with maxReaders 2
+[05:51:41.644] INFO: world-state:ipc-database Created IPC-backed world state instance
+[05:51:42.159] INFO: txe_node Aztec Node version: txe
+[05:51:42.159] INFO: txe_node Aztec Node started on chain 0x1
+[05:51:42.179] INFO: txe:top_level_context Created block 1 with timestamp 1792887702
+[05:51:42.279] INFO: txe:top_level_context Created block 2 with timestamp 1792887702
+[05:51:42.365] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.031246624999999768s {"blockNumber":3,"successfulCount":1,"failedCount":0,"duration":0.031246624999999768,"rate":18558548.323219046,"totalPublicGas":{"daGas":864,"l2Gas":579892},"totalBlockGas":{"daGas":864,"l2Gas":579892},"totalSizeInBytes":992,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[05:51:42.406] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.01599083299999984s {"blockNumber":4,"successfulCount":1,"failedCount":0,"duration":0.01599083299999984,"rate":24211559.21020524,"totalPublicGas":{"daGas":192,"l2Gas":387163},"totalBlockGas":{"daGas":192,"l2Gas":387163},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[05:51:42.425] INFO: txe:top_level_context Created block 5 with timestamp 1792887702
+[05:51:42.618] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.007812541999999667s {"blockNumber":6,"successfulCount":1,"failedCount":0,"duration":0.007812541999999667,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":800,"l2Gas":483700},"totalSizeInBytes":800,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[05:51:42.912] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.03125470899999891s {"blockNumber":7,"successfulCount":1,"failedCount":0,"duration":0.03125470899999891,"rate":15928543.75959851,"totalPublicGas":{"daGas":1280,"l2Gas":497842},"totalBlockGas":{"daGas":3744,"l2Gas":1229592},"totalSizeInBytes":3744,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[05:51:43.132] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.024265292000000046s {"blockNumber":8,"successfulCount":1,"failedCount":0,"duration":0.024265292000000046,"rate":21731327.197710995,"totalPublicGas":{"daGas":1472,"l2Gas":527317},"totalBlockGas":{"daGas":2208,"l2Gas":1170692},"totalSizeInBytes":2208,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[05:51:43.347] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.007019458000000668s {"blockNumber":9,"successfulCount":1,"failedCount":0,"duration":0.007019458000000668,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":864,"l2Gas":504900},"totalSizeInBytes":864,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[05:51:43.548] INFO: simulator:public-processor Processed 1 successful txs and 0 failed txs (0 skipped due to block gas limit, 0 silently skipped, 0ms wasted) in 0.007094709000000875s {"blockNumber":10,"successfulCount":1,"failedCount":0,"duration":0.007094709000000875,"rate":0,"totalPublicGas":{"daGas":0,"l2Gas":0},"totalBlockGas":{"daGas":320,"l2Gas":509200},"totalSizeInBytes":320,"blockGasSkippedCount":0,"silentlySkippedCount":0,"silentlySkippedDurationMs":0}
+[private_bok_test] Testing owner_delivery_cold_claim_authorize_cancel_and_withdraw ... [0m[32mok[0m
+[private_bok_test] [0m[32m1 test passed[0m
+[05:51:43.681] INFO: simulator:avm-pool AVM simulator pool destroyed
+PrivateBok TXE protocol tests passed; owned service and test processes cleaned up. Real-proof acceptance remains separate.

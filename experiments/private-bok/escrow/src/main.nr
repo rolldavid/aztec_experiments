@@ -1,4 +1,5 @@
-use aztec::{macros::aztec, protocol::{address::{AztecAddress, EthAddress}, hash::poseidon2_hash_with_separator, traits::ToField}};
+use aztec::{macros::{aztec, AztecConfig}, protocol::{address::{AztecAddress, EthAddress}, hash::poseidon2_hash_with_separator, traits::ToField}};
+use owner_delivery::delivery::sync_owner_state;
 
 pub fn words<let N: u32, let D: u32>(domain: str<D>, fields: [Field; N]) -> [u8; 32 + N * 32] {
     let mut out = [0; 32 + N * 32];
@@ -17,11 +18,11 @@ pub fn recipient_commitment(chain: Field, portal: EthAddress, escrow: AztecAddre
     poseidon2_hash_with_separator([chain, portal.to_field(), escrow.to_field(), version, owner.to_field(), salt], 0x424b4301)
 }
 
-#[aztec]
+#[aztec(AztecConfig::new().custom_sync_state(sync_owner_state))]
 pub contract PrivateBok {
+    use owner_delivery::delivery::{deliver_note, deliver_optional_note, deliver_message};
     use aztec::{
         macros::{events::event, functions::{external, initializer, internal, only_self, view}, notes::note, storage::storage},
-        messages::delivery::MessageDelivery,
         note::{note_getter_options::NoteGetterOptions, note_viewer_options::NoteViewerOptions, note_interface::NoteProperties},
         protocol::{address::{AztecAddress, EthAddress}, hash::{sha256_to_field, poseidon2_hash_with_separator},
             traits::{Deserialize, FromField, Packable, Serialize, ToField}},
@@ -110,7 +111,8 @@ pub contract PrivateBok {
         assert(commitment != 0, "Empty recipient commitment");
         let content = sha256_to_field(words("PLUGIN_CREDIT_V1", [self.storage.l1_chain.read(), portal.to_field(), self.address.to_field(), self.storage.version.read(), commitment, amount as Field]));
         self.context.consume_l1_to_l2_message(content, [bridge_secret], portal, leaf_index);
-        self.storage.balances.at(sender).add(amount).deliver(MessageDelivery::onchain_constrained());
+        let created = self.storage.balances.at(sender).add(amount).get_new_note();
+        deliver_optional_note(self.context, created);
     }
 
     #[internal("private")]
@@ -134,10 +136,14 @@ pub contract PrivateBok {
         assert((request_id != 0) & (invocation_hash != 0) & (budget > 0), "Invalid request");
         let sender = self.msg_sender();
         let change = self.internal.subtract(sender, budget, 2);
-        self.storage.balances.at(sender).add(change).deliver(MessageDelivery::onchain_constrained());
-        self.storage.controls.at(sender).insert(RequestControlNote { schema: 1, request_id }).deliver(MessageDelivery::onchain_constrained());
-        let primary = UintNote::partial(sender, self.context, sender, self.address);
-        let secondary = UintNote::partial(sender, self.context, sender, self.address);
+        let created = self.storage.balances.at(sender).add(change).get_new_note();
+        deliver_optional_note(self.context, created);
+        let control = self.storage.controls.at(sender).insert(RequestControlNote { schema: 1, request_id }).get_new_note();
+        deliver_note(self.context, control);
+        let (primary, primary_message) = UintNote::partial_with_message(sender, self.context, self.address);
+        deliver_message(self.context, BoundedVec::from_array(primary_message));
+        let (secondary, secondary_message) = UintNote::partial_with_message(sender, self.context, self.address);
+        deliver_message(self.context, BoundedVec::from_array(secondary_message));
         self.enqueue_self._open_escrow(request_id, invocation_hash, budget, primary, secondary);
     }
 
@@ -262,7 +268,8 @@ pub contract PrivateBok {
         assert((note.schema == 1) & (note.request_id == request_id), "Invalid control note");
         // Keep wallet-local history recoverable after cancellation. The public
         // state transition still rejects a second cancellation atomically.
-        self.storage.controls.at(self.msg_sender()).insert(note).deliver(MessageDelivery::onchain_constrained());
+        let control = self.storage.controls.at(self.msg_sender()).insert(note).get_new_note();
+        deliver_note(self.context, control);
         self.enqueue_self._cancel(request_id);
     }
 
@@ -279,7 +286,8 @@ pub contract PrivateBok {
     fn withdraw(amount: u128, recipient: EthAddress, nonce: Field) {
         recipient.validate(); assert((recipient.to_field() != 0) & (amount > 0) & (nonce != 0), "Invalid withdrawal");
         let sender = self.msg_sender(); let change = self.internal.subtract(sender, amount, 2);
-        self.storage.balances.at(sender).add(change).deliver(MessageDelivery::onchain_constrained());
+        let created = self.storage.balances.at(sender).add(change).get_new_note();
+        deliver_optional_note(self.context, created);
         self.context.push_nullifier_unsafe(poseidon2_hash_with_separator([nonce], 0x424b5701));
         let portal = self.storage.portal.read();
         self.context.message_portal(portal, sha256_to_field(words("PLUGIN_EXIT_V1", [self.storage.l1_chain.read(), portal.to_field(), self.address.to_field(), self.storage.version.read(), recipient.to_field(), amount as Field, nonce])));

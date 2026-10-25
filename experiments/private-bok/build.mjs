@@ -16,6 +16,8 @@ export function buildInputs() {
   return Object.fromEntries(['experiments/private-bok/Nargo.toml', 'experiments/private-bok/escrow/Nargo.toml', 'experiments/private-bok/escrow/src/main.nr',
     'experiments/private-bok/tests/Nargo.toml', 'experiments/private-bok/tests/src/lib.nr',
     'experiments/private-bok/probe-board/Nargo.toml', 'experiments/private-bok/probe-board/src/main.nr', 'experiments/private-bok/build.mjs',
+    'billboard/owner_delivery/Nargo.toml', 'billboard/owner_delivery/src/lib.nr',
+    'billboard/owner_delivery/src/delivery.nr', 'billboard/owner_delivery/src/envelope.nr',
     'noir-dependencies.json', 'toolchain.json', 'package-lock.json',
     'scripts/build-contracts.mjs', 'scripts/check-noir-dependencies.mjs', 'scripts/normalize-noir.mjs',
     'scripts/prepare-owner-noir.mjs', 'scripts/owner-delivery-noir-sources.json',

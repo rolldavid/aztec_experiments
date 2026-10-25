@@ -8,3 +8,4 @@ compiler_version = ">=1.0.0"
 aztec = { path = "../../../.build/owner-delivery/aztec-nr/aztec" }
 balance_set = { path = "../../../.build/owner-delivery/aztec-nr/balance-set" }
 uint_note = { path = "../../../.build/owner-delivery/aztec-nr/uint-note" }
+owner_delivery = { path = "../../../billboard/owner_delivery" }
