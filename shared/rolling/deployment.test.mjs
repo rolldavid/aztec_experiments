@@ -11,7 +11,7 @@ import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {derivePrivateFeeInstance,normalizePrivateFeeGasSettings} from '../private-fee-client.mjs';
 import {expectedPortalRuntime,verifyPortalRuntime} from '../portal-runtime.mjs';
 import {encodeConfigCommitment} from '../protocol-commitments.mjs';
-import {verifyRollingDeployment} from './deployment.mjs';
+import {verifyRollingDeployment,createRollingDeploymentPreparation,prepareRollingDeployment,assertRollingDeploymentPreparation,consumeRollingDeploymentPreparation} from './deployment.mjs';
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 const feeArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../apps/src/billboard/private_fee_artifact.json',import.meta.url))));
 const metadata=JSON.parse(fs.readFileSync(new URL('../portal-runtime.json',import.meta.url)));
@@ -37,13 +37,13 @@ async function fixture(){
  const options={sdk,node,ethers,config,boardArtifact:artifact,privateFeeArtifact:feeArtifact,contextGuard:async()=>{state.guards++;}};
  return {options,state,node,provider,board,fee,storage,immutables,configHash,economics};
 }
-test('actual artifact layout/hash/runtime yields detached application deployment and canonical instances',async()=>{
+test('actual artifact layout/hash/runtime yields detached deployment values, stable artifacts and canonical instances',async()=>{
  const f=await fixture(),out=await verifyRollingDeployment(f.options);
  assert.deepEqual(out.economics,f.economics);assert.equal(out.configHash,String(f.configHash));assert.equal(String(out.board.instance.address),String(f.board.address));
  assert.equal(String(await computeContractAddressFromInstance(out.board.instance)),String(f.board.address));
  assert.equal(String(await computeContractAddressFromInstance(out.privateFee.instance)),String(f.fee.address));
- assert.ok(Object.isFrozen(out)&&Object.isFrozen(out.privateFee.gasSettings));assert.notEqual(out.board.artifact,artifact);
- const original=artifact.functions[0].bytecode[0];out.board.artifact.functions[0].bytecode[0]^=255;assert.equal(artifact.functions[0].bytecode[0],original);
+ assert.ok(Object.isFrozen(out)&&Object.isFrozen(out.privateFee.gasSettings));assert.equal(out.board.artifact,artifact);
+ assert.equal(out.privateFee.artifact,feeArtifact);assert.notEqual(out.board.instance,f.board);assert.notEqual(out.privateFee.instance,f.fee);
  assert.equal(f.state.destroyed,1);assert.equal(f.state.guards,2);assert.equal(f.state.inspection,2);
  assert.ok(f.state.reads.every(([,ref])=>ref.hash===hex(55)));assert.ok(f.state.ethReads.every(number=>number===20));
 });
@@ -62,9 +62,15 @@ test('wrong runtime, Ethereum identity and reorg anchors are rejected with provi
  }
 });
 test('untrusted/stale node, missing guard and secret-bearing URL fail without funding or ordinary node fallback',async()=>{
- for(const mutate of [f=>{f.options.sdk.isTrustedPrivateNode=()=>false;},f=>{f.options.sdk.inspectTrustedNode=async()=>{throw Error('PRIVATE_SENTINEL');};},
-  f=>{f.options.contextGuard=undefined;},f=>{f.options.config.network.ethRpcUrl='https://secret@example.com';},f=>{f.options.boardArtifact={...artifact,storageLayout:{...artifact.storageLayout,config:{slot:new Fr(4)}}};}]){
-  const f=await fixture();mutate(f);await assert.rejects(verifyRollingDeployment(f.options),error=>error.code==='ROLLING_DEPLOYMENT_INVALID'&&!error.message.includes('PRIVATE_SENTINEL'));assert.equal(f.state.destroyed,0);
+ const cases=[
+  {mutate:f=>{f.options.sdk.isTrustedPrivateNode=()=>false;},destroyed:0},
+  {mutate:f=>{f.options.sdk.inspectTrustedNode=async()=>{throw Error('PRIVATE_SENTINEL');};},destroyed:1},
+  {mutate:f=>{f.options.contextGuard=undefined;},destroyed:0},
+  {mutate:f=>{f.options.config.network.ethRpcUrl='https://secret@example.com';},destroyed:0},
+  {mutate:f=>{f.options.boardArtifact={...artifact,storageLayout:{...artifact.storageLayout,config:{slot:new Fr(4)}}};},destroyed:0},
+ ];
+ for(const {mutate,destroyed} of cases){
+  const f=await fixture();mutate(f);await assert.rejects(verifyRollingDeployment(f.options),error=>error.code==='ROLLING_DEPLOYMENT_INVALID'&&!error.message.includes('PRIVATE_SENTINEL'));assert.equal(f.state.destroyed,destroyed);
  }
 });
 test('context changes dispose the provider; pending guard waits for explicit caller cancellation without a deadline',async t=>{
@@ -107,7 +113,7 @@ const diagnosticDeploymentFailures={
  'artifact-layout':f=>{f.options.boardArtifact.name='Wrong';},
  'board-class':(f,error)=>{f.options.sdk.getContractClassFromArtifact=async()=>{throw error;};},
  checkpoint:(f,error)=>{f.node.getBlockData=async()=>{throw error;};},
- 'board-instance':(f,error)=>{f.node.getContract=async()=>{throw error;};},
+ 'board-instance':(f,error)=>{const original=f.node.getContract;f.node.getContract=async(address,...args)=>{if(String(address)===f.options.config.board.contractAddress)throw error;return original(address,...args);};},
  'public-config':(f,error)=>{f.node.getPublicStorageAt=async()=>{throw error;};},
  'config-commitment':(f,error)=>{f.options.sdk.sha256ToField=()=>{throw error;};},
  'fee-instance':(f,error)=>{f.options.sdk.derivePrivateFeeInstance=async()=>{throw error;};},
@@ -123,13 +129,16 @@ for(const [step,inject]of Object.entries(diagnosticDeploymentFailures))test('lab
  await assert.rejects(verifyRollingDeployment(f.options),e=>e.code==='ROLLING_DEPLOYMENT_INVALID'&&!e.message.includes('PRIVATE_SENTINEL'));
  assert.deepEqual(observed.at(-1),{stage:'deployment-initialization',step,state:'failed',code:['config','artifact-layout'].includes(step)?'ROLLING_DEPLOYMENT_INVALID':'unknown'});
  assert.equal(observed.filter(r=>r.state==='failed').length,1);assert.equal(getterCalls,0);assert(!JSON.stringify(observed).includes('PRIVATE_SENTINEL'));
- assert.equal(f.state.destroyed,['portal-code-and-immutables','canonical-recheck','final-readiness-and-context'].includes(step)?1:0);
+ assert.equal(f.state.destroyed,['config','artifact-layout','l1-context'].includes(step)?0:1);
 });
 test('deployment diagnostic success visits fixed stages and throwing observers cannot change result',async()=>{
  const f=await fixture(),observed=[];f.options.onProgress=record=>{observed.push(record);if(record.state==='started')throw Error('PRIVATE_SENTINEL');return Promise.reject(Error('PRIVATE_SENTINEL'));};
  const result=await verifyRollingDeployment(f.options);assert.equal(result.configHash,String(f.configHash));assert.equal(f.state.destroyed,1);
- assert.deepEqual(observed.filter(r=>r.state==='started').map(r=>r.step),ROLLING_DEPLOYMENT_STAGES);
- assert.deepEqual(observed.filter(r=>r.state==='complete').map(r=>r.step),ROLLING_DEPLOYMENT_STAGES);assert(observed.every(Object.isFrozen));
+ const stages=ROLLING_DEPLOYMENT_STAGES.filter(step=>step!=='prepared-refresh');
+ assert.deepEqual(observed.filter(r=>r.state==='started').map(r=>r.step).sort(),[...stages].sort());
+ assert.deepEqual(observed.filter(r=>r.state==='complete').map(r=>r.step).sort(),[...stages].sort());
+ for(const step of stages)assert(observed.findIndex(r=>r.step===step&&r.state==='started')<observed.findIndex(r=>r.step===step&&r.state==='complete'));
+ assert(observed.every(Object.isFrozen));
 });
 test('diagnostic codes are own fixed data only, including falsy failures and hostile thenable observers',async()=>{
  let calls=0;const getter=Object.defineProperty({},'code',{get(){calls++;throw Error('PRIVATE_SENTINEL');}});
@@ -137,4 +146,45 @@ test('diagnostic codes are own fixed data only, including falsy failures and hos
  assert.equal(calls,0);assert.equal(rollingSetupErrorCode({code:'BB_TRUSTED_NODE_STALE'}),'BB_TRUSTED_NODE_STALE');
  const f=await fixture();f.options.sdk.inspectTrustedNode=async()=>{throw null;};f.options.onProgress=()=>({get then(){throw Error('PRIVATE_SENTINEL');}});
  await assert.rejects(verifyRollingDeployment(f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
+});
+
+
+// Labelled factory/RPC doubles retain the real pinned artifact/class/address,
+// commitment and runtime checks above. These checks measure call counts, not time.
+async function preparedFixture(){
+ const f=await fixture(),counts={factory:0,classes:0,fee:0};
+ const {sdk}=f.options,classRead=sdk.getContractClassFromArtifact,feeRead=sdk.derivePrivateFeeInstance;
+ sdk.getContractClassFromArtifact=async(...args)=>{counts.classes++;return classRead(...args);};
+ sdk.derivePrivateFeeInstance=async(...args)=>{counts.fee++;return feeRead(...args);};
+ sdk.createTrustedPrivateNode=async options=>{counts.factory++;assert.equal(options.readinessTier,'checkpointed');await sdk.inspectTrustedNode(f.node,options);return f.node;};
+ const preparation=createRollingDeploymentPreparation({...f.options,trustedQuery:{url:'http://127.0.0.1:1'}});
+ return {...f,counts,preparation};
+}
+test('prepared deployment creates one attested client, reuses immutable reads, and refreshes mutable authority',async()=>{
+ const f=await preparedFixture();
+ const first=await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ const second=await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ assert.equal(first.node,f.node);assert.equal(second.deployment,first.deployment);assert.equal(first.preparation,f.preparation);
+ assert.deepEqual(f.counts,{factory:1,classes:1,fee:1});assert.equal(f.state.inspection,2);
+ const storageReads=f.state.reads.filter(([kind])=>kind==='storage').length,ethReads=f.state.ethReads.length;
+ const consumed=await consumeRollingDeploymentPreparation(f.preparation,f.options);
+ assert.equal(consumed.node,f.node);assert.equal(consumed.deployment.configHash,first.deployment.configHash);
+ assert.deepEqual(f.counts,{factory:1,classes:1,fee:1});assert.equal(f.state.inspection,3);
+ assert.equal(f.state.reads.filter(([kind])=>kind==='storage').length,storageReads);
+ assert.equal(f.state.reads.filter(([kind])=>kind==='instance').length,4);
+ assert.equal(f.state.ethReads.length,ethReads+1);assert.equal(f.state.destroyed,2);
+});
+test('prepared capability rejects fake handles and mismatched node, artifacts, SDK, config and proof mode',async()=>{
+ const f=await preparedFixture();await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});
+ assert.throws(()=>assertRollingDeploymentPreparation({},f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});
+ for(const change of [{node:{...f.node}},{boardArtifact:{...artifact}},{privateFeeArtifact:{...feeArtifact}},{sdk:{...f.options.sdk}},{config:{...f.options.config,board:{...f.options.config.board,portalAddress:eth(23)}}},{proofsEnabled:false}]){
+  await assert.rejects(consumeRollingDeploymentPreparation(f.preparation,{...f.options,...change}),{code:'ROLLING_DEPLOYMENT_INVALID'});
+ }
+ assert.equal(f.state.destroyed,1);assert.equal(f.state.inspection,2);
+});
+test('prepared refresh rejects changed class, disabled admission and reorged cached observations',async()=>{
+ for(const mutate of [f=>{f.board.currentContractClassId=new Fr(99);},f=>{f.state.enabled=false;},f=>{f.provider.getBlock=async n=>({number:20,hash:n==='latest'?hex(66):hex(67)});},f=>{f.node.getBlockData=async n=>({blockHash:Fr.fromString(n==='checkpointed'?hex(55):hex(56)),header:{globalVariables:{blockNumber:10}}});}]){
+  const f=await preparedFixture();await prepareRollingDeployment(f.preparation,{contextGuard:f.options.contextGuard});mutate(f);
+  await assert.rejects(consumeRollingDeploymentPreparation(f.preparation,f.options),{code:'ROLLING_DEPLOYMENT_INVALID'});assert.equal(f.state.destroyed,2);
+ }
 });

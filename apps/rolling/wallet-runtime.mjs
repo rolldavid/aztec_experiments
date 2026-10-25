@@ -1,7 +1,8 @@
 import {createSavedItems} from '../../shared/rolling/saved-items.mjs';
 // Public code and contract data may load in the background. Account creation,
 // wallet permissions and private sessions remain explicit user actions.
-import {createRollingWalletSession,createRollingRefundSession} from './wallet-session.mjs';
+import {createRollingWorkerClient} from './wallet-worker-client.mjs';
+import {createBrowserJournalStorage} from '../../shared/journal-indexeddb.mjs';
 // Fresh metadata/API requests retain a transport failure bound. Immutable asset
 // delivery ends on native completion/error or page cancellation, never elapsed time.
 const METADATA_LOAD_MS=30000;
@@ -20,6 +21,18 @@ async function boundedJSON(url,limit,expected,request={}){
  if(expected&&(size!==expected.bytes||await digest(bytes)!==expected.sha256))throw failed();
  return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
 }
+async function verifiedScriptBytes(asset,signal){
+ descriptor(asset);
+ const response=await fetch(assetURL(asset),{credentials:'omit',redirect:'error',cache:'default',referrerPolicy:'no-referrer',signal});
+ if(!response.ok||!response.body){await response.body?.cancel().catch(()=>{});throw failed();}
+ const reader=response.body.getReader(),chunks=[];let length=0;
+ try{for(;;){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>asset.bytes)throw failed();chunks.push(value);}}
+ catch(error){await reader.cancel().catch(()=>{});throw error;}finally{reader.releaseLock();}
+ if(length!==asset.bytes)throw failed();
+ const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
+ if(await digest(bytes)!==asset.sha256)throw failed();return bytes;
+}
+
 function descriptor(value){
  if(!value||Object.keys(value).sort().join()!=='bytes,sha256,url'||!Number.isSafeInteger(value.bytes)||value.bytes<1||value.bytes>128*1024*1024||
   !/^[a-f0-9]{64}$/.test(value.sha256)||typeof value.url!=='string'||!/^\/(?:wallet|crs)\/[a-zA-Z0-9_.-]+$/.test(value.url))throw failed();
@@ -54,7 +67,7 @@ async function load(signal){
  if(!isSecureContext||!navigator.locks?.request||!crossOriginIsolated)throw failed();
  const metadata=await boundedJSON('/wallet/runtime.json',65536,undefined,{signal});
  if(metadata?.schemaVersion!==1||!Array.isArray(metadata.scripts)||metadata.scripts.length!==8||
-  Object.keys(metadata).sort().join()!=='artifacts,config,crs,proofsEnabled,remoteProver,schemaVersion,scripts,trustedQuery')throw failed();
+  Object.keys(metadata).sort().join()!=='artifacts,config,crs,proofsEnabled,remoteProver,schemaVersion,scripts,trustedQuery,worker')throw failed();
  const config=structuredClone(metadata.config),query=structuredClone(metadata.trustedQuery),remote=metadata.remoteProver?structuredClone(metadata.remoteProver):undefined;
  if(typeof metadata.proofsEnabled!=='boolean'||(!metadata.proofsEnabled&&config.network?.chainId!=='31337'))throw failed();
  // Host pins exact script ordering and hashes. Reject repeated or unexpected
@@ -62,40 +75,39 @@ async function load(signal){
  const names=['ethers.js','aztec_bundle.js','crs-client.js','wallet-providers.js','claim-secret-store.js','ethereum-account-session.js','account.js','engine.js'];
  if(metadata.scripts.some((a,i)=>descriptor(a).url!=='/wallet/'+names[i]))throw failed();
  if(Object.keys(metadata.artifacts??{}).sort().join()!==(config.bok?'board,bok,privateFee':'board,privateFee'))throw failed();
- // Start script downloads alongside the independent contract data. Matching
- // integrity/CORS attributes let the ordered script elements reuse these requests.
- const preloads=metadata.scripts.map(asset=>{
-  const link=document.createElement('link');link.rel='preload';link.as='script';link.href=assetURL(asset);
-  link.integrity='sha256-'+btoa(String.fromCharCode(...asset.sha256.match(/../g).map(x=>parseInt(x,16))));link.crossOrigin='anonymous';link.referrerPolicy='no-referrer';document.head.append(link);return link;
- });
- const bokAsset=config.bok?structuredClone(descriptor(metadata.artifacts.bok)):undefined;
- let boardRaw,feeRaw;
+ // The main thread owns extension custody only. All Aztec code executes once,
+ // in the dedicated worker. Blob parts remain bytes: no SDK text decode/eval here.
+ descriptor(metadata.worker);if(metadata.worker.url!=='/wallet/native-worker.js')throw failed();
+ const workerAssets=new AbortController(),workerSignal=AbortSignal.any([signal,workerAssets.signal]);
+ let workerClient,workerURL,workerAccount,workerClosed=false,progressObserver=()=>{};
+ const workerGuard=()=>{if(workerClosed||globalThis.walletState?.invalidated||workerAccount&&globalThis.walletState?.aztec!==workerAccount)throw failed();};
+ const workerReady=(async()=>{
+  const names=['ethers.js','aztec_bundle.js','crs-client.js','claim-secret-store.js','engine.js'];
+  const parts=await Promise.all([...names.map(name=>metadata.scripts.find(asset=>asset.url==='/wallet/'+name)),metadata.worker].map(asset=>verifiedScriptBytes(asset,workerSignal)));
+  if(signal.aborted||workerClosed)throw failed();
+  const prefix='globalThis.__rollingWalletAssetBase='+JSON.stringify(new URL('/wallet/',location.href).href)+';\n';
+  workerURL=URL.createObjectURL(new Blob([prefix,...parts.flatMap(bytes=>[bytes,'\n;\n'])],{type:'text/javascript'}));
+  const worker=new Worker(workerURL,{name:'rolling-private-wallet'});
+  workerClient=createRollingWorkerClient({worker,contextGuard:workerGuard,
+   captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:workerGuard,chainId:config.network.chainId}),
+   onProgress:value=>progressObserver(value)});
+  // Do not make wallet discovery wait for SDK parsing or deployment preparation.
+  // Each worker command waits only for its own actual prerequisites.
+  const initialized=workerClient.initialize({config,trustedQuery:query,remoteProver:remote,proofsEnabled:metadata.proofsEnabled,artifacts:metadata.artifacts,crs:metadata.crs});
+  initialized.catch(()=>{});
+  return workerClient;
+ })();
+ workerReady.catch(()=>{});
+ const terminateWorker=()=>{workerClosed=true;workerAssets.abort();workerClient?.terminate();if(workerURL){URL.revokeObjectURL(workerURL);workerURL=undefined;}};
+ globalThis.addEventListener('pagehide',terminateWorker,{once:true});
  try{
-  const values=await Promise.all([
-   boundedJSON(descriptor(metadata.crs).url,65536,metadata.crs,{signal}),
-   boundedJSON(descriptor(metadata.artifacts.board).url,32*1024*1024,metadata.artifacts.board,{signal}),
-   boundedJSON(descriptor(metadata.artifacts.privateFee).url,32*1024*1024,metadata.artifacts.privateFee,{signal})
-  ]);
-  [globalThis.BILLBOARD_CRS_MANIFEST,boardRaw,feeRaw]=values;
-  globalThis._getPublicConfig=()=>structuredClone(config);
-  // Evaluate in dependency order; downloads are already running through preload.
-  for(const asset of metadata.scripts)await script(asset,signal);
- }finally{for(const link of preloads)link.remove();}
- const sdk=globalThis.__aztec,account=globalThis.BillboardAccount,routing=globalThis.BillboardPrivateFeeRouting;
- if(!sdk?.createTrustedPrivateNode||!account?.configure||!routing?.isPrivateWalletForNode||!globalThis.ethers)throw failed();
- globalThis.BillboardCRS.validateManifest(globalThis.BILLBOARD_CRS_MANIFEST);
- const boardArtifact=sdk.loadContractArtifact(boardRaw),privateFeeArtifact=sdk.loadContractArtifact(feeRaw);
- let bokLoading;
- const getBokArtifact=()=>{
-  if(!bokAsset)return Promise.resolve(undefined);
-  if(!bokLoading){
-   const controller=new AbortController(),cancel=()=>controller.abort();
-   globalThis.addEventListener('pagehide',cancel,{once:true});
-   bokLoading=boundedJSON(bokAsset.url,32*1024*1024,bokAsset,{signal:controller.signal})
-    .then(raw=>sdk.loadContractArtifact(raw)).finally(()=>globalThis.removeEventListener('pagehide',cancel));
-  }
-  return bokLoading;
- };
+ globalThis._getPublicConfig=()=>structuredClone(config);
+ for(const name of ['ethers.js','wallet-providers.js','ethereum-account-session.js','account.js']){
+  await script(metadata.scripts.find(asset=>asset.url==='/wallet/'+name),signal);
+ }
+ const account=globalThis.BillboardAccount;
+ if(!account?.configure||!globalThis.ethers)throw failed();
+ account.configure({deriveAddress:async value=>(await workerReady).deriveAccount(value)});
  let session,creating;
  // Only metadata leaves provider discovery. The selected transport stays inside
  // existing custody, which verifies the configured chain and invalidates changes.
@@ -119,12 +131,14 @@ async function load(signal){
   return fundingWalletStatus();
  };
  const canStartTestAccount=['11155111','31337'].includes(String(config.network.chainId));
+ let startedFreshAccount=false;
  const startingTestAccount=()=>canStartTestAccount&&globalThis.location.hash==='#/new-account';
  const signInWallet=async (id,{freshAccount=startingTestAccount()}={})=>{
   if(globalThis.walletState.aztec||globalThis.walletState.invalidated)throw failed();
   const selected=globalThis.BillboardWalletProviders.list().find(entry=>entry.id===id);
   if(!selected)throw failed();
   await account.connect(selected.provider,selected.name,{deriveAccount:true,providerId:selected.rdns??selected.id,freshAccount});
+  startedFreshAccount=freshAccount;
   if(startingTestAccount()){const url=new URL(globalThis.location.href);url.hash='/home';globalThis.history.replaceState(null,'',url);}
   return true;
  };
@@ -135,31 +149,28 @@ async function load(signal){
   if(savedAccount===selected&&savedPromise)return savedPromise;
   if(savedPromise)void savedPromise.then(value=>value.close()).catch(()=>{});savedAccount=selected;
   const contextGuard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
-  savedPromise=createSavedItems({walletSecret:selected.secretKey,walletSalt:selected.salt,scopeText:JSON.stringify(['rolling.saved-items.v1',config.network.chainId,config.board.contractAddress]),storage:sdk.createBrowserJournalStorage(globalThis.indexedDB,{databaseName:'rolling-saved-items-v1'}),contextGuard}).catch(error=>{if(savedAccount===selected)savedPromise=null;throw error;});return savedPromise;
+  savedPromise=createSavedItems({walletSecret:selected.secretKey,walletSalt:selected.salt,scopeText:JSON.stringify(['rolling.saved-items.v1',config.network.chainId,config.board.contractAddress]),storage:createBrowserJournalStorage(globalThis.indexedDB,{databaseName:'rolling-saved-items-v1'}),contextGuard}).catch(error=>{if(savedAccount===selected)savedPromise=null;throw error;});return savedPromise;
  }
- return Object.freeze({signInWallet,restoreAccount,canStartTestAccount,startingTestAccount,account,savedItems,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
-  if(session)return Promise.resolve(session);if(creating)return creating;
-  const selected=globalThis.walletState.aztec;if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
-  const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
-  creating=createRollingRefundSession({sdk,ethers:globalThis.ethers,config,boardArtifact,getBokArtifact,account:selected,contextGuard:guard,
-   captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:guard,chainId:config.network.chainId})}).then(value=>(session=value)).finally(()=>{creating=undefined;});
-  return creating;
- }}:{}),fundingWallets,fundingWalletStatus,connectFundingWallet,getAccount:()=>globalThis.walletState.aztec,createSession({onProgress}={}){
-  if(config.refundOnly===true)return Promise.reject(failed());
-  if(session)return Promise.resolve(session);if(creating)return creating;
+ async function openWorkerAccount({onProgress}={}){
+  if(onProgress)progressObserver=onProgress;
+  if(session)return session;if(creating)return creating;
   const selected=globalThis.walletState.aztec;
-  if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
-  const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};
-  // Public immutable circuit assets load alongside account initialization.
-  // This never blocks sign-in or starts a private execution/proof.
-  try{void Promise.resolve(sdk.preloadPostingKernels()).catch(()=>{});}catch{}
-  creating=createRollingWalletSession({sdk,routing,ethers:globalThis.ethers,config,boardArtifact,privateFeeArtifact,getBokArtifact,account:selected,
-   trustedQuery:query,remoteProver:remote,contextGuard:guard,onProgress,
-   fundingRelay:createRollingFundingRelay({contextGuard:guard}),
-   captureFundingWallet:()=>captureRollingFundingWallet({getState:()=>globalThis.walletState,contextGuard:guard,chainId:config.network.chainId}),
-   claimStore:globalThis.makeClaimSecretStore(selected.secretKey,selected.salt),proofsEnabled:metadata.proofsEnabled}).then(value=>(session=value)).finally(()=>{creating=undefined;});
+  if(!selected||globalThis.walletState.invalidated)throw failed();
+  if(workerAccount&&workerAccount!==selected)throw failed();workerAccount=selected;
+  creating=(async()=>{
+   const client=await workerReady;workerGuard();
+   await client.openAccount({secretKey:selected.secretKey,salt:String(selected.salt),address:String(selected.address)});
+   workerGuard();if(globalThis.walletState.aztec!==selected)throw failed();
+   session=client.session;return session;
+  })().finally(()=>{creating=undefined;});
   return creating;
- }});
+ }
+ return Object.freeze({signInWallet,restoreAccount,canStartTestAccount,startingTestAccount,startedFreshAccount:()=>startedFreshAccount,invalidate:terminateWorker,account,savedItems,refundOnly:config.refundOnly===true,
+  backgroundStatus:()=>workerClient?.backgroundStatus??[],
+  ...(config.publicRefundRpcUrl?{createRefundSession:openWorkerAccount}:{}),fundingWallets,fundingWalletStatus,connectFundingWallet,
+  getAccount:()=>globalThis.walletState.aztec,createSession(options){if(config.refundOnly===true)return Promise.reject(failed());return openWorkerAccount(options);}
+ });
+ }catch(error){terminateWorker();throw error;}
 }
 
 /** Captures the chosen custody transport only when a user requests a quote.

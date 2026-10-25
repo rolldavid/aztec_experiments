@@ -11,10 +11,10 @@ test('three native assets load concurrently, once, without retaining result payl
  pending[1].resolve({bytecode:'not retained'});await Promise.resolve();assert.equal(settled,false);
  pending[2].resolve({bytecode:'not retained'});assert.equal(await first,undefined);assert.equal(preload(),first);assert.equal(calls.length,3);
 });
-test('failed optional preload drains siblings, is handled, and never retries automatically',async()=>{
+test('failed optional preload drains siblings, reports failure, and never retries automatically',async()=>{
  const pending=deferred();let calls=0;const preload=createPostingKernelPreload({getClientCircuitArtifactByName(){if(++calls===1)throw Error('asset unavailable');return pending.promise;}});
- const operation=preload();let settled=false;operation.then(()=>settled=true);await Promise.resolve();await Promise.resolve();assert.equal(calls,3);assert.equal(settled,false);
- pending.reject(Error('other asset unavailable'));assert.equal(await operation,undefined);assert.equal(preload(),operation);assert.equal(calls,3);
+ const operation=preload();let settled=false;operation.then(()=>settled=true,()=>settled=true);await Promise.resolve();await Promise.resolve();assert.equal(calls,3);assert.equal(settled,false);
+ pending.reject(Error('other asset unavailable'));await assert.rejects(operation,/asset unavailable/);assert.equal(preload(),operation);assert.equal(calls,3);
 });
 test('preload uses real artifacts only, never simulations or an unrestricted variant sweep',()=>{
  assert.deepEqual(POSTING_KERNEL_ARTIFACTS,['PrivateKernelInit3Artifact','PrivateKernelResetTailToPublicArtifact_4_4_4_4_4_4_4_4_4','PrivateKernelResetTailToPublicArtifact_0_8_0_8_4_0_4_16_8']);assert(Object.isFrozen(POSTING_KERNEL_ARTIFACTS));

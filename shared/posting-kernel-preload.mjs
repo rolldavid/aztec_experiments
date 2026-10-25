@@ -13,7 +13,7 @@ export function createPostingKernelPreload(provider){
    // All downloads start together and settle independently. Retain no artifact
    // values: the native module loader already owns their immutable cache.
    started=Promise.allSettled(POSTING_KERNEL_ARTIFACTS.map(name=>
-    Promise.resolve().then(()=>provider.getClientCircuitArtifactByName(name)))).then(()=>undefined);
+    Promise.resolve().then(()=>provider.getClientCircuitArtifactByName(name)))).then(results=>{const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;});
   }
   return started;
  };

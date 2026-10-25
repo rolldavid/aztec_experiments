@@ -9402,8 +9402,8 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "25 October: owner explicitly authorizes operator-trusted testnet deployment activation, removing epoch-proof wait. Root replaces Bok escrow/portal only; existing fresh Board remains. Off-chain saved items source staged both hosts, not activated. Retain withdrawal Outbox proofs, all security credentials, native transaction inclusion. No further test campaigns per owner. Parallel private tips implementation remains isolated. Performance goal incomplete.",
-      "execution_lane": "operational readiness",
+      "checkpoint": "Dedicated-worker architecture integrated and independently reviewed. Real isolated browser: crypto442ms, verifier848ms, no main SDK. Fixed Blob-relative lazy imports, swallowed preload failures and duplicate custody guards. Focused boundary checks pass; hosted-origin account/payment validation and <=2s measurement outstanding. Live remains26a68597; candidate not yet published.",
+      "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
       "verification_method": "Native claim/cancel exclusion, Solidity custody/refund proofs, client and browser checks, coherent artifact verification, independent review, then fresh testnet signup and publication.",
@@ -9845,8 +9845,16 @@
     "request": "Owner25October: apply all proven posting optimizations across ALL other application transaction flows; new goal at least50% end-to-end reduction for every flow against currentpublished74c baseline. Cover Ethereum/Aztec user and operator paths, preservevalidation and genuine usable completion.",
     "status": "active",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
-    "checkpoint": "25 October: three patches integrated/published; UI b7870f5c live. Clean fresh signup40.797s versus59.033s baseline,31percent improvement; witness1.705s. Core cleanup complete5.814GB free; automatic SDK retention and stopped-container disposal implemented. Current agent patches remove duplicate custody verification and parallelize readiness discovery.",
-    "next_action": "Integrate reviewed custody/readiness patches; focused tests, publish one coherent build, measure fresh signup and actual other transaction flows. Continue until50percent goal achieved; current result does not meet signup target."
+    "checkpoint": "26a68597 UI published; missing signup SDK binding fixed; real fresh native signup completed. Fresh opening measured22.543s and detailed19.748s. Owner prioritizes2.000s account opening; target unmet.",
+    "next_action": "Split funding quote capability from private execution session; independently prepare deployment data, quote and private engine, remove duplicate validation reads and unnecessary private status dependency; publish and measure actual enabled payment endpoint.",
+    "account_opening_target": {
+      "maximum_seconds": 2,
+      "start": "Wallet selection click",
+      "end": "Correctly priced enabled payment button visibly rendered",
+      "wallet_approval": "Report total wall time and human wallet approval dwell separately; never hide application work in approval time.",
+      "coverage": "Fresh account, returning account, warm page and cold page; report page startup separately and immediate-click results.",
+      "requirement": "Remove private engine startup, private synchronization, constructor simulation and private balance discovery from funding quote dependencies. No placeholder payment readiness or costs moved blindly after Pay."
+    }
   },
   "completed_operating_requests": [
     {

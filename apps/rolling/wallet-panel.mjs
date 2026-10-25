@@ -515,7 +515,13 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    const setupMessages={'account-lock':'Opening your account…','trusted-node':'Connecting to the network…',deployment:'Checking the network…','account-derive':'Preparing your private account…','store-open':'Saving your account on this device…','pxe-create':'Preparing your private account…','account-register':'Preparing your private account…','contracts-register':'Preparing your private account…','initial-sync':'Syncing your account with the network…','journal-open':'Finishing account setup…','wallet-bind':'Finishing account setup…','account-manager':'Finishing account setup…','application-bind':'Finishing account setup…'};
    note(setupMode&&diagnostic?.stage==='session-initialization'?(setupMessages[diagnostic.step]??'Finishing account setup…'):setupMode&&diagnostic?.stage==='private-refresh'?'Checking your account balance…':diagnostic?.stage==='funding-claim'?fundingProgressMessage(diagnostic,fundingKind):Object.hasOwn(stages,stage)?stages[stage]:fundingAutomatic||fundingActiveCapability?(diagnostic?.stage==='private-refresh'?`Checking your ${credit}…`:`Adding your ${credit}…`):postingInProgress?'Posting…':'Loading your account…');progressNote=true;
   }});}
-  await refresh();checkAccount(epoch);note('');
+  if(setupMode&&runtime.startedFreshAccount?.()&&session.funding){
+   // An explicit new test account has a new derivation nonce. Its payment does
+   // not require private note discovery. Returning accounts still obtain their
+   // actual state; missing local records never mean an empty account.
+   status={status:'fee-needed',depositIds:[]};intent=null;blocked=false;view='funding';
+   await prepareFundingQuote();checkAccount(epoch);
+  }else await refresh();checkAccount(epoch);note('');
   }catch{if(attempt===initializationAttempt)initializationAttempt++;throw connectionFailure;}
  }
  function ensureRuntime(){
@@ -524,7 +530,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!loaded?.account||typeof loaded.getAccount!=='function'||typeof loaded.createSession!=='function')throw runtimeFailure;
    runtime=loaded;
    runtime.account.configure({requireEth:false,canEndSession:()=>!session?.busy,onSetupError:()=>{error=message;},onChange:value=>{
-    if(value?.invalidated===true||accountIdentity&&runtime.getAccount()!==accountIdentity){invalidated=true;clearPrivateView();note('The account changed. Reload before continuing.');render();}
+    if(value?.invalidated===true||accountIdentity&&runtime.getAccount()!==accountIdentity){invalidated=true;runtime.invalidate?.();clearPrivateView();note('The account changed. Reload before continuing.');render();}
    }});
    return runtime;
   });

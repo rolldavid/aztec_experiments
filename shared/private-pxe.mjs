@@ -12,6 +12,7 @@ import { proveBrowserChonk } from './browser-chonk-stream.mjs';
 // PXE/prover diagnostics may contain private execution data. The application
 // reports bounded progress and public receipt identifiers through its own UI.
 const discard=()=>{};
+const browserEnvironment=typeof window!=='undefined'||typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalScope;
 const privateLogger=Object.freeze({
   trace:discard,debug:discard,verbose:discard,info:discard,warn:discard,error:discard,fatal:discard,
   level:'silent',module:'billboard-private',isLevelEnabled:()=>false,
@@ -29,7 +30,7 @@ let cliProverInitialization;
 const cliFailure=()=>Object.assign(new Error('Local CLI proving setup could not be verified.'),{code:'BB_CLI_PROVER_CONFIGURATION'});
 const cliOptions=Object.freeze({backend:BackendType.Wasm,threads:1,skipSrsInit:true});
 export async function initializeCliProver(input) {
-  if(typeof window!=='undefined'||!input||Object.keys(input).sort().join(',')!=='loadLocal,manifest,sha256'||typeof input.loadLocal!=='function'||typeof input.sha256!=='function')throw cliFailure();
+  if(browserEnvironment||!input||Object.keys(input).sort().join(',')!=='loadLocal,manifest,sha256'||typeof input.loadLocal!=='function'||typeof input.sha256!=='function')throw cliFailure();
   try {
     const singleton=await Barretenberg.initSingleton({...cliOptions,logger:discard});
     if(singleton.options.backend!==cliOptions.backend||singleton.options.threads!==1||singleton.options.skipSrsInit!==true)throw cliFailure();
@@ -66,7 +67,11 @@ export async function initializeBrowserProver(supplied, {verifierOnly=false}={})
         manifest:globalThis.BILLBOARD_CRS_MANIFEST,
         verifierOnly,
         bn254NumPoints:requestedPoints,
-        loadLocal:async file=>crs.readResponse(await fetch('crs/'+file.name+'?sha256='+file.sha256,{credentials:'omit',redirect:'error',cache:'default'}),file),
+        loadLocal:async file=>{
+          const path='crs/'+file.name+'?sha256='+file.sha256;
+          const url=globalThis.__rollingWalletAssetBase?new URL('../'+path,globalThis.__rollingWalletAssetBase).href:path;
+          return crs.readResponse(await fetch(url,{credentials:'omit',redirect:'error',cache:'default'}),file);
+        },
         fetch:async()=>{throw browserFailure();},
         sha256:async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),b=>b.toString(16).padStart(2,'0')).join(''),
         log:discard,
@@ -105,7 +110,7 @@ export async function createPXE(node,config,options={}) {
     // mode. Do not install an application prover or contact a remote service.
     config={...config,proverEnabled:false};
     selected={...options};delete selected.proverOrOptions;delete selected.remoteProver;
-  }else if(!readOnly && typeof window !== 'undefined') {
+  }else if(!readOnly && browserEnvironment) {
     const proverOrOptions=await initializeBrowserProver(options.proverOrOptions,{verifierOnly:Boolean(remote)});
     const simulator=options.simulator??withOwnerEnvelopeOracles(new WASMSimulator(privateLogger));
     selected={...options,simulator,proverOrOptions:new BrowserPrivateKernelProver(simulator,{...proverOrOptions,logger:privateLogger},{proofsEnabled,transport:transport(remote)})};
@@ -128,7 +133,7 @@ export async function createPXE(node,config,options={}) {
     pxe.setRemoteProver=value=>{
       const change=routeChange.then(async()=>{
         const next=transport(value);
-        if(typeof window!=='undefined')await initializeBrowserProver(options.proverOrOptions,{verifierOnly:Boolean(next)});
+        if(browserEnvironment)await initializeBrowserProver(options.proverOrOptions,{verifierOnly:Boolean(next)});
         selected.proverOrOptions.setTransport(next);
         remote=value;
       });

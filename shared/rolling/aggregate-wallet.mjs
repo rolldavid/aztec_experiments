@@ -216,7 +216,13 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  }
  return Object.freeze({
   async prepare(allocation){
-   const values=clone(allocation);prepared=null;check(typeof verifyFeeCredit==='function','UNAVAILABLE');await read(()=>verifyFeeCredit(values.feeAmount));check(typeof values.bokAmount==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(values.bokAmount),'INVALID');const recheckScope=await read(()=>verifyScope({includeBok:BigInt(values.bokAmount)>0n,asset:values.asset}));check(typeof recheckScope==='function');
+   const values=clone(allocation);prepared=null;check(typeof verifyFeeCredit==='function','UNAVAILABLE');check(typeof values.bokAmount==='string'&&/^(0|[1-9][0-9]{0,38})$/.test(values.bokAmount),'INVALID');
+   const qualification=await Promise.allSettled([
+    ()=>read(()=>verifyFeeCredit(values.feeAmount)),
+    ()=>read(()=>verifyScope({includeBok:BigInt(values.bokAmount)>0n,asset:values.asset})),
+   ].map(qualify=>Promise.resolve().then(qualify)));
+   const failure=qualification.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+   const recheckScope=qualification[1].value;check(typeof recheckScope==='function');
    if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
    const previous=await stored(),priorPayment=await archivePrevious(previous);
    const wallet=await read(captureWallet);await read(wallet.guard);

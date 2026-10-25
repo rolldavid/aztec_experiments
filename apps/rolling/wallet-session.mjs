@@ -1,3 +1,5 @@
+import {createRollingFundingSession,verifyRollingTopupClaim} from '../../shared/rolling/funding-session.mjs';
+export {createRollingFundingSession,verifyRollingFundingCredit,verifyRollingAggregateScope,verifyRollingTopupClaim,fundingUsdEstimate} from '../../shared/rolling/funding-session.mjs';
 import {executeRollingAction} from './wallet-action.mjs';
 import {executeAutomaticWithdrawal} from './automatic-withdrawal.mjs';
 import {measureRollingStage} from './performance.mjs';
@@ -7,10 +9,10 @@ import {createDepositRefunds} from './deposit-refunds.mjs';
 import {createEncryptedJournalSlot} from '../../shared/journal-record.mjs';
 import {l2JournalScopeText} from '../../shared/l2-journal.mjs';
 import {encodeDepositExitCommitment,sha256Field} from '../../shared/protocol-commitments.mjs';
-import {createAggregateWallet,starterFundingAllocation,createStandaloneTopupWallet,advanceAggregateClaim,submitWithFundingCheckpoint} from '../../shared/rolling/aggregate-wallet.mjs';
+import {createStandaloneTopupWallet,advanceAggregateClaim,submitWithFundingCheckpoint} from '../../shared/rolling/aggregate-wallet.mjs';
 import {createSynchronizedRollingApplication} from '../../shared/rolling/synchronized-application.mjs';
 import {createRollingApplication,createPendingWithdrawalSlot} from '../../shared/rolling/application.mjs';
-import {verifyRollingDeployment,observeRollingSetup,rollingSetupErrorCode} from '../../shared/rolling/deployment.mjs';
+import {verifyRollingDeployment,createRollingDeploymentPreparation,prepareRollingDeployment,observeRollingSetup,rollingSetupErrorCode} from '../../shared/rolling/deployment.mjs';
 const fail=code=>Object.assign(Error('The private account is unavailable. Preserve recovery records.'),{code});
 export const ROLLING_SESSION_STAGES=Object.freeze(['account-lock','trusted-node','deployment','account-derive','store-open','pxe-create','journal-open','wallet-bind','account-manager','account-register','contracts-register','application-bind']);
 const refreshMethods=Object.freeze({readAccountStatus:'account-status',ownedIdentities:'owned-names',readModeratorStatus:'moderator-status',readBokStatus:'bok-status'});
@@ -36,21 +38,6 @@ export function projectRollingTransactionProgress(stage,details){
 const silent=()=>{};
 const logger=Object.freeze({trace:silent,debug:silent,verbose:silent,info:silent,warn:silent,error:silent,fatal:silent,
  level:'silent',module:'rolling-wallet',isLevelEnabled:()=>false,createChild:()=>logger,getBindings:()=>({})});
-// Admission for a new payment, never a gate on recovery of an existing one.
-// The incoming bridge OR existing private credit must independently fund the
-// configured native maximum; the two payment compositions cannot pool them.
-export async function verifyRollingFundingCredit({sdk,node,gasSettings,incomingAmount,readExistingCredit,contextGuard}){
- await contextGuard();
- if(typeof incomingAmount!=='string'||!/^[1-9][0-9]{0,38}$/.test(incomingAmount)||BigInt(incomingAmount)>=1n<<128n)throw fail('ROLLING_FUNDING_INVALID');
- const fixed=sdk.normalizePrivateFeeGasSettings(gasSettings).gasSettings,maximum=fixed.getFeeLimit().toBigInt();
- const minimum=await node.getCurrentMinFees();await contextGuard();
- if(['feePerDaGas','feePerL2Gas'].some(k=>fixed.maxFeesPerGas[k]<BigInt(minimum[k])))throw fail('PRIVATE_FEE_CAP_TOO_LOW');
- if(BigInt(incomingAmount)>=maximum)return;
- const existing=await readExistingCredit();await contextGuard();
- if(typeof existing!=='bigint'||existing<0n||existing>=1n<<128n)throw fail('ROLLING_INVALID_RESPONSE');
- if(existing<maximum)throw Object.assign(fail('ROLLING_FUNDING_FEE_CREDIT_INSUFFICIENT'),{minimumFeeCredit:maximum.toString()});
-}
-
 export function createFundingContinuation({application,funding,sdk,node,contextGuard,locked,onProgress,invalidateSnapshot=()=>{},confirmationTier='checkpointed',bridgeChainTip='checkpointed'}){
  if(!['checkpointed','proposed'].includes(bridgeChainTip))throw fail('ROLLING_SESSION_CONFIG');
  let active=null;
@@ -386,8 +373,9 @@ export async function createRollingRefundSession({sdk,ethers,config,boardArtifac
 }
 
 export async function createRollingWalletSession({sdk,routing,ethers,config,boardArtifact,privateFeeArtifact,bokArtifact,getBokArtifact,account,
- trustedQuery,remoteProver,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
+ trustedQuery,remoteProver,fundingContext,contextGuard,claimStore,captureFundingWallet,fundingRelay,onProgress=()=>{},locks=globalThis.navigator?.locks,proofsEnabled=true}){
  if(typeof proofsEnabled!=='boolean'||(!proofsEnabled&&String(config?.network?.chainId)!=='31337')||typeof contextGuard!=='function'||typeof locks?.request!=='function'||!account||!trustedQuery||!routing)throw fail('ROLLING_SESSION_CONFIG');
+ const ownsFundingContext=fundingContext==null;
  const nativeChainTip='proposed';
  const captured={secretKey:account.secretKey,salt:String(account.salt),address:String(account.address)};
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
@@ -424,7 +412,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  async function dispose(){
   try{if(pxe){try{await pxe.stop();pxe=undefined;store=undefined;}
    catch(error){try{if(store){await store.close();store=undefined;}}catch(cleanupError){throw new AggregateError([error,cleanupError],'Private session cleanup failed');}throw error;}}
-  else if(store){await store.close();store=undefined;}}finally{fundingProvider?.destroy();fundingProvider=undefined;}
+  else if(store){await store.close();store=undefined;}}finally{if(ownsFundingContext)fundingContext?.close();fundingProvider?.destroy();fundingProvider=undefined;}
  }
  let initializationStep='account-lock',nestedFailure=null,failedObservation=false;
  const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'session-initialization',step:initializationStep,deploymentStep:null,state,code:state==='failed'?rollingSetupErrorCode(error):null});
@@ -435,12 +423,19 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
   try{
    begin('trusted-node');
    const network={chainId:String(selected.network.chainId),version:String(selected.network.rollupVersion),rollup:selected.network.rollupAddress};
-   const node=await sdk.createTrustedPrivateNode({...query,expectedNetworkScope:network,proofsEnabled,readinessTier:'checkpointed'});await guard();
-   begin('deployment');
-   const verifiedDeployment=await verifyRollingDeployment({sdk,node,ethers,config:selected,boardArtifact,privateFeeArtifact,contextGuard:guard,proofsEnabled,onProgress:record=>{
+   let node,verifiedDeployment,deploymentPreparation;
+   const deploymentProgress=record=>{
     const value={stage:'session-initialization',step:'deployment',deploymentStep:record.step,state:record.state,code:record.code};
     if(record.state==='failed')nestedFailure=Object.freeze(value);observeRollingSetup(onProgress,value);
-   }});
+   };
+   if(fundingContext){
+    node=fundingContext.node;await fundingContext.assertContext({config:selected,account,node,proofsEnabled});begin('deployment');
+    ({deployment:verifiedDeployment}=await fundingContext.claimDeployment({sdk,ethers,config:selected,boardArtifact,privateFeeArtifact,node,proofsEnabled,contextGuard:guard,onProgress:deploymentProgress}));
+   }else{
+    deploymentPreparation=createRollingDeploymentPreparation({sdk,ethers,config:selected,boardArtifact,privateFeeArtifact,trustedQuery:query,proofsEnabled});begin('deployment');
+    ({node,deployment:verifiedDeployment}=await prepareRollingDeployment(deploymentPreparation,{contextGuard:guard,onProgress:deploymentProgress}));
+   }
+   await guard();
    const deployment={...verifiedDeployment};
    let bok;
    // The session lock owns verification, registration and first note sync.
@@ -510,27 +505,17 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    }]))};
    funding.resolveBokWithdrawal=async()=>verifyRollingTopupScope({sdk,ethers,node,provider:funding.provider,network,privateFee:deployment.privateFee.address.toString(),bok:await ensureBok(),kind:'bok',contextGuard:guardRoute});
    if(selected.aggregateFunding!==undefined){
-    const scope=selected.aggregateFunding;
-    if(scope.chainId!==network.chainId||scope.collateralPortal!==deployment.portal||scope.privateFpc!==deployment.privateFee.address.toString()||typeof captureFundingWallet!=='function')throw fail('ROLLING_SESSION_CONFIG');
     const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call','send','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{
-     await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);
-     const result=await fundingRead(name,args);await guardRoute();return result;
+     await guardRoute();const result=await fundingRead(name,args);await guardRoute();return result;
     }]));
-    const verifyFeeCredit=incomingAmount=>verifyRollingFundingCredit({sdk,node,gasSettings:selected.privateFee.gasSettings,incomingAmount,contextGuard:guardRoute,
-     readExistingCredit:async()=>{
-      await pxe.sync();await initializeAccount();await guardRoute();
-      try{return (await sdk.preparePrivateFeePayment({wallet,node,owner:instance.address,privateFeeAddress:deployment.privateFee.address.toString(),privateFeeArtifact,expectedChainId:network.chainId,expectedVersion:network.version,gasSettings:selected.privateFee.gasSettings})).availableCredit;}
-      catch(error){if(error?.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return 0n;throw error;}
-     }});
-    const verifyScope=async({includeBok,asset})=>verifyRollingAggregateScope({sdk,ethers,node,provider,scope,bok:includeBok?await ensureBok():undefined,bokArtifact,network,proofsEnabled,contextGuard:guardRoute,includeBok,asset});
-    aggregate=await createAggregateWallet({sdk,ethers,scope,network,board:deployment.board.address.toString(),bok:selected.bok?.contractAddress,owner:captured.address,
-     walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,verifyScope,verifyFeeCredit,claimStore,relay:fundingRelay,verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute,confirmationTier:'proposed'}),reconcileClaim:id=>app.reconcile(id)});
-    prepareStarter=async({asset})=>{
-     const quote=await aggregate.prepare(await starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap,provider}));
-     if(asset==='USDC')return quote;
-     const usdEstimate=await fundingUsdEstimate({ethers,provider,chainId:network.chainId,wei:quote.breakdown.maximumTotalWei});
-     return Object.freeze({...quote,usdEstimate});
-    };
+    fundingContext??=await createRollingFundingSession({sdk,ethers,config:selected,account,deploymentPreparation,boardArtifact,privateFeeArtifact,node,contextGuard:guardRoute,captureWallet:captureFundingWallet,claimStore,relay:fundingRelay,storage:privateStore,provider,locks,proofsEnabled});
+    await fundingContext.assertContext({config:selected,account,node,proofsEnabled});
+    await fundingContext.bindPrivateContext({ensureBok,reconcileClaim:id=>app.reconcile(id),readExistingCredit:async()=>{
+     await pxe.sync();await initializeAccount();await guardRoute();
+     try{return (await sdk.preparePrivateFeePayment({wallet,node,owner:instance.address,privateFeeAddress:deployment.privateFee.address.toString(),privateFeeArtifact,expectedChainId:network.chainId,expectedVersion:network.version,gasSettings:selected.privateFee.gasSettings})).availableCredit;}
+     catch(error){if(error?.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return 0n;throw error;}
+    }});
+    aggregate=fundingContext.aggregate;prepareStarter=options=>fundingContext.prepareStarter(options);
     funding.loadAggregate=txHash=>aggregate.loadAggregate(txHash);
    }
    if(typeof captureFundingWallet==='function'){
@@ -644,47 +629,6 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  }});
 }
 
-/** Bind immutable native portal storage once per quote, retaining its canonical
- * block for confirmation. Every native read still traverses the admitted query
- * service; repeat only the mutable L1 observations before a payment. */
-export async function verifyRollingAggregateScope({sdk,ethers,node,provider,scope,bok,bokArtifact,network,proofsEnabled,contextGuard,includeBok=true,asset='ETH'}){
- const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;};
- const contracts=await read(()=>node.getL1ContractAddresses());
- if(contracts.feeJuicePortalAddress?.toString().toLowerCase()!==scope.feePortal)throw fail('ROLLING_SESSION_CONFIG');
- let canonical=async()=>{};
- if(includeBok){
- if(!bok)throw fail('ROLLING_SESSION_CONFIG');
- const head=await read(()=>node.getBlockData('checkpointed'));
- const number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bokArtifact.storageLayout?.portal?.slot;
- if(!Number.isSafeInteger(number)||number<1||!/^0x[0-9a-f]{64}$/.test(hash)||slot===undefined)throw fail('ROLLING_SESSION_CONFIG');
- const portal=await read(()=>node.getPublicStorageAt({hash},bok.address,new sdk.Fr(BigInt(slot))));
- if(BigInt(portal.toString())!==BigInt(scope.bokPortal))throw fail('ROLLING_SESSION_CONFIG');
- canonical=async()=>{const again=await read(()=>node.getBlockData(number));if(again?.blockHash?.toString()!==hash||Number(again?.header?.globalVariables?.blockNumber)!==number)throw fail('ROLLING_CONTEXT_CHANGED');};
- }
- const l1Scope=async()=>{
-  const l1=await read(()=>provider.getBlock('latest'));
-  if(!Number.isSafeInteger(l1?.number)||!/^0x[0-9a-f]{64}$/.test(l1?.hash))throw fail('ROLLING_SESSION_CONFIG');
-  const abi=new ethers.Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)']);
-  const call=async(address,name)=>abi.decodeFunctionResult(name,await read(()=>provider.call({to:address,data:abi.encodeFunctionData(name),blockTag:l1.number})))[0];
-  // USDC payment authenticates its token even when no Bok credit is bought.
-  const reads=[call(scope.feePortal,'UNDERLYING'),call(scope.feeToken,'decimals')];
-  if(includeBok)reads.push(call(scope.bokPortal,'token'));
-  if(includeBok||asset==='USDC')reads.push(call(scope.bokToken,'decimals'));
-  const values=await Promise.allSettled(reads);
-  const rejected=values.find(value=>value.status==='rejected');if(rejected)throw rejected.reason;
-  const [feeToken,feeDecimals,...optional]=values.map(value=>value.value);
-  if(String(feeToken).toLowerCase()!==scope.feeToken||BigInt(feeDecimals)!==18n)throw fail('ROLLING_SESSION_CONFIG');
-  if(includeBok&&String(optional.shift()).toLowerCase()!==scope.bokToken)throw fail('ROLLING_SESSION_CONFIG');
-  if((includeBok||asset==='USDC')&&BigInt(optional.shift())!==6n)throw fail('ROLLING_SESSION_CONFIG');
-  if((await read(()=>provider.getBlock(l1.number)))?.hash!==l1.hash)throw fail('ROLLING_CONTEXT_CHANGED');
- };
- // Independent authorities use their existing anchors and fresh final checks.
- // Drain every started read before releasing the owning account operation.
- const together=async tasks=>{const results=await Promise.allSettled(tasks.map(task=>Promise.resolve().then(task)));const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;};
- await together([canonical,l1Scope,()=>read(()=>sdk.inspectTrustedNode(node,{expectedNetworkScope:network,proofsEnabled}))]);
- return ()=>together([canonical,l1Scope]);
-}
-
 /** Discover direct funding endpoints from the authenticated node and Bok
  * contract, then pin all token/portal reads to one canonical L1 block. */
 export async function verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee,bok,kind,contextGuard}){
@@ -715,28 +659,4 @@ export async function verifyRollingTopupScope({sdk,ethers,node,provider,network,
  }
  check(/^0x[0-9a-f]{40}$/.test(portal)&&/^0x[0-9a-f]{40}$/.test(token)&&BigInt(portal)>0n&&BigInt(token)>0n);
  check(BigInt(await call(token,'decimals'))===(kind==='bok'?6n:18n));check((await read(()=>provider.getBlock(l1.number)))?.hash===l1.hash);return Object.freeze({portal,token,recipient});
-}
-
-// An encrypted completed claim survives replacement of the single active L2
-// workflow, but its exact receipt must still be canonical before more funding.
-export async function verifyRollingTopupClaim({sdk,node,txHash,contextGuard,confirmationTier='checkpointed'}){
- const read=async fn=>{await contextGuard();const result=await sdk.boundedTransactionRead(fn);await contextGuard();return result;};
- if(!/^0x[0-9a-f]{64}$/.test(txHash)||BigInt(txHash)===0n)throw fail('ROLLING_SESSION_CONFIG');
- const hash=sdk.TxHash.fromString(txHash),receipt=await read(()=>node.getTxReceipt(hash));sdk.requireSuccessfulReceipt(receipt,hash,{confirmationTier});
- const block=await read(()=>node.getBlock(receipt.blockNumber));if(block?.hash?.toString()!==receipt.blockHash.toString())throw fail('ROLLING_SESSION_CONFIG');
-}
-
-/** Reference fiat value from the network's Chainlink ETH/USD feed. Display only. */
-export async function fundingUsdEstimate({ethers,provider,chainId,wei}){
- const feed=({'1':'0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419','11155111':'0x694AA1769357215DE4FAC081bf1f309aDC325306'})[chainId];
- if(!feed)return null;
- try{
-  const abi=new ethers.Interface(['function decimals() view returns (uint8)','function latestRoundData() view returns (uint80,int256,uint256,uint256,uint80)']);
-  const block=await provider.getBlock('latest');
-  const results=await Promise.all(['decimals','latestRoundData'].map(async name=>abi.decodeFunctionResult(name,await provider.call({to:feed,data:abi.encodeFunctionData(name),blockTag:block.number}))));
-  const decimals=Number(results[0][0]),[round,price,,updated,answered]=results[1];
-  if(decimals>18||price<=0n||updated<=0n||answered<round||updated>BigInt(block.timestamp)||BigInt(block.timestamp)-updated>86400n)return null;
-  const cents=(BigInt(wei)*price*100n+10n**BigInt(18+decimals)/2n)/10n**BigInt(18+decimals);
-  return (cents/100n).toString()+'.'+(cents%100n).toString().padStart(2,'0');
- }catch{return null;}
 }

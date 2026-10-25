@@ -88,7 +88,7 @@ const options = {
 const main = await build({ ...options, entryPoints: ['shared/sdk-entry.mjs'],
   format: 'iife', globalName: '__aztec', outfile: path.join(out, 'aztec_bundle.js'),
   define: { ...options.define, 'import.meta.url': '__aztecBundleUrl' },
-  banner: { js: 'var __aztecBundleUrl = typeof document !== "undefined" && document.currentScript ? document.currentScript.src : globalThis.location?.href;' },
+  banner: { js: 'var __aztecBundleUrl = globalThis.__rollingWalletAssetBase ? new URL("aztec_bundle.js", globalThis.__rollingWalletAssetBase).href : typeof document !== "undefined" && document.currentScript ? document.currentScript.src : globalThis.location?.href;' },
 });
 // Keep the synchronous CLI bundle above unchanged. Browser builds preserve the
 // SDK's existing lazy artifact imports rather than embedding every circuit and
@@ -101,22 +101,28 @@ const wasmImporter = path.join(root, bb, 'fetch_code/browser/index.js');
 const browserLazyAssets = {
   name: 'aztec-browser-lazy-assets',
   setup(builder) {
-    builder.onResolve({filter: /\.(?:json|js)$/}, async args => {
-      if (args.kind !== 'dynamic-import') return;
-      const circuit = args.importer === circuitImporter && /^\.\.\/artifacts\/[a-z0-9_]+\.json$/.test(args.path);
-      const wasm = args.importer === wasmImporter && ['./barretenberg.js', './barretenberg-threads.js'].includes(args.path);
-      if (!circuit && !wasm) return;
-      const filename = path.resolve(path.dirname(args.importer), args.path);
-      if (circuit && path.dirname(filename) !== circuitDirectory) throw new Error('Unexpected SDK circuit asset');
-      const original = await fs.readFile(filename, 'utf8');
-      // JSON becomes an ordinary ESM default export, exactly matching the
-      // existing dynamic-import consumer without requiring JSON import attributes.
-      const contents = circuit ? 'export default ' + original + ';\n' : original;
-      const digest = sha(contents);
-      const name = 'sdk-lazy-' + digest + '.mjs';
-      lazyAssets.set(name, contents);
-      lazyInputs.add(path.relative(root, filename).split(path.sep).join('/'));
-      return {path: './' + name + '?sha256=' + digest, external: true};
+    builder.onLoad({filter: /\.js$/}, async args => {
+      if (args.path !== circuitImporter && args.path !== wasmImporter) return;
+      let contents = await fs.readFile(args.path, 'utf8');
+      const imports = [...contents.matchAll(/import\((['"])([^'"]+)\1\)/g)];
+      for (const match of imports) {
+        const requested = match[2];
+        const circuit = args.path === circuitImporter && /^\.\.\/artifacts\/[a-z0-9_]+\.json$/.test(requested);
+        const wasm = args.path === wasmImporter && ['./barretenberg.js', './barretenberg-threads.js'].includes(requested);
+        if (!circuit && !wasm) throw new Error('Unexpected SDK lazy import: ' + requested);
+        const filename = path.resolve(path.dirname(args.path), requested);
+        if (circuit && path.dirname(filename) !== circuitDirectory) throw new Error('Unexpected SDK circuit asset');
+        const original = await fs.readFile(filename, 'utf8');
+        const asset = circuit ? 'export default ' + original + ';\n' : original;
+        const digest = sha(asset);
+        const name = 'sdk-lazy-' + digest + '.mjs';
+        lazyAssets.set(name, asset);
+        lazyInputs.add(path.relative(root, filename).split(path.sep).join('/'));
+        // A verified Blob worker has no relative module base. Resolve lazy
+        // imports against the same hosted bundle URL as WASM and child workers.
+        contents = contents.replace(match[0], `import(new URL(${JSON.stringify('./' + name + '?sha256=' + digest)}, import.meta.url).href)`);
+      }
+      return {contents, loader: 'js'};
     });
   },
 };
@@ -124,7 +130,7 @@ const browser = await build({ ...options, entryPoints: ['shared/sdk-entry.mjs'],
   plugins: [browserLazyAssets, ...options.plugins],
   format: 'iife', globalName: '__aztec', outfile: path.join(out, 'aztec_browser.js'),
   define: { ...options.define, 'import.meta.url': '__aztecBundleUrl' },
-  banner: { js: 'var __aztecBundleUrl = typeof document !== "undefined" && document.currentScript ? document.currentScript.src : globalThis.location?.href;' },
+  banner: { js: 'var __aztecBundleUrl = globalThis.__rollingWalletAssetBase ? new URL("aztec_bundle.js", globalThis.__rollingWalletAssetBase).href : typeof document !== "undefined" && document.currentScript ? document.currentScript.src : globalThis.location?.href;' },
 });
 if (![...lazyInputs].some(name => name.startsWith(path.relative(root, circuitDirectory).split(path.sep).join('/') + '/')) ||
     !['barretenberg.js', 'barretenberg-threads.js'].every(name => lazyInputs.has(bb + '/fetch_code/browser/' + name))) {

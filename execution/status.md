@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 25 October: owner explicitly authorizes operator-trusted testnet deployment activation, removing epoch-proof wait. Root replaces Bok escrow/portal only; existing fresh Board remains. Off-chain saved items source staged both hosts, not activated. Retain withdrawal Outbox proofs, all security credentials, native transaction inclusion. No further test campaigns per owner. Parallel private tips implementation remains isolated. Performance goal incomplete.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Dedicated-worker architecture integrated and independently reviewed. Real isolated browser: crypto442ms, verifier848ms, no main SDK. Fixed Blob-relative lazy imports, swallowed preload failures and duplicate custody guards. Focused boundary checks pass; hosted-origin account/payment validation and <=2s measurement outstanding. Live remains26a68597; candidate not yet published.
 
 ## Ready internal work
 

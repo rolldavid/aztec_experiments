@@ -22,13 +22,14 @@ const scripts={
 };
 const sources={...Object.fromEntries(Object.entries(scripts).map(([name,file])=>['/wallet/'+name,file])),
  '/wallet/runtime.mjs':out+'/runtime.mjs',
+ '/wallet/native-worker.js':out+'/native-worker.js',
  '/wallet/board.json':'billboard/target/rolling_contract-RollingBoard.json',
  '/wallet/private-fee.json':'apps/src/billboard/private_fee_artifact.json',
  '/wallet/bok.json':'experiments/private-bok/target/private_bok-PrivateBok.json',
  '/crs/crs-manifest.json':'crs-manifest.json',
 };
 const invalid=()=>Error('Invalid Rolling wallet assets or public configuration');
-const requiredInputs=['apps/rolling/wallet-runtime.mjs','apps/rolling/wallet-session.mjs',
+const requiredInputs=['apps/rolling/wallet-runtime.mjs','apps/rolling/wallet-session.mjs','apps/rolling/wallet-worker-entry.mjs','apps/rolling/wallet-worker-client.mjs','apps/rolling/wallet-worker-protocol.mjs','shared/rolling/funding-session.mjs',
  'shared/rolling/saved-items.mjs','shared/rolling/aggregate-wallet.mjs','shared/rolling/application.mjs','shared/rolling/synchronized-application.mjs','shared/rolling/deployment.mjs','shared/rolling/name-policy.mjs','shared/rolling/invocation.mjs',
  'shared/journal-record.mjs','shared/l2-journal.mjs','shared/transaction-outcomes.mjs','shared/protocol-commitments.mjs','shared/protocol-schema.mjs',
  'scripts/rolling-wallet-assets.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json'];
@@ -105,11 +106,14 @@ export async function buildRollingWalletAssets(){
  // invocation.mjs supplies only a scalar constant here. Its unused hashing
  // helper must tree-shake away; do not resolve another copy of the Aztec SDK.
  const built=await build({absWorkingDir:ROOT,entryPoints:['apps/rolling/wallet-runtime.mjs'],outfile:out+'/runtime.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',metafile:true,logLevel:'silent',external:['@aztec-labs/foundation/crypto/poseidon','@aztec-labs/aztec.js/node']});
+ const workerBuilt=await build({absWorkingDir:ROOT,entryPoints:['apps/rolling/wallet-worker-entry.mjs'],outfile:out+'/native-worker.js',bundle:true,format:'iife',platform:'browser',target:'es2022',metafile:true,logLevel:'silent',external:['@aztec-labs/foundation/crypto/poseidon','@aztec-labs/aztec.js/node']});
  if(Object.values(built.metafile.outputs).some(output=>output.imports.length))throw invalid();
+ if(Object.values(workerBuilt.metafile.outputs).some(output=>output.imports.length))throw invalid();
  if(Object.keys(built.metafile.inputs).some(name=>name.includes('node_modules')))throw invalid();
+ if(Object.keys(workerBuilt.metafile.inputs).some(name=>name.includes('node_modules')))throw invalid();
  const inputs={...current,...bokInputs()};
  for(const file of [bokManifestPath,bokArtifactPath])inputs[path.relative(ROOT,file)]=sha(await fs.readFile(file));
- for(const name of [...Object.keys(built.metafile.inputs),'scripts/rolling-wallet-assets.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json'])inputs[name]=sha(await fs.readFile(path.join(ROOT,name)));
+ for(const name of new Set([...Object.keys(built.metafile.inputs),...Object.keys(workerBuilt.metafile.inputs),'scripts/rolling-wallet-assets.mjs',...Object.values(scripts),'crs-manifest.json','.build/contracts-manifest.json','.build/sdk/sdk-manifest.json']))inputs[name]=sha(await fs.readFile(path.join(ROOT,name)));
  const files={};for(const [url,file] of Object.entries(await inventory())){const bytes=await fs.readFile(path.join(ROOT,file));files[url]={file,bytes:bytes.length,sha256:sha(bytes)};}
  await fs.writeFile(path.join(ROOT,out,'manifest.json'),JSON.stringify({schemaVersion:1,inputs,files},null,2)+'\n');
  return {files:Object.keys(files).length,inputs:Object.keys(inputs).length};
@@ -129,7 +133,7 @@ export async function loadRollingWalletAssets(configuration,scope){
   if(entry.file!==file)throw invalid();const bytes=await fs.readFile(path.join(ROOT,file));if(bytes.length!==entry.bytes||sha(bytes)!==entry.sha256)throw invalid();
  }
  const describe=url=>{const {bytes,sha256}=manifest.files[url];return {url,bytes,sha256};};
- const runtime={schemaVersion:1,...value,scripts:Object.keys(scripts).map(name=>describe('/wallet/'+name)),crs:describe('/crs/crs-manifest.json'),artifacts:{board:describe('/wallet/board.json'),privateFee:describe('/wallet/private-fee.json'),...(value.config.bok?{bok:describe('/wallet/bok.json')}:{})}};
+ const runtime={schemaVersion:1,...value,worker:describe('/wallet/native-worker.js'),scripts:Object.keys(scripts).map(name=>describe('/wallet/'+name)),crs:describe('/crs/crs-manifest.json'),artifacts:{board:describe('/wallet/board.json'),privateFee:describe('/wallet/private-fee.json'),...(value.config.bok?{bok:describe('/wallet/bok.json')}:{})}};
  return Object.freeze({connectOrigins,runtime,async read(url){
   if(url==='/wallet/runtime.json')return {body:Buffer.from(JSON.stringify(runtime)),type:'application/json'};
   const file=manifest.files[url];if(!file)return null;

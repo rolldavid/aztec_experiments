@@ -2,7 +2,8 @@
 const cacheName='rolling-public-assets-v1',pending=new Map(),MiB=1024*1024;
 const limits=new Map([
  ...['ethers.js','crs-client.js','wallet-providers.js','ethereum-account-session.js','claim-secret-store.js','account.js','engine.js'].map(name=>['/wallet/'+name,MiB]),
- ['/wallet/aztec_bundle.js',128*MiB],...['board.json','private-fee.json','bok.json'].map(name=>['/wallet/'+name,32*MiB]),['/crs/crs-manifest.json',65536]
+ ['/wallet/aztec_bundle.js',128*MiB],...['board.json','private-fee.json','bok.json'].map(name=>['/wallet/'+name,32*MiB]),['/crs/crs-manifest.json',65536],
+ ['/wallet/native-worker.js',8*MiB]
 ]);
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));

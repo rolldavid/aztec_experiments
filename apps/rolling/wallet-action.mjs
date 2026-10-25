@@ -4,7 +4,7 @@ import {measureRollingStage} from './performance.mjs';
 export async function executeRollingAction(application,action,{onPrepared=()=>{},postingRules,submit=id=>application.submitPrepared(id)}={}){
  const prepareOptions={immediate:true,...(postingRules===undefined?{}:{postingRules:structuredClone(postingRules)})};
  let intent=await measureRollingStage('action.prepare',()=>application.prepare(action,prepareOptions));
- const send=async()=>{onPrepared({...intent,status:'unknown'});return measureRollingStage('action.submit',()=>submit(intent.intentId));};
+ const send=async()=>{await onPrepared({...intent,status:'unknown'});return measureRollingStage('action.submit',()=>submit(intent.intentId));};
  let result=await send();
  // A previously authorized request may still use the older two-step contract.
  if(action.type==='bok'&&result.status==='authorized'){

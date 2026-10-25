@@ -1,3 +1,10 @@
+# Active two-second opening architecture —25 October2026
+
+- Root: lightweight runtime/custody, panel integration, build/publication and actual measurement.
+- pending_feed_release: one native worker, explicit RPC/custody bridge, eager SDK initialization.
+- pending_reply_ui: one early funding context adopted by private session; no duplicate aggregate.
+- private_tips: shared deployment preparation and parallel anchored reads.
+
 # All transaction flow performance —25 October2026
 
 Owner goal:50% end-to-end reduction per nonordinary-posting flow. Currentbaseline browser74c, hostedBok6cb, prover702. No sourcechanges before baseline identification; source-only agentdrafts, rootserializedbuild/livewrites, one existingIAB and one retainedbuildtree.
@@ -198,3 +205,6 @@ Root deletes Noir preference notes/events/storage/methods and obsolete SDK/appli
 
 ## 25 October: remove testnet deployment proof wait
 Root owns integration, focused Solidity build and replacement Bok/portal deployment. pending_reply_ui drafts operator-authorized activation and exact binding checks; pending_feed_release reviews authority and unchanged withdrawal rules, then returns to private_tips conservation review. private_tips continues isolated implementation. No test campaigns or dependency copies.
+
+## 25 October: published bbf76 performance continuation
+Root owns browser measurements, wallet test adapter, integration and publication. pending_feed_release investigates remaining signup readiness/claim critical path and prepares minimal draft; pending_reply_ui audits exact baseline and missing flow coverage. Both source/evidence only, no service changes or dependency copies. Single-router and private-tip drafts stay isolated until next contract deployment.

@@ -3,6 +3,7 @@
 window.walletState = { aztec:null, ethSigner:null, ethProvider:null, ethTransport:null, ethAccount:null, ethType:null, ethWalletName:null, invalidated:false };
 let _onReady=null, _onSetupError=(_error)=>_wlog('Account unlocked, but setup did not finish. Try account setup again.','error'), _onAztecLoad=null, _requireEth=true, _readyFired=false;
 let _canEndSession=()=>true;
+let _deriveAddress=null;
 let _walletBusy=false, _walletGeneration=0, _connectingEth=null;
 /** @type {(state:ReturnType<typeof accountSnapshot>)=>void} */
 let _accountNotify=()=>{};
@@ -47,8 +48,12 @@ async function _prepareWallet(raw) {
   const modulus=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
   if(!raw||['secretKey','salt'].some(name=>typeof raw[name]!=='string'||!/^0x[0-9a-f]{64}$/.test(raw[name])||BigInt(raw[name])>=modulus)||BigInt(raw.secretKey)===0n)throw Object.assign(Error('Invalid saved account.'),{code:'BB_ACCOUNT_RECORD_INVALID'});
   const wallet={secretKey:raw.secretKey,salt:raw.salt};
-  if(!window.__aztec?.Fr) throw new Error('Wait for the application to load before opening a wallet.');
-  const derived=await _deriveAccountAddress(window.__aztec,wallet.secretKey,wallet.salt);
+  if(!_deriveAddress&&!window.__aztec?.Fr) throw new Error('Wait for the application to load before opening a wallet.');
+  const derived=_deriveAddress?await _deriveAddress(wallet):await _deriveAccountAddress(window.__aztec,wallet.secretKey,wallet.salt);
+  for(const name of ['address','partialAddress']){
+    const value=derived?.[name]?.toString();
+    if(typeof value!=='string'||!/^0x[0-9a-f]{64}$/.test(value)||BigInt(value)>=modulus||(name==='address'&&BigInt(value)===0n))throw Object.assign(Error('Invalid derived account.'),{code:'BB_ACCOUNT_RECORD_INVALID'});
+  }
   if(raw.address && String(raw.address).toLowerCase()!==derived.address.toString().toLowerCase()) throw Object.assign(Error('Wallet address does not match its key and salt.'),{code:'BB_ACCOUNT_RECORD_INVALID'});
   return {...wallet,...derived,raw:wallet};
 }
@@ -208,6 +213,10 @@ async function endAccountSession(){
   }finally{_walletBusy=false;_updateAccountState();}
 }
 function configureAccount(options={}) {
+  if(Object.hasOwn(options,'deriveAddress')){
+    if(typeof options.deriveAddress!=='function'||_deriveAddress&&_deriveAddress!==options.deriveAddress)throw new Error('Account derivation is already configured.');
+    _deriveAddress=options.deriveAddress;
+  }
   _requireEth=options.requireEth!==false;
   _canEndSession=options.canEndSession||(()=>true);
   _onReady=options.onReady||null;if(options.onSetupError)_onSetupError=options.onSetupError;_onAztecLoad=options.onAztecLoad||null;

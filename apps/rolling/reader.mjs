@@ -21,7 +21,13 @@ async function preparePublicAssetCache(){
   });
  }catch{/* Public reading and account tools also work when browser storage is disabled. */}
 }
-function prepareAccountTools(){return accountPreparation??=preparePublicAssetCache().then(()=>import('/wallet/runtime.mjs')).then(runtime=>runtime.loadRollingWalletRuntime());}
+function prepareAccountTools(){
+ if(!accountPreparation){
+  void preparePublicAssetCache();
+  accountPreparation=import('/wallet/runtime.mjs').then(runtime=>runtime.loadRollingWalletRuntime());
+ }
+ return accountPreparation;
+}
 const privateViews=new Set(['following','bookmarks']);
 function loadSavedItems(){
  return savedItemsLoad??=Promise.resolve().then(()=>privatePanel.loadSavedItems()).finally(()=>{savedItemsLoad=null;updatePreferenceControls();});
@@ -374,6 +380,9 @@ document.querySelector('.skip').addEventListener('click',skipToContent);
 addEventListener('hashchange',()=>{positions.set(route,capturePosition());if(positions.size>40)positions.delete(positions.keys().next().value);route=currentRoute();render();});
 narrow.addEventListener('change',()=>{const rail=document.querySelector('.rail'),workspace=document.querySelector('.workspace');if(rail){rail.classList.remove('open');rail.inert=narrow.matches;workspace.inert=false;document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');}});
 updates.start();
+// Account-independent worker preparation starts with the page, not with a panel
+// click or completion of service-worker installation.
+void prepareAccountTools().catch(()=>{});
 render();
 // Restore this browser’s saved account without opening the panel or prompting a wallet.
 void accountPanel().catch(()=>{});
