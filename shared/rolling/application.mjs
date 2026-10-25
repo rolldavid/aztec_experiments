@@ -1,3 +1,4 @@
+import {includedPreferenceTransition} from './preferences.mjs';
 import {createEncryptedJournalSlot} from '../journal-record.mjs';
 import {l2JournalScopeText} from '../l2-journal.mjs';
 import {nameRegistration,NAME_DOMAIN} from './name-policy.mjs';
@@ -386,7 +387,21 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     await acknowledge(found,{operation:operation(saved.value.id),txHash:saved.value.replacementReview?found.txHash:(saved.value.txHash??found.txHash)});
     const next={...saved.value,...(saved.value.withdrawal?{actualNetworkFee:String(chainValue(found.receipt.transactionFee))}:{}),status:found.outcome==='success'?(found.receipt.status==='proposed'?'included':'confirmed'):'reverted',txHash:found.txHash,...(includedAction(saved.value)?{inclusion:{blockNumber:found.receipt.blockNumber,blockHash:hashText(found.receipt.blockHash)}}:{}),...(preferenceAction(saved.value)?{inclusionHistory:inclusionHistory(saved.value,found)}:{})};
     if(historical&&!terminalHistory(next))await checkBokRecord(next);
-    await retainExit(next);await (await slot()).write(saved,next);return {...summary(next),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:next.bokReleaseSource&&next.status==='reverted'?{status:'bok-release-reverted'}:{})};
+    await retainExit(next);await (await slot()).write(saved,next);
+    // Only the exact successfully included signed call can authenticate this
+    // display transition. Native notes remain discovered/validated normally.
+    let preferenceTransition;
+    if(found.outcome==='success'&&preferenceAction(next)&&next.originalPreferenceHead&&BigInt(next.originalPreferenceHead.revision)<0xffffffffffffffffn){
+      const previousHead=clone(next.originalPreferenceHead),a=next.action,marker=next.originalMarker;
+      check(previousHead.revision===a.expectedRevision,'ROLLING_RECOVERY_CONTEXT_CHANGED');
+      const event={schema:1,revision:String(BigInt(previousHead.revision)+1n),kind:a.type==='read-marker'?6:a.kind,
+        target:String(BigInt(a.type==='read-marker'?a.thread:a.target)),value:a.type==='read-marker'?true:a.enabled,
+        read_block:a.type==='read-marker'?Number(marker.throughBlock):0,read_hash:a.type==='read-marker'?String(BigInt(marker.blockHash)):'0',previous_digest:previousHead.digest};
+      preferenceTransition=await includedPreferenceTransition({scope:{chainId:String(BigInt(fixed.network.chainId)),version:String(BigInt(fixed.network.version)),board:String(BigInt(fixed.board))},previousHead,event,
+        hash:async(fields,domain)=>(await sdk.poseidon2HashWithSeparator(fields,domain)).toBigInt()});
+      await localGuard();
+    }
+    return {...summary(next),...(preferenceTransition?{preferenceTransition}:{}),...(next.bok?.phase==='authorize'&&next.status==='confirmed'?{status:'authorized'}:next.bok?.phase==='post'&&next.status==='reverted'?{status:'bok-post-reverted'}:next.bokReleaseSource&&next.status==='reverted'?{status:'bok-release-reverted'}:{})};
   }
   // Inspect only the authenticated current workflow. Funding needs this fence
   // before a claim, not unrelated deposit and private fee balance utilities.

@@ -1,3 +1,4 @@
+import {projectIncludedPreference} from '../../shared/rolling/preferences.mjs';
 import {executeRollingAction} from './wallet-action.mjs';
 // Labelled DOM and session doubles. No browser, crypto, RPC or real account.
 import test from 'node:test';
@@ -38,11 +39,11 @@ async function fixture(t,{fee='fee-ready',defaults={type:'post'},posting=null,to
   readAccountStatus:async()=>{core.status++;if(core.status>1)await posting?.balanceRefresh?.();return {status:fee,privateFeeCredit:'1000000000000000000',depositIds};},ownedIdentities:async options=>{if(session.busy)throw Object.assign(Error('busy'),{code:'ROLLING_BUSY'});core.names++;const names=await posting?.namesRead?.(core.names,options);if(names)return names;return {identities:profile?['5']:[],records:profile?[{id:'5',first:'River',last:'Lane'}]:[],nextCursor:null};},readModeratorStatus:async()=>{core.moderator++;if(!moderatorRead)return {authorized:moderator};session.busy=true;try{return await moderatorRead();}finally{session.busy=false;}},
   readPreferenceHead:async()=>({revision:'7'}),readProfile:async({name})=>await posting?.profileRead?.(name)??({name,bioVersion:'3',avatarVersion:'4'}),
   readBokStatus(){reads++;started.resolve();return balanceRead?balanceRead(reads):balance.promise;},async prepare(action,options){if(options?.postingRules&&options.postingRules.parentVersion!==(document.rules?.version??'1'))throw Object.assign(Error('rules changed'),{code:'ROLLING_POSTING_RULES_CHANGED'});prepared=action;prepareOptions.push(options);if(!posting)throw Error('stop at authoritative preparation boundary');await posting.prepare?.();return {intentId:'post-1',action,status:'prepared',maximumFee:'100'};},
-  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{}),...(posting.inclusion?{inclusion:posting.inclusion}:{}),...(posting.nameAvailability?{nameAvailability:posting.nameAvailability}:{})};},
+  async submitPrepared(id){submissions.push(id);await posting.submit?.(id);return {intentId:id,action:prepared,status:posting.status??'confirmed',...(posting.txHash?{txHash:posting.txHash}:{}),...(posting.inclusion?{inclusion:posting.inclusion}:{}),...(posting.preferenceTransition?{preferenceTransition:posting.preferenceTransition}:{}),...(posting.nameAvailability?{nameAvailability:posting.nameAvailability}:{})};},
   async prepareBokPost(id,options){prepareOptions.push(options);return {intentId:'post-2',action:prepared,status:'prepared',maximumFee:'100'};}
  }};
  session.application.executeAction=(action,options)=>executeRollingAction(session.application,structuredClone(action),options);
- const runtime={getAccount:()=>account,account:{configure(){}},createSession:async options=>{onProgress=options.onProgress;core.sessions++;return session;}};
+ const runtime={projectIncludedPreference,getAccount:()=>account,account:{configure(){}},createSession:async options=>{onProgress=options.onProgress;core.sessions++;return session;}};
  const panel=mountRollingWalletPanel({loadRuntime:async()=>runtime,onPublicEffect:()=>posting?.effect?.(),onIncludedPostRendered:post=>posting?.reveal?.(post)});const host=document.createElement('section');document.body.append(host);panel.attachBokControls(host);panel.open(defaults);
  await document.until(()=>(defaults.type?document.querySelector('[data-action-review]'):document.querySelectorAll('button').find(b=>b.textContent==='Write a post'))&&document.querySelector('dialog').getAttribute('aria-busy')==='false');
  return {document,panel,host,balance,started,session,runtime,progress:value=>onProgress(value),reads:()=>reads,prepared:()=>prepared,submissions,prepareOptions,core:()=>({...core})};
@@ -1165,4 +1166,53 @@ for(const observed of ['unknown','orphaned','reverted'])test('subscription obser
   f.panel.observePublicPosts([],{...snapshot,confirmationCheckpoint:{number:108,hash:inclusion.blockHash}});await new Promise(setImmediate);
   assert.equal(reads,2);assert(identity.textContent.includes(': confirmed.'));assert.equal(f.panel.preferenceEnabled(4,'42'),true);
  }else{assert.equal(f.panel.preferenceEnabled(4,'42'),null);assert(identity.textContent.includes(observed==='reverted'?'change reverted':'no longer included'));}
+});
+
+function nativePreferenceBase(){return {scope:{chainId:'1',version:'1',board:'99'},head:{initialized:true,schema:1,revision:'7',digest:'70'},bookmarks:['11'],followedBoards:['0'],followedNames:['12'],subscriptions:[],replyNotifications:true,readMarkers:[]};}
+function localTransition(base,action,digest='80'){
+ const read=action.type==='read-marker',event={schema:1,revision:String(BigInt(base.head.revision)+1n),kind:read?6:action.kind,target:read?action.thread:action.target,value:read?true:action.enabled,read_block:read?Number(action.throughBlock):0,read_hash:read?'123':'0',previous_digest:base.head.digest};
+ return {scope:base.scope,previousHead:base.head,event,head:{initialized:true,schema:1,revision:event.revision,digest}};
+}
+for(const action of [{type:'preference',kind:1,target:'42',enabled:true},{type:'preference',kind:2,target:'0',enabled:false},{type:'preference',kind:3,target:'12',enabled:false},{type:'preference',kind:4,target:'42',enabled:true},{type:'preference',kind:5,target:'0',enabled:false},{type:'read-marker',thread:'42',throughBlock:'19'}])test('included native '+action.type+' '+(action.kind??6)+' updates every private view without a second native read',{timeout:3000},async t=>{
+ const base=nativePreferenceBase(),before=structuredClone(base),posting={status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:localTransition(base,action)};
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting});let reads=0,shown;
+ f.runtime.selectPrivateViews=({preferences})=>{shown=preferences;return {following:preferences,bookmarks:preferences,notifications:preferences};};
+ f.session.application.readPreferences=async()=>{reads++;if(reads>1)throw Error('duplicate completion read');return {status:'complete',complete:true,preferences:base};};
+ await f.panel.loadSavedItems();assert.equal(reads,1);
+ assert.equal((await f.panel.act(action)).status,'included');assert.equal(reads,1);assert.equal(f.session.busy,false);assert.equal(f.panel.privateStatus(),'complete');
+ f.panel.filterPrivatePage('notifications',{});assert.equal(shown.head.revision,'8');assert.deepEqual(base,before);
+ if(action.type==='preference')assert.equal(f.panel.preferenceEnabled(action.kind,action.target),action.enabled);else assert.deepEqual(shown.readMarkers,[{thread:'42',throughBlock:19,blockHash:'123'}]);
+ assert.deepEqual(shown.bookmarks,action.kind===1?['11','42']:['11']);
+});
+for(const mismatch of ['head','scope','absent'])test('included preference '+mismatch+' cannot invent a complete prefix',{timeout:3000},async t=>{
+ const base=nativePreferenceBase(),action={type:'preference',kind:4,target:'42',enabled:true},transition=localTransition(base,action);
+ if(mismatch==='head')transition.previousHead={...base.head,digest:'999'};if(mismatch==='scope')transition.scope={...base.scope,board:'100'};
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:transition}});let reads=0;
+ f.runtime.selectPrivateViews=()=>({});f.session.application.readPreferences=async()=>({status:'complete',complete:true,preferences:(reads++===0&&mismatch!=='absent')?base:{...base,subscriptions:['42']}});
+ if(mismatch!=='absent')await f.panel.loadSavedItems();
+ assert.equal((await f.panel.act(action)).status,'included');assert.equal(reads,mismatch==='absent'?1:2);assert.equal(f.panel.preferenceEnabled(4,'42'),true);
+});
+for(const terminal of ['orphaned','reverted'])test('included preference overlay is revoked on '+terminal,{timeout:3000},async t=>{
+ const base=nativePreferenceBase(),action={type:'preference',kind:4,target:'42',enabled:true},txHash=includedPost().txHash;
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:localTransition(base,action)}});
+ f.runtime.selectPrivateViews=()=>({});f.session.application.readPreferences=async()=>({status:'complete',complete:true,preferences:base});await f.panel.loadSavedItems();
+ await f.panel.act(action);assert.equal(f.panel.preferenceEnabled(4,'42'),true);f.session.observeIncluded=async()=>({status:terminal,txHash});
+ f.panel.observePublicPosts([],{checkpoint:{number:110,hash:'0x'+'a'.repeat(64)}});await new Promise(setImmediate);assert.equal(f.panel.preferenceEnabled(4,'42'),null);assert.equal(f.panel.privateStatus(),'recovering');
+});
+
+test('successive included preference inverses consume only their exact projected prefix and keep native action reads',{timeout:3000},async t=>{
+ const base=nativePreferenceBase(),action={type:'preference',kind:4,target:'42',enabled:true};
+ const posting={status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:localTransition(base,action)};
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting});let reads=0,heads=0,shown;
+ f.runtime.selectPrivateViews=({preferences})=>{shown=preferences;return {notifications:preferences};};f.session.application.readPreferences=async()=>{reads++;return {status:'complete',complete:true,preferences:base};};
+ f.session.application.readPreferenceHead=async()=>({revision:String(7+heads++)});await f.panel.loadSavedItems();
+ await f.panel.act(action);f.panel.filterPrivatePage('notifications',{});posting.preferenceTransition=localTransition(shown,{...action,enabled:false},'90');
+ await f.panel.act({...action,enabled:false});assert.equal(reads,1);assert.equal(heads,2,'each native transaction still selects its fresh revision');assert.equal(f.submissions.length,2);assert.equal(f.panel.preferenceEnabled(4,'42'),false);
+ f.panel.filterPrivatePage('notifications',{});assert.equal(shown.head.revision,'9');assert.deepEqual(shown.subscriptions,[]);
+});
+test('account replacement while an included preference send is held cannot publish its projection',{timeout:3000},async t=>{
+ const base=nativePreferenceBase(),action={type:'preference',kind:4,target:'42',enabled:true},entered=Promise.withResolvers(),gate=Promise.withResolvers();
+ const f=await fixture(t,{balanceRead:()=>Promise.resolve({available:true,availableCredit:'0'}),posting:{status:'included',txHash:includedPost().txHash,inclusion:{blockNumber:108,blockHash:includedPost().blockHash},preferenceTransition:localTransition(base,action),submit:async()=>{entered.resolve();await gate.promise;}}});
+ f.runtime.selectPrivateViews=()=>({});f.session.application.readPreferences=async()=>({status:'complete',complete:true,preferences:base});await f.panel.loadSavedItems();
+ const sending=f.panel.act(action);await entered.promise;f.runtime.getAccount=()=>({});gate.resolve();assert.equal((await sending).status,'failed');assert.equal(f.panel.privateStatus(),'locked');assert.equal(f.panel.preferenceEnabled(4,'42'),null);
 });

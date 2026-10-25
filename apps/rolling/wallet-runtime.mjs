@@ -1,3 +1,4 @@
+import {projectIncludedPreference} from '../../shared/rolling/preferences.mjs';
 import {selectPrivateViews} from '../../shared/rolling/private-views.mjs';
 // Public code and contract data may load in the background. Account creation,
 // wallet permissions and private sessions remain explicit user actions.
@@ -129,7 +130,7 @@ async function load(signal){
   return true;
  };
  const restoreAccount=()=>startingTestAccount()?Promise.resolve(false):account.restoreRemembered();
- return Object.freeze({signInWallet,restoreAccount,canStartTestAccount,startingTestAccount,account,selectPrivateViews,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
+ return Object.freeze({signInWallet,restoreAccount,canStartTestAccount,startingTestAccount,account,selectPrivateViews,projectIncludedPreference,refundOnly:config.refundOnly===true,...(config.publicRefundRpcUrl?{createRefundSession(){
   if(session)return Promise.resolve(session);if(creating)return creating;
   const selected=globalThis.walletState.aztec;if(!selected||globalThis.walletState.invalidated)return Promise.reject(failed());
   const guard=()=>{if(globalThis.walletState.invalidated||globalThis.walletState.aztec!==selected)throw failed();};

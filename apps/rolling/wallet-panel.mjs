@@ -234,7 +234,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }).catch(()=>{}).finally(()=>{if(includedObservationPending===reading){includedObservationPending=null;requestIncludedObservation();}});
   includedObservationPending=reading;
  }
- let preferences=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
+ let preferences=null,preferenceProjection=null,preferenceProgress=null,accountIdentity=null,recoveryAbort=null,recoveryInspection=null;
  let fundingQuote=null,fundingQuoteRequested=false,fundingAutomatic=false,fundingActiveCapability=null,fundingInputs={asset:'ETH'};
  let profileSnapshot=null,avatarDraft=null,renderEpoch=0,accountEpoch=0,view='overview',namesLoaded=false,actionsLoaded=false;const previewURLs=new Set();
  const dialog=el('dialog',{class:'account-dialog','aria-labelledby':'rolling-wallet-title','aria-describedby':'rolling-wallet-description'});
@@ -328,13 +328,14 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
 
  function releasePreviews(){updateBokForm=()=>{};renderEpoch++;updateRules=()=>{};for(const url of previewURLs)URL.revokeObjectURL(url);previewURLs.clear();}
  function clearProfileDraft(){profileSnapshot=null;avatarDraft=null;}
- function clearPreferences(){preferences=null;preferenceProgress=null;onPrivateChange();}
+ function clearPreferences(){preferences=null;preferenceProjection=null;preferenceProgress=null;onPrivateChange();}
  function clearPrivateView(){pendingPostReveal=null;stopRefundWatch();pendingWithdrawal=null;refundReadiness=null;includedObservation=null;includedRevision=null;actionFeedback.textContent='';actionFeedback.hidden=true;composerAttempt=null;composerCheckpoint='open';ownBokPosts.clear();bokRefreshNeeded=false;preferenceUpdates.clear();selectedName='0';selectedLabel='Anonymous';stopFunding();depositRefundPage=null;balances=null;bokAccounting=null;bokExitAmount='';refundQuote=null;topupQuote=null;topupQuoteKey=null;topupQuoteError='';topupSaved=null;topupInputs={amount:''};fundingQuote=null;fundingQuoteRequested=false;fundingInputs={asset:'ETH'};initializationAttempt++;dialog.removeAttribute('data-rolling-initialization');recoveryInspection=null;accountEpoch++;accountIdentity=null;bokBalance.invalidate();content.replaceChildren();moderatorStatus=null;clearPreferences();status=null;bokStatus=null;intent=null;identities=[];identityRecords=[];cursor=0;namesLoaded=false;actionsLoaded=false;view='overview';draft={type:'post',subboard:'0',content:''};releasePreviews();clearProfileDraft();}
  function checkAccount(epoch){if(epoch!==accountEpoch||!unlocked())throw connectionFailure;}
  function privateStatus(){if(!unlocked()||!session)return 'locked';return preferences?'complete':'recovering';}
- function preferenceEnabled(kind,target){const updated=preferenceUpdates.get(kind+':'+target);if(updated!==undefined&&unlocked())return updated;if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];return kind===5?preferences.replyNotifications:key?preferences[key].includes(BigInt(target).toString()):null;}
+ function displayedPreferences(){return preferenceProjection??preferences;}
+ function preferenceEnabled(kind,target){const updated=preferenceUpdates.get(kind+':'+target);if(updated!==undefined&&unlocked())return updated;if(privateStatus()!=='complete')return null;const key={1:'bookmarks',2:'followedBoards',3:'followedNames',4:'subscriptions'}[kind];const shown=displayedPreferences();return kind===5?shown.replyNotifications:key?shown[key].includes(BigInt(target).toString()):null;}
  async function recoverPreferences(){
-  const epoch=accountEpoch;checkAccount(epoch);preferences=null;preferenceProgress=null;
+  const epoch=accountEpoch;checkAccount(epoch);preferences=null;preferenceProjection=null;preferenceProgress=null;
   const abort=recoveryAbort=new AbortController();controlsBusy(true);
   try{for(;;){
    const result=await session.application.readPreferences({signal:abort.signal});
@@ -350,7 +351,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function preferencesView(){
   content.append(paragraph('Your follows, bookmarks and notification settings are saved with your account. Load them to pick up where you left off.'));
-  if(preferences){content.append(paragraph('Your saved choices are ready.'),button(preferences.replyNotifications?'Disable reply notifications':'Enable reply notifications',()=>choosePreference({type:'preference',kind:5,target:'0',enabled:!preferences.replyNotifications})));}
+  if(preferences){content.append(paragraph('Your saved choices are ready.'),button(displayedPreferences().replyNotifications?'Disable reply notifications':'Enable reply notifications',()=>choosePreference({type:'preference',kind:5,target:'0',enabled:!displayedPreferences().replyNotifications})));}
   else if(preferenceProgress){const details=el('details',{},el('summary',{},'Loading details'));content.append(details);const p=preferenceProgress,labels={nextBlock:'Next history block to check',scannedThrough:'History checked through block',anchorBlock:'History available through block',processedRevision:'Saved changes recovered',targetRevision:'Saved changes to recover',markersChecked:'Read positions checked',markersTotal:'Read positions to check'};for(const [key,label]of Object.entries(labels))if(/^[0-9]+$/.test(String(p?.[key]??'')))details.append(paragraph(label+': '+p[key]));}
   const stop=button('Stop loading',()=>{recoveryAbort?.abort();clearPreferences();note('Recovery stop requested. Waiting for the private operation to settle.');});stop.dataset.recoveryStop='true';content.append(stop);
   content.append(button(preferences?'Refresh saved items':recoveryAbort?'Loading saved items':'Load saved items',()=>void work(recoverPreferences,()=>'Your saved items could not load. Check your connection and try again.'),true));
@@ -1029,7 +1030,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   transactionTiming.complete();
   if(result.bok||result.action?.type==='bok'||['claim-bok','withdraw-bok','cancel-bok-request','expire-bok-request'].includes(result.action?.type))invalidateBokBalance();
   recoveryInspection=null;intent=result;blocked=false;
-  if(['included','confirmed','reverted'].includes(result.status)&&['preference','read-marker'].includes(result.action?.type))clearPreferences();
+  if(result.status==='reverted'&&['preference','read-marker'].includes(result.action?.type)){preferenceUpdates.clear();clearPreferences();}
   if(['included','confirmed','reverted'].includes(result.status)&&['bio','avatar'].includes(result.action?.type))profileSnapshot=null;
   if(result.status==='authorized'){note('');notice='Bok request authorized. Review the saved post when ready; it has not been published.';return;}
   if(['bok-post-reverted','bok-release-reverted'].includes(result.status)){note('');notice=(result.status==='bok-post-reverted'?'The Bok post reverted.':'The Bok release or expiry reverted.')+' A network fee may have been charged. The funded request remains saved; no action is retried automatically.';return;}
@@ -1052,7 +1053,16 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     notice='Your exit is '+(provisional?'included on Aztec; confirmation is pending.':'confirmed on Aztec.')+' The Ethereum refund has not been paid.';
     accountRefreshNeeded=true;return;
    }
-   if(provisional&&['preference','read-marker'].includes(result.action?.type))await measureRollingStage('action.required-account-refresh',recoverPreferences);
+   if(['preference','read-marker'].includes(result.action?.type)){
+    let projected=false;const owned=actionOperation;
+    if(owned?.epoch===accountEpoch&&owned.intentId===result.intentId&&owned.preferenceSource&&owned.preferenceSource===displayedPreferences()&&
+      JSON.stringify(owned.preferenceAction)===JSON.stringify(result.action)&&(!owned.txHash||owned.txHash===result.txHash)&&/^0x[0-9a-f]{64}$/.test(result.txHash??'')&&
+      Number.isSafeInteger(result.inclusion?.blockNumber)&&/^0x[0-9a-f]{64}$/.test(result.inclusion?.blockHash??'')){
+     try{preferenceProjection=runtime.projectIncludedPreference(owned.preferenceSource,result.preferenceTransition);preferenceUpdates.clear();projected=true;onPrivateChange();}catch{/* A gap is ordinary native recovery, never guessed state. */}
+    }
+    if(!projected&&(provisional||result.preferenceTransition))await measureRollingStage('action.required-account-refresh',recoverPreferences);
+    else if(!projected)clearPreferences();
+   }
    if(result.action?.type==='name'){
     // Only owned-name discovery is required to use a newly included name.
     // Fee/deposit balances refresh separately after this interaction releases.
@@ -1096,7 +1106,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   const epoch=accountEpoch;checkAccount(epoch);pendingPostReveal=null;includedObservation=null;blocked=true;
   if(immediate){
    let result;
-   try{result=await session.application.executeAction(action,{...(expectedRules===undefined?{}:{postingRules:expectedRules}),onPrepared:prepared=>{checkAccount(epoch);includedObservation=null;intent=prepared;if(immediateTypes.has(prepared.action?.type)){actionFeedback.textContent='';actionFeedback.hidden=true;actionOperation={epoch,intentId:prepared.intentId,included:false,modal,onIncluded};}}});checkAccount(epoch);}catch(failure){
+   try{result=await session.application.executeAction(action,{...(expectedRules===undefined?{}:{postingRules:expectedRules}),onPrepared:prepared=>{checkAccount(epoch);includedObservation=null;intent=prepared;if(immediateTypes.has(prepared.action?.type)){actionFeedback.textContent='';actionFeedback.hidden=true;actionOperation={epoch,intentId:prepared.intentId,included:false,modal,onIncluded,...(['preference','read-marker'].includes(prepared.action.type)?{preferenceAction:structuredClone(prepared.action),preferenceSource:displayedPreferences()}: {})};}}});checkAccount(epoch);}catch(failure){
     if(['ROLLING_POSTING_RULES_CHANGED','ROLLING_SUBBOARD_REJECTED'].includes(failure?.code)){checkAccount(epoch);intent=null;actionOperation=null;await loadRules(rulesId(action),true).catch(()=>{});checkAccount(epoch);throw rulesFailure;}
     if(['BB_POST_FEE_CREDIT_REQUIRED','BB_LIKE_FEE_CREDIT_REQUIRED','BB_PREFERENCE_FEE_CREDIT_REQUIRED'].includes(failure?.code)){checkAccount(epoch);intent=null;actionOperation=null;accountRefreshNeeded=true;}
     throw failure;
@@ -1606,5 +1616,5 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    else if(!intent&&!viewReady())void work(loadView);
   }
   requestComposerPreparation();
- },close,attachIdentityControls,attachBokControls,observePublicPosts,async loadSavedItems(){if(initializationPending)await initializationPending;while(busy)await operationSettled;if(!session||!unlocked())return false;if(preferences)return true;await work(recoverPreferences);return !!preferences;},moderatorAuthorized(){return unlocked()&&!!session&&moderatorStatus?.authorized===true;},privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences,page})[view];}});
+ },close,attachIdentityControls,attachBokControls,observePublicPosts,async loadSavedItems(){if(initializationPending)await initializationPending;while(busy)await operationSettled;if(!session||!unlocked())return false;if(preferences)return true;await work(recoverPreferences);return !!preferences;},moderatorAuthorized(){return unlocked()&&!!session&&moderatorStatus?.authorized===true;},privateStatus,preferenceEnabled,filterPrivatePage(view,page){if(privateStatus()!=='complete'||!['following','bookmarks','notifications'].includes(view))throw connectionFailure;return runtime.selectPrivateViews({preferences:displayedPreferences(),page})[view];}});
 }

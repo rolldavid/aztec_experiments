@@ -5,7 +5,7 @@ import {randomBytes,createCipheriv,createDecipheriv} from 'node:crypto';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
 import {FIELD_MODULUS} from './invocation.mjs';
-import {replayPreferenceEvents,PREFERENCE_DOMAIN,PREFERENCE_KINDS,createPreferenceFold,resumePreferenceFold,PREFERENCE_FOLD_BATCH_LIMIT} from './preferences.mjs';
+import {includedPreferenceTransition,projectIncludedPreference,replayPreferenceEvents,PREFERENCE_DOMAIN,PREFERENCE_KINDS,createPreferenceFold,resumePreferenceFold,PREFERENCE_FOLD_BATCH_LIMIT} from './preferences.mjs';
 
 after(async()=>{await BarretenbergSync.destroySingleton();});
 // Synthetic history with actual pinned Poseidon. This is a pure replay check,
@@ -318,4 +318,23 @@ test('invalid append after a valid checkpoint cannot change the detached earlier
  await fold.append(input.events.slice(0,1));const earlier=fold.checkpoint();
  const altered=copy(input.events.slice(1));altered[0].previous_digest='1';await rejected(fold.append(altered));
  assert.deepEqual(earlier.bookmarks,['2']);assert.equal(earlier.head.revision,'1');badSync(()=>fold.checkpoint());
+});
+
+test('included local projection equals native-digest history for every setting and inverse without mutating its base',async()=>{
+ const changes=[change(1,'10'),change(2,'0'),change(3,'21'),change(4,'22'),change(5,'0',false),change(6,'42',true,100,'123'),change(1,'10',false),change(2,'0',false),change(3,'21',false),change(4,'22',false),change(5,'0',true),change(6,'42',true,40,'124')];
+ const h=await history(changes),base=await replayPreferenceEvents(empty());let current=base;
+ for(let i=0;i<h.events.length;i++){
+  const previous=structuredClone(current),transition=await includedPreferenceTransition({scope,previousHead:current.head,event:h.events[i],hash});
+  const next=projectIncludedPreference(current,transition);assert.deepEqual(current,previous);
+  assert.deepEqual(next,await replayPreferenceEvents(await history(changes.slice(0,i+1))));current=next;
+ }
+ assert.deepEqual(base,await replayPreferenceEvents(empty()));
+});
+test('included projection refuses gaps, a different native digest/scope and incomplete private state',async()=>{
+ const h=await history([change(1,'10')]),base=await replayPreferenceEvents(empty()),transition=await includedPreferenceTransition({scope,previousHead:base.head,event:h.events[0],hash});
+ for(const mutate of [t=>t.previousHead={initialized:true,schema:1,revision:'1',digest:'10'},t=>t.scope.board='100',t=>t.event.revision='2']){
+  const t=structuredClone(transition);mutate(t);assert.throws(()=>projectIncludedPreference(base,t),{code:'ROLLING_PREFERENCES_INVALID'});
+ }
+ assert.throws(()=>projectIncludedPreference({...base,head:undefined},transition));
+ await rejected(includedPreferenceTransition({scope,previousHead:base.head,event:{...h.events[0],previous_digest:'1'},hash}));
 });

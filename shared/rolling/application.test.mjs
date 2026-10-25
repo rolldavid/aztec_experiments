@@ -3070,3 +3070,19 @@ for(const change of ['receipt','canonical-block'])test(`explicit reconciliation 
  else{const hash=[...f.receipts.keys()][0];f.receipts.set(hash,new PendingTxReceipt(TxHash.fromString(hash)));assert.notEqual((await f.app.reconcile(prepared.intentId)).status,'confirmed');}
  assert.equal(reads,1,'explicit reconciliation reads the exact signed transaction again');
 });
+
+test('only successful exact included preferences expose their deterministic native transition',async()=>{
+ const f=proposedFixture();const action={type:'preference',kind:4,target:'42',enabled:true};
+ const result=await executeRollingAction(f.app,action),t=result.preferenceTransition;
+ assert.equal(result.status,'included');assert.deepEqual(t.previousHead,{initialized:false,schema:1,revision:'0',digest:'0'});
+ assert.deepEqual(t.event,{schema:1,revision:'1',kind:4,target:'42',value:true,read_block:0,read_hash:'0',previous_digest:'0'});
+ const expected=await poseidon2HashWithSeparator([BigInt(t.scope.chainId),BigInt(t.scope.version),BigInt(t.scope.board),1n,1n,4n,42n,1n,0n,0n,0n],0x52435031);
+ assert.equal(t.head.digest,String(expected.toBigInt()));
+ assert.throws(()=>{t.previousHead.digest='99';},TypeError);assert.equal((await f.app.reconcile(result.intentId)).preferenceTransition.previousHead.digest,'0');
+ f.state.outcome={...f.state.outcome,outcome:'pending',receipt:null};assert.equal((await f.app.reconcile(result.intentId)).preferenceTransition,undefined);
+});
+test('read-marker transition retains the exact native checked block hash',async()=>{
+ const f=proposedFixture();const result=await executeRollingAction(f.app,{type:'read-marker',thread:'42',throughBlock:'1'});
+ assert.equal(result.status,'included');assert.equal(result.preferenceTransition.event.kind,6);assert.equal(result.preferenceTransition.event.read_block,1);
+ const block=await f.options.accountSession.node.getBlockData(1);assert.equal(result.preferenceTransition.event.read_hash,String(BigInt(block.blockHash.toString())));
+});

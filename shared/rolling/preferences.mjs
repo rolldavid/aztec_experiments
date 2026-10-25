@@ -276,3 +276,27 @@ export async function resumePreferenceFold(input) {
     return fold(options);
   } catch { throw invalid(); }
 }
+
+/** Build the deterministic constrained transition. The caller authenticates the
+ * exact signed action and successful canonical inclusion; this is not a note
+ * import or a substitute for native synchronization before the next action. */
+export async function includedPreferenceTransition({scope,previousHead,event,hash}) {
+ scope=scopeRecord(scope);previousHead=headRecord(previousHead);event=eventRecord(event);
+ check(BigInt(event.revision)===BigInt(previousHead.revision)+1n&&event.previous_digest===previousHead.digest);
+ const digest=await eventDigest(scope,event,hash);
+ return Object.freeze({scope,previousHead,event,head:Object.freeze({initialized:true,schema:1,revision:event.revision,digest:String(digest)})});
+}
+
+/** UI-only projection of a trusted included transition onto an already complete
+ * native prefix. Never write this result into the reader cache or PXE stores.
+ * Missing revisions/scopes/heads must use ordinary native recovery instead. */
+export function projectIncludedPreference(preferences,transition) {
+ const t=record(transition,['scope','previousHead','event','head']);
+ const scope=scopeRecord(t.scope),previous=headRecord(t.previousHead),head=headRecord(t.head),event=eventRecord(t.event);
+ check(JSON.stringify(headRecord(preferences.head))===JSON.stringify(previous));
+ check(head.initialized&&head.revision===event.revision&&BigInt(head.revision)===BigInt(previous.revision)+1n&&event.previous_digest===previous.digest);
+ const prefix=prefixSnapshot({format:PREFIX_FORMAT,...preferences},scope,previous),state=emptyState();
+ for(let i=0;i<SET_NAMES.length;i++)state.sets[i+1]=new Set(prefix[SET_NAMES[i]]);
+ state.replyNotifications=prefix.replyNotifications;state.readMarkers=new Map(prefix.readMarkers.map(marker=>[marker.thread,marker]));
+ applyEvent(state,event);return result(scope,head,state);
+}
