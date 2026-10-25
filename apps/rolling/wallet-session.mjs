@@ -167,10 +167,16 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
  // Transaction confirmation and bridge settlement have no whole-operation deadline.
  const read=async fn=>{await contextGuard();const out=await own(fn);await contextGuard();return out;};
  const run=async fn=>{try{return await fn();}finally{while(pending.size)await Promise.allSettled([...pending]);}};
- const gasAndFees=async request=>{
-  const results=await Promise.allSettled([()=>read(()=>provider.estimateGas(request)),()=>read(()=>provider.getFeeData())].map(read=>Promise.resolve().then(read)));
+ // All three reads qualify this exact portal request. The portal execution
+ // remains mandatory; drain siblings before returning any failure or quote.
+ const portalGasAndFees=async request=>{
+  const results=await Promise.allSettled([
+   ()=>read(()=>provider.call(request)),
+   ()=>read(()=>provider.estimateGas(request)),
+   ()=>read(()=>provider.getFeeData()),
+  ].map(read=>Promise.resolve().then(read)));
   const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;
-  return results.map(result=>result.value);
+  return results.slice(1).map(result=>result.value);
  };
 
  let quote=null;
@@ -288,7 +294,7 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
    const request={from:r.withdrawal.depositor,to:exitScope(r).portal,data,value:0n};
    // Real portal eth_call checks settled Outbox membership and the original
    // depositor receipt, including when the board has since been rejected.
-   await read(()=>provider.call(request));const [gas,fees]=await gasAndFees(request),price=fees.maxFeePerGas??fees.gasPrice;
+   const [gas,fees]=await portalGasAndFees(request),price=fees.maxFeePerGas??fees.gasPrice;
    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n);
    maximumGasWei??=String(gas*2n*price);check(gas*2n*price<=BigInt(maximumGasWei));
    quote={r,wallet,data,maximumGasWei,previous};return Object.freeze({amount:r.withdrawal.amount,recipient:r.withdrawal.depositor,maximumGasWei,estimatedGasWei:String(gas*2n*price),walletName:wallet.name});
@@ -301,7 +307,7 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
    catch(error){if(error?.code!=='BB_ETH_RECOVERY_REQUIRED')throw error;}
    check(requestIdentity(await read(()=>j.inspectRequest()))===requestIdentity(saved));
    const request={from:saved.from,to:saved.to,data:saved.data,value:0n};
-   await read(()=>provider.call(request));const [gas,fees]=await gasAndFees(request),price=fees.maxFeePerGas??fees.gasPrice;
+   const [gas,fees]=await portalGasAndFees(request),price=fees.maxFeePerGas??fees.gasPrice;
    check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n);
    maximumGasWei??=String(gas*2n*price);check(gas*2n*price<=BigInt(maximumGasWei));
    quote={r,wallet,data,maximumGasWei,saved};return Object.freeze({savedRequest:true,nonce:saved.nonce,amount:r.withdrawal.amount,recipient:saved.from,maximumGasWei,estimatedGasWei:String(gas*2n*price),walletName:wallet.name});
@@ -313,8 +319,8 @@ export function createCollateralWithdrawal({sdk,ethers,provider,node,application
    let j;
    const signer={getAddress:()=>q.wallet.signer.getAddress(),sendTransaction:async request=>{
     if(q.saved)check(request.from===q.saved.from&&request.to===q.saved.to&&request.data===q.saved.data&&String(request.value)===q.saved.value&&String(request.chainId)===q.saved.chainId&&request.nonce===q.saved.nonce);
-    await read(q.wallet.guard);await read(()=>provider.call(request));
-    const [gas,fees]=await gasAndFees(request),price=fees.maxFeePerGas??fees.gasPrice;
+    await read(q.wallet.guard);
+    const [gas,fees]=await portalGasAndFees(request),price=fees.maxFeePerGas??fees.gasPrice;
     check(typeof gas==='bigint'&&gas>0n&&typeof price==='bigint'&&price>0n&&gas*2n*price<=BigInt(q.maximumGasWei));await read(q.wallet.guard);await recheckMembership(proof);
     if(q.saved)check(requestIdentity(await read(()=>j.inspectRequest()))===requestIdentity(q.saved));
     return q.wallet.signer.sendTransaction({...request,gasLimit:gas*2n,...(fees.maxFeePerGas!=null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})});
