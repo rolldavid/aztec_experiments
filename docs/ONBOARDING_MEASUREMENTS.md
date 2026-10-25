@@ -1,3 +1,13 @@
+## Latest publication and failed measurement — d20794f6
+
+Published UI/source `d20794f6eaf078439857eff9a4ef214f781b14c2`; pushed to master and both application branches. Composer-only change removes checkpoint-triggered restarts and cancels future advisory preparation phases while draining any active native phase. SDK bytes unchanged. No app or proxy restart. Seventy-four focused checks and the actual worker evaluation build gate passed. Publication is not a successful latency measurement.
+
+The next real browser run failed: account opening spent24.053s in shared deployment preparation, including21.758s in node readiness. The reader request failed after20.003s concurrently. Do not add overlapping spans. Public query returned503 after10.617s; service monitor independently recorded degraded query/prover readiness19:24:23–19:25:45 UTC, healthy19:23:42 and19:26:15. Services did not restart, disk had12GBfree, and local node metadata reads later returned in60ms. Exact failure cause is not retained: query diagnostics were not wired and native node logging was disabled.
+
+After recovery, the previous8ae post receipt0x198a3749ddc168188ef8c9c50d5270f95603737be734b866efb3afc192ad0024 and fb619 post receipt0x146f2bd0f01d5793722a6bb2012305e31496f5542562e99c08f1b754ebf3c1de both reported dropped. Native dropped means no archived effect or known pool entry, not proof of a reorg. Earlier browser evidence records actual included feed rendering and subsequent native proposed receipt/completed submission, but omitted the inclusion block/hash. Consequently their timings describe observed inclusion then, not durable present inclusion. Future real-run evidence must retain that public anchor.
+
+For a separate new-test attempt, only the disposable IndexedDB transaction journal was cleared after signing out; native PXE/account identity remained. Subsequent opening reached Set up posting with insufficient ETH, so no new payment or post was submitted. This changed fixture cannot be compared with the earlier funded opening. No d207 posting or two-second-opening success is claimed. Raw failed-run files: funded-opening-d207-failed.json and d207-after-test-journal-clear.json. Targets remain open.
+
 # Measured onboarding, 25 October 2026
 
 Off-chain bookmark: click→usable Unbookmark control11.660ms on8ae95. This measures local UI readiness, not remote encrypted-preference replication durability; no blockchain transaction. Raw evidence`bookmark-8ae95.json`.

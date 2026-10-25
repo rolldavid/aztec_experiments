@@ -2,6 +2,10 @@
 
 Current handover: 25 October 2026. Current owner scope takes precedence over historical task records. Credentials and private account material remain outside Git.
 
+## Current live update — d20794f6
+
+UI/source `d20794f6eaf078439857eff9a4ef214f781b14c2` is published and pushed. Composer checkpoint-restart/supersession fix only, SDK unchanged, no service restart. Latest real measurement failed during a transient node-query readiness outage; retain failure evidence, do not claim a d207 posting timing. Prior8ae/fb619 included posts now have dropped receipts; original included block hashes were not captured, so a reorg is unproven. Root cleared only disposable test transaction journal after sign-out to start a new test; same identity then reports Set up posting and insufficient ETH. No new transaction sent. See latest measurement report. All2s/15s/50% goals remain incomplete. Native artifact split and published deployment registration patches are independently approved but NOT integrated. One retained build and IAB tab; source/runtime remain separately identified. Upload versions and archives for8ae/d207 cleaned.
+
 ## Current live update — 26 October,8ae95b3d
 
 Live UI/source `8ae95b3d839caf7293c0aff4ab0031d0dacec552`; master and both app branches pushed. Actual immediate funded opening wallet→readyWrite10.753415s coldSDK /6.321715s cachedSDK. Actual delayed-composer135char post18.177735s click→included visible.2s/15s/all-flow50% targets remain incomplete. Previous3.256s unfunded quote run allowed more prewarming beforewalletselection and must not be presented as immediate opening. Latest source overlaps post/claim reads, reconnects owned funding cache, preserves bounded per-request/sync timing; focused256+148+51+9checks and actualworker build passed. Services unchanged.

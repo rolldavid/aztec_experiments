@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Progress: live/pushed8ae95b3d839caf7293c0aff4ab0031d0dacec552. Actual immediate funded wallet-to-readyWrite10753.415ms coldSDK/6321.715ms cached; delayed-composer post18177.735ms click-to-included-visible.2s/15s/all-flow50% NOT met. Concrete3.052770s extra click wait is active composer prewarm; checkpoint restarts removed and cooperative supersession peer-approved, integrated74checks+actualworker build for pending composer-only publication (SDK unchanged). Published read overlap cuts actualaction.prepare1.768s. Priorfb619 signup58.075s,like43.076s,name23.029s; bookmark8ae localUI11.66ms(no remote-durability timing). Native artifact splitting(private_tips) and exact public registration descriptor(pending_feed_release) drafted/reviewing, not integrated. Root onebuild/IAB, services unchanged. Read latest docs/ONBOARDING_MEASUREMENTS.md.",
+      "checkpoint": "Published/pushed d20794f6 composer-only fix, SDK unchanged/no service restart;74 checks and actualworker gate pass. Latest realopening failed during transient queryreadiness outage19:24-19:26 UTC. Prior8ae/fb619 includedpost receipts now dropped; originalincludedblockhash omitted, reorg unproven. Testjournal cleared aftersignout; sameidentity nowneedssetup/insufficientETH, no newtxsent. No d207 post timing or targetacceptance. Nativeartifact/publishedregistration patches approved notintegrated. Read latest ONBOARDING_MEASUREMENTS; all2s/15s/50% goals active. Uploadarchives cleaned.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
