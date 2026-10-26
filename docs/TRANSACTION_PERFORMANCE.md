@@ -25,7 +25,7 @@ Bookmarks and follows moved off-chain in `bbf76d92`; conversation read state is 
 | Automatic moderation |None|Functional evidence only|Inference through included removal and backlog completion remain unmeasured. |
 | Bookmarks, follows and read state |Now off-chain|Bookmark control11.660ms (`8ae95b3d`)|Local interaction only; encrypted replication durability measured separately. Do not compare with retired on-chain transactions. |
 
-These are observed results, not guarantees or matched multi-run distributions. Different network conditions do not erase an observed reduction, but endpoint differences and unmeasured wallet dwell limit what it establishes. Live `eda83e16` has no new browser timings yet. The all-flow50% target remains open.
+These are observed results, not guarantees or matched multi-run distributions. Different network conditions do not erase an observed reduction, but endpoint differences and unmeasured wallet dwell limit what it establishes. Live `e291136f` has no new browser timings yet. The all-flow50% target remains open.
 
 [Onboarding measurements](ONBOARDING_MEASUREMENTS.md) retains exact intervals and raw evidence. The latest `d20794f6` opening attempt failed during degraded node/query readiness; it supplies no successful posting or opening result. The preceding `8ae95b3d` delayed-composer post was observed visible at18.177735s. Its and the `fb61925c` post receipts later reported dropped, and the original traces omitted inclusion block/hash. Those observations do not establish durable present inclusion; future evidence must retain the public inclusion anchor. Do not infer a reorg from dropped status alone.
 
@@ -45,7 +45,7 @@ For a new Bok deposit claim with no saved Aztec claim, Ethereum receipt/custody 
 
 Fresh ETH quote qualification now overlaps guarded wallet capture and pending nonce lookup. Both finish before any archive or journal mutation; predecessor nonce maximum and final quote/wallet checks remain. Historical nonce lookup was146ms; this is potential overlap, not measured current elapsed savings. Funded opening starts no extra quote work, and cold SRS is unchanged.
 
-These changes require current browser measurements before any end-to-end reduction claim. Browser access is still denied at the tool boundary.
+Published `e291136f`; public worker/panel hashes verified, no service restart. Root186 UI checks,270 final aggregate checks and743 application checks passed. These changes require current browser measurements before any end-to-end reduction claim. Browser access is still denied at the tool boundary.
 
 ## Live f16 measurements — 26 October 2026
 

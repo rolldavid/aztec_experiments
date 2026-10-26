@@ -1,0 +1,29 @@
+{
+  "commit": "e291136f04155604e8414e0da0f3d97275a8ff67",
+  "files": [
+    {
+      "path": "/wallet/native-worker.js",
+      "sha256": "80458c0bfd845833245dd277bbb0afc6ab67b77c0fa13b60cdab95fb5557b72f",
+      "bytes": 432292,
+      "wireBytes": 98877,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/wallet-panel.mjs",
+      "sha256": "5261561a37ae927ef640174ba2f0f4002aa321289ba5022e2bba60007c86f364",
+      "bytes": 165746,
+      "wireBytes": 165746,
+      "encoding": null
+    }
+  ],
+  "appRestarted": false,
+  "proxyRestarted": false,
+  "stageCommand": "4c2de7d3-4d35-481e-ad85-4876f30cc365",
+  "activationCommand": "5ca3544a-98dc-4810-9790-c837ebb9c1ab",
+  "checks": {
+    "application": 743,
+    "aggregate": 270,
+    "ui": 186
+  },
+  "newBrowserTiming": false
+}

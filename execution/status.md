@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — eda83e16 live/pushed. Generic profile/name/subboard fee metadata overlaps synchronization; exact held moderation reviews reduce3 to2 with final fresh authority intact. Independent review,863 root checks and actual SDK/wallet build passed; public worker/SDK hashes verified. Prior warm opening improvements retained. Cold SRS deferred. Browser tool still denies access; no new timing or target-completion claim. All7 protected core services active; no restart.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — e291136f live/pushed. Removed repeated post-topup account scan; independent Bok receipt/workflow reads and fresh ETH qualification/nonce overlap. Independent review,186 UI+270 aggregate+743 application checks, installed SDK check and wallet build pass. Exact public worker/panel verified. No restart; owned draft/upload/obsolete packet cleanup complete. No new browser timing; warm2s and all-flow50% unproven.
 
 ## Ready internal work
 
