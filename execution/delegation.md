@@ -295,3 +295,5 @@ Bok discovery independently approved, integrated,34 native and6 application chec
 ## 26 October — lean warm opening
 
 Root integrated pending_reply_ui's single-lease fresh quote and inclusion_timing's browser-only unchanged-fact write elimination. pending_feed_release independently approved both; installed dependencies and server behavior remain unchanged. Root20 explicit VM opening checks,28 selected actual SDK/custody checks and22 native fact checks passed. Initial full VM run exposed an obsolete fixture expectation that quote starts before held fiat resolves; corrected test now asserts the intended ordering, with no runtime change. SDK/wallet build passed. No new timing claim while browser tool denies access.
+
+Final e8d4cede live, exact served worker/SDK hashes verified. All agents completed and removed owned source drafts. Root removed another154.89MB of obsolete publication packets; one retained build/current packet plus compact inventories remain. Signed transfer launchers, local archives and exact S3 object versions removed. No browser timing claim.

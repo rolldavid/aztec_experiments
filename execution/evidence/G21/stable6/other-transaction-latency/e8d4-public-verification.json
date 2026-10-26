@@ -1,0 +1,16 @@
+[
+  {
+    "path": "/wallet/native-worker.js",
+    "bytes": 427671,
+    "sha256": "0af3a2373a2edc586b941609850b80cd23943e70479cd2f685b4296e010078f7",
+    "matches": true
+  },
+  {
+    "path": "/wallet/aztec_bundle.js",
+    "bytes": 8401425,
+    "encodedBytes": 945169,
+    "encoding": "br",
+    "sha256": "7517bbc83fc735442ffa97df00679ebe1468230ac243e6bc712fa03cbbd1e333",
+    "matches": true
+  }
+]

@@ -189,3 +189,8 @@ Observed wallet-selection→enabled Write a post:3.071610s after four service-wo
 ### fdf6395a warm-start source published
 
 Funded native status now returns without any signup payment allocation/rate/wallet/nonce/quote reads. Fresh accounts still obtain complete pricing before Pay. Independent review and20 focused VM-boundary checks passed. Exact served worker SHA `ff159df6a2aef84bc1a50bbce845a5ee6ba2ad8907c9f1ea720a488bd5130501`; no service restart. Browser control began returning access denied after restart, so no post-change timing or two-second acceptance is claimed.
+
+
+### e8d4cede warm-start batch published
+
+Fresh signup now runs original aggregate.prepare once after native eligibility and allocation/fiat reads; final quote freshness and current/prior depositor journal checks remain. Browser native owner discovery compares complete current staged facts and origins after validation, skipping only identical delete/reinsert work. No installed dependency, server, SRS or contract changes. Independent review approved. Root20 explicit VM opening,28 selected custody and22 actual native fact checks passed; SDK build/check and wallet build passed. Initial obsolete fixture ordering was corrected before publication. Public worker SHA0af3a2373a2edc586b941609850b80cd23943e70479cd2f685b4296e010078f7; SDK SHA7517bbc83fc735442ffa97df00679ebe1468230ac243e6bc712fa03cbbd1e333 (945,169B Brotli to8,401,425B decoded), exact matches. No post-change browser timing: CUA denies access. Target remains unverified.
