@@ -3458,3 +3458,96 @@ test('Bok generic preparation cannot select the owned message path through actio
  await assert.rejects(f.restart().prepare({...f.action,verified:true}));assert.equal(reads,0);assert.equal(f.values.size,0);
  const app=f.restart(),prepared=await app.prepare(f.action);assert.equal((await app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(reads,0);
 });
+
+
+for(const action of moderatorActions)test('held moderation reuses its exact review before proof but refreshes before send: '+action.type,async()=>{
+ const f=moderatorFixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ const estimate=f.options.sdk.estimatePrivateFeeTransaction;f.options.sdk.estimatePrivateFeeTransaction=async input=>{assert.equal(f.state.storageReads.length,1,'no repeated pre-proof authority roundtrip');return estimate(input);};
+ const prepared=await f.app.prepare(action,{immediate:true});assert.equal(f.state.storageReads.length,1);await f.app.submitPrepared(prepared.intentId);
+ assert.equal(f.state.storageReads.length,2,'fresh final authority is mandatory');assert.equal(f.state.sends,1);
+ assert.equal(f.state.privateReads.filter(r=>r.name==='main_policy').length,2,'only immediate duplicate native review is omitted');
+});
+for(const changed of ['authority','policy','target','fork','owner'])test('held moderation still rejects final '+changed+' change without broadcast',async()=>{
+ const f=moderatorFixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ const prepared=await f.app.prepare(moderatorActions[0],{immediate:true});
+ f.state.beforeModeratorSubmit=async()=>{
+  if(changed==='authority')f.state.moderator=99n;
+  if(changed==='policy')f.state.policy=2;
+  if(changed==='target')f.state.responses.get_post=[f.state.responses.get_post[0],f.state.responses.get_post[1],1n,...f.state.responses.get_post.slice(3)];
+  if(changed==='fork')f.state.reorg=true;
+  if(changed==='owner')f.state.guard=false;
+ };
+ await assert.rejects(f.app.submitPrepared(prepared.intentId));assert.equal(f.state.sends,0);assert.equal(f.state.estimates,1);
+});
+for(const changed of ['operation','anchor','cached-node','reopen','unsynchronized','encoded'])test('moderation review does not survive '+changed,async()=>{
+ const f=moderatorFixture();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ const prepared=await f.app.prepare(moderatorActions[4],{immediate:true});
+ if(changed==='operation')scope={synchronized:true};
+ if(changed==='anchor')f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:101n},hash:async()=>hex(43)});
+ if(changed==='cached-node')f.options.accountSession.wallet.pxe.node={};
+ if(changed==='reopen')f.app=f.restart();
+ if(changed==='unsynchronized')scope.synchronized=false;
+ if(changed==='encoded'){
+  const journalScope={account:hex(3),chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20),board:hex(1),portal:'0x'+'22'.repeat(20)};
+  const slot=await createEncryptedJournalSlot({storage:f.options.privateStore,walletSecret:hex(8),walletSalt:'0',scopeText:JSON.stringify(['ROLLING_WORKFLOW_V1',l2JournalScopeText(journalScope)]),keyDomain:'ROLLING_WORKFLOW_V1'});
+  const before=await slot.read();await slot.write(before,before.value);
+ }
+ await f.app.submitPrepared(prepared.intentId);assert.equal(f.state.storageReads.length,3,'full pre-proof plus final authority remain');assert.equal(f.state.sends,1);
+});
+
+test('held moderation review rejects operation replacement during its local anchor comparison',async()=>{
+ const f=moderatorFixture();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;f.app=f.restart();
+ const prepared=await f.app.prepare(moderatorActions[4],{immediate:true}),entered=Promise.withResolvers(),gate=Promise.withResolvers();
+ const read=f.options.accountSession.wallet.pxe.getSyncedBlockHeader;f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>{entered.resolve();await gate.promise;return read();};
+ const pending=f.app.submitPrepared(prepared.intentId),rejected=assert.rejects(pending,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;scope={synchronized:true};gate.resolve();await rejected;
+ assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);
+});
+
+const deferredMetadataActions=[
+ {type:'bio',name:'5',expectedVersion:'0',content:'Fresh metadata'},
+ {type:'avatar',name:'5',expectedVersion:'0',width:100,height:100,data:'AA=='},
+ {type:'name',first:'River',last:'Lane'},
+ {type:'subboard',slug:'metadata-board',name:'Metadata',description:'Fresh state',rules:''},
+];
+for(const action of deferredMetadataActions)test(`${action.type} public fee metadata precedes discovery; native credit waits and is reused only within its operation`,async()=>{
+ const f=fixture(),scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ const discovery=Promise.withResolvers();scope.contractStateReady=discovery.promise;
+ let metadata=0,credit=0,ready=false;
+ f.options.sdk.preparePrivateFeePayment=async input=>{assert.equal(input.creditCheck,'deferred-balance');metadata++;return {creditCheck:input.creditCheck,withAvailableCredit:async()=>{assert.equal(ready,true);credit++;return {creditCheck:'read-balance',availableCredit:100n};}};};
+ f.app=f.restart();await f.app.prefetchContext({deferredPayment:true});assert.equal(metadata,1);assert.equal(credit,0);
+ let done=false;const preparing=f.app.prepare(action,{immediate:true}).finally(()=>done=true);
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(done,false);assert.equal(credit,0);
+ ready=true;discovery.resolve();const prepared=await preparing;assert.equal(credit,1);
+ await f.app.submitPrepared(prepared.intentId);assert.equal(metadata,1);assert.equal(credit,1);assert.equal(f.state.sends,1);
+});
+for(const failure of ['readiness','payment'])test(`deferred payment prefetch ${failure} failure drains independent preparation`,async()=>{
+ const f=fixture(),scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers();let settled=false;
+ f.options.sdk.inspectTrustedNode=async()=>{if(failure==='readiness')throw Error(failure);entered.resolve();await gate.promise;};
+ f.options.sdk.preparePrivateFeePayment=async()=>{if(failure==='payment')throw Error(failure);entered.resolve();await gate.promise;return {};};f.app=f.restart();
+ const work=f.app.prefetchContext({deferredPayment:true}).finally(()=>settled=true),observed=assert.rejects(work,new RegExp(failure));
+ await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await observed;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+for(const replacement of ['scope','pxe','node'])test(`deferred payment rejects ${replacement} replacement during fresh credit read`,async()=>{
+ const f=fixture();let scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ const entered=Promise.withResolvers(),gate=Promise.withResolvers();
+ f.options.sdk.preparePrivateFeePayment=async()=>({creditCheck:'deferred-balance',withAvailableCredit:async()=>{entered.resolve();await gate.promise;return {creditCheck:'read-balance',availableCredit:100n};}});f.app=f.restart();
+ await f.app.prefetchContext({deferredPayment:true});
+ const work=f.app.prepare(deferredMetadataActions[0],{immediate:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ if(replacement==='scope')scope={};else if(replacement==='pxe')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};else f.options.accountSession.node={...f.options.accountSession.node};gate.resolve();await rejected;assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+test('deferred fee metadata cannot carry a balance or be consumed by a different operation',async()=>{
+ const f=fixture();let scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;const seen=[];
+ f.options.sdk.preparePrivateFeePayment=async input=>{seen.push(input.creditCheck);return input.creditCheck==='deferred-balance'?{creditCheck:'deferred-balance',withAvailableCredit:()=>assert.fail('old operation credit')}:{creditCheck:'read-balance',availableCredit:100n};};f.app=f.restart();
+ await f.app.prefetchContext({deferredPayment:true});scope={preparationReads:[]};
+ const prepared=await f.app.prepare(deferredMetadataActions[0],{immediate:true});await f.app.submitPrepared(prepared.intentId);
+ assert.deepEqual(seen,['deferred-balance',undefined]);assert.equal(f.state.sends,1);
+});
+
+test('deferred empty-credit rejection happens before writing an intent or attempting a proof',async()=>{
+ const f=fixture(),scope={preparationReads:[]};f.options.accountSession.operationScope=()=>scope;
+ let credits=0;f.options.sdk.preparePrivateFeePayment=async()=>({creditCheck:'deferred-balance',withAvailableCredit:async()=>{credits++;throw Object.assign(Error('empty'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});}});f.app=f.restart();
+ await f.app.prefetchContext({deferredPayment:true});assert.equal(credits,0);
+ await assert.rejects(f.app.prepare(deferredMetadataActions[0],{immediate:true}),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});
+ assert.equal(credits,1);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});

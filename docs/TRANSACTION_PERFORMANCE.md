@@ -6,17 +6,36 @@ Owner goal: reduce end-to-end time by at least **50% for every other live applic
 
 Bookmarks and follows moved off-chain in `bbf76d92`; conversation read state is also off-chain. Their retired Aztec preference/read-marker implementations are not current transaction work. Preserve the historical measurements below as evidence of those releases, without restoring deleted contract paths or comparing local UI feedback with blockchain settlement.
 
-| Flow and release | Latest recorded endpoint | Comparison and qualification |
-|---|---|---|
-| Like, `a75bd5b7` |12.547165s click→native inclusion and visible count | Earlier fb61943.075745s uses same endpoint but different state/network; goal-start56.933s is canonical action return. Current observed speedup does not establish all-flow50%. Unlike now measured13.909s; no goal-start matched Unlike baseline exists. |
-| Unlike, `f9865f2d` |13.909000s click→native inclusion and visible count0 | Transaction0x1ea9af5800fca51653e57f2d52ed57d99f84c77999822f37eb328eeeba4ea8d5; block5254/hash0x191bde9c889ec03b2810f48e80f4e54133fd49d9c8b088bccd6250d0f0959f5b. No matched historical baseline; do not invent a50% result. |
-| Register name, `3b032339` |16.385465s Create→native included and new owned name selected | Historical106.844s also includes selectable-name feedback, but network/account fixtures differ. Lower observed time does not establish a controlled50% result for all identity/profile actions. |
-| ETH signup, `fb61925c` |58.075380s Confirm payment→enabled Write a post | Same endpoint was52.501800s on `0d23da65`; automatic wallet approvals and network waits are included. No improvement in these observations. Claim changes published in `8ae95b3d` have not had a new full-payment measurement. |
-| ETH-to-Bok funding, `f0dc` |39.222685s Pay→usable credit after native inclusion | Older165.094s baseline contains unmeasured wallet/tool dwell; not a matched50% denominator. A current-release full-flow run is missing. |
-| Bok request, `30fb` |43.754055s click→included visible request | Generated reply and app usability are separate required endpoints. Older reply evidence includes offscreen DOM insertion and unmeasured observer attachment; a current matched visible-response run is missing. |
-| Off-chain bookmark, `8ae95b3d` |11.660ms click→usable Unbookmark control | Local UI readiness only; no transaction. Remote encrypted replication durability and inverse/reload behavior need separate timings. Do not compare with the old58.264s Aztec bookmark action as equivalent settlement. |
+| Flow | Goal-start observation | Latest actual observation | Comparison and remaining evidence |
+|---|---:|---:|---|
+| Like: visible included count |14.135s|12.547165s (`a75bd5b7`)|11.2% lower. The later `87` action returned in13.260s versus56.933s initially (76.7% lower), but its visible-count observer was invalid; these endpoints cannot be mixed. |
+| Unlike: visible count and inclusion |None|About19.608s (`87`)|Count reached zero at19.191s; native receipt arrived417ms later. No goal-start denominator. |
+| Register name: included and selected |106.844s|16.385465s (`3b032339`)|84.7% observed reduction at the same useful endpoint. Single observations under different network/account conditions; latest source not remeasured. |
+| Set bio: included and editor closed |About75.020s|25.481420s (`af0`)|About66.0% lower; baseline click was approximate. Public profile was verified afterward, not continuously timed. |
+| Clear bio; set/clear avatar |None|None complete|Baseline and after-run missing. |
+| Create subboard: included directory entry |None|14.478s (`e752`)|No goal-start denominator. Other administrator flows lack complete paired timings. |
+| ETH signup: payment confirmation to ready to post |None|58.075380s (`fb61925c`)|Full payment flow measured, but no goal-start baseline. Later quote/claim changes need a new full-flow observation. |
+| USDC signup |None|None complete|Signatures, relay, bridge claim and usable account must all be included. |
+| Posting-credit top-up |None|134.757725s (`f16`)|Includes36.180520s test-adapter repair dwell. Functional evidence only; clean approval-present/absent observations missing. |
+| ETH-to-Bok: Pay to usable credit |165.094s|37.178030s (`f20`, repeat)|77.5% lower historical wall time. Baseline wallet/tool dwell was unmeasured, so application-only reduction is unknown. |
+| Direct-token Bok funding |None|None complete|Approval-present/absent branches missing. |
+| Collateral cancellation/refund and withdrawal |None|No complete mined-payout timing|Report protocol maturity waits separately; inclusion is not payout. |
+| Bok withdrawal |None|Mined ETH payout verified (`ef358`), no continuous total|Functional evidence; no percentage. |
+| Bok request to visible usable reply |No clean full baseline|Request included/visible43.754055s (`30fb`)|Reply already existed before observer attached. This does not measure request-to-reply completion. |
+| Automatic moderation |None|Functional evidence only|Inference through included removal and backlog completion remain unmeasured. |
+| Bookmarks, follows and read state |Now off-chain|Bookmark control11.660ms (`8ae95b3d`)|Local interaction only; encrypted replication durability measured separately. Do not compare with retired on-chain transactions. |
+
+These are observed results, not guarantees or matched multi-run distributions. Different network conditions do not erase an observed reduction, but endpoint differences and unmeasured wallet dwell limit what it establishes. Live `e8d4cede` has no new browser timings yet. The all-flow50% target remains open.
 
 [Onboarding measurements](ONBOARDING_MEASUREMENTS.md) retains exact intervals and raw evidence. The latest `d20794f6` opening attempt failed during degraded node/query readiness; it supplies no successful posting or opening result. The preceding `8ae95b3d` delayed-composer post was observed visible at18.177735s. Its and the `fb61925c` post receipts later reported dropped, and the original traces omitted inclusion block/hash. Those observations do not establish durable present inclusion; future evidence must retain the public inclusion anchor. Do not infer a reorg from dropped status alone.
+
+## Reviewed preparation batch — 26 October
+
+Immediate bio, avatar, name and subboard actions load public fee metadata alongside native synchronization. Fresh native credit is still read after the existing discovery barrier; zero credit rejects before saving an intent. Reuse remains bound to the same encoded action and held operation, wallet, PXE and node. This overlaps approximately286ms of payment preparation seen in the earlier bio trace; actual elapsed savings are unmeasured.
+
+Immediate moderation reuses its completed review before proving only for the same encoded action, operation and native anchor. It removes one of three authority/target review passes. The final fresh moderator, policy, target and canonical checks remain before sending. Separate or changed operations use the normal full review.
+
+Independent review approved both patches. The integrated affected suite passed863 checks. No browser measurement or50% claim follows from these checks. Cold SRS work is deferred by owner direction.
 
 ## Live f16 measurements — 26 October 2026
 

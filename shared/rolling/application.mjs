@@ -350,11 +350,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     }
     return claim;
   }
-  async function payment(action,record,{ordinaryProof=false,likeProof=false}={}){
+  async function payment(action,record,{ordinaryProof=false,likeProof=false,deferredBalance=false}={}){
     const claim=await verifiedFeeClaim(action,record);
     return sdk.preparePrivateFeePayment({wallet:session.wallet,node:session.node,owner:session.owner,
       privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas,measure,
-      ...(claim?{claim}:{}),...(ordinaryProof?{creditCheck:'ordinary-post-proof'}:likeProof?{creditCheck:'qualified-like-proof'}:{})});
+      ...(claim?{claim}:{}),...(ordinaryProof?{creditCheck:'ordinary-post-proof'}:likeProof?{creditCheck:'qualified-like-proof'}:deferredBalance?{creditCheck:'deferred-balance'}:{})});
   }
   async function collateralClaim(action){
     // Receipt metadata cannot replace the authenticated deployment or inject
@@ -539,7 +539,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   }
   // Reuse the original submission checks at recovery boundaries; none of these
   // checks grants permission to resend without the exact authenticated journal.
-  async function checkActionSubmission(record){
+  async function checkActionSubmission(record,{moderationReviewed=false}={}){
       shareAggregateClaim(record.action);
       if(record.withdrawal?.kind==='bok'){
         const anchor=await balanceAnchor();
@@ -556,7 +556,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       if(record.fundingBok)check(same(await (record.action.type==='claim-bok'?privateBokClaim(record.action.receipt):bokFundingClaim(record.action)),record.fundingBok),'ROLLING_FUNDING_MISMATCH');
       if(record.action.type==='claim-private-fee')check(record.fundingFee,'ROLLING_FUNDING_MISMATCH');
       if(record.bokReleaseSource)await checkBokRelease(record.bokReleaseSource,record.action.type);
-      await checkModeration(record);
+      if(!moderationReviewed)await checkModeration(record);
       if(record.bok&&record.bok.phase!=='atomic')await checkBokThread(record.action,await contract());
       if(record.bok?.phase==='authorize'){const available=await bokCredit();check(available>=BigInt(record.bok.budget),'ROLLING_BOK_CREDIT_INSUFFICIENT');}
       if(record.bok?.phase==='post')await waitingBok(record);
@@ -928,7 +928,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await fence();check(Number.isSafeInteger(result?.anchor?.number)&&result.anchor.number>0&&Number.isSafeInteger(result.value)&&result.value>=0&&result.value<=0xffffffff,'ROLLING_INVALID_RESPONSE');
       preparedPolicies.set(scope,{...context,number:result.anchor.number,hash:hashText(result.anchor.hash),mainVersion:result.value});
     },
-    async prefetchContext({predecessor=false,ordinaryPayment=false,likePayment=false}={}){
+    async prefetchContext({predecessor=false,ordinaryPayment=false,likePayment=false,deferredPayment=false}={}){
       await localGuard();const owner=getOperationScope();
       const results=await Promise.allSettled([
         guard,
@@ -938,11 +938,11 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           if(saved.value&&(terminalHistory(saved.value)||saved.value.status==='cancelled'&&saved.value.predecessor))await session.journal.inspectOutcome();
         },
         async()=>{
-          if((!ordinaryPayment&&!likePayment)||!owner)return;
-          // Qualified payment preparation uses public metadata and local class
+          if((!ordinaryPayment&&!likePayment&&!deferredPayment)||!owner)return;
+          // Early payment preparation uses public metadata and local class
           // registration, with no private balance utility or action arguments.
           const context={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
-          const prepared=await measure('action.payment-prefetch',()=>payment(undefined,undefined,{ordinaryProof:ordinaryPayment,likeProof:likePayment}));
+          const prepared=await measure('action.payment-prefetch',()=>payment(undefined,undefined,{ordinaryProof:ordinaryPayment,likeProof:likePayment,deferredBalance:deferredPayment}));
           await localGuard();check(getOperationScope()===owner&&session.wallet===context.wallet&&session.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
           preparedPayments.set(owner,{phase:'metadata',payment:prepared,...context});
         },
@@ -1193,6 +1193,8 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const paymentScope=immediate&&(ordinaryPreparation||genericPreparation||action.type==='bok')
         ?session.operationScope?.():null;
       const paymentOwner=paymentScope&&{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node};
+      const moderationCachedNode=paymentOwner?.pxe.node;
+      const moderationAnchor=paymentScope?.synchronized===true&&moderationTypes.has(action.type)?await balanceAnchor():undefined;
       let args,preparedPayment,preparedNameAvailability,preparedFundingBok;
       const claimScope=immediate&&['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)?session.operationScope?.():null;
       const claimOwner=claimScope?.synchronized===true?{wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,cachedNode:session.wallet.pxe.node}:null;
@@ -1223,11 +1225,20 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         const postingAnchor=(ordinaryPreparation||action.type==='bok')?(earlyPolicy?.anchor??(field(action.subboard??'0')===zero?await balanceAnchor():undefined)):undefined;
         checkPaymentOwner();
         const earlier=preparedPayments.get(paymentScope);preparedPayments.delete(paymentScope);
-        const earlyMode=ordinaryPreparation?'ordinary-post-proof':['like','unlike'].includes(action.type)?'qualified-like-proof':undefined;
+        const deferredBalance=['name','bio','avatar','subboard'].includes(action.type);
+        const earlyMode=ordinaryPreparation?'ordinary-post-proof':['like','unlike'].includes(action.type)?'qualified-like-proof':deferredBalance?'deferred-balance':undefined;
         const earlyPayment=earlyMode&&earlier?.phase==='metadata'&&earlier.payment.creditCheck===earlyMode&&earlier.wallet===session.wallet&&earlier.pxe===session.wallet.pxe&&earlier.node===session.node?earlier.payment:null;
         const values=await Promise.allSettled([
           ()=>measure('action.arguments',async()=>{if(moderationTypes.has(action.type)){moderation=await moderationArguments(action,board);return moderation.args;}return argumentsFor(action,board,nonce,{atomicBok:action.type==='bok',postingAnchor,preparedPolicy:earlyPolicy?.policy,withdrawalObservation});}),
-          ()=>earlyPayment??measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:ordinaryPreparation,likeProof:['like','unlike'].includes(action.type)})),
+          async()=>{
+            const prepared=earlyPayment??await measure('action.payment-prefetch',()=>payment(action,undefined,{ordinaryProof:ordinaryPreparation,likeProof:['like','unlike'].includes(action.type)}));
+            if(!deferredBalance||!earlyPayment)return prepared;
+            // Native record discovery has completed at this operation's anchor.
+            // Read credit now; only public metadata overlapped synchronization.
+            checkPaymentOwner();check(prepared.creditCheck==='deferred-balance'&&typeof prepared.withAvailableCredit==='function','ROLLING_CONTEXT_CHANGED');
+            const funded=await prepared.withAvailableCredit();await guard();checkPaymentOwner();
+            check(funded.creditCheck==='read-balance','ROLLING_CONTEXT_CHANGED');return funded;
+          },
           ...(action.type==='name'?[()=>nameAvailability(action)]:[]),
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
@@ -1290,10 +1301,14 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       }
       if(paymentScope&&['withdraw-bok','cancel-bok-request','expire-bok-request'].includes(action.type))checkPaymentOwner();
       if(claimOwner)checkClaimOwner();
+      if(moderationAnchor){
+        checkPaymentOwner();check(paymentScope.synchronized===true&&same(await balanceAnchor(),moderationAnchor),'ROLLING_CONTEXT_CHANGED');checkPaymentOwner();check(session.wallet.pxe.node===moderationCachedNode,'ROLLING_CONTEXT_CHANGED');
+      }
       const saved=await store.write(prior,record);
       // No persistent cache: only the unchanged journal record in the same held
       // operation may use this result. Separate submissions prepare afresh.
-      if(paymentScope&&session.operationScope()===paymentScope)preparedPayments.set(paymentScope,{encoded:saved.encoded,payment:preparedPayment,...paymentOwner});
+      if(paymentScope&&session.operationScope()===paymentScope)preparedPayments.set(paymentScope,{encoded:saved.encoded,payment:preparedPayment,...paymentOwner,
+        ...(moderationAnchor&&moderation?{moderationReady:{anchor:moderationAnchor,cachedNode:moderationCachedNode}}:{})});
       const claimPaymentScope=immediate&&['claim-deposit','claim-private-fee','claim-bok'].includes(action.type)&&record.fundingFee?session.operationScope?.():null;
       if(claimPaymentScope?.synchronized===true)preparedPayments.set(claimPaymentScope,{encoded:saved.encoded,payment:preparedPayment,wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,claim:true});
       return summary(record);
@@ -1414,6 +1429,17 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       await session.journal.assertCanStart(!replacing&&saved.value.predecessor?{predecessor:saved.value.predecessor}:undefined); // Before private simulation, not merely before send.
       const paymentScope=session.operationScope?.(),cachedPayment=paymentScope&&preparedPayments.get(paymentScope);
       if(paymentScope)preparedPayments.delete(paymentScope);
+      let moderationReviewed=false;
+      // Only the completed review for these exact bytes in this still-held
+      // native operation can replace the immediately repeated pre-proof read.
+      // The post-proof beforeSubmit callback below always checks fresh authority.
+      if(!replacing&&saved.value.moderation&&paymentScope?.synchronized===true&&cachedPayment?.moderationReady&&cachedPayment.encoded===saved.encoded&&
+        cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node&&cachedPayment.moderationReady.cachedNode===session.wallet.pxe.node){
+        moderationReviewed=same(await balanceAnchor(),cachedPayment.moderationReady.anchor);
+        await guard();check(session.operationScope()===paymentScope&&paymentScope.synchronized===true&&cachedPayment.wallet===session.wallet&&
+          cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node&&cachedPayment.moderationReady.cachedNode===session.wallet.pxe.node,'ROLLING_CONTEXT_CHANGED');
+      }
+
       const preparePayment=()=>measure('action.fee-prepare',async()=>{
         if(cachedPayment&&cachedPayment.encoded===saved.encoded&&cachedPayment.wallet===session.wallet&&cachedPayment.pxe===session.wallet.pxe&&cachedPayment.node===session.node){
           if(cachedPayment.claim)await verifiedFeeClaim(saved.value.action,saved.value);
@@ -1434,7 +1460,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         preparedPayment=reads[1].value;
         selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
       }else{
-        await checkActionSubmission(saved.value);
+        await checkActionSubmission(saved.value,{moderationReviewed});
         selected=await interaction(await selectedContract(saved.value),saved.value);progress('estimating');
         preparedPayment=await preparePayment();
       }

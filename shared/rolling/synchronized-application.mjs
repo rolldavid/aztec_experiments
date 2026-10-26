@@ -72,7 +72,8 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     const ownedNames=Boolean(scope)&&name==='ownedIdentities';
     const reads=[()=>synchronize({ordinaryPolicy,ordinaryPost,...(accountStatus?{accountStatus:true}:{}),...(ownedNames?{ownedNames:true}:{})})];if(scope&&prepareContext)reads.push(()=>prepareContext({predecessor:name==='prepare',
       ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['post','reply','quote','repost'].includes(captured[0]?.type)?{ordinaryPayment:true}:{}),
-      ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['like','unlike'].includes(captured[0]?.type)?{likePayment:true}:{})}));
+      ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['like','unlike'].includes(captured[0]?.type)?{likePayment:true}:{}),
+      ...(name==='prepare'&&Array.isArray(scope.preparationReads)&&captured[1]?.immediate===true&&['name','bio','avatar','subboard'].includes(captured[0]?.type)?{deferredPayment:true}:{})}));
     const results=await Promise.allSettled(reads.map(read=>Promise.resolve().then(read)));
     const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
     if(scope&&operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});

@@ -151,13 +151,13 @@ for(const fail of ['discovery','scope'])test('generic preparation '+fail+' failu
 });
 
 
-test('only held immediate likes start their qualified metadata alongside native synchronization',async()=>{
- for(const type of ['like','unlike','bio','avatar'])for(const immediate of [false,true]){
+test('held immediate actions start only their corresponding fee metadata alongside native synchronization',async()=>{
+ for(const type of ['like','unlike','bio','avatar','name','subboard','moderate-post'])for(const immediate of [false,true]){
   let seen;const scope={preparationReads:[]},gate=Promise.withResolvers(),entered=Promise.withResolvers();let stages=0,called=false;
   const arrive=async()=>{if(++stages===2)entered.resolve();await gate.promise;};
   const raw=Object.fromEntries(names.map(name=>[name,()=>{called=true;return {};} ]));
   const app=createSynchronizedRollingApplication({application:raw,contextGuard:()=>{},operationScope:()=>scope,synchronize:arrive,prepareContext:async options=>{seen=options;await arrive();}});
-  const work=app.prepare({type},immediate?{immediate:true}:undefined);await entered.promise;assert.equal(called,false);assert.equal(seen.likePayment,immediate&&['like','unlike'].includes(type)?true:undefined);gate.resolve();await work;assert.equal(called,true);
+  const work=app.prepare({type},immediate?{immediate:true}:undefined);await entered.promise;assert.equal(called,false);assert.equal(seen.likePayment,immediate&&['like','unlike'].includes(type)?true:undefined);assert.equal(seen.deferredPayment,immediate&&['name','bio','avatar','subboard'].includes(type)?true:undefined);gate.resolve();await work;assert.equal(called,true);
  }
 });
 
