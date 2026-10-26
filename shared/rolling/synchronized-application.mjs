@@ -40,14 +40,16 @@ function accountStatusArguments(args){
  }catch{throw Object.assign(Error('Invalid Rolling action'),{code:'ROLLING_INVALID_ACTION'});}
 }
 const boardStateMethods=Object.freeze({like:'set_like',unlike:'set_like',name:'register_name',bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator',screen:'screen',withdraw:'withdraw'});
-export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null,prepareContext,prepareContractState,preparePredecessorAnchor}){
- if(typeof synchronize!=='function'||typeof contextGuard!=='function'||prepareContext!==undefined&&typeof prepareContext!=='function'||prepareContractState!==undefined&&typeof prepareContractState!=='function'||preparePredecessorAnchor!==undefined&&typeof preparePredecessorAnchor!=='function')throw Error('Rolling synchronization unavailable');
+export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null,prepareContext,prepareContractState,preparePredecessorAnchor,beforePostingPrepare}){
+ if(typeof synchronize!=='function'||typeof contextGuard!=='function'||prepareContext!==undefined&&typeof prepareContext!=='function'||prepareContractState!==undefined&&typeof prepareContractState!=='function'||preparePredecessorAnchor!==undefined&&typeof preparePredecessorAnchor!=='function'||beforePostingPrepare!==undefined&&typeof beforePostingPrepare!=='function')throw Error('Rolling synchronization unavailable');
+ const refreshPostingAnchor=Symbol('refresh-posting-anchor');
  const calls=methods.map(name=>{
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
   return [name,async(...args)=>{
    if(name==='readFundingState'&&args.length!==0)throw Object.assign(Error('Invalid Rolling action'),{code:'ROLLING_INVALID_ACTION'});
    const captured=name==='readAccountStatus'?accountStatusArguments(args):name==='resumeSaved'?savedResumeArguments(args):name==='prepareBokRelease'?bokReleaseArguments(args):['readBalances','readBokAccounting'].includes(name)?balanceArguments(args,name==='readBalances'):args;
+   for(;;){
    const stateMethod=name==='prepare'&&Object.hasOwn(boardStateMethods,captured[0]?.type)?boardStateMethods[captured[0].type]:undefined;
    await contextGuard();
    const scope=operationScope();let ordinaryPost=false;
@@ -89,6 +91,20 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
     await contextGuard();
    }
+   const invoke=async()=>{
+    if(beforePostingPrepare&&name==='prepare'&&captured[1]?.immediate===true&&['post','reply','quote','repost','bok'].includes(captured[0]?.type)){
+     // The existing native discovery barrier owns this exact synchronized scope.
+     // No workflow intent exists while readiness is inspected or chain time waits.
+     if(scope?.contractStateReady)await scope.contractStateReady;
+     const ready=await beforePostingPrepare(captured[0]);await contextGuard();
+     if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
+     if(ready===false){
+      if(!scope||scope.synchronized!==false)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
+      return refreshPostingAnchor;
+     }
+    }
+    return call(...captured);
+   };
    let result;
    if(overlapMethod&&prepareContractState){
     // Capture the synchronized header before discovery owns the native queue.
@@ -98,14 +114,16 @@ export function createSynchronizedRollingApplication({application,synchronize,co
     // Predecessor authority can run during native discovery. The application
     // awaits this exact owned barrier before arguments or a new intent write.
     try{
-     const results=await Promise.allSettled([ready,Promise.resolve().then(()=>call(...captured))]);
+     const results=await Promise.allSettled([ready,Promise.resolve().then(invoke)]);
      const failed=results.find(value=>value.status==='rejected');if(failed)throw failed.reason;
      await contextGuard();if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});
      result=results[1].value;
     }finally{if(scope.contractStateReady===ready)delete scope.contractStateReady;}
-   }else result=await call(...captured);
+   }else result=await invoke();
+   if(result===refreshPostingAnchor)continue;
    if(scope&&['submitPrepared','resumeSaved'].includes(name)&&['included','confirmed','authorized','reverted','bok-post-reverted','bok-release-reverted'].includes(result?.status))scope.synchronized=false;
    return result;
+   }
   }];
  });
  return Object.freeze(Object.fromEntries(calls));

@@ -567,6 +567,21 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  // Both reads consume the same public Board class/initialization cache keys.
  // syncForAccountStatus owns fresh native sync only; ownership discovery still follows.
  const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false,accountStatus=false,ownedNames=false,snapshotAncestry=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?refreshSyncStage:'action.sync',()=>accountStatus||ownedNames?pxe.syncForAccountStatus(selected.board.contractAddress,accountStatus?selected.privateFee.contractAddress:undefined):ordinaryPolicy&&typeof pxe.syncForOrdinaryPost==='function'?app.prefetchPostingPolicy(read=>pxe.syncForOrdinaryPost({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress},read)):pxe.sync(snapshotAncestry?{snapshotAncestry:true}:undefined));refreshPhase?.('account-initialize');await initializeAccount();
+ },beforePostingPrepare:async action=>{
+  const owner=operationScope,gate=owner?.postingReadiness;
+  // Only the single user-authorized executeAction flow waits automatically.
+  if(!gate)return true;
+  const postingGuard=async()=>{gate.signal?.throwIfAborted();await guardRoute();gate.signal?.throwIfAborted();if(operationScope!==owner)throw fail('ROLLING_CONTEXT_CHANGED');};
+  await postingGuard();const state=await app.readPostingReadiness(action.deposit);await postingGuard();
+  if(state.ready){try{onProgress({stage:'preparing'});}catch{}return true;}
+  try{onProgress({stage:'posting-waiting'});}catch{}
+  // Observe actual chain time. Each wakeup repeats the existing native sync,
+  // policy/payment prefetch and selected-note check before an intent is saved.
+  await sdk.retryUntil(async()=>{
+   await postingGuard();const block=await privateNode.getBlockData('proposed');await postingGuard();
+   return block&&BigInt(block.header.globalVariables.timestamp.toString())>=BigInt(state.nextAllowedTime);
+  },'posting availability',0);
+  await postingGuard();owner.synchronized=false;return false;
  },preparePredecessorAnchor:async()=>{
   await guardRoute();const owner=operationScope,engine=pxe,node=privateNode,wallet=privateWallet,header=await engine.getSyncedBlockHeader();await guardRoute();
   if(!owner?.synchronized||operationScope!==owner||engine!==pxe||node!==privateNode||wallet!==privateWallet)throw fail('ROLLING_CONTEXT_CHANGED');
@@ -585,7 +600,10 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  }
 
  const application=Object.freeze({...Object.fromEntries(Object.entries(synchronized).map(([name,call])=>[name,(...args)=>refreshMethods[name]?observedRead(name,call,args):locked(async()=>{const result=name==='submitPrepared'&&(topups||aggregate)?await submitWithFundingCheckpoint({application:synchronized,topups,aggregate,intentId:args[0]}):await call(...args);if(name==='reconcile'&&['included','confirmed'].includes(result?.status)){const kind=result.action?.type==='claim-bok'?'bok':result.action?.type==='claim-private-fee'?'private-fee':null;if(kind&&topups?.[kind])await topups[kind].recordClaimCompletion(result);else if(result.action?.type==='claim-deposit'&&aggregate)await aggregate.recordClaimCompletion(result);}return result;})])),
-  executeAction(input,options={}){const action=structuredClone(input),onPrepared=options.onPrepared,postingRules=options.postingRules===undefined?undefined:structuredClone(options.postingRules);return locked(()=>{
+  executeAction(input,options={}){const action=structuredClone(input),onPrepared=options.onPrepared,postingRules=options.postingRules===undefined?undefined:structuredClone(options.postingRules),signal=options.signal;
+   if(signal!==undefined&&!(signal instanceof AbortSignal))throw fail('ROLLING_INVALID_ACTION');
+   return locked(()=>{
+   if(['post','reply','quote','repost','bok'].includes(action.type))operationScope.postingReadiness={signal};
    // Only one-click prepare+send owns the lock for the entire lifetime of these
    // independent hash-pinned reads. Standalone preparation still awaits them.
    operationScope.preparationReads=[];

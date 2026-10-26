@@ -1004,6 +1004,13 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         return {complete:true,phase:'complete',anchor,nextCursor:null,available,requests,totals,refundedMeaning:'already-returned-to-unallocated-balance'};
       }catch(error){accountingScan=null;completedAccounting=null;throw error;}
     });},
+    // Internal preparation read: posting eligibility is independent of exit screening.
+    async readPostingReadiness(deposit){return exclusive(async()=>{
+      const id=field(deposit,true),anchor=await balanceAnchor();
+      const info=await collateralInfo(id,await contract(),BigInt(anchor.timestamp));
+      await checkBalanceAnchor(anchor);
+      return {anchor,nextAllowedTime:info.nextAllowedTime,ready:BigInt(anchor.timestamp)>=BigInt(info.nextAllowedTime)};
+    });},
     async readWithdrawalReadiness(deposit){return exclusive(async()=>{
       const id=field(deposit,true),operation=session.operationScope?.();
       if(operation)withdrawalObservations.delete(operation);

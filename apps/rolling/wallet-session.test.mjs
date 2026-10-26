@@ -1189,7 +1189,7 @@ for(const failure of ['prepare','proof'])test(`one-click history work cannot esc
  const f=await sessionFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();
  const originalAt=f.input.sdk.Contract.at;f.input.sdk.Contract.at=(...args)=>{
   const board=originalAt(...args);return {...board,methods:{...board.methods,
-   post:(...args)=>({args}),get_screen_hints:()=>({simulate:async()=>({result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))})})}};
+   get_deposit_info:(owner,deposit)=>({simulate:async()=>({result:[1n,BigInt(deposit.toString()),100n,BigInt(eth(33)),0n,0n,0n,0n,0n,100n,56n]})}),post:(...args)=>({args}),get_screen_hints:()=>({simulate:async()=>({result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))})})}};
  };
  const publicRead=f.node.getPublicStorageAt;f.node.getPublicStorageAt=async(reference,address,slot)=>slot.equals(artifact.storageLayout.main_version.slot)?Fr.ONE:publicRead(reference,address,slot);
  f.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:10,timestamp:100n},hash:async()=>BlockHash.fromString(hex(55))});
@@ -1288,7 +1288,7 @@ test('invalid background screening selection fails before acquiring an operation
 
 test('Post reexecutes screening for its own deposit after background preparation',async()=>{
  const f=await sessionFixture(),seen=[],original=f.input.sdk.Contract.at;
- f.input.sdk.Contract.at=(...args)=>{const board=original(...args);return {...board,methods:{...board.methods,post:(...args)=>({args}),get_screen_hints:(owner,deposit)=>({simulate:async()=>{
+ f.input.sdk.Contract.at=(...args)=>{const board=original(...args);return {...board,methods:{...board.methods,get_deposit_info:(owner,deposit)=>({simulate:async()=>({result:[1n,BigInt(deposit.toString()),100n,BigInt(eth(33)),0n,0n,0n,0n,0n,100n,56n]})}),post:(...args)=>({args}),get_screen_hints:(owner,deposit)=>({simulate:async()=>{
   seen.push(BigInt(deposit.toString()));return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
  }})}};};
  const publicRead=f.node.getPublicStorageAt;f.node.getPublicStorageAt=async(reference,address,slot)=>slot.equals(artifact.storageLayout.main_version.slot)?Fr.ONE:publicRead(reference,address,slot);

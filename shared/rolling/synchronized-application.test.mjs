@@ -328,3 +328,29 @@ test('snapshot ancestry belongs only to an owned immediate Like or Unlike prepar
   assert.equal(seen.length,1);assert.equal(seen[0].snapshotAncestry,owned&&immediate&&['like','unlike'].includes(type)?true:undefined);
  }
 });
+
+
+for(const type of ['post','reply','quote','repost','bok'])for(const name of ['0','5'])for(const waits of [0,2])test(`posting readiness preserves fast sync and exact ${type} name=${name}, waits=${waits}`,async()=>{
+ const scope={synchronized:false,preparationReads:[]},events=[],syncOptions=[],action={type,name,deposit:'9',subboard:'0',content:'Exact draft',budget:'100000',parent:'10',root:'1'};let checks=0,discoveries=0,prepares=0;
+ const raw=Object.fromEntries(names.map(method=>[method,async(...args)=>{if(method==='prepare'){assert.deepEqual(args[0],action);prepares++;events.push('prepare');return {intentId:'one',action:args[0]};}if(method==='submitPrepared'){events.push('send');return {status:'confirmed'};}}]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:async options=>{syncOptions.push(options);events.push('sync');},prepareContext:async()=>{},preparePredecessorAnchor:async()=>{},prepareContractState:async({method})=>{assert.equal(method,'post');discoveries++;events.push('discovery');},beforePostingPrepare:async exact=>{
+  assert.deepEqual(exact,action);assert.equal(prepares,0);assert.equal(scope.synchronized,true);events.push('check');
+  if(type!=='bok')assert.equal(discoveries,checks+1);
+  if(checks++<waits){scope.synchronized=false;events.push('chain-advanced');return false;}return true;
+ }});
+ const prepared=await app.prepare(action,{immediate:true});events.push('onPrepared');await app.submitPrepared(prepared.intentId);
+ assert.equal(checks,waits+1);assert.equal(syncOptions.length,waits+1);assert.equal(discoveries,type==='bok'?0:waits+1);assert.equal(prepares,1);
+ for(const options of syncOptions){assert.equal(options.ordinaryPost,type!=='bok');assert.equal(options.ordinaryPolicy,type!=='bok');}
+ assert.deepEqual(events.slice(-3),['prepare','onPrepared','send']);
+});
+for(const reason of ['account changed','aborted','read failed'])test('posting readiness '+reason+' prevents intent creation and submit',async()=>{
+ const scope={synchronized:false};let calls=0;const failure=Error(reason);
+ const raw=Object.fromEntries(names.map(name=>[name,async()=>{calls++;}]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:async()=>{},prepareContractState:async()=>{},beforePostingPrepare:async()=>{throw failure;}});
+ await assert.rejects(app.prepare({type:'post',deposit:'9'},{immediate:true}),error=>error===failure);assert.equal(calls,0);assert.equal(scope.contractStateReady,undefined);
+});
+test('posting readiness cannot request a fresh pass without invalidating its held anchor',async()=>{
+ const scope={synchronized:false};let calls=0;const raw=Object.fromEntries(names.map(name=>[name,async()=>{calls++;}]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:async()=>{},prepareContractState:async()=>{},beforePostingPrepare:async()=>false});
+ await assert.rejects(app.prepare({type:'post',deposit:'9'},{immediate:true}),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(calls,0);
+});

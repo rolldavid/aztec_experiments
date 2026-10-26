@@ -3585,3 +3585,16 @@ for(const installFirst of [false,true])test(`Bok recovery wave historical claim 
  const application={readFundingState:async()=>{await entered.promise;if(!installFirst)gate.resolve();const result=await app.readFundingState();if(installFirst)gate.resolve();return result;},prepare:async()=>{assert.equal(installed,true);assert.equal(custodyReads,0);throw stop;}};
  await assert.rejects(advanceAggregateClaim({application,funding,contextGuard:f.options.contextGuard}),error=>error===stop);assert.equal(custodyReads,0);assert.equal(f.state.sends,1);
 });
+
+
+test('posting readiness uses selected native timestamp independently of exit screening',async()=>{
+ for(const [time,ready]of [[99n,true],[100n,true],[101n,false]]){
+  const f=collateralFixture();f.state.responses={get_deposit_info:[1n,9n,100n,BigInt('0x'+'33'.repeat(20)),0n,1n,0n,0n,1n,time,56n]};
+  const result=await f.app.readPostingReadiness('9');assert.equal(result.ready,ready);assert.equal(result.nextAllowedTime,String(time));assert.equal(result.anchor.timestamp,'100');
+  assert.deepEqual(f.state.privateReads.map(r=>r.name),['get_deposit_info']);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+ }
+});
+test('posting readiness rejects a noncanonical anchor without preparing an intent',async()=>{
+ const f=collateralFixture();f.options.accountSession.node.getBlockData=async()=>({header:{globalVariables:{blockNumber:1}},blockHash:hex(99)});
+ await assert.rejects(f.app.readPostingReadiness('9'),{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
