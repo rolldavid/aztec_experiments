@@ -11,7 +11,7 @@ Browser access restored through the existing in-app browser without changing per
 | Like → included visible count increase, run2 | 14.134775 | 14.691035 | −3.94%; target missed |
 | $1 ETH→Bok Pay → included claim and usable7USDC | 165.094005 | 55.345905 | 66.48% observed wall |
 
-Fresh signup payment readiness is NOT established by funded reopening. The first fresh-account attempt rejected insufficient fixture ETH and has no successful ready endpoint. The fixture is being replenished using its existing free test faucet/exchange helper. No ready timing is inferred from the failure.
+Fresh signup payment readiness is NOT established by funded reopening. The first fresh-account attempt rejected insufficient fixture ETH and has no successful ready endpoint. The existing free test faucet/exchange helper replenished the fixture to0.000313693882484933ETH, still below the actual0.001ETH minimum deposit. Documented old fixtures were also below the requirement; further FEE swaps cannot cover it because the pool is nearly depleted. No deposit or balance check was bypassed. No ready timing is inferred from the failure.
 
 Name baseline registered the first name; this fixture registered its third (River Cedar). The bio baseline payload was not retained and its endpoint was approximate. The historical Bok baseline includes unmeasured wallet/tool dwell; the current three provider calls total1.252s. These are observed comparisons, not controlled distributions or guarantees.
 
@@ -28,3 +28,5 @@ Bok proposed receipt arrived50.165840s after Pay; usable credit took another5.18
 ## Evidence
 
 Adjacent *e291*.json files contain browser traces and UI observer timings. Files accumulate earlier spans: scope each transaction to flow.start. Native proposed receipts establish Aztec inclusion, not checkpoint settlement. Cached startup assets were reused; cold SRS download was excluded as instructed. The private key remained in the local signer, never in the webpage or evidence. Agent pending_feed_release independently reconciled timings, endpoints, overlap and baseline caveats. Read-only agents warm_trace_analysis and like_trace_analysis traced measured costs to source; no patches have been integrated from these investigations.
+
+Read-only source follow-up: fixed HTTP ethers provider network detection repeats explicit funding-flow chain checks; predecessor header lookup queues behind discovery; result delivery uses uncompressed base64 SSE. These are investigated candidates, not published changes or measured savings. Native proving itself was2.096s in Like2; the4.654s remote-proof span must not be described entirely as computation.

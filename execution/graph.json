@@ -9846,7 +9846,7 @@
     "status": "active",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
     "checkpoint": "Browser restored; e291 real warm funded opening2.255125s/1.914850s, name20.912730s, bio18.548505s, Like visible14.691035s, ETH\u2192usableBok55.345905s. Name/bio/Bok exceed50% observed reduction with recorded fixture/dwell caveats; Like misses. Freshsignup2s notverified: testETHbelow0.001minimumdeposit; fixture refill underway. No appsourcechanges.",
-    "next_action": "Continue live browser measurement on e291: profile bio, repeated like with document-level observer, ETH-to-Bok, fresh warm signup quote. Investigate only measured regressions. Keep cached assets and one tab.",
+    "next_action": "Measure and fix supported warm/like bottlenecks from e291 traces. Name/bio/Bok observed reductions exceed50%; Like visible14.691s misses7.067s. Freshsignup2s still unqualified because retainedtestfixtureETH0.000313694 is belowactual0.001minimum; documentedoldfixtures insufficient and FEE/WETHpoolnearlydepleted. No browserpermissionblocker. Needfundedtestfixture forfreshsignup; continue independent measured optimization.",
     "account_opening_target": {
       "maximum_seconds": 2,
       "start": "Wallet selection click",
