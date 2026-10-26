@@ -50,7 +50,32 @@ for(const defect of ['wrongChain','wrongCode','upgrade','revert','expensive','un
  const f=await fixture(t,{[defect]:true});await assert.rejects(f.relay.submit(f.input),/Funding relay unavailable/);assert.equal(f.state.sends,0);assert.equal(f.state.signs,0);assert.equal(JSON.parse(await fs.readFile(path.join(f.directory,'funding-budget.json'),'utf8')).reservedGasWei,'0');
 });
 test('cumulative conservative gas budget remains consumed even after successful reimbursement',async t=>{
- const f=await fixture(t,{budget:'1000'});assert.equal(f.relay.terms().feeUsdc,'500');await f.relay.submit(f.input);assert.throws(()=>f.relay.terms());const next={data:abi.encodeFunctionData('fundUsdc',[{...f.plan,authorizationSalt:h(88)},'0x01','0x02'])};await assert.rejects(f.relay.submit(next));assert.equal(f.state.sends,1);
+ const f=await fixture(t,{budget:'1000'});assert.equal((await f.relay.terms()).feeUsdc,'500');await f.relay.submit(f.input);await assert.rejects(f.relay.terms());const next={data:abi.encodeFunctionData('fundUsdc',[{...f.plan,authorizationSalt:h(88)},'0x01','0x02'])};await assert.rejects(f.relay.submit(next));assert.equal(f.state.sends,1);
+});
+for(const admission of ['terms','submit'])test(`a mined predecessor releases ${admission} without a client status call`,async t=>{
+ const f=await fixture(t,{unknown:true});await f.relay.submit(f.input);
+ await assert.rejects(f.relay.terms());assert.equal(f.state.signs,1);
+ f.state.canonical=true;
+ if(admission==='terms'){
+  assert.equal((await f.relay.terms()).feeUsdc,'500');assert.equal(f.state.signs,1);assert.equal(f.state.sends,1);
+  const ledger=JSON.parse(await fs.readFile(path.join(f.directory,'funding-budget.json'),'utf8'));
+  assert.equal(ledger.activePlan,null);assert.equal(ledger.reservedGasWei,'1000');
+ }else{
+  const next={data:abi.encodeFunctionData('fundUsdc',[{...f.plan,authorizationSalt:h(88)},'0x01','0x02'])};
+  assert.equal((await f.relay.submit(next)).canonical,true);assert.equal(f.state.sends,2);assert.equal(f.state.signs,2);
+ }
+});
+test('quote reconciliation retains a malformed canonical payment fence',async t=>{
+ const f=await fixture(t,{unknown:true});await f.relay.submit(f.input);f.state.canonical=true;f.state.receipt.logs.pop();
+ await assert.rejects(f.relay.terms());assert.equal(f.state.sends,1);assert.equal(f.state.signs,1);
+ assert.notEqual(JSON.parse(await fs.readFile(path.join(f.directory,'funding-budget.json'),'utf8')).activePlan,null);
+});
+test('quote reconciliation and submission cannot concurrently own the signer',async t=>{
+ const f=await fixture(t,{unknown:true});await f.relay.submit(f.input);f.state.canonical=true;
+ const original=f.provider.getTransactionReceipt;let entered,release;const ready=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
+ f.provider.getTransactionReceipt=async hash=>{entered();await gate;return original(hash);};
+ const terms=f.relay.terms();await ready;await assert.rejects(f.relay.submit(f.input));release();await terms;
+ assert.equal(f.state.sends,1);assert.equal(f.state.signs,1);
 });
 test('HTTP data cannot replace signer, change network, select a destination or call arbitrary methods',async t=>{
  const f=await fixture(t);for(const input of [{...f.input,to:a(99)},{data:'0x1234'},{data:abi.encodeFunctionData('fundUsdc',[{...f.plan,relayer:a(99)},'0x01','0x02'])},{data:abi.encodeFunctionData('fundUsdc',[{...f.plan,relayFeeUsdc:'1'},'0x01','0x02'])}])await assert.rejects(f.relay.submit(input));assert.equal(f.state.calls,0);assert.equal(f.state.sends,0);
@@ -73,7 +98,7 @@ for(const defect of ['writable','symlink'])test(`private relay directory rejects
 test('durable gas reservation without a plan file remains unresolved after restart',async t=>{
  const f=await fixture(t);await f.relay.close();const file=path.join(f.directory,'funding-budget.json'),budget=JSON.parse(await fs.readFile(file,'utf8'));
  await fs.writeFile(file,JSON.stringify({...budget,activePlan:h(90),reservedGasWei:'1000'}));const reopened=await f.open();
- assert.equal((await reopened.status(h(90))).status,'unresolved');assert.equal((await reopened.status(h(91))).status,'absent');await assert.rejects(reopened.submit(f.input));assert.equal(f.state.sends,0);await reopened.close();
+ await assert.rejects(reopened.terms());assert.equal((await reopened.status(h(90))).status,'unresolved');assert.equal((await reopened.status(h(91))).status,'absent');await assert.rejects(reopened.submit(f.input));assert.equal(f.state.sends,0);await reopened.close();
 });
 
 // Development composition uses the same real relay factory above; these checks

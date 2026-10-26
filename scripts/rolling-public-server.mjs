@@ -106,7 +106,7 @@ export async function startRollingPublicServer({index,host='127.0.0.1',port=0,st
         if(++fundingRequests>60)return reply(429,{schemaVersion:1,error:'unavailable'});
         if(req.headers['sec-fetch-site']&&!['same-origin','none'].includes(req.headers['sec-fetch-site']))return invalid();
         if(req.method==='GET'&&!req.headers['transfer-encoding']&&(!req.headers['content-length']||req.headers['content-length']==='0')){
-          if(url.pathname==='/api/funding/usdc/terms'&&!url.search)return reply(200,fundingRelay.terms());
+          if(url.pathname==='/api/funding/usdc/terms'&&!url.search)return reply(200,await fundingRelay.terms());
           const params=[...url.searchParams];
           if(url.pathname==='/api/funding/usdc/status'&&params.length===1&&params[0][0]==='planHash'&&/^0x[0-9a-f]{64}$/.test(params[0][1]))return reply(200,await fundingRelay.status(params[0][1]));
           return invalid();

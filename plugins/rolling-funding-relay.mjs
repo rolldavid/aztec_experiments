@@ -50,6 +50,17 @@ export async function createRollingFundingRelay({config,directory,provider,signe
   if(result.canonical&&ledger.read().activePlan===record.identity)await ledger.write({...ledger.read(),activePlan:null});
   return {...result,planHash:record.identity};
  }
+ // Called only inside owned(): canonical observation can release the existing
+ // predecessor fence, but never signs, broadcasts or refunds reserved budget.
+ async function reconcilePredecessor(){
+  const hash=ledger.read().activePlan;
+  if(hash===null)return;
+  check(hex(hash));
+  const store=await readStore(hash),record=store?.read().operations?.['relay-funding'];
+  check(record?.identity===hash);
+  await reconcile(record);
+  check(ledger.read().activePlan===null);
+ }
  async function preflight(intent,plan){
   check((await provider.getNetwork()).chainId===BigInt(c.chainId));
   const block=await provider.getBlock('latest');check(block&&Number.isSafeInteger(block.number)&&Number.isSafeInteger(block.timestamp)&&BigInt(block.timestamp)>plan.validAfter&&BigInt(block.timestamp)+30n<plan.deadline);
@@ -71,11 +82,12 @@ export async function createRollingFundingRelay({config,directory,provider,signe
  }
  async function owned(fn){check(!closed&&!busy);busy=true;active=(async()=>{await lease.assertHeld();return fn();})();try{return await active;}catch{throw rejected();}finally{busy=false;}}
  return Object.freeze({
-  terms:()=>{check(!closed&&ledger.read().activePlan===null&&BigInt(ledger.read().reservedGasWei)+BigInt(c.maxGasWei)<=BigInt(c.totalGasBudgetWei));return {relayer:c.relayer,feeUsdc:c.feeUsdc,gasBudgetWei:c.maxGasWei};},
+  terms:()=>owned(async()=>{await reconcilePredecessor();check(BigInt(ledger.read().reservedGasWei)+BigInt(c.maxGasWei)<=BigInt(c.totalGasBudgetWei));return {relayer:c.relayer,feeUsdc:c.feeUsdc,gasBudgetWei:c.maxGasWei};}),
   submit:input=>owned(async()=>{
    const {data}=capture(input,['data']),{intent,plan,planHash}=intentFromData(data);
    const old=await readStore(planHash);if(old){const record=old.read().operations?.['relay-funding'];check(record?.identity===planHash);return reconcile(record);}
    // An unresolved predecessor blocks every new plan, including after restart.
+   await reconcilePredecessor();
    check(ledger.read().activePlan===null&&BigInt(ledger.read().reservedGasWei)+BigInt(c.maxGasWei)<=BigInt(c.totalGasBudgetWei));
    const transaction=await preflight(intent,plan);await lease.assertHeld();
    await ledger.write({...ledger.read(),activePlan:planHash,reservedGasWei:String(BigInt(ledger.read().reservedGasWei)+BigInt(c.maxGasWei))});

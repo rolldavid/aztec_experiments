@@ -217,10 +217,10 @@ test('close rejects pipelined request admission while draining the already admit
 });
 
 test('optional funding endpoint is exact, bounded and independent of public index readiness',async t=>{
- const calls=[],relay={terms:()=>({relayer:'0x'+'11'.repeat(20),feeUsdc:'50',gasBudgetWei:'1000'}),submit:async body=>{calls.push(body);return {status:'unresolved',canonical:false,planHash:'0x'+'22'.repeat(32)};},status:async hash=>({status:'absent',canonical:false,planHash:hash}),close:async()=>calls.push('closed')};
+ const calls=[],relay={terms:async()=>({relayer:'0x'+'11'.repeat(20),feeUsdc:'50',gasBudgetWei:'1000'}),submit:async body=>{calls.push(body);return {status:'unresolved',canonical:false,planHash:'0x'+'22'.repeat(32)};},status:async hash=>({status:'absent',canonical:false,planHash:hash}),close:async()=>calls.push('closed')};
  const index={sync:async()=>{},status:()=>({state:'unavailable'}),query:()=>{throw Error('not-ready');}};
  const server=await startRollingPublicServer({index,fundingRelay:relay,pollMs:30000});t.after(()=>server.close());
- assert.equal((await fetch(server.url+'/api/funding/usdc/terms')).status,200);
+ const termsResponse=await fetch(server.url+'/api/funding/usdc/terms');assert.equal(termsResponse.status,200);assert.deepEqual(await termsResponse.json(),await relay.terms());
  const send=(route,body,headers={'content-type':'application/json'})=>fetch(server.url+route,{method:'POST',headers,body});
  const r=await send('/api/funding/usdc',JSON.stringify({data:'0x1234'}));assert.equal(r.status,200);assert.equal(r.headers.get('access-control-allow-origin'),null);assert.deepEqual(calls,[{data:'0x1234'}]);
  for(const [route,body,headers] of [['/api/funding/usdc?retry=true','{}'],['/api/funding/usdc','bad'],['/api/funding/usdc','{}',{'content-type':'text/plain'}],['/api/funding/usdc','{}',{'content-type':'application/json','sec-fetch-site':'cross-site'}],['/api/funding/usdc','x'.repeat(32769)]])assert.equal((await send(route,body,headers)).status,400);
