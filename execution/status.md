@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — e291136f live/pushed. Removed repeated post-topup account scan; independent Bok receipt/workflow reads and fresh ETH qualification/nonce overlap. Independent review,186 UI+270 aggregate+743 application checks, installed SDK check and wallet build pass. Exact public worker/panel verified. No restart; owned draft/upload/obsolete packet cleanup complete. No new browser timing; warm2s and all-flow50% unproven.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Browser restored; e291 real warm funded opening2.255125s/1.914850s, name20.912730s, bio18.548505s, Like visible14.691035s, ETH→usableBok55.345905s. Name/bio/Bok exceed50% observed reduction with recorded fixture/dwell caveats; Like misses. Freshsignup2s notverified: testETHbelow0.001minimumdeposit; fixture refill underway. No appsourcechanges.
 
 ## Ready internal work
 

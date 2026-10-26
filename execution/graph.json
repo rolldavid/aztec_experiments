@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "e291136f live/pushed. Removed repeated post-topup account scan; independent Bok receipt/workflow reads and fresh ETH qualification/nonce overlap. Independent review,186 UI+270 aggregate+743 application checks, installed SDK check and wallet build pass. Exact public worker/panel verified. No restart; owned draft/upload/obsolete packet cleanup complete. No new browser timing; warm2s and all-flow50% unproven.",
+      "checkpoint": "Browser restored; e291 real warm funded opening2.255125s/1.914850s, name20.912730s, bio18.548505s, Like visible14.691035s, ETH\u2192usableBok55.345905s. Name/bio/Bok exceed50% observed reduction with recorded fixture/dwell caveats; Like misses. Freshsignup2s notverified: testETHbelow0.001minimumdeposit; fixture refill underway. No appsourcechanges.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
@@ -9845,8 +9845,8 @@
     "request": "Owner25October: apply all proven posting optimizations across ALL other application transaction flows; new goal at least50% end-to-end reduction for every flow against currentpublished74c baseline. Cover Ethereum/Aztec user and operator paths, preservevalidation and genuine usable completion.",
     "status": "active",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
-    "checkpoint": "e291136f live/pushed. Removed repeated post-topup account scan; independent Bok receipt/workflow reads and fresh ETH qualification/nonce overlap. Independent review,186 UI+270 aggregate+743 application checks, installed SDK check and wallet build pass. Exact public worker/panel verified. No restart; owned draft/upload/obsolete packet cleanup complete. No new browser timing; warm2s and all-flow50% unproven.",
-    "next_action": "Actual warm/full-flow measurement is blocked: CUA denied existing IAB access in at least3 consecutive goal turns (e8,eda,e291 work). Current source-backed audit changes are published; further performance decisions require runtime evidence. Resume existing one-tab measurement when tool access works; no permission bypass or speculative timing claim.",
+    "checkpoint": "Browser restored; e291 real warm funded opening2.255125s/1.914850s, name20.912730s, bio18.548505s, Like visible14.691035s, ETH\u2192usableBok55.345905s. Name/bio/Bok exceed50% observed reduction with recorded fixture/dwell caveats; Like misses. Freshsignup2s notverified: testETHbelow0.001minimumdeposit; fixture refill underway. No appsourcechanges.",
+    "next_action": "Continue live browser measurement on e291: profile bio, repeated like with document-level observer, ETH-to-Bok, fresh warm signup quote. Investigate only measured regressions. Keep cached assets and one tab.",
     "account_opening_target": {
       "maximum_seconds": 2,
       "start": "Wallet selection click",
@@ -9854,13 +9854,6 @@
       "wallet_approval": "Report total wall time and human wallet approval dwell separately; never hide application work in approval time.",
       "coverage": "Fresh account, returning account, warm page and cold page; report page startup separately and immediate-click results.",
       "requirement": "Remove private engine startup, private synchronization, constructor simulation and private balance discovery from funding quote dependencies. No placeholder payment readiness or costs moved blindly after Pay."
-    },
-    "measurement_blocker": {
-      "condition": "Local browser use is disabled in Work settings",
-      "consecutive_goal_turns_at_least": 3,
-      "last_attempt": "Existing app IAB getTab, before navigation,26October2026",
-      "unblock": "Browser tool can access existing application tab",
-      "remaining": "Warm2second target and per-flow50percent end-to-end verification including absent baselines"
     }
   },
   "completed_operating_requests": [
