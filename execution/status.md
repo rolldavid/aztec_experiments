@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Browser restored; e291 real warm funded opening2.255125s/1.914850s, name20.912730s, bio18.548505s, Like visible14.691035s, ETH→usableBok55.345905s. Name/bio/Bok exceed50% observed reduction with recorded fixture/dwell caveats; Like misses. Freshsignup2s notverified: testETHbelow0.001minimumdeposit; fixture refill underway. No appsourcechanges.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 636d0a58 published/pushed UI+prover. Real warm funded opening2.712740s/2.255880s and Likes19.399400s/15.196415s miss targets. Proofresponse149KB→25KB; predecessor0.609/0.470s. Uploadbrowserarrival variable1.54–7.05s vs samehostcurl0.83–0.92s, serverloopidle dominates. FEEtopup minedrevert with205630gas; identicalcall succeeds411260; adapterinterrupted so no qualifiedtiming. Targets remainopen.
 
 ## Ready internal work
 

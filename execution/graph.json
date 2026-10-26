@@ -9402,12 +9402,13 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Browser restored; e291 real warm funded opening2.255125s/1.914850s, name20.912730s, bio18.548505s, Like visible14.691035s, ETH\u2192usableBok55.345905s. Name/bio/Bok exceed50% observed reduction with recorded fixture/dwell caveats; Like misses. Freshsignup2s notverified: testETHbelow0.001minimumdeposit; fixture refill underway. No appsourcechanges.",
+      "checkpoint": "636d0a58 published/pushed UI+prover. Real warm funded opening2.712740s/2.255880s and Likes19.399400s/15.196415s miss targets. Proofresponse149KB\u219225KB; predecessor0.609/0.470s. Uploadbrowserarrival variable1.54\u20137.05s vs samehostcurl0.83\u20130.92s, serverloopidle dominates. FEEtopup minedrevert with205630gas; identicalcall succeeds411260; adapterinterrupted so no qualifiedtiming. Targets remainopen.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
       "verification_method": "Native claim/cancel exclusion, Solidity custody/refund proofs, client and browser checks, coherent artifact verification, independent review, then fresh testnet signup and publication.",
-      "priority": 0
+      "priority": 0,
+      "next_action": "Diagnose wallet-adapter gas fidelity against minedfaileddeposit before any application gas change; repair measurement callback persistence. Capture bounded warm observer at ready and isolate browser upload arrival with current server counters; continue actual other-flow50% comparisons. Do not skip native discovery or claim freshsignup2s fromfunded reopening."
     }
   ],
   "specification": {

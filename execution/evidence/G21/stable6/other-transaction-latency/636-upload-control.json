@@ -1,0 +1,1 @@
+{"status": 400, "durationMs": 886.7029170505702, "serverTiming": "body;dur=251.583,body-first;dur=0.161,body-gap;dur=72.269,body-chunks;desc=\"46\",body-bytes;desc=\"113399\",body-loop-active;dur=1.530,body-loop-idle;dur=250.012,body-32k;dur=92.353,body-64k;dur=146.256", "bytes": 113399, "kind": "rejected-envelope-no-proof-job", "transport": "python-https"}
