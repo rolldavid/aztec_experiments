@@ -71,6 +71,59 @@ function validated(input) {
   field(input.owner);requireThat(typeof input.contextGuard==='function','INVALID');
   return frozen({kind,scope,receipt,anchor,owner:input.owner});
 }
+async function bokClaimContent(scope,owner,amount,recipientSalt){
+  const recipient=(await poseidon2HashWithSeparator([new Fr(BigInt(scope.chainId)),new Fr(BigInt(scope.portal)),Fr.fromString(scope.recipient),new Fr(BigInt(scope.version)),Fr.fromString(owner),Fr.fromString(recipientSalt)],0x424b4301)).toString();
+  const content=await sha256Field(getBytes(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32','uint256','bytes32','uint128'],[encodeBytes32String('PLUGIN_CREDIT_V1'),scope.chainId,scope.portal,scope.recipient,scope.version,recipient,amount])));
+  return {recipient,content};
+}
+async function checkClaimAnchor(read,getBlockData,anchor){
+  const block=await read(()=>getBlockData(anchor.number));
+  requireThat(block && equal(block.blockHash,anchor.hash) && block.header?.globalVariables?.blockNumber===anchor.number && equal(block.header?.state?.l1ToL2MessageTree?.root,anchor.root),'REORG');
+}
+async function claimMembership(read,membershipRead,checkL2,anchor,receipt){
+  const messageKey=Fr.fromString(receipt.messageKey);
+  const [,witness]=await together([checkL2,()=>read(()=>membershipRead({number:anchor.number,hash:BlockHash.fromString(anchor.hash)},messageKey))]);
+  if(!witness)return false;
+  requireThat(Array.isArray(witness) && witness.length===2 && witness[0]===BigInt(receipt.leafIndex) && witness[1].pathSize===L1_TO_L2_MSG_TREE_HEIGHT);
+  const path=witness[1].toFields();requireThat(Array.isArray(path) && path.length===L1_TO_L2_MSG_TREE_HEIGHT);
+  let root=messageKey,index=witness[0];
+  for(const sibling of path){root=await poseidon2HashWithSeparator(index&1n?[sibling,root]:[root,sibling],DomainSeparator.MERKLE_HASH);index>>=1n;}
+  requireThat(index===0n && root.toString()===anchor.root);
+  return true;
+}
+/** Native Bok message preparation, not an Ethereum payment-status assertion.
+ * The owned continuation supplies locally bound custody after verifying payment.
+ * Native immutable contract state, constrained message membership and its replay
+ * nullifier authorize credit. No receipt/code/portal result is reused as authority.
+ * This builder is not exposed by the worker's renderer method allowlist. */
+export async function prepareBokMessageClaim(input){
+  try{
+    const {kind,scope:s,receipt:r,anchor:a,owner}=validated(input);requireThat(kind==='bok','INVALID');
+    const secrets=object(input.secrets,['recipientSalt','bridgeSecret']);Object.values(secrets).forEach(value=>field(value));
+    const node=input.node,guard=input.contextGuard,membershipNode=input.membershipNode??node;
+    requireThat(isTrustedPrivateNode(node),'UNTRUSTED_NODE');
+    const getNodeInfo=node.getNodeInfo.bind(node),getBlockData=node.getBlockData.bind(node),membershipRead=membershipNode.getL1ToL2MessageMembershipWitness.bind(membershipNode);
+    const read=async fn=>{await guard();const value=await fn();await guard();return value;};
+    const measure=input.measure??((_name,fn)=>fn());requireThat(typeof measure==='function','INVALID');
+    const checkL2=()=>checkClaimAnchor(read,getBlockData,a);
+    const effects=async()=>{
+      const {content}=await bokClaimContent(s,owner,r.amount,secrets.recipientSalt);
+      requireThat((await computeSecretHash(Fr.fromString(secrets.bridgeSecret))).toString()===r.secretHash);
+      const message=new L1ToL2Message(new L1Actor(EthAddress.fromString(s.portal),Number(s.chainId)),new L2Actor(new AztecAddress(Fr.fromString(s.recipient)),Number(s.version)),Fr.fromString(content),Fr.fromString(r.secretHash),new Fr(BigInt(r.leafIndex)));
+      requireThat(message.hash().toString()===r.messageKey);
+      return content;
+    };
+    const [info,content,delivered]=await together([
+      ()=>read(getNodeInfo),()=>measure('action.claim-effects',effects),
+      ()=>measure('action.claim-membership',()=>claimMembership(read,membershipRead,checkL2,a,r)),
+    ]);
+    requireThat(String(info.l1ChainId)===s.chainId && String(info.rollupVersion)===s.version && equal(info.l1ContractAddresses?.rollupAddress,s.rollup));
+    await measure('action.claim-final-canonical',checkL2);await read(()=>Promise.resolve());
+    if(!delivered)return frozen({status:'waiting',reason:'l2-delivery'});
+    return frozen({status:'claim-ready',claim:{contract:s.recipient,method:'claim',args:[r.amount,secrets.recipientSalt,secrets.bridgeSecret,r.leafIndex]},evidence:{kind,txHash:r.txHash,l2:{number:a.number,hash:a.hash},messageKey:r.messageKey,leafIndex:r.leafIndex,content}});
+  }catch(error){if(failures.has(error))throw error;throw fail('UNKNOWN');}
+}
+
 /**
  * Read-only claim preparation, NOT a payment, a claim submission or a spendability verdict.
  * Scope/artifacts come from the authenticated deployment. node must be the session's
@@ -173,10 +226,7 @@ export async function prepareFundingClaim(input) {
     requireThat(tx,'UNKNOWN');
     requireThat(equal(tx.hash,r.txHash) && equal(tx.from,r.sender) && String(tx.nonce)===r.nonce && String(tx.chainId)===s.chainId && equal(receipt.from,r.sender) && equal(receipt.to,tx.to));
     if(receipt.status===0){await initialL1();await measure('action.claim-final-canonical',checkL1);return frozen({status:'reverted'});}
-    const checkL2=async()=>{
-      const block=await read(()=>nodeReads.getBlockData(a.number));
-      requireThat(block && equal(block.blockHash,a.hash) && block.header?.globalVariables?.blockNumber===a.number && equal(block.header?.state?.l1ToL2MessageTree?.root,a.root),'REORG');
-    };
+    const checkL2=()=>checkClaimAnchor(read,nodeReads.getBlockData,a);
     if(reusable){
       // No asynchronous work separates two identical L1 checks here. Keep the
       // final canonical wave; exact cached effects/membership need no earlier fence.
@@ -287,7 +337,7 @@ export async function prepareFundingClaim(input) {
         content=await sha256Field(getBytes(feeClaimAbi.encodeFunctionData('claim',[s.recipient,r.amount])));messageRecipient=ProtocolContractAddress.FeeJuice.toString();
         claim={contract:s.recipient,kind:'private-fee-bridge',bridgeClaim:{amount:r.amount,salt:recovered.salt.toString(),leafIndex:r.leafIndex}};
       } else {
-        const recipient=(await poseidon2HashWithSeparator([new Fr(BigInt(s.chainId)),new Fr(BigInt(s.portal)),Fr.fromString(s.recipient),new Fr(BigInt(s.version)),Fr.fromString(owner),Fr.fromString(secrets.recipientSalt)],0x424b4301)).toString();
+        const bokContent=await bokClaimContent(s,owner,r.amount,secrets.recipientSalt),recipient=bokContent.recipient;
         secret=secrets.bridgeSecret;
         // PluginPortal's event omits secretHash; require exact direct calldata too.
         if(aggregate)requireThat(aggregate.commitment===recipient);
@@ -302,7 +352,7 @@ export async function prepareFundingClaim(input) {
         const logs=receipt.logs.filter(log=>equal(log.address,s.portal) && equal(log.topics?.[0],topic));requireThat(logs.length===1);
         const event=bokAbi.parseLog(logs[0]).args;
         requireThat(equal(event.account,recipient) && String(event.amount)===r.amount && equal(event.key,r.messageKey) && String(event.index)===r.leafIndex);
-        content=await sha256Field(getBytes(AbiCoder.defaultAbiCoder().encode(['bytes32','uint256','address','bytes32','uint256','bytes32','uint128'],[encodeBytes32String('PLUGIN_CREDIT_V1'),s.chainId,s.portal,s.recipient,s.version,recipient,r.amount])));
+        content=bokContent.content;
         claim={contract:s.recipient,method:'claim',args:[r.amount,secrets.recipientSalt,secret,r.leafIndex]};
       }
       requireThat((await computeSecretHash(Fr.fromString(secret))).toString()===r.secretHash);
@@ -313,19 +363,7 @@ export async function prepareFundingClaim(input) {
       requireThat(message.hash().toString()===r.messageKey);
       return {claim,canonicalFee,content,message};
     });
-    const membership=()=>measure('action.claim-membership',async()=>{
-      // Read the captured key at the captured native anchor. Effects independently
-      // reconstruct this exact key before the joined result can authorize a claim.
-      const messageKey=Fr.fromString(r.messageKey);
-      const [,witness]=await together([checkL2,()=>read(()=>membershipRead({number:a.number,hash:BlockHash.fromString(a.hash)},messageKey))]);
-      if(!witness)return false;
-      requireThat(Array.isArray(witness) && witness.length===2 && witness[0]===BigInt(r.leafIndex) && witness[1].pathSize===L1_TO_L2_MSG_TREE_HEIGHT);
-      const path=witness[1].toFields();requireThat(Array.isArray(path) && path.length===L1_TO_L2_MSG_TREE_HEIGHT);
-      let root=messageKey,index=witness[0];
-      for(const sibling of path){root=await poseidon2HashWithSeparator(index&1n?[sibling,root]:[root,sibling],DomainSeparator.MERKLE_HASH);index>>=1n;}
-      requireThat(index===0n && root.toString()===a.root);
-      return true;
-    });
+    const membership=()=>measure('action.claim-membership',()=>claimMembership(read,membershipRead,checkL2,a,r));
     // Each branch is read-only and bound to the same captured receipt/anchor.
     // Preserve canonical, binding, effects, then membership failure priority and
     // drain all branches before returning or publishing verified evidence.

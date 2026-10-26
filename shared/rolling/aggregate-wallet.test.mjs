@@ -1371,3 +1371,55 @@ for(const phase of ['approval','deposit','ETH'])test(`standalone ${phase} final 
  await assert.rejects(cap.confirm(),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});
  failScope=false;await cap.prepare(f.allocation);await cap.confirm();assert.equal(f.state.sends,sends+1,'explicitly reviewed replacement can send once');
 });
+
+for(const failed of [null,'qualification','quote'])test('readonly opening joins independent admission and quote, failure='+failed,async()=>{
+ const f=fixture(),qualification=Promise.withResolvers(),quote=Promise.withResolvers(),qualificationEntered=Promise.withResolvers(),quoteEntered=Promise.withResolvers();
+ const originalQuote=f.options.sdk.prepareAggregateFunding,error=Error('held '+failed);
+ f.options.verifyScope=async()=>{qualificationEntered.resolve();await qualification.promise;return async()=>{};};
+ f.options.sdk.prepareAggregateFunding=async(...args)=>{quoteEntered.resolve();await quote.promise;return originalQuote(...args);};
+ const app=await f.open();let done=false;
+ const pending=app.prepareReadOnly(openingAllocation(f)).finally(()=>{done=true;});pending.catch(()=>{});
+ await Promise.all([qualificationEntered.promise,quoteEntered.promise]);
+ assert.equal(f.records.size,0);assert.equal(f.state.signatures,0);assert.equal(f.state.sends,0);
+ if(failed==='qualification')qualification.reject(error);else qualification.resolve();
+ await new Promise(setImmediate);assert.equal(done,false,'held quote must drain before operation release');
+ if(failed==='quote')quote.reject(error);else quote.resolve();
+ if(failed)await assert.rejects(pending,e=>e===error);
+ else{const token=await pending;await app.installPreparedQuote(token);assert.equal(f.records.size,1);}
+ assert.equal(f.state.signatures,0);assert.equal(f.state.sends,0);
+});
+
+for(const asset of ['ETH','token'])test('owned Bok continuation keeps exact local custody through its own checkpoint only: '+asset,async()=>{
+ const f=asset==='ETH'?ethTopupFixture():topupFixture(),cap=await f.open();await runTopupPayment(cap,f.allocation,await cap.prepare(f.allocation));
+ const {receipt}=await cap.recover();assert.equal(await cap.readClaimCustody(receipt),null);let leaked;
+ await cap.withClaimContinuation(async()=>{
+  assert.equal(await cap.readClaimCustody(receipt),null);const paid=await cap.recover();
+  for(const name of ['getNetwork','getTransactionReceipt','getTransaction','getBlock','getCode','call'])f.options.provider[name]=async()=>{throw Error('L1 must not be read for owned custody');};
+  leaked=await cap.readClaimCustody(paid.receipt);assert.equal(leaked.bokScope.recipient,f.scope.recipient);await leaked.checkCurrent();
+  const changed={...paid.receipt,amount:'301'};await assert.rejects(cap.readClaimCustody(changed),{code:'ROLLING_FUNDING_MISMATCH'});
+  await cap.checkpointClaim({intentId:h(777),attempted:false});await leaked.checkCurrent();
+  await cap.checkpointClaim({intentId:h(777),attempted:true});await leaked.checkCurrent();
+  await assert.rejects(cap.withClaimContinuation(async()=>{}),{code:'ROLLING_FUNDING_BUSY'});
+ });
+ assert.equal(await cap.readClaimCustody(receipt),null);await assert.rejects(leaked.checkCurrent(),{code:'ROLLING_FUNDING_MISMATCH'});
+ assert.equal(f.state.sends,asset==='ETH'?1:2);
+});
+for(const failure of ['cursor','owner','failed-payment','throw'])test('owned Bok continuation rejects changed custody or failure: '+failure,async()=>{
+ const f=ethTopupFixture(),cap=await f.open();await runTopupPayment(cap,f.allocation,await cap.prepare(f.allocation));let invalid=false;
+ f.options.contextGuard=async()=>{if(invalid)throw Error('owner replaced');};
+ // Reopen to capture the guard, using the same authenticated slot.
+ const current=await f.open();let receipt,leaked;
+ await assert.rejects(current.withClaimContinuation(async()=>{
+  if(failure==='failed-payment')f.options.provider.getTransactionReceipt=async()=>null;
+  ({receipt}=await current.recover());leaked=await current.readClaimCustody(receipt);
+  if(failure==='cursor'){
+   const entry=[...f.records.entries()].find(([,value])=>value.includes('recovery'));assert(entry);
+   // Changing any slot is insufficient; change the exact active topup record.
+   for(const [key,value]of f.records)f.records.set(key,value+' ');
+  }else if(failure==='owner')invalid=true;
+  else if(failure==='throw')throw Error('owned work failed');
+  await leaked.checkCurrent();
+ }));
+ invalid=false;assert.equal(await current.readClaimCustody(receipt),null);
+ if(leaked)await assert.rejects(leaked.checkCurrent());assert.equal(f.state.sends,1);
+});

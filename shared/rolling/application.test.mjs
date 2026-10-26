@@ -3434,3 +3434,27 @@ for(const failure of ['zero-credit','class','network','native','malformed'])test
  assert.equal(f.state.readinessPreparations.length,1);assert.equal(f.state.readinessPreparations[0].collateralOnly,undefined);
  assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
+
+for(const change of ['none','expired','args','owner','receipt'])test('owned Bok application uses internal custody and retains submission binding: '+change,async()=>{
+ const f=topUpFixture('bok'),original=f.options.sdk.prepareFundingClaim;let active=true,custodyReads=0,nativeReads=0;
+ const checkCurrent=async()=>{if(!active)throw Object.assign(Error('owned custody ended'),{code:'ROLLING_FUNDING_MISMATCH'});};
+ f.options.funding.readBokClaimCustody=async receipt=>{custodyReads++;assert.deepEqual(receipt,f.receipt);await checkCurrent();return {...f.retained,checkCurrent};};
+ f.options.funding.loadAggregate=async()=>{throw Error('duplicate Ethereum custody verification');};
+ f.options.sdk.prepareFundingClaim=async()=>{throw Error('duplicate Ethereum claim verification');};
+ f.options.sdk.prepareBokMessageClaim=async input=>{nativeReads++;await input.contextGuard();return original(input);};
+ const app=f.restart(),prepared=await app.prepare(f.action);assert.equal(nativeReads,1);assert.equal(f.state.sends,0);
+ if(change==='expired')active=false;
+ if(change==='args')f.state.changedClaim=true;
+ if(change==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
+ if(change==='receipt')f.receipt.amount='99';
+ if(change==='none')assert.equal((await app.submitPrepared(prepared.intentId)).status,'confirmed');
+ else await assert.rejects(app.submitPrepared(prepared.intentId));
+ assert.equal(f.state.sends,change==='none'?1:0);assert(custodyReads>=1);
+});
+test('Bok generic preparation cannot select the owned message path through action fields',async()=>{
+ const f=topUpFixture('bok');let reads=0;
+ f.options.funding.readBokClaimCustody=async()=>null;
+ f.options.sdk.prepareBokMessageClaim=async()=>{reads++;throw Error('unowned path');};
+ await assert.rejects(f.restart().prepare({...f.action,verified:true}));assert.equal(reads,0);assert.equal(f.values.size,0);
+ const app=f.restart(),prepared=await app.prepare(f.action);assert.equal((await app.submitPrepared(prepared.intentId)).status,'confirmed');assert.equal(reads,0);
+});

@@ -7,7 +7,7 @@ export {createEncryptedJournalSlot} from './journal-record.mjs';
 export {prepareAggregateFunding, validateAggregateFundingQuote, encodeAggregateFundingTransaction, aggregateFundingTransaction, prepareAggregateUsdcFunding, aggregateUsdcFundingTransaction} from './rolling/aggregate-funding.mjs';
 export {validateAggregateFundingIntent, verifyAggregateFundingEffects} from './rolling/aggregate-recovery.mjs';
 import './browser-runtime-policy.mjs';
-export {prepareFundingClaim} from './rolling/funding-receipts.mjs';
+export {prepareFundingClaim,prepareBokMessageClaim} from './rolling/funding-receipts.mjs';
 
 // Legacy application consumers require the browser Buffer global.
 import { Buffer } from 'node:buffer';

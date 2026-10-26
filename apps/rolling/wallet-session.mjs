@@ -50,7 +50,7 @@ export function createFundingContinuation({application,funding,sdk,node,contextG
    if(active)throw fail('ROLLING_BUSY');
    const run=active={paused:false};
    const fence=async()=>{await contextGuard();if(run.paused)throw fail('ROLLING_FUNDING_PAUSED');};
-   try{return await locked(()=>advanceAggregateClaim({application,funding,contextGuard,onProgress,paused:()=>run.paused,waits:{
+   try{return await locked(()=>{const advance=()=>advanceAggregateClaim({application,funding,contextGuard,onProgress,paused:()=>run.paused,waits:{
     async bridge(receipts){
      const legs=['receipt','feeReceipt','bokReceipt'].filter(key=>receipts[key]).map(key=>receipts[key]);
      await fence();
@@ -60,7 +60,7 @@ export function createFundingContinuation({application,funding,sdk,node,contextG
      // Delivery changes the usable anchor; prepare synchronizes once here.
     },
     async claim(hash){await fence();await sdk.waitForTx(node,sdk.TxHash.fromString(hash),{timeout:0,waitForStatus:confirmationTier,dontThrowOnRevert:true,ignoreDroppedReceiptsFor:0});await fence();invalidateSnapshot();},
-   }}));}finally{active=null;}
+   }});return typeof funding.withClaimContinuation==='function'?funding.withClaimContinuation(advance):advance();});}finally{active=null;}
   },
  });
 }
@@ -538,6 +538,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
     const provider=Object.fromEntries(['getNetwork','getTransactionReceipt','getTransaction','getBlock','getLogs','getCode','call','getTransactionCount','getBlockNumber','estimateGas','getFeeData','waitForTransaction'].map(name=>[name,async(...args)=>{await guardRoute();fundingProvider??=new ethers.JsonRpcProvider(selected.network.ethRpcUrl);const value=await fundingRead(name,args);await guardRoute();return value;}]));
     topups={};for(const kind of ['private-fee',...(selected.bok?['bok']:[])])topups[kind]=await createStandaloneTopupWallet({sdk,ethers,kind,network,board:deployment.board.address.toString(),owner:captured.address,walletSecret:captured.secretKey,walletSalt:captured.salt,storage:privateStore,provider,captureWallet:captureFundingWallet,contextGuard:guardRoute,operationScope:()=>operationScope,topupScope:kind==='bok'?bokTopupScope:undefined,
      resolveScope:async()=>verifyRollingTopupScope({sdk,ethers,node,provider,network,privateFee:deployment.privateFee.address.toString(),bok:kind==='bok'?await ensureBok():undefined,kind,contextGuard:guardRoute}),verifyClaim:txHash=>verifyRollingTopupClaim({sdk,node,txHash,contextGuard:guardRoute,confirmationTier:'proposed'}),reconcileClaim:id=>app.reconcile(id)});
+    if(topups.bok)funding.readBokClaimCustody=receipt=>topups.bok.readClaimCustody(receipt);
     const aggregateLookup=funding.loadAggregate;
     funding.loadAggregate=async(hash,kind)=>{const found=aggregateLookup?await aggregateLookup(hash):null;return found??(kind==='bok'&&topups.bok?await topups.bok.loadAggregate(hash):null);};
    }

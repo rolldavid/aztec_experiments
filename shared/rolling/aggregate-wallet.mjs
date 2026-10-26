@@ -263,7 +263,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const recheckScope=qualification[1].value;check(typeof recheckScope==='function');return recheckScope;
    });
  }
- async function constructEth(values,recheckScope,previous,priorPayment,readOnly=false){
+ async function constructEth(values,previous,priorPayment,readOnly=false){
    // Production capture resolves only after checking the live wallet and chain.
    const wallet=await timeFundingPreparation(onProgress,'wallet',()=>read(captureWallet));
    const depositor=wallet.address;
@@ -282,7 +282,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
     wallet:{address:depositor,chainId:n.chainId,canSendTransaction:true,canSignTypedData:true,gasBudgetWei}},
     {provider:{request:({method,params})=>read(()=>provider.send(method,params))}})));
    await read(wallet.guard);
-   return {values,recheckScope,previous,wallet,depositor,existing,nonce,recipientSalt,bridgeSecret,bokScope,privateFeeCap,quote};
+   return {values,previous,wallet,depositor,existing,nonce,recipientSalt,bridgeSecret,bokScope,privateFeeCap,quote};
  }
  async function installEth(candidate){
    const {values,recheckScope,previous,wallet,depositor,existing,nonce,recipientSalt,bridgeSecret,bokScope,privateFeeCap,quote}=candidate;
@@ -298,15 +298,22 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const recheckScope=await qualify(values);
    if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
    const {previous,priorPayment}=await timeFundingPreparation(onProgress,'journal',async()=>{const previous=await stored();return {previous,priorPayment:await archivePrevious(previous)};});
-   return installEth(await constructEth(values,recheckScope,previous,priorPayment));
+   return installEth({...await constructEth(values,previous,priorPayment),recheckScope});
   },
   // Internal opening capability, never a renderer quote or payment authority.
   // Sent or uncertain custody takes the ordinary post-status preparation path.
   async prepareReadOnly(allocation){
    const values=clone(allocation);check(values.asset==='ETH'&&values.bokAmount==='0','INVALID');
    const previous=await stored();if(!unsignedQuote(previous.value))return null;
-   const recheckScope=await qualify(values);
-   const candidate=await constructEth(values,recheckScope,previous,null,true);
+   // Quote construction only reads public Ethereum data. Its nonce and swap
+   // reads do not depend on fee/scope admission; join both before issuing the
+   // local token. Neither branch writes custody or requests a signature.
+   const results=await Promise.allSettled([
+    ()=>qualify(values),()=>constructEth(values,previous,null,true),
+   ].map(read=>Promise.resolve().then(read)));
+   const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+   await contextGuard();
+   const candidate={...results[1].value,recheckScope:results[0].value};
    const token=Object.freeze({});readOnlyQuotes.set(token,candidate);return token;
   },
   async installPreparedQuote(token){
@@ -510,8 +517,8 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
     }else{
      // Recovered receipts already identify the exact incoming messages. Wait
      // for their native tree readiness before the expensive full preparation.
-     // This is only scheduling: preparation still verifies canonical receipt,
-     // message membership and root at its freshly synchronized anchor below.
+     // This is only scheduling: preparation still verifies native message
+     // membership and root at a fresh anchor. Generic paths also recheck L1.
      if(waits?.bridge)await read('prepare',()=>waits.bridge(receipts),'bridge');
      try{next=await read('prepare',()=>application.prepare({type:claimAction,...receipts},{immediate:true}));}
      catch(error){
@@ -550,7 +557,7 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
 /** Direct token top-ups compose the original Ethereum journal and private claim
  * workflow. They never touch posting collateral or create a public L2 account. */
 export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board,owner,walletSecret,walletSalt,storage,provider,captureWallet,contextGuard,resolveScope,reconcileClaim,verifyClaim,swapScope,topupScope,operationScope}){
- check(['private-fee','bok'].includes(kind));const n=freeze(clone(network));topupScope=topupScope===undefined?undefined:freeze(clone(topupScope));let captured,prepared;
+ check(['private-fee','bok'].includes(kind));const n=freeze(clone(network));topupScope=topupScope===undefined?undefined:freeze(clone(topupScope));let captured,prepared,claimContinuation;
  const read=async fn=>{await contextGuard();const value=await fn();await contextGuard();return value;};
  const together=async tasks=>{const results=await Promise.allSettled(tasks.map(task=>Promise.resolve().then(task)));const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;return results.map(result=>result.value);};
  const tokenAbi=new ethers.Interface(['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','function approve(address,uint256) returns(bool)']);
@@ -680,8 +687,34 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    return receiptResult(currentSaved.value,await verifiedResult(currentSaved.value,result));
   },
   async inspect(){const {saved}=await stored();return saved.value?freeze({paymentSaved:!!saved.value.intent,completed:!!saved.value.confirmedClaim,amount:saved.value.amount,asset:saved.value.asset??'USDC',privateFeeCap:saved.value.privateFeeCap,claim:clone(saved.value.claim),claimAction:kind==='bok'?'claim-bok':'claim-private-fee',explicitClaimReview:saved.value.explicitClaimReview===true,phase:saved.value.phase}):null;},
-  async recover({wait=false}={}){const {saved}=await stored();return receiptResult(saved.value,await verified(saved.value,wait));},
-  async checkpointClaim(value){check(value&&Object.keys(value).sort().join()==='attempted,intentId'&&/^0x[0-9a-f]{64}$/.test(value.intentId)&&typeof value.attempted==='boolean');const {store,saved}=await stored();check(saved.value?.phase==='deposit'&&saved.value.intent,'RECOVERY_REQUIRED');if(saved.value.claim)check(saved.value.claim.intentId===value.intentId&&(!saved.value.claim.attempted||value.attempted),'RECOVERY_REQUIRED');await read(()=>store.write(saved,{...saved.value,claim:clone(value)}));},
+  // The session enters this lifetime under its account lease. The verified
+  // payment selects custody; native anchored message consumption authorizes credit.
+  async withClaimContinuation(work){
+   if(kind!=='bok')return work();
+   check(!claimContinuation,'BUSY');const run=claimContinuation={custody:null};
+   try{await contextGuard();return await work();}finally{if(claimContinuation===run)claimContinuation=null;}
+  },
+  async readClaimCustody(receipt){
+   const run=claimContinuation,custody=run?.custody;if(!custody)return null;
+   const checkCurrent=async()=>{
+    await contextGuard();check(claimContinuation===run&&run.custody===custody,'MISMATCH');
+    check(await read(()=>custody.store.isCurrent(custody.saved.encoded)),'MISMATCH');
+    check(claimContinuation===run&&run.custody===custody,'MISMATCH');
+   };
+   await checkCurrent();
+   check(receipt&&Object.keys(receipt).sort().join()===Object.keys(custody.receipt).sort().join()&&Object.keys(custody.receipt).every(key=>receipt[key]===custody.receipt[key]),'MISMATCH');
+   const value=custody.saved.value;
+   return Object.freeze({bokScope:freeze(clone(value.bokScope)),recipientSalt:value.recipientSalt,bridgeSecret:value.bridgeSecret,checkCurrent});
+  },
+  async recover({wait=false}={}){
+   const run=claimContinuation,{store,saved}=await stored(),result=receiptResult(saved.value,await verified(saved.value,wait));
+   if(run&&kind==='bok'&&saved.value.phase==='deposit'){
+    check(claimContinuation===run&&await read(()=>store.isCurrent(saved.encoded)),'MISMATCH');
+    check(claimContinuation===run,'MISMATCH');run.custody={store,saved,receipt:freeze(clone(result.receipt))};
+   }
+   return result;
+  },
+  async checkpointClaim(value){check(value&&Object.keys(value).sort().join()==='attempted,intentId'&&/^0x[0-9a-f]{64}$/.test(value.intentId)&&typeof value.attempted==='boolean');const {store,saved}=await stored();check(saved.value?.phase==='deposit'&&saved.value.intent,'RECOVERY_REQUIRED');if(saved.value.claim)check(saved.value.claim.intentId===value.intentId&&(!saved.value.claim.attempted||value.attempted),'RECOVERY_REQUIRED');const next=await read(()=>store.write(saved,{...saved.value,claim:clone(value)}));if(claimContinuation?.custody?.saved.encoded===saved.encoded)claimContinuation.custody.saved=next;},
   async checkpointSubmission(intentId,receipt){
    const {saved}=await stored();if(saved.value?.claim?.intentId!==intentId)return;
    const original=(await cap.recover()).receipt;check(receipt&&Object.keys(receipt).sort().join()===Object.keys(original).sort().join()&&Object.keys(original).every(key=>receipt[key]===original[key]),'MISMATCH');

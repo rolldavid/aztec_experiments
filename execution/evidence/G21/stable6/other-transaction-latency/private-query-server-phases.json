@@ -1,0 +1,170 @@
+{
+  "schema": 1,
+  "scope": "synthetic-public-tag-query",
+  "results": [
+    {
+      "tagCount": 84,
+      "inspections": [
+        {
+          "durationMs": 7.775973999999906,
+          "calls": [
+            {
+              "method": "getNodeInfo",
+              "startMs": 0.03145999999992455,
+              "durationMs": 4.142743999999993
+            },
+            {
+              "method": "getChainTips",
+              "startMs": 0.06864999999993415,
+              "durationMs": 4.108134000000064
+            },
+            {
+              "method": "getWorldStateSyncStatus",
+              "startMs": 0.07944099999997434,
+              "durationMs": 4.098982999999976
+            },
+            {
+              "method": "getSyncedL1Timestamp",
+              "startMs": 0.08916099999999005,
+              "durationMs": 4.090823
+            },
+            {
+              "method": "getBlockData",
+              "startMs": 4.253063999999995,
+              "durationMs": 3.492469999999912
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "handlerMs": 19.326469999999972,
+      "responseBytes": 287,
+      "success": true,
+      "returnedLogs": 0,
+      "afterAdmissionMs": 11.550496000000066
+    },
+    {
+      "tagCount": 1,
+      "inspections": [
+        {
+          "durationMs": 6.6804180000000315,
+          "calls": [
+            {
+              "method": "getNodeInfo",
+              "startMs": 0.02296000000001186,
+              "durationMs": 3.4291299999999865
+            },
+            {
+              "method": "getChainTips",
+              "startMs": 0.04513999999994667,
+              "durationMs": 3.4082400000000916
+            },
+            {
+              "method": "getWorldStateSyncStatus",
+              "startMs": 0.050190000000043256,
+              "durationMs": 3.4034899999999197
+            },
+            {
+              "method": "getSyncedL1Timestamp",
+              "startMs": 0.0536099999999351,
+              "durationMs": 3.400320000000079
+            },
+            {
+              "method": "getBlockData",
+              "startMs": 3.518640000000005,
+              "durationMs": 3.135618000000022
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "handlerMs": 8.597659000000021,
+      "responseBytes": 38,
+      "success": true,
+      "returnedLogs": 0,
+      "afterAdmissionMs": 1.91724099999999
+    },
+    {
+      "tagCount": 84,
+      "inspections": [
+        {
+          "durationMs": 6.23891500000002,
+          "calls": [
+            {
+              "method": "getNodeInfo",
+              "startMs": 0.027749999999969077,
+              "durationMs": 3.1614080000000513
+            },
+            {
+              "method": "getChainTips",
+              "startMs": 0.04531999999994696,
+              "durationMs": 3.1449380000000247
+            },
+            {
+              "method": "getWorldStateSyncStatus",
+              "startMs": 0.049819999999954234,
+              "durationMs": 3.1410280000000057
+            },
+            {
+              "method": "getSyncedL1Timestamp",
+              "startMs": 0.05286999999998443,
+              "durationMs": 3.138458000000014
+            },
+            {
+              "method": "getBlockData",
+              "startMs": 3.243247999999994,
+              "durationMs": 2.9740769999999657
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "handlerMs": 15.515147999999954,
+      "responseBytes": 287,
+      "success": true,
+      "returnedLogs": 0,
+      "afterAdmissionMs": 9.276232999999934
+    },
+    {
+      "tagCount": 1,
+      "inspections": [
+        {
+          "durationMs": 5.688911999999959,
+          "calls": [
+            {
+              "method": "getNodeInfo",
+              "startMs": 0.02197000000001026,
+              "durationMs": 2.8523759999999356
+            },
+            {
+              "method": "getChainTips",
+              "startMs": 0.05743999999992866,
+              "durationMs": 2.8182259999999815
+            },
+            {
+              "method": "getWorldStateSyncStatus",
+              "startMs": 0.062239999999974316,
+              "durationMs": 2.813765999999987
+            },
+            {
+              "method": "getSyncedL1Timestamp",
+              "startMs": 0.06581999999991694,
+              "durationMs": 2.8104660000000194
+            },
+            {
+              "method": "getBlockData",
+              "startMs": 2.9379359999999224,
+              "durationMs": 2.728876000000014
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "handlerMs": 8.169466000000057,
+      "responseBytes": 38,
+      "success": true,
+      "returnedLogs": 0,
+      "afterAdmissionMs": 2.4805540000000974
+    }
+  ]
+}

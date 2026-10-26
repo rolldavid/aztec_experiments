@@ -166,6 +166,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
   const verifyWithdrawal=typeof funding?.verifyWithdrawal==='function'?funding.verifyWithdrawal.bind(funding):null;
   const resolveBokWithdrawal=typeof funding?.resolveBokWithdrawal==='function'?funding.resolveBokWithdrawal.bind(funding):null;
   const loadAggregate=typeof funding?.loadAggregate==='function'?funding.loadAggregate.bind(funding):null;
+  const readBokClaimCustody=typeof funding?.readBokClaimCustody==='function'?funding.readBokClaimCustody.bind(funding):null;
   const fixed=deployment&&{board:deployment.board.address.toString(),network:clone(deployment.network),portal:deployment.portal,
     fee:deployment.privateFee.address.toString(),gas:JSON.parse(JSON.stringify(deployment.privateFee.gasSettings,(_,v)=>typeof v==='bigint'?v.toString():v)),proofsEnabled:deployment.proofsEnabled!==false};
   let bok=deployment?.bok&&{address:deployment.bok.address.toString(),operator:deployment.bok.operator.toString(),pluginId:field(deployment.bok.pluginId,true)};
@@ -296,6 +297,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     if(shared&&shared.anchor===null)shared.anchor=clone(anchor);
     const sameAggregate=!cancellation&&shared&&same(shared.anchor,anchor)&&shared.txHash===receipt.txHash&&shared.blockHash===receipt.blockHash&&shared.blockNumber===receipt.blockNumber&&shared.sender===receipt.sender&&shared.nonce===receipt.nonce;
     const readAggregate=()=>!cancellation&&loadAggregate?(sameAggregate?shared.read(kind):loadAggregate(receipt.txHash,kind)):null;
+    const ownedBok=kind==='bok'&&readBokClaimCustody?await readBokClaimCustody(receipt):null;await localGuard();
     let aggregate,feeInfo;
     if(kind==='private-fee'){
       // Custody and fee portal metadata are independent reads. Drain both before
@@ -308,7 +310,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
       check(session.node===node,'ROLLING_CONTEXT_CHANGED');
       [aggregate,feeInfo]=values.map(value=>value.value);
-    }else{aggregate=await readAggregate();await localGuard();}
+    }else{aggregate=ownedBok??await readAggregate();await localGuard();}
     let claimScope={...fixed.network,portal:fixed.portal,recipient:fixed.board};
     let secrets=cancellation ? undefined : {walletSecret:session.walletSecret,...(kind==='collateral'?{walletSalt:field(String(session.walletSalt))}:{})};
     if(kind==='bok'){
@@ -326,8 +328,9 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     const operationScope=session.operationScope?.(),held=operationScope?.synchronized===true?operationScope:undefined;
     const claimOwner={wallet:session.wallet,pxe:session.wallet.pxe,node:session.node,secret:session.walletSecret,salt:session.walletSalt,cachedNode:held?session.wallet.pxe.node:undefined};
     if(held)check(sdk.isPrivatePXEForNode(claimOwner.pxe,claimOwner.node)&&typeof claimOwner.cachedNode?.getL1ToL2MessageMembershipWitness==='function','ROLLING_CONTEXT_CHANGED');
-    const claimGuard=async()=>{await localGuard();if(held)check(session.operationScope()===held&&session.wallet===claimOwner.wallet&&session.wallet.pxe===claimOwner.pxe&&session.node===claimOwner.node&&session.walletSecret===claimOwner.secret&&session.walletSalt===claimOwner.salt&&claimOwner.pxe.node===claimOwner.cachedNode&&sdk.isPrivatePXEForNode(claimOwner.pxe,claimOwner.node),'ROLLING_CONTEXT_CHANGED');};
-    const verified=await sdk.prepareFundingClaim({kind,scope:claimScope,receipt,anchor,owner,...(held?{operationScope:held,membershipNode:claimOwner.cachedNode}:{}),...(kind==='bok'&&bokTopupScope?{bokTopupScope}:{}),
+    const claimGuard=async()=>{await localGuard();if(ownedBok)await ownedBok.checkCurrent();if(held)check(session.operationScope()===held&&session.wallet===claimOwner.wallet&&session.wallet.pxe===claimOwner.pxe&&session.node===claimOwner.node&&session.walletSecret===claimOwner.secret&&session.walletSalt===claimOwner.salt&&claimOwner.pxe.node===claimOwner.cachedNode&&sdk.isPrivatePXEForNode(claimOwner.pxe,claimOwner.node),'ROLLING_CONTEXT_CHANGED');};
+    const prepareClaim=ownedBok?sdk.prepareBokMessageClaim:sdk.prepareFundingClaim;check(typeof prepareClaim==='function','ROLLING_FUNDING_UNAVAILABLE');
+    const verified=await prepareClaim({kind,scope:claimScope,receipt,anchor,owner,...(held?{operationScope:held,membershipNode:claimOwner.cachedNode}:{}),...(kind==='bok'&&bokTopupScope?{bokTopupScope}:{}),
       secrets,...(aggregate?{aggregateIntent:aggregate.intent,...(aggregate.aggregateCustody?{aggregateCustody:aggregate.aggregateCustody}:{})}:{}),
       privateFeeArtifact:deployment.privateFee.artifact,ethProvider:fundingProvider,node:session.node,claimStore,contextGuard:claimGuard,measure});
     await guard();if(verified.status!=='claim-ready')throw Object.assign(Error('Funding is not ready to claim.'),{code:'ROLLING_FUNDING_NOT_READY',reason:verified.reason});return verified.claim;

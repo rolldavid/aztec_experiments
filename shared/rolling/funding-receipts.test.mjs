@@ -650,3 +650,37 @@ test('qualification wave keeps canonical then bindings then effects failure prio
  f.state.blockHash=h(999);f.state.bindings.L2_CONTRACT=h(999);f.state.receipt.logs=[];f.state.witness[0]=10n;
  for(const gate of Object.values(gates))gate.resolve();await rejected;
 });
+
+// Native message authority is independent of later Ethereum receipt availability.
+// These cases use the pinned message/hash/path implementation, not mocked proofs.
+import {prepareBokMessageClaim} from './funding-receipts.mjs';
+test('owned Bok message reconstructs exact native claim without Ethereum receipt or portal reads',async()=>{
+ const f=await fixture('bok'),expected=await prepareFundingClaim(f.input);f.state.reads=[];
+ for(const name of Object.keys(f.input.ethProvider))f.input.ethProvider[name]=async()=>{throw Error('No repeated L1 authorization');};
+ f.state.receipt=null;f.state.blockHash=h(909);f.state.bindings.token=addr(999);
+ const actual=await prepareBokMessageClaim(f.input);assert.deepEqual(actual.claim,expected.claim);
+ assert.deepEqual(f.state.reads.sort(),['l2','l2','witness'].sort());assert.equal(actual.evidence.l1,undefined);
+});
+for(const change of ['owner','amount','salt','secret','portal','recipient','version','message','index','anchor','path','network','context'])test('owned Bok native claim rejects '+change,async()=>{
+ const f=await fixture('bok');
+ if(change==='owner')f.input.owner=h(99);
+ if(change==='amount')f.input.receipt.amount='5001';
+ if(change==='salt')f.input.secrets.recipientSalt=h(99);
+ if(change==='secret')f.input.secrets.bridgeSecret=h(99);
+ if(change==='portal')f.input.scope.portal=addr(99);
+ if(change==='recipient')f.input.scope.recipient=h(99);
+ if(change==='version')f.input.scope.version='3';
+ if(change==='message')f.input.receipt.messageKey=h(99);
+ if(change==='index')f.input.receipt.leafIndex='10';
+ if(change==='anchor')f.state.l2Hash=h(99);
+ if(change==='path')f.state.witness[1]=new SiblingPath(L1_TO_L2_MSG_TREE_HEIGHT,Array.from({length:L1_TO_L2_MSG_TREE_HEIGHT},()=>new Fr(1n).toBuffer()));
+ if(change==='network'){const get=f.backend.getNodeInfo;f.backend.getNodeInfo=async()=>({...await get(),l1ChainId:1});}
+ if(change==='context')f.state.guardError=true;
+ await assert.rejects(prepareBokMessageClaim(f.input));
+});
+test('owned Bok message retains missing delivery and fresh final native fork boundary',async()=>{
+ const f=await fixture('bok');f.state.witness=null;assert.deepEqual(await prepareBokMessageClaim(f.input),{status:'waiting',reason:'l2-delivery'});
+ const g=await fixture('bok'),get=g.backend.getL1ToL2MessageMembershipWitness;
+ g.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const value=await get(...args);g.state.l2Hash=h(999);return value;};
+ await assert.rejects(prepareBokMessageClaim(g.input),{code:'ROLLING_FUNDING_REORG'});
+});

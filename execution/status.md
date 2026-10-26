@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Published87c0014d and pushed; real ETH-to-usable Bok31.069425s, normal funded opening2.406370/2.425505s. Browser works without settings changes. Targets remain unachieved. Source drafts address redundant owned-claim L1 checks and private discovery serial reads.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 87 remains live; source integrated and independently reviewed: owned standalone Bok claim removes repeated L1 verification, readonly quote overlaps admission, browser artifacts strip7.71MB compiler metadata with identical native IDs. Root42+21+4 checks and actual SDK/wallet build passed. Publishing combined batch next; targets unachieved.
 
 ## Ready internal work
 

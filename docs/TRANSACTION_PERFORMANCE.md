@@ -86,6 +86,18 @@ Published `87c0014d0411b0538f4cbc37c6aad78144018309` without app/proxy restart. 
 
 Funded normal opening measured **2.406370s** on the first changed-SDK visit and **2.425505s** on immediate cached reload. The cached run includes236.390ms automatic signature; account-button→ready3.216845s includes the separate wallet selection. Session363ms, native sync673ms, account status605ms. Its native source snapshot324ms preceded the313ms ancestry lookup. Both opening runs miss2s. This is funded reopening, not fresh-account payment readiness or human MetaMask timing. Evidence: `opening-87-first.json`, `opening-87-cached.json`, `bok-topup-87.json`.
 
+The current87 Like transaction returned in13.260s and the page showed1like; its visible-count observer selected the wrong element, so there is no precise visible-completion timestamp for that run. Unlike reached the visible zero count in19.191350s; its native proposed receipt arrived417ms later (the server feed had already indexed the effect). Preparation2.853s, proving4.682s and observed receipt wait11.813s are retained, not excluded as a slow run. The native transaction is0x2f6b35e5c8668712ba3153e180275a2c823ddf9b7e1e2beb182bcebddbf8a13a at block5681/hash0x16deb7e704c2a0b490afb0e8399666348a7487e5bffb1f190855e535a892088d. No50% claim follows from this run.
+
+A read-only probe through the actual installed private-query handler measured empty synthetic-tag requests at8.17–19.33ms, including5.69–7.78ms node admission. This does not explain browser250–330ms round trips. The public-feed read gate remains unchanged. The probe created no listener or persistent service and removed its temporary server file.
+
+## Next reviewed source: owned claims and browser artifacts
+
+Standalone Bok continuation now verifies its Ethereum payment once, then retains exact authenticated custody only inside the existing account operation. Native message reconstruction, anchored membership, canonical checks and the contract proof authorize credit. Preparation/submission no longer repeat the L1 payment verification. Generic claims still use their original receipt path; no renderer-controlled verification flag or persistent verification cache exists. Independent review approved; root42 affected checks passed (author163 native,105 boundary and6 application checks separately passed).
+
+Readonly signup quote construction now overlaps independent scope/fee admission with nonce and price reads. Both finish before any local token; no custody write, signature or payment happens speculatively. Installation retains fresh wallet/nonce/quote checks and exact record comparison. Root21 focused checks passed.
+
+The browser artifact projection removes compiler source maps/debug symbols only, retaining bytecode, verification keys, ABI errors and assertion messages. Native class IDs,41 function hashes and deployed Board/FPC addresses are unchanged;4 real-native checks passed. Original compiler artifacts stay intact. Published artifact payload falls by7.71MB; reduced browser source mapping is the diagnostic tradeoff. Actual SDK and wallet builds passed,90 files/111 inputs. These changes still require published timing measurements.
+
 ## Remaining qualification work
 
 Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.

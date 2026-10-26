@@ -1802,3 +1802,12 @@ for(const failure of ['none','canonical','portal','both'])test(`Bok portal final
  await entered.promise;await new Promise(setImmediate);assert.equal(done,failure==='both');hold.resolve();const result=await pending;
  if(failure==='none')assert.deepEqual(result.value,{portal,token,recipient});else assert.equal(result.error,['canonical','both'].includes(failure)?canonicalError:portalError);
 });
+
+for(const failure of [false,true])test('owned claim lifetime stays within session lease and closes on failure='+failure,async()=>{
+ const f=continuationFixture();let active=false,entries=0;
+ f.input.funding.withClaimContinuation=async work=>{assert(f.busy);assert(!active);active=true;entries++;try{return await work();}finally{assert(f.busy);active=false;}};
+ const recover=f.input.funding.recover;f.input.funding.recover=async(...args)=>{assert(active);if(failure)throw Error('payment unavailable');return recover(...args);};
+ const cap=createFundingContinuation(f.input);
+ if(failure)await assert.rejects(cap.advanceClaim(),/payment unavailable/);else assert.equal((await cap.advanceClaim()).state,'complete');
+ assert.equal(entries,1);assert(!active);assert(!f.busy);
+});
