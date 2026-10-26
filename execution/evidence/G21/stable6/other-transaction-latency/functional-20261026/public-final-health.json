@@ -1,0 +1,22 @@
+[
+  {
+    "path": "/api/status",
+    "status": 200,
+    "state": "ready"
+  },
+  {
+    "path": "/wallet/runtime.json",
+    "status": 200,
+    "state": null
+  },
+  {
+    "path": "/prover/healthz",
+    "status": 200,
+    "state": null
+  },
+  {
+    "path": "/api/funding/usdc/terms",
+    "status": 200,
+    "state": null
+  }
+]

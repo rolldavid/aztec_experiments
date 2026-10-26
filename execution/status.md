@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 26 October functional certification; performance paused. Funding, completed withdrawals, fresh ETH signup/post, profile/social and real Bok app creation/edit verified. Fresh USDC signup completed but first post failed before submission; diagnose original native error lost at worker sanitization. Root owns source/live tests; functional_flow_inventory reviews diagnostic boundary. No speculative cooldown changes.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Owner performance goal remains paused. Funded functional pass completed on UI f9d42ce4: fresh USDC signup and first included/rendered post passed without retry; ETH signup, funding/payouts, social/profile flows and real Bok app creation/edit verified. Native-anchor posting eligibility and relay predecessor reconciliation repaired/published. All required services active; app PID311339 uses ui-f9d42ce4616e. Sepolia test relay allowance extended to0.01ETH preserving consumed reservations. Explicit unverified MetaMask/empty-browser/live-admin/terminal boundaries in docs/FUNCTIONAL_CHECK_20261026.md. Await owner direction; do not resume optimization.
 
 ## Ready internal work
 

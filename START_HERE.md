@@ -4,7 +4,9 @@ Current handover: 26 October 2026. The owner's current request takes precedence 
 
 ## Live work and next action
 
-**Owner paused the performance goal on26October2026. Do not resume optimization automatically.** Cleanup and functional verification completed on UI99dcfe60fec9. Bok repairbe6f9f72 is pushed/live: its direct proof path now performs the native sync normally owned by EmbeddedWallet.sendTx.81 focused checks and independent review passed. Real ordinary post, Like/Unlike, bookmarks, profile/name changes and real Bok request/reply have current-session evidence. Bok reply rendered and unused budget returned; service ready, active0, no last failure. Fresh signup/funding were not repeated because the owned test wallet has0.000313693859922125ETH, below the0.001ETH collateral plus fees. Do not call funded reopening fresh signup. See [cleanup and functional report](docs/FUNCTIONAL_CHECK_20261026.md).
+**Owner paused the performance goal on26October2026. Do not resume optimization automatically.** Funded functional verification is complete with explicit remaining limits in [the report](docs/FUNCTIONAL_CHECK_20261026.md). Fresh ETH and USDC signup, first post, funding/withdrawals, names/profile/avatar, boards/follows/bookmarks, quote/repost and real Bok generated-app creation/edit were exercised. Final fresh USDC signup→first included/rendered post succeeded without retry on UI f9d42ce4. Fixed the native-anchor cooldown readiness failure and completed relay-payment reconciliation. All required services running. Actual MetaMask extension, independent empty-browser restoration and live moderator/terminal edge paths remain unverified; native checks are labelled separately.
+
+Current UI baseline `/private/tmp/ui-f9d42ce4616e/next-baseline.json`, SHA1a0c9f31da36639a73661fee67dc75e7807fe9dc9175bef9bfb52f46a9a8b2ea. Application runs configured source `/opt/rolling-app/releases/ui-f9d42ce4616e`, PID311339. Sepolia relay cumulative allowance0.01ETH, per-payment reservation0.00005ETH, consumed0.0001ETH preserved; no reset of journals. Public terms200. No contracts changed. Temporary browser hooks and agent app tab removed. Keep one reusable build. All following measurement paragraphs are historical; no new performance target is claimed.
 
 UI baseline `/private/tmp/ui-99dcfe60fec9/next-baseline.json` SHA511a428c071d888b5a0bb87b421499cf34c811dd5b1381d5b2013e67040fc32e. Latest99 Like10.657020s (24.60% below comparable14.134775s baseline), Unlike11.604790s (no goal-start baseline). c993 funded warm opening2.166935s;58-byte bio16.215390s; name24.028000s. Targets remain unachieved and paused.
 
@@ -55,8 +57,8 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/99dcfe60fec9a26abf4a4b2ace34ac6382a165e6` |
-| Running application | `/opt/rolling-app/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
+| Browser UI | `/opt/rolling-ui/releases/f9d42ce4616e74094c165f846d54aed264a71f17` |
+| Running application | `/opt/rolling-app/releases/ui-f9d42ce4616e` |
 | Prover | `/opt/board-prover/releases/prover-gzip-636d0a581fe81108f09bfc04731e45c46ce35abf` |
 | Bok | `/opt/rolling-bok/releases/operator-be6f9f724e69faef3f64802ccbe4782fb7dce082` |
 | Moderator | `/opt/rolling-app/releases/operator-a0c2c10c199c3057b99da9b7941f54b2951f1cc1` |

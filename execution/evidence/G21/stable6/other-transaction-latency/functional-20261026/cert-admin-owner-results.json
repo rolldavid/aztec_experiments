@@ -1,0 +1,17 @@
+[
+  {
+    "test": "posting_tests::removal_preserves_thread_and_timely_penalty",
+    "exitCode": 0,
+    "log": "/private/tmp/cert-admin-owner-0.log"
+  },
+  {
+    "test": "profiles_tests::moderator_removes_only_selected_current_avatar_without_mutating_profile_or_private_ownership",
+    "exitCode": 0,
+    "log": "/private/tmp/cert-admin-owner-1.log"
+  },
+  {
+    "test": "tests::rejection_retains_identity_and_authenticated_reason",
+    "exitCode": 0,
+    "log": "/private/tmp/cert-admin-owner-2.log"
+  }
+]

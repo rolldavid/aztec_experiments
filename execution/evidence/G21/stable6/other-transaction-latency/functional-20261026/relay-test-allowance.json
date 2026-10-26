@@ -1,0 +1,9 @@
+{
+  "chainId": 11155111,
+  "appPid": 311339,
+  "maximumPerPaymentWei": "50000000000000",
+  "totalGasBudgetWei": "10000000000000000",
+  "reservedGasWei": "100000000000000",
+  "journalsPreserved": true,
+  "termsHttpStatus": 200
+}

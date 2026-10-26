@@ -1,0 +1,22 @@
+[
+  {
+    "test": "tests::subboard_usable_without_collateral_and_tracks_current_parent_policy",
+    "exitCode": 0,
+    "log": "/private/tmp/cert-admin-fixed-0.log"
+  },
+  {
+    "test": "tests::moderator_rotation_preserves_policy_and_successor_can_transfer_back",
+    "exitCode": 0,
+    "log": "/private/tmp/cert-admin-fixed-1.log"
+  },
+  {
+    "test": "tests::moderator_rotation_revokes_old_authority",
+    "exitCode": 0,
+    "log": "/private/tmp/cert-admin-fixed-2.log"
+  },
+  {
+    "test": "posting_tests::removal_preserves_thread_and_timely_penalty",
+    "exitCode": 1,
+    "log": "/private/tmp/cert-admin-fixed-3.log"
+  }
+]

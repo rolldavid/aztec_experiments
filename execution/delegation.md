@@ -344,3 +344,7 @@ Previousgoalturn wasprogress:636published,2realprooflikesand2warmopeningtracesca
 26 October status-balance integration: status_fixture_update drafted isolated fixture adaptation; status_integration_review approved integrated runtime/tests (native class/network guards, context fences, zero semantics, sibling drain intact). Root integrated and ran 765 application/status checks, all passed. SDK and wallet builds succeeded. No contracts or services changed by this patch.
 
 26October: status_fixture_update drafted Like/Unlike snapshot sync and actual native NoteStore/nullifier reorg tests; status_integration_review approved runtime and tests. Root integrated;563 affected checks pass across4 suites (430 rerun after stale status fixtures/pinned-artifact selection). Registration serializer draft remains isolated pending custom Buffer parity checks.
+
+
+## 26 October funded functional closure
+Root integrated and published the reviewed posting-readiness and relay reconciliation changes. completion_evidence_review approved readiness; withdrawal_plan approved relay and bounded test-budget updater. Functional inventory proposal integrated; no agent remains active. Performance goal remains paused. Temporary diagnostics removed. See docs/FUNCTIONAL_CHECK_20261026.md for live/native-only boundaries.

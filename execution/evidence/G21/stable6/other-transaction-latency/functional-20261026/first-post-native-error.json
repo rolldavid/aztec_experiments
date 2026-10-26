@@ -1,0 +1,1 @@
+[[{"originalMessage":"Assertion failed: Too early to post -- time lock not yet expired","functions":[{"name":"entrypoint","contract":"SchnorrInitializerlessAccount"},{"name":"post","contract":"RollingBoard"}]},{"message":"Assertion failed: Too early to post -- time lock not yet expired","functions":[]}]]

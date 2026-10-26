@@ -1,0 +1,34 @@
+{
+  "removedLocalFiles": [
+    {
+      "name": "ui-af7d8db22570.tgz",
+      "bytes": 121756
+    },
+    {
+      "name": "ui-f9d42ce4616e.tgz",
+      "bytes": 222925
+    },
+    {
+      "name": "relay-f952b3edec25.tgz",
+      "bytes": 15339
+    },
+    {
+      "name": "rolling-posting-readiness-v2.patch",
+      "bytes": 18060
+    },
+    {
+      "name": "rolling-cooldown-proposed.patch",
+      "bytes": 17156
+    }
+  ],
+  "removedOwnedS3Versions": 5,
+  "removedInactiveDiagnosticReleases": [
+    "ui-af7d8db22570",
+    "af7d8db22570b1d008c75b6dc78f96ab816ee01f"
+  ],
+  "coreDiskFreeBytes": 10800783360,
+  "bokDiskFreeBytes": 110325239808,
+  "keptReusableBuild": "/private/tmp/rolling-browser-proof-spans-build",
+  "agentAppTabClosed": true,
+  "temporaryBrowserHooksRemovedByReload": true
+}

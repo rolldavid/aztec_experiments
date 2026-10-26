@@ -1,0 +1,28 @@
+[
+  {
+    "args": [
+      "billboard/rolling_contract/test.mjs",
+      "--filter",
+      "tests::refund_pending_old_deposit_does_not_block_same_owner_fresh_claim_or_withdrawal"
+    ],
+    "exitCode": 0,
+    "log": "/private/tmp/cert-conditional-0.log"
+  },
+  {
+    "args": [
+      "billboard/rolling_contract/test.mjs",
+      "--filter",
+      "tests::refund_cancellation_wins_then_original_message_cannot_mint_collateral"
+    ],
+    "exitCode": 0,
+    "log": "/private/tmp/cert-conditional-1.log"
+  },
+  {
+    "args": [
+      "--test",
+      "shared/rolling/bok-terminal-native.test.mjs"
+    ],
+    "exitCode": 0,
+    "log": "/private/tmp/cert-conditional-2.log"
+  }
+]
