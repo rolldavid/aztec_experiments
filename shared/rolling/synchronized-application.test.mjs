@@ -290,6 +290,22 @@ for(const type of ['post','like','unlike','name','bio','avatar','subboard'])for(
  await started.promise;assert.equal(appStarted,true);await new Promise(r=>setImmediate(r));assert.equal(settled,false);gate.resolve();await result;assert.equal(scope.contractStateReady,undefined);
 });
 
+test('captured native header lets predecessor reads start while discovery holds the SDK queue',async()=>{
+ let anchor=14,scope={},captured,checks=0;const gate=Promise.withResolvers(),entered=Promise.withResolvers(),predecessor=Promise.withResolvers();
+ const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},anchorBlockStore:{getBlockHeader:async()=>({number:anchor})},contributors:[],stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort:()=>{}},log:{debug(){},verbose(){},warn(){}}});queue.start();
+ const raw=Object.fromEntries(names.map(name=>[name,async()=>{}]));raw.prepare=async()=>{assert.equal(captured.number,anchor);checks++;predecessor.resolve();await scope.contractStateReady;return 'ready';};
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>queue.run(()=>{anchor++;}),preparePredecessorAnchor:async()=>{captured=await queue.run(()=>({number:anchor}));},prepareContractState:()=>queue.runSynced(async()=>{entered.resolve();await gate.promise;})});
+ try{
+  const work=app.prepare({type:'like'},{immediate:true});await entered.promise;await predecessor.promise;assert.equal(checks,1);assert.equal(captured.number,15);gate.resolve();assert.equal(await work,'ready');assert.equal(scope.contractStateReady,undefined);
+  scope={};await app.prepare({type:'like'},{immediate:true});assert.equal(captured.number,16);assert.equal(checks,2);
+ }finally{gate.resolve();await queue.stop();}
+});
+for(const failure of ['read','scope'])test('failed predecessor header capture prevents discovery and execution: '+failure,async()=>{
+ let scope={},calls=0;const raw=Object.fromEntries(names.map(name=>[name,async()=>{calls++;}]));
+ const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:()=>{},preparePredecessorAnchor:async()=>{if(failure==='read')throw Error('header unavailable');scope={};},prepareContractState:async()=>{calls++;}});
+ await assert.rejects(app.prepare({type:'like'},{immediate:true}),failure==='read'?/header unavailable/:{code:'ROLLING_CONTEXT_CHANGED'});assert.equal(calls,0);
+});
+
 for(const kind of ['names','unowned','other','replaced','failed'])test('owned-name warmup preserves fresh sync and operation fences: '+kind,async()=>{
  let scope=kind==='unowned'?null:{},calls=0;const held=Promise.withResolvers(),seen=[];
  const raw=Object.fromEntries(names.map(name=>[name,()=>{calls++;return 'native result';}]));

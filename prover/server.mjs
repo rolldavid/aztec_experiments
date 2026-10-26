@@ -2,8 +2,17 @@ import {createHash,timingSafeEqual} from 'node:crypto';
 import {isIP} from 'node:net';
 import http from 'node:http';
 import {performance} from 'node:perf_hooks';
+import {createGzip,constants as zlibConstants} from 'node:zlib';
+import {finished} from 'node:stream/promises';
 import {decodeJob,MAX_REQUEST_BYTES} from '../shared/remote-prover-wire.mjs';
 import {COMPACT_GATEWAY_ROUTE} from '../shared/rolling/compact-client.mjs';
+function acceptsGzip(header=''){
+ const encodings=String(header).toLowerCase().split(',').map(entry=>entry.trim().split(/\s*;\s*/));
+ const entry=encodings.find(([name])=>name==='gzip')??encodings.find(([name])=>name==='*');
+ if(!entry)return false;
+ const quality=entry.slice(1).find(value=>value.startsWith('q='));
+ return quality===undefined||/^(?:0(?:\.\d{1,3})?|1(?:\.0{1,3})?)$/.test(quality.slice(2))&&Number(quality.slice(2))>0;
+}
 /** HTTP adapter depends only on queue and board policy APIs. */
 export function createProverServer({serviceMode='prover',queue,board,chainId,rollupVersion,proofsEnabled=true,origins=[],requestsPerMinute=6,compactRequestsPerMinute=600,trustedProxy,privateQuery,operatorAuthSha256}){
  if(!['prover','query-only'].includes(serviceMode)||(serviceMode==='query-only'&&(!privateQuery||queue!==undefined||board!==undefined||proofsEnabled!==true)))throw Error('Invalid service mode');
@@ -96,16 +105,29 @@ export function createProverServer({serviceMode='prover',queue,board,chainId,rol
      const state=queue.get(resultMatch[1]);if(!state){reply(404,{error:'Job not found'});return;}
      // Subscribe before writing headers: capacity failures remain normal HTTP errors.
      const completed=queue.waitForResult(resultMatch[1],controller.signal);void completed.catch(()=>{});
+     const gzip=acceptsGzip(req.headers['accept-encoding'])?createGzip({level:1}):null;
+     res.setHeader('Vary',origin?'Origin, Accept-Encoding':'Accept-Encoding');
+     if(gzip){
+      res.setHeader('Content-Encoding','gzip');
+      gzip.once('error',()=>res.destroy());
+      res.once('close',()=>gzip.destroy());
+      gzip.pipe(res);
+     }
      res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-store'});
-     const send=value=>res.write('data: '+JSON.stringify(value)+'\n\n');
+     const output=gzip??res;
+     const flushed=gzip?finished(res,{cleanup:true}):null;void flushed?.catch(()=>{});
+     // Flush each event so compression never holds a queued state or heartbeat
+     // until proof completion. The bounded result remains verified by the client.
+     const write=frame=>{const ready=output.write(frame);gzip?.flush(zlibConstants.Z_SYNC_FLUSH);return ready&&!res.writableNeedDrain;};
+     const send=value=>write('data: '+JSON.stringify(value)+'\n\n');
      if(!['complete','failed'].includes(state.state))send(state);
      // Keep intermediaries alive. This does not bound or cancel proof execution.
-     heartbeat=setInterval(()=>{if(!res.write(': keepalive\n\n'))res.destroy();},10000);heartbeat.unref();
-     const result=await completed;if(!res.destroyed){if(result){
+     heartbeat=setInterval(()=>{if(!write(': keepalive\n\n'))res.destroy();},10000);heartbeat.unref();
+     const result=await completed;clearInterval(heartbeat);if(!res.destroyed){if(result){
       // Refresh only the local terminal snapshot's monotonic readiness age; no
       // polling, upstream request or browser/server clock comparison.
       const latest=queue.get(resultMatch[1]);send(latest?.state===result.state?latest:result);
-     }res.end();}
+     }output.end();if(flushed)await flushed;}
     }finally{clearInterval(heartbeat);res.off('close',abort);controller.abort();}
     return;
    }

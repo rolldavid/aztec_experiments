@@ -387,7 +387,7 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  const selected=structuredClone(config),query=structuredClone(trustedQuery),remote=remoteProver?structuredClone(remoteProver):undefined;
  const preparedAccount=accountPreparation===undefined?null:consumeRollingAccountPreparation(accountPreparation,{sdk,account:captured});
  const lockName='billboard-wallet:'+captured.address;
- let operationScope=null;
+ let operationScope=null;const predecessorAnchors=new WeakMap();
  let pxe,store,fundingProvider,closed=false,busy=false,app,closing,privateNode,privateWallet,initializeAccount,aggregate,prepareStarter,topups,withdrawal,depositRefunds;
  const assertCaptured=()=>{
   if(closed||captured.secretKey!==account.secretKey||captured.salt!==String(account.salt)||captured.address!==String(account.address))throw fail('ROLLING_CONTEXT_CHANGED');
@@ -469,7 +469,10 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
    begin('journal-open');
    const privateStore=sdk.createBrowserJournalStorage();
    await guard();const journal=await sdk.createL2Journal({storage:privateStore,walletSecret:captured.secretKey,walletSalt:captured.salt,
-    scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard,operationScope:()=>operationScope,confirmationTier:'proposed',predecessorAnchor:()=>pxe.getSyncedBlockHeader()});
+    scope:{account:captured.address,...network,board:deployment.board.address.toString(),portal:deployment.portal},Tx:sdk.Tx,node,contextGuard:guard,operationScope:()=>operationScope,confirmationTier:'proposed',predecessorAnchor:()=>{
+     const owner=operationScope,anchor=owner&&predecessorAnchors.get(owner);
+     return owner?.synchronized&&owner.contractStateReady&&anchor?.pxe===pxe&&anchor.node===node&&anchor.wallet===privateWallet?anchor.header:pxe.getSyncedBlockHeader();
+    }});
    begin('wallet-bind');
    await guard();const wallet=routing.createAztecWallet(sdk,pxe,node,node,silent,secret,{contextGuard:guard,transactionJournal:journal,progress:(stage,details)=>{const value=projectRollingTransactionProgress(stage,details);if(value)void Promise.resolve().then(()=>onProgress?.(value)).catch(()=>{});}});
    if(wallet.aztecNode!==node||wallet.pxe!==pxe||!routing.isPrivateWalletForNode(wallet,node))throw fail('ROLLING_PRIVATE_ROUTE');
@@ -564,6 +567,10 @@ export async function createRollingWalletSession({sdk,routing,ethers,config,boar
  // Both reads consume the same public Board class/initialization cache keys.
  // syncForAccountStatus owns fresh native sync only; ownership discovery still follows.
  const synchronized=createSynchronizedRollingApplication({application:app,prepareContext:app.prefetchContext,operationScope:()=>operationScope,synchronize:async({ordinaryPolicy=false,ordinaryPost=false,accountStatus=false,ownedNames=false}={})=>{refreshPhase?.('pxe-sync');await measureRollingStage(refreshPhase?refreshSyncStage:'action.sync',()=>accountStatus||ownedNames?pxe.syncForAccountStatus(selected.board.contractAddress,accountStatus?selected.privateFee.contractAddress:undefined):ordinaryPolicy&&typeof pxe.syncForOrdinaryPost==='function'?app.prefetchPostingPolicy(read=>pxe.syncForOrdinaryPost({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress},read)):pxe.sync());refreshPhase?.('account-initialize');await initializeAccount();
+ },preparePredecessorAnchor:async()=>{
+  await guardRoute();const owner=operationScope,engine=pxe,node=privateNode,wallet=privateWallet,header=await engine.getSyncedBlockHeader();await guardRoute();
+  if(!owner?.synchronized||operationScope!==owner||engine!==pxe||node!==privateNode||wallet!==privateWallet)throw fail('ROLLING_CONTEXT_CHANGED');
+  predecessorAnchors.set(owner,{pxe:engine,node,wallet,header});
  },prepareContractState:async({method})=>{await guardRoute();await measureRollingStage('action.contract-state',()=>method==='post'?pxe.prepareOrdinaryPostState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress}):pxe.prepareBoardActionState({owner:captured.address,board:selected.board.contractAddress,privateFee:selected.privateFee.contractAddress,method}));await guardRoute();},contextGuard:async()=>{refreshPhase?.('context');await guardRoute();refreshPhase?.('context-complete');}});
  async function observedRead(name,call,args){
   const method=refreshMethods[name];if(!method)return locked(()=>call(...args));

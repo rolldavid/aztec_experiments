@@ -40,8 +40,8 @@ function accountStatusArguments(args){
  }catch{throw Object.assign(Error('Invalid Rolling action'),{code:'ROLLING_INVALID_ACTION'});}
 }
 const boardStateMethods=Object.freeze({like:'set_like',unlike:'set_like',name:'register_name',bio:'set_bio',avatar:'set_avatar',subboard:'create_subboard','moderate-post':'remove_post','moderate-avatar':'remove_avatar','reject-subboard':'reject_subboard','set-main-policy':'set_main_policy','transfer-moderator':'transfer_moderator',screen:'screen',withdraw:'withdraw'});
-export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null,prepareContext,prepareContractState}){
- if(typeof synchronize!=='function'||typeof contextGuard!=='function'||prepareContext!==undefined&&typeof prepareContext!=='function'||prepareContractState!==undefined&&typeof prepareContractState!=='function')throw Error('Rolling synchronization unavailable');
+export function createSynchronizedRollingApplication({application,synchronize,contextGuard,operationScope=()=>null,prepareContext,prepareContractState,preparePredecessorAnchor}){
+ if(typeof synchronize!=='function'||typeof contextGuard!=='function'||prepareContext!==undefined&&typeof prepareContext!=='function'||prepareContractState!==undefined&&typeof prepareContractState!=='function'||preparePredecessorAnchor!==undefined&&typeof preparePredecessorAnchor!=='function')throw Error('Rolling synchronization unavailable');
  const calls=methods.map(name=>{
   if(typeof application?.[name]!=='function')throw Error('Rolling application unavailable');
   const call=application[name].bind(application);
@@ -88,6 +88,8 @@ export function createSynchronizedRollingApplication({application,synchronize,co
    }
    let result;
    if(overlapMethod&&prepareContractState){
+    // Capture the synchronized header before discovery owns the native queue.
+    if(preparePredecessorAnchor){await preparePredecessorAnchor();await contextGuard();if(operationScope()!==scope)throw Object.assign(Error('Rolling operation changed'),{code:'ROLLING_CONTEXT_CHANGED'});}
     const ready=Promise.resolve().then(()=>prepareContractState({method:overlapMethod}));
     scope.contractStateReady=ready;
     // Predecessor authority can run during native discovery. The application

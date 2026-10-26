@@ -322,3 +322,7 @@ Published e291136f with exact served worker/panel hashes and no service restart.
 ## 26 October live e291 measurement
 
 Root operates the existing IAB tab and retains credentials outside page/source. pending_feed_release independently audited warm/name/bio/like/Bok traces and baseline endpoints; now locating a funded disposable test fixture. warm_trace_analysis reviewed warm sync and fresh quote dependencies read-only. like_trace_analysis reviewed predecessor/discovery and actual server/transport timings read-only. No agent source edits or separate browser/build sessions.
+
+## 26 October — measured preparation and proof-response follow-up
+
+Root integrated current-header capture before queued native discovery; warm_trace_analysis approved scope/identity invalidation and focused tests. like_trace_analysis independently reviewed single-stream gzip response transport; root fixed terminal-heartbeat lifetime identified in review. 480 affected tests passed before expanded stream cases; final47 server/client checks passed including held terminal flush, backpressure, disconnect and byte reduction. Three stale unsigned-wallet capture expectations reproduced on unchanged HEAD; corrected assertions retain exact error and zero secret derivations/sends. No live speedup claimed. One retained build reused; no new dependencies or browser sessions. Source-only prover deployment draft under independent review before activation.

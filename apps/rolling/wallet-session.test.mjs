@@ -18,6 +18,23 @@ for(const failure of [false,true])test('generic Board state preparation holds na
  await entered.promise;assert.equal(done,false);assert.equal(f.state.active,true);assert.equal(f.state.boardStateMethod,'register_name');gate.resolve();await observed;assert.equal(f.state.active,false);await session.close();
 });
 
+test('predecessor anchor reuse is confined to the held discovery barrier',async()=>{
+ const f=await sessionFixture();let accessor,reads=0,current=10;
+ f.input.sdk.createL2Journal=async options=>{accessor=options.predecessorAnchor;return createL2Journal(options);};
+ f.pxe.getSyncedBlockHeader=async()=>{assert(f.state.active);reads++;return {globalVariables:{blockNumber:current},hash:async()=>BlockHash.fromString(hex(55))};};
+ const original=f.pxe.prepareBoardActionState;
+ f.pxe.prepareBoardActionState=async targets=>{
+  const before=reads;assert.equal((await accessor()).globalVariables.blockNumber,10);assert.equal(reads,before,'discovery must not queue a second header read');return original(targets);
+ };
+ const session=await createRollingWalletSession(f.input);
+ try{
+  await session.application.prepare({type:'name',first:'Fresh',last:'Willow'},{immediate:true});
+  current=11;const before=reads;
+  await f.input.locks.request('billboard-wallet:'+f.input.account.address,{ifAvailable:true},async()=>assert.equal((await accessor()).globalVariables.blockNumber,11));
+  assert.equal(reads,before+1,'after the barrier the accessor must read the current native header');
+ }finally{await session.close();}
+});
+
 test('unsupported cross-tab custody fails before any SDK/network access',async()=>{
  const {input,accesses}=options();input.locks={};await assert.rejects(createRollingWalletSession(input),{code:'ROLLING_SESSION_CONFIG'});assert.deepEqual(accesses,[]);
 });
@@ -393,7 +410,7 @@ async function aggregateSessionFixture(){
  const prior=f.node.getL1ContractAddresses;f.node.getL1ContractAddresses=async()=>({...await prior(),feeJuicePortalAddress:s.feePortal});
  f.input.ethers={...f.input.ethers,Interface};const abi=new Interface(['function UNDERLYING() view returns(address)','function token() view returns(address)','function decimals() view returns(uint8)','function escrow() view returns(bytes32)','function version() view returns(uint256)','function chainId() view returns(uint256)','function inbox() view returns(address)','function outbox() view returns(address)','function active() view returns(bool)']);
  f.provider.call=async request=>{assert(f.state.active);const call=abi.parseTransaction(request),addresses=await f.node.getL1ContractAddresses();return abi.encodeFunctionResult(call.name,[{UNDERLYING:s.feeToken,token:s.bokToken,decimals:request.to===s.feeToken?18:6,escrow:b.input.config.contractAddress,version:1,chainId:31337,inbox:addresses.inboxAddress,outbox:addresses.outboxAddress,active:true}[call.name]]);};
- const expected=Error('Chosen wallet requested only after verified scope');let captures=0;
+ const expected=Error('Read-only wallet selection rejected');let captures=0;
  f.input.captureFundingWallet=async()=>{assert(f.state.active);captures++;throw expected;};
  return {...f,b,scope:s,expected,captures:()=>captures};
 }
@@ -405,13 +422,14 @@ test('aggregate configured session retains direct receipt recovery with an empty
   await assert.rejects(session.application.prepare({type:'claim-deposit',receipt}),{code:'ROLLING_FUNDING_NOT_READY'});assert.equal(f.captures(),0);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
-for(const defect of ['none','bok-portal','fee-portal','token-decimals'])test('aggregate session validates canonical '+defect+' bindings before custody capture',async()=>{
- const f=await aggregateSessionFixture();
+for(const defect of ['none','bok-portal','fee-portal','token-decimals'])test('aggregate canonical '+defect+' validation retains priority over overlapping wallet rejection',async()=>{
+ const f=await aggregateSessionFixture();let custody=0;
+ f.input.sdk.deriveBoardDepositSecret=async()=>{custody++;throw Error('Unexpected custody derivation');};
  if(defect==='bok-portal')f.b.values.set(String(BigInt(bokArtifact.storageLayout.portal.slot)),new Fr(999));
  if(defect==='fee-portal')f.node.getL1ContractAddresses=async()=>({rollupAddress:eth(11),inboxAddress:eth(33),outboxAddress:eth(44),feeJuicePortalAddress:eth(999)});
  if(defect==='token-decimals'){const original=f.provider.call;f.provider.call=async request=>request.to===f.scope.bokToken?'0x'+BigInt(18).toString(16).padStart(64,'0'):original(request);}
  const session=await createRollingWalletSession(f.input);try{
-  await assert.rejects(session.funding.prepare({asset:'ETH',feeAmount:'2000',bokAmount:'1'}),defect==='none'?error=>error===f.expected:{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.captures(),defect==='none'?1:0);assert.equal(f.state.sends,0);
+  await assert.rejects(session.funding.prepare({asset:'ETH',feeAmount:'2000',bokAmount:'1'}),defect==='none'?error=>error===f.expected:{code:'ROLLING_SESSION_CONFIG'});assert.equal(f.captures(),1);assert.equal(custody,0);assert.equal(f.state.sends,0);
  }finally{await session.close();}
 });
 test('USDC session exposes only explicitly pinned relay capability and retains authenticated custody ordering',async()=>{

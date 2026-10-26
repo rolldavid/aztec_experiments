@@ -1,4 +1,5 @@
-import {createHash} from 'node:crypto';
+import {createHash,randomBytes} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
 import http from 'node:http';
 import vm from 'node:vm';
 import {test} from 'node:test';
@@ -208,30 +209,58 @@ test('queue completion listeners are bounded, abortable and notified without pol
   assert.equal((await queue.waitForResult(id)).state,'complete');assert.equal(await queue.acknowledge(id),true);assert.equal(await queue.waitForResult(id),null);
  }finally{await queue.close();await fs.rm(directory,{recursive:true,force:true});}
 });
-test('real HTTP completion stream wakes immediately and disconnect only releases observer',async()=>{
+for(const encoding of ['identity','gzip'])test('real HTTP '+encoding+' completion stream wakes immediately and disconnect only releases observer',async()=>{
  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-stream-'));let complete,closed=0;
  const queue=await createProofQueue({directory,worker:{prove:()=>new Promise(r=>complete=r),close:async()=>{closed++;}}});
  const server=createProverServer({queue,origins:['https://board.example']});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try{
   const id=await queue.submit(Buffer.of(1),'client'),url='http://127.0.0.1:'+server.address().port+'/v1/jobs/'+id+'/result';
   assert.equal((await fetch(url,{headers:{origin:'https://other.example'}})).status,403);
-  const aborted=new AbortController(),first=await fetch(url,{signal:aborted.signal}),reader=first.body.getReader();
+  const aborted=new AbortController(),first=await fetch(url,{signal:aborted.signal,headers:{'accept-encoding':encoding}}),reader=first.body.getReader();
   assert.match(new TextDecoder().decode((await reader.read()).value),/running/);aborted.abort();await reader.cancel().catch(()=>{});
   assert.equal(queue.get(id).state,'running');assert.equal(closed,0);
-  const response=await fetch(url);assert.equal(response.headers.get('content-type'),'text/event-stream');let done=false;const text=response.text().then(x=>{done=true;return x;});
+  const response=await fetch(url,{headers:{'accept-encoding':encoding}});assert.equal(response.headers.get('content-type'),'text/event-stream');let done=false;const text=response.text().then(x=>{done=true;return x;});
   await new Promise(setImmediate);assert.equal(done,false);complete({mode:'real',compressedProof:'finished'});assert.match(await text,/finished/);
   assert.equal(queue.get(id).state,'complete');assert.equal(closed,0);
  }finally{await server.closeAndDrain();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
 });
-test('server drain cancels event observation without waiting for or cancelling a running proof',async()=>{
+for(const encoding of ['identity','gzip'])test('server drain cancels '+encoding+' event observation without waiting for or cancelling a running proof',async()=>{
  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'proof-stream-close-'));let complete;
  const queue=await createProofQueue({directory,worker:{prove:()=>new Promise(r=>complete=r),close:async()=>{}}});
  const server=createProverServer({queue});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try{
-  const id=await queue.submit(Buffer.of(1),'client');const response=await fetch('http://127.0.0.1:'+server.address().port+'/v1/jobs/'+id+'/result');
+  const id=await queue.submit(Buffer.of(1),'client');const response=await fetch('http://127.0.0.1:'+server.address().port+'/v1/jobs/'+id+'/result',{headers:{'accept-encoding':encoding}});
   const body=response.text().catch(()=>{});await server.closeAndDrain();await body;assert.equal(queue.get(id).state,'running');
   complete({mode:'real'});assert.equal((await queue.waitForResult(id)).state,'complete');
  }finally{await server.closeAndDrain();await queue.close();await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('gzip result stream flushes progress before completion and reduces base64 transport bytes',async()=>{
+ const id='a'.repeat(64),proof=randomBytes(100000).toString('base64');let complete;
+ let state={state:'running'};const terminal=new Promise(resolve=>complete=()=>{state={state:'complete',result:{mode:'real',compressedProof:proof}};resolve(state);});
+ const queue={get:()=>state,waitForResult:()=>terminal};
+ const server=createProverServer({queue,origins:['https://board.example']});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const url='http://127.0.0.1:'+server.address().port+'/v1/jobs/'+id+'/result';
+ const raw=encoding=>new Promise((resolve,reject)=>{
+  http.get(url,{headers:{'accept-encoding':encoding,origin:'https://board.example'}},response=>{
+   const chunks=[];response.on('data',chunk=>chunks.push(chunk));response.on('end',()=>resolve({headers:response.headers,body:Buffer.concat(chunks)}));response.on('error',reject);
+  }).on('error',reject);
+ });
+ try{
+  const response=await fetch(url,{headers:{'accept-encoding':'gzip'}}),reader=response.body.getReader();
+  assert.equal(response.headers.get('content-encoding'),'gzip');
+  // Completion is withheld until the queued event has crossed the compressor.
+  assert.match(new TextDecoder().decode((await reader.read()).value),/"state":"running"/);
+  complete();let text='';for(;;){const part=await reader.read();if(part.done)break;text+=new TextDecoder().decode(part.value);}
+  assert.equal(JSON.parse(text.trim().slice(6)).result.compressedProof,proof);
+  const compressed=await raw('gzip'),identity=await raw('gzip;q=0, *;q=1');
+  assert.equal(compressed.headers['content-encoding'],'gzip');assert.equal(compressed.headers.vary,'Origin, Accept-Encoding');
+  assert.equal(identity.headers['content-encoding'],undefined);
+  assert.deepEqual(gunzipSync(compressed.body),identity.body);
+  assert(compressed.body.length<identity.body.length*0.8,'base64 overhead should be removed from the wire');
+  for(const encoding of ['identity','gzip;q=0.000','gzip;q=invalid'])assert.equal((await raw(encoding)).headers['content-encoding'],undefined);
+  assert.equal((await raw('*;q=0.5')).headers['content-encoding'],'gzip');
+ }finally{complete();await server.closeAndDrain();}
 });
 
 test('backpressured heartbeat disconnects only the bounded result observer',async t=>{
@@ -243,6 +272,30 @@ test('backpressured heartbeat disconnects only the bounded result observer',asyn
  assert.equal(writes,1);t.mock.timers.tick(10000);await new Promise(setImmediate);
  assert.equal(writes,2);assert.equal(detached,1);assert.equal(res.destroyed,true);assert.equal(queue.get().state,'running');
  t.mock.timers.tick(100000);assert.equal(writes,2);await server.closeAndDrain();
+});
+
+test('gzip heartbeat respects downstream response backpressure',async t=>{
+ const {Writable}=await import('node:stream');t.mock.timers.enable({apis:['setInterval']});
+ const firstWrite=Promise.withResolvers();let detached=0;
+ const queue={get:()=>({state:'running'}),waitForResult:(_id,signal)=>new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>{detached++;reject(signal.reason);},{once:true}))};
+ const server=createProverServer({queue}),res=new Writable({highWaterMark:1,write(_chunk,_encoding,_callback){firstWrite.resolve();}});
+ Object.assign(res,{headersSent:false,setHeader(){},writeHead(){this.headersSent=true;}});
+ server.emit('request',{method:'GET',url:'/v1/jobs/'+'a'.repeat(64)+'/result',headers:{'accept-encoding':'gzip'},socket:{remoteAddress:'127.0.0.1'}},res);
+ await firstWrite.promise;assert.equal(res.writableNeedDrain,true);t.mock.timers.tick(10000);await new Promise(setImmediate);
+ assert.equal(res.destroyed,true);assert.equal(detached,1);assert.equal(queue.get().state,'running');await server.closeAndDrain();
+});
+
+test('terminal gzip flush cannot be interrupted by an observation heartbeat',async t=>{
+ const {Writable}=await import('node:stream');t.mock.timers.enable({apis:['setInterval']});
+ const finalEntered=Promise.withResolvers(),releaseFinal=Promise.withResolvers(),chunks=[];
+ const result={state:'complete',result:{mode:'real',compressedProof:'proof'}};
+ const queue={get:()=>result,waitForResult:async()=>result};
+ const server=createProverServer({queue}),res=new Writable({write(chunk,_encoding,callback){chunks.push(Buffer.from(chunk));callback();},final(callback){finalEntered.resolve();void releaseFinal.promise.then(()=>callback());}});
+ Object.assign(res,{headersSent:false,setHeader(){},writeHead(){this.headersSent=true;}});
+ server.emit('request',{method:'GET',url:'/v1/jobs/'+'a'.repeat(64)+'/result',headers:{'accept-encoding':'gzip'},socket:{remoteAddress:'127.0.0.1'}},res);
+ await finalEntered.promise;t.mock.timers.tick(30000);await new Promise(setImmediate);
+ assert.equal(res.destroyed,false);assert.equal(gunzipSync(Buffer.concat(chunks)).toString(),'data: '+JSON.stringify(result)+'\n\n');
+ const done=new Promise(resolve=>res.once('finish',resolve));releaseFinal.resolve();await done;await server.closeAndDrain();
 });
 
 test('terminal queue snapshots separate numeric persistence wait worker and cleanup without private metadata',async()=>{
