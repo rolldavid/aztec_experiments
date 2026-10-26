@@ -169,6 +169,7 @@ async function invoke(method,args){
    // Other private requests keep waiting for this entire opening operation.
    const ready=await startSession();await guard();
    const result=await ready.prepareOpening(options,preparation);
+   if(result.quoteError)temporaryActionDiagnostic({method:'prepareOpening',id:0},result.quoteError);
    return {...result,...(result.quoteError?{quoteError:errorRecord(result.quoteError)}:{})};
   }catch(error){if(preparation)await funding.discardOpening(preparation,error);throw error;}
   finally{fundingBusy=false;drained();}
