@@ -1348,17 +1348,22 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(provisional){const claimed=result.intent;includedObservation={txHash:claimed.txHash,action:claimed.action,inclusion:claimed.inclusion,observed:null};actionFeedback.textContent='Credit added: confirmation pending.';actionFeedback.hidden=false;}
    const bokTopup=view==='topup'&&topupKind==='bok';stopFunding();
    if(bokTopup){
-    // Only the newly claimed native Bok balance is required here. Unrelated
-    // deposit and fee scans run after this interaction releases its busy state.
+    // The fresh native Bok balance is the completion read. This claim does
+    // not change collateral; invalidate its spent fee display without another
+    // full inventory scan. The next transaction still checks native state.
     invalidateBokBalance();await measureRollingStage('action.required-account-refresh',loadBok);checkAccount(epoch);
     if(bokBalance.snapshot().phase!=='ready'||bokStatus?.available!==true)throw connectionFailure;
-    intent=null;blocked=false;balances=null;bokAccounting=null;accountRefreshNeeded=true;
+    if(status){status={...status};delete status.privateFeeCredit;}
+    intent=null;blocked=false;balances=null;bokAccounting=null;
    }else if(view==='topup'&&topupKind==='private-fee'){
-    // Standalone top-ups need current credit, not a new collateral inventory.
-    // Retain the previous readiness classification until its full refresh.
+    // Only fee credit changes. Combine its fresh native value with the
+    // existing collateral classification; actual actions validate afresh.
     const credit=await measureRollingStage('action.required-account-refresh',()=>session.application.readPrivateFeeCredit());checkAccount(epoch);
     if(typeof credit?.availableCredit!=='string'||!/^(0|[1-9][0-9]*)$/.test(credit.availableCredit)||BigInt(credit.availableCredit)>=(1n<<128n))throw connectionFailure;
-    status={...status,privateFeeCredit:credit.availableCredit};intent=null;blocked=false;balances=null;accountRefreshNeeded=true;
+    status={...status,privateFeeCredit:credit.availableCredit};
+    if(['fee-needed','fee-ready','collateral-pending'].includes(status.status)&&Array.isArray(status.depositIds))
+     status={...status,status:BigInt(credit.availableCredit)===0n?'fee-needed':status.depositIds.length?'fee-ready':'collateral-pending'};
+    intent=null;blocked=false;balances=null;
    }else{await refresh();checkAccount(epoch);}
    if(view==='topup'){notice=(bokTopup?'Bok credit added.':'Posting credit added.')+(provisional?' Confirmation pending.':'');topupSaved=null;resetTopupQuote();view=draft.content?'action':'overview';}
    else{

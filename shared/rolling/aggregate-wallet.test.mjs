@@ -66,7 +66,14 @@ test('aggregate review never signs/sends; explicit confirm uses Ethereum nonce, 
  const result=await app.confirm();assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);assert.equal(result.bokReceipt.nonce,'7');assert.equal(result.feeReceipt.amount,'200');
  f.state.connected=false;const reopened=await f.open(),context=await reopened.loadAggregate(result.receipt.txHash);assert.equal(context.intent.nonce,7);assert.equal(context.bokScope.portal,f.options.scope.bokPortal);
  assert.equal((await reopened.recover()).receipt.txHash,result.receipt.txHash);assert.equal(f.state.sends,1);await assert.rejects(reopened.confirm(),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});
+ // The read-only wallet capture now precedes journal inspection. Both failures
+ // still veto a new quote, with no mutation or additional signature/broadcast.
+ const retained=[...f.records];
+ await assert.rejects(reopened.prepare(f.allocation),/No wallet/);
+ assert.deepEqual([...f.records],retained);assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);
+ f.state.connected=true;
  await assert.rejects(reopened.prepare(f.allocation),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});
+ assert.deepEqual([...f.records],retained);assert.equal(f.state.sends,1);assert.equal(f.state.signatures,1);
 });
 test('changed Ethereum nonce rejects inside original journal callback before encrypted intent and broadcast',async()=>{
  const f=fixture(),app=await f.open();await app.prepare(f.allocation);f.state.nonce=8;
@@ -1452,4 +1459,73 @@ for(const changed of ['fork','chain','expiry'])test('direct fresh quote retains 
   return value;
  };
  const app=await f.open();await assert.rejects(app.prepare(openingAllocation(f)));assert.equal(f.records.size,0);assert.equal(f.state.sends,0);assert.equal(f.state.signatures,0);
+});
+
+for(const failure of ['none','qualification','nonce','both','owner'])test('direct ETH qualification/nonce wave drains before journal work: '+failure,async()=>{
+ const f=fixture(),qualification=Promise.withResolvers(),nonce=Promise.withResolvers(),qualificationEntered=Promise.withResolvers(),nonceEntered=Promise.withResolvers();
+ const rejectedQualification=Error('qualification failed'),rejectedNonce=Error('nonce failed');
+ let captures=0,nonceReads=0,journalReads=0,writes=0,settled=false;
+ const capture=f.options.captureWallet,createSlot=f.options.sdk.createEncryptedJournalSlot;
+ f.options.captureWallet=async()=>{captures++;return capture();};
+ f.options.verifyScope=async()=>{qualificationEntered.resolve();await qualification.promise;if(['qualification','both'].includes(failure))throw rejectedQualification;return async()=>{};};
+ f.options.provider.getTransactionCount=async()=>{nonceReads++;nonceEntered.resolve();await nonce.promise;if(['nonce','both'].includes(failure))throw rejectedNonce;return 7;};
+ f.options.sdk.createEncryptedJournalSlot=async options=>{const slot=await createSlot(options);return {...slot,read:async(...args)=>{journalReads++;return slot.read(...args);},write:async(...args)=>{writes++;return slot.write(...args);}};};
+ const app=await f.open(),pending=app.prepare(f.allocation).finally(()=>settled=true);pending.catch(()=>{});
+ await Promise.all([qualificationEntered.promise,nonceEntered.promise]);
+ assert.equal(captures,1);assert.equal(nonceReads,1);assert.equal(journalReads,0);assert.equal(writes,0);assert.equal(f.records.size,0);
+ if(failure==='nonce'){nonce.resolve();await new Promise(setImmediate);assert.equal(settled,false);qualification.resolve();}
+ else{qualification.resolve();await new Promise(setImmediate);assert.equal(settled,false);assert.equal(journalReads,0);if(failure==='owner')f.state.invalid=true;nonce.resolve();}
+ if(failure==='none'){const quote=await pending;assert.equal(quote.ethereumNonce,7);assert.equal(writes,1);assert.equal(captures,1);assert.equal(nonceReads,1);}
+ else{await assert.rejects(pending,failure==='owner'?/Context changed/:error=>error===(failure==='nonce'?rejectedNonce:rejectedQualification));assert.equal(journalReads,0);assert.equal(writes,0);assert.equal(f.records.size,0);}
+ assert.equal(f.state.sends,0);assert.equal(f.state.signatures,0);
+});
+test('direct ETH early nonce retains predecessor maximum and final wallet guard',async()=>{
+ const f=fixture(),app=await f.open();await app.prepare(f.allocation);await app.confirm();
+ const workflow=durableClaimApplication(f,app);await advanceAggregateClaim({application:workflow.open(),funding:app});
+ f.state.nonce=6;
+ const review=await app.prepare(f.allocation);assert.equal(review.ethereumNonce,8);
+ const sends=f.state.sends;f.state.nonce=9;await assert.rejects(app.confirm(),{code:'ROLLING_FUNDING_NONCE_CHANGED'});assert.equal(f.state.sends,sends);
+});
+test('direct ETH qualification/nonce wave does not bypass quote-final fork or final wallet guard',async()=>{
+ for(const failure of ['fork','wallet']){
+  const f=fixture(),send=f.options.provider.send;let numbered=0;
+  if(failure==='fork')f.options.provider.send=async(method,params)=>{const result=await send(method,params);if(method==='eth_getBlockByNumber'&&params[0]!=='latest'&&params[0]!=='pending'&&++numbered===1)return {...result,hash:h(999)};return result;};
+  else f.wallet.guard=async()=>{throw Error('wallet replaced');};
+  const app=await f.open();await assert.rejects(app.prepare(f.allocation));assert.equal(f.records.size,0);assert.equal(f.state.sends,0);assert.equal(f.state.signatures,0);
+ }
+});
+
+function bokRecoveryWaveFixture(){
+ const f=claimProgressFixture();f.input.funding.inspect=async()=>({paymentSaved:true,privateFeeCap:'10',claim:null,claimAction:'claim-bok',phase:'deposit'});return f;
+}
+for(const first of ['recover','account-status'])test(`Bok recovery wave overlaps independent journals; ${first} completes first`,async()=>{
+ const f=bokRecoveryWaveFixture(),gates={'recover':Promise.withResolvers(),'account-status':Promise.withResolvers()},entered=new Set(),both=Promise.withResolvers();
+ f.input.funding.recover=async()=>{entered.add('recover');if(entered.size===2)both.resolve();await gates.recover.promise;return {receipt:{private:'SECRET_RECEIPT'}};};
+ f.input.application.readFundingState=async()=>{entered.add('account-status');if(entered.size===2)both.resolve();await gates['account-status'].promise;return {status:'ready'};};
+ let done=false;const result=advanceAggregateClaim(f.input).finally(()=>done=true);await both.promise;
+ gates[first].resolve();await new Promise(setImmediate);assert.equal(done,false);assert(!f.calls.includes('prepare'));
+ const completion=f.rows.filter(row=>row.state==='complete'&&row.step!=='inspect');assert.deepEqual(completion.map(row=>row.step),[first]);
+ gates[first==='recover'?'account-status':'recover'].resolve();assert.equal((await result).state,'complete');assert(!f.rows.some(row=>row.state==='failed'));
+});
+for(const failure of ['recover','account-status','both'])test(`Bok recovery wave drains before ${failure} failure and reports only selected diagnostic`,async()=>{
+ const f=bokRecoveryWaveFixture(),gates=[Promise.withResolvers(),Promise.withResolvers()],entered=Promise.withResolvers(),errors=[Error('Ethereum private failure'),Error('Aztec private failure')];let arrivals=0,done=false;
+ const run=async(i,name,value)=>{if(++arrivals===2)entered.resolve();await gates[i].promise;if(failure===name||failure==='both')throw errors[i];return value;};
+ f.input.funding.recover=()=>run(0,'recover',{receipt:{}});f.input.application.readFundingState=()=>run(1,'account-status',{status:'ready'});
+ const result=advanceAggregateClaim(f.input).finally(()=>done=true),expected=failure==='account-status'?1:0,observed=assert.rejects(result,e=>e===errors[expected]);
+ await entered.promise;gates[expected].resolve();await new Promise(setImmediate);assert.equal(done,false);assert.equal(f.rows.filter(row=>row.state==='failed').length,0);assert(!f.calls.includes('prepare'));
+ gates[1-expected].resolve();await observed;assert.deepEqual(f.rows.filter(row=>row.state==='failed').map(row=>row.step),[expected?'account-status':'recover']);assert(!f.calls.includes('submit'));assert(!JSON.stringify(f.rows).includes('private failure'));
+});
+for(const mode of ['pending','approved'])test(`Bok recovery wave retains ${mode} recovery priority after draining a failed workflow read`,async()=>{
+ const f=bokRecoveryWaveFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let done=false;
+ f.input.funding.recover=async()=>{if(mode==='pending')throw Object.assign(Error('pending'),{code:'ROLLING_FUNDING_PENDING'});return {approved:true};};
+ f.input.application.readFundingState=async()=>{entered.resolve();await gate.promise;throw Error('unneeded workflow failure');};
+ const result=advanceAggregateClaim(f.input).finally(()=>done=true);await entered.promise;await new Promise(setImmediate);assert.equal(done,false);gate.resolve();
+ assert.deepEqual(await result,mode==='pending'?{state:'waiting',phase:'payment'}:{state:'review-payment'});assert(!f.calls.includes('prepare'));assert.deepEqual(f.rows.filter(row=>row.state==='failed').map(row=>row.step),mode==='pending'?['recover']:[]);
+});
+for(const mode of ['saved-claim','approval','private-fee','aggregate'])test(`Bok recovery wave does not apply to ${mode}`,async()=>{
+ const f=bokRecoveryWaveFixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let statusReads=0;
+ f.input.funding.inspect=async()=>({paymentSaved:true,privateFeeCap:'10',claim:mode==='saved-claim'?{intentId:'PRIVATE_ID',attempted:false}:null,phase:mode==='approval'?'approval':'deposit',claimAction:mode==='private-fee'?'claim-private-fee':mode==='aggregate'?'claim-deposit':'claim-bok'});
+ f.input.funding.recover=async()=>{entered.resolve();await gate.promise;return mode==='approval'?{approved:true}:{receipt:{}};};f.input.application.readFundingState=async()=>{statusReads++;return {status:'ready'};};
+ const result=advanceAggregateClaim(f.input);await entered.promise;await new Promise(setImmediate);assert.equal(statusReads,0);gate.resolve();await result;
+ assert.equal(statusReads,['saved-claim','approval'].includes(mode)?0:1);
 });

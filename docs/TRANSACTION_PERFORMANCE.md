@@ -37,6 +37,16 @@ Immediate moderation reuses its completed review before proving only for the sam
 
 Published `eda83e16`; served worker/SDK hashes verified, with no service restart. Independent review approved both patches. The integrated affected suite passed863 checks. No browser measurement or50% claim follows from these checks. Cold SRS work is deferred by owner direction.
 
+## Funding continuation and warm quote batch — 26 October
+
+The f20 repeat trace shows a2436ms required native Bok balance read followed by an unnecessary2215ms full account-status refresh. The latter starts just after the recorded usable-credit endpoint and blocks the next interaction. Standalone top-ups now retain the required affected-balance read without scheduling that second scan. Posting-credit readiness uses fresh native credit and known collateral; Bok funding invalidates its spent fee display. Independent orphan/account invalidations remain scheduled, and the next transaction still checks native state.
+
+For a new Bok deposit claim with no saved Aztec claim, Ethereum receipt/custody verification and inspection of the prior Aztec workflow now overlap. The f20 trace recorded these sequentially at1314ms and991ms. They use different authenticated stores, drain before continuation, and retain recovery-error priority and native claim authorization. Other claim branches keep their existing order.
+
+Fresh ETH quote qualification now overlaps guarded wallet capture and pending nonce lookup. Both finish before any archive or journal mutation; predecessor nonce maximum and final quote/wallet checks remain. Historical nonce lookup was146ms; this is potential overlap, not measured current elapsed savings. Funded opening starts no extra quote work, and cold SRS is unchanged.
+
+These changes require current browser measurements before any end-to-end reduction claim. Browser access is still denied at the tool boundary.
+
 ## Live f16 measurements — 26 October 2026
 
 Published and pushed `f16ff3d778a31563c66b1169708b6d353efa8cfa`. Same34-character bio shape on Clear Finch succeeded in15.299050s from Save bio to native inclusion/editor closed; public profile then displayed the exact new text. Previous3b observation14.560285s. Preparation fell3.177420s→1.870050s, but depleted test credit triggered2.169740s fee estimation absent from the earlier run. Proof6.808930s vs6.927570s. The differing credit state prevents a matched end-to-end improvement claim. Current inclusion: transaction`0x115249ed7cf0cbe554c9d2f601439871b71b5f607f5cd07e0057e435c5159568`, block5291/hash`0x1948798d660936526bebb350cce9f13764565bb2c138a68b1d2a513eb6008625`.

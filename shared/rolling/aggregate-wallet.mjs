@@ -263,9 +263,15 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const recheckScope=qualification[1].value;check(typeof recheckScope==='function');return recheckScope;
    });
  }
- async function constructEth(values,previous,priorPayment,readOnly=false){
-   // Production capture resolves only after checking the live wallet and chain.
+ async function captureEthInputs(){
    const wallet=await timeFundingPreparation(onProgress,'wallet',()=>read(captureWallet));
+   const nonce=await timeFundingPreparation(onProgress,'nonce',()=>read(()=>provider.getTransactionCount(wallet.address,'pending')));
+   check(Number.isSafeInteger(nonce)&&nonce>=0);
+   return {wallet,nonce};
+ }
+ async function constructEth(values,previous,priorPayment,readOnly=false,capturedInputs){
+   // Production capture resolves only after checking the live wallet and chain.
+   const wallet=capturedInputs?.wallet??await timeFundingPreparation(onProgress,'wallet',()=>read(captureWallet));
    const depositor=wallet.address;
    const existing=readOnly?null:await read(async()=> (await journal(depositor)).inspectSummary());
    check(existing===null||priorPayment&&existing.txHash===priorPayment.txHash&&existing.outcome===priorPayment.outcome,'RECOVERY_REQUIRED');
@@ -273,7 +279,7 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    // not hide its outstanding journal when preparing a replacement directly.
    if(!readOnly&&unsignedQuote(previous.value)&&previous.value?.depositor&&previous.value.depositor!==depositor)
     check(await read(async()=> (await journal(previous.value.depositor)).inspectSummary())===null,'RECOVERY_REQUIRED');
-   let nonce=await timeFundingPreparation(onProgress,'nonce',()=>read(()=>provider.getTransactionCount(depositor,'pending')));if(priorPayment?.request.from===depositor)nonce=Math.max(nonce,priorPayment.request.nonce+1);check(Number.isSafeInteger(nonce)&&nonce>=0);
+   let nonce=capturedInputs?.nonce??await timeFundingPreparation(onProgress,'nonce',()=>read(()=>provider.getTransactionCount(depositor,'pending')));if(priorPayment?.request.from===depositor)nonce=Math.max(nonce,priorPayment.request.nonce+1);check(Number.isSafeInteger(nonce)&&nonce>=0);
    const {collateral,fee,recipientSalt,bridgeSecret,bokScope,bokSecretHash,bokCommitment}=await timeFundingPreparation(onProgress,'secrets',async()=>{
    const collateral=await read(()=>sdk.deriveBoardDepositSecret({walletSecret,walletSalt,owner,
     scope:{l1ChainId:n.chainId,rollupVersion:n.version,rollupAddress:n.rollup,boardAddress:board,portalAddress:s.collateralPortal,depositor},nonce}));
@@ -299,10 +305,17 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
  return Object.freeze({
   async prepare(allocation){
    const values=clone(allocation);prepared=null;
-   const recheckScope=await qualify(values);
-   if(values.asset==='USDC')return prepareUsdc(values,recheckScope);
+   if(values.asset==='USDC')return prepareUsdc(values,await qualify(values));
+   // Wallet identity and the pending nonce do not depend on fee/scope reads.
+   // Drain both branches before any journal inspection or archive/custody write.
+   const reads=await Promise.allSettled([
+    ()=>qualify(values),()=>captureEthInputs(),
+   ].map(read=>Promise.resolve().then(read)));
+   const failure=reads.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+   await contextGuard();
+   const recheckScope=reads[0].value,capturedInputs=reads[1].value;
    const {previous,priorPayment}=await timeFundingPreparation(onProgress,'journal',async()=>{const previous=await stored();return {previous,priorPayment:await archivePrevious(previous)};});
-   return installEth({...await constructEth(values,previous,priorPayment),recheckScope});
+   return installEth({...await constructEth(values,previous,priorPayment,false,capturedInputs),recheckScope});
   },
   // Internal opening capability, never a renderer quote or payment authority.
   // Sent or uncertain custody takes the ordinary post-status preparation path.
@@ -491,12 +504,12 @@ function claimProgressCode(error){try{const d=error!=null?Object.getOwnPropertyD
 export async function advanceAggregateClaim({application,funding,contextGuard=async()=>{},onProgress=()=>{},waits,paused=()=>false}){
  const pause=()=>{if(paused())throw fail('PAUSED');};
  let step='inspect',observedFailure=false;
- const emit=(state,error)=>observeRollingSetup(onProgress,{stage:'funding-claim',step,deploymentStep:null,state,code:state==='failed'?claimProgressCode(error):null});
- const read=async(name,fn,span=name)=>{
-  step=name;observedFailure=false;emit('started');let start;
+ const emit=(state,error,readStep=step)=>observeRollingSetup(onProgress,{stage:'funding-claim',step:readStep,deploymentStep:null,state,code:state==='failed'?claimProgressCode(error):null});
+ const read=async(name,fn,span=name,deferFailure=false)=>{
+  step=name;observedFailure=false;emit('started',undefined,name);let start;
   try{start=performance.now();}catch{}
-  try{await contextGuard();pause();const value=await fn();await contextGuard();pause();emit('complete');return value;}
-  catch(error){observedFailure=true;emit('failed',error);throw error;}
+  try{await contextGuard();pause();const value=await fn();await contextGuard();pause();emit('complete',undefined,name);return value;}
+  catch(error){if(!deferFailure){observedFailure=true;emit('failed',error,name);}throw error;}
   finally{try{if(Number.isFinite(start))performance.measure('rolling.funding-claim.'+span,{start,end:performance.now()});}catch{}}
  };
  try{
@@ -506,12 +519,27 @@ export async function advanceAggregateClaim({application,funding,contextGuard=as
   next=await read('reconcile',()=>application.reconcile(saved.claim.intentId));
   if(next.status==='prepared')return {state:'review-saved',intent:next};
  }else{
-  let receipts;try{receipts=await read('recover',()=>funding.recover({wait:!!waits}));}catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&['ROLLING_FUNDING_PENDING','BB_ETH_RECOVERY_REQUIRED'].includes(d.value))return {state:'waiting',phase:'payment'};throw error;}
+  let recoveryRead,workflowRead;
+  if(claimAction==='claim-bok'&&!saved.claim&&saved.phase==='deposit'){
+   // These journals are independent: Ethereum recovery owns new funding custody;
+   // workflow inspection owns the prior Aztec intent and does not read custody.
+   // Drain both before advancing, preserving recovery failure priority.
+   [recoveryRead,workflowRead]=await Promise.allSettled([
+    ()=>read('recover',()=>funding.recover({wait:!!waits}),'recover',true),
+    ()=>read('account-status',()=>application.readFundingState(),'account-status',true),
+   ].map(fn=>Promise.resolve().then(fn)));
+  }
+  const selectedRead=(name,result)=>{
+   step=name;
+   if(result.status==='rejected'){observedFailure=true;emit('failed',result.reason,name);throw result.reason;}
+   return result.value;
+  };
+  let receipts;try{receipts=recoveryRead?selectedRead('recover',recoveryRead):await read('recover',()=>funding.recover({wait:!!waits}));}catch(error){const d=error==null?null:Object.getOwnPropertyDescriptor(error,'code');if(d&&'value' in d&&['ROLLING_FUNDING_PENDING','BB_ETH_RECOVERY_REQUIRED'].includes(d.value))return {state:'waiting',phase:'payment'};throw error;}
   if(receipts.approved===true)return {state:'review-payment'};
   if(saved.claim)next=await read('reconcile',()=>application.reconcile(saved.claim.intentId));
   else{
    try{
-    const current=await read('account-status',()=>application.readFundingState());
+    const current=workflowRead?selectedRead('account-status',workflowRead):await read('account-status',()=>application.readFundingState());
     check(['ready','recovering'].includes(current?.status),'RECOVERY_REQUIRED');
     if(current.status==='recovering'){
      const action=current.intent?.action;

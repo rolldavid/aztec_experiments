@@ -23,6 +23,7 @@ import {prepareFundingClaim as verifyFundingClaim} from './funding-receipts.mjs'
 import {BaseWallet} from '@aztec-labs/wallet-sdk/base-wallet';
 import {FIELD_MODULUS} from './invocation.mjs';
 import {createRollingApplication,createPendingWithdrawalSlot} from './application.mjs';
+import {advanceAggregateClaim} from './aggregate-wallet.mjs';
 import {createSynchronizedRollingApplication} from './synchronized-application.mjs';
 import {executeRollingAction} from '../../apps/rolling/wallet-action.mjs';
 import {executeAutomaticWithdrawal} from '../../apps/rolling/automatic-withdrawal.mjs';
@@ -3550,4 +3551,14 @@ test('deferred empty-credit rejection happens before writing an intent or attemp
  await f.app.prefetchContext({deferredPayment:true});assert.equal(credits,0);
  await assert.rejects(f.app.prepare(deferredMetadataActions[0],{immediate:true}),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});
  assert.equal(credits,1);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
+});
+
+for(const installFirst of [false,true])test(`Bok recovery wave historical claim never accesses new custody; installed first=${installFirst}`,async()=>{
+ const f=topUpFixture('bok');let scope={};f.options.accountSession.operationScope=()=>scope;
+ const previous=f.restart(),prepared=await previous.prepare({type:'claim-bok',receipt:f.receipt});await previous.submitPrepared(prepared.intentId);
+ let custodyReads=0,installed=false;f.options.funding.readBokClaimCustody=async()=>{custodyReads++;throw Error('previous receipt must not read new custody');};
+ const app=f.restart(),entered=Promise.withResolvers(),gate=Promise.withResolvers(),stop=Error('prepared boundary');
+ const funding={inspect:async()=>({paymentSaved:true,privateFeeCap:'100',claim:null,claimAction:'claim-bok',phase:'deposit'}),recover:async()=>{if(installFirst){installed=true;entered.resolve();await gate.promise;}else{entered.resolve();await gate.promise;installed=true;}return {receipt:f.receipt};}};
+ const application={readFundingState:async()=>{await entered.promise;if(!installFirst)gate.resolve();const result=await app.readFundingState();if(installFirst)gate.resolve();return result;},prepare:async()=>{assert.equal(installed,true);assert.equal(custodyReads,0);throw stop;}};
+ await assert.rejects(advanceAggregateClaim({application,funding,contextGuard:f.options.contextGuard}),error=>error===stop);assert.equal(custodyReads,0);assert.equal(f.state.sends,1);
 });

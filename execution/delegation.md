@@ -306,3 +306,13 @@ Previous turn was progress: e8d4 published/pushed with exact public hashes. Brow
 Root integrated both independently approved drafts: generic metadata overlap (17 focused checks) and exact-operation moderation review reuse (42 focused checks). Root affected suite passed863 checks in8.8s. Deferred zero-credit boundary corrected before integration. Moderation retains final fresh authority; no source-of-authority change. Browser access denied before navigation, so no new warm or all-flow timing claimed.
 
 Published/pushed eda83e16. Public native worker and SDK hashes match build; no app/proxy restart. Exact upload object version, signed launcher and archive removed. Source-only agent drafts cleaned. One retained build/current packet; no new measured timing.
+
+## 26 October — remaining measured work after eda83 publication
+
+Previous turn made progress: reviewed runtime batch live and pushed. Retried existing IAB via documented getTab; tool again denies local browser access before navigation. Inclusion_timing audits residual measured Bok stages; pending_reply_ui audits warm fresh quote dependencies; pending_feed_release audits post-action refresh and baseline coverage. Findings first, no speculative patches or cold SRS changes. Root reconciles graph checkpoint and measured work.
+
+Concrete next change: f20 repeat shows required Bok refresh2436ms then another full account-status refresh2215ms; next UI work waits on the latter. pending_feed_release drafts removal with correct fee-needed/fee-ready transitions, affected native balance remains required. pending_reply_ui reviews. No new elapsed-time claim.
+
+Accepted two additional narrow drafts: inclusion_timing overlaps no-saved-claim receipt recovery with independent prior app journal inspection (f20 serial991ms), verifying no cross-custody dependency; pending_reply_ui overlaps only quote qualification with guarded wallet/pending nonce read, draining before any archive/journal mutation (old nonce146ms). Independent peer review before root integration.
+
+All three drafts independently approved and integrated. Root186 pure DOM/readiness checks,743 application checks, final270 aggregate checks passed; installed SDK check and wallet build passed. Full check first found changed disconnected-wallet vs prior-payment diagnostic order; strengthened same-fixture test proves both reject without record/sign/send changes, independently approved. Two pre-existing readiness test assertions reproduced on exact deployed source, updated to current navigation semantics with independent review. No runtime changes for those test corrections. No real browser measurement.

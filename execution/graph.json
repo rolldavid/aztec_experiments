@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "e8d4cede live/pushed. Funded opening skips unused signup quote; fresh quote prepares once; native Bok claim reads overlap; browser discovery skips identical fact writes. Root20 explicit VM+28 custody+22 native checks and SDK build/check+wallet build passed. Public worker and Brotli SDK hashes verified; no service restart. Cold SRS untouched. CUA denies browser access after restart; actual warm2s and all-flow50% remain unverified. All owned draft/transfer payloads cleaned; one build/current packet retained.",
+      "checkpoint": "eda83e16 live/pushed. Generic profile/name/subboard fee metadata overlaps synchronization; exact held moderation reviews reduce3 to2 with final fresh authority intact. Independent review,863 root checks and actual SDK/wallet build passed; public worker/SDK hashes verified. Prior warm opening improvements retained. Cold SRS deferred. Browser tool still denies access; no new timing or target-completion claim. All7 protected core services active; no restart.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
@@ -9846,7 +9846,7 @@
     "status": "active",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
     "checkpoint": "eda83e16 live/pushed. Generic profile/name/subboard fee metadata overlaps synchronization; exact held moderation reviews reduce3 to2 with final fresh authority intact. Independent review,863 root checks and actual SDK/wallet build passed; public worker/SDK hashes verified. Prior warm opening improvements retained. Cold SRS deferred. Browser tool still denies access; no new timing or target-completion claim. All7 protected core services active; no restart.",
-    "next_action": "Measure warm funded opening and fresh-account payment readiness on eda83e16 when browser access resumes; then actual profile/moderation/funding flows against recorded useful endpoints. No cold SRS work or speculative elapsed-time claim.",
+    "next_action": "Publish reviewed funding batch: no redundant topup status scan, overlapping independent Bok receipt/workflow reads, overlapping quote qualification/wallet nonce. Root affected checks and wallet build passed. Then actual warm/full-flow measurement when browser access permits.",
     "account_opening_target": {
       "maximum_seconds": 2,
       "start": "Wallet selection click",

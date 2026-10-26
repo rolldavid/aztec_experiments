@@ -926,16 +926,22 @@ for(const leave of ['none','close','view','account'])test(`pending refund follow
  assert.equal(f.document.querySelectorAll('button').some(b=>b.textContent==='Withdraw to Ethereum'),leave==='none');assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'false');assert.equal(f.submissions.length,1);assert.equal(waits,1);
 });
 
-test('included Bok funding requires fresh native Bok credit but releases before unrelated account refresh',{timeout:3000},async t=>{
- const native=Promise.withResolvers(),nativeStarted=Promise.withResolvers(),account=Promise.withResolvers(),accountStarted=Promise.withResolvers();let claims=0;
+for(const orphaned of [false,true])test('included Bok funding keeps only independently requested account refresh: '+orphaned,{timeout:3000},async t=>{
+ const native=Promise.withResolvers(),nativeStarted=Promise.withResolvers();let claims=0;
  const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){return {...input,phase:'deposit',maximumSwapWei:'1000'};},async confirm(){return {};},async inspect(){return null;},async advanceClaim(){claims++;return {state:'included',intent:{intentId:'claim',txHash:'0x'+'8'.repeat(64),inclusion:{blockNumber:3,blockHash:'0x'+'7'.repeat(64)},action:{type:'claim-bok'}}};}};
- const f=await fixture(t,{topup:cap,balanceRead:count=>{if(count===1)return Promise.resolve({available:true,availableCredit:'0'});nativeStarted.resolve();return native.promise;},posting:{balanceRefresh:async()=>{accountStarted.resolve();await account.promise;}}});
+ const f=await fixture(t,{topup:cap,balanceRead:count=>{if(count===1)return Promise.resolve({available:true,availableCredit:'0'});nativeStarted.resolve();return native.promise;},posting:{balanceRefresh:async()=>assert.equal(orphaned,true,'only an independent invalidation requests a refresh')}});
  await f.document.until(()=>f.host.textContent.includes('0 USDC available'));f.panel.close();f.host.querySelectorAll('button').find(b=>b.textContent==='Add credit').fire('click');
  const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pay'&&!b.disabled));pay.fire('click');await nativeStarted.promise;
  assert.equal(f.core().status,1,'no unrelated account scan ahead of native Bok balance');assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');assert(!f.host.textContent.includes('1 USDC available'));
- native.resolve({available:true,availableCredit:'1000000'});await accountStarted.promise;
+ if(orphaned){
+  f.session.observeIncluded=async({txHash})=>({txHash,status:'orphaned'});
+  f.panel.observePublicPosts([],{checkpoint:{number:4,hash:'0x'+'6'.repeat(64)}});await new Promise(setImmediate);assert.equal(f.core().status,1,'orphan refresh waits for held claim balance');
+ }
+ native.resolve({available:true,availableCredit:'1000000'});
  await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert(f.host.textContent.includes('1 USDC available'));assert.equal(f.reads(),2);assert.equal(claims,1);assert.match(f.document.body.textContent,/Confirmation pending/i);
- account.resolve();await new Promise(resolve=>setImmediate(resolve));
+ await new Promise(setImmediate);assert.equal(f.core().status,orphaned?2:1);
+ f.panel.close();f.panel.open({type:'post'});if(!orphaned)assert.match(f.document.querySelector('.composer-cost').textContent,/Balance —/,'spent fee display is invalidated');
+ assert.equal((await f.panel.act({type:'like',post:'42'})).status,'confirmed');assert.equal(f.submissions.length,1);assert.equal(f.core().status,orphaned?2:1);
 });
 
 test('top-up changes wallet prompt to Ethereum waiting after acknowledged submission, before receipt',{timeout:3000},async()=>{
@@ -1005,25 +1011,27 @@ test('foreground read clears only its own progress when it settles',{timeout:300
  held.resolve();await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert(!f.document.body.textContent.includes('Loading your account…'));await new Promise(setImmediate);
 });
 
-for(const mode of ['success','native-failure','account-change'])test(`standalone posting-credit completion waits only for fresh native credit: ${mode}`,{timeout:3000},async t=>{
- const native=Promise.withResolvers(),nativeStarted=Promise.withResolvers(),account=Promise.withResolvers(),accountStarted=Promise.withResolvers();let claims=0,reads=0;
+for(const mode of ['success','no-collateral','zero-credit','native-failure','account-change'])test(`standalone posting-credit completion waits only for fresh native credit: ${mode}`,{timeout:3000},async t=>{
+ const native=Promise.withResolvers(),nativeStarted=Promise.withResolvers();let claims=0,reads=0;
  const cap={ethAvailable:true,defaultPrivateFeeCap:'100',async prepare(input){return {...input,phase:'deposit',maximumSwapWei:'1000'};},async confirm(){return {};},async inspect(){return null;},async advanceClaim(){claims++;return {state:'included',intent:{intentId:'claim',txHash:'0x'+'8'.repeat(64),inclusion:{blockNumber:3,blockHash:'0x'+'7'.repeat(64)},action:{type:'claim-private-fee'}}};}};
- const f=await fixture(t,{fee:'fee-needed',balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{balanceRefresh:async()=>{accountStarted.resolve();await account.promise;}}});
+ const f=await fixture(t,{fee:'fee-needed',depositIds:mode==='no-collateral'?[]:['9'],balanceRead:async()=>({available:true,availableCredit:'0'}),posting:{balanceRefresh:async()=>assert.fail('unrelated account refresh')}});
  f.session.topup['private-fee']=cap;f.session.application.readPrivateFeeCredit=async()=>{reads++;nativeStarted.resolve();return native.promise;};
  f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Add posting credit').fire('click');
  const pay=await f.document.until(()=>f.document.querySelectorAll('button').find(b=>b.textContent==='Pay'&&!b.disabled));pay.fire('click');await nativeStarted.promise;
  assert.equal(f.core().status,1);assert.equal(f.document.querySelector('dialog').getAttribute('aria-busy'),'true');
  if(mode==='account-change')f.runtime.getAccount=()=>null;
- if(mode==='native-failure')native.reject(Error('native unavailable'));else native.resolve({availableCredit:'2000000000000000000'});
- if(mode==='success'){
-  await accountStarted.promise;await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ if(mode==='native-failure')native.reject(Error('native unavailable'));else native.resolve({availableCredit:mode==='zero-credit'?'0':'2000000000000000000'});
+ if(['success','no-collateral','zero-credit'].includes(mode)){await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
   assert.match(f.document.body.textContent,/Posting credit added/);
-  f.document.querySelectorAll('button').find(b=>b.textContent==='Add posting credit').fire('click');assert(f.document.querySelectorAll('strong').some(n=>n.textContent==='2'));
-  assert(f.document.body.textContent.includes('Add posting credit'),'stale deposit data does not relabel account ready');
+  assert.equal(f.document.querySelectorAll('button').some(b=>b.textContent==='Write a post'),mode==='success');
+  if(mode==='no-collateral')assert(f.document.querySelectorAll('button').some(b=>b.textContent==='Set up posting'));
+  if(mode==='zero-credit')assert(f.document.body.textContent.includes('Your deposit is already in place.'));
+  f.panel.close();f.panel.open({});f.document.querySelectorAll('button').find(b=>b.textContent==='Add posting credit').fire('click');assert(f.document.querySelectorAll('strong').some(n=>n.textContent===(mode==='zero-credit'?'0':'2')));
+  if(mode==='success'){f.panel.close();assert.equal((await f.panel.act({type:'like',post:'42'})).status,'confirmed');assert.equal(f.submissions.length,1);}
  }else{
   await f.document.until(()=>f.document.querySelector('dialog').getAttribute('aria-busy')==='false');assert(!f.document.body.textContent.includes('Posting credit added'));assert.equal(f.core().status,1);
  }
- assert.equal(claims,1);assert.equal(reads,1);account.resolve();await new Promise(setImmediate);
+ assert.equal(claims,1);assert.equal(reads,1);await new Promise(setImmediate);assert.equal(f.core().status,1);
 });
 
 test('withdrawal interaction completes at Ethereum settlement before unrelated account refresh',{timeout:3000},async t=>{

@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — e8d4cede live/pushed. Funded opening skips unused signup quote; fresh quote prepares once; native Bok claim reads overlap; browser discovery skips identical fact writes. Root20 explicit VM+28 custody+22 native checks and SDK build/check+wallet build passed. Public worker and Brotli SDK hashes verified; no service restart. Cold SRS untouched. CUA denies browser access after restart; actual warm2s and all-flow50% remain unverified. All owned draft/transfer payloads cleaned; one build/current packet retained.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — eda83e16 live/pushed. Generic profile/name/subboard fee metadata overlaps synchronization; exact held moderation reviews reduce3 to2 with final fresh authority intact. Independent review,863 root checks and actual SDK/wallet build passed; public worker/SDK hashes verified. Prior warm opening improvements retained. Cold SRS deferred. Browser tool still denies access; no new timing or target-completion claim. All7 protected core services active; no restart.
 
 ## Ready internal work
 
