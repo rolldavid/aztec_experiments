@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Browser restored; real warm opening3.2649s, ETH-to-Bok38.281095s, bio25.48142s retained. Root integrating independently reviewed three funding read overlaps; native receipt wait investigation in parallel. Targets unachieved.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Published e4a02f22 without restart; actual funded opening2.9956/2.5002/2.424945s, real ETH-to-Bok49.345615s usable3USDC. Root integrating reviewed immutable custody namespace simplification to remove duplicate remote admission during local reads. Ancestry snapshot proposal under review; all goals unachieved.
 
 ## Ready internal work
 

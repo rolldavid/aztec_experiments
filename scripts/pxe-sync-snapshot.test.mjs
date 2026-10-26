@@ -328,3 +328,79 @@ test('native sync diagnostics are opt-in and retain prewrite and moving-tier che
  for(const name of ['prewrite-moving-head','prewrite-recheck'])assert(names().some(x=>x.name==='rolling.proof.native.phase.sync-'+name),name);
  assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),13,'diagnostics do not change the source-plan anchor');
 });
+
+// Synthetic chain data with native archive helpers; no live latency claim.
+const {ARCHIVE_HEIGHT,DomainSeparator,GENESIS_BLOCK_HEADER_HASH,GENESIS_ARCHIVE_ROOT}=await import('@aztec-labs/constants');
+const {MembershipWitness,computeRootFromSiblingPath,makePoseidonMerkleHash,MerkleTreeCalculator}=await import('@aztec-labs/foundation/trees');
+const archiveHash=makePoseidonMerkleHash(DomainSeparator.MERKLE_HASH);
+async function snapshotAdvanceFixture(t){
+ const f=await fixture(t,{tier:'proposed'});await f.advance(10);f.state.tip=12;
+ const path=Array.from({length:ARCHIVE_HEIGHT},(_,i)=>new Fr(i+999));
+ const witness=new MembershipWitness(ARCHIVE_HEIGHT,10n,path);
+ const root=await computeRootFromSiblingPath(f.chain[10].hash.toBuffer(),path.map(x=>x.toBuffer()),10,archiveHash);
+ f.chain[12].header.lastArchive.root=Fr.fromBuffer(root);f.chain[12].header.lastArchive.nextAvailableLeafIndex=12;
+ f.chain[12].hash=await f.chain[12].header.recomputeHash();f.state.witnessReads=0;
+ f.node.getBlockHashMembershipWitness=async(reference,hash)=>{f.state.witnessReads++;assert.equal(reference.number,12);assert.equal(reference.hash.toString(),f.id(12).hash);assert.equal(hash.toString(),f.id(10).hash);return witness;};
+ f.state.tipReads=0;f.state.numberReads=0;f.state.hashReads=0;
+ return {...f,witness,run:()=>f.sync.syncWithAnchorRead(async selected=>selected,{snapshotAncestry:true})};
+}
+test('native archive hasher matches canonical genesis root',async()=>{
+ const tree=await MerkleTreeCalculator.create(ARCHIVE_HEIGHT,Buffer.alloc(32),archiveHash);
+ assert((await tree.computeTreeRoot([new Fr(GENESIS_BLOCK_HEADER_HASH).toBuffer()])).equals(new Fr(GENESIS_ARCHIVE_ROOT).toBuffer()));
+});
+test('readonly snapshot advance verifies exact-target ancestry without later freshness wave',async t=>{
+ const f=await snapshotAdvanceFixture(t);await f.run();assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);
+ assert.equal(f.state.tipReads,1);assert.equal(f.state.numberReads,1,'native ancestry walk only');assert.equal(f.state.hashReads,1,'native selected header only');assert.equal(f.state.witnessReads,1);
+ await f.run();assert.equal(f.state.witnessReads,1,'same anchor requires no ancestry request');
+});
+for(const defect of ['absent','index','path','current','root'])test('readonly ancestry rejects '+defect+' before anchor write',async t=>{
+ const f=await snapshotAdvanceFixture(t),before=await f.snapshot();
+ if(defect==='absent')f.node.getBlockHashMembershipWitness=async()=>undefined;
+ if(defect==='index')f.witness.leafIndex=9n;
+ if(defect==='path')f.witness.siblingPath[0]=new Fr(2);
+ if(defect==='current')f.node.getBlockHashMembershipWitness=async()=>{await f.anchor.setHeader(f.chain[9].header);return f.witness;};
+ if(defect==='root'){f.chain[12].header.lastArchive.root=new Fr(17);f.chain[12].hash=await f.chain[12].header.recomputeHash();}
+ await assert.rejects(f.run(),/PXE_REORG_/);
+ if(defect!=='current')assert.deepEqual(await f.snapshot(),before);else assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),9);
+});
+test('readonly ancestry read is drained on public prefetch failure',async t=>{
+ const f=await snapshotAdvanceFixture(t),gate=Promise.withResolvers(),entered=Promise.withResolvers();let finished=false;
+ const native=f.node.getBlockHashMembershipWitness;f.node.getBlockHashMembershipWitness=async(...args)=>{entered.resolve();await gate.promise;return native(...args);};
+ const run=f.sync.syncWithAnchorRead(async()=>{throw Error('prefetch failed');},{snapshotAncestry:true});
+ const rejected=assert.rejects(run,/prefetch failed/).finally(()=>finished=true);await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(finished,false);gate.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);
+});
+test('readonly snapshot retains native rollback for a real lower-tip fork',async t=>{
+ const f=await fixture(t,{tier:'proposed'});await f.seed(true);f.state.tip=12;
+ f.node.getBlockHashMembershipWitness=async()=>assert.fail('lower tip needs rollback, not advance proof');
+ await f.sync.syncWithAnchorRead(async()=>7,{snapshotAncestry:true});assert.deepEqual(f.state.prunes,[12]);assert.equal(await f.balance(),100n);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);
+});
+test('readonly snapshot retains native rollback for a same-height fork',async t=>{
+ const f=await fixture(t,{tier:'proposed'});await f.seed(true);f.chain[15]=await block(15,999);
+ f.node.getBlockHashMembershipWitness=async()=>assert.fail('same-height fork needs rollback, not advance proof');
+ await f.sync.syncWithAnchorRead(async()=>7,{snapshotAncestry:true});assert.deepEqual(f.state.prunes,[12]);assert.equal(await f.balance(),100n);assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),15);
+});
+for(const tier of ['checkpointed','proven','finalized'])test('readonly snapshot advance cannot override '+tier+' tier policy',async t=>{
+ const f=await fixture(t,{tier});await assert.rejects(f.sync.syncWithAnchorRead(async()=>7,{snapshotAncestry:true}),/PXE_ANCHOR_READ_BUSY/);
+});
+
+test('captured readonly snapshot survives later fork and next ordinary sync rolls it back',async t=>{
+ const f=await snapshotAdvanceFixture(t),gate=Promise.withResolvers(),entered=Promise.withResolvers(),oldTarget=f.id(12);
+ const witness=f.node.getBlockHashMembershipWitness;f.node.getBlockHashMembershipWitness=async(...args)=>{const value=await witness(...args);await gate.promise;return value;};
+ const selected=f.sync.readonlySnapshotTarget.bind(f.sync);f.sync.readonlySnapshotTarget=async(...args)=>{entered.resolve();return selected(...args);};
+ const work=f.run();await entered.promise;f.chain[12]=await block(12,999);gate.resolve();await work;
+ assert.equal((await(await f.anchor.getBlockHeader()).hash()).toString(),oldTarget.hash,'result retains exact captured fork');
+ assert.equal(f.sync.anchorRead,undefined);await f.sync.sync();
+ assert.deepEqual(f.state.prunes,[10]);assert.equal((await(await f.anchor.getBlockHeader()).hash()).toString(),f.id(12).hash,'next ordinary sync has no snapshot permission');
+});
+test('readonly ancestry detaches witness before a later provider mutation',async t=>{
+ const f=await snapshotAdvanceFixture(t),gate=Promise.withResolvers(),entered=Promise.withResolvers();
+ const selected=f.sync.readonlySnapshotTarget.bind(f.sync);f.sync.readonlySnapshotTarget=async(...args)=>{entered.resolve();await gate.promise;return selected(...args);};
+ const work=f.run();await entered.promise;f.witness.leafIndex=9n;f.witness.siblingPath[0]=new Fr(33);gate.resolve();await work;
+ assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);
+});
+test('ancestry RPC rejection drains the independent public source read',async t=>{
+ const f=await snapshotAdvanceFixture(t),gate=Promise.withResolvers(),entered=Promise.withResolvers();let finished=false;
+ f.node.getBlockHashMembershipWitness=async()=>{throw Error('witness failed');};
+ const work=f.sync.syncWithAnchorRead(async()=>{entered.resolve();await gate.promise;return 1;},{snapshotAncestry:true});
+ const rejected=assert.rejects(work,/PXE_REORG_/).finally(()=>finished=true);await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(finished,false);gate.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);
+});

@@ -224,7 +224,7 @@ export function validatedPxeProve(source){
                     ...(feeAddress?[()=>this.node.getContract(feeAddress,anchor)]:[]),
                     ()=>this.node.findLeavesIndexes(anchor,SyncTreeId.NULLIFIER_TREE,[nullifier]),
                 ].map(read=>Promise.resolve().then(read)));
-            },{warmNodeCache:true});
+            },{warmNodeCache:true,snapshotAncestry:true});
         });
     }
     // Public API\n`);

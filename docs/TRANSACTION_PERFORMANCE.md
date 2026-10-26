@@ -68,6 +68,18 @@ Opening now uses the existing joint Board/FPC native discovery wave immediately,
 
 Bok funding overlaps fixed-block L1 portal getters with the existing L2 canonical check, final gas-price reads with funding-scope verification, and public plugin admission with native credit discovery. A shared admission helper serves all Bok balance callers; no duplicate status implementation or new cache was added. All reads drain before the operation releases. Independent source reviews approved both changes. Live measurements are required before a speedup claim.
 
+## e4 live follow-up
+
+`e4a02f22` is published with no service restart. Public worker SHA256`092990e513ece69bd4b0e8effbee329e91241e4e3a240c6b76547a866768e862` matched. Funded opening observations:2.995600s after the earlier bio,2.500210s after a Bok top-up, and2.424945s on immediate cached reload with no intervening transaction. The last case includes236ms automatic signature and measured3.315740s from the earlier account-button click. None establishes the2s target or cold new-account acceptance.
+
+The first e4 status took1.271s because it discovered a real pending refund, including326ms partial completion lookup and238ms native validation absent from the prior af0 trace. Repeat status fell to697/684ms; actual Board/FPC reads overlap. The tagged lookup is native partial-refund discovery, not legacy encrypted sender delivery.
+
+Actual1USDC ETH-to-Bok payment took49.345615s and exposed3USDC usable balance after proposed inclusion. Pay→wallet request improved9.044→6.727s, but the Ethereum interval increased. Postpayment claim work remained approximately26s. Native proof6.654s; observed Aztec inclusion4.015s; required credit refresh2.381s. These observations do not satisfy the50% goal.
+
+The next source change separates immutable encrypted storage namespace from current payment admission. It removes full remote portal qualification merely to read local custody, including the repeat after bridge readiness. Quote and the final presend boundary qualify current scope; receipt, network, canonical and actual claim validation remain. The prior scope WeakMap is deleted, not replaced with another cache. Independent review approved; affected checks and published measurement remain recorded separately. The redundant initial confirm qualification is removed because the existing journal always invokes final qualification before its only wallet-send call; preflight failure restores its local records.
+
+Readonly opening now uses one freshly captured, internally consistent snapshot. Its local anchor is verified against the selected header with the native archive membership proof; subsequent transaction preparation still synchronizes freshly. This replaces the later serial remote freshness sweep only on forward, non-pruned readonly paths. It deliberately reports captured-snapshot state, not a promise that the chain cannot change afterward. Rollback, tier acknowledgment and operation ownership remain.57 focused native checks passed, and a real witness from the published node verified its root at block5649 for retained block5615. No measured latency gain is claimed before publication.
+
 ## Remaining qualification work
 
 Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.

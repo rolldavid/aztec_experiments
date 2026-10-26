@@ -753,15 +753,15 @@ for(const change of ['pending-state','expiry','encoded-request'])test(`ETH final
  await assert.rejects(app.confirm());assert.equal(f.state.sends,0);assert.equal((await app.inspect()).paymentSaved,false);
 });
 
-for(const owned of [false,true])test(`top-up phase checks stay fresh while owned slot reads reuse scope: ${owned}`,async()=>{
+for(const owned of [false,true])test(`top-up admission stays fresh while custody uses its fixed namespace: ${owned}`,async()=>{
  const f=topupFixture();f.state.allowance=1000n;let operation={},scopes=0;
  f.options.resolveScope=async()=>{scopes++;return f.scope;};if(owned)f.options.operationScope=()=>operation;
  const cap=await f.open();await cap.prepare(f.allocation);assert.equal(scopes,1);
- operation={};scopes=0;await cap.confirm();assert.equal(scopes,owned?2:3,'Fresh confirm and presend phase checks remain');
+ operation={};scopes=0;await cap.confirm();assert.equal(scopes,1,'Fresh presend qualification remains immediately before payment');
  operation={};scopes=0;
  await cap.inspect();await cap.recover();await cap.checkpointClaim({intentId:h(900),attempted:false});await cap.checkpointClaim({intentId:h(900),attempted:true});
- assert.equal(scopes,owned?1:4,'Only journal plumbing reuses same-operation qualification');
- operation={};await cap.inspect();assert.equal(scopes,owned?2:5,'New operation always qualifies afresh');
+ assert.equal(scopes,0,'Local custody plumbing does not repeat admission');
+ operation={};await cap.inspect();assert.equal(scopes,0,'Native anchor invalidation does not change the custody namespace');
 });
 for(const change of ['scope','guard','operation'])test(`top-up scope reuse refuses ${change} changes`,async()=>{
  const f=topupFixture();let operation={},calls=0,invalid=false;
@@ -770,7 +770,7 @@ for(const change of ['scope','guard','operation'])test(`top-up scope reuse refus
  f.options.resolveScope=async()=>{calls++;return f.scope;};
  const cap=await f.open();await cap.inspect();assert.equal(calls,1);
  if(change==='guard'){invalid=true;await assert.rejects(cap.inspect(),/Account replaced/);assert.equal(calls,1);}
- else if(change==='scope'){operation={};f.scope.portal=a(999);await assert.rejects(cap.inspect(),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(calls,2);}
+ else if(change==='scope'){operation={};f.scope.portal=a(999);assert.equal(await cap.inspect(),null);assert.equal(calls,1);await assert.rejects(cap.prepare(f.allocation),{code:'ROLLING_FUNDING_MISMATCH'});assert.equal(calls,2);assert.equal(f.state.sends,0);}
  else{
   operation={};const before=operation;f.options.resolveScope=async()=>f.scope;
   // Captured resolver switches the owned operation while it is being qualified.
@@ -778,13 +778,13 @@ for(const change of ['scope','guard','operation'])test(`top-up scope reuse refus
   await assert.rejects((await g.open()).inspect(),{code:'ROLLING_FUNDING_MISMATCH'});assert.notEqual(operation,before);
  }
 });
-test('top-up presend qualification failure invalidates earlier same-operation scope',async()=>{
+test('top-up presend failure leaves custody readable but cannot authorize another payment',async()=>{
  const f=topupFixture();f.state.allowance=1000n;let operation={},calls=0,reject=false;
  f.options.operationScope=()=>operation;f.options.resolveScope=async()=>{calls++;if(reject)throw Error('Portal disabled');return f.scope;};
  const cap=await f.open();await cap.prepare(f.allocation);operation={};
  const guard=f.wallet.guard;let guards=0;f.wallet.guard=async()=>{await guard();if(++guards===2)reject=true;};
  await assert.rejects(cap.confirm());assert.equal(f.state.sends,0);
- const before=calls;await assert.rejects(cap.inspect(),/Portal disabled/);assert(calls>before);
+ const before=calls;await cap.inspect();assert.equal(calls,before);await assert.rejects(cap.prepare(f.allocation),/Portal disabled/);assert.equal(calls,before+1);assert.equal(f.state.sends,0);
 });
 
 for(const asset of ['ETH','USDC'])test(`standalone ${asset} quote overlaps independent RPC waves without changing calls or final authority`,async()=>{
@@ -1317,14 +1317,57 @@ test('purchase recovery retains final canonical check after fallback journal wri
 for(const failure of ['none','scope','fees','owner'])test(`standalone confirm scope and fee wave drains before send: ${failure}`,async()=>{
  const hold=Promise.withResolvers(),entered=Promise.withResolvers(),started=new Set();
  let scopes=0,done=false;const mark=name=>{started.add(name);if(started.size===2)entered.resolve();};
- // The first scope is the unchanged pre-custody boundary; the second belongs
- // to the journal's prepareRequest immediately before the wallet send.
+ // Scope qualification belongs to the journal's prepareRequest immediately
+ // before the wallet send; local custody writes do not repeat this RPC wave.
  const g=ethTopupFixture();let armed=false;const originalScope=g.options.resolveScope,originalFees=g.options.provider.getFeeData;
- g.options.resolveScope=async()=>{if(armed&&++scopes===2){mark('scope');if(failure==='scope')throw Error('scope read failed');await hold.promise;}return originalScope();};
+ g.options.resolveScope=async()=>{if(armed&&++scopes===1){mark('scope');if(failure==='scope')throw Error('scope read failed');await hold.promise;}return originalScope();};
  g.options.provider.getFeeData=async()=>{if(armed){mark('fees');if(failure==='fees')throw Error('fee read failed');await hold.promise;}return originalFees();};
  const current=await g.open();await current.prepare(g.allocation);armed=true;
  const pending=current.confirm().then(value=>({value}),error=>({error})).finally(()=>done=true);
  await entered.promise;await new Promise(setImmediate);assert.equal(done,false);assert.equal(g.state.sends,0);
  if(failure==='owner')g.state.invalid=true;hold.resolve();const result=await pending;
  if(failure==='none'){assert(result.value.receipt);assert.equal(g.state.sends,1);}else{assert(result.error);assert.equal(g.state.sends,0);}
+});
+
+for(const failure of ['network','operation','resolver'])test(`top-up failed first namespace qualification cannot seed custody: ${failure}`,async()=>{
+ const f=topupFixture();let calls=0,operation={},bad=true;
+ const network=f.options.provider.getNetwork;
+ f.options.operationScope=()=>operation;
+ f.options.resolveScope=async()=>{calls++;if(bad&&failure==='resolver')throw Error('scope failed');if(bad&&failure==='operation')operation={};return f.scope;};
+ f.options.provider.getNetwork=async()=>bad&&failure==='network'?{chainId:1n}:network();
+ const cap=await f.open();await assert.rejects(cap.inspect());assert.equal(calls,1);bad=false;
+ assert.equal(await cap.inspect(),null);assert.equal(calls,2,'failed qualification did not publish the namespace');
+ assert.equal(await cap.inspect(),null);assert.equal(calls,2);assert.equal(f.state.sends,0);
+});
+
+test('top-up custody survives native anchor replacement but receipt/fork authority stays fresh',async()=>{
+ const f=ethTopupFixture();let operation={},scopes=0,receipts=0,blocks=0;
+ f.options.operationScope=()=>operation;f.options.resolveScope=async()=>{scopes++;return f.scope;};
+ const receipt=f.options.provider.getTransactionReceipt,block=f.options.provider.getBlock;
+ f.options.provider.getTransactionReceipt=async(...args)=>{receipts++;return receipt(...args);};
+ f.options.provider.getBlock=async(...args)=>{blocks++;return block(...args);};
+ const cap=await f.open();await cap.prepare(f.allocation);const paid=await cap.confirm();const qualified=scopes;
+ operation={};await cap.inspect();const before=receipts;await cap.recover();assert(receipts>before);const canonical=blocks;
+ operation={synchronized:true};await cap.loadAggregate(paid.receipt.txHash);assert(blocks>canonical);assert.equal(scopes,qualified);
+ f.options.provider.getBlock=async tag=>({...await block(tag),hash:h(999)});
+ await assert.rejects(cap.recover());await assert.rejects(cap.loadAggregate(paid.receipt.txHash));assert.equal(scopes,qualified);assert.equal(f.state.sends,1);
+});
+
+for(const phase of ['approval','deposit','ETH'])test(`standalone ${phase} final scope failure restores both journals before any new send`,async()=>{
+ const f=phase==='ETH'?ethTopupFixture():topupFixture(),journals=[],create=f.options.sdk.createEthereumJournal,scope=f.options.resolveScope;
+ let failScope=false,scopeReads=0,writes=0;
+ f.options.resolveScope=async()=>{scopeReads++;if(failScope)throw Error('Portal no longer active');return scope();};
+ f.options.sdk.createEthereumJournal=async input=>{const journal=await create(input);journals.push(journal);return journal;};
+ const cas=f.options.storage.compareAndSwap;f.options.storage.compareAndSwap=async(...args)=>{writes++;return cas(...args);};
+ const cap=await f.open();await cap.prepare(f.allocation);
+ if(phase==='deposit'){await cap.confirm();assert.equal(f.state.sends,1);assert.equal((await cap.prepare(f.allocation)).phase,'deposit');}
+ const before=await cap.inspect(),previousRequest=await journals.at(-1).inspectRequest(),sends=f.state.sends,beforeWrites=writes;
+ scopeReads=0;failScope=true;
+ await assert.rejects(cap.confirm(),{code:'BB_ETH_PREFLIGHT_FAILED'});
+ assert.equal(scopeReads,1,'fresh scope is checked exactly at the actual presend boundary');
+ assert.equal(f.state.sends,sends,'no new wallet transaction was invoked');
+ assert(writes>=beforeWrites+5,'both staged journal values and their rollbacks were exercised');
+ assert.deepEqual(await cap.inspect(),before);assert.deepEqual(await journals.at(-1).inspectRequest(),previousRequest);
+ await assert.rejects(cap.confirm(),{code:'ROLLING_FUNDING_QUOTE_REQUIRED'});
+ failScope=false;await cap.prepare(f.allocation);await cap.confirm();assert.equal(f.state.sends,sends+1,'explicitly reviewed replacement can send once');
 });

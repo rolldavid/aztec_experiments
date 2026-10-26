@@ -1,0 +1,33 @@
+{
+  "readonlySnapshot": {
+    "semantics": "one captured internally consistent read-only chain snapshot; next transaction synchronizes freshly",
+    "review": "pending_feed_release approved",
+    "nativeChecksPassed": 57,
+    "actualPublishedNodeWitness": {
+      "reference": 5649,
+      "leafIndex": 5615,
+      "pathLength": 30,
+      "rootMatches": true,
+      "readMs": 242.323125
+    }
+  },
+  "custodyNamespace": {
+    "review": "pending_feed_release approved",
+    "agentFocusedPassed": 37,
+    "rootFocusedPassed": 33,
+    "cacheRemoved": "scopedContexts WeakMap"
+  },
+  "goalsAchieved": false,
+  "finalPresend": {
+    "review": "pending_feed_release approved source; pending_reply_ui implementation",
+    "rootFocusedPassed": 40,
+    "rootFocusedFailed": 0
+  },
+  "build": {
+    "sdk": "passed",
+    "wallet": {
+      "files": 90,
+      "inputs": 107
+    }
+  }
+}

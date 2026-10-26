@@ -46,6 +46,12 @@ async function rollingSyncPhase(stage,operation){
 }
 
 function withAnchorRead(source){
+ source=`import {Buffer as RollingBuffer} from 'buffer';
+import {ARCHIVE_HEIGHT as rollingArchiveHeight,DomainSeparator as RollingDomainSeparator} from '@aztec-labs/constants';
+import {computeRootFromSiblingPath as rollingArchiveRoot,makePoseidonMerkleHash as rollingMerkleHash} from '@aztec-labs/foundation/trees';
+import {BlockHash as RollingBlockHash} from '@aztec-labs/stdlib/block';
+import {BlockHeader as RollingBlockHeader} from '@aztec-labs/stdlib/tx';
+`+source;
  const replace=(before,after)=>{if(source.split(before).length!==2)throw Error('PXE anchor read layout mismatch');source=source.replace(before,after);};
  // Resolve both canonical headers together before changing the native anchor.
  // The stream event already carries the selected immutable source identity;
@@ -68,13 +74,16 @@ function withAnchorRead(source){
         const currentId = { number: current.getBlockNumber(), hash: (await current.hash()).toString() };
         const advancing = !this.sameAnchor(currentId, event.block);
         if (advancing && currentId.number >= event.block.number) throw new Error('PXE_REORG_ANCHOR_CHANGED');
-        const checks = await rollingSyncPhase(advancing?'native.phase.sync-prewrite-advance':'native.phase.sync-prewrite-same',()=>Promise.allSettled([
-          Promise.resolve().then(() => advancing ? this.checkedHeader(currentId) : undefined),
-          Promise.resolve().then(() => this.checkedSelectedAnchor('prewrite')),
-        ]));
-        const failed = checks.find(result => result.status === 'rejected');
-        if (failed) throw failed.reason;
-        const target = checks[1].value;
+        let target = await this.readonlySnapshotTarget(event, currentId);
+        if (!target) {
+          const checks = await rollingSyncPhase(advancing?'native.phase.sync-prewrite-advance':'native.phase.sync-prewrite-same',()=>Promise.allSettled([
+            Promise.resolve().then(() => advancing ? this.checkedHeader(currentId) : undefined),
+            Promise.resolve().then(() => this.checkedSelectedAnchor('prewrite')),
+          ]));
+          const failed = checks.find(result => result.status === 'rejected');
+          if (failed) throw failed.reason;
+          target = checks[1].value;
+        }
         if (!this.sameAnchor(target.block, event.block)) throw new Error('PXE_REORG_ANCHOR_CHANGED');`);
  replace('      await this.blockStream.sync();',"      await rollingSyncPhase('native.phase.sync-stream',()=>this.blockStream.sync());");
  // The stream has already applied the captured plan, including atomic rollback.
@@ -89,26 +98,64 @@ function withAnchorRead(source){
  replace('  syncPass = undefined;',`  syncPass = undefined;
 
   anchorRead = undefined;
-  async syncWithAnchorRead(read, {warmNodeCache=false} = {}) {
-    if (typeof read !== 'function' || typeof warmNodeCache !== 'boolean' || this.anchorRead || this.isSyncing) throw new Error('PXE_ANCHOR_READ_BUSY');
-    const state = { read, reads: new Map(), selected: undefined, warmNodeCache };
+  // Readonly opening reports one freshly captured source snapshot. The archive
+  // witness binds retained state to that fork, not to all future chain heads.
+  // Transaction preparation retains its fresh native synchronization and proof.
+  async readonlySnapshotTarget(event, current) {
+    const state=this.anchorRead;
+    if(!state?.snapshotAncestry || state.pruned || event.type!=='chain-proposed')return undefined;
+    const eventBlock={number:event.block.number,hash:event.block.hash};
+    const header=RollingBlockHeader.fromBuffer(event.header.toBuffer());
+    const selected=await this.selectedAnchor();
+    if(!this.sameAnchor(selected,eventBlock) || header.getBlockNumber()!==selected.number ||
+       (await header.hash()).toString()!==selected.hash)throw new Error('PXE_REORG_ANCHOR_CHANGED');
+    if(this.sameAnchor(current,selected))return {block:selected,header};
+    if(current.number>=selected.number)throw new Error('PXE_REORG_ANCHOR_CHANGED');
+    const pending=state.ancestry.get(selected.hash+':'+current.hash);
+    if(!pending)throw new Error('PXE_REORG_ANCESTRY_MISSING');
+    const witness=await pending;
+    if(!witness || witness.leafIndex!==BigInt(current.number) || witness.siblingPath.length!==rollingArchiveHeight ||
+       header.lastArchive.nextAvailableLeafIndex!==selected.number || current.number>=2**rollingArchiveHeight)throw new Error('PXE_REORG_ANCESTRY_INVALID');
+    const root=await rollingSyncPhase('native.phase.sync-ancestry-verify',()=>rollingArchiveRoot(
+      RollingBlockHash.fromString(current.hash).toBuffer(),witness.siblingPath,current.number,
+      rollingMerkleHash(RollingDomainSeparator.MERKLE_HASH)));
+    if(!root.equals(header.lastArchive.root.toBuffer()))throw new Error('PXE_REORG_ANCESTRY_INVALID');
+    return {block:selected,header};
+  }
+  async syncWithAnchorRead(read, {warmNodeCache=false,snapshotAncestry=false} = {}) {
+    if (typeof read !== 'function' || typeof warmNodeCache !== 'boolean' || typeof snapshotAncestry !== 'boolean' || snapshotAncestry && (this.config.syncChainTip ?? 'proposed') !== 'proposed' || this.anchorRead || this.isSyncing) throw new Error('PXE_ANCHOR_READ_BUSY');
+    const state = { read, reads: new Map(), selected: undefined, warmNodeCache, snapshotAncestry, pruned:false, ancestry:new Map() };
     this.anchorRead = state;
     try {
       if (warmNodeCache) this.node.wipeCache();
       await this.sync();
-      const results = await Promise.allSettled([...state.reads.values()]);
+      const results = await Promise.allSettled([...state.reads.values(),...state.ancestry.values()]);
       const failed = results.find(result => result.status === 'rejected');
       if (failed) throw failed.reason;
       if (!state.selected || !state.reads.has(state.selected.hash)) throw new Error('PXE_ANCHOR_READ_INCOMPLETE');
       return { anchor: state.selected, value: await state.reads.get(state.selected.hash) };
     } finally {
-      await Promise.allSettled([...state.reads.values()]);
+      await Promise.allSettled([...state.reads.values(),...state.ancestry.values()]);
       this.anchorRead = undefined;
     }
   }`);
  replace('      this.syncTips = structuredClone(await tips());',`      this.syncTips = structuredClone(await rollingSyncPhase('native.phase.sync-source-snapshot',()=>tips()));
       const read = this.anchorRead;
       if (read) {
+        if(read.snapshotAncestry){
+          const selected=this.syncTips.proposed,current=await this.anchorBlockStore.getBlockHeader();
+          const currentHash=(await current.hash()).toString();
+          const key=selected.hash+':'+currentHash;
+          if(selected.number>current.getBlockNumber()&&!read.ancestry.has(key)){
+            const pending=rollingSyncPhase('native.phase.sync-ancestry-read',()=>this.node.getBlockHashMembershipWitness(
+              {number:selected.number,hash:RollingBlockHash.fromString(selected.hash)},RollingBlockHash.fromString(currentHash))).then(witness=>{
+              if(!witness)return undefined;
+              if(witness.siblingPath.length!==rollingArchiveHeight)throw new Error('PXE_REORG_ANCESTRY_INVALID');
+              return {leafIndex:witness.leafIndex,siblingPath:witness.siblingPath.map(value=>RollingBuffer.from(value.toBuffer()))};
+            });
+            read.ancestry.set(key,pending);pending.catch(()=>{});
+          }
+        }
         const tier = this.config.syncChainTip ?? 'proposed';
         const selected = tier === 'proposed' ? this.syncTips.proposed : this.syncTips[tier].block;
         if (!read.reads.has(selected.hash)) {
@@ -121,5 +168,6 @@ function withAnchorRead(source){
       }`);
  replace('      await this.checkAcknowledgedSnapshot();',`      await this.checkAcknowledgedSnapshot();
       if (this.anchorRead) this.anchorRead.selected = Object.freeze({ number: selected.block.number, hash: selected.block.hash });`);
+ replace("    if (event.type === 'chain-pruned') {","    if (event.type === 'chain-pruned') {\n      if(this.anchorRead)this.anchorRead.pruned=true;");
  return source;
 }

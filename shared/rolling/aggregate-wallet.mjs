@@ -555,22 +555,21 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
  const together=async tasks=>{const results=await Promise.allSettled(tasks.map(task=>Promise.resolve().then(task)));const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;return results.map(result=>result.value);};
  const tokenAbi=new ethers.Interface(['function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','function approve(address,uint256) returns(bool)']);
  const portalAbi=new ethers.Interface(kind==='bok'?['function deposit(bytes32,uint128,bytes32)']:['function depositToAztecPublic(bytes32,uint256,bytes32)']);
- // Slot construction reuses qualification only inside the current held account
- // operation. Payment phase boundaries still request fresh mutable authority.
- const scopedContexts=new WeakMap();
+ // Admission remains fresh at quote and payment boundaries. Once qualified,
+ // the immutable captured binding is only the encrypted custody namespace;
+ // reading that local journal does not require current portal admission.
  const owned=()=>{const operation=operationScope?.();check(operation===undefined||operation===null||typeof operation==='object','MISMATCH');return operation;};
- async function context({fresh=false}={}){
+ const checkEthereumNetwork=async()=>check(String((await read(()=>provider.getNetwork())).chainId)===n.chainId,'MISMATCH');
+ async function qualifyScope(){
   await contextGuard();const operation=owned();
-  if(operation&&!fresh&&scopedContexts.has(operation))return scopedContexts.get(operation);
-  if(operation)scopedContexts.delete(operation);
-  const scope=await read(resolveScope);check(scope&&Object.keys(scope).sort().join()==='portal,recipient,token');
+  const scope=freeze(clone(await read(resolveScope)));check(scope&&Object.keys(scope).sort().join()==='portal,recipient,token');
   for(const key of ['portal','token'])check(/^0x[0-9a-f]{40}$/.test(scope[key])&&BigInt(scope[key])>0n);
   check(/^0x[0-9a-f]{64}$/.test(scope.recipient)&&BigInt(scope.recipient)>0n);
-  if(captured)check(JSON.stringify(scope)===JSON.stringify(captured),'MISMATCH');else captured=freeze(clone(scope));
-  check(String((await read(()=>provider.getNetwork())).chainId)===n.chainId,'MISMATCH');
-  check(owned()===operation,'MISMATCH');if(operation)scopedContexts.set(operation,captured);return captured;
+  if(captured)check(JSON.stringify(scope)===JSON.stringify(captured),'MISMATCH');
+  await checkEthereumNetwork();
+  check(owned()===operation,'MISMATCH');captured??=scope;return captured;
  }
- async function slot(hash){const scope=await context(),frame=['ROLLING_TOPUP_FUNDING_V1',n.chainId,n.version,n.rollup,board,owner,kind,scope.portal,scope.token,scope.recipient];if(hash!==undefined){check(/^0x[0-9a-f]{64}$/.test(hash));frame.push(hash);}frame.push(1);return sdk.createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:JSON.stringify(frame),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});}
+ async function slot(hash){await contextGuard();const scope=captured??await qualifyScope(),frame=['ROLLING_TOPUP_FUNDING_V1',n.chainId,n.version,n.rollup,board,owner,kind,scope.portal,scope.token,scope.recipient];if(hash!==undefined){check(/^0x[0-9a-f]{64}$/.test(hash));frame.push(hash);}frame.push(1);return sdk.createEncryptedJournalSlot({storage,walletSecret,walletSalt,scopeText:JSON.stringify(frame),keyDomain:'ROLLING_TOPUP_FUNDING_V1'});}
  async function stored(){const store=await slot(),saved=await read(()=>store.read());if(saved.value)check(saved.value.kind===kind&&saved.value.schemaVersion===1,'MISMATCH');return {store,saved};}
  function journalOptions(value){return {storage,walletSecret,walletSalt,scope:{account:owner,...n,board:captured.recipient,portal:value.purchaseRouter??(value.phase==='swap'?value.swapRouter:captured.portal),token:captured.token,depositor:value.depositor},provider,contextGuard};}
  async function verified(value,wait=false){
@@ -600,7 +599,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    const values=clone(input);values.asset??='USDC';check(['USDC','ETH'].includes(values.asset));
    check(values.asset!=='ETH'||kind==='bok'&&topupScope,'SWAP_UNAVAILABLE');
    for(const key of Object.keys(values).filter(key=>key!=='asset'))check(typeof values[key]==='string'&&/^[1-9][0-9]{0,76}$/.test(values[key]));check(BigInt(values.amount)<1n<<128n);
-   const {store,saved}=await stored();let priorHash=saved.value?.previousTxHash??null,reuse=null;
+   await qualifyScope();const {store,saved}=await stored();let priorHash=saved.value?.previousTxHash??null,reuse=null;
    if(saved.value?.intent){
     const result=await verified(saved.value);priorHash=result.txHash;
     if(result.outcome==='success'&&['approval','swap'].includes(saved.value.phase)&&values.asset===(saved.value.asset??'USDC')&&values.amount===saved.value.amount&&values.privateFeeCap===saved.value.privateFeeCap){
@@ -662,11 +661,11 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    return freeze({kind,phase,...values,exchanged,maximumSwapWei:request.value,walletName:wallet.name,token:captured.token,portal:captured.portal});
   },
   async confirm({onSubmitted}={}){
-   const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');const {wallet,request}=current;await context({fresh:true});await read(wallet.guard);
+   const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');const {wallet,request}=current;await read(wallet.guard);
    if(current.saved.value?.intent){const prior=await verified(current.saved.value);if(prior.outcome==='success'&&current.saved.value.phase==='deposit')await completedClaim(current.saved.value);}else if(current.priorHash)await archived(current.priorHash);
    let saved=await read(()=>current.store.write(current.saved,current.value));
    const prepareRequest=async tx=>{await read(wallet.guard);
-    const [,fees]=await together([()=>context({fresh:true}),()=>read(()=>provider.getFeeData())]),price=fees.maxFeePerGas??fees.gasPrice;
+    const [,fees]=await together([()=>qualifyScope(),()=>read(()=>provider.getFeeData())]),price=fees.maxFeePerGas??fees.gasPrice;
     const gasLimit=tx.gasLimit??(await read(()=>provider.estimateGas(tx)))*2n;
     check(typeof gasLimit==='bigint'&&gasLimit>0n&&typeof price==='bigint'&&price>0n&&(!current.value.fixedGasBudget||gasLimit*price<=BigInt(current.value.gasBudgetWei)),'GAS_CHANGED');
     await read(wallet.guard);return {gasLimit,...(fees.maxFeePerGas!==undefined&&fees.maxFeePerGas!==null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})};
@@ -705,7 +704,7 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
   // still checks this exact intent, effects and canonical block before disclosure.
   // Successful purchases finish that verifier with a current canonical check;
   // only local outcome/phase checks and projection follow in this direct path.
-  async loadAggregate(hash){check(/^0x[0-9a-f]{64}$/.test(hash));if(kind!=='bok')return null;const {saved}=await stored();let value;
+  async loadAggregate(hash){check(/^0x[0-9a-f]{64}$/.test(hash));if(kind!=='bok')return null;await checkEthereumNetwork();const {saved}=await stored();let value;
    if(saved.value?.intent){const j=await sdk.createEthereumJournal(journalOptions(saved.value)),request=await read(()=>j.inspectRequest());const tx=request?.txHash===hash?null:await read(()=>provider.getTransaction(hash));if(request?.txHash===hash||tx?.hash?.toLowerCase()===hash&&tx.from?.toLowerCase()===saved.value.intent.from&&Number(tx.nonce)===saved.value.intent.nonce){const result=await read(()=>sdk.verifyEthereumIntentReceipt(provider,saved.value.intent,hash));check(result?.outcome==='success'&&saved.value.phase==='deposit','PENDING');if(saved.value.intent.expected.kind!=='bok-purchase'){const block=await read(()=>provider.getBlock(result.receipt.blockNumber));check(block?.hash?.toLowerCase()===result.receipt.blockHash.toLowerCase(),'MISMATCH');}value=saved.value;}}
    if(!value){const archive=await slot(hash),old=await read(()=>archive.read());if(old.value===null)return null;const checked=await archived(hash);check(checked.result.outcome==='success'&&checked.value.phase==='deposit','PENDING');value=checked.value;}
    return freeze({bokScope:clone(value.bokScope),recipientSalt:value.recipientSalt,bridgeSecret:value.bridgeSecret});
