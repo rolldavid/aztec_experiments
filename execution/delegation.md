@@ -1,3 +1,7 @@
+# Active functional certification —26 October2026
+
+Root owns source, publication and live browser tests. functional_flow_inventory independently reviewed the temporary profile-only native-error capture; no transaction or ordinary-error behavior changed. Descriptor-only array reads incorporated. Performance remains paused.
+
 # Pause and functional verification —26 October2026
 
 Performance goal paused by owner. Root owns cleanup, functional verification and minimal Bok repair. bok_failure_review completed independent source and deployment review; all agents are complete. Bok repair is live and its reply checkpointed.

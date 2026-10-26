@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 26 October: performance goal remains paused. Owner funded Sepolia wallet and requested verification of every application flow. Root serializes live browser tests; functional_flow_inventory/withdrawal_plan provide read-only review. Existing collateral exit included, awaiting L1 settlement; FEE top-up in progress. Fixing discovered UI offers for second exit while one refund is pending, and incorrect FEE approval label.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 26 October functional certification; performance paused. Funding, completed withdrawals, fresh ETH signup/post, profile/social and real Bok app creation/edit verified. Fresh USDC signup completed but first post failed before submission; diagnose original native error lost at worker sanitization. Root owns source/live tests; functional_flow_inventory reviews diagnostic boundary. No speculative cooldown changes.
 
 ## Ready internal work
 

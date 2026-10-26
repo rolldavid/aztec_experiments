@@ -186,6 +186,26 @@ async function invoke(method,args){
  if(parts.length===2&&parts[0]==='depositRefunds'&&DEPOSIT_METHODS.includes(parts[1]))return(await ensureSession()).depositRefunds[parts[1]](...args);
  throw workerFailure('ROLLING_WORKER_METHOD');
 }
+// Temporary, opt-in observation for the owned functional-verification session.
+// Never attach native exception contents to normal UI errors or stored telemetry.
+function temporaryActionDiagnostic(message,error){
+ try{
+  if(settings?.profile!==true||message.method!=='application.executeAction')return;
+  const own=(value,key)=>Object.getOwnPropertyDescriptor(value??{},key)?.value;
+  const text=value=>typeof value==='string'?value.slice(0,2048):undefined;
+  const records=[];let current=error;
+  for(let depth=0;current&&depth<3;depth++){
+   const frames=own(current,'functionErrorStack');
+   const functions=[],length=Array.isArray(frames)?own(frames,'length'):0;
+   if(Number.isSafeInteger(length)&&length>=0)for(let i=Math.max(0,length-8);i<length;i++){
+    const frame=own(frames,String(i));functions.push({name:text(own(frame,'functionName')),contract:text(own(frame,'contractName'))});
+   }
+   records.push({name:text(own(current,'name')),message:text(own(current,'message')),originalMessage:text(own(current,'originalMessage')),code:text(own(current,'code')),functions});
+   current=own(current,'cause');
+  }
+  send({type:'temporary-action-diagnostic',id:message.id,records});
+ }catch{/* Observation must not change the original outcome. */}
+}
 globalThis.addEventListener('message',event=>{
  const message=event.data;if(!message||typeof message!=='object')return;
  if(['guard-result','custody-result','callback-result'].includes(message.type)){const pending=pendingCallbacks.get(message.id);if(pending){pendingCallbacks.delete(message.id);message.error?pending.reject(restoreError(message.error)):pending.resolve(message.value);}return;}
@@ -199,5 +219,5 @@ globalThis.addEventListener('message',event=>{
   const visible=!['initialize','deriveAccount','openAccount','close','observeIncluded','withdrawal.observe','withdrawal.waitUntilReady'].includes(message.method)&&(!message.method.startsWith('funding.')||message.method==='funding.advanceClaim');
   if(visible)foreground++;
   return Promise.resolve().then(()=>invoke(message.method,args)).finally(()=>{if(visible)foreground--;});
- }).then(value=>structuredClone(value)).then(value=>send({type:'result',id:message.id,value}),error=>send({type:'result',id:message.id,error:errorRecord(error)})).finally(()=>operations.delete(message.id));
+ }).then(value=>structuredClone(value)).then(value=>send({type:'result',id:message.id,value}),error=>{temporaryActionDiagnostic(message,error);send({type:'result',id:message.id,error:errorRecord(error)});}).finally(()=>operations.delete(message.id));
 });
