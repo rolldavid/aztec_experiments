@@ -276,3 +276,8 @@ Usage-reset result: af0aea9c reviewed, built, pushed and published. pending_feed
 ## 26 October — restored browser and87 continuation
 
 Root confirmed browser access and measured real31.069425s Bok funding plus2.425505s cached funded opening on published87. pending_reply_ui drafts same-invocation standalone Bok claim verification removal; pending_feed_release investigates private-query readiness cost (public feed gate excluded); inclusion_timing examines remaining snapshot/ancestry serial opening read. Agents use source-only drafts; root integrates, builds, publishes and runs the single retained browser. No new dependency copies or service changes.
+
+
+## 26 October — cold artifact delivery
+
+Root integrates inclusion_timing's early Board/FPC/registration preload and exact public-artifact Brotli publisher patch. pending_feed_release independently approved; root 12 preload and 5 compression checks passed, actual wallet bundle built. Existing worker/cache owns single-flight fetching; no new thread or duplicate SDK. Check actual CloudFront encoding after publication, since immutable content hashes are unchanged. Removed 38 obsolete owned local publication packets (1,500,313,296 bytes), retaining one build/current packet and compact SHA-bound inventory. Native nullifier prefetch remains separately reviewed, not yet integrated.

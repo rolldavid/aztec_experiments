@@ -508,6 +508,19 @@ class BrotliPublication(unittest.TestCase):
         # Stage inventory naturally binds generated delivery encodings too.
         self.assertIn('wallet/sdk.mjs.br',[str(p.relative_to(second)) for p in second.rglob('*') if p.is_file()])
 
+    def test_json_artifact_sidecar_keeps_exact_content_hash_and_link(self):
+        data=json.dumps({'functions':[{'bytecode':'public-compiled-bytecode'}]*5000}).encode()
+        (self.source/'board.json').write_bytes(data)
+        digest=hashlib.sha256(data).hexdigest()
+        self.description['files']={'/wallet/board.json':{'file':'board.json','bytes':len(data),'sha256':digest}}
+        self.publish()
+        target=self.base/'by-hash'/digest/'wallet/board.json';sidecar=target.with_name('board.json.br')
+        decoded=subprocess.run([self.node,'-e',"process.stdout.write(require('node:zlib').brotliDecompressSync(require('node:fs').readFileSync(0)))"],input=sidecar.read_bytes(),check=True,capture_output=True).stdout
+        self.assertEqual(decoded,data);self.assertEqual(target.read_bytes(),data)
+        self.assertEqual(hashlib.sha256(decoded).hexdigest(),digest)
+        self.assertLess(sidecar.stat().st_size,len(data))
+        self.assertEqual((self.destination/'wallet/board.json.br').stat().st_ino,sidecar.stat().st_ino)
+
     def test_corrupt_or_symlink_sidecar_is_rejected_without_replacing_original(self):
         self.publish();sidecar=self.target.with_name('sdk.mjs.br');original=self.target.read_bytes()
         sidecar.unlink();sidecar.write_bytes(b'corrupt');sidecar.chmod(0o444)
@@ -522,10 +535,13 @@ class BrotliPublication(unittest.TestCase):
         with self.assertRaises(AssertionError):self.publish()
         self.assertFalse(self.base.exists())
 
-    def test_only_large_javascript_assets_are_compressed(self):
+    def test_only_large_javascript_and_exact_public_artifacts_are_compressed(self):
         selected=self.ns['brotli_asset']
         self.assertTrue(selected('/wallet/sdk.js',102400));self.assertTrue(selected('/wallet/runtime.mjs',102400))
-        for url,size in [('/crs/data.bin',1000000),('/wallet/runtime.json',1000000),('/wallet/small.js',102399)]:
+        for name in ['board','private-fee','bok']+['native-contract-'+name for name in ['ContractClassRegistry','ContractInstanceRegistry','FeeJuice','MultiCallEntrypoint','AuthRegistry','HandshakeRegistry']]:
+            self.assertTrue(selected('/wallet/'+name+'.json',102400))
+            self.assertFalse(selected('/wallet/'+name+'.json',102399))
+        for url,size in [('/crs/data.bin',1000000),('/wallet/runtime.json',1000000),('/wallet/config.json',1000000),('/wallet/native-contract-Unknown.json',1000000),('/wallet/small.js',102399)]:
             self.assertFalse(selected(url,size))
 
 if __name__ == '__main__':

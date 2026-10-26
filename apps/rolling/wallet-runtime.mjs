@@ -78,11 +78,18 @@ async function load(signal){
  // The main thread owns extension custody only. All Aztec code executes once,
  // in the dedicated worker. Blob parts remain bytes: no SDK text decode/eval here.
  descriptor(metadata.worker);if(metadata.worker.url!=='/wallet/native-worker.js')throw failed();
+ const openingArtifacts=[['board','/wallet/board.json'],['privateFee','/wallet/private-fee.json']].map(([name,url])=>{
+  const asset=descriptor(metadata.artifacts[name]);if(asset.url!==url||asset.bytes>32*1024*1024)throw failed();return asset;
+ });
+ if(!config.refundOnly){const asset=descriptor(metadata.deploymentRegistration);if(asset.url!=='/wallet/deployment-registration.json'||asset.bytes>65536)throw failed();openingArtifacts.push(asset);}
  const workerAssets=new AbortController(),workerSignal=AbortSignal.any([signal,workerAssets.signal]);
  let workerClient,workerURL,workerAccount,workerClosed=false,progressObserver=()=>{};
  const workerGuard=()=>{if(workerClosed||globalThis.walletState?.invalidated||workerAccount&&globalThis.walletState?.aztec!==workerAccount)throw failed();};
  // Advisory preload is useful only when this already-controlling cache worker
- // can coalesce these exact URLs. Old/uncontrolled pages use native loading alone.
+ // can coalesce these exact URLs. Start required application artifacts alongside
+ // SDK download instead of waiting for SDK evaluation to discover them. This
+ // fetches bytes only; parsing and Aztec execution stay in the dedicated worker.
+ // Old/uncontrolled pages use native loading alone.
  const nativeNames=['ContractClassRegistry','ContractInstanceRegistry','FeeJuice','MultiCallEntrypoint','AuthRegistry','HandshakeRegistry'];
  if(!Array.isArray(metadata.nativeArtifacts)||metadata.nativeArtifacts.length!==nativeNames.length||metadata.nativeArtifacts.some((asset,i)=>descriptor(asset).url!=='/wallet/native-contract-'+nativeNames[i]+'.json'||asset.bytes>8*1024*1024))throw failed();
  let nativePreloadChannel;
@@ -93,7 +100,7 @@ async function load(signal){
   nativePreloadChannel.port1.onmessage=event=>{
    if(!nativePreloadChannel)return;closeNativePreload();
    if(event.data!=='rolling-native-artifacts-v1'||navigator.serviceWorker?.controller!==cacheController||workerSignal.aborted)return;
-   const nativeAssetsReady=Promise.allSettled(metadata.nativeArtifacts.map(asset=>verifiedScriptBytes(asset,workerSignal).catch(error=>{
+   const nativeAssetsReady=Promise.allSettled([...metadata.nativeArtifacts,...openingArtifacts].map(asset=>verifiedScriptBytes(asset,workerSignal).then(()=>undefined).catch(error=>{
     if(!workerSignal.aborted){workerAssets.abort();workerClient?.terminate();}throw error;
    }))).then(results=>{if(results.some(value=>value.status==='rejected'))throw failed();});
    nativeAssetsReady.catch(()=>{});

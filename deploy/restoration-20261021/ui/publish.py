@@ -134,7 +134,12 @@ def clone_source():
  assert dependency_root(NEXT)==dependencies
 
 def brotli_asset(url,size):
- return pathlib.PurePosixPath(url).suffix in ('.js','.mjs') and size>=100*1024
+ # Only immutable, manifest-authenticated public artifacts. Runtime/config JSON
+ # and private files never become eligible through their extension alone.
+ artifact=url in ('/wallet/board.json','/wallet/private-fee.json','/wallet/bok.json') or url in (
+  '/wallet/native-contract-'+name+'.json' for name in
+  ('ContractClassRegistry','ContractInstanceRegistry','FeeJuice','MultiCallEntrypoint','AuthRegistry','HandshakeRegistry'))
+ return (pathlib.PurePosixPath(url).suffix in ('.js','.mjs') or artifact) and size>=100*1024
 
 def brotli_bytes(data):
  # The stage already authenticated this Node binary. No new packages or SDK

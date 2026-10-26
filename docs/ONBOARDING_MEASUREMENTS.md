@@ -172,3 +172,8 @@ First post from the new balance succeeded:15703.535ms click→actual included fe
 Intermediate deacc publication failed before opening a native account: ContractClassPublicSchema was undefined during bundle evaluation. The newly added trusted-private-node import in the cache injected into native contract-class code formed a circular module dependency. Source tests and successful compilation missed it.0d23 moves snapshot provenance to a dependency-free module, retaining exact-node WeakMap and detached-value semantics. The new wallet-build gate executes the six actual hash-verified worker scripts in order before publishing. It rejects the actual bad bundle and passes the corrected one; it is a bundle-evaluation check, not a substitute for initialized browser/transaction testing.
 
 Three next lanes remain active: native pre-signature PXE preparation, synchronization/discovery critical path, and unnecessary post-inclusion signup completion work. No2s,15s or all-flow50% completion claim.
+
+
+### f20 published observation — 26 October
+
+Funded wallet selection to enabled Write a post: first changed-SDK visit **8.560355s**, immediate cached visit **1.766840s**, including approximately 0.24s automated signature approval. These are returning funded-account observations, not fresh signup. The first Board artifact download began after SDK delivery and lasted 4.952s. Source fixes now preload these bytes alongside the SDK and compress exact public contract JSON. New delivery timing remains to be measured. Raw snapshots: `execution/evidence/G21/stable6/other-transaction-latency/opening-f20-{first,cached}.json`.

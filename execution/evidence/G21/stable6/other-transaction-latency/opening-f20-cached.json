@@ -1,0 +1,3272 @@
+{
+  "timing": {
+    "accountClick": 1850.3550000190735,
+    "ready": 4717.3550000190735,
+    "signatureRequested": 2961.3099999427795,
+    "signatureResolved": 3203.110000014305,
+    "walletClick": 2950.514999985695
+  },
+  "trace": [
+    {
+      "timeOrigin": 1792984175784.025,
+      "visibilityState": "visible"
+    },
+    {
+      "connectEnd": 525.1699999570847,
+      "connectStart": 525.1699999570847,
+      "decodedBodySize": 66896,
+      "domainLookupEnd": 525.1699999570847,
+      "domainLookupStart": 525.1699999570847,
+      "duration": 560.6950000524521,
+      "encodedBodySize": 18295,
+      "endpoint": "wallet-asset",
+      "fetchStart": 525.1699999570847,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 530.5750000476837,
+      "responseEnd": 1085.6050000190735,
+      "responseStart": 955.9249999523164,
+      "secureConnectionStart": 525.1699999570847,
+      "start": 524.9099999666214,
+      "transferSize": 18595
+    },
+    {
+      "connectEnd": 1087.2300000190735,
+      "connectStart": 1087.2300000190735,
+      "decodedBodySize": 5432,
+      "domainLookupEnd": 1087.2300000190735,
+      "domainLookupStart": 1087.2300000190735,
+      "duration": 317.63499999046326,
+      "encodedBodySize": 2487,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1087.2300000190735,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 1088.5349999666214,
+      "responseEnd": 1404.4950000047684,
+      "responseStart": 1404.0650000572205,
+      "secureConnectionStart": 1087.2300000190735,
+      "start": 1086.8600000143051,
+      "transferSize": 2787
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 0.885,
+      "connectEnd": 1405.7599999904633,
+      "connectStart": 1405.7599999904633,
+      "decodedBodySize": 526551,
+      "domainLookupEnd": 1405.7599999904633,
+      "domainLookupStart": 1405.7599999904633,
+      "duration": 9.27999997138977,
+      "encodedBodySize": 526551,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1405.7599999904633,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1405.7599999904633,
+      "responseEnd": 1414.774999976158,
+      "responseStart": 1406.929999947548,
+      "secureConnectionStart": 1405.7599999904633,
+      "start": 1405.4950000047684,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.265,
+      "connectEnd": 1405.8400000333786,
+      "connectStart": 1405.8400000333786,
+      "decodedBodySize": 8399309,
+      "domainLookupEnd": 1405.8400000333786,
+      "domainLookupStart": 1405.8400000333786,
+      "duration": 26.325000047683716,
+      "encodedBodySize": 8399309,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1405.8400000333786,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1405.8400000333786,
+      "responseEnd": 1431.8799999952316,
+      "responseStart": 1407.335000038147,
+      "secureConnectionStart": 1405.8400000333786,
+      "start": 1405.554999947548,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.485,
+      "connectEnd": 1405.8799999952316,
+      "connectStart": 1405.8799999952316,
+      "decodedBodySize": 8944,
+      "domainLookupEnd": 1405.8799999952316,
+      "domainLookupStart": 1405.8799999952316,
+      "duration": 4.539999961853027,
+      "encodedBodySize": 8944,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1405.8799999952316,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1405.8799999952316,
+      "responseEnd": 1410.1549999713898,
+      "responseStart": 1407.5750000476835,
+      "secureConnectionStart": 1405.8799999952316,
+      "start": 1405.6150000095367,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.55,
+      "connectEnd": 1405.960000038147,
+      "connectStart": 1405.960000038147,
+      "decodedBodySize": 7525,
+      "domainLookupEnd": 1405.960000038147,
+      "domainLookupStart": 1405.960000038147,
+      "duration": 4.545000076293945,
+      "encodedBodySize": 7525,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1405.960000038147,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1405.960000038147,
+      "responseEnd": 1410.1900000572205,
+      "responseStart": 1407.6900000572205,
+      "secureConnectionStart": 1405.960000038147,
+      "start": 1405.6449999809265,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.815,
+      "connectEnd": 1406.0049999952316,
+      "connectStart": 1406.0049999952316,
+      "decodedBodySize": 136387,
+      "domainLookupEnd": 1406.0049999952316,
+      "domainLookupStart": 1406.0049999952316,
+      "duration": 6.480000019073486,
+      "encodedBodySize": 136387,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.0049999952316,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.0049999952316,
+      "responseEnd": 1412.1449999809265,
+      "responseStart": 1408.0349999666214,
+      "secureConnectionStart": 1406.0049999952316,
+      "start": 1405.664999961853,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 2,
+      "connectEnd": 1406.0299999713898,
+      "connectStart": 1406.0299999713898,
+      "decodedBodySize": 428098,
+      "domainLookupEnd": 1406.0299999713898,
+      "domainLookupStart": 1406.0299999713898,
+      "duration": 8.829999923706055,
+      "encodedBodySize": 428098,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.0299999713898,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.0299999713898,
+      "responseEnd": 1414.5199999809265,
+      "responseStart": 1408.304999947548,
+      "secureConnectionStart": 1406.0299999713898,
+      "start": 1405.6900000572205,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 0.885,
+      "connectEnd": 1406.1050000190735,
+      "connectStart": 1406.1050000190735,
+      "decodedBodySize": 526551,
+      "domainLookupEnd": 1406.1050000190735,
+      "domainLookupStart": 1406.1050000190735,
+      "duration": 9.379999995231628,
+      "encodedBodySize": 526551,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.1050000190735,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.1050000190735,
+      "responseEnd": 1415.2150000333786,
+      "responseStart": 1407.024999976158,
+      "secureConnectionStart": 1406.1050000190735,
+      "start": 1405.835000038147,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 2.23,
+      "connectEnd": 1406.274999976158,
+      "connectStart": 1406.274999976158,
+      "decodedBodySize": 1115916,
+      "domainLookupEnd": 1406.274999976158,
+      "domainLookupStart": 1406.274999976158,
+      "duration": 16.93499994277954,
+      "encodedBodySize": 1115916,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.274999976158,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.274999976158,
+      "responseEnd": 1422.914999961853,
+      "responseStart": 1408.929999947548,
+      "secureConnectionStart": 1406.274999976158,
+      "start": 1405.9800000190735,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 2.63,
+      "connectEnd": 1406.350000023842,
+      "connectStart": 1406.350000023842,
+      "decodedBodySize": 511279,
+      "domainLookupEnd": 1406.350000023842,
+      "domainLookupStart": 1406.350000023842,
+      "duration": 8.889999985694885,
+      "encodedBodySize": 511279,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.350000023842,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.350000023842,
+      "responseEnd": 1414.8949999809265,
+      "responseStart": 1409.1699999570849,
+      "secureConnectionStart": 1406.350000023842,
+      "start": 1406.0049999952316,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 2.765,
+      "connectEnd": 1406.3849999904633,
+      "connectStart": 1406.3849999904633,
+      "decodedBodySize": 703874,
+      "domainLookupEnd": 1406.3849999904633,
+      "domainLookupStart": 1406.3849999904633,
+      "duration": 11.165000081062315,
+      "encodedBodySize": 703874,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.3849999904633,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.3849999904633,
+      "responseEnd": 1417.195000052452,
+      "responseStart": 1409.399999976158,
+      "secureConnectionStart": 1406.3849999904633,
+      "start": 1406.0299999713898,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 3.235,
+      "connectEnd": 1406.4199999570849,
+      "connectStart": 1406.4199999570849,
+      "decodedBodySize": 572149,
+      "domainLookupEnd": 1406.4199999570849,
+      "domainLookupStart": 1406.4199999570849,
+      "duration": 10.275000095367432,
+      "encodedBodySize": 572149,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.4199999570849,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.4199999570849,
+      "responseEnd": 1416.335000038147,
+      "responseStart": 1409.945000052452,
+      "secureConnectionStart": 1406.4199999570849,
+      "start": 1406.0599999427795,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 3.805,
+      "connectEnd": 1406.4700000286102,
+      "connectStart": 1406.4700000286102,
+      "decodedBodySize": 805746,
+      "domainLookupEnd": 1406.4700000286102,
+      "domainLookupStart": 1406.4700000286102,
+      "duration": 14.704999923706056,
+      "encodedBodySize": 805746,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.4700000286102,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.4700000286102,
+      "responseEnd": 1420.789999961853,
+      "responseStart": 1410.4800000190735,
+      "secureConnectionStart": 1406.4700000286102,
+      "start": 1406.085000038147,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 3.935,
+      "connectEnd": 1406.4950000047684,
+      "connectStart": 1406.4950000047684,
+      "decodedBodySize": 1847456,
+      "domainLookupEnd": 1406.4950000047684,
+      "domainLookupStart": 1406.4950000047684,
+      "duration": 18.735000014305115,
+      "encodedBodySize": 1847456,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1406.4950000047684,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1406.4950000047684,
+      "responseEnd": 1424.8450000286102,
+      "responseStart": 1410.5800000429151,
+      "secureConnectionStart": 1406.4950000047684,
+      "start": 1406.1100000143051,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 0.795,
+      "connectEnd": 1420.585000038147,
+      "connectStart": 1420.585000038147,
+      "decodedBodySize": 1648,
+      "domainLookupEnd": 1420.585000038147,
+      "domainLookupStart": 1420.585000038147,
+      "duration": 0,
+      "encodedBodySize": 1648,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1420.585000038147,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1420.585000038147,
+      "responseEnd": 1420.585000038147,
+      "responseStart": 1420.585000038147,
+      "secureConnectionStart": 1420.585000038147,
+      "start": 1420.585000038147,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 0.61,
+      "connectEnd": 1420.8450000286102,
+      "connectStart": 1420.8450000286102,
+      "decodedBodySize": 9979,
+      "domainLookupEnd": 1420.8450000286102,
+      "domainLookupStart": 1420.8450000286102,
+      "duration": 0,
+      "encodedBodySize": 9979,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1420.8450000286102,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1420.8450000286102,
+      "responseEnd": 1420.8450000286102,
+      "responseStart": 1420.8450000286102,
+      "secureConnectionStart": 1420.8450000286102,
+      "start": 1420.8450000286102,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 0.695,
+      "connectEnd": 1421.710000038147,
+      "connectStart": 1421.710000038147,
+      "decodedBodySize": 18002,
+      "domainLookupEnd": 1421.710000038147,
+      "domainLookupStart": 1421.710000038147,
+      "duration": 0,
+      "encodedBodySize": 18002,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1421.710000038147,
+      "kind": "resource",
+      "protocol": "unknown",
+      "requestStart": 1421.710000038147,
+      "responseEnd": 1421.710000038147,
+      "responseStart": 1421.710000038147,
+      "secureConnectionStart": 1421.710000038147,
+      "start": 1421.710000038147,
+      "transferSize": 0
+    },
+    {
+      "duration": 232.18999993801117,
+      "name": "rolling.worker-init.cryptography",
+      "realm": "worker",
+      "start": 1663.8400585651398
+    },
+    {
+      "duration": 1091.3849999904633,
+      "name": "rolling.worker-init.pxe-artifacts",
+      "realm": "worker",
+      "start": 1663.8800585269928
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 3.12,
+      "connectEnd": 1664.8200585842133,
+      "connectStart": 1664.8200585842133,
+      "decodedBodySize": 3320,
+      "domainLookupEnd": 1664.8200585842133,
+      "domainLookupStart": 1664.8200585842133,
+      "duration": 5.490000009536743,
+      "encodedBodySize": 3320,
+      "endpoint": "proof-asset",
+      "fetchStart": 1664.8200585842133,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1664.8200585842133,
+      "responseEnd": 1669.6600584983826,
+      "responseStart": 1668.7050585746765,
+      "secureConnectionStart": 1664.8200585842133,
+      "start": 1664.1700584888458,
+      "transferSize": 0
+    },
+    {
+      "duration": 1234,
+      "name": "rolling.worker-init.prover",
+      "realm": "worker",
+      "start": 1664.2500585317612
+    },
+    {
+      "duration": 1027.9599999189377,
+      "name": "rolling.worker-init.deployment",
+      "realm": "worker",
+      "start": 1664.460058569908
+    },
+    {
+      "duration": 21.80999994277954,
+      "name": "rolling.worker-init.kernels",
+      "realm": "worker",
+      "start": 1664.475058555603
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 3.94,
+      "connectEnd": 1664.975058555603,
+      "connectStart": 1664.975058555603,
+      "decodedBodySize": 968847,
+      "domainLookupEnd": 1664.975058555603,
+      "domainLookupStart": 1664.975058555603,
+      "duration": 21.860000014305115,
+      "encodedBodySize": 968847,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1664.975058555603,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1664.975058555603,
+      "responseEnd": 1686.515058517456,
+      "responseStart": 1669.1900585889816,
+      "secureConnectionStart": 1664.975058555603,
+      "start": 1664.655058503151,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 4.31,
+      "connectEnd": 1665.0400584936142,
+      "connectStart": 1665.0400584936142,
+      "decodedBodySize": 3634847,
+      "domainLookupEnd": 1665.0400584936142,
+      "domainLookupStart": 1665.0400584936142,
+      "duration": 232.66999995708463,
+      "encodedBodySize": 3634847,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1665.0400584936142,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1665.0400584936142,
+      "responseEnd": 1897.5100585222244,
+      "responseStart": 1669.5750585794449,
+      "secureConnectionStart": 1665.0400584936142,
+      "start": 1664.8400585651398,
+      "transferSize": 0
+    },
+    {
+      "duration": 241.0199999809265,
+      "name": "rolling.worker-init.execution-engine",
+      "realm": "worker",
+      "start": 1664.8850585222244
+    },
+    {
+      "connectEnd": 1665.5200585126877,
+      "connectStart": 1665.5200585126877,
+      "decodedBodySize": 5428879,
+      "domainLookupEnd": 1665.5200585126877,
+      "domainLookupStart": 1665.5200585126877,
+      "duration": 22.169999957084656,
+      "encodedBodySize": 5327786,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1665.5200585126877,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 1666.2600585222244,
+      "responseEnd": 1687.4800585508349,
+      "responseStart": 1669.0250585079193,
+      "secureConnectionStart": 1665.5200585126877,
+      "start": 1665.31005859375,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 5.49,
+      "connectEnd": 1665.765058517456,
+      "connectStart": 1665.765058517456,
+      "decodedBodySize": 5570115,
+      "domainLookupEnd": 1665.765058517456,
+      "domainLookupStart": 1665.765058517456,
+      "duration": 410.94000005722046,
+      "encodedBodySize": 5570115,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1665.765058517456,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1665.765058517456,
+      "responseEnd": 2076.575058579445,
+      "responseStart": 1671.6100585460665,
+      "secureConnectionStart": 1665.765058517456,
+      "start": 1665.6350585222244,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 6.315,
+      "connectEnd": 1665.905058503151,
+      "connectStart": 1665.905058503151,
+      "decodedBodySize": 608001,
+      "domainLookupEnd": 1665.905058503151,
+      "domainLookupStart": 1665.905058503151,
+      "duration": 14.865000009536743,
+      "encodedBodySize": 608001,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1665.905058503151,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1665.905058503151,
+      "responseEnd": 1680.5700585842133,
+      "responseStart": 1672.5700585842133,
+      "secureConnectionStart": 1665.905058503151,
+      "start": 1665.7050585746765,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 5.84,
+      "connectEnd": 1665.930058479309,
+      "connectStart": 1665.930058479309,
+      "decodedBodySize": 5078,
+      "domainLookupEnd": 1665.930058479309,
+      "domainLookupStart": 1665.930058479309,
+      "duration": 6.925000071525574,
+      "encodedBodySize": 5078,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1665.930058479309,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1665.930058479309,
+      "responseEnd": 1672.68505859375,
+      "responseStart": 1672.0350584983826,
+      "secureConnectionStart": 1665.930058479309,
+      "start": 1665.7600585222244,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 1667.4100584983826,
+      "connectStart": 1667.4100584983826,
+      "decodedBodySize": 814729,
+      "domainLookupEnd": 1667.4100584983826,
+      "domainLookupStart": 1667.4100584983826,
+      "duration": 12.834999918937685,
+      "encodedBodySize": 426056,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1667.4100584983826,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 1669.56005859375,
+      "responseEnd": 1679.0400584936142,
+      "responseStart": 1671.6050585508349,
+      "secureConnectionStart": 1667.4100584983826,
+      "start": 1666.2050585746765,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 1667.710058569908,
+      "connectStart": 1667.710058569908,
+      "decodedBodySize": 1156360,
+      "domainLookupEnd": 1667.710058569908,
+      "domainLookupStart": 1667.710058569908,
+      "duration": 15.139999985694883,
+      "encodedBodySize": 851380,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1667.710058569908,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 1669.6750584840777,
+      "responseEnd": 1681.405058503151,
+      "responseStart": 1672.1450585126877,
+      "secureConnectionStart": 1667.710058569908,
+      "start": 1666.265058517456,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 1667.7600585222244,
+      "connectStart": 1667.7600585222244,
+      "decodedBodySize": 1101105,
+      "domainLookupEnd": 1667.7600585222244,
+      "domainLookupStart": 1667.7600585222244,
+      "duration": 14.049999952316284,
+      "encodedBodySize": 739083,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1667.7600585222244,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 1669.6900585889816,
+      "responseEnd": 1680.3950585126877,
+      "responseStart": 1671.9650585651398,
+      "secureConnectionStart": 1667.7600585222244,
+      "start": 1666.3450585603714,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 1669.265058517456,
+      "connectStart": 1669.265058517456,
+      "decodedBodySize": 2785,
+      "domainLookupEnd": 1669.265058517456,
+      "domainLookupStart": 1669.265058517456,
+      "duration": 233.58500003814697,
+      "encodedBodySize": 1347,
+      "endpoint": "node",
+      "fetchStart": 1669.265058517456,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 1671.31005859375,
+      "responseEnd": 1901.9550585746765,
+      "responseStart": 1901.5200585126877,
+      "secureConnectionStart": 1669.265058517456,
+      "start": 1668.3700585365295,
+      "transferSize": 1647
+    },
+    {
+      "duration": 280.94000005722046,
+      "name": "rolling.reader.load",
+      "start": 1787.179999947548
+    },
+    {
+      "connectEnd": 1787.9550000429151,
+      "connectStart": 1787.9550000429151,
+      "decodedBodySize": 5591,
+      "domainLookupEnd": 1787.9550000429151,
+      "domainLookupStart": 1787.9550000429151,
+      "duration": 278.6749999523163,
+      "encodedBodySize": 5591,
+      "endpoint": "public-read",
+      "fetchStart": 1787.9550000429151,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 1788.6549999713898,
+      "responseEnd": 2066.4049999713898,
+      "responseStart": 2064.804999947548,
+      "secureConnectionStart": 1787.9550000429151,
+      "start": 1787.7300000190735,
+      "transferSize": 5891
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 0.97,
+      "connectEnd": 1896.5500584840777,
+      "connectStart": 1896.5500584840777,
+      "decodedBodySize": 511279,
+      "domainLookupEnd": 1896.5500584840777,
+      "domainLookupStart": 1896.5500584840777,
+      "duration": 13.81499993801117,
+      "encodedBodySize": 511279,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1896.5500584840777,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1896.5500584840777,
+      "responseEnd": 1910.140058517456,
+      "responseStart": 1897.8150585889816,
+      "secureConnectionStart": 1896.5500584840777,
+      "start": 1896.3250585794449,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.075,
+      "connectEnd": 1896.6700584888456,
+      "connectStart": 1896.6700584888456,
+      "decodedBodySize": 1115916,
+      "domainLookupEnd": 1896.6700584888456,
+      "domainLookupStart": 1896.6700584888456,
+      "duration": 80.78999996185303,
+      "encodedBodySize": 1115916,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1896.6700584888456,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1896.6700584888456,
+      "responseEnd": 1977.240058541298,
+      "responseStart": 1897.93505859375,
+      "secureConnectionStart": 1896.6700584888456,
+      "start": 1896.4500585794449,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.185,
+      "connectEnd": 1896.780058503151,
+      "connectStart": 1896.780058503151,
+      "decodedBodySize": 703874,
+      "domainLookupEnd": 1896.780058503151,
+      "domainLookupStart": 1896.780058503151,
+      "duration": 26.06000006198883,
+      "encodedBodySize": 703874,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1896.780058503151,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1896.780058503151,
+      "responseEnd": 1922.615058541298,
+      "responseStart": 1898.1300585269928,
+      "secureConnectionStart": 1896.780058503151,
+      "start": 1896.555058479309,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.275,
+      "connectEnd": 1896.8200585842133,
+      "connectStart": 1896.8200585842133,
+      "decodedBodySize": 572149,
+      "domainLookupEnd": 1896.8200585842133,
+      "domainLookupStart": 1896.8200585842133,
+      "duration": 13.600000023841858,
+      "encodedBodySize": 572149,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1896.8200585842133,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1896.8200585842133,
+      "responseEnd": 1910.240058541298,
+      "responseStart": 1898.2350585460665,
+      "secureConnectionStart": 1896.8200585842133,
+      "start": 1896.640058517456,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.34,
+      "connectEnd": 1896.865058541298,
+      "connectStart": 1896.865058541298,
+      "decodedBodySize": 805746,
+      "domainLookupEnd": 1896.865058541298,
+      "domainLookupStart": 1896.865058541298,
+      "duration": 40.67999994754791,
+      "encodedBodySize": 805746,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1896.865058541298,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1896.865058541298,
+      "responseEnd": 1937.3950585126877,
+      "responseStart": 1898.365058541298,
+      "secureConnectionStart": 1896.865058541298,
+      "start": 1896.71505856514,
+      "transferSize": 0
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 1.625,
+      "connectEnd": 1896.9100584983823,
+      "connectStart": 1896.9100584983823,
+      "decodedBodySize": 1847456,
+      "domainLookupEnd": 1896.9100584983823,
+      "domainLookupStart": 1896.9100584983823,
+      "duration": 796.3450000286102,
+      "encodedBodySize": 1847456,
+      "endpoint": "wallet-asset",
+      "fetchStart": 1896.9100584983823,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 1896.9100584983823,
+      "responseEnd": 2693.130058526993,
+      "responseStart": 1898.6950585842133,
+      "secureConnectionStart": 1896.9100584983823,
+      "start": 1896.7850584983823,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 1909.1100585460665,
+      "connectStart": 1909.1100585460665,
+      "decodedBodySize": 3577,
+      "domainLookupEnd": 1909.1100585460665,
+      "domainLookupStart": 1909.1100585460665,
+      "duration": 246.2300000190735,
+      "encodedBodySize": 975,
+      "endpoint": "node",
+      "fetchStart": 1909.1100585460665,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 1909.7200585603712,
+      "responseEnd": 2155.1350585222244,
+      "responseStart": 2154.8700585365295,
+      "secureConnectionStart": 1909.1100585460665,
+      "start": 1908.905058503151,
+      "transferSize": 1275
+    },
+    {
+      "duration": 1.409999966621399,
+      "name": "rolling.reader.dom",
+      "start": 2066.7000000476837
+    },
+    {
+      "duration": 404.08000004291534,
+      "name": "rolling.worker-init.application-classes",
+      "realm": "worker",
+      "start": 2285.3600585460663
+    },
+    {
+      "duration": 227.89999997615817,
+      "name": "rolling.worker-init.pxe-native",
+      "realm": "worker",
+      "start": 2691.880058526993
+    },
+    {
+      "duration": 817.4650000333786,
+      "name": "rolling.worker-init.funding-scope",
+      "realm": "worker",
+      "start": 2692.1750584840775
+    },
+    {
+      "connectEnd": 2692.5950585603714,
+      "connectStart": 2692.5950585603714,
+      "decodedBodySize": 2634,
+      "domainLookupEnd": 2692.5950585603714,
+      "domainLookupStart": 2692.5950585603714,
+      "duration": 226.2149999141693,
+      "encodedBodySize": 1070,
+      "endpoint": "node",
+      "fetchStart": 2692.5950585603714,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 2693.210058569908,
+      "responseEnd": 2918.545058488846,
+      "responseStart": 2918.255058526993,
+      "secureConnectionStart": 2692.5950585603714,
+      "start": 2692.3300585746765,
+      "transferSize": 1370
+    },
+    {
+      "connectEnd": 2693.5200585126877,
+      "connectStart": 2693.5200585126877,
+      "decodedBodySize": 128,
+      "domainLookupEnd": 2693.5200585126877,
+      "domainLookupStart": 2693.5200585126877,
+      "duration": 2.4850000143051147,
+      "encodedBodySize": 128,
+      "endpoint": "proof-asset",
+      "fetchStart": 2693.5200585126877,
+      "kind": "resource",
+      "protocol": "h3",
+      "realm": "worker",
+      "requestStart": 2693.9000585079193,
+      "responseEnd": 2695.8850585222244,
+      "responseStart": 2695.630058526993,
+      "secureConnectionStart": 2693.5200585126877,
+      "start": 2693.4000585079193,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 2755.7300585508347,
+      "connectStart": 2755.7300585508347,
+      "decodedBodySize": 128,
+      "domainLookupEnd": 2755.7300585508347,
+      "domainLookupStart": 2755.7300585508347,
+      "duration": 2.430000066757202,
+      "encodedBodySize": 128,
+      "endpoint": "proof-asset",
+      "fetchStart": 2755.7300585508347,
+      "kind": "resource",
+      "protocol": "h3",
+      "realm": "worker",
+      "requestStart": 2756.1950585842133,
+      "responseEnd": 2757.9800585508347,
+      "responseStart": 2757.740058541298,
+      "secureConnectionStart": 2755.7300585508347,
+      "start": 2755.5500584840775,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 2758.710058569908,
+      "connectStart": 2758.710058569908,
+      "decodedBodySize": 8388608,
+      "domainLookupEnd": 2758.710058569908,
+      "domainLookupStart": 2758.710058569908,
+      "duration": 13.024999976158142,
+      "encodedBodySize": 8388608,
+      "endpoint": "proof-asset",
+      "fetchStart": 2758.710058569908,
+      "kind": "resource",
+      "protocol": "h3",
+      "realm": "worker",
+      "requestStart": 2759.045058488846,
+      "responseEnd": 2771.545058488846,
+      "responseStart": 2759.93505859375,
+      "secureConnectionStart": 2758.710058569908,
+      "start": 2758.5200585126877,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 2921.4950585365295,
+      "connectStart": 2921.4950585365295,
+      "decodedBodySize": 2787,
+      "domainLookupEnd": 2921.4950585365295,
+      "domainLookupStart": 2921.4950585365295,
+      "duration": 232.79999995231628,
+      "encodedBodySize": 1349,
+      "endpoint": "node",
+      "fetchStart": 2921.4950585365295,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 2922.1200585365295,
+      "responseEnd": 3154.130058526993,
+      "responseStart": 3153.71505856514,
+      "secureConnectionStart": 2921.4950585365295,
+      "start": 2921.3300585746765,
+      "transferSize": 1649
+    },
+    {
+      "connectEnd": 3156.4000585079193,
+      "connectStart": 3156.4000585079193,
+      "decodedBodySize": 3579,
+      "domainLookupEnd": 3156.4000585079193,
+      "domainLookupStart": 3156.4000585079193,
+      "duration": 228.6599999666214,
+      "encodedBodySize": 976,
+      "endpoint": "node",
+      "fetchStart": 3156.4000585079193,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3157.290058493614,
+      "responseEnd": 3384.7200585603714,
+      "responseStart": 3384.4250584840775,
+      "secureConnectionStart": 3156.4000585079193,
+      "start": 3156.06005859375,
+      "transferSize": 1276
+    },
+    {
+      "duration": 1.225000023841858,
+      "name": "rolling.session-init.account-lock",
+      "realm": "worker",
+      "start": 3243.765058517456
+    },
+    {
+      "duration": 282.09500002861023,
+      "name": "rolling.worker-init.private-session",
+      "realm": "worker",
+      "start": 3243.8550585508347
+    },
+    {
+      "duration": 265.3349999189377,
+      "name": "rolling.funding-preparation.allocation",
+      "realm": "worker",
+      "start": 3244.18505859375
+    },
+    {
+      "duration": 0.034999966621398926,
+      "name": "rolling.session-init.trusted-node",
+      "realm": "worker",
+      "start": 3245.0100585222244
+    },
+    {
+      "duration": 0.125,
+      "name": "rolling.session-init.deployment",
+      "realm": "worker",
+      "start": 3245.0500584840775
+    },
+    {
+      "duration": 0.005000114440917969,
+      "name": "rolling.session-init.account-derive",
+      "realm": "worker",
+      "start": 3245.180058479309
+    },
+    {
+      "duration": 2.34499990940094,
+      "name": "rolling.session-init.store-open",
+      "realm": "worker",
+      "start": 3245.1900585889816
+    },
+    {
+      "duration": 125.45000004768372,
+      "name": "rolling.session-init.pxe-create",
+      "realm": "worker",
+      "start": 3247.555058479309
+    },
+    {
+      "duration": 2.1399999856948853,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3298.405058503151
+    },
+    {
+      "duration": 23.985000014305115,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3300.585058569908
+    },
+    {
+      "duration": 5.514999985694885,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3300.8150585889816
+    },
+    {
+      "duration": 18.230000019073486,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3306.3450585603714
+    },
+    {
+      "duration": 2.259999990463257,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3306.975058555603
+    },
+    {
+      "duration": 15.34500002861023,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3309.240058541298
+    },
+    {
+      "duration": 1.7400000095367432,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3309.625058531761
+    },
+    {
+      "duration": 13.205000042915344,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3311.3850585222244
+    },
+    {
+      "duration": 2.440000057220459,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3311.655058503151
+    },
+    {
+      "duration": 10.475000023841858,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3314.1200585365295
+    },
+    {
+      "duration": 9.009999990463257,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3314.4850585460663
+    },
+    {
+      "duration": 1.0700000524520874,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3323.5250585079193
+    },
+    {
+      "duration": 2.759999990463257,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3324.7600585222244
+    },
+    {
+      "duration": 6.90500009059906,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3324.915058493614
+    },
+    {
+      "duration": 17.235000014305115,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3324.950058579445
+    },
+    {
+      "duration": 21.81000006198883,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3325.0500584840775
+    },
+    {
+      "duration": 26.93499994277954,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3325.0800585746765
+    },
+    {
+      "duration": 32.74500000476837,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3325.1050585508347
+    },
+    {
+      "duration": 1.46999990940094,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3327.93505859375
+    },
+    {
+      "duration": 5.990000009536743,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3333.255058526993
+    },
+    {
+      "duration": 2.4299999475479126,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3342.700058579445
+    },
+    {
+      "duration": 1.6750000715255735,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3347.295058488846
+    },
+    {
+      "duration": 2.294999957084656,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3352.5700585842133
+    },
+    {
+      "duration": 8.53000009059906,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3359.405058503151
+    },
+    {
+      "duration": 0.3500000238418579,
+      "name": "rolling.session-init.journal-open",
+      "realm": "worker",
+      "start": 3373.015058517456
+    },
+    {
+      "duration": 0.15999996662139893,
+      "name": "rolling.session-init.wallet-bind",
+      "realm": "worker",
+      "start": 3373.375058531761
+    },
+    {
+      "duration": 10.400000095367432,
+      "name": "rolling.session-init.account-manager",
+      "realm": "worker",
+      "start": 3373.5350584983826
+    },
+    {
+      "duration": 8.379999995231628,
+      "name": "rolling.session-init.account-register",
+      "realm": "worker",
+      "start": 3383.950058579445
+    },
+    {
+      "duration": 130.01499998569489,
+      "name": "rolling.session-init.contracts-register",
+      "realm": "worker",
+      "start": 3392.34005856514
+    },
+    {
+      "duration": 9.714999914169312,
+      "name": "rolling.session-init.contracts-account-class",
+      "realm": "worker",
+      "start": 3392.460058569908
+    },
+    {
+      "duration": 2.8249999284744263,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3392.475058555603
+    },
+    {
+      "duration": 0.41499996185302734,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3395.31005859375
+    },
+    {
+      "duration": 1.8949999809265137,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3395.7700585126877
+    },
+    {
+      "duration": 2.9049999713897705,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3398.56005859375
+    },
+    {
+      "duration": 1.055000066757202,
+      "name": "rolling.session-init.contracts-account-instance",
+      "realm": "worker",
+      "start": 3402.180058479309
+    },
+    {
+      "duration": 42.889999985694885,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3403.250058531761
+    },
+    {
+      "duration": 103.49500000476836,
+      "name": "rolling.session-init.contracts-board-class",
+      "realm": "worker",
+      "start": 3403.250058531761
+    },
+    {
+      "duration": 42.894999980926514,
+      "name": "rolling.proof.native.phase.registration-board-serialize",
+      "realm": "worker",
+      "start": 3403.255058526993
+    },
+    {
+      "duration": 3.4200000762939453,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3446.155058503151
+    },
+    {
+      "duration": 3.4250000715255737,
+      "name": "rolling.proof.native.phase.registration-board-class-cache",
+      "realm": "worker",
+      "start": 3446.1600584983826
+    },
+    {
+      "duration": 4.979999899864197,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3449.68505859375
+    },
+    {
+      "duration": 4.984999895095825,
+      "name": "rolling.proof.native.phase.registration-board-stored-read",
+      "realm": "worker",
+      "start": 3449.68505859375
+    },
+    {
+      "duration": 40.764999985694885,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3460.3150585889816
+    },
+    {
+      "duration": 40.77499997615814,
+      "name": "rolling.proof.native.phase.registration-board-serialize",
+      "realm": "worker",
+      "start": 3460.3150585889816
+    },
+    {
+      "duration": 3.330000042915344,
+      "name": "rolling.session-init.contracts-board-instance",
+      "realm": "worker",
+      "start": 3506.755058526993
+    },
+    {
+      "duration": 3.8899999856948857,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3510.100058555603
+    },
+    {
+      "duration": 10.97000002861023,
+      "name": "rolling.session-init.contracts-fee-class",
+      "realm": "worker",
+      "start": 3510.100058555603
+    },
+    {
+      "duration": 3.8949999809265137,
+      "name": "rolling.proof.native.phase.registration-fee-serialize",
+      "realm": "worker",
+      "start": 3510.1050585508347
+    },
+    {
+      "duration": 0.3400000333786011,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 3514.000058531761
+    },
+    {
+      "duration": 0.3400000333786011,
+      "name": "rolling.proof.native.phase.registration-fee-class-cache",
+      "realm": "worker",
+      "start": 3514.005058526993
+    },
+    {
+      "duration": 1.8949999809265137,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 3514.405058503151
+    },
+    {
+      "duration": 1.90500009059906,
+      "name": "rolling.proof.native.phase.registration-fee-stored-read",
+      "realm": "worker",
+      "start": 3514.405058503151
+    },
+    {
+      "duration": 227.2300000190735,
+      "name": "rolling.funding-preparation.qualification",
+      "realm": "worker",
+      "start": 3515.0250585079193
+    },
+    {
+      "duration": 0.565000057220459,
+      "name": "rolling.funding-preparation.wallet",
+      "realm": "worker",
+      "start": 3515.140058517456
+    },
+    {
+      "connectEnd": 3515.755058526993,
+      "connectStart": 3515.755058526993,
+      "decodedBodySize": 86,
+      "domainLookupEnd": 3515.755058526993,
+      "domainLookupStart": 3515.755058526993,
+      "duration": 225.77999997138977,
+      "encodedBodySize": 86,
+      "endpoint": "node",
+      "fetchStart": 3515.755058526993,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3516.505058526993,
+      "responseEnd": 3741.305058479309,
+      "responseStart": 3740.980058550834,
+      "secureConnectionStart": 3515.755058526993,
+      "start": 3515.5250585079193,
+      "transferSize": 386
+    },
+    {
+      "duration": 145.67499995231628,
+      "name": "rolling.funding-preparation.nonce",
+      "realm": "worker",
+      "start": 3515.710058569908
+    },
+    {
+      "duration": 3.7699999809265137,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 3516.8150585889816
+    },
+    {
+      "duration": 3.774999976158142,
+      "name": "rolling.proof.native.phase.registration-fee-serialize",
+      "realm": "worker",
+      "start": 3516.8150585889816
+    },
+    {
+      "duration": 1.2649999856948853,
+      "name": "rolling.session-init.contracts-fee-instance",
+      "realm": "worker",
+      "start": 3521.0800585746765
+    },
+    {
+      "duration": 2.884999990463257,
+      "name": "rolling.session-init.application-bind",
+      "realm": "worker",
+      "start": 3522.3700585365295
+    },
+    {
+      "duration": 584.6549999713898,
+      "name": "rolling.action.sync",
+      "realm": "worker",
+      "start": 3526.3950585126877
+    },
+    {
+      "connectEnd": 3527.2600585222244,
+      "connectStart": 3527.2600585222244,
+      "decodedBodySize": 4499,
+      "domainLookupEnd": 3527.2600585222244,
+      "domainLookupStart": 3527.2600585222244,
+      "duration": 231.5550000667572,
+      "encodedBodySize": 1375,
+      "endpoint": "node",
+      "fetchStart": 3527.2600585222244,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3527.835058569908,
+      "responseEnd": 3758.605058550834,
+      "responseStart": 3757.960058569908,
+      "secureConnectionStart": 3527.2600585222244,
+      "start": 3527.0500584840775,
+      "transferSize": 1675
+    },
+    {
+      "duration": 579.7700001001358,
+      "name": "rolling.proof.native.phase.sync-stream",
+      "realm": "worker",
+      "start": 3530.0500584840775
+    },
+    {
+      "duration": 330.53000009059906,
+      "name": "rolling.proof.native.phase.sync-source-snapshot",
+      "realm": "worker",
+      "start": 3530.2850584983826
+    },
+    {
+      "connectEnd": 3530.6200585365295,
+      "connectStart": 3530.6200585365295,
+      "decodedBodySize": 798,
+      "domainLookupEnd": 3530.6200585365295,
+      "domainLookupStart": 3530.6200585365295,
+      "duration": 328.6949999332428,
+      "encodedBodySize": 798,
+      "endpoint": "node",
+      "fetchStart": 3530.6200585365295,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3531.125058531761,
+      "responseEnd": 3859.155058503151,
+      "responseStart": 3858.045058488846,
+      "secureConnectionStart": 3530.6200585365295,
+      "start": 3530.460058569908,
+      "transferSize": 1098
+    },
+    {
+      "duration": 0.9099999666213988,
+      "name": "rolling.funding-preparation.secrets",
+      "realm": "worker",
+      "start": 3661.390058517456
+    },
+    {
+      "duration": 367.7699999809265,
+      "name": "rolling.funding-preparation.quote",
+      "realm": "worker",
+      "start": 3662.330058574677
+    },
+    {
+      "connectEnd": 3760.2450585365295,
+      "connectStart": 3760.2450585365295,
+      "decodedBodySize": 3579,
+      "domainLookupEnd": 3760.2450585365295,
+      "domainLookupStart": 3760.2450585365295,
+      "duration": 240.20000004768372,
+      "encodedBodySize": 976,
+      "endpoint": "node",
+      "fetchStart": 3760.2450585365295,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3761.09005856514,
+      "responseEnd": 4000.1100585460663,
+      "responseStart": 3999.630058526993,
+      "secureConnectionStart": 3760.2450585365295,
+      "start": 3759.9100584983826,
+      "transferSize": 1276
+    },
+    {
+      "duration": 242.79999995231628,
+      "name": "rolling.proof.native.phase.sync-ancestry-read",
+      "realm": "worker",
+      "start": 3863.6950585842137
+    },
+    {
+      "connectEnd": 3864.355058550834,
+      "connectStart": 3864.355058550834,
+      "decodedBodySize": 1363,
+      "domainLookupEnd": 3864.355058550834,
+      "domainLookupStart": 3864.355058550834,
+      "duration": 241.2699999809265,
+      "encodedBodySize": 1060,
+      "endpoint": "node",
+      "fetchStart": 3864.355058550834,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3865.2750585079193,
+      "responseEnd": 4105.350058555603,
+      "responseStart": 4104.375058531761,
+      "secureConnectionStart": 3864.355058550834,
+      "start": 3864.080058574677,
+      "transferSize": 1360
+    },
+    {
+      "connectEnd": 3864.765058517456,
+      "connectStart": 3864.765058517456,
+      "decodedBodySize": 2575,
+      "domainLookupEnd": 3864.765058517456,
+      "domainLookupStart": 3864.765058517456,
+      "duration": 242.92500007152557,
+      "encodedBodySize": 862,
+      "endpoint": "node",
+      "fetchStart": 3864.765058517456,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3865.81005859375,
+      "responseEnd": 4107.43505859375,
+      "responseStart": 4106.395058512688,
+      "secureConnectionStart": 3864.765058517456,
+      "start": 3864.510058522224,
+      "transferSize": 1162
+    },
+    {
+      "connectEnd": 3867.5500584840775,
+      "connectStart": 3867.5500584840775,
+      "decodedBodySize": 1799,
+      "domainLookupEnd": 3867.5500584840775,
+      "domainLookupStart": 3867.5500584840775,
+      "duration": 235.88499999046329,
+      "encodedBodySize": 792,
+      "endpoint": "node",
+      "fetchStart": 3867.5500584840775,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3868.375058531761,
+      "responseEnd": 4103.160058498383,
+      "responseStart": 4102.575058579445,
+      "secureConnectionStart": 3867.5500584840775,
+      "start": 3867.2750585079193,
+      "transferSize": 1092
+    },
+    {
+      "connectEnd": 3867.725058555603,
+      "connectStart": 3867.725058555603,
+      "decodedBodySize": 1799,
+      "domainLookupEnd": 3867.725058555603,
+      "domainLookupStart": 3867.725058555603,
+      "duration": 235.75999999046329,
+      "encodedBodySize": 794,
+      "endpoint": "node",
+      "fetchStart": 3867.725058555603,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 3868.510058522224,
+      "responseEnd": 4103.225058555603,
+      "responseStart": 4102.6200585365295,
+      "secureConnectionStart": 3867.725058555603,
+      "start": 3867.46505856514,
+      "transferSize": 1094
+    },
+    {
+      "duration": 1.2300000190734863,
+      "name": "rolling.proof.native.phase.sync-ancestry-verify",
+      "realm": "worker",
+      "start": 4106.585058569908
+    },
+    {
+      "duration": 3.774999976158142,
+      "name": "rolling.account.signing-capsule",
+      "realm": "worker",
+      "start": 4111.505058526993
+    },
+    {
+      "duration": 599.2149999141693,
+      "name": "rolling.account.status",
+      "realm": "worker",
+      "start": 4115.450058579445
+    },
+    {
+      "duration": 1.5600000619888306,
+      "name": "rolling.account.status.workflow",
+      "realm": "worker",
+      "start": 4115.510058522224
+    },
+    {
+      "duration": 576.170000076294,
+      "name": "rolling.account.status.discovery-queued",
+      "realm": "worker",
+      "start": 4117.160058498383
+    },
+    {
+      "duration": 234.09500002861023,
+      "name": "rolling.action.fee-metadata",
+      "realm": "worker",
+      "start": 4117.725058555603
+    },
+    {
+      "connectEnd": 4122.575058579445,
+      "connectStart": 4122.575058579445,
+      "decodedBodySize": 3004,
+      "domainLookupEnd": 4122.575058579445,
+      "domainLookupStart": 4122.575058579445,
+      "duration": 228.7300000190735,
+      "encodedBodySize": 1496,
+      "endpoint": "node",
+      "fetchStart": 4122.575058579445,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 4123.100058555603,
+      "responseEnd": 4351.0800585746765,
+      "responseStart": 4350.130058526993,
+      "secureConnectionStart": 4122.575058579445,
+      "start": 4122.350058555603,
+      "transferSize": 1796
+    },
+    {
+      "duration": 0.3799999952316284,
+      "name": "rolling.proof.native.phase.sync-classes",
+      "realm": "worker",
+      "start": 4128.640058517456
+    },
+    {
+      "duration": 470.4300000667572,
+      "name": "rolling.proof.native.phase.sync-records",
+      "realm": "worker",
+      "start": 4129.025058507919
+    },
+    {
+      "duration": 466.84999990463257,
+      "name": "rolling.proof.native.phase.circuit",
+      "realm": "worker",
+      "start": 4132.565058588982
+    },
+    {
+      "duration": 327.36500000953674,
+      "name": "rolling.proof.native.phase.circuit",
+      "realm": "worker",
+      "start": 4132.670058488846
+    },
+    {
+      "duration": 4.674999952316284,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "realm": "worker",
+      "start": 4150.220058560371
+    },
+    {
+      "duration": 0.15999996662139893,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "realm": "worker",
+      "start": 4154.750058531761
+    },
+    {
+      "duration": 0.7800000905990601,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 4155.170058488846
+    },
+    {
+      "duration": 0.7599999904632568,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 4155.195058584213
+    },
+    {
+      "duration": 0.2950000762939453,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 4156.175058484077
+    },
+    {
+      "duration": 0.18500006198883057,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 4156.290058493614
+    },
+    {
+      "duration": 8.059999942779541,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "realm": "worker",
+      "start": 4156.690058588982
+    },
+    {
+      "duration": 15.664999961853027,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "realm": "worker",
+      "start": 4156.8700585365295
+    },
+    {
+      "connectEnd": 4163.405058503151,
+      "connectStart": 4163.405058503151,
+      "decodedBodySize": 108,
+      "domainLookupEnd": 4163.405058503151,
+      "domainLookupStart": 4163.405058503151,
+      "duration": 245.15499997138977,
+      "encodedBodySize": 108,
+      "endpoint": "node",
+      "fetchStart": 4163.405058503151,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 4163.985058546066,
+      "responseEnd": 4408.355058550835,
+      "responseStart": 4407.890058517456,
+      "secureConnectionStart": 4163.405058503151,
+      "start": 4163.200058579445,
+      "transferSize": 408
+    },
+    {
+      "duration": 7.795000076293945,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "realm": "worker",
+      "start": 4171.170058488846
+    },
+    {
+      "duration": 7.400000095367432,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "realm": "worker",
+      "start": 4174.035058498383
+    },
+    {
+      "connectEnd": 4176.395058512688,
+      "connectStart": 4176.395058512688,
+      "decodedBodySize": 63,
+      "domainLookupEnd": 4176.395058512688,
+      "domainLookupStart": 4176.395058512688,
+      "duration": 236.86500000953671,
+      "encodedBodySize": 63,
+      "endpoint": "node",
+      "fetchStart": 4176.395058512688,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 4177.000058531761,
+      "responseEnd": 4413.035058498383,
+      "responseStart": 4412.380058526993,
+      "secureConnectionStart": 4176.395058512688,
+      "start": 4176.170058488846,
+      "transferSize": 363
+    },
+    {
+      "duration": 0.060000061988830566,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4179.155058503151
+    },
+    {
+      "duration": 0.19499993324279785,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4179.335058569908
+    },
+    {
+      "duration": 412.61500000953674,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "realm": "worker",
+      "start": 4179.555058479309
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4181.575058579445
+    },
+    {
+      "duration": 0.04500007629394531,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4181.640058517456
+    },
+    {
+      "duration": 273.9800000190735,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "realm": "worker",
+      "start": 4181.7050585746765
+    },
+    {
+      "connectEnd": 4197.020058512688,
+      "connectStart": 4197.020058512688,
+      "decodedBodySize": 67755,
+      "domainLookupEnd": 4197.020058512688,
+      "domainLookupStart": 4197.020058512688,
+      "duration": 381.1299999952316,
+      "encodedBodySize": 26046,
+      "endpoint": "node",
+      "fetchStart": 4197.020058512688,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 4200.96505856514,
+      "responseEnd": 4577.925058484077,
+      "responseStart": 4472.420058488846,
+      "secureConnectionStart": 4197.020058512688,
+      "start": 4196.795058488846,
+      "transferSize": 26346
+    },
+    {
+      "connectEnd": 4209.68505859375,
+      "connectStart": 4209.68505859375,
+      "decodedBodySize": 19899,
+      "domainLookupEnd": 4209.68505859375,
+      "domainLookupStart": 4209.68505859375,
+      "duration": 238.18999993801117,
+      "encodedBodySize": 8536,
+      "endpoint": "node",
+      "fetchStart": 4209.68505859375,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 4210.380058526993,
+      "responseEnd": 4447.640058517456,
+      "responseStart": 4444.565058588982,
+      "secureConnectionStart": 4209.68505859375,
+      "start": 4209.450058579445,
+      "transferSize": 8836
+    },
+    {
+      "duration": 2.3700000047683716,
+      "name": "rolling.action.fee-binding",
+      "realm": "worker",
+      "start": 4351.915058493614
+    },
+    {
+      "duration": 352.1599999666214,
+      "name": "rolling.action.fee-balance",
+      "realm": "worker",
+      "start": 4354.365058541298
+    },
+    {
+      "duration": 0.040000081062316895,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4455.795058488846
+    },
+    {
+      "duration": 1.4950000047683716,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "realm": "worker",
+      "start": 4455.920058488846
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4457.505058526993
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4457.56005859375
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4457.6200585365295
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4457.650058507919
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4457.695058584213
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4457.71505856514
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4457.755058526993
+    },
+    {
+      "duration": 0.41999995708465576,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "realm": "worker",
+      "start": 4457.84005856514
+    },
+    {
+      "duration": 0.03000009059906006,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4458.300058484077
+    },
+    {
+      "duration": 0.16499996185302734,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "realm": "worker",
+      "start": 4458.365058541298
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 4458.56005859375
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4458.595058560371
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4458.625058531761
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4458.645058512688
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4458.670058488846
+    },
+    {
+      "duration": 0.4249999523162842,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "realm": "worker",
+      "start": 4458.700058579445
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 4459.140058517456
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 4459.155058503151
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4592.270058512688
+    },
+    {
+      "duration": 3.090000033378601,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "realm": "worker",
+      "start": 4592.405058503151
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4595.595058560371
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4595.645058512688
+    },
+    {
+      "duration": 0.07999992370605469,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4595.720058560371
+    },
+    {
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4596.020058512688
+    },
+    {
+      "duration": 0.04499995708465576,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.125058531761
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4596.21505856514
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.265058517456
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4596.335058569908
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4596.380058526993
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4596.400058507919
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.430058479309
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4596.480058550835
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4596.500058531761
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.520058512688
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.585058569908
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4596.645058512688
+    },
+    {
+      "duration": 0.010000109672546388,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4596.680058479309
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.7050585746765
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4596.7450585365295
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4596.770058512688
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.790058493614
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.835058569908
+    },
+    {
+      "duration": 0.03000009059906006,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4596.905058503151
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4596.945058584213
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4596.975058555603
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4597.025058507919
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.050058484077
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4597.070058584213
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4597.115058541298
+    },
+    {
+      "duration": 0.03000009059906006,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4597.165058493614
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.2050585746765
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4597.220058560371
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.2450585365295
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.265058517456
+    },
+    {
+      "duration": 0.1799999475479126,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "realm": "worker",
+      "start": 4597.3300585746765
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.520058512688
+    },
+    {
+      "duration": 0.06500005722045898,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "realm": "worker",
+      "start": 4597.545058488846
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 4597.6200585365295
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.640058517456
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.655058503151
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.68505859375
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.7050585746765
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4597.730058550835
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4597.775058507919
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.795058488846
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4597.81005859375
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4597.860058546066
+    },
+    {
+      "duration": 0.03000009059906006,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4597.905058503151
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.950058579445
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4597.96505856514
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4597.985058546066
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.030058503151
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.075058579445
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4598.115058541298
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4598.135058522224
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.155058503151
+    },
+    {
+      "duration": 0.04499995708465576,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.210058569908
+    },
+    {
+      "duration": 0.09499990940093994,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4598.315058588982
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4598.470058560371
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4598.520058512688
+    },
+    {
+      "duration": 0.03500008583068848,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.555058479309
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.6200585365295
+    },
+    {
+      "duration": 0.03000009059906006,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.675058484077
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4598.730058550835
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4598.765058517456
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.785058498383
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.835058569908
+    },
+    {
+      "duration": 0.040000081062316895,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4598.895058512688
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4598.950058579445
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 4598.970058560371
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4598.990058541298
+    },
+    {
+      "duration": 0.02500009536743164,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4599.035058498383
+    },
+    {
+      "duration": 0.16499996185302734,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "realm": "worker",
+      "start": 4599.085058569908
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 4599.265058517456
+    },
+    {
+      "duration": 0,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 4599.280058503151
+    },
+    {
+      "duration": 21.18500006198883,
+      "name": "rolling.account.status.deposit-ids-queued",
+      "realm": "worker",
+      "start": 4693.430058479309
+    },
+    {
+      "duration": 10.774999976158142,
+      "name": "rolling.proof.native.phase.circuit",
+      "realm": "worker",
+      "start": 4695.265058517456
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "realm": "worker",
+      "start": 4696.105058550835
+    },
+    {
+      "duration": 0.08500003814697266,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 4696.160058498383
+    },
+    {
+      "duration": 4.664999961853027,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "realm": "worker",
+      "start": 4696.585058569908
+    },
+    {
+      "duration": 3.819999933242798,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "realm": "worker",
+      "start": 4701.71505856514
+    },
+    {
+      "duration": 5.790000081062317,
+      "name": "rolling.proof.native.phase.circuit",
+      "realm": "worker",
+      "start": 4708.430058479309
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "realm": "worker",
+      "start": 4709.710058569908
+    },
+    {
+      "duration": 0.08000004291534424,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 4709.750058531761
+    },
+    {
+      "duration": 0.375,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "realm": "worker",
+      "start": 4709.885058522224
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 4711.2050585746765
+    },
+    {
+      "duration": 0.029999971389770508,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 4711.2450585365295
+    },
+    {
+      "duration": 0.20000004768371585,
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "realm": "worker",
+      "start": 4711.300058484077
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 4711.520058512688
+    },
+    {
+      "duration": 2.0749999284744263,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "realm": "worker",
+      "start": 4711.710058569908
+    },
+    {
+      "duration": 238.8400000333786,
+      "name": "rolling.account.bok-sync",
+      "realm": "worker",
+      "start": 4717.095058560371
+    },
+    {
+      "connectEnd": 4717.545058488846,
+      "connectStart": 4717.545058488846,
+      "decodedBodySize": 2789,
+      "domainLookupEnd": 4717.545058488846,
+      "domainLookupStart": 4717.545058488846,
+      "duration": 233.6949999332428,
+      "encodedBodySize": 1346,
+      "endpoint": "node",
+      "fetchStart": 4717.545058488846,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 4718.305058479309,
+      "responseEnd": 4951.025058507919,
+      "responseStart": 4950.445058584213,
+      "secureConnectionStart": 4717.545058488846,
+      "start": 4717.3300585746765,
+      "transferSize": 1646
+    },
+    {
+      "duration": 236.77499997615817,
+      "name": "rolling.proof.native.phase.sync-stream",
+      "realm": "worker",
+      "start": 4717.650058507919
+    },
+    {
+      "duration": 235.36000001430511,
+      "name": "rolling.proof.native.phase.sync-source-snapshot",
+      "realm": "worker",
+      "start": 4717.655058503151
+    },
+    {
+      "connectEnd": 4717.8300585746765,
+      "connectStart": 4717.8300585746765,
+      "decodedBodySize": 798,
+      "domainLookupEnd": 4717.8300585746765,
+      "domainLookupStart": 4717.8300585746765,
+      "duration": 234.07499992847443,
+      "encodedBodySize": 798,
+      "endpoint": "node",
+      "fetchStart": 4717.8300585746765,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 4718.545058488846,
+      "responseEnd": 4951.785058498383,
+      "responseStart": 4950.68505859375,
+      "secureConnectionStart": 4717.8300585746765,
+      "start": 4717.710058569908,
+      "transferSize": 1098
+    },
+    {
+      "connectEnd": 4953.050058484077,
+      "connectStart": 4953.050058484077,
+      "decodedBodySize": 3579,
+      "domainLookupEnd": 4953.050058484077,
+      "domainLookupStart": 4953.050058484077,
+      "duration": 228.78999996185303,
+      "encodedBodySize": 976,
+      "endpoint": "node",
+      "fetchStart": 4953.050058484077,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 4953.800058484077,
+      "responseEnd": 5181.550058484077,
+      "responseStart": 5181.095058560371,
+      "secureConnectionStart": 4953.050058484077,
+      "start": 4952.760058522224,
+      "transferSize": 1276
+    },
+    {
+      "assetCacheHit": 1,
+      "assetReadyDuration": 2.595,
+      "connectEnd": 5183.195058584213,
+      "connectStart": 5183.195058584213,
+      "decodedBodySize": 1044899,
+      "domainLookupEnd": 5183.195058584213,
+      "domainLookupStart": 5183.195058584213,
+      "duration": 4.774999976158142,
+      "encodedBodySize": 1044899,
+      "endpoint": "wallet-asset",
+      "fetchStart": 5183.195058584213,
+      "kind": "resource",
+      "protocol": "unknown",
+      "realm": "worker",
+      "requestStart": 5183.195058584213,
+      "responseEnd": 5187.670058488846,
+      "responseStart": 5186.175058484077,
+      "secureConnectionStart": 5183.195058584213,
+      "start": 5182.895058512688,
+      "transferSize": 0
+    },
+    {
+      "connectEnd": 5199.710058569908,
+      "connectStart": 5199.710058569908,
+      "decodedBodySize": 1790,
+      "domainLookupEnd": 5199.710058569908,
+      "domainLookupStart": 5199.710058569908,
+      "duration": 232.8550000190735,
+      "encodedBodySize": 791,
+      "endpoint": "node",
+      "fetchStart": 5199.710058569908,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 5200.355058550835,
+      "responseEnd": 5432.335058569908,
+      "responseStart": 5431.910058498383,
+      "secureConnectionStart": 5199.710058569908,
+      "start": 5199.480058550835,
+      "transferSize": 1091
+    },
+    {
+      "connectEnd": 5508.695058584213,
+      "connectStart": 5508.695058584213,
+      "decodedBodySize": 1209,
+      "domainLookupEnd": 5508.695058584213,
+      "domainLookupStart": 5508.695058584213,
+      "duration": 278.45500004291534,
+      "encodedBodySize": 659,
+      "endpoint": "node",
+      "fetchStart": 5508.695058584213,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 5509.415058493614,
+      "responseEnd": 5786.845058560371,
+      "responseStart": 5739.820058584213,
+      "secureConnectionStart": 5508.695058584213,
+      "start": 5508.390058517456,
+      "transferSize": 959
+    },
+    {
+      "connectEnd": 5791.140058517456,
+      "connectStart": 5791.140058517456,
+      "decodedBodySize": 417,
+      "domainLookupEnd": 5791.140058517456,
+      "domainLookupStart": 5791.140058517456,
+      "duration": 238.37999999523163,
+      "encodedBodySize": 417,
+      "endpoint": "node",
+      "fetchStart": 5791.140058517456,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 5791.985058546066,
+      "responseEnd": 6029.125058531761,
+      "responseStart": 6028.850058555603,
+      "secureConnectionStart": 5791.140058517456,
+      "start": 5790.7450585365295,
+      "transferSize": 717
+    },
+    {
+      "connectEnd": 6030.445058584213,
+      "connectStart": 6030.445058584213,
+      "decodedBodySize": 1790,
+      "domainLookupEnd": 6030.445058584213,
+      "domainLookupStart": 6030.445058584213,
+      "duration": 227.41999995708463,
+      "encodedBodySize": 790,
+      "endpoint": "node",
+      "fetchStart": 6030.445058584213,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 6030.985058546066,
+      "responseEnd": 6257.500058531761,
+      "responseStart": 6257.235058546066,
+      "secureConnectionStart": 6030.445058584213,
+      "start": 6030.0800585746765,
+      "transferSize": 1090
+    },
+    {
+      "connectEnd": 6258.850058555603,
+      "connectStart": 6258.850058555603,
+      "decodedBodySize": 2789,
+      "domainLookupEnd": 6258.850058555603,
+      "domainLookupStart": 6258.850058555603,
+      "duration": 231.99000000953671,
+      "encodedBodySize": 1345,
+      "endpoint": "node",
+      "fetchStart": 6258.850058555603,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 6259.335058569908,
+      "responseEnd": 6490.59005856514,
+      "responseStart": 6490.260058522224,
+      "secureConnectionStart": 6258.850058555603,
+      "start": 6258.600058555603,
+      "transferSize": 1645
+    },
+    {
+      "connectEnd": 6491.905058503151,
+      "connectStart": 6491.905058503151,
+      "decodedBodySize": 3579,
+      "domainLookupEnd": 6491.905058503151,
+      "domainLookupStart": 6491.905058503151,
+      "duration": 229.42500007152557,
+      "encodedBodySize": 976,
+      "endpoint": "node",
+      "fetchStart": 6491.905058503151,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 6492.475058555603,
+      "responseEnd": 6721.06005859375,
+      "responseStart": 6720.565058588982,
+      "secureConnectionStart": 6491.905058503151,
+      "start": 6491.635058522224,
+      "transferSize": 1276
+    },
+    {
+      "duration": 7.5,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 6722.315058588982
+    },
+    {
+      "duration": 0.5499999523162842,
+      "name": "rolling.proof.native.phase.registration-class-cache",
+      "realm": "worker",
+      "start": 6729.84005856514
+    },
+    {
+      "duration": 2.5149999856948853,
+      "name": "rolling.proof.native.phase.registration-stored-read",
+      "realm": "worker",
+      "start": 6730.490058541298
+    },
+    {
+      "duration": 6.644999980926514,
+      "name": "rolling.proof.native.phase.registration-serialize",
+      "realm": "worker",
+      "start": 6736.405058503151
+    },
+    {
+      "connectEnd": 6748.155058503151,
+      "connectStart": 6748.155058503151,
+      "decodedBodySize": 1209,
+      "domainLookupEnd": 6748.155058503151,
+      "domainLookupStart": 6748.155058503151,
+      "duration": 249.65499997138977,
+      "encodedBodySize": 659,
+      "endpoint": "node",
+      "fetchStart": 6748.155058503151,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 6748.84005856514,
+      "responseEnd": 6997.540058493614,
+      "responseStart": 6996.740058541298,
+      "secureConnectionStart": 6748.155058503151,
+      "start": 6747.885058522224,
+      "transferSize": 959
+    },
+    {
+      "connectEnd": 6749.315058588982,
+      "connectStart": 6749.315058588982,
+      "decodedBodySize": 58,
+      "domainLookupEnd": 6749.315058588982,
+      "domainLookupStart": 6749.315058588982,
+      "duration": 246.77500009536743,
+      "encodedBodySize": 58,
+      "endpoint": "node",
+      "fetchStart": 6749.315058588982,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 6749.670058488846,
+      "responseEnd": 6995.93505859375,
+      "responseStart": 6995.635058522224,
+      "secureConnectionStart": 6749.315058588982,
+      "start": 6749.160058498383,
+      "transferSize": 358
+    },
+    {
+      "duration": 356.4850000143051,
+      "name": "rolling.proof.native.phase.circuit",
+      "realm": "worker",
+      "start": 6998.855058550835
+    },
+    {
+      "duration": 0.0700000524520874,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "realm": "worker",
+      "start": 7001.990058541298
+    },
+    {
+      "duration": 0.10500001907348631,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 7002.100058555603
+    },
+    {
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 7002.265058517456
+    },
+    {
+      "duration": 1.6399999856948853,
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "realm": "worker",
+      "start": 7002.405058503151
+    },
+    {
+      "duration": 2.3899999856948853,
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "realm": "worker",
+      "start": 7004.970058560371
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 7007.4950585365295
+    },
+    {
+      "duration": 0.040000081062316895,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 7007.555058479309
+    },
+    {
+      "duration": 345.3200000524521,
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "realm": "worker",
+      "start": 7007.615058541298
+    },
+    {
+      "connectEnd": 7017.460058569908,
+      "connectStart": 7017.460058569908,
+      "decodedBodySize": 7827,
+      "domainLookupEnd": 7017.460058569908,
+      "domainLookupStart": 7017.460058569908,
+      "duration": 332.5,
+      "encodedBodySize": 3635,
+      "endpoint": "node",
+      "fetchStart": 7017.460058569908,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 7018.400058507919,
+      "responseEnd": 7349.700058579445,
+      "responseStart": 7348.305058479309,
+      "secureConnectionStart": 7017.460058569908,
+      "start": 7017.200058579445,
+      "transferSize": 3935
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7353.015058517456
+    },
+    {
+      "duration": 1.2949999570846558,
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "realm": "worker",
+      "start": 7353.125058531761
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 7354.485058546066
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7354.530058503151
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 7354.575058579445
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7354.595058560371
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 7354.625058531761
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7354.645058512688
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7354.665058493614
+    },
+    {
+      "duration": 0.17499995231628418,
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "realm": "worker",
+      "start": 7354.730058550835
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7354.920058488846
+    },
+    {
+      "duration": 0.06999993324279785,
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "realm": "worker",
+      "start": 7354.940058588982
+    },
+    {
+      "duration": 0.004999995231628418,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 7355.025058507919
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7355.040058493614
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7355.065058588982
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7355.0800585746765
+    },
+    {
+      "duration": 0.019999980926513672,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "realm": "worker",
+      "start": 7355.100058555603
+    },
+    {
+      "duration": 0.09500002861022948,
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "realm": "worker",
+      "start": 7355.130058526993
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 7355.230058550835
+    },
+    {
+      "duration": 0.009999990463256836,
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "realm": "worker",
+      "start": 7355.2450585365295
+    },
+    {
+      "duration": 240.0699999332428,
+      "name": "rolling.proof.native.phase.circuit",
+      "realm": "worker",
+      "start": 7355.9550585746765
+    },
+    {
+      "duration": 0.014999985694885254,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "realm": "worker",
+      "start": 7356.59005856514
+    },
+    {
+      "duration": 0.07500004768371582,
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "realm": "worker",
+      "start": 7356.6200585365295
+    },
+    {
+      "duration": 0.3849999904632568,
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "realm": "worker",
+      "start": 7356.755058526993
+    },
+    {
+      "duration": 0.020000100135803223,
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "realm": "worker",
+      "start": 7358.045058488846
+    },
+    {
+      "duration": 0.02499997615814209,
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "realm": "worker",
+      "start": 7358.0800585746765
+    },
+    {
+      "duration": 235.90499997138977,
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "realm": "worker",
+      "start": 7358.1200585365295
+    },
+    {
+      "connectEnd": 7358.565058588982,
+      "connectStart": 7358.565058588982,
+      "decodedBodySize": 159,
+      "domainLookupEnd": 7358.565058588982,
+      "domainLookupStart": 7358.565058588982,
+      "duration": 235.20999991893768,
+      "encodedBodySize": 159,
+      "endpoint": "node",
+      "fetchStart": 7358.565058588982,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 7359.195058584213,
+      "responseEnd": 7593.555058479309,
+      "responseStart": 7592.8300585746765,
+      "secureConnectionStart": 7358.565058588982,
+      "start": 7358.345058560371,
+      "transferSize": 459
+    },
+    {
+      "duration": 0.039999961853027344,
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "realm": "worker",
+      "start": 7594.105058550835
+    },
+    {
+      "duration": 1.5449999570846558,
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "realm": "worker",
+      "start": 7594.21505856514
+    },
+    {
+      "connectEnd": 7605.765058517456,
+      "connectStart": 7605.765058517456,
+      "decodedBodySize": 209,
+      "domainLookupEnd": 7605.765058517456,
+      "domainLookupStart": 7605.765058517456,
+      "duration": 233.70500004291537,
+      "encodedBodySize": 209,
+      "endpoint": "node",
+      "fetchStart": 7605.765058517456,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 7606.34005856514,
+      "responseEnd": 7839.235058546066,
+      "responseStart": 7838.9550585746765,
+      "secureConnectionStart": 7605.765058517456,
+      "start": 7605.530058503151,
+      "transferSize": 509
+    },
+    {
+      "connectEnd": 7840.350058555603,
+      "connectStart": 7840.350058555603,
+      "decodedBodySize": 1790,
+      "domainLookupEnd": 7840.350058555603,
+      "domainLookupStart": 7840.350058555603,
+      "duration": 228.7150000333786,
+      "encodedBodySize": 788,
+      "endpoint": "node",
+      "fetchStart": 7840.350058555603,
+      "kind": "resource",
+      "protocol": "h2",
+      "realm": "worker",
+      "requestStart": 7840.9550585746765,
+      "responseEnd": 8068.855058550835,
+      "responseStart": 8068.385058522224,
+      "secureConnectionStart": 7840.350058555603,
+      "start": 7840.140058517456,
+      "transferSize": 1088
+    },
+    {
+      "duration": 329.6299999952316,
+      "name": "rolling.reader.update",
+      "start": 14549.894999980928
+    },
+    {
+      "connectEnd": 14554.110000014303,
+      "connectStart": 14554.110000014303,
+      "decodedBodySize": 5591,
+      "domainLookupEnd": 14554.110000014303,
+      "domainLookupStart": 14554.110000014303,
+      "duration": 322.5049999952316,
+      "encodedBodySize": 5591,
+      "endpoint": "public-read",
+      "fetchStart": 14554.110000014303,
+      "kind": "resource",
+      "protocol": "h2",
+      "requestStart": 14556.40999996662,
+      "responseEnd": 14873.25,
+      "responseStart": 14871.59500002861,
+      "secureConnectionStart": 14554.110000014303,
+      "start": 14550.745000004768,
+      "transferSize": 5891
+    },
+    {
+      "duration": 4.740000009536743,
+      "name": "rolling.reader.dom",
+      "start": 14874.764999985697
+    },
+    {
+      "count": 6,
+      "duration": 0,
+      "inclusiveMs": 4.974999904632568,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-aztecmiscassert-compatible-oracle-version",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 9,
+      "duration": 0,
+      "inclusiveMs": 2.4400004148483276,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-utility-context",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 25.364999890327457,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-public-keys-and-partial-address",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 17.585000157356262,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-key-validation-request",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 20,
+      "duration": 0,
+      "inclusiveMs": 0.3599998950958252,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-aztecmiscget-random-field",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 14,
+      "duration": 0,
+      "inclusiveMs": 0.7200002670288086,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-push-ephemeral",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 1031.9150000810623,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-pending-owner-tagged-logs-v",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 45,
+      "duration": 0,
+      "inclusiveMs": 0.5999999046325684,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral-len",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 5.879999995231628,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-fact-collections-by-type",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 0.7749998569488525,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-aztecmisclog",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 0.2999999523162842,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-logs-by-tag-v",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 9,
+      "duration": 0,
+      "inclusiveMs": 0.07499992847442627,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-clear-ephemeral",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 3,
+      "duration": 0,
+      "inclusiveMs": 0.684999942779541,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-validate-and-store-enqueued-notes-and-events",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 29,
+      "duration": 0,
+      "inclusiveMs": 0.8149999380111694,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-ephemeral",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 4,
+      "duration": 0,
+      "inclusiveMs": 12.104999780654907,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-notes",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 2,
+      "duration": 0,
+      "inclusiveMs": 0.7599999904632568,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-contract-instance",
+      "start": 14885.40999996662
+    },
+    {
+      "count": 2,
+      "duration": 0,
+      "inclusiveMs": 236.1050000190735,
+      "kind": "oracle-total",
+      "name": "rolling.proof.native.phase.oracle-get-nullifier-statuses",
+      "start": 14885.40999996662
+    }
+  ],
+  "source": "f20ece1951bfe9e6cc14316d6b9986be6499d658"
+}

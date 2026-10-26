@@ -4,13 +4,13 @@ Current handover: 26 October 2026. The owner's current request takes precedence 
 
 ## Live work and next action
 
-Static `87c0014d0411b0538f4cbc37c6aad78144018309` is live and pushed. It removes repeated remote funding admission for local encrypted custody reads, retains one final payment admission before send, and verifies readonly account snapshots using native archive ancestry. Actual ETH-to-usable Bok credit measured31.069425s, with4USDC visible. Pay-to-wallet preparation fell6.727→3.446s and claim preparation5.276→2.693s across the recorded observations; the full50% target remains unachieved. Funded opening measured2.406370s first changed-SDK visit and2.425505s immediate cached reload, including automated signature approval. The2s target remains unachieved. Browser access works; no settings change was required. Static publication did not restart services.
+Static `f20ece1951bfe9e6cc14316d6b9986be6499d658` is live and pushed. Same-invocation Bok claims reuse authenticated custody and Ethereum evidence while retaining native membership and nullifier authorization. Browser compiler metadata projection removes 7.71MB without changing contract identities. Cached funded opening measured **1.766840s**, but first changed-SDK opening measured **8.560355s**: cold opening remains outside the two-second target. Actual repeat ETH-to-usable Bok credit measured **37.178030s**, with 6 USDC visible; claim preparation was 1.882s. A prior f20 payment includes 15.628s test-handler dwell and is functional evidence only. The all-flow 50% target remains unachieved. Browser access works; no settings change was required. No services restarted.
 
 Bok runs the three-file `bff92b32` operator overlay with the existing bbf76 native dependencies. Public observations from different requests can proceed independently of the shared signing queue; same-request journal ordering and signing serialization remain. Moderator received the corresponding public-read overlap.235 integrated checks passed. BokPID96885 was ready/active0. Moderator now runs `a0c2c10c` on PID191841, with healthy current ingestion and zero manual-attention or unresolved-signing items. It corrects the false critical classification of two strictly unsigned canonical orphan posts. It preserves signed/uncertain work and requeues reobserved posts.158 affected checks passed.
 
 Both operator publishers retain the existing dependencies, credentials, security settings and attestor/control bytes. Failed drains restore normal restart policy without force-killing or duplicating work. The reviewed implementation and20 failure subcases are in `deploy/updates/20261026-operator/`. Other app/node/query/prover/proxy services were unchanged. Temporary transfer versions, archives and completed source-only agent drafts are removed; keep one retained build at `/private/tmp/rolling-browser-proof-spans-build`.
 
-**Next:** remove repeated Ethereum verification inside the same owned standalone Bok claim continuation while preserving native message membership, and quantify private-query/discovery serial reads. Root owns the one retained IAB tab, build and publication; agents supply bounded patches/reviews.
+**Next:** publish reviewed early Board/FPC artifact preload and Brotli delivery, then measure actual cold and cached opening. Native Bok message-nullifier prefetch is independently approved for the next SDK batch. Root owns the single browser/build/publication.
 
 ## Performance targets and evidence
 
@@ -48,7 +48,7 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/87c0014d0411b0538f4cbc37c6aad78144018309` |
+| Browser UI | `/opt/rolling-ui/releases/f20ece1951bfe9e6cc14316d6b9986be6499d658` |
 | Running application | `/opt/rolling-app/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Prover | `/opt/board-prover/releases/fresh-board-bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
 | Bok | `/opt/rolling-bok/releases/operator-bff92b326bb112b08931cc4d750c805abecb2c52` |

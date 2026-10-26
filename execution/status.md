@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 87 remains live; source integrated and independently reviewed: owned standalone Bok claim removes repeated L1 verification, readonly quote overlaps admission, browser artifacts strip7.71MB compiler metadata with identical native IDs. Root42+21+4 checks and actual SDK/wallet build passed. Publishing combined batch next; targets unachieved.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — f20ece19 is live and pushed: cached funded opening 1.766840s, changed-SDK opening 8.560355s; actual ETH-to-usable Bok repeat 37.178030s. Integrating independently approved early Board/FPC preload and public-artifact Brotli delivery; full targets remain unachieved.
 
 ## Ready internal work
 
