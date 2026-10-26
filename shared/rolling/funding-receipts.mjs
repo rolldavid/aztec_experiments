@@ -3,12 +3,13 @@ import {AbiCoder, Interface, getBytes, encodeBytes32String} from 'ethers';
 import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {BlockHash} from '@aztec-labs/stdlib/block';
+import {MerkleTreeId} from '@aztec-labs/stdlib/trees';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
-import {L1Actor, L2Actor, L1ToL2Message} from '@aztec-labs/stdlib/messaging';
+import {L1Actor, L2Actor, L1ToL2Message, computeFeeJuiceMessageNullifier} from '@aztec-labs/stdlib/messaging';
 import {ProtocolContractAddress} from '@aztec-labs/protocol-contracts';
 import {DomainSeparator, L1_TO_L2_MSG_TREE_HEIGHT} from '@aztec-labs/constants';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
-import {computeSecretHash} from '@aztec-labs/stdlib/hash';
+import {computeSecretHash,siloNullifier} from '@aztec-labs/stdlib/hash';
 import {deriveBoardDepositSecret} from '../deposit-custody.mjs';
 import {claimSecrets, captureAggregateFundingIntent, captureAggregateFundingCustody, PrivateFeeFundingError} from '../private-fee-funding.mjs';
 import {verifyEthereumIntentReceipt} from '../ethereum-journal.mjs';
@@ -102,7 +103,7 @@ export async function prepareBokMessageClaim(input){
     const secrets=object(input.secrets,['recipientSalt','bridgeSecret']);Object.values(secrets).forEach(value=>field(value));
     const node=input.node,guard=input.contextGuard,membershipNode=input.membershipNode??node;
     requireThat(isTrustedPrivateNode(node),'UNTRUSTED_NODE');
-    const getNodeInfo=node.getNodeInfo.bind(node),getBlockData=node.getBlockData.bind(node),membershipRead=membershipNode.getL1ToL2MessageMembershipWitness.bind(membershipNode);
+    const getNodeInfo=node.getNodeInfo.bind(node),getBlockData=node.getBlockData.bind(node),membershipRead=membershipNode.getL1ToL2MessageMembershipWitness.bind(membershipNode),findLeaves=membershipNode.findLeavesIndexes.bind(membershipNode);
     const read=async fn=>{await guard();const value=await fn();await guard();return value;};
     const measure=input.measure??((_name,fn)=>fn());requireThat(typeof measure==='function','INVALID');
     const checkL2=()=>checkClaimAnchor(read,getBlockData,a);
@@ -113,9 +114,18 @@ export async function prepareBokMessageClaim(input){
       requireThat(message.hash().toString()===r.messageKey);
       return content;
     };
+    // PrivateBok consumes exactly one secret, the same native derivation used
+    // by this SDK helper. Warm only the normal hash-pinned leaf lookup; the
+    // actual private oracle still checks its result for duplicate consumption.
+    const prefetchNullifier=async()=>{
+      const nullifier=await computeFeeJuiceMessageNullifier(Fr.fromString(r.messageKey),Fr.fromString(secrets.bridgeSecret));
+      const siloed=await siloNullifier(new AztecAddress(Fr.fromString(s.recipient)),nullifier);
+      await read(()=>findLeaves({number:a.number,hash:BlockHash.fromString(a.hash)},MerkleTreeId.NULLIFIER_TREE,[siloed]));
+    };
     const [info,content,delivered]=await together([
       ()=>read(getNodeInfo),()=>measure('action.claim-effects',effects),
       ()=>measure('action.claim-membership',()=>claimMembership(read,membershipRead,checkL2,a,r)),
+      prefetchNullifier,
     ]);
     requireThat(String(info.l1ChainId)===s.chainId && String(info.rollupVersion)===s.version && equal(info.l1ContractAddresses?.rollupAddress,s.rollup));
     await measure('action.claim-final-canonical',checkL2);await read(()=>Promise.resolve());

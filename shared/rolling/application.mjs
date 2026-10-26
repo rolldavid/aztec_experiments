@@ -1211,7 +1211,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           ()=>action.type==='claim-deposit'&&action.bokReceipt!==undefined?bokFundingClaim(action):undefined,
           ()=>action.type==='claim-private-fee'||action.feeReceipt!==undefined?payment(action,claimFields):undefined,
           ()=>action.type==='claim-deposit'?measure('action.claim-witnesses',()=>sdk.prefetchBoardClaimWitnesses({wallet:session.wallet,node:session.node,board:deployment.board.instance,artifact:deployment.board.artifact})):undefined,
-          ()=>action.type==='claim-bok'||action.type==='claim-deposit'&&action.bokReceipt!==undefined?measure(action.type==='claim-bok'?'action.claim-witnesses':'action.bok-claim-witnesses',()=>sdk.prefetchBokClaimWitnesses({wallet:session.wallet,node:session.node,bok:deployment.bok.instance,artifact:deployment.bok.artifact})):undefined,
+          ()=>action.type==='claim-bok'||action.type==='claim-deposit'&&action.bokReceipt!==undefined?measure(action.type==='claim-bok'?'action.claim-witnesses':'action.bok-claim-witnesses',()=>sdk.prefetchBokClaimWitnesses({wallet:session.wallet,node:session.node,bok:deployment.bok.instance,artifact:deployment.bok.artifact,owner:session.owner})):undefined,
         ].map(read=>Promise.resolve().then(read)));
         const failure=values.find(value=>value.status==='rejected');if(failure)throw failure.reason;
         await guard();checkClaimOwner();

@@ -1,0 +1,38 @@
+[
+  {
+    "path": "/wallet/board.json",
+    "requested": "br",
+    "encoding": "br",
+    "bytes": 2926245,
+    "decodedBytes": 5570115,
+    "sha256": "273cf45f55a06e4ba653f42e49fc53a6606367eb271e922ce808b80afd8f18d8",
+    "cache": "Miss from cloudfront"
+  },
+  {
+    "path": "/wallet/private-fee.json",
+    "requested": "br",
+    "encoding": "br",
+    "bytes": 323315,
+    "decodedBytes": 608001,
+    "sha256": "28af34297187cb2bdc24a2cbea8601a9de127a41e9958d9a1129d6118038950d",
+    "cache": "Miss from cloudfront"
+  },
+  {
+    "path": "/wallet/private-fee.json",
+    "requested": "gzip",
+    "encoding": "gzip",
+    "bytes": 387399,
+    "decodedBytes": 608001,
+    "sha256": "28af34297187cb2bdc24a2cbea8601a9de127a41e9958d9a1129d6118038950d",
+    "cache": "RefreshHit from cloudfront"
+  },
+  {
+    "path": "/wallet/private-fee.json",
+    "requested": "identity",
+    "encoding": null,
+    "bytes": 608001,
+    "decodedBytes": 608001,
+    "sha256": "28af34297187cb2bdc24a2cbea8601a9de127a41e9958d9a1129d6118038950d",
+    "cache": "RefreshHit from cloudfront"
+  }
+]

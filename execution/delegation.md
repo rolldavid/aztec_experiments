@@ -281,3 +281,12 @@ Root confirmed browser access and measured real31.069425s Bok funding plus2.4255
 ## 26 October — cold artifact delivery
 
 Root integrates inclusion_timing's early Board/FPC/registration preload and exact public-artifact Brotli publisher patch. pending_feed_release independently approved; root 12 preload and 5 compression checks passed, actual wallet bundle built. Existing worker/cache owns single-flight fetching; no new thread or duplicate SDK. Check actual CloudFront encoding after publication, since immutable content hashes are unchanged. Removed 38 obsolete owned local publication packets (1,500,313,296 bytes), retaining one build/current packet and compact SHA-bound inventory. Native nullifier prefetch remains separately reviewed, not yet integrated.
+
+
+## 26 October — usage resumed, warm scope
+
+All three interrupted agents resumed. Owner excludes cold8MB SRS optimization and prioritizes warm startup. inclusion_timing removes unnecessary funded signup quote; pending_feed_release reviews it and audits warm serial work; pending_reply_ui drafts existing native Bok account-sync overlap. Root integrated independently approved message-nullifier prefetch;48 affected native/receipt tests passed. No new build trees, browser profiles or infrastructure.
+
+Funded signup-quote removal independently approved and integrated;20 actual VM-boundary checks passed. Native message-nullifier prefetch passed48 integrated compiled/receipt checks. Bok discovery overlap candidate review pending. Existing CUA browser began denying access after restart despite earlier successful measurements; no settings instructions or alternate automation bypass. Root continues source/build/publication and will not claim new browser timings without observation.
+
+Bok discovery independently approved, integrated,34 native and6 application checks passed. Both source-only Bok drafts cleaned (1.36MB); no dependency copies. Warm batch includes funded quote removal and exact native message-nullifier prefetch. Actual SDK and wallet build completed; publication next.

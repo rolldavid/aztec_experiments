@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {AbiCoder,Interface,encodeBytes32String,getBytes,keccak256} from 'ethers';
 import {BlockHeader} from '@aztec-labs/stdlib/tx';
-import {AppendOnlyTreeSnapshot} from '@aztec-labs/stdlib/trees';
+import {AppendOnlyTreeSnapshot,MerkleTreeId} from '@aztec-labs/stdlib/trees';
 import {L1ContractsNames} from '@aztec-labs/ethereum/l1-contract-addresses';
 import {createTrustedPrivateNode,isTrustedPrivateNode} from '../trusted-private-node.mjs';
 import {jsonStringify} from '@aztec-labs/foundation/json-rpc';
@@ -14,10 +14,10 @@ import {Fr} from '@aztec-labs/foundation/curves/bn254';
 import {EthAddress} from '@aztec-labs/foundation/eth-address';
 import {AztecAddress} from '@aztec-labs/stdlib/aztec-address';
 import {BlockHash,BlockParameterSchema} from '@aztec-labs/stdlib/block';
-import {L1Actor,L2Actor,L1ToL2Message,getL1ToL2MessageWitness} from '@aztec-labs/stdlib/messaging';
+import {L1Actor,L2Actor,L1ToL2Message,getL1ToL2MessageWitness,computeFeeJuiceMessageNullifier} from '@aztec-labs/stdlib/messaging';
 import {SiblingPath} from '@aztec-labs/foundation/trees';
 import {poseidon2HashWithSeparator} from '@aztec-labs/foundation/crypto/poseidon';
-import {computeSecretHash} from '@aztec-labs/stdlib/hash';
+import {computeSecretHash,siloNullifier} from '@aztec-labs/stdlib/hash';
 import {DomainSeparator,L1_TO_L2_MSG_TREE_HEIGHT} from '@aztec-labs/constants';
 import {ProtocolContractAddress} from '@aztec-labs/protocol-contracts';
 import {BarretenbergSync} from '@aztec-foundation/bb.js';
@@ -95,6 +95,7 @@ async function fixture(kind='collateral',retainedFeeSalt=null,feeMessageMode='ca
   getSyncedL1Timestamp:async()=>BigInt(Math.floor(Date.now()/1000)),
   getContract:async()=>canonical,
   getBlockData:async parameter=>{assert.equal(parameter,anchor.number,'Canonical lookup must be by height, not orphan hash');state.reads.push('l2');const header=BlockHeader.empty();header.globalVariables.blockNumber=3;header.state.l1ToL2MessageTree.root=Fr.fromString(state.root);return {blockHash:BlockHash.fromString(state.l2Hash),header,archive:AppendOnlyTreeSnapshot.empty(),checkpointNumber:1,indexWithinCheckpoint:0};},
+  findLeavesIndexes:async(_anchor,_tree,leaves)=>leaves.map(()=>undefined),
   getL1ToL2MessageMembershipWitness:async(parameter,key)=>{BlockParameterSchema.parse(JSON.parse(jsonStringify(parameter)));assert(parameter.hash instanceof BlockHash);assert.equal(key.toString(),r.messageKey);state.reads.push('witness');return state.witness;}};
  const provider={getNetwork:async()=>({chainId:31337n}),getTransactionReceipt:async()=>state.receipt,getTransaction:async()=>state.tx,
   getBlock:async number=>{state.reads.push('l1');return number==='finalized'||number===8?state.finalized:{number,hash:state.blockHash};},
@@ -683,4 +684,38 @@ test('owned Bok message retains missing delivery and fresh final native fork bou
  const g=await fixture('bok'),get=g.backend.getL1ToL2MessageMembershipWitness;
  g.backend.getL1ToL2MessageMembershipWitness=async(...args)=>{const value=await get(...args);g.state.l2Hash=h(999);return value;};
  await assert.rejects(prepareBokMessageClaim(g.input),{code:'ROLLING_FUNDING_REORG'});
+});
+
+import {UtilityExecutionOracle} from '../../node_modules/@aztec-labs/pxe/dest/contract_function_simulator/oracle/utility_execution_oracle.js';
+async function bokNullifierFixture(){
+ const f=await fixture('bok'),parameter=()=>({number:f.input.anchor.number,hash:BlockHash.fromString(f.input.anchor.hash)});
+ const message=Fr.fromString(f.input.receipt.messageKey),contractAddress=new AztecAddress(Fr.fromString(f.input.scope.recipient));
+ const nullifier=await computeFeeJuiceMessageNullifier(message,Fr.fromString(f.input.secrets.bridgeSecret)),siloed=await siloNullifier(contractAddress,nullifier);
+ let leafReads=0,spent=false,failure=false;
+ // Actual native cache and actual private oracle; only the node's immutable
+ // database reply is labelled. No secret is sent to this reader.
+ const cache=withCache({getL1ToL2MessageMembershipWitness:f.input.node.getL1ToL2MessageMembershipWitness.bind(f.input.node),findLeavesIndexes:async(anchor,tree,leaves)=>{
+  leafReads++;assert.equal(tree,MerkleTreeId.NULLIFIER_TREE);assert(anchor.hash instanceof BlockHash);assert.deepEqual(anchor,parameter());assert.equal(leaves.length,1);assert(leaves[0].equals(siloed));
+  if(failure)throw Error('labelled node read failed');return [spent?{data:1n,l2BlockNumber:anchor.number,l2BlockHash:anchor.hash}:undefined];
+ }});f.input.membershipNode=cache;
+ const oracle=()=>UtilityExecutionOracle.prototype.getL1ToL2MembershipWitnessV2.call({aztecNode:cache,anchorBlockHeader:{toBlockParameter:async()=>parameter()}},message,{value:{contractAddress,nullifier}});
+ return {...f,oracle,get leafReads(){return leafReads;},spend:()=>spent=true,fail:value=>failure=value};
+}
+test('owned Bok nullifier prefetch shares one logical leaf lookup with the actual native oracle',async()=>{
+ const f=await bokNullifierFixture();assert.equal((await prepareBokMessageClaim(f.input)).status,'claim-ready');assert.equal(f.leafReads,1);
+ await f.oracle();assert.equal(f.leafReads,1);assert.equal(f.state.reads.filter(x=>x==='witness').length,1);
+ f.input.anchor.hash=h(302);f.state.l2Hash=h(302);f.spend();
+ await prepareBokMessageClaim(f.input);assert.equal(f.leafReads,2,'new anchor must not reuse previous nonmembership');
+ await assert.rejects(f.oracle(),/No non-nullified L1 to L2 message/);assert.equal(f.leafReads,2,'real oracle still rejects the cached spent leaf');
+});
+test('owned Bok nullifier prefetch propagates failure and native cache evicts rejected read',async()=>{
+ const f=await bokNullifierFixture();f.fail(true);await assert.rejects(prepareBokMessageClaim(f.input),{code:'ROLLING_FUNDING_UNKNOWN'});assert.equal(f.leafReads,1);
+ f.fail(false);await prepareBokMessageClaim(f.input);await f.oracle();assert.equal(f.leafReads,2);
+});
+test('owned Bok nullifier prefetch drains held membership before failing',async()=>{
+ const f=await bokNullifierFixture(),entered=Promise.withResolvers(),held=Promise.withResolvers();
+ const original=f.input.membershipNode.getL1ToL2MessageMembershipWitness;
+ f.input.membershipNode={findLeavesIndexes:async()=>{throw Error('leaf failed');},getL1ToL2MessageMembershipWitness:async(...args)=>{entered.resolve();await held.promise;return original(...args);}};
+ let settled=false;const work=prepareBokMessageClaim(f.input).finally(()=>settled=true);await entered.promise;await Promise.resolve();assert.equal(settled,false);
+ held.resolve();await assert.rejects(work,{code:'ROLLING_FUNDING_UNKNOWN'});
 });

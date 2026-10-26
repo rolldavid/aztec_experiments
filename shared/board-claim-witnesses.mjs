@@ -19,15 +19,15 @@ export async function prefetchBoardClaimWitnesses({wallet,node,board,artifact}) 
 
 // PrivateBok's exact claim reads three scalar PublicImmutable values. The native
 // owner reuses only its existing anchored cache and recorded immutable facts.
-export async function prefetchBokClaimWitnesses({wallet,node,bok,artifact}) {
+export async function prefetchBokClaimWitnesses({wallet,node,bok,artifact,owner}) {
   const pxe=wallet?.pxe,cachedNode=pxe?.node,address=bok?.address,classId=bok?.currentContractClassId;
   const guard=()=>{if(wallet?.pxe!==pxe||pxe?.node!==cachedNode||!isPrivatePXEForNode(pxe,node))throw Object.assign(Error('Bok claim context changed'),{code:'ROLLING_CONTEXT_CHANGED'});};
   guard();
-  if(!address||!classId||artifact?.name!=='PrivateBok'||!classId.equals((await getContractClassFromArtifact(artifact)).id)||
+  if(!owner||!address||!classId||artifact?.name!=='PrivateBok'||!classId.equals((await getContractClassFromArtifact(artifact)).id)||
     Object.entries({board:1,operator:3,owner:5,portal:7,l1_chain:9,version:11,balances:13}).some(([key,slot])=>BigInt(artifact.storageLayout?.[key]?.slot??-1)!==BigInt(slot)))
     throw Object.assign(Error('Invalid Bok claim layout'),{code:'ROLLING_ABI_MISMATCH'});
   guard();const anchor=await (await pxe.getSyncedBlockHeader()).toBlockParameter();guard();
-  await pxe.prefetchBokClaimWitnesses(address,classId);guard();
+  await pxe.prefetchBokClaimWitnesses(address,classId,owner);guard();
   const current=await (await pxe.getSyncedBlockHeader()).toBlockParameter();guard();
   if(current.hash.toString()!==anchor.hash.toString())throw Object.assign(Error('Bok claim anchor changed'),{code:'ROLLING_CONTEXT_CHANGED'});
 }

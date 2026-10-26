@@ -1,3 +1,4 @@
+import {computeFeeJuiceMessageNullifier} from '@aztec-labs/stdlib/messaging';
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -26,11 +27,14 @@ import {sha256ToField} from '@aztec-labs/foundation/crypto/sha256';
 import {openTmpStore} from '@aztec-labs/kv-store/lmdb-v2';
 import {FactStore,FactService,FactCollectionKey} from '../node_modules/@aztec-labs/pxe/dest/storage/fact_store/index.js';
 import {StagedWriteCoordinator} from '../node_modules/@aztec-labs/pxe/dest/storage/staged_write_coordinator.js';
+import {ContractSyncService} from '../node_modules/@aztec-labs/pxe/dest/contract/contract_sync_service.js';
+import {ContractClassService} from '../node_modules/@aztec-labs/pxe/dest/contract/contract_class_service.js';
 import {OperationQueue} from '../node_modules/@aztec-labs/pxe/dest/operation_queue.js';
 import {validatedPxeProve} from './pxe-validated-prove.mjs';
 import {restoreNativePxe} from './patch-pxe-operation-guards.mjs';
 const transformed=validatedPxeProve(restoreNativePxe(fs.readFileSync(new URL('../node_modules/@aztec-labs/pxe/dest/pxe.js',import.meta.url),'utf8'),'dest/pxe.js'));
 const methodStart=transformed.indexOf('    prefetchBoardClaimWitnesses(board) {');
+const syncMethod=transformed.slice(transformed.indexOf('    async #syncOrdinaryPostTargets('),transformed.indexOf('    prepareOrdinaryPostState(',transformed.indexOf('    async #syncOrdinaryPostTargets(')));
 const nativeMethod=transformed.slice(methodStart,transformed.indexOf('    prepareBoardActionState(',methodStart));
 const resources=[];
 after(async()=>{for(const {queue,db} of resources){await queue.stop();await db.close();}await BarretenbergSync.destroySingleton();});
@@ -39,6 +43,7 @@ const bokRaw=JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_BOK_ARTIFACT??n
 const source=fs.readFileSync(new URL('../shared/board-claim-witnesses.mjs',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replaceAll('export async function','async function');
 const pair=(a,b)=>poseidon2HashWithSeparator([a,b],DomainSeparator.PUBLIC_DATA_MERKLE);
 async function fixture({bokClaim=false}={}){
+ const owner=AztecAddress.fromFieldUnsafe(new Fr(8));
  const selectedArtifact=bokClaim?bokArtifact:artifact,selectedCircuit=bokClaim?bokRaw.functions.find(fn=>fn.name==='claim'):circuit,selectedClass=bokClaim?bokClass:Fr.fromString(ORDINARY_POST_GAS_PROFILE.boardClassId);
  const instance=new SerializableContractInstance({version:2,salt:Fr.ONE,deployer:AztecAddress.ZERO,currentContractClassId:selectedClass,originalContractClassId:selectedClass,initializationHash:new Fr(77),immutablesHash:Fr.ZERO,publicKeys:PublicKeys.default()});
  const board={address:await computeContractAddressFromInstance(instance),currentContractClassId:instance.currentContractClassId};
@@ -57,29 +62,41 @@ async function fixture({bokClaim=false}={}){
  let root=level[0];for(let i=height;i<PUBLIC_DATA_TREE_HEIGHT;i++){paths.forEach(path=>path.push(zero));root=await pair(root,zero);zero=await pair(zero,zero);}
  header.state.partial.publicDataTree.root=root;
  const witnesses=entries.map((e,i)=>new PublicDataWitness(BigInt(i),e,new SiblingPath(PUBLIC_DATA_TREE_HEIGHT,paths[i].map(f=>f.toBuffer()))));
- const calls=[];let held=null,failure=null,exists=true,records=0;
+ const messageCalls=[],calls=[];let held=null,failure=null,exists=true,records=0;
  const read=async(type,fn)=>{calls.push(type);if(held)await held.promise;if(failure===type)throw Error('read unavailable');return fn();};
  const node={findLeavesIndexes:(anchor,tree,items)=>read('nullifier',()=>items.map(()=>exists?{data:1n,l2BlockNumber:header.globalVariables.blockNumber,l2BlockHash:anchor.hash}:undefined)),getPublicStorageAt:(anchor,address,slot)=>read('storage',()=>values.get(slot.toBigInt().toString())),getPublicDataWitness:(anchor,slot)=>read('witness',()=>witnesses.find(w=>w.leafPreimage.leaf.slot.equals(slot)))};
+ const discovery=[],classReads=[],syncGates=[];let holdSync=false,failSync=false,badOwner=false;
+ const originalNodeGetContract=async(address,anchor)=>{classReads.push({address,anchor});return {currentContractClassId:address.equals(owner)?Fr.fromString(badOwner?'0x01':ORDINARY_POST_GAS_PROFILE.accountClassId):selectedClass};};
+ node.getContract=originalNodeGetContract;
+ const cachedNode=withCache(node),store={getContractArtifact:async()=>selectedArtifact,getFunctionCall:async(name,args,to)=>({name,args,to,selector:FunctionSelector.fromString('0x418ef5da')})};
+ const classService=new ContractClassService(cachedNode,store);
+ const service=new ContractSyncService(cachedNode,store,classService,{getNotes:async()=>[]},{debug(){},warn(){}},{concurrentContractSyncEnabled:false});
+ const utility=async(_sim,call,auth,scopes,anchor,changeSetId)=>{
+  assert.equal(call.name,'sync_state');assert.equal(scopes.length,1);assert.ok(scopes[0].equals(owner));assert.equal(anchor,header);assert.ok(changeSetId!==undefined);assert.equal(auth.length,0);
+  discovery.push(call.to.toString());if(holdSync)await new Promise((resolve,reject)=>syncGates.push({resolve,reject}));if(failSync&&call.to.equals(board.address))throw Error('discovery failed');
+ };
  const db=await openTmpStore('board-claim-witnesses',true,8192),facts=new FactStore(db),writes=new StagedWriteCoordinator({kvStore:db,stagedStores:[facts]});
- const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{sync:()=>assert.fail('no extra global sync')},anchorBlockStore:{getBlockHeader:async()=>header},contributors:[],stagedWriteCoordinator:writes,log:{debug(){},verbose(){},warn(){},error(){}}});queue.start();resources.push({queue,db});
- const Native=vm.runInNewContext('(class {'+nativeMethod+'})',{SyncAddress:AztecAddress,SyncFr:Fr,SyncFactCollectionKey:FactCollectionKey,syncSha256ToField:sha256ToField,syncPublicDataLeaf:computePublicDataTreeLeafSlot,syncSiloNullifier:siloNullifier,syncPoseidon:poseidon2HashWithSeparator,SyncTreeId:MerkleTreeId,allToCompletion,Buffer});
- const pxe=new Native();Object.assign(pxe,{node:withCache(node),getSyncedBlockHeader:async()=>header,operationQueue:queue,factStore:facts,contractClassService:{getCurrentClassId:async()=>board.currentContractClassId},contractStore:{getContractArtifact:async()=>selectedArtifact}});const wallet={pxe};
+ const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{sync:()=>assert.fail('no extra global sync')},anchorBlockStore:{getBlockHeader:async()=>header},contributors:[service],stagedWriteCoordinator:writes,log:{debug(){},verbose(){},warn(){},error(){}}});queue.start();resources.push({queue,db});
+ const Native=vm.runInNewContext('(class {#executeUtility=utility;#getSimulatorForTx=()=>({});'+syncMethod+nativeMethod+'})',{measureRollingProofPhase:(_name,work)=>work(),utility,SyncAddress:AztecAddress,SyncFr:Fr,SyncFactCollectionKey:FactCollectionKey,syncSha256ToField:sha256ToField,syncPublicDataLeaf:computePublicDataTreeLeafSlot,syncSiloNullifier:siloNullifier,syncPoseidon:poseidon2HashWithSeparator,SyncTreeId:MerkleTreeId,allToCompletion,Buffer});
+ const pxe=new Native();Object.assign(pxe,{node:cachedNode,contractSyncService:service,getSyncedBlockHeader:async()=>header,operationQueue:queue,factStore:facts,contractClassService:classService,contractStore:store});const wallet={pxe};
  const factService=new FactService(facts,[]);
  const context=vm.createContext({getContractClassFromArtifact,Fr,poseidon2HashWithSeparator,computePublicDataTreeLeafSlot,siloNullifier,MerkleTreeId,ORDINARY_POST_GAS_PROFILE,isPrivatePXEForNode:(p,n)=>p===pxe&&n===node});vm.runInContext(source,context);
- const input={wallet,node,...(bokClaim?{bok:board}:{board}),artifact:selectedArtifact};
+ const input={wallet,node,owner,...(bokClaim?{bok:board}:{board}),artifact:selectedArtifact};
  const run=async(expected=null)=>{
   const reached=Error('reached message after both immutable proofs');
   const execute=queue.runSynced(async ctx=>{
   const callContext=CallContext.empty();callContext.contractAddress=board.address;callContext.msgSender=AztecAddress.fromFieldUnsafe(new Fr(8));callContext.functionSelector=await FunctionSelector.fromNameAndParameters(selectedCircuit.name,selectedArtifact.functions.find(f=>f.name===selectedCircuit.name).parameters);
   const txContext=new TxContext(1,1,GasSettings.empty()),inputs=new PrivateContextInputs(callContext,header,txContext,1,new Fr(91));
   const oracle=new PrivateExecutionOracle({anchorBlockHeader:header,callContext,txContext,protocolNullifier:new Fr(91),scopes:[callContext.msgSender],aztecNode:pxe.node,anchoredContractData:{getContractInstance:async()=>instance},noteCache:{getNullifiers:()=>new Set(),isSideEffectCounterRevertible:()=>true},changeSetId:ctx.changeSetId,factService:{getFactCollection:(...args)=>factService.getFactCollection(...args),recordFact:(...args)=>{records++;return factService.recordFact(...args);}},l2TipsStore:{getL2Tips:async()=>({proposed:{block:{number:header.globalVariables.blockNumber}},checkpointed:{block:{number:header.globalVariables.blockNumber}},proven:{block:{number:header.globalVariables.blockNumber}},finalized:{block:{number:header.globalVariables.blockNumber}}})}});
-  oracle.getL1ToL2MembershipWitnessV2=async()=>{throw reached;};
+  oracle.getL1ToL2MembershipWitnessV2=async(message,nullifier)=>{messageCalls.push({message,nullifier:nullifier.value});throw reached;};
   const seen=[],callback=buildACIRCallback(oracle);
   return new WASMSimulator({module:'claim-immutable-parity'}).executeUserCircuit(toACVMWitness(0,[...inputs.toFields(),...(bokClaim?[new Fr(10),new Fr(6),new Fr(5),new Fr(1)]:[new Fr(5),new Fr(10),new Fr(6),new Fr(1)])]),{...selectedCircuit,bytecode:Buffer.from(selectedCircuit.bytecode,'base64'),contractName:selectedArtifact.name},new Proxy(callback,{get(target,key){const fn=target[key];return typeof fn==='function'?async(...args)=>{seen.push(key);return fn(...args);}:fn;}}));
   });
   await assert.rejects(execute,e=>{if(expected){assert.ok(!e.message.includes(reached.message),'native validation must fail before the message oracle');assert.match(e.message,expected);return true;}if(e.cause===reached||e.message.includes(reached.message))return true;throw e;});
  };
- return {input,run,warm:()=>bokClaim?context.prefetchBokClaimWitnesses(input):context.prefetchBoardClaimWitnesses(input),calls,get header(){return header;},advance:()=>{header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber++;},rewind:()=>{header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber--;},prune:()=>facts.rollbackToBlock(2),pxe,values,witnesses,get records(){return records;},seed:()=>queue.runSynced(async ctx=>{for(const s of slots){await facts.recordFact(new FactCollectionKey(board.address,{type:'public'},sha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_CACHE_TYPE_ID')),new Fr(s.slot)),sha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_VALUE_READ')),Array.from({length:s.length},(_,i)=>values.get(String(s.slot+BigInt(i)))),{blockNumber:header.getBlockNumber(),blockHash:await header.hash()},ctx.changeSetId);}}),hold:()=>held=Promise.withResolvers(),fail:type=>failure=type,absent:()=>exists=false};
+ return {input,run,messageCalls,discovery,classReads,syncGates,holdSync:()=>holdSync=true,failSync:value=>failSync=value,badOwner:()=>badOwner=true,
+ ensure:()=>queue.runSynced(async ctx=>{for(const contract of [owner,board.address])await service.ensureContractSynced({contract,utilityExecutor:(call,scopes)=>utility({},call,[],scopes,ctx.anchorBlockHeader,ctx.changeSetId),anchorBlockHeader:ctx.anchorBlockHeader,changeSetId:ctx.changeSetId,scopes:[owner],triggeredBy:undefined});}),
+ warm:()=>bokClaim?context.prefetchBokClaimWitnesses(input):context.prefetchBoardClaimWitnesses(input),calls,get header(){return header;},advance:()=>{header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber++;service.wipe();},rewind:()=>{header=BlockHeader.fromBuffer(header.toBuffer());header.globalVariables.blockNumber--;},prune:()=>facts.rollbackToBlock(2),pxe,values,witnesses,get records(){return records;},seed:()=>queue.runSynced(async ctx=>{for(const s of slots){await facts.recordFact(new FactCollectionKey(board.address,{type:'public'},sha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_CACHE_TYPE_ID')),new Fr(s.slot)),sha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_VALUE_READ')),Array.from({length:s.length},(_,i)=>values.get(String(s.slot+BigInt(i)))),{blockNumber:header.getBlockNumber(),blockHash:await header.hash()},ctx.changeSetId);}}),hold:()=>held=Promise.withResolvers(),fail:type=>failure=type,absent:()=>exists=false};
 }
 test('qualified compiled claim reaches message consumption with unchanged native immutable checks and zero additional reads after prefetch',async()=>{
  assert.equal((await getContractClassFromArtifact(artifact)).id.toString(),ORDINARY_POST_GAS_PROFILE.boardClassId);
@@ -165,4 +182,39 @@ test('Bok deployed class and artifact layout qualification precede immutable rea
 });
 test('Bok rejected immutable reads drain then retry only failed native cache entries',async()=>{
  const f=await fixture({bokClaim:true});f.fail('storage');await assert.rejects(f.warm(),/read unavailable/);assert.equal(f.calls.length,7);f.fail(null);await f.warm();assert.equal(f.calls.length,10);await f.run();assert.equal(f.calls.length,10);
+});
+
+test('Bok preparation shares native owner discovery with later execution at the exact anchor',async()=>{
+ const f=await fixture({bokClaim:true});await f.warm();
+ assert.deepEqual(new Set(f.discovery),new Set([f.input.owner.toString(),f.input.bok.address.toString()]));
+ assert.equal(f.classReads.length,2,'class qualification and native discovery share exact-anchor node cache');
+ await f.ensure();await f.run();assert.equal(f.discovery.length,2,'execution reuses native ContractSyncService; no repeated owner scan');
+ f.advance();await f.warm();await f.ensure();assert.equal(f.discovery.length,4,'native anchor invalidation requires new discovery');
+});
+test('Bok preparation drains immutable reads while failed discovery discards native sync cache',async()=>{
+ const f=await fixture({bokClaim:true}),gate=f.hold();f.failSync(true);let settled=false;
+ const work=f.warm().finally(()=>settled=true),reject=assert.rejects(work,/discovery failed/);
+ while(f.discovery.length<2)await new Promise(setImmediate);assert.equal(settled,false);gate.resolve();await reject;
+ f.failSync(false);await f.warm();assert.equal(f.discovery.length,4,'discarded sync must retry rather than reuse partial discovery');
+});
+test('Bok preparation drains held discovery after an immutable read failure',async()=>{
+ const f=await fixture({bokClaim:true});f.holdSync();f.fail('storage');let settled=false;
+ const work=f.warm().finally(()=>settled=true),reject=assert.rejects(work,/read unavailable/);
+ while(f.syncGates.length<2)await new Promise(setImmediate);assert.equal(settled,false);f.syncGates.forEach(g=>g.resolve());await reject;
+});
+test('Bok preparation rejects another account class before private discovery',async()=>{
+ const f=await fixture({bokClaim:true});f.badOwner();await assert.rejects(f.warm(),/Invalid Bok claim/);assert.equal(f.discovery.length,0);assert.equal(f.calls.length,0);
+});
+test('Bok preparation rejects a missing or self owner before discovery',async()=>{
+ const f=await fixture({bokClaim:true});delete f.input.owner;await assert.rejects(f.warm(),{code:'ROLLING_ABI_MISMATCH'});assert.equal(f.discovery.length,0);
+ f.input.owner=f.input.bok.address;await assert.rejects(f.warm(),/Invalid Bok claim owner/);assert.equal(f.discovery.length,0);
+});
+
+test('compiled Bok single-secret message nullifier equals the native helper used by preparation',async()=>{
+ const f=await fixture({bokClaim:true});await f.run();assert.equal(f.messageCalls.length,1);
+ const {message,nullifier}=f.messageCalls[0];assert(nullifier.contractAddress.equals(f.input.bok.address));
+ // fixture.run supplies the compiled claim's bridge_secret = 5 (salt = 6).
+ const expected=await computeFeeJuiceMessageNullifier(message,new Fr(5));
+ assert(nullifier.nullifier.equals(expected));
+ assert((await siloNullifier(nullifier.contractAddress,nullifier.nullifier)).equals(await siloNullifier(f.input.bok.address,expected)));
 });

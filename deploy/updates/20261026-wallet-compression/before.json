@@ -1,0 +1,27 @@
+{
+  "ETag": "E23ZP02F085DFQ",
+  "CachePolicy": {
+    "Id": "901eeaf8-9757-442e-b12a-7664747c826a",
+    "LastModifiedTime": "2026-10-19T03:49:16.048000+00:00",
+    "CachePolicyConfig": {
+      "Comment": "Forward normalized supported gzip to existing wallet asset compressor; origin no-store remains authoritative.",
+      "Name": "rolling-wallet-origin-gzip",
+      "DefaultTTL": 0,
+      "MaxTTL": 1,
+      "MinTTL": 0,
+      "ParametersInCacheKeyAndForwardedToOrigin": {
+        "EnableAcceptEncodingGzip": true,
+        "EnableAcceptEncodingBrotli": false,
+        "HeadersConfig": {
+          "HeaderBehavior": "none"
+        },
+        "CookiesConfig": {
+          "CookieBehavior": "none"
+        },
+        "QueryStringsConfig": {
+          "QueryStringBehavior": "none"
+        }
+      }
+    }
+  }
+}

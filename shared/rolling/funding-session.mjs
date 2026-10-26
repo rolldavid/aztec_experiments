@@ -91,28 +91,25 @@ export async function fundingUsdEstimate({ethers,provider,chainId,wei}){
  try{return usdAmount(await fundingUsdRate({ethers,provider,chainId}),wei);}catch{return null;}
 }
 
-// One held account operation. These public reads never prepare custody or imply
-// an empty account; the native result remains the only signup decision.
+// Native account state determines whether signup pricing is needed. A returning
+// account never prepares or waits for a signup payment that it will not use.
 export async function prepareRollingFundingOpening({asset,readStatus,readAllocation,readRate,prepareQuote,constructQuote,installQuote,guard}){
    await guard();if(!['ETH','USDC'].includes(asset))throw fail('ROLLING_FUNDING_INVALID');
+   const status=await readStatus();await guard();
+   if(status?.intent||!['fee-needed','collateral-pending'].includes(status?.status)||!Array.isArray(status.depositIds)||status.depositIds.length!==0)return {status};
    const overlap=asset==='ETH'&&typeof constructQuote==='function'&&typeof installQuote==='function';
    const reads=await Promise.allSettled([
-    readStatus,
     async()=>{const allocation=await readAllocation();return overlap?{allocation,token:await constructQuote(allocation)}:allocation;},
     readRate,
    ].map(read=>Promise.resolve().then(read)));
-   await guard();if(reads[0].status==='rejected')throw reads[0].reason;
-   const status=reads[0].value;
-   // Empty local custody is not evidence of an empty account. Only the real
-   // native status chooses signup; funded/recovering accounts never prepare it.
-   if(status?.intent||!['fee-needed','collateral-pending'].includes(status?.status)||!Array.isArray(status.depositIds)||status.depositIds.length!==0)return {status};
+   await guard();
    try{
-    for(const result of reads.slice(1))if(result.status==='rejected')throw result.reason;
+    for(const result of reads)if(result.status==='rejected')throw result.reason;
     let quote;
-    if(overlap){const {allocation,token}=reads[1].value;quote=token===null?await prepareQuote(allocation):await installQuote(token);}
-    else quote=await prepareQuote(reads[1].value);
+    if(overlap){const {allocation,token}=reads[0].value;quote=token===null?await prepareQuote(allocation):await installQuote(token);}
+    else quote=await prepareQuote(reads[0].value);
     await guard();
-    return {status,quote:asset==='USDC'?quote:Object.freeze({...quote,usdEstimate:usdAmount(reads[2].value,quote.breakdown.maximumTotalWei)})};
+    return {status,quote:asset==='USDC'?quote:Object.freeze({...quote,usdEstimate:usdAmount(reads[1].value,quote.breakdown.maximumTotalWei)})};
    }catch(quoteError){await guard();return {status,quoteError};}
 }
 
@@ -244,8 +241,8 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
   async registrationDeployment(options){await guard();const result=await readRollingDeploymentRegistration(deploymentPreparation,options);await guard();return result;},
   async bindPrivateContext(context){await guard();if(privateContext||!context||['readExistingCredit','ensureBok','reconcileClaim'].some(key=>typeof context[key]!=='function')||(context.readFunding!==undefined&&typeof context.readFunding!=='function'))throw fail('ROLLING_SESSION_CONFIG');privateContext=Object.freeze({...context});},
   // Internal one-use opening work, never a renderer capability or cached quote.
-  // Public reads may run during native construction; status and installation
-  // still run together under the private session's account lease.
+  // Status and any required signup quote run under the private session's
+  // account lease. The token starts no speculative Ethereum work.
   beginOpening({asset='ETH'}={}){
    if(!['ETH','USDC'].includes(asset))throw fail('ROLLING_FUNDING_INVALID');
    let resolve,reject;const status=new Promise((yes,no)=>{resolve=yes;reject=no;});

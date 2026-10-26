@@ -3350,7 +3350,7 @@ for(const failure of ['none','witness','receipt'])test('Bok claim immutable wave
  const f=topUpFixture('bok'),scope={synchronized:true},gate=Promise.withResolvers(),entered=Promise.withResolvers();let count=0,settled=false;
  f.options.accountSession.operationScope=()=>scope;const verify=f.options.sdk.prepareFundingClaim;
  f.options.sdk.prepareFundingClaim=async input=>{if(++count===2)entered.resolve();if(failure==='receipt')throw Error('receipt failed');await gate.promise;return verify(input);};
- f.options.sdk.prefetchBokClaimWitnesses=async input=>{assert.equal(input.artifact,f.options.deployment.bok.artifact);assert.equal(input.wallet,f.options.accountSession.wallet);assert.equal(input.node,f.options.accountSession.node);if(++count===2)entered.resolve();if(failure==='witness')throw Error('witness failed');await gate.promise;};
+ f.options.sdk.prefetchBokClaimWitnesses=async input=>{assert.equal(input.owner,f.options.accountSession.owner);assert.equal(input.artifact,f.options.deployment.bok.artifact);assert.equal(input.wallet,f.options.accountSession.wallet);assert.equal(input.node,f.options.accountSession.node);if(++count===2)entered.resolve();if(failure==='witness')throw Error('witness failed');await gate.promise;};
  const work=f.restart().prepare(f.action,{immediate:true});work.then(()=>settled=true,()=>settled=true);const result=failure==='none'?work:assert.rejects(work,new RegExp(failure+' failed'));
  await entered.promise;await new Promise(setImmediate);assert.equal(settled,false);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);gate.resolve();await result;
  if(failure!=='none')assert.equal(f.values.size,0);
@@ -3373,7 +3373,7 @@ for(const usdc of [false,true])for(const withBok of [false,true])test(`combined 
  const app=f.restart(),prepared=await app.prepare(f.action,{immediate:true});
  assert.equal(f.state.claimWitnessPrefetches.length,1);assert.equal(f.state.bokClaimWitnessPrefetches?.length??0,withBok?1:0);
  assert.deepEqual(measured.filter(name=>name.endsWith('claim-witnesses')).sort(),withBok?['action.bok-claim-witnesses','action.claim-witnesses']:['action.claim-witnesses']);
- if(withBok){const input=f.state.bokClaimWitnessPrefetches[0];assert.equal(input.bok,f.options.deployment.bok.instance);assert.equal(input.artifact,f.options.deployment.bok.artifact);assert.equal(input.wallet,f.options.accountSession.wallet);assert.equal(input.node,f.options.accountSession.node);}
+ if(withBok){const input=f.state.bokClaimWitnessPrefetches[0];assert.equal(input.bok,f.options.deployment.bok.instance);assert.equal(input.owner,f.options.accountSession.owner);assert.equal(input.artifact,f.options.deployment.bok.artifact);assert.equal(input.wallet,f.options.accountSession.wallet);assert.equal(input.node,f.options.accountSession.node);}
  await app.submitPrepared(prepared.intentId);assert.equal(f.state.sends,1);assert.equal(f.state.claimReads.length,withBok?6:4);
  assert.deepEqual(withBok?f.state.sent.payload.interactions.map(call=>call.name):[f.state.sent.payload.name],withBok?['claim_deposit','claim']:['claim_deposit']);
  assert.equal(f.state.claimWitnessPrefetches.length,1);assert.equal(f.state.bokClaimWitnessPrefetches?.length??0,withBok?1:0);

@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — f20ece19 is live and pushed: cached funded opening 1.766840s, changed-SDK opening 8.560355s; actual ETH-to-usable Bok repeat 37.178030s. Integrating independently approved early Board/FPC preload and public-artifact Brotli delivery; full targets remain unachieved.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Warm-start batch independently reviewed and integrated: funded accounts skip unused signup pricing, Bok native owner discovery overlaps existing immutable reads, native message-nullifier lookup prefetched at exact anchor. Root20 opening+48 receipt/native+34 discovery+6 application checks passed; actual SDK/wallet build. Publishing next; new browser timing unavailable because CUA denies access after restart. Cold SRS unchanged per owner.
 
 ## Ready internal work
 

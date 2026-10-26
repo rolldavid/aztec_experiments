@@ -1,0 +1,10 @@
+{
+  "timing": {
+    "accountClick": 1744.655000090599,
+    "ready": 5513.525000095367,
+    "signatureRequested": 3056.6299999952316,
+    "signatureResolved": 3304.7050000429153,
+    "walletClick": 3051.0400000810623
+  },
+  "trace": []
+}

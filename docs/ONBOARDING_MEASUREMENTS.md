@@ -177,3 +177,10 @@ Three next lanes remain active: native pre-signature PXE preparation, synchroniz
 ### f20 published observation — 26 October
 
 Funded wallet selection to enabled Write a post: first changed-SDK visit **8.560355s**, immediate cached visit **1.766840s**, including approximately 0.24s automated signature approval. These are returning funded-account observations, not fresh signup. The first Board artifact download began after SDK delivery and lasted 4.952s. Source fixes now preload these bytes alongside the SDK and compress exact public contract JSON. New delivery timing remains to be measured. Raw snapshots: `execution/evidence/G21/stable6/other-transaction-latency/opening-f20-{first,cached}.json`.
+
+
+### fe8 delivered assets and opening — 26 October
+
+Exact public Board Brotli transfer2,926,245bytes decodes to5,570,115bytes with unchangedSHA; private fee323,315→608,001bytes. Gzip and identity variants also match. CloudFront previously stripped Brotli from `/wallet/*`; reviewed policy correction preserves all routing/security/TTL settings.
+
+Observed wallet-selection→enabled Write a post:3.071610s after four service-worker entries were removed but HTTP cache remained;2.462485s subsequent cached run (endpoint only, profile collector absent);27.419855s after HTTP cache-clear attempt, with actual network-miss trace and8MB Grumpkin CRS taking13.628s. The cache-clear tool timed out, but actual trace identifies network misses. Do not label the3.071610s result a fully cold run. Owner now explicitly prioritizes warm startup and excludes cold8MB SRS work. Warm trace exposes funded account waiting for irrelevant signup quote until6.027s page time although account status was ready4.860s. Removing this dependency is the next fix.

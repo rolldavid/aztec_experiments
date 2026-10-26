@@ -166,18 +166,21 @@ export function validatedPxeProve(source){
         return this.#prefetchClaimImmutables(SyncAddress.fromStringUnsafe(board.toString()),'${ORDINARY_POST_GAS_PROFILE.boardClassId}','RollingBoard',
             [{slot:1n,length:1},{slot:3n,length:10}],{portal_address:1,config:3,deposits:14});
     }
-    prefetchBokClaimWitnesses(bok, classId) {
+    prefetchBokClaimWitnesses(bok, classId, owner) {
+        const scope=SyncAddress.fromStringUnsafe(owner.toString());
+        if(scope.equals(bok))throw new Error('Invalid Bok claim owner');
         return this.#prefetchClaimImmutables(SyncAddress.fromStringUnsafe(bok.toString()),SyncFr.fromString(classId.toString()).toString(),'PrivateBok',
-            [{slot:7n,length:1},{slot:9n,length:1},{slot:11n,length:1}],{board:1,operator:3,owner:5,portal:7,l1_chain:9,version:11,balances:13});
+            [{slot:7n,length:1},{slot:9n,length:1},{slot:11n,length:1}],{board:1,operator:3,owner:5,portal:7,l1_chain:9,version:11,balances:13},scope);
     }
-    #prefetchClaimImmutables(address, expected, name, slots, layout) {
+    #prefetchClaimImmutables(address, expected, name, slots, layout, owner) {
         return this.operationQueue.runSynced(async ctx=>{
             const qualified=await allToCompletion([
                 ()=>this.contractClassService.getCurrentClassId(address,ctx.anchorBlockHeader),
                 ()=>this.contractStore.getContractArtifact(SyncFr.fromString(expected)),
+                ...(owner?[()=>this.contractClassService.getCurrentClassId(owner,ctx.anchorBlockHeader)]:[]),
             ].map(read=>Promise.resolve().then(read)));
             const artifact=qualified[1];
-            if(qualified[0]?.toString()!==expected || artifact?.name!==name ||
+            if(qualified[0]?.toString()!==expected || (owner && qualified[2]?.toString()!=='${ORDINARY_POST_GAS_PROFILE.accountClassId}') || artifact?.name!==name ||
                 Object.entries(layout).some(([key,slot])=>!artifact.storageLayout?.[key]?.slot?.equals(new SyncFr(slot))))throw new Error('Invalid '+(name==='RollingBoard'?'Board':'Bok')+' claim layout');
             const anchor=await ctx.anchorBlockHeader.toBlockParameter();
             const type=syncSha256ToField(Buffer.from('AZTEC_NR::PUBLIC_IMMUTABLE_CACHE_TYPE_ID'));
@@ -196,6 +199,13 @@ export function validatedPxeProve(source){
             const reads=[...(nullifiers.length?[()=>this.node.findLeavesIndexes(anchor,SyncTreeId.NULLIFIER_TREE,nullifiers)]:[]),
                 ...entries.flatMap(entry=>[()=>this.node.getPublicDataWitness(anchor,entry.leaf),
                     ...(!entry.hasValue?Array.from({length:entry.length},(_,i)=>()=>this.node.getPublicStorageAt(anchor,address,new SyncFr(entry.slot+BigInt(i)))):[])])];
+            // Claim execution requires this same owner-scoped native discovery.
+            // Run it beside immutable reads; native rollback/discard owns its
+            // staged notes and same-anchor ContractSyncService reuse.
+            if(owner)reads.push(()=>this.#syncOrdinaryPostTargets([
+                {address:owner,classId:'${ORDINARY_POST_GAS_PROFILE.accountClassId}'},
+                {address,classId:expected},
+            ],this.#getSimulatorForTx(),ctx,[owner]));
             await allToCompletion(reads.map(read=>Promise.resolve().then(read)));
         });
     }
