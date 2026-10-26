@@ -272,3 +272,7 @@ Root integrates and publishes public-action completion, final withdrawal read ov
 Root owns integration, live operations and one retained build. pending_feed_release audits and drafts early read-only opening quote overlap; private_tips prepares the existing static publisher successor against ab6658, without remote actions. pending_reply_ui will independently review. Browser tool still reports disabled; no alternative automation bypass and no new timing claim.
 
 Usage-reset result: af0aea9c reviewed, built, pushed and published. pending_feed_release draft integrated; pending_reply_ui approved runtime and final test cleanup; private_tips publisher successor used after fresh read-only inspection. All agents completed, owned source draft/upload archives removed. Root verified public worker hash; browser timing remains unavailable.
+
+## 26 October — restored browser and87 continuation
+
+Root confirmed browser access and measured real31.069425s Bok funding plus2.425505s cached funded opening on published87. pending_reply_ui drafts same-invocation standalone Bok claim verification removal; pending_feed_release investigates private-query readiness cost (public feed gate excluded); inclusion_timing examines remaining snapshot/ancestry serial opening read. Agents use source-only drafts; root integrates, builds, publishes and runs the single retained browser. No new dependency copies or service changes.
