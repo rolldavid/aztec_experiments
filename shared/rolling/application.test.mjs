@@ -31,6 +31,7 @@ const hex=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const artifact=loadContractArtifact(JSON.parse(fs.readFileSync(process.env.ROLLING_TEST_ARTIFACT??new URL('../../billboard/target/rolling_contract-RollingBoard.json',import.meta.url))));
 // REQUIRED: run only after normal profile-protocol build/processing. Never invent
 // or patch an ABI to make these cases pass against an older application artifact.
+const feeArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../billboard/target/private_fee_contract-PrivateFPC.json',import.meta.url))));
 const bokArtifact=loadContractArtifact(JSON.parse(fs.readFileSync(new URL('../../experiments/private-bok/target/private_bok-PrivateBok.json',import.meta.url))));
 const ownedRecordAbi=artifact.functions.find(f=>f.name==='owned_name_records');
 const displayPack=value=>{const bytes=new TextEncoder().encode(value),words=[0n,0n];for(let i=0;i<bytes.length;i++)words[Math.floor(i/31)]|=BigInt(bytes[i])<<BigInt(8*(30-i%31));return words;};
@@ -61,6 +62,11 @@ function fixture(){
       main_policy:[BigInt(state.policy),1n],effective_policy:('effectivePolicy' in state)?state.effectivePolicy:[BigInt(state.policy),1n,1n,2n,false],get_screen_hints:state.hints??decodeFromAbi(getFunctionReturnType(artifact.functions.find(f=>f.name==='get_screen_hints')),Array.from({length:28},()=>Fr.ZERO))};
     return {result:replies[name],...(name==='get_screen_hints'&&state.noteHashWitnessHints?{noteHashWitnessHints:state.noteHashWitnessHints}:{})};
   }})})};
+  const feeContract={methods:new Proxy(board.methods,{get:(methods,name)=>name!=='balance_of'?methods[name]:(...args)=>({name,args,simulate:async()=>{
+    state.privateReads.push({name,args,contract:'private-fee'});
+    await state.beforeFeeBalance?.();if(state.feeReadError)throw state.feeReadError;
+    return {result:state.feeCredit??100n};
+  }})})};
   const journal={assertCanStart:async()=>{},inspectOutcome:async()=>state.outcome,inspect:async()=>state.outcome,confirmed:()=>{}};
   const owner=new AztecAddress(new Fr(3n));
   const wallet={getAccounts:async()=>[owner],getChainInfo:async()=>({chainId:31337,version:1}),sendTx:async(payload,opts)=>{
@@ -69,7 +75,7 @@ function fixture(){
     state.outcome={operation:opts.journalOperation,outcome:'success',txHash:hex(77),receipt:{txHash:hex(77),status:'checkpointed',blockNumber:1,blockHash:hex(42),transactionFee:2n}};return {receipt:{}};
   }};
   const node={getTxReceipt:async()=>({...state.outcome?.receipt,executionResult:state.outcome?.outcome==='success'?'success':'reverted'}),getBlockData:async height=>({header:{globalVariables:{blockNumber:['checkpointed','proposed'].includes(height)?1:height}},blockHash:hex(42)}),getPublicStorageAt:async(reference,address,slot)=>{const pluginId=state.pluginId??deployment.bok?.pluginId,pluginSlot=pluginId===undefined?null:await deriveStorageSlotInMap(new Fr(BigInt(artifact.storageLayout.plugins.slot)),new Fr(BigInt(pluginId)));if(pluginSlot!==null&&[0n,1n].some(offset=>BigInt(slot.toString())===BigInt(pluginSlot.toString())+offset)){(state.pluginReads??=[]).push({reference,address:String(address),slot:String(slot)});if(state.beforePluginRead)await state.beforePluginRead(slot);return new Fr(BigInt(slot.toString())===BigInt(pluginSlot.toString())?BigInt(state.bokAdapter??5):BigInt(state.pluginEnabledValue??(state.bokEnabled!==false?1:0)));}if(BigInt(slot.toString())===BigInt(artifact.storageLayout.main_version.slot)){(state.policyReads??=[]).push({reference,address:String(address)});if(state.beforePolicyRead)await state.beforePolicyRead();return new Fr(state.policy);}(state.nameReads??=[]).push({reference,address:address.toString(),slot:slot.toString()});if(state.nameReadError)throw state.nameReadError;if(state.beforeNameRead)await state.beforeNameRead();return new Fr(state.nameRegistered??0n);}};wallet.aztecNode=node;wallet.pxe={prepareBoardActionState:async input=>{(state.readinessPreparations??=[]).push(input);},node:{getL1ToL2MessageMembershipWitness:async()=>{throw Error('Unexpected fixture membership read');}},getSyncedBlockHeader:async()=>({globalVariables:{blockNumber:1,timestamp:100n},hash:async()=>hex(42)})};let random=100n;
-  const sdk={TxHash,poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:()=>board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
+  const sdk={TxHash,poseidon2HashWithSeparator,deriveStorageSlotInMap,Fr:class extends Fr {static random(){return new Fr(random++);}},AztecAddress,encodeArguments,Contract:{at:address=>String(address)===hex(2)?feeContract:board},isTrustedPrivateNode:n=>n===node,isPrivateWalletForNode:(w,n)=>w===wallet&&n===node,isPrivatePXEForNode:(p,n)=>p===wallet.pxe&&n===node,
     inspectTrustedNode:async()=>{if(!state.guard)throw Error('stale trusted node');},
     prefetchBokClaimWitnesses:async input=>{(state.bokClaimWitnessPrefetches??=[]).push(input);},prefetchBoardClaimWitnesses:async input=>{(state.claimWitnessPrefetches??=[]).push(input);},prefetchOrdinaryPostWitnesses:async input=>{(state.witnessPrefetches??=[]).push(input);},likeFeeBudget:()=>({maximumFee:100n}),ordinaryPostFeeBudget:()=>({maximumFee:100n}),normalizePrivateFeeGasSettings:()=>({maximumFee:100n}),preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async input=>{
       await input.guard();state.estimates++;state.calls.push(input.interaction);
@@ -79,7 +85,7 @@ function fixture(){
       return {maximumFee:state.fee,payload:input.interaction,gasSettings:{ceiling:state.fee}};
     }};
   const deployment={board:{address:hex(1),artifact,instance:{address:hex(1),currentContractClassId:hex(12),originalContractClassId:hex(12)}},network:{chainId:'31337',version:'1',rollup:'0x'+'11'.repeat(20)},
-    portal:'0x'+'22'.repeat(20),privateFee:{address:hex(2),artifact:{},gasSettings:{}}};
+    portal:'0x'+'22'.repeat(20),privateFee:{address:hex(2),artifact:feeArtifact,gasSettings:{}}};
   const accountSession={owner,wallet,node,journal,walletSecret:hex(8),walletSalt:'0'};
   const options={sdk,deployment,accountSession,privateStore,publicReader:new Proxy({},{get(){throw Error('Private access to public reader');}}),contextGuard:async()=>{assert.ok(state.guard);}};
   return {state,values,options,app:createRollingApplication(options),restart:()=>createRollingApplication(options)};
@@ -1054,9 +1060,9 @@ test('top-up rejects private action fields, missing Bok custody and unavailable 
  const g=topUpFixture();g.options.sdk.prepareFundingClaim=verifyFundingClaim;await assert.rejects(g.restart().prepare(g.action),{code:'ROLLING_FUNDING_UNTRUSTED_NODE'});assert.equal(g.values.size,0);assert.equal(g.state.sends,0);
 });
 
-function collateralFixture(){const f=fixture();f.options.deployment.privateFee.artifact=bokArtifact;f.options.funding={verifyWithdrawal:async()=>f.state.refunded===true};f.app=f.restart();return f;}
+function collateralFixture(){const f=fixture();f.options.funding={verifyWithdrawal:async()=>f.state.refunded===true};f.app=f.restart();return f;}
 test('RC22 balances page uses owned private utilities, exact zero fee and anchored maturity without public account lookup',async()=>{
- const f=collateralFixture();f.state.bokCredit=0n;const b=await f.app.readBalances();
+ const f=collateralFixture();f.state.feeCredit=0n;const b=await f.app.readBalances();
  assert.equal(b.fee.available,'0');assert.equal(b.fee.withdrawal,'not-supported');assert.equal(b.collateral.deposits[0].amount,'100');assert.equal(b.collateral.deposits[0].depositId,hex(56));assert.equal(b.collateral.deposits[0].eligible,true);assert.equal(b.collateral.nextCursor,null);assert.equal(b.bok,null);
  assert(f.state.privateReads.every(r=>!r.name.includes('public')));assert.equal(f.state.sends,0);
 });
@@ -1097,7 +1103,7 @@ test('RC22 collateral page continuation is bounded and a full page never implies
  const first=await f.app.readBalances(),page=await f.app.readBalances({cursor:first.collateral.nextCursor});assert.equal(page.collateral.deposits.length,10);assert.equal(typeof page.collateral.nextCursor,'string');assert.notEqual(page.collateral.nextCursor,first.collateral.nextCursor);assert.equal(page.collateral.complete,false);assert(f.state.privateReads.some(r=>r.name==='get_deposit_ids'&&r.args[1]===10));await assert.rejects(f.app.readBalances({cursor:first.collateral.nextCursor}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});await assert.rejects(f.restart().readBalances({cursor:page.collateral.nextCursor}),{code:'ROLLING_BALANCE_CURSOR_INVALID'});
 });
 test('RC22 unresolved local fee reservation is explicit and never double-deducts private note balance',async()=>{
- const f=collateralFixture(),review=await f.app.prepare({type:'like',post:'1'});f.state.failSend=true;
+ const f=collateralFixture();f.state.feeCredit=1000n;const review=await f.app.prepare({type:'like',post:'1'});f.state.failSend=true;
  await assert.rejects(f.app.submitPrepared(review.intentId));const balances=await f.restart().readBalances();
  assert.equal(balances.fee.available,'1000');assert.deepEqual(balances.fee.pendingReservation,{status:'unresolved',maximumFee:'10'});assert.equal(f.state.sends,1);
 });
@@ -1686,7 +1692,8 @@ for(const priorOutcome of ['success','reverted'])test(`terminal ${priorOutcome} 
  f.options.deployment.bok={...f.options.deployment.bok,address:hex(95),operator:hex(96),pluginId:hex(97)};f.state.bokAdapter=95n;f.state.privateReads.length=0;
  const reopened=f.restart(),status=await reopened.readAccountStatus();
  assert.equal(status.status,'fee-ready');assert.deepEqual(status.depositIds.map(BigInt),[9n]);assert.equal(status.privateFeeCredit,'100');assert.equal(f.state.sends,1);
- assert(!f.state.privateReads.some(row=>['get_plugin','request','balance_of'].includes(row.name)));
+ assert(!f.state.privateReads.some(row=>['get_plugin','request'].includes(row.name)||(row.name==='balance_of'&&row.contract!=='private-fee')));
+ assert.equal(f.state.privateReads.filter(row=>row.contract==='private-fee').length,1);
  await assert.rejects(reopened.submitPrepared(prepared.intentId),{code:'ROLLING_CONTEXT_CHANGED'});
  await assert.rejects(reopened.reconcile(prepared.intentId),{code:'ROLLING_CONTEXT_CHANGED'});
  const post=await reopened.prepare({type:'post',deposit:'9',content:'Same account, ordinary post',name:'0',subboard:'0'},{immediate:true});
@@ -2568,7 +2575,7 @@ test('funding workflow inspection omits unrelated private balance/deposit utilit
  const f=fixture();let payments=0;const payment=f.options.sdk.preparePrivateFeePayment;
  f.options.sdk.preparePrivateFeePayment=(...args)=>{payments++;return payment(...args);};
  assert.deepEqual(await f.app.readFundingState(),{status:'ready'});assert.equal(payments,0);assert.equal(f.state.privateReads.length,0);
- assert.equal((await f.app.readAccountStatus()).status,'fee-ready');assert.equal(payments,1);assert(f.state.privateReads.some(r=>r.name==='get_deposit_ids'));
+ assert.equal((await f.app.readAccountStatus()).status,'fee-ready');assert.equal(payments,0);assert(f.state.privateReads.some(r=>r.name==='get_deposit_ids'));assert(f.state.privateReads.some(r=>r.contract==='private-fee'&&r.name==='balance_of'));
  assert.deepEqual(await createRollingApplication({}).readFundingState(),{status:'locked'});
 });
 test('funding workflow inspection preserves current saved intent and freshly rejects lost terminal authority',async()=>{
@@ -2588,7 +2595,7 @@ test('funding workflow holds its read lease and rejects an owner replacement whi
 });
 
 for(const amount of [0n,17n,(1n<<128n)-1n])test(`standalone fee credit reads only anchored native balance: ${amount}`,async()=>{
- const f=collateralFixture();f.state.bokCredit=amount;
+ const f=collateralFixture();f.state.feeCredit=amount;
  const result=await f.app.readPrivateFeeCredit();
  assert.equal(result.availableCredit,String(amount));assert.equal(result.anchor.blockNumber,1);assert.equal(result.anchor.blockHash,hex(42));
  assert.deepEqual(f.state.privateReads.map(x=>x.name),['balance_of']);assert.equal(f.state.privateReads[0].args[0],f.options.accountSession.owner);
@@ -2596,9 +2603,9 @@ for(const amount of [0n,17n,(1n<<128n)-1n])test(`standalone fee credit reads onl
 });
 for(const change of ['overflow','canonical','anchor','owner'])test(`standalone fee credit rejects ${change} before presenting a balance`,async()=>{
  const f=collateralFixture(),native=f.options.sdk.Contract.at;const entered=Promise.withResolvers(),held=Promise.withResolvers();
- f.options.sdk.Contract.at=async()=>{const contract=await native();return {methods:{balance_of:(...args)=>({simulate:async()=>{entered.resolve();await held.promise;return contract.methods.balance_of(...args).simulate();}})}};};f.app=f.restart();
+ f.options.sdk.Contract.at=async(...input)=>{const contract=await native(...input);return {methods:{balance_of:(...args)=>({simulate:async()=>{entered.resolve();await held.promise;return contract.methods.balance_of(...args).simulate();}})}};};f.app=f.restart();
  const pending=f.app.readPrivateFeeCredit();await entered.promise;
- if(change==='overflow')f.state.bokCredit=1n<<128n;
+ if(change==='overflow')f.state.feeCredit=1n<<128n;
  if(change==='canonical')f.options.accountSession.node.getBlockData=async()=>({header:{globalVariables:{blockNumber:1}},blockHash:hex(43)});
  if(change==='anchor')f.options.accountSession.wallet.pxe.getSyncedBlockHeader=async()=>({globalVariables:{blockNumber:2,timestamp:100n},hash:async()=>hex(43)});
  if(change==='owner')f.state.guard=false;
@@ -2875,7 +2882,7 @@ for(const mode of ['fee-ready','fee-needed','collateral-pending','deposit-error'
  f.options.privateStore.read=async key=>{if(++reads===2){entered.add(1);await gates[1].promise;if(mode==='exit-error')throw errors[1];}return original(key);};
  f.state.beforeDepositIds=async()=>{entered.add(0);await gates[0].promise;if(mode==='deposit-error')throw errors[0];};
  if(mode==='collateral-pending')f.state.responses={get_deposit_ids:Array(10).fill(0n)};
- f.options.sdk.preparePrivateFeePayment=async()=>{entered.add(2);await gates[2].promise;if(mode==='fee-error'||mode==='deposit-error'||mode==='exit-error')throw errors[2];if(mode==='fee-needed')throw Object.assign(Error('empty'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});return {availableCredit:77n};};
+ f.state.feeCredit=mode==='fee-needed'?0n:77n;f.state.beforeFeeBalance=async()=>{entered.add(2);await gates[2].promise;if(mode==='fee-error'||mode==='deposit-error'||mode==='exit-error')throw errors[2];};
  const result=f.app.readAccountStatus().finally(()=>settled=true);result.catch(()=>{});
  while(entered.size!==3)await new Promise(setImmediate);
  await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
@@ -2972,36 +2979,37 @@ test('empty funding probe rejects storage failure and invalid probe options with
 
 for(const mode of ['success','discovery-failure','scope-change','wallet-change','pxe-change','owner-change'])test('account readiness native preparation boundary '+mode,{timeout:3000},async()=>{
  const f=fixture();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
- const gate=Promise.withResolvers(),entered=Promise.withResolvers(),feeGate=Promise.withResolvers(),feeEntered=Promise.withResolvers();let payments=0,seen,settled=false;
+ const gate=Promise.withResolvers(),entered=Promise.withResolvers(),exitGate=Promise.withResolvers(),exitEntered=Promise.withResolvers();let balances=0,seen,settled=false,reads=0;
+ const read=f.options.privateStore.read;f.options.privateStore.read=async key=>{if(++reads===2){exitEntered.resolve();await exitGate.promise;}return read(key);};
  f.options.accountSession.wallet.pxe.prepareBoardActionState=async input=>{seen=input;entered.resolve();await gate.promise;if(mode==='discovery-failure')throw Error('discovery failed');};
- f.options.sdk.preparePrivateFeePayment=async()=>{payments++;feeEntered.resolve();await feeGate.promise;return {availableCredit:77n};};f.app=f.restart();
- const work=f.app.readAccountStatus().finally(()=>{settled=true;});work.catch(()=>{});await Promise.all([entered.promise,feeEntered.promise]);
+ f.state.feeCredit=77n;f.state.beforeFeeBalance=()=>{balances++;};f.options.sdk.preparePrivateFeePayment=()=>assert.fail('Status cannot prepare payment');f.app=f.restart();
+ const work=f.app.readAccountStatus().finally(()=>{settled=true;});work.catch(()=>{});await Promise.all([entered.promise,exitEntered.promise]);
  assert.equal(seen.method,'get_deposit_ids');assert.equal(seen.owner.toString(),hex(3));assert.equal(seen.board.toString(),hex(1));assert.equal(seen.privateFee.toString(),hex(2));
- assert.equal(f.state.privateReads.length,0);assert.equal(payments,1,'independent fee work starts while discovery is held');await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ assert.equal(f.state.privateReads.length,0);assert.equal(balances,0,'both utilities wait for native discovery');await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
  if(mode==='scope-change')scope={synchronized:true};if(mode==='wallet-change')f.options.accountSession.wallet={...f.options.accountSession.wallet};
  if(mode==='pxe-change')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};if(mode==='owner-change')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
  gate.resolve();await new Promise(resolve=>setImmediate(resolve));
- assert.equal(settled,false,'discovery result cannot release the operation before the fee sibling drains');await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
- assert.equal(f.state.privateReads.length,mode==='success'?1:0);feeGate.resolve();
+ assert.equal(settled,false,'discovery result cannot release the operation before the pending-exit sibling drains');await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ assert.equal(f.state.privateReads.length,mode==='success'?2:0);exitGate.resolve();
  if(mode==='success'){const result=await work;assert.equal(result.status,'fee-ready');assert.equal(result.privateFeeCredit,'77');assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,1);}
  else await assert.rejects(work,mode==='discovery-failure'?/discovery failed/:{code:'ROLLING_CONTEXT_CHANGED'});
- assert.equal(payments,1);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ assert.equal(balances,mode==='success'?1:0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
-for(const bothFail of [false,true])test('account readiness fee failure drains held discovery '+bothFail,{timeout:3000},async()=>{
- const f=fixture(),scope={synchronized:true},discovery=Promise.withResolvers(),discoveryEntered=Promise.withResolvers(),feeEntered=Promise.withResolvers();let settled=false;
+for(const bothFail of [false,true])test('account readiness fee failure drains held deposit utility '+bothFail,{timeout:3000},async()=>{
+ const f=fixture(),scope={synchronized:true},ids=Promise.withResolvers(),idsEntered=Promise.withResolvers(),feeEntered=Promise.withResolvers();let settled=false;
  f.options.accountSession.operationScope=()=>scope;
- f.options.accountSession.wallet.pxe.prepareBoardActionState=async()=>{discoveryEntered.resolve();await discovery.promise;if(bothFail)throw Error('discovery first');};
- f.options.sdk.preparePrivateFeePayment=()=>{feeEntered.resolve();throw Error('fee second');};f.app=f.restart();
- const work=f.app.readAccountStatus().finally(()=>{settled=true;}),rejection=assert.rejects(work,bothFail?/discovery first/:/fee second/);
- await Promise.all([discoveryEntered.promise,feeEntered.promise]);await new Promise(resolve=>setImmediate(resolve));
- assert.equal(settled,false);assert.equal(f.state.privateReads.length,0);await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
- discovery.resolve();await rejection;assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+ f.state.beforeDepositIds=async()=>{idsEntered.resolve();await ids.promise;if(bothFail)throw Error('deposit first');};
+ f.state.beforeFeeBalance=()=>{feeEntered.resolve();throw Error('fee second');};f.options.sdk.preparePrivateFeePayment=()=>assert.fail('Status cannot prepare payment');f.app=f.restart();
+ const work=f.app.readAccountStatus().finally(()=>{settled=true;}),rejection=assert.rejects(work,bothFail?/deposit first/:/fee second/);
+ await Promise.all([idsEntered.promise,feeEntered.promise]);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(settled,false);assert.equal(f.state.readinessPreparations.length,1);await assert.rejects(f.app.readFundingState(),{code:'ROLLING_BUSY'});
+ ids.resolve();await rejection;assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
  assert.deepEqual(await f.app.readFundingState(),{status:'ready'},'failed read releases its lease only after every sibling settles');
 });
 for(const change of ['scope','wallet','pxe','owner'])test('account readiness rejects late context change while fee result is held '+change,{timeout:3000},async()=>{
  const f=fixture(),feeGate=Promise.withResolvers(),feeEntered=Promise.withResolvers(),idsEntered=Promise.withResolvers();let scope={synchronized:true},settled=false;
  f.options.accountSession.operationScope=()=>scope;f.state.beforeDepositIds=()=>idsEntered.resolve();
- f.options.sdk.preparePrivateFeePayment=async()=>{feeEntered.resolve();await feeGate.promise;return {availableCredit:77n};};f.app=f.restart();
+ f.state.feeCredit=77n;f.state.beforeFeeBalance=async()=>{feeEntered.resolve();await feeGate.promise;};f.app=f.restart();
  const work=f.app.readAccountStatus().finally(()=>{settled=true;}),rejection=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});
  await Promise.all([feeEntered.promise,idsEntered.promise]);await new Promise(resolve=>setImmediate(resolve));
  assert.equal(settled,false);assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,1);
@@ -3107,7 +3115,7 @@ for(const mode of ['empty','funded','unsynchronized','pending-exit','recovering'
  if(mode==='recovering')await f.app.prepare({type:'like',post:'5'});
  const scope={synchronized:mode!=='unsynchronized'};f.options.accountSession.operationScope=()=>scope;
  if(mode!=='funded')f.state.responses={get_deposit_ids:Array(10).fill(0n)};
- let fees=0;f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};
+ let fees=0;f.state.feeCredit=77n;f.state.beforeFeeBalance=()=>{fees++;};
  const app=f.restart(),before=[...f.values.entries()],readStart=f.state.privateReads.length;
  const result=await app.readAccountStatus({opening:true});
  assert.equal(result.status,mode==='recovering'?'recovering':mode==='funded'?'fee-ready':'collateral-pending');
@@ -3118,21 +3126,21 @@ for(const mode of ['empty','funded','unsynchronized','pending-exit','recovering'
  if(mode==='funded'){assert.equal(result.privateFeeCredit,'77');assert.deepEqual(result.depositIds,[hex(9)]);}
 });
 for(const change of ['scope','wallet','pxe','owner'])test('opening collateral classification rejects held-read '+change,async()=>{
- const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let scope={synchronized:true},fees=0;
+ const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers(),feeEntered=Promise.withResolvers();let scope={synchronized:true},fees=0;
  f.options.accountSession.operationScope=()=>scope;f.state.responses={get_deposit_ids:Array(10).fill(0n)};
  f.state.beforeDepositIds=async()=>{entered.resolve();await gate.promise;};
- f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};const app=f.restart();
- const work=app.readAccountStatus({opening:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await entered.promise;
+ f.state.feeCredit=77n;f.state.beforeFeeBalance=()=>{fees++;feeEntered.resolve();};const app=f.restart();
+ const work=app.readAccountStatus({opening:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});await Promise.all([entered.promise,feeEntered.promise]);
  await assert.rejects(app.readAccountStatus(),{code:'ROLLING_BUSY'});
  if(change==='scope')scope={synchronized:true};if(change==='wallet')f.options.accountSession.wallet={...f.options.accountSession.wallet};
  if(change==='pxe')f.options.accountSession.wallet.pxe={...f.options.accountSession.wallet.pxe};if(change==='owner')f.options.accountSession.owner=AztecAddress.fromBigIntUnsafe(99n);
  gate.resolve();await rejected;assert.equal(fees,1);assert.equal(f.values.size,0);assert.equal(f.state.sends,0);
 });
-test('opening collateral classification rejects failed native discovery after draining fee reads',async()=>{
+test('opening collateral classification rejects failed native discovery before any utility',async()=>{
  const f=fixture();f.options.accountSession.operationScope=()=>scope;const scope={synchronized:true};let fees=0;
  f.options.accountSession.wallet.pxe.prepareBoardActionState=async()=>{throw Error('native discovery failed');};
- f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};
- await assert.rejects(f.restart().readAccountStatus({opening:true}),/native discovery failed/);assert.equal(fees,1);assert.equal(f.state.privateReads.length,0);
+ f.state.feeCredit=77n;f.state.beforeFeeBalance=()=>{fees++;};
+ await assert.rejects(f.restart().readAccountStatus({opening:true}),/native discovery failed/);assert.equal(fees,0);assert.equal(f.state.privateReads.length,0);
 });
 
 for(const phase of ['included','confirmed'])test('native claim readiness omits only presentation receipt reread for '+phase,async()=>{
@@ -3144,7 +3152,7 @@ for(const phase of ['included','confirmed'])test('native claim readiness omits o
  const app=f.restart(),intent=await app.prepare({type:'claim-deposit',receipt:f.receipt});assert.equal((await app.submitPrepared(intent.intentId)).status,phase);
  const scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
  let inspections=0,fees=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
- f.options.sdk.preparePrivateFeePayment=async()=>{fees++;return {availableCredit:77n};};
+ f.state.feeCredit=77n;f.state.beforeFeeBalance=()=>{fees++;};
  const current=f.restart(),before=[...f.values],reads=f.state.privateReads.length,status=await current.readAccountStatus();
  assert.equal(status.status,'fee-ready');assert.equal(status.privateFeeCredit,'77');assert.equal(inspections,0);assert.equal(fees,1);
  assert(f.state.privateReads.slice(reads).some(row=>row.name==='get_deposit_ids'));assert.deepEqual([...f.values],before);
@@ -3158,7 +3166,7 @@ for(const mode of ['unsynchronized','missing-native-notes','fee-failure'])test('
  const scope=f.options.accountSession.operationScope();f.options.accountSession.operationScope=()=>scope;
  let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
  if(mode==='missing-native-notes')f.state.responses={get_deposit_ids:Array(10).fill(0n)};
- if(mode==='fee-failure')f.options.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('no actual credit'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
+ if(mode==='fee-failure')f.state.feeCredit=0n;
  const status=await f.restart().readAccountStatus();assert.equal(status.status,mode==='unsynchronized'?'recovering':mode==='missing-native-notes'?'collateral-pending':'fee-needed');
  assert.equal(inspections,mode==='unsynchronized'?1:0);
 });
@@ -3196,7 +3204,7 @@ for(const nativeState of ['missing-collateral','missing-credit'])test('included 
  const scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
  let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
  if(nativeState==='missing-collateral')f.state.responses={get_deposit_ids:Array(10).fill(0n)};
- else f.options.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('no native credit'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
+ else f.state.feeCredit=0n;
  const current=f.restart(),before=[...f.values],status=await current.readAccountStatus();
  assert.equal(status.status,nativeState==='missing-collateral'?'collateral-pending':'fee-needed');assert.equal(inspections,0);assert.deepEqual([...f.values],before);
  await assert.rejects(current.prepare({type:'like',post:'6'}),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(inspections,1);assert.equal(f.state.sends,1);
@@ -3222,31 +3230,31 @@ for(const action of [
  const abi=artifact.functions.find(fn=>fn.name===actual.name);assert.deepEqual(encodeArguments(abi,actual.args),encodeArguments(abi,expected.args));assert.equal(f.state.sends,1);
 });
 
-for(const failure of ['none','discovery','fee','both'])test('funded opening overlaps fee discovery and metadata with drained ownership: '+failure,async()=>{
+for(const failure of ['none','discovery','fee','both'])test('funded opening shares discovery and drains native balance ownership: '+failure,async()=>{
  const f=fixture(),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
- const discovery=Promise.withResolvers(),fee=Promise.withResolvers(),entered=Promise.withResolvers();
- let discoveries=0,fees=0,settled=false;
- const started=()=>{if(discoveries===1&&fees===1)entered.resolve();};
+ const discovery=Promise.withResolvers(),exit=Promise.withResolvers(),discoveryEntered=Promise.withResolvers(),exitEntered=Promise.withResolvers();
+ let discoveries=0,fees=0,settled=false,reads=0;
+ const read=f.options.privateStore.read;f.options.privateStore.read=async key=>{if(++reads===2){exitEntered.resolve();await exit.promise;}return read(key);};
  f.options.accountSession.wallet.pxe.prepareBoardActionState=async input=>{
-  discoveries++;assert.equal(input.collateralOnly,undefined);started();await discovery.promise;
+  discoveries++;assert.equal(input.collateralOnly,undefined);discoveryEntered.resolve();await discovery.promise;
   if(failure==='discovery'||failure==='both')throw Error('FPC discovery failed');
  };
- f.options.sdk.preparePrivateFeePayment=async()=>{fees++;started();await fee.promise;if(failure==='fee'||failure==='both')throw Error('fee metadata failed');return {availableCredit:77n};};
+ f.state.feeCredit=77n;f.state.beforeFeeBalance=()=>{fees++;if(failure==='fee'||failure==='both')throw Error('native balance failed');};
+ f.options.sdk.preparePrivateFeePayment=()=>assert.fail('Status cannot prepare payment');
  const app=f.restart(),before=[...f.values],work=app.readAccountStatus({opening:true});work.then(()=>settled=true,()=>settled=true);
- const outcome=failure==='none'?work:assert.rejects(work,failure==='fee'?/fee metadata failed/:/FPC discovery failed/);
- await entered.promise;assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,0);
+ const outcome=failure==='none'?work:assert.rejects(work,failure==='fee'?/native balance failed/:/FPC discovery failed/);
+ await Promise.all([discoveryEntered.promise,exitEntered.promise]);assert.equal(f.state.privateReads.length,0);assert.equal(fees,0);
  await assert.rejects(app.readAccountStatus(),{code:'ROLLING_BUSY'});
- if(failure==='fee')fee.resolve();else discovery.resolve();
- await new Promise(setImmediate);assert.equal(settled,false,'account operation stays held until both reads settle');
- discovery.resolve();fee.resolve();const result=await outcome;
+ discovery.resolve();await new Promise(setImmediate);assert.equal(settled,false,'pending exit retains operation ownership while native reads settle');
+ exit.resolve();const result=await outcome;
  if(failure==='none'){assert.equal(result.status,'fee-ready');assert.equal(result.privateFeeCredit,'77');assert.deepEqual(result.depositIds,[hex(9)]);}
- assert.equal(discoveries,1);assert.equal(fees,1);assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,['discovery','both'].includes(failure)?0:1);
+ assert.equal(discoveries,1);assert.equal(fees,['discovery','both'].includes(failure)?0:1);assert.equal(f.state.privateReads.filter(x=>x.name==='get_deposit_ids').length,['discovery','both'].includes(failure)?0:1);
  assert.deepEqual([...f.values],before);assert.equal(f.state.sends,0);assert.equal(f.state.estimates,0);
 });
 for(const change of ['scope','wallet','pxe','owner','synchronized'])test('funded opening fee wave rejects held '+change,async()=>{
  const f=fixture(),gate=Promise.withResolvers(),entered=Promise.withResolvers();let scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
  f.options.accountSession.wallet.pxe.prepareBoardActionState=async input=>{if(!input.collateralOnly){entered.resolve();await gate.promise;}};
- f.options.sdk.preparePrivateFeePayment=async()=>({availableCredit:77n});
+ f.state.feeCredit=77n;
  const app=f.restart(),work=app.readAccountStatus({opening:true}),rejected=assert.rejects(work,{code:'ROLLING_CONTEXT_CHANGED'});
  await entered.promise;
  if(change==='scope')scope={synchronized:true};if(change==='wallet')f.options.accountSession.wallet={...f.options.accountSession.wallet};
@@ -3316,7 +3324,7 @@ for(const kind of ['private-fee','bok'])for(const included of [false,true])test(
  const raw=f.restart(),prepared=await raw.prepare(f.action);await raw.submitPrepared(prepared.intentId);
  if(included){f.state.outcome.receipt.status='proposed';await raw.reconcile(prepared.intentId);}
  let inspections=0;f.options.accountSession.journal.inspectOutcome=async()=>{inspections++;return null;};
- const before=f.state.privateReads.length,status=await raw.readAccountStatus();assert.equal(status.status,'fee-ready');assert.equal(status.privateFeeCredit,'200');assert.equal(inspections,0);
+ f.state.feeCredit=200n;const before=f.state.privateReads.length,status=await raw.readAccountStatus();assert.equal(status.status,'fee-ready');assert.equal(status.privateFeeCredit,'200');assert.equal(inspections,0);
  assert(f.state.privateReads.slice(before).some(x=>x.name==='get_deposit_ids'));
  assert.equal((await raw.readFundingState()).status,'recovering');assert.equal(inspections,1);
  await assert.rejects(raw.prepare(f.action),{code:'ROLLING_RECOVERY_REQUIRED'});assert.equal(f.state.sends,1);
@@ -3332,7 +3340,7 @@ for(const kind of ['private-fee','bok'])test('completed '+kind+' claim display s
  const f=topUpFixture(kind),scope={synchronized:true};f.options.accountSession.operationScope=()=>scope;
  const raw=f.restart(),prepared=await raw.prepare(f.action);await raw.submitPrepared(prepared.intentId);
  f.options.accountSession.journal.inspectOutcome=async()=>assert.fail('display does not consume historical receipt');
- f.options.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('native credit absent'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
+ f.state.feeCredit=0n;
  assert.equal((await raw.readAccountStatus()).status,'fee-needed');assert.equal(f.state.sends,1);
 });
 test('private-fee predecessor to Bok claim synchronizes once after bridge and refreshes spendable balance afterward',async()=>{
@@ -3421,19 +3429,34 @@ for(const failure of ['none','plugin','balance','both','disabled','owner','canon
  assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
 
-for(const failure of ['zero-credit','class','network','native','malformed'])test('empty joint opening preserves fee failure classification '+failure,{timeout:3000},async()=>{
+for(const failure of ['zero-credit','native','malformed'])test('empty joint opening preserves native fee failure classification '+failure,{timeout:3000},async()=>{
  const f=fixture(),scope={synchronized:true},ids=Promise.withResolvers(),entered=Promise.withResolvers();f.options.accountSession.operationScope=()=>scope;
  f.state.responses={get_deposit_ids:Array(10).fill(0n)};f.state.beforeDepositIds=()=>ids.promise;
- const codes={'zero-credit':'PRIVATE_FEE_BALANCE_INSUFFICIENT',class:'PRIVATE_FEE_CLASS_MISMATCH',network:'PRIVATE_FEE_CHAIN_MISMATCH',native:'PRIVATE_FEE_PREPARATION_FAILED',malformed:'PRIVATE_FEE_INVALID_VALUE'};
- const error=Object.assign(Error('fixed fee failure'),{code:codes[failure]});
- f.options.sdk.preparePrivateFeePayment=async()=>{entered.resolve();throw error;};
+ const error=Error('native balance failed');f.state.feeCredit=failure==='malformed'?(1n<<128n):0n;
+ f.state.beforeFeeBalance=()=>{entered.resolve();if(failure==='native')throw error;};
+ f.options.sdk.preparePrivateFeePayment=()=>assert.fail('Status cannot prepare payment');
  const app=f.restart();let done=false;const work=app.readAccountStatus({opening:true}).then(value=>({value}),error=>({error})).finally(()=>done=true);
  await entered.promise;await new Promise(setImmediate);assert.equal(done,false);await assert.rejects(app.readAccountStatus(),{code:'ROLLING_BUSY'});
  ids.resolve();const result=await work;
  if(failure==='zero-credit')assert.deepEqual(result.value,{status:'collateral-pending',depositIds:[],pendingWithdrawal:null,postEligibility:'requires-action-simulation'});
- else assert.equal(result.error,error);
+ else if(failure==='native')assert.equal(result.error,error);else assert.equal(result.error.code,'ROLLING_INVALID_RESPONSE');
  assert.equal(f.state.readinessPreparations.length,1);assert.equal(f.state.readinessPreparations[0].collateralOnly,undefined);
  assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+test('empty joint opening class failure drains pending exit without reading balances',{timeout:3000},async()=>{
+ const f=fixture(),scope={synchronized:true},exit=Promise.withResolvers(),entered=Promise.withResolvers();f.options.accountSession.operationScope=()=>scope;
+ const error=Object.assign(Error('current class mismatch'),{code:'PRIVATE_FEE_CLASS_MISMATCH'});let reads=0;
+ const read=f.options.privateStore.read;f.options.privateStore.read=async key=>{if(++reads===2){entered.resolve();await exit.promise;}return read(key);};
+ f.options.accountSession.wallet.pxe.prepareBoardActionState=async()=>{throw error;};
+ const app=f.restart();let done=false;const work=app.readAccountStatus({opening:true}).finally(()=>done=true),rejected=assert.rejects(work,e=>e===error);
+ await entered.promise;await new Promise(setImmediate);assert.equal(done,false);await assert.rejects(app.readAccountStatus(),{code:'ROLLING_BUSY'});
+ exit.resolve();await rejected;assert.equal(f.state.privateReads.length,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
+});
+test('empty joint opening network failure rejects before discovery or balance reads',async()=>{
+ const f=fixture(),error=Object.assign(Error('wrong trusted network'),{code:'PRIVATE_FEE_CHAIN_MISMATCH'});
+ f.options.sdk.inspectTrustedNode=async()=>{throw error;};
+ await assert.rejects(f.restart().readAccountStatus({opening:true}),e=>e===error);
+ assert.equal(f.state.readinessPreparations?.length??0,0);assert.equal(f.state.privateReads.length,0);assert.equal(f.state.estimates,0);assert.equal(f.state.sends,0);assert.equal(f.values.size,0);
 });
 
 for(const change of ['none','expired','args','owner','receipt'])test('owned Bok application uses internal custody and retains submission binding: '+change,async()=>{

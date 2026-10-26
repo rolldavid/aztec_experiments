@@ -356,6 +356,17 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       privateFeeAddress:fixed.fee,privateFeeArtifact:deployment.privateFee.artifact,expectedChainId:scope.chainId,expectedVersion:scope.version,gasSettings:fixed.gas,measure,
       ...(claim?{claim}:{}),...(ordinaryProof?{creditCheck:'ordinary-post-proof'}:likeProof?{creditCheck:'qualified-like-proof'}:deferredBalance?{creditCheck:'deferred-balance'}:{})});
   }
+  // Read the native credit at the caller's held PXE anchor. Account status
+  // owns Board/FPC class-qualified discovery; full balance views retain their
+  // existing canonical anchor checks. No transaction is prepared by this read.
+  async function privateFeeAvailable(){
+    await localGuard();
+    const payer=await sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.fee))),deployment.privateFee.artifact,session.wallet);
+    await localGuard();
+    const available=chainValue(await measure('action.fee-balance',()=>utility(payer,'balance_of',[session.owner],deployment.privateFee.artifact),{nativeUtility:true}));
+    check(available<(1n<<128n),'ROLLING_INVALID_RESPONSE');await localGuard();
+    return available;
+  }
   async function collateralClaim(action){
     // Receipt metadata cannot replace the authenticated deployment or inject
     // secrets. Both claims are derived from custody and rechecked at submission.
@@ -1030,8 +1041,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
       const ids=await utility(board,'get_deposit_ids',[session.owner,offset]);check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');
       const deposits=[],seen=new Set();let empty=false;
       for(const value of ids){const id=field(value);if(BigInt(id)===0n){empty=true;continue;}check(!empty&&!seen.has(id),'ROLLING_INVALID_RESPONSE');seen.add(id);deposits.push(await collateralInfo(id,board,BigInt(anchor.timestamp)));}
-      const feeContract=await sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.fee))),deployment.privateFee.artifact,session.wallet);
-      const fee=chainValue(await utility(feeContract,'balance_of',[session.owner],deployment.privateFee.artifact));check(fee<(1n<<128n),'ROLLING_INVALID_RESPONSE');
+      const fee=await privateFeeAvailable();
       let credit=null;if(includeBok&&bok){const current=await bokContract(),available=chainValue(await utility(current,'balance_of',[session.owner],deployment.bok.artifact));check(available<(1n<<128n),'ROLLING_INVALID_RESPONSE');
         credit={available:String(available),token:'USDC',availableMeaning:'unallocated-private-credit',requestsComplete:false,requests:[]};
 
@@ -1045,9 +1055,7 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     // Display only: the next action still verifies payment readiness itself.
     async readPrivateFeeCredit(){return exclusive(async()=>{
       const anchor=await balanceAnchor();
-      const payer=await sdk.Contract.at(new sdk.AztecAddress(new sdk.Fr(BigInt(fixed.fee))),deployment.privateFee.artifact,session.wallet);
-      const available=chainValue(await utility(payer,'balance_of',[session.owner],deployment.privateFee.artifact));
-      check(available<(1n<<128n),'ROLLING_INVALID_RESPONSE');await checkBalanceAnchor(anchor);
+      const available=await privateFeeAvailable();await checkBalanceAnchor(anchor);
       return {availableCredit:String(available),anchor};
     });},
     async readBokStatus(){return exclusive(async()=>{await ensureBok();if(!bok)return {available:false};try{return {available:true,availableCredit:String(await bokCredit()),pluginId:bok.pluginId};}catch(error){if(error?.code==='ROLLING_BOK_UNAVAILABLE')return {available:false};throw error;}});},
@@ -1067,21 +1075,26 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           await localGuard();
           check(getOperationScope()===operation&&session.wallet===context.wallet&&context.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
         };
-        const prepareReadiness=async()=>{
-          if(operation?.synchronized===true){
-            await measure('account.status.discovery-queued',()=>context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'}));
-            await checkContext();check(operation.synchronized===true,'ROLLING_CONTEXT_CHANGED');
-          }
-        };
+        const synchronized=operation?.synchronized===true;
+        // Both status utilities require these exact current classes and native
+        // owner records. Raw callers use the same barrier; the public wrapper
+        // still owns fresh synchronization before opening this account view.
+        const readiness=Promise.resolve().then(async()=>{
+          await measure('account.status.discovery-queued',()=>context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'}));
+          await checkContext();if(synchronized)check(operation.synchronized===true,'ROLLING_CONTEXT_CHANGED');
+        });
         const readIds=async()=>{
-          await prepareReadiness();
+          await readiness;await checkContext();
           const ids=await measure('account.status.deposit-ids-queued',async()=>utility(await contract(),'get_deposit_ids',[session.owner,0]));check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;
         };
-        // Discover Board and fee notes together in the existing native queue.
-        // Public fee metadata runs alongside that discovery; neither a local
-        // hint nor a preceding Board-only read decides which work to start.
+        const readCredit=async()=>{
+          await readiness;await checkContext();
+          const available=await privateFeeAvailable();await checkContext();return available;
+        };
+        // Only balance and collateral are needed here. Fee prices, gas limits,
+        // payment methods and refunds are prepared by the actual action.
         const reads=await Promise.allSettled([
-          readIds,pendingExitSummary,()=>payment(),
+          readIds,pendingExitSummary,readCredit,
         ].map(read=>Promise.resolve().then(read)));
         // Keep collateral, pending-exit, then fee failure priority after draining.
         for(const result of reads.slice(0,2))if(result.status==='rejected')throw result.reason;
@@ -1089,16 +1102,13 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
         check(getOperationScope()===operation&&session.wallet===context.wallet&&session.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
         const ids=reads[0].value,pendingWithdrawal=reads[1].value;
         const emptyOpening=opening&&operation?.synchronized===true&&!pendingWithdrawal&&ids.every(id=>BigInt(id)===0n);
-        if(reads[2].status==='rejected'){
-          const error=reads[2].reason;
-          if(error.code!=='PRIVATE_FEE_BALANCE_INSUFFICIENT')throw error;
-          if(!emptyOpening)return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};
-        }
-        // Only actual zero credit is expected for a new account. Native,
-        // class, network and other fee failures remain failures after draining.
+        // Failed native/class/network reads never mean zero credit. Zero is a
+        // successfully decoded u128; all failed reads remain errors after drain.
+        if(reads[2].status==='rejected')throw reads[2].reason;
+        const available=reads[2].value;
+        if(available===0n&&!emptyOpening)return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};
         if(emptyOpening)return {status:'collateral-pending',depositIds:[],pendingWithdrawal:null,postEligibility:'requires-action-simulation'};
-        const fee=reads[2].value;
-        return {status:ids.some(id=>BigInt(id)!==0n)?'fee-ready':'collateral-pending',privateFeeCredit:String(fee.availableCredit),
+        return {status:ids.some(id=>BigInt(id)!==0n)?'fee-ready':'collateral-pending',privateFeeCredit:String(available),
           depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal,postEligibility:'requires-action-simulation'};
       }));
     },

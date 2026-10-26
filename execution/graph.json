@@ -9408,7 +9408,7 @@
       "branch": "codex/rolling-chat-draft3",
       "verification_method": "Native claim/cancel exclusion, Solidity custody/refund proofs, client and browser checks, coherent artifact verification, independent review, then fresh testnet signup and publication.",
       "priority": 0,
-      "next_action": "Diagnose wallet-adapter gas fidelity against minedfaileddeposit before any application gas change; repair measurement callback persistence. Capture bounded warm observer at ready and isolate browser upload arrival with current server counters; continue actual other-flow50% comparisons. Do not skip native discovery or claim freshsignup2s fromfunded reopening."
+      "next_action": "Integrate independently reviewed status-only FPC balance read; root diagnoses mined FEE deposit gas and fixes test adapter callback persistence. Read-only parallel lane designs owner-log prefetch under exact native anchor. Then publish affected assets and capture full bounded opening/transaction traces."
     }
   ],
   "specification": {
