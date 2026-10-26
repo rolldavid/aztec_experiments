@@ -129,7 +129,7 @@ test('captured policy read is requested only for synchronized ordinary main-boar
  ]){
   const scope={},seen=[],raw=Object.fromEntries(names.map(name=>[name,()=>{}]));
   const app=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:options=>seen.push(options)});
-  await app.prepare(input,options);assert.deepEqual(seen,[{ordinaryPolicy:wanted,ordinaryPost:Boolean(scope)&&options?.immediate===true&&['post','reply','quote','repost'].includes(input.type)}]);
+  await app.prepare(input,options);assert.deepEqual(seen,[{ordinaryPolicy:wanted,ordinaryPost:Boolean(scope)&&options?.immediate===true&&['post','reply','quote','repost'].includes(input.type),...(options?.immediate===true&&['like','unlike'].includes(input.type)?{snapshotAncestry:true}:{})}]);
  }
 });
 
@@ -318,4 +318,13 @@ for(const kind of ['names','unowned','other','replaced','failed'])test('owned-na
  if(kind==='replaced'){assert.equal(out.error.code,'ROLLING_CONTEXT_CHANGED');assert.equal(calls,0);}
  else if(kind==='failed'){assert.match(out.error.message,/sync failed/);assert.equal(calls,0);}
  else{assert.equal(out.value,'native result');assert.equal(calls,1);}
+});
+
+test('snapshot ancestry belongs only to an owned immediate Like or Unlike preparation',async()=>{
+ for(const type of ['like','unlike','name','bio','post','claim-private-fee'])for(const immediate of [false,true])for(const owned of [false,true]){
+  const scope=owned?{}:null,seen=[],raw=Object.fromEntries(names.map(name=>[name,()=>({})]));
+  const application=createSynchronizedRollingApplication({application:raw,operationScope:()=>scope,contextGuard:()=>{},synchronize:options=>seen.push(options)});
+  await application.prepare({type},{immediate});
+  assert.equal(seen.length,1);assert.equal(seen[0].snapshotAncestry,owned&&immediate&&['like','unlike'].includes(type)?true:undefined);
+ }
 });

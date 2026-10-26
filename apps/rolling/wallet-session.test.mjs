@@ -150,7 +150,12 @@ async function sessionFixture({chainId='31337'}={}){
   createBrowserJournalStorage:()=>privateStore,createL2Journal,
   AccountManager:{create:async()=>{held('account-manager');return {address:accountInstance.address,getInstance:()=>accountInstance};}},
   ContractFunctionInteraction:class{async simulate(){held('signing-capsule');}},
-  Contract:{at:()=>({methods:{get_screen_hints:(owner,deposit)=>({simulate:async options=>{held('screen-hints');assert.equal(owner.toString(),account.address);assert.equal(options.from.toString(),account.address);return {result:[null,null]};}}),preference_head:()=>({simulate:async()=>{held('preference-head');return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='preference_head')),[Fr.ZERO,Fr.ONE,Fr.ZERO,Fr.ZERO])};}}),register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
+  Contract:{at:(address,selectedArtifact,selectedWallet)=>({methods:{balance_of:owner=>({simulate:async options=>{
+   held('fee-balance');assert.equal(String(address),f.options.config.privateFee.contractAddress);assert.equal(selectedArtifact,f.options.privateFeeArtifact);assert.equal(selectedWallet,wallet);
+   assert.equal(owner.toString(),account.address);assert.equal(options.from.toString(),account.address);state.feeBalanceReads=(state.feeBalanceReads??0)+1;
+   await state.beforeFeeBalance?.();if(Object.hasOwn(state,'feeReadError'))throw state.feeReadError;
+   return {result:state.feeCredit??100n};
+  }}),get_screen_hints:(owner,deposit)=>({simulate:async options=>{held('screen-hints');assert.equal(owner.toString(),account.address);assert.equal(options.from.toString(),account.address);return {result:[null,null]};}}),preference_head:()=>({simulate:async()=>{held('preference-head');return {result:decodeFromAbi(getFunctionReturnType(artifact.functions.find(fn=>fn.name==='preference_head')),[Fr.ZERO,Fr.ONE,Fr.ZERO,Fr.ZERO])};}}),register_name:(...args)=>({args}),get_deposit_ids:()=>({simulate:async()=>({result:[9n,...Array(9).fill(0n)]})}),owned_name_records:()=>({simulate:async()=>({result:ownedRecords})})}})},
   prefetchOrdinaryPostWitnesses:async input=>{held('posting-witnesses');(state.witnessPrefetches??=[]).push(input);},
   preparePrivateFeePayment:async()=>({availableCredit:100n}),estimatePrivateFeeTransaction:async()=>({maximumFee:10n,payload:{},gasSettings:{}})};
  const locks={request:async(name,options,run)=>{
@@ -613,7 +618,7 @@ for(const phase of ['lock','context','pxe-sync','account-initialize','method'])t
  if(phase==='context')f.input.sdk.isPrivatePXEForNode=()=>{throw original;};
  if(phase==='pxe-sync')f.pxe.sync=async()=>{throw original;};
  if(phase==='account-initialize')f.pxe.initializeSchnorrAccount=async()=>{throw original;};
- if(phase==='method')f.input.sdk.preparePrivateFeePayment=async()=>{throw original;};
+ if(phase==='method')f.state.feeReadError=original;
  // The production application captures SDK capabilities at construction.
  if(phase==='method'){
   await session.close();const again=await createRollingWalletSession(f.input);rows.length=0;
@@ -640,9 +645,9 @@ test('moderator refresh reads public storage without private synchronization and
  }finally{await session.close();}
 });
 test('refresh diagnostic observer failure cannot mask zero balance or inspect private exception getters',async()=>{
- const f=await sessionFixture(),rows=[];f.input.sdk.preparePrivateFeePayment=async()=>{throw Object.assign(Error('PRIVATE_SENTINEL'),{code:'PRIVATE_FEE_BALANCE_INSUFFICIENT'});};
+ const f=await sessionFixture(),rows=[];f.state.feeCredit=0n;f.input.sdk.preparePrivateFeePayment=async()=>assert.fail('Account status must not prepare a payment');
  f.input.onProgress=row=>{rows.push(row);if(row.state==='started')throw Error('OBSERVER');return Promise.reject(Error('OBSERVER'));};
- const session=await createRollingWalletSession(f.input);assert.deepEqual(await session.application.readAccountStatus(),{status:'fee-needed',depositIds:['0x'+9n.toString(16).padStart(64,'0')],pendingWithdrawal:null});assert.equal(rows.at(-1).state,'complete');assert.equal(rows.filter(r=>r.stage==='private-refresh'&&r.step==='account-status/method'&&r.state==='started').length,1);
+ const session=await createRollingWalletSession(f.input);assert.deepEqual(await session.application.readAccountStatus(),{status:'fee-needed',depositIds:['0x'+9n.toString(16).padStart(64,'0')],pendingWithdrawal:null});assert.equal(rows.at(-1).state,'complete');assert.equal(f.state.feeBalanceReads,1);assert.equal(rows.filter(r=>r.stage==='private-refresh'&&r.step==='account-status/method'&&r.state==='started').length,1);
  let accessed=0;const original=Object.defineProperty({},'code',{get(){accessed++;throw Error('PRIVATE_SENTINEL');}});f.pxe.sync=async()=>{throw original;};
  await assert.rejects(session.application.readAccountStatus(),e=>e===original);assert.equal(accessed,0);assert.equal(rows.at(-1).code,'unknown');assert(!JSON.stringify(rows).includes('PRIVATE_SENTINEL'));await session.close();
 });
@@ -1828,4 +1833,14 @@ for(const failure of [false,true])test('owned claim lifetime stays within sessio
  const cap=createFundingContinuation(f.input);
  if(failure)await assert.rejects(cap.advanceClaim(),/payment unavailable/);else assert.equal((await cap.advanceClaim()).state,'complete');
  assert.equal(entries,1);assert(!active);assert(!f.busy);
+});
+
+for(const type of ['like','unlike'])for(const immediate of [false,true])test('wallet forwards Like snapshot option under the account lease: '+type+' immediate='+immediate,async()=>{
+ const f=await sessionFixture(),session=await createRollingWalletSession(f.input),seen=[],failure=Error('stop at native sync boundary');
+ f.pxe.sync=async options=>{assert.equal(f.state.active,true);seen.push(options);throw failure;};
+ try{
+  await assert.rejects(session.application.prepare({type,post:'5'},{immediate}),error=>error===failure);
+  assert.deepEqual(seen,[immediate?{snapshotAncestry:true}:undefined]);assert.equal(f.state.active,false);assert.equal(f.state.sends,0);
+  assert.equal(f.state.boardStateMethod,undefined,'failed native sync cannot begin contract discovery or transaction work');
+ }finally{await session.close();}
 });

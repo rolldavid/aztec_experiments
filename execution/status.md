@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 636d0a58 published/pushed UI+prover. Real warm funded opening2.712740s/2.255880s and Likes19.399400s/15.196415s miss targets. Proofresponse149KB→25KB; predecessor0.609/0.470s. Uploadbrowserarrival variable1.54–7.05s vs samehostcurl0.83–0.92s, serverloopidle dominates. FEEtopup minedrevert with205630gas; identicalcall succeeds411260; adapterinterrupted so no qualifiedtiming. Targets remainopen.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — c993 UI live/pushed. Actual funded warm2.166935s; Like11.420380s (19.20% vs14.134775s), bio16.215390s, name24.028s. Fresh signup unfunded testETH prerequisite remains. Like/Unlike snapshot ancestry integrated and reviewed; affected563 checks pass after status-fixture updates and pinned-artifact selection. Pending publication and real measurement. Goals open.
 
 ## Ready internal work
 

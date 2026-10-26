@@ -9402,13 +9402,13 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "636d0a58 published/pushed UI+prover. Real warm funded opening2.712740s/2.255880s and Likes19.399400s/15.196415s miss targets. Proofresponse149KB\u219225KB; predecessor0.609/0.470s. Uploadbrowserarrival variable1.54\u20137.05s vs samehostcurl0.83\u20130.92s, serverloopidle dominates. FEEtopup minedrevert with205630gas; identicalcall succeeds411260; adapterinterrupted so no qualifiedtiming. Targets remainopen.",
+      "checkpoint": "c993 UI live/pushed. Actual funded warm2.166935s; Like11.420380s (19.20% vs14.134775s), bio16.215390s, name24.028s. Fresh signup unfunded testETH prerequisite remains. Like/Unlike snapshot ancestry integrated and reviewed; affected563 checks pass after status-fixture updates and pinned-artifact selection. Pending publication and real measurement. Goals open.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
       "verification_method": "Native claim/cancel exclusion, Solidity custody/refund proofs, client and browser checks, coherent artifact verification, independent review, then fresh testnet signup and publication.",
       "priority": 0,
-      "next_action": "Integrate independently reviewed status-only FPC balance read; root diagnoses mined FEE deposit gas and fixes test adapter callback persistence. Read-only parallel lane designs owner-log prefetch under exact native anchor. Then publish affected assets and capture full bounded opening/transaction traces."
+      "next_action": "Publish reviewed Like/Unlike native snapshot ancestry change and measure actual inclusion/visible result. Keep isolated registration serialization draft unpublished until mutation/parity checks and independent approval. Test wallet callbacks bind ID+method; no app gas-multiplier change. Need adequate authorized testETH for fresh signup; do not substitute funded reopening."
     }
   ],
   "specification": {

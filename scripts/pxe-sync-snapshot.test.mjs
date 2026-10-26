@@ -404,3 +404,46 @@ test('ancestry RPC rejection drains the independent public source read',async t=
  const work=f.sync.syncWithAnchorRead(async()=>{entered.resolve();await gate.promise;return 1;},{snapshotAncestry:true});
  const rejected=assert.rejects(work,/PXE_REORG_/).finally(()=>finished=true);await entered.promise;await new Promise(r=>setImmediate(r));assert.equal(finished,false);gate.resolve();await rejected;assert.equal(f.sync.anchorRead,undefined);
 });
+
+// Actual native NoteStore, staged commits, nullifier rollback and tips stream.
+// The chain/header data is synthetic; this is not a real-network acceptance claim.
+for(const failRollback of [false,true])test('captured action snapshot rolls back committed orphan notes and nullifiers; rollback failure='+failRollback,async t=>{
+ const f=await snapshotAdvanceFixture(t);
+ const retained=await f.add(10,100,7001);
+ await f.commit(c=>f.notes.addNotes([retained],f.owner,c));
+ assert.equal(await f.balance(),100n);
+ await f.run();assert.equal((await f.anchor.getBlockHeader()).getBlockNumber(),12);
+ // Model successful native discovery after this snapshot: an old note is spent
+ // at the captured height and private change is recorded on that same branch.
+ const change=await f.add(12,80,7002);
+ await f.commit(async c=>{
+  await f.notes.applyNullifiers([{data:retained.siloedNullifier,l2BlockNumber:12}],c);
+  await f.notes.addNotes([change],f.owner,c);
+ });
+ assert.equal(await f.balance(),80n);
+ const before=await f.snapshot(),wipes=f.state.wipes,nodeWipes=f.state.nodeWipes;
+ f.chain[12]=await block(12,999);f.state.failRollback=failRollback;
+ // Same-height fork must use native prune, not an advance witness shortcut.
+ f.node.getBlockHashMembershipWitness=async()=>assert.fail('fork requires native rollback');
+ const run=()=>f.sync.syncWithAnchorRead(()=>undefined,{snapshotAncestry:true});
+ if(failRollback){
+  await assert.rejects(run(),/PXE_REORG_/);
+  assert.deepEqual(await f.snapshot(),before,'failed rollback changes neither notes, emissions, anchor nor tips');
+  f.state.failRollback=false;
+ }
+ await run();
+ assert.equal(await f.balance(),100n,'orphan nullifier emission is removed and the retained note becomes active again');
+ let live,orphan;
+ await f.commit(async c=>{
+  const filter={contractAddress:f.contract,scopes:[f.owner]};
+  live=await f.notes.getNotes(filter,c);
+  orphan=await f.notes.getNotes({...filter,siloedNullifier:change.siloedNullifier},c);
+ });
+ assert.deepEqual(live.map(note=>note.siloedNullifier.toString()),[retained.siloedNullifier.toString()]);
+ assert.deepEqual(orphan,[],'orphan change is deleted, not merely hidden by a balance total');
+ assert.equal(f.state.prunes.at(-1),10);assert(f.state.wipes>wipes);assert(f.state.nodeWipes>nodeWipes);
+ assert.equal((await(await f.anchor.getBlockHeader()).hash()).toString(),f.id(12).hash);
+ assert.deepEqual((await f.tips.getL2Tips()).proposed,f.id(12));
+ assert.equal(f.sync.anchorRead,undefined);
+ const prunes=f.state.prunes.length;await run();assert.equal(f.state.prunes.length,prunes);assert.equal(await f.balance(),100n);
+});

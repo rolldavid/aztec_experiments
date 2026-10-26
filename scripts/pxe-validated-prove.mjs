@@ -303,7 +303,14 @@ export function validatedPxeProve(source){
     }
     // Public API\n`);
  source=replace(source,'return this.#proveTx(ctx, txRequest, privateExecutionResult);','return this.#proveTx(ctx, txRequest, privateExecutionResult, validatePublic);');
- source=replace(source,'        return this.operationQueue.run(()=>this.blockStateSynchronizer.sync());',`        return this.operationQueue.run(()=>this.blockStateSynchronizer.sync());
+ source=replace(source,'   */ sync() {\n        return this.operationQueue.run(()=>this.blockStateSynchronizer.sync());',`   */ sync({snapshotAncestry=false} = {}) {
+        if(typeof snapshotAncestry!=='boolean')throw new Error('Invalid sync snapshot option');
+        // The same captured source plan and archive-membership verifier used by
+        // account reads establish an exact native anchor for action preparation.
+        // Admission, public execution, proving and inclusion remain unchanged.
+        return this.operationQueue.run(()=>snapshotAncestry
+            ? this.blockStateSynchronizer.syncWithAnchorRead(()=>undefined,{snapshotAncestry:true}).then(()=>undefined)
+            : this.blockStateSynchronizer.sync());
     }
     // A public read at the captured source-plan anchor overlaps native checks.
     // It cannot become visible until the complete native sync succeeds.

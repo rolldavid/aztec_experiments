@@ -390,3 +390,25 @@ test('opening collateral native option cannot bypass action discovery',async()=>
  const f=await ordinarySyncFixture();for(const method of ['set_like','register_name','withdraw'])assert.throws(()=>f.prepareGeneric(method,{owner:f.owner,board:f.board,privateFee:f.fee,collateralOnly:true}),/Invalid Board state method/);
  assert.throws(()=>f.prepareGeneric('get_deposit_ids',{owner:f.owner,board:f.board,privateFee:f.fee,collateralOnly:'true'}),/Invalid Board state method/);assert.equal(f.events.length,0);
 });
+
+for(const failure of [false,true])test('snapshot sync option retains the native queue and void result; failure='+failure,async()=>{
+ const {OperationQueue}=await import('../node_modules/@aztec-labs/pxe/dest/operation_queue.js');
+ const queue=new OperationQueue({autoSync:false,node:{startRecording:()=>({stop(){}})},synchronizer:{},anchorBlockStore:{getBlockHeader:async()=>({})},contributors:[],stagedWriteCoordinator:{begin:()=>1,commit:async()=>{},abort(){}},log:{debug(){},verbose(){},warn(){}}});queue.start();
+ const text=method(pxe,'sync({snapshotAncestry=false} = {}) {','\n    // A public read');
+ const Class=vm.runInNewContext(`(class {${text}})`),instance=new Class();instance.operationQueue=queue;
+ const queued=Promise.withResolvers(),held=Promise.withResolvers(),entered=Promise.withResolvers(),calls=[];let nextRan=false;
+ instance.blockStateSynchronizer={sync:async()=>{calls.push('ordinary');},syncWithAnchorRead:async(read,options)=>{
+  calls.push('snapshot');assert.equal(options.snapshotAncestry,true);assert.deepEqual(Object.keys(options),['snapshotAncestry']);assert.equal(await read(),undefined);
+  entered.resolve();await held.promise;if(failure)throw Error('native ancestry failure');return {anchor:{number:12,hash:'captured'},value:undefined};
+ }};
+ try{
+  const prior=queue.run(()=>queued.promise),options={snapshotAncestry:true},pending=instance.sync(options);
+  const observed=failure?assert.rejects(pending,/native ancestry failure/):pending;
+  options.snapshotAncestry=false;await new Promise(setImmediate);assert.deepEqual(calls,[],'snapshot cannot bypass an earlier native operation');
+  queued.resolve();await prior;await entered.promise;
+  const next=queue.run(()=>{nextRan=true;});await new Promise(setImmediate);assert.equal(nextRan,false);
+  held.resolve();assert.equal(await observed,undefined);await next;assert.equal(nextRan,true);assert.deepEqual(calls,['snapshot']);
+  assert.equal(await instance.sync(),undefined);assert.equal(await instance.sync({snapshotAncestry:false}),undefined);assert.deepEqual(calls,['snapshot','ordinary','ordinary']);
+  assert.throws(()=>instance.sync({snapshotAncestry:'true'}),/Invalid sync snapshot option/);assert.equal(calls.length,3);
+ }finally{queued.resolve();held.resolve();await queue.stop();}
+});
