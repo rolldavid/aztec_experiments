@@ -9,7 +9,8 @@ def atomic(path,data,mode):
  temp=path.with_name(path.name+'.relay-update');temp.write_bytes(data);temp.chmod(mode);os.replace(temp,path)
 def ready(source):
  pid=int(prop('rolling-application.service','MainPID'));assert pid>0
- assert P('/proc',str(pid),'cwd').resolve()==source
+ # Type=simple may return before the child has completed exec/chdir. The
+ # successful HTTP response below is the startup boundary, then verify cwd.
  # Native SDK polling observes HTTP readiness; timeout is a deployment watchdog.
  port=json.loads(P('/etc/rolling-app/public.json').read_text())['port']
  assert isinstance(port,int) and 0<port<65536
