@@ -5,7 +5,7 @@ import {performance} from 'node:perf_hooks';
 // wall-clock expiry or exception text enter these records or control execution.
 const contexts=new AsyncLocalStorage();
 const methods={
- escrow:['request','assertUsable','inspectOperation','waitForOperation','reserve','settle','close_uncertain','reconcile','finish','publish_reply','finalize_reply','open','prove','send','wait'],
+ escrow:['request','assertUsable','inspectOperation','waitForOperation','reserve','settle','close_uncertain','reconcile','finish','publish_reply','finalize_reply','open','sync','prove','send','wait'],
  board:['readRequest'],conversation:['load','assertCurrent'],
 };
 const stages=new Set([
@@ -64,7 +64,7 @@ export function recordBokProofProfile(stats){
 export function recordBokOperationFailure(error,{phase,method}={}){
  try{
   const context=contexts.getStore();if(!context||(context.operationFailures??0)>=16)return;
-  if(!['request','fee','prove','validate','before-submit','submitted'].includes(phase)||!['reserve','settle','close_uncertain','reconcile','finish','publish_reply','finalize_reply'].includes(method))return;
+  if(!['request','sync','fee','prove','validate','before-submit','submitted'].includes(phase)||!['reserve','settle','close_uncertain','reconcile','finish','publish_reply','finalize_reply'].includes(method))return;
   const own=key=>Object.getOwnPropertyDescriptor(error,key)?.value;
   const code=own('code'),name=own('name'),stack=error instanceof Error?error.stack:own('stack');
   const errorCode=['ERR_ASSERTION','ECONNRESET','ECONNREFUSED','ETIMEDOUT','ABORT_ERR','BB_OPERATOR_FEE_BALANCE_INSUFFICIENT'].includes(code)?code:'unclassified';

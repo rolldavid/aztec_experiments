@@ -12,7 +12,7 @@ class Field {
 }
 const names=['state','invocation_hash','sequence','deadline','budget','available','reserved','charged','refunded','primary_refund','secondary_refund','primary_done','secondary_done','receipt'];
 async function fixture(overrides={}){
- let validations=0,feeQuotes=0,balanceReads=0,feeBalance=10000000000n;
+ let syncs=0,syncFailed=false,validations=0,feeQuotes=0,balanceReads=0,feeBalance=10000000000n;
  let saved={operations:{}},proofs=0,sends=0,held=true,sendLost=false,proofFailed=false,wrongCall=false,writeFailure=false;
  const id=H(50),target=H(51),address=H(52),operator=H(53),board=H(54),classId=H(55),txHash=H(56),blockHash=H(57),rollup='0x'+'12'.repeat(20);
  const real=overrides.development===false;
@@ -42,7 +42,7 @@ async function fixture(overrides={}){
  tx.data.getNonRevertiblePublicCallRequests=()=>[];tx.data.getRevertiblePublicCallRequests=()=>payloadCalls??[lastCall];tx.data.getTeardownPublicCallRequest=()=>undefined;
  const maxTxGasLimits=new Gas(10000,1000000);
  const wallet={registerContract:async()=>{},completeFeeOptions:async options=>{feeQuotes++;assert.equal(options.forEstimation,undefined);return {gasSettings:GasSettings.fallback({gasLimits:maxTxGasLimits,maxFeesPerGas:new GasFees(2n,3n)})};},createTxExecutionRequestFromPayloadAndFee:async(p,from,fee)=>{payloadCalls=p.calls;return {payload:p,salt:'same nonce',authWitnesses:['same authorization'],txContext:{chainId:new Field(chainId),version:new Field(1),gasSettings:fee.gasSettings}};},scopesFrom:()=>[],senderForTagsFrom:()=>new Field(operator),
-  pxe:{proverEnabled:real,proofCreator:{trusted:true},simulateAndProveTx:async()=>{throw Error('Unexpected estimation path');},proveTxWithPublicValidation:async(request,options)=>{
+  pxe:{sync:async()=>{syncs++;if(syncFailed)throw Error("private sync details");},proverEnabled:real,proofCreator:{trusted:true},simulateAndProveTx:async()=>{throw Error('Unexpected estimation path');},proveTxWithPublicValidation:async(request,options)=>{
    validations++;assert.deepEqual(options.scopes,[]);assert.equal(String(options.senderForTags),operator);
    return wallet.pxe.proveTx(request,options);
   },proveTx:async request=>{tx.data.constants.txContext.gasSettings=request.txContext.gasSettings;assert(Object.values(saved.privateBokEscrow.operations).flatMap(r=>[r,...(r.replacement?[r.replacement]:[])]).some(r=>r.phase==='preparing'),'intent before proof');proofs++;if(proofFailed)throw Error('private witness must not escape');return {chonkProof:{isEmpty:()=>false},toTx:async()=>tx};}}};
@@ -52,8 +52,9 @@ async function fixture(overrides={}){
  if(overrides.development===false)chainId='11155111';
  const create=()=>createPrivateBokEscrowFactory(sdk)(options),port=await create();
  const op=(method,args,key=0)=>({operationId:digest([method,key]),argsDigest:digest(args.map(x=>typeof x==='bigint'?String(x):x))});
- return {port,create,id,target,row,receipt,effect,tx,block,readAnchors,op,store,options,sdk,counts:()=>({proofs,sends}),
+ return {port,create,id,target,row,receipt,effect,tx,block,readAnchors,op,store,options,sdk,counts:()=>({proofs,sends}),syncCount:()=>syncs,
   maxTxGasLimits,feeCounts:()=>({validations,feeQuotes,balanceReads}),journal:()=>saved.privateBokEscrow,set:(key,value)=>{
+   if(key==='syncFailed')syncFailed=value;
    if(key==='feeBalance')feeBalance=value;if(key==='nodeProofs')nodeProofs=value;if(key==='pxeEnabled')wallet.pxe.proverEnabled=value;if(key==='proverMode')wallet.pxe.proofCreator.proofsEnabled=value;if(key==='proverTrusted')wallet.pxe.proofCreator.trusted=value;
    if(key==='sendLost')sendLost=value;if(key==='proofFailed')proofFailed=value;if(key==='wrongCall')wrongCall=value;if(key==='held')held=value;
    if(key==='chainId')chainId=value;if(key==='class')actualClass=value;if(key==='operator')actualOperator=value;if(key==='blockMismatch')blockMismatch=value;if(key==='writeFailure')writeFailure=value;
@@ -628,4 +629,22 @@ test('hosted public native waiter holds its request order without occupying the 
  assert.equal((await two.finish(b.id,b.op('finish',[b.id]))).status,'succeeded');assert.equal(sameDone,false);assert.equal(queued,1);
  a.receipt.status='checkpointed';held.resolve();assert.equal((await wait).status,'succeeded');assert.equal((await same).status,'succeeded');
  assert.equal(queued,2);assert.deepEqual(a.counts(),{proofs:1,sends:1},'same original transaction was inspected, never sent again');
+});
+
+test('cold direct operator proof synchronizes before fees and proof; submitted reconciliation does not sync',async()=>{
+ const f=await fixture(),args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0],op=f.op('finalize_reply',args);
+ const fee=f.options.wallet.completeFeeOptions,prove=f.options.wallet.pxe.proveTxWithPublicValidation;
+ f.options.wallet.completeFeeOptions=async(...values)=>{assert.equal(f.syncCount(),1,'sync before fee');return fee(...values);};
+ f.options.wallet.pxe.proveTxWithPublicValidation=async(...values)=>{assert.equal(f.syncCount(),1,'native anchor before proof');return prove(...values);};
+ assert.equal((await f.port.finalize_reply(...args,op)).status,'succeeded');assert.equal(f.syncCount(),1);
+ await (await f.create()).finalize_reply(...args,op);assert.equal(f.syncCount(),1);assert.deepEqual(f.counts(),{proofs:1,sends:1});
+});
+test('failed native sync prevents fee preparation, proof and send without exposing private error',async()=>{
+ const f=await fixture();f.set('syncFailed',true);const args=[f.id,0,120n,H(88),H(89),Array(32).fill(H(0)),1,0,0];
+ await assert.rejects(f.port.finalize_reply(...args,f.op('finalize_reply',args)),/operation unresolved/);
+ assert.deepEqual(f.counts(),{proofs:0,sends:0});assert.equal(f.feeCounts().feeQuotes,0);assert.equal(f.syncCount(),1);assert(!JSON.stringify(f.journal()).includes('private sync details'));
+});
+test('successive new operator actions each refresh their native anchor',async()=>{
+ const f=await fixture();await f.port.reserve(f.id,0,400n,f.op('reserve',[f.id,0,400n]));
+ await f.port.finish(f.id,f.op('finish',[f.id]));assert.equal(f.syncCount(),2);assert.deepEqual(f.counts(),{proofs:2,sends:2});
 });

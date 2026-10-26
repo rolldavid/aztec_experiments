@@ -288,6 +288,9 @@ export function createPrivateBokEscrowFactory(sdk) {
     // Use the SDK's node-advertised transaction ceiling, not estimation limits.
     // The operator must afford the full commitment before doing private work;
     // actual kernel output is validated with fee enforcement before the proof.
+    // Direct PXE proving bypasses EmbeddedWallet.sendTx, which normally owns sync.
+    phase='sync';
+    await measureBokStage('escrow.sync',()=>wallet.pxe.sync());
     phase='fee';
     const [fee,balance]=await Promise.all([
      wallet.completeFeeOptions({from:op,feePayer:payload.feePayer}),sdk.getFeeJuiceBalance(op,node),
