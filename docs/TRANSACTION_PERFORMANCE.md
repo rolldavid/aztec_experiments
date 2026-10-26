@@ -50,6 +50,24 @@ The worker reserves the opening operation before starting these reads, avoids wa
 
 The actual worker build passed. The affected integration suite passed601 checks, and the final focused opening file passed18 tests including the child VM lifecycle cases. Independent review approved the runtime and tests. These checks establish overlap and failure/authority behavior, not elapsed-time savings. Browser control still reports disabled; no new2-second or50% acceptance measurement is claimed.
 
+## Actual af0 measurements after browser restoration — 26 October 2026
+
+Browser access resumed after the owner restarted the desktop application. No permission setting was changed. One retained IAB tab and the disposable Sepolia test wallet were used.
+
+| Flow | Click to useful completion | Observed detail |
+|---|---:|---|
+| Warm funded account opening |3.264900s|205ms automatic signature; session429ms, native sync1.254s, account status1.278s. Page was already warm; not cold or immediate opening. |
+| ETH-to-Bok,1USDC |38.281095s|One successful Ethereum payment, actual Aztec inclusion block5611, refreshed usable balance2USDC. Proof6.520s; native inclusion4.014s. Previous f16 run46.175s; not50% acceptance. |
+| Bio,34ASCII characters |25.481420s|Sufficient private credit; preparation2.237s, proof4.975s, submit425ms, actual Aztec inclusion17.716s. Editor closed at inclusion; public profile subsequently displayed exact text and confirmed state. Slow observation retained. |
+
+Raw evidence: `opening-af0-warm.json`, `bok-topup-af0.json`, `bio-af0-run1.json` in the transaction-latency evidence directory. The first opening recorder missed the icon-prefixed wallet label; that observer failure supplies no timing result. The bio observer deadline expired while the real transaction remained pending; observation continued without resubmission and captured completion. Neither observer deadline controlled application progress.
+
+## Joint account and funding read waves
+
+Opening now uses the existing joint Board/FPC native discovery wave immediately, while public fee metadata loads concurrently. It removes the separate Board-only preliminary discovery and reads actual deposit IDs and fee balance once. Empty accounts also read the fee contract; only an actual insufficient-credit result with native empty collateral and no pending exit becomes normal setup readiness. Other errors still reject.
+
+Bok funding overlaps fixed-block L1 portal getters with the existing L2 canonical check, final gas-price reads with funding-scope verification, and public plugin admission with native credit discovery. A shared admission helper serves all Bok balance callers; no duplicate status implementation or new cache was added. All reads drain before the operation releases. Independent source reviews approved both changes. Live measurements are required before a speedup claim.
+
 ## Remaining qualification work
 
 Use the live coverage table below as the worklist. Each branch needs a recorded baseline and after-run with the same useful endpoint and sufficiently matched action shape, funding state and wallet interaction. Where no qualified baseline exists, record one rather than inventing a percentage. Repeat across inclusion phases and keep failed/slow runs.

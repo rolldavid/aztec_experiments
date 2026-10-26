@@ -1,0 +1,29 @@
+{
+  "changes": [
+    "Overlap L2 canonical portal read with fixed-block L1 metadata",
+    "Overlap final funding scope with gas-price read",
+    "Share plugin admission and overlap it with native credit discovery"
+  ],
+  "review": "pending_feed_release source approved, final shared-helper revision",
+  "focusedChecks": {
+    "passed": 287,
+    "failed": 0,
+    "skipped": 0
+  },
+  "measuredSpeedup": null,
+  "patchSha256": "3d7c8f92ebd9577223920dfa8b021a65d1e8c80280641b62c2c6bff67ba98e66",
+  "openingChange": "Replace preliminary Board-only discovery with existing joint Board/FPC wave and concurrent fee metadata",
+  "openingReview": "pending_reply_ui approved",
+  "integration": {
+    "initialPassed": 393,
+    "initialFailed": 1,
+    "failure": "Session fixture still required old collateralOnly first stage",
+    "affectedRecheckPassed": 2,
+    "affectedRecheckFailed": 0
+  },
+  "build": {
+    "files": 90,
+    "inputs": 107,
+    "sdkRebuild": false
+  }
+}

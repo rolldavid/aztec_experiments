@@ -665,7 +665,8 @@ export async function createStandaloneTopupWallet({sdk,ethers,kind,network,board
    const current=prepared;prepared=null;check(current,'QUOTE_REQUIRED');const {wallet,request}=current;await context({fresh:true});await read(wallet.guard);
    if(current.saved.value?.intent){const prior=await verified(current.saved.value);if(prior.outcome==='success'&&current.saved.value.phase==='deposit')await completedClaim(current.saved.value);}else if(current.priorHash)await archived(current.priorHash);
    let saved=await read(()=>current.store.write(current.saved,current.value));
-   const prepareRequest=async tx=>{await read(wallet.guard);await context({fresh:true});const fees=await read(()=>provider.getFeeData()),price=fees.maxFeePerGas??fees.gasPrice;
+   const prepareRequest=async tx=>{await read(wallet.guard);
+    const [,fees]=await together([()=>context({fresh:true}),()=>read(()=>provider.getFeeData())]),price=fees.maxFeePerGas??fees.gasPrice;
     const gasLimit=tx.gasLimit??(await read(()=>provider.estimateGas(tx)))*2n;
     check(typeof gasLimit==='bigint'&&gasLimit>0n&&typeof price==='bigint'&&price>0n&&(!current.value.fixedGasBudget||gasLimit*price<=BigInt(current.value.gasBudgetWei)),'GAS_CHANGED');
     await read(wallet.guard);return {gasLimit,...(fees.maxFeePerGas!==undefined&&fees.maxFeePerGas!==null?{maxFeePerGas:price,maxPriorityFeePerGas:fees.maxPriorityFeePerGas??0n}:{gasPrice:price})};

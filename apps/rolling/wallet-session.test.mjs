@@ -1669,11 +1669,11 @@ for(const rejectReady of [false,true])test(`opening local store precedes held pr
 for(const changed of [false,true])test('opening status owns public Board sync through the actual session, changed='+changed,async()=>{
  const f=await sessionFixture(),session=await createRollingWalletSession(f.input),entered=Promise.withResolvers(),held=Promise.withResolvers();let warmed=0,discovered=0;
  f.pxe.syncForAccountStatus=async(board,privateFee)=>{assert.equal(f.state.active,true);assert.equal(String(board),f.input.config.board.contractAddress);assert.equal(String(privateFee),f.input.config.privateFee.contractAddress);warmed++;entered.resolve();await held.promise;};
- f.pxe.prepareBoardActionState=async options=>{assert.equal(options.method,'get_deposit_ids');assert.equal(options.collateralOnly,discovered===0?true:undefined);discovered++;};
+ f.pxe.prepareBoardActionState=async options=>{assert.equal(options.method,'get_deposit_ids');assert.equal(options.collateralOnly,undefined);discovered++;};
  const run=session.application.readAccountStatus({opening:true});const result=run.then(value=>({value}),error=>({error}));await entered.promise;
  assert.equal(session.busy,true);assert.equal(discovered,0);if(changed)f.state.wrongPXE=true;held.resolve();const outcome=await result;
  assert.equal(warmed,1);assert.equal(f.state.syncs,0,'opening invokes only the native owned sync capability');
- if(changed){assert.equal(outcome.error.code,'ROLLING_PRIVATE_ROUTE');assert.equal(discovered,0);f.state.wrongPXE=false;}else{assert.equal(outcome.error,undefined);assert(discovered>0);}
+ if(changed){assert.equal(outcome.error.code,'ROLLING_PRIVATE_ROUTE');assert.equal(discovered,0);f.state.wrongPXE=false;}else{assert.equal(outcome.error,undefined);assert.equal(discovered,1);}
  await session.close();
 });
 
@@ -1790,4 +1790,15 @@ for(const failure of ['getNetwork','getTxReceipt','getBlockData'])test('exit fin
 for(const change of ['network','tx','status','reverted','receipt-number','receipt-hash','canonical-hash','canonical-number','context'])test('exit final canonical wave rejects changed '+change,{timeout:3000},async()=>{
  const f=await finalExitWave({}, {change});const work=assert.rejects(f.cap.confirm());
  await f.entered.promise;if(change==='context')f.state.guard=false;assert.equal(f.state.sends,0);f.gate.resolve();await work;assert.equal(f.state.sends,0);
+});
+
+for(const failure of ['none','canonical','portal','both'])test(`Bok portal final read wave drains canonical and L1 metadata: ${failure}`,async()=>{
+ const {input,abi,portal,token,recipient}=topupScopeFixture('bok'),hold=Promise.withResolvers(),entered=Promise.withResolvers(),started=new Set();
+ const canonicalError=Error('canonical read failed'),portalError=Error('portal read failed'),block=input.node.getBlockData,call=input.provider.call;
+ const mark=name=>{started.add(name);if(started.size===2)entered.resolve();};
+ input.node.getBlockData=async tag=>{if(typeof tag==='number'){mark('canonical');if(['canonical','both'].includes(failure))throw canonicalError;await hold.promise;}return block(tag);};
+ input.provider.call=async request=>{if(abi.parseTransaction({data:request.data}).name!=='decimals'){mark('portal');if(['portal','both'].includes(failure))throw portalError;await hold.promise;}return call(request);};
+ let done=false;const pending=verifyRollingTopupScope(input).then(value=>({value}),error=>({error})).finally(()=>done=true);
+ await entered.promise;await new Promise(setImmediate);assert.equal(done,failure==='both');hold.resolve();const result=await pending;
+ if(failure==='none')assert.deepEqual(result.value,{portal,token,recipient});else assert.equal(result.error,['canonical','both'].includes(failure)?canonicalError:portalError);
 });

@@ -1313,3 +1313,18 @@ test('purchase recovery retains final canonical check after fallback journal wri
  await entered.promise;assert.equal(settled,false);assert.equal(reads,2);assert.equal(writes,1);
  fork=true;release.resolve();await rejected;assert.equal(finalForkReads,1);assert.equal(f.state.sends,1);
 });
+
+for(const failure of ['none','scope','fees','owner'])test(`standalone confirm scope and fee wave drains before send: ${failure}`,async()=>{
+ const hold=Promise.withResolvers(),entered=Promise.withResolvers(),started=new Set();
+ let scopes=0,done=false;const mark=name=>{started.add(name);if(started.size===2)entered.resolve();};
+ // The first scope is the unchanged pre-custody boundary; the second belongs
+ // to the journal's prepareRequest immediately before the wallet send.
+ const g=ethTopupFixture();let armed=false;const originalScope=g.options.resolveScope,originalFees=g.options.provider.getFeeData;
+ g.options.resolveScope=async()=>{if(armed&&++scopes===2){mark('scope');if(failure==='scope')throw Error('scope read failed');await hold.promise;}return originalScope();};
+ g.options.provider.getFeeData=async()=>{if(armed){mark('fees');if(failure==='fees')throw Error('fee read failed');await hold.promise;}return originalFees();};
+ const current=await g.open();await current.prepare(g.allocation);armed=true;
+ const pending=current.confirm().then(value=>({value}),error=>({error})).finally(()=>done=true);
+ await entered.promise;await new Promise(setImmediate);assert.equal(done,false);assert.equal(g.state.sends,0);
+ if(failure==='owner')g.state.invalid=true;hold.resolve();const result=await pending;
+ if(failure==='none'){assert(result.value.receipt);assert.equal(g.state.sends,1);}else{assert(result.error);assert.equal(g.state.sends,0);}
+});

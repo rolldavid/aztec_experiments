@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Published and pushed af0aea9c opening quote overlap. Public runtime and worker hash match; no service restarts, contract changes or dependency copies.601 affected checks,18 final opening tests, actual worker build and independent review passed. All services running; temporary transfer and owned draft removed. Browser access still refused after repeated goal turns; no new timing and no2s/50% completion claim.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — Browser restored; real warm opening3.2649s, ETH-to-Bok38.281095s, bio25.48142s retained. Root integrating independently reviewed three funding read overlaps; native receipt wait investigation in parallel. Targets unachieved.
 
 ## Ready internal work
 

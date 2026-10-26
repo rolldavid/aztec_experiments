@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Published and pushed af0aea9c opening quote overlap. Public runtime and worker hash match; no service restarts, contract changes or dependency copies.601 affected checks,18 final opening tests, actual worker build and independent review passed. All services running; temporary transfer and owned draft removed. Browser access still refused after repeated goal turns; no new timing and no2s/50% completion claim.",
+      "checkpoint": "Browser restored; real warm opening3.2649s, ETH-to-Bok38.281095s, bio25.48142s retained. Root integrating independently reviewed three funding read overlaps; native receipt wait investigation in parallel. Targets unachieved.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
@@ -9843,10 +9843,10 @@
   },
   "current_operating_request": {
     "request": "Owner25October: apply all proven posting optimizations across ALL other application transaction flows; new goal at least50% end-to-end reduction for every flow against currentpublished74c baseline. Cover Ethereum/Aztec user and operator paths, preservevalidation and genuine usable completion.",
-    "status": "blocked",
+    "status": "active",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
-    "checkpoint": "Published and pushed af0aea9c opening quote overlap. Public runtime and worker hash match; no service restarts, contract changes or dependency copies.601 affected checks,18 final opening tests, actual worker build and independent review passed. All services running; temporary transfer and owned draft removed. Browser access still refused after repeated goal turns; no new timing and no2s/50% completion claim.",
-    "next_action": "Capture actual normal opening and transaction timings once permitted browser access returns. Do not bypass the reported disabled browser capability or invent latency results; current changes are already live and pushed.",
+    "checkpoint": "Browser restored after owner app restart; one IAB tab in use. Actual af0 warm normal funded sign-in3.2649s includes205ms wallet signature. Actual ETH1USD-to-Bok38.281095s Pay-to-native included usablecredit; balance2USDC, Ethereum status1, Aztec block5611 exactanchor in trace. No50%/2s claim. Parallel source audit now driven by current opening status and funding traces.",
+    "next_action": "Measure current profile/social flows and normal fresh opening; eliminate current measured duplicate discovery/funding reads, peer review, push and publish improvements. Browser blocker resolved.",
     "account_opening_target": {
       "maximum_seconds": 2,
       "start": "Wallet selection click",
@@ -9854,8 +9854,7 @@
       "wallet_approval": "Report total wall time and human wallet approval dwell separately; never hide application work in approval time.",
       "coverage": "Fresh account, returning account, warm page and cold page; report page startup separately and immediate-click results.",
       "requirement": "Remove private engine startup, private synchronization, constructor simulation and private balance discovery from funding quote dependencies. No placeholder payment readiness or costs moved blindly after Pay."
-    },
-    "blocker": "Live browser measurement is required for the2s and50% targets. Browser tool repeatedly returns Local browser use is disabled in Work settings; code and deployment work in this batch is complete. Resume actual timing when permitted browser access is available."
+    }
   },
   "completed_operating_requests": [
     {

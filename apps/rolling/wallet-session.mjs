@@ -669,8 +669,14 @@ export async function verifyRollingTopupScope({sdk,ethers,node,provider,network,
   check(kind==='bok'&&bok);recipient=bok.address.toString();const head=bokHead,number=Number(head?.header?.globalVariables?.blockNumber),hash=head?.blockHash?.toString(),slot=bok.artifact.storageLayout?.portal?.slot;
   check(Number.isSafeInteger(number)&&number>0&&/^0x[0-9a-f]{64}$/.test(hash)&&slot!==undefined);
   const value=await read(()=>node.getPublicStorageAt({hash},bok.address,new sdk.Fr(BigInt(slot))));check(BigInt(value.toString())>0n&&BigInt(value.toString())<1n<<160n);portal='0x'+BigInt(value.toString()).toString(16).padStart(40,'0');
-  const again=await read(()=>node.getBlockData(number));check(again?.blockHash?.toString()===hash&&Number(again?.header?.globalVariables?.blockNumber)===number);
-  const [underlying,escrow,version,chainId,active,inbox,outbox]=await together(['token','escrow','version','chainId','active','inbox','outbox'].map(name=>()=>call(portal,name)));
+  // The captured L2 portal binding and fixed-block L1 getters are independent.
+  // Drain both before accepting either chain's observation; canonical failure
+  // retains its original priority over portal metadata failures.
+  const [,portalValues]=await together([
+   async()=>{const again=await read(()=>node.getBlockData(number));check(again?.blockHash?.toString()===hash&&Number(again?.header?.globalVariables?.blockNumber)===number);},
+   ()=>together(['token','escrow','version','chainId','active','inbox','outbox'].map(name=>()=>call(portal,name))),
+  ]);
+  const [underlying,escrow,version,chainId,active,inbox,outbox]=portalValues;
   token=String(underlying).toLowerCase();check(BigInt(escrow)===BigInt(recipient)&&String(version)===network.version&&String(chainId)===network.chainId&&active===true);
   check(String(inbox).toLowerCase()===addresses.inboxAddress?.toString().toLowerCase()&&String(outbox).toLowerCase()===addresses.outboxAddress?.toString().toLowerCase());
  }

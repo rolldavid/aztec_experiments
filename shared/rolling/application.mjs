@@ -780,14 +780,24 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
     check(enabled===0n||enabled===1n,'ROLLING_INVALID_RESPONSE');await checkBalanceAnchor(anchor);
     return {adapter:field(adapter.toString()),enabled:enabled===1n};
   }
-  async function bokContext(){
-    await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');await guard();
+  async function checkBokPlugin(){
     const plugin=await pluginRecord();
     check(plugin?.enabled===true&&field(plugin.adapter,true)===field(bok.address,true),'ROLLING_BOK_UNAVAILABLE');
-    await guard();bokBindingVerified=true;return bokContract();
+    await guard();bokBindingVerified=true;
+  }
+  async function bokContext(){
+    await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');await guard();
+    await checkBokPlugin();return bokContract();
   }
   async function bokCredit(){
-    const current=await bokContext(),credit=BigInt(await utility(current,'balance_of',[session.owner],deployment.bok.artifact));
+    await ensureBok();check(bok,'ROLLING_BOK_UNAVAILABLE');await guard();const current=await bokContract();
+    // Public plugin admission and native owned-credit discovery are independent.
+    // Drain both, preserving admission error priority before returning any credit.
+    const reads=await Promise.allSettled([
+      ()=>checkBokPlugin(),()=>utility(current,'balance_of',[session.owner],deployment.bok.artifact),
+    ].map(read=>Promise.resolve().then(read)));
+    const failure=reads.find(read=>read.status==='rejected');if(failure)throw failure.reason;
+    const credit=BigInt(reads[1].value);
     check(credit>=0n&&credit<(1n<<128n),'ROLLING_INVALID_RESPONSE');await guard();return credit;
   }
   async function waitingBok(record){
@@ -1054,41 +1064,36 @@ export function createRollingApplication({sdk,deployment,accountSession,privateS
           await localGuard();
           check(getOperationScope()===operation&&session.wallet===context.wallet&&context.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
         };
-        const prepareReadiness=async(collateralOnly=false)=>{
+        const prepareReadiness=async()=>{
           if(operation?.synchronized===true){
-            await measure('account.status.discovery-queued',()=>context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids',...(collateralOnly?{collateralOnly:true}:{})}));
+            await measure('account.status.discovery-queued',()=>context.pxe.prepareBoardActionState({owner:session.owner,board:deployment.board.address,privateFee:deployment.privateFee.address,method:'get_deposit_ids'}));
             await checkContext();check(operation.synchronized===true,'ROLLING_CONTEXT_CHANGED');
           }
         };
-        const readIds=async(collateralOnly=false)=>{
-          await prepareReadiness(collateralOnly);
+        const readIds=async()=>{
+          await prepareReadiness();
           const ids=await measure('account.status.deposit-ids-queued',async()=>utility(await contract(),'get_deposit_ids',[session.owner,0]));check(Array.isArray(ids)&&ids.length===10,'ROLLING_INVALID_RESPONSE');return ids;
         };
-        let openingIds,openingExit;
-        if(opening&&operation?.synchronized===true){
-          openingExit=await pendingExitSummary();await checkContext();
-          if(!openingExit){
-            openingIds=await readIds(true);await checkContext();
-            // Native Board notes, never local custody or an Ethereum nonce,
-            // decide whether collateral is absent. Starter signup buys the same
-            // incoming fee amount regardless of existing private fee credit.
-            if(openingIds.every(id=>BigInt(id)===0n))return {status:'collateral-pending',depositIds:[],pendingWithdrawal:null,postEligibility:'requires-action-simulation'};
-          }
-        }
-        // Ordinary status keeps its existing parallel Board/FPC discovery.
-        // Once opening finds real collateral, enqueue native FPC discovery
-        // alongside public fee metadata. Native same-anchor state reuses Board
-        // discovery; the IDs and the private balance are each read only once.
+        // Discover Board and fee notes together in the existing native queue.
+        // Public fee metadata runs alongside that discovery; neither a local
+        // hint nor a preceding Board-only read decides which work to start.
         const reads=await Promise.allSettled([
-          async()=>{if(!openingIds)return readIds();await prepareReadiness();return openingIds;},
-          ()=>openingExit===undefined?pendingExitSummary():openingExit,()=>payment(),
+          readIds,pendingExitSummary,()=>payment(),
         ].map(read=>Promise.resolve().then(read)));
         // Keep collateral, pending-exit, then fee failure priority after draining.
         for(const result of reads.slice(0,2))if(result.status==='rejected')throw result.reason;
         await localGuard();
         check(getOperationScope()===operation&&session.wallet===context.wallet&&session.wallet.pxe===context.pxe&&session.node===context.node,'ROLLING_CONTEXT_CHANGED');
         const ids=reads[0].value,pendingWithdrawal=reads[1].value;
-        if(reads[2].status==='rejected'){const error=reads[2].reason;if(error.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};throw error;}
+        const emptyOpening=opening&&operation?.synchronized===true&&!pendingWithdrawal&&ids.every(id=>BigInt(id)===0n);
+        if(reads[2].status==='rejected'){
+          const error=reads[2].reason;
+          if(error.code!=='PRIVATE_FEE_BALANCE_INSUFFICIENT')throw error;
+          if(!emptyOpening)return {status:'fee-needed',depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal};
+        }
+        // Only actual zero credit is expected for a new account. Native,
+        // class, network and other fee failures remain failures after draining.
+        if(emptyOpening)return {status:'collateral-pending',depositIds:[],pendingWithdrawal:null,postEligibility:'requires-action-simulation'};
         const fee=reads[2].value;
         return {status:ids.some(id=>BigInt(id)!==0n)?'fee-ready':'collateral-pending',privateFeeCredit:String(fee.availableCredit),
           depositIds:ids.filter(id=>BigInt(id)!==0n),pendingWithdrawal,postEligibility:'requires-action-simulation'};
