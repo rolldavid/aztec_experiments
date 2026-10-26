@@ -25,7 +25,7 @@ Bookmarks and follows moved off-chain in `bbf76d92`; conversation read state is 
 | Automatic moderation |None|Functional evidence only|Inference through included removal and backlog completion remain unmeasured. |
 | Bookmarks, follows and read state |Now off-chain|Bookmark control11.660ms (`8ae95b3d`)|Local interaction only; encrypted replication durability measured separately. Do not compare with retired on-chain transactions. |
 
-These are observed results, not guarantees or matched multi-run distributions. Different network conditions do not erase an observed reduction, but endpoint differences and unmeasured wallet dwell limit what it establishes. Live `e8d4cede` has no new browser timings yet. The all-flow50% target remains open.
+These are observed results, not guarantees or matched multi-run distributions. Different network conditions do not erase an observed reduction, but endpoint differences and unmeasured wallet dwell limit what it establishes. Live `eda83e16` has no new browser timings yet. The all-flow50% target remains open.
 
 [Onboarding measurements](ONBOARDING_MEASUREMENTS.md) retains exact intervals and raw evidence. The latest `d20794f6` opening attempt failed during degraded node/query readiness; it supplies no successful posting or opening result. The preceding `8ae95b3d` delayed-composer post was observed visible at18.177735s. Its and the `fb61925c` post receipts later reported dropped, and the original traces omitted inclusion block/hash. Those observations do not establish durable present inclusion; future evidence must retain the public inclusion anchor. Do not infer a reorg from dropped status alone.
 
@@ -35,7 +35,7 @@ Immediate bio, avatar, name and subboard actions load public fee metadata alongs
 
 Immediate moderation reuses its completed review before proving only for the same encoded action, operation and native anchor. It removes one of three authority/target review passes. The final fresh moderator, policy, target and canonical checks remain before sending. Separate or changed operations use the normal full review.
 
-Independent review approved both patches. The integrated affected suite passed863 checks. No browser measurement or50% claim follows from these checks. Cold SRS work is deferred by owner direction.
+Published `eda83e16`; served worker/SDK hashes verified, with no service restart. Independent review approved both patches. The integrated affected suite passed863 checks. No browser measurement or50% claim follows from these checks. Cold SRS work is deferred by owner direction.
 
 ## Live f16 measurements — 26 October 2026
 

@@ -1,0 +1,25 @@
+{
+  "commit": "eda83e161ba55836aa157227267aec024eb4118b",
+  "files": [
+    {
+      "path": "/wallet/native-worker.js",
+      "sha256": "d260e1cbec30d7729e541ef5dbfc4ebfb13b2f709b8d07f545cc5bf0c5ed565e",
+      "bytes": 430465,
+      "wireBytes": 98433,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/wallet/aztec_bundle.js",
+      "sha256": "75a2003b8f5e2530205be4b49a10044d8f212f421a90db933bb4d0363553b092",
+      "bytes": 8401589,
+      "wireBytes": 1536217,
+      "encoding": "gzip"
+    }
+  ],
+  "stageCommand": "6695cb54-07e3-4a48-8102-e5f2d2e1ef8c",
+  "activationCommand": "25609fd8-ef6c-4468-8e5b-097c2a4e7685",
+  "appRestarted": false,
+  "proxyRestarted": false,
+  "focusedIntegratedChecks": 863,
+  "browserTiming": "unmeasured: browser tool access denied"
+}
