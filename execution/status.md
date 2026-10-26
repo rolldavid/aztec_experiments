@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — 26 October: owner PAUSED performance goal. Cleanup and functional verification found missing native PXE synchronization in Bok direct proof path. Fix be6f9f72 reviewed, 81 checks passed, pushed/published; real pending Bok reply now rendered and unused budget returned. Ordinary post and bookmarks verified. Fresh signup/funding not rerun: owned test wallet has less than required 0.001 Sepolia ETH. Do not resume optimization without owner instruction.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 26 October: performance goal remains paused. Owner funded Sepolia wallet and requested verification of every application flow. Root serializes live browser tests; functional_flow_inventory/withdrawal_plan provide read-only review. Existing collateral exit included, awaiting L1 settlement; FEE top-up in progress. Fixing discovered UI offers for second exit while one refund is pending, and incorrect FEE approval label.
 
 ## Ready internal work
 

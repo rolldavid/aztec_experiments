@@ -680,7 +680,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }}catch(failure){bokAccounting=null;throw failure;}finally{accountingCheck=null;}
  }
  function unfinishedDepositsView() {
-  if (!session.depositRefunds) return;
+  if (!session.depositRefunds || pendingWithdrawal) return;
   const section = el('section',{class:'account-details'},el('h3',{},'Unfinished signup'));
   section.append(paragraph('Return a deposit from a signup you did not finish. You can keep using your current account.'),paragraph('Max cost '+compactAmount(session.postingFeeLimit,18,4,true)+' posting credits. Ethereum gas is paid separately.'));
   const load = async offset => {
@@ -696,6 +696,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if (!refundable.length) section.append(paragraph('No unfinished deposits on this page.'));
    for (const deposit of refundable) {
     section.append(button('Refund '+decimal(deposit.amount,18)+' ETH',()=>void work(async()=>{
+     requireNoPendingWithdrawal();
      const epoch = accountEpoch;
      note('Confirm the refund request in your Ethereum wallet.');
      const receipt = await session.depositRefunds.request(deposit.depositId);
@@ -714,7 +715,9 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   }
   content.append(section);
  }
+ function requireNoPendingWithdrawal(){if(pendingWithdrawal)throw Object.assign(new Error('Pending withdrawal'),{code:'ROLLING_WITHDRAWAL_PENDING'});}
  function withdrawalFailure(failure){
+  if(failure?.code==='ROLLING_WITHDRAWAL_PENDING')return 'Complete your pending Ethereum refund before starting another withdrawal. No new withdrawal was sent.';
   if(failure?.code==='PRIVATE_FEE_BALANCE_INSUFFICIENT')return 'Add posting credit to cover withdrawal fees, then try again.';
   if(failure?.code==='ROLLING_WITHDRAWAL_NO_PROGRESS')return 'Your withdrawal could not continue. No further payment was sent.';
   return 'Your withdrawal could not complete. Any transaction already sent is saved; check its status before trying again.';
@@ -754,6 +757,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
   if(busy||!pendingWithdrawal)return;clearOperationFeedback();view='refund';render();if(typeof session?.withdrawal?.waitUntilReady!=='function')void work(checkRefundReadiness);
  }
  async function withdrawDeposit(deposit){
+  requireNoPendingWithdrawal();
   const epoch=accountEpoch,controller=new AbortController();let stop;
   checkAccount(epoch);withdrawalActive=true;refundQuote=null;note('Preparing your withdrawal…');
   try{
@@ -776,7 +780,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
  }
  function balancesView(){
   content.append(el('h3',{},'Balances and withdrawals'),paragraph('Your deposit is refundable. Your posting balance pays network fees and cannot be withdrawn. Unused Bok credit can be withdrawn separately.'));
-  if(pendingWithdrawal)content.append(button('Pending Ethereum refund',openPendingRefund,true));
+  if(pendingWithdrawal)content.append(paragraph('Complete your pending Ethereum refund before starting another withdrawal.'),button('Pending Ethereum refund',openPendingRefund,true));
   unfinishedDepositsView();
   if(!balances){content.append(button('Check private balances',()=>void work(async()=>{const epoch=accountEpoch;const value=await session.application.readBalances({cursor:0});checkAccount(epoch);rememberBalances(value);}),true));return;}
   content.append(paragraph('Posting balance: '+decimal(balances.fee.available,18)+' credits (FEE).'));
@@ -797,21 +801,24 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
     if(bokAccounting&&!bokAccounting.complete)content.append(paragraph('Checking '+(bokAccounting.phase==='owned-requests'?'private ownership pages':'uniform public accounting pages')+'. No partial total is presented.'));
     if(accountingCheck){const stop=button('Stop checking requests',()=>{accountingCheck.stopped=true;bokAccounting=null;note('Accounting stop requested. Waiting for the current private operation to settle.');});stop.dataset.accountingStop='true';content.append(stop);}
    }
+   if(!pendingWithdrawal){
    fundingWalletView();const recipient=runtime.fundingWalletStatus?.()?.address?.toLowerCase();
    const amount=el('input',{type:'text',inputmode:'decimal','aria-label':'Bok credit to withdraw in USDC',value:bokExitAmount});amount.addEventListener('input',()=>bokExitAmount=amount.value);
    content.append(label('Bok credit to withdraw (USDC)',amount));
    if(recipient)content.append(paragraph('Receive at '+recipient));
    content.append(paragraph('Max cost '+compactAmount(session.postingFeeLimit,18,4,true)+' posting credits. Ethereum gas is paid separately.'),button('Withdraw Bok credit',()=>{
     const amount=bokExitAmount;
-    void work(async()=>{const action={type:'withdraw-bok',amount:units(amount,6),recipient};const selected=runtime.fundingWalletStatus?.();if(!selected?.connected||!recipient||selected.address?.toLowerCase()!==recipient)throw connectionFailure;
+    void work(async()=>{requireNoPendingWithdrawal();const action={type:'withdraw-bok',amount:units(amount,6),recipient};const selected=runtime.fundingWalletStatus?.();if(!selected?.connected||!recipient||selected.address?.toLowerCase()!==recipient)throw connectionFailure;
      refundQuote=null;await executeAction(action,{immediate:true});
     },withdrawalFailure,{action:true});
    },true));
+   }
   }
   for(const d of balances.collateral.deposits){
    const area=el('section',{'aria-label':'Posting collateral'});
    if(d.reason==='time-locked')area.append(paragraph('Available to withdraw after '+new Date(Number(d.nextAllowedTime)*1000).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'})+'.'));
-   area.append(paragraph(decimal(d.amount,18)+' ETH'),button('Withdraw deposit',()=>void work(()=>withdrawDeposit(d.id),withdrawalFailure,{action:true}),true));
+   area.append(paragraph(decimal(d.amount,18)+' ETH'));
+   if(!pendingWithdrawal)area.append(button('Withdraw deposit',()=>void work(()=>withdrawDeposit(d.id),withdrawalFailure,{action:true}),true));
    content.append(area);
   }
   if(!balances.collateral.deposits.length)content.append(paragraph('No refundable deposits on this page.'));
@@ -1441,7 +1448,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
    if(!q||selected?.key!==topupQuoteKey)throw topupFailure(Error('Price changed'),'quote');
    topupQuote=null;
    try{
-    await runTopupPayment(cap,selected.input,q,phase=>{checkAccount(epoch);note(phase==='confirmation'?'Waiting for Ethereum confirmation…':phase==='approval'?'Approve USDC spending in your wallet…':'Confirm your payment in your wallet…');});
+    await runTopupPayment(cap,selected.input,q,phase=>{checkAccount(epoch);note(phase==='confirmation'?'Waiting for Ethereum confirmation…':phase==='approval'?(isBok?'Approve USDC spending in your wallet…':'Approve FEE spending in your wallet…'):'Confirm your payment in your wallet…');});
     checkAccount(epoch);topupSaved={paymentSaved:true,phase:'deposit',...selected.input};fundingAutomatic=true;try{await advanceFunding();}catch(error){stopFunding();throw topupFailure(error,'claim');}
    }catch(failure){topupQuoteError=aggregateFundingFailure(failure)??'The payment could not complete. Refresh the price and try again.';try{topupSaved=await cap.inspect();}catch{}throw failure;}
   },aggregateFundingFailure),true);
@@ -1597,7 +1604,7 @@ export function mountRollingWalletPanel({loadRuntime,onPublicEffect=()=>{},onPri
       content.append(settings);
      }else{
       if(!viewReady())content.append(button(view==='names'?'Load your names':'Load publishing options',()=>void work(loadView),true));
-      else if(view==='refund')refundView();else if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else{if(status?.status==='fee-needed'||status?.status==='collateral-pending')content.append(paragraph('Add a posting balance before publishing.'),button(status?.depositIds?.length?'Add posting credit':'Set up posting',()=>{topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;selectView(status?.depositIds?.length?'topup':'funding');},true));form();}
+      else if(view==='refund')refundView();else if(view==='balances')balancesView();else if(view==='names')namesView();else if(view==='preferences')preferencesView();else{if(status?.status==='fee-needed'||(status?.status==='collateral-pending'&&postingTypes.has(draft.type)))content.append(paragraph('Add a posting balance before publishing.'),button(status?.depositIds?.length?'Add posting credit':'Set up posting',()=>{topupKind='private-fee';topupInputs={amount:''};resetTopupQuote();topupSaved=null;selectView(status?.depositIds?.length?'topup':'funding');},true));form();}
       if(!inlineCreation)content.append(button('Back to account',()=>selectView('overview')));
      }
     }

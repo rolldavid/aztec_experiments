@@ -1287,3 +1287,19 @@ for(const [type,values] of [
  feeHeld.resolve();await f.document.until(()=>f.document.querySelector('.composer-cost')?.textContent.includes('Balance 0.7'));
  assert.equal(feeReads,1);assert.equal(f.core().status,1);
 });
+
+test('pending Ethereum refund keeps balances usable without offering another withdrawal',{timeout:3000},async t=>{
+ const f=await exitFixture(t,'withdraw-bok');
+ const amount=f.document.querySelector('input[aria-label="Bok credit to withdraw in USDC"]');amount.value='1.5';amount.fire('input');
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Withdraw Bok credit').fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('refund remains saved')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ f.session.depositRefunds={list:async()=>{throw Error('Unfinished refund must not be offered');},request:async()=>{throw Error('No second Ethereum request');}};
+ f.session.application.readBalances=async()=>({fee:{available:'1000000000000000000'},bok:{available:'8500000'},collateral:{deposits:[{id:'9',amount:'1000000000000000'}],nextCursor:null}});
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Back to account').fire('click');
+ f.document.querySelectorAll('button').find(b=>b.textContent==='Balance and withdrawals').fire('click');
+ await f.document.until(()=>f.document.body.textContent.includes('Complete your pending Ethereum refund')&&f.document.querySelector('dialog').getAttribute('aria-busy')==='false');
+ const labels=f.document.querySelectorAll('button').map(b=>b.textContent);
+ for(const unavailable of ['Withdraw Bok credit','Withdraw deposit','Find refundable deposits'])assert(!labels.includes(unavailable));
+ assert(labels.includes('Pending Ethereum refund'));assert(labels.includes('Refresh balances'));assert.deepEqual(f.submissions,['post-1']);
+ await new Promise(resolve=>setImmediate(resolve));
+});
