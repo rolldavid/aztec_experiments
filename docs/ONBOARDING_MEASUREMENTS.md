@@ -184,3 +184,8 @@ Funded wallet selection to enabled Write a post: first changed-SDK visit **8.560
 Exact public Board Brotli transfer2,926,245bytes decodes to5,570,115bytes with unchangedSHA; private fee323,315→608,001bytes. Gzip and identity variants also match. CloudFront previously stripped Brotli from `/wallet/*`; reviewed policy correction preserves all routing/security/TTL settings.
 
 Observed wallet-selection→enabled Write a post:3.071610s after four service-worker entries were removed but HTTP cache remained;2.462485s subsequent cached run (endpoint only, profile collector absent);27.419855s after HTTP cache-clear attempt, with actual network-miss trace and8MB Grumpkin CRS taking13.628s. The cache-clear tool timed out, but actual trace identifies network misses. Do not label the3.071610s result a fully cold run. Owner now explicitly prioritizes warm startup and excludes cold8MB SRS work. Warm trace exposes funded account waiting for irrelevant signup quote until6.027s page time although account status was ready4.860s. Removing this dependency is the next fix.
+
+
+### fdf6395a warm-start source published
+
+Funded native status now returns without any signup payment allocation/rate/wallet/nonce/quote reads. Fresh accounts still obtain complete pricing before Pay. Independent review and20 focused VM-boundary checks passed. Exact served worker SHA `ff159df6a2aef84bc1a50bbce845a5ee6ba2ad8907c9f1ea720a488bd5130501`; no service restart. Browser control began returning access denied after restart, so no post-change timing or two-second acceptance is claimed.

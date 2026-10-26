@@ -9402,7 +9402,7 @@
       "evidence": "evidence/G21.json",
       "evidence_mode": "historical",
       "blocker": null,
-      "checkpoint": "Warm-start batch independently reviewed and integrated: funded accounts skip unused signup pricing, Bok native owner discovery overlaps existing immutable reads, native message-nullifier lookup prefetched at exact anchor. Root20 opening+48 receipt/native+34 discovery+6 application checks passed; actual SDK/wallet build. Publishing next; new browser timing unavailable because CUA denies access after restart. Cold SRS unchanged per owner.",
+      "checkpoint": "fdf6395a published and pushed. Exact public worker SHA ff159df6a2aef84bc1a50bbce845a5ee6ba2ad8907c9f1ea720a488bd5130501 verified; no service restart. Root20 opening+48 receipt/native+34 discovery+6 application checks and actual build passed. Browser access denied after restart, no new timing claim. Owner prioritizes warm startup; cold SRS unchanged. Next direct fresh quote simplification being drafted; unchanged owner-fact write elimination reviewed separately.",
       "execution_lane": "application performance",
       "owner": "root",
       "branch": "codex/rolling-chat-draft3",
@@ -9845,7 +9845,7 @@
     "request": "Owner25October: apply all proven posting optimizations across ALL other application transaction flows; new goal at least50% end-to-end reduction for every flow against currentpublished74c baseline. Cover Ethereum/Aztec user and operator paths, preservevalidation and genuine usable completion.",
     "status": "active",
     "execution_lane": "Parallel everyday social/profile/preferences/moderation UI; funding/bridges/refunds; hosted Bok/moderator/native paths. Root owns complete inventory, shared orchestration, baselines, integration, publication and cleanup.",
-    "checkpoint": "Warm-start batch independently reviewed and integrated: funded accounts skip unused signup pricing, Bok native owner discovery overlaps existing immutable reads, native message-nullifier lookup prefetched at exact anchor. Root20 opening+48 receipt/native+34 discovery+6 application checks passed; actual SDK/wallet build. Publishing next; new browser timing unavailable because CUA denies access after restart. Cold SRS unchanged per owner.",
+    "checkpoint": "fdf6395a published and pushed. Exact public worker SHA ff159df6a2aef84bc1a50bbce845a5ee6ba2ad8907c9f1ea720a488bd5130501 verified; no service restart. Root20 opening+48 receipt/native+34 discovery+6 application checks and actual build passed. Browser access denied after restart, no new timing claim. Owner prioritizes warm startup; cold SRS unchanged. Next direct fresh quote simplification being drafted; unchanged owner-fact write elimination reviewed separately.",
     "next_action": "Publish reviewed warm-start/claim batch, verify installed assets; measure actual warm opening when existing browser access works. Continue warm-state audit.",
     "account_opening_target": {
       "maximum_seconds": 2,

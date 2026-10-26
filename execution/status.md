@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — Warm-start batch independently reviewed and integrated: funded accounts skip unused signup pricing, Bok native owner discovery overlaps existing immutable reads, native message-nullifier lookup prefetched at exact anchor. Root20 opening+48 receipt/native+34 discovery+6 application checks passed; actual SDK/wallet build. Publishing next; new browser timing unavailable because CUA denies access after restart. Cold SRS unchanged per owner.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — fdf6395a published and pushed. Exact public worker SHA ff159df6a2aef84bc1a50bbce845a5ee6ba2ad8907c9f1ea720a488bd5130501 verified; no service restart. Root20 opening+48 receipt/native+34 discovery+6 application checks and actual build passed. Browser access denied after restart, no new timing claim. Owner prioritizes warm startup; cold SRS unchanged. Next direct fresh quote simplification being drafted; unchanged owner-fact write elimination reviewed separately.
 
 ## Ready internal work
 
