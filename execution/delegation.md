@@ -290,3 +290,8 @@ All three interrupted agents resumed. Owner excludes cold8MB SRS optimization an
 Funded signup-quote removal independently approved and integrated;20 actual VM-boundary checks passed. Native message-nullifier prefetch passed48 integrated compiled/receipt checks. Bok discovery overlap candidate review pending. Existing CUA browser began denying access after restart despite earlier successful measurements; no settings instructions or alternate automation bypass. Root continues source/build/publication and will not claim new browser timings without observation.
 
 Bok discovery independently approved, integrated,34 native and6 application checks passed. Both source-only Bok drafts cleaned (1.36MB); no dependency copies. Warm batch includes funded quote removal and exact native message-nullifier prefetch. Actual SDK and wallet build completed; publication next.
+
+
+## 26 October — lean warm opening
+
+Root integrated pending_reply_ui's single-lease fresh quote and inclusion_timing's browser-only unchanged-fact write elimination. pending_feed_release independently approved both; installed dependencies and server behavior remain unchanged. Root20 explicit VM opening checks,28 selected actual SDK/custody checks and22 native fact checks passed. Initial full VM run exposed an obsolete fixture expectation that quote starts before held fiat resolves; corrected test now asserts the intended ordering, with no runtime change. SDK/wallet build passed. No new timing claim while browser tool denies access.

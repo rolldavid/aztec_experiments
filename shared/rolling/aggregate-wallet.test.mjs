@@ -1423,3 +1423,33 @@ for(const failure of ['cursor','owner','failed-payment','throw'])test('owned Bok
  invalid=false;assert.equal(await current.readClaimCustody(receipt),null);
  if(leaked)await assert.rejects(leaked.checkCurrent());assert.equal(f.state.sends,1);
 });
+
+for(const changedWallet of [false,true])test('direct opening quote cannot replace hidden Ethereum intent, changedWallet='+changedWallet,async()=>{
+ const f=fixture(),app=await f.open(),allocation=openingAllocation(f);await app.prepare(allocation);const unsigned=[...f.records];
+ f.state.unknown=true;await assert.rejects(app.confirm());assert.equal(f.state.sends,1);
+ // Model an aggregate draft restored beside its still-authenticated unknown ETH
+ // journal. The final native journal inspection must veto custody replacement.
+ for(const [key,value]of unsigned)f.records.set(key,value);
+ if(changedWallet)f.wallet.address=new ethers.Wallet(h(98)).address.toLowerCase();
+ const before=[...f.records],reopened=await f.open();
+ await assert.rejects(reopened.prepare(allocation),{code:'ROLLING_FUNDING_RECOVERY_REQUIRED'});assert.deepEqual([...f.records],before);assert.equal(f.state.sends,1);
+});
+
+test('direct fresh quote uses one nonce read and one final canonical quote fence before custody save',async()=>{
+ const f=fixture(),counts={nonce:0,numbered:0},read=f.options.provider.send,nonce=f.options.provider.getTransactionCount;
+ f.options.provider.getTransactionCount=async(...args)=>{counts.nonce++;return nonce(...args);};
+ f.options.provider.send=async(method,params)=>{if(method==='eth_getBlockByNumber'&&params[0]==='0x10')counts.numbered++;return read(method,params);};
+ f.options.sdk.validateAggregateFundingQuote=()=>assert.fail('direct preparation must not repeat the SDK final validity fence');
+ const app=await f.open();await app.prepare(openingAllocation(f));assert.deepEqual(counts,{nonce:1,numbered:1});assert.equal(f.records.size,1);assert.equal(f.state.sends,0);assert.equal(f.state.signatures,0);
+});
+for(const changed of ['fork','chain','expiry'])test('direct fresh quote retains final '+changed+' rejection before custody',async()=>{
+ const f=fixture(),read=f.options.provider.send;let pending=0,chains=0;
+ f.options.provider.send=async(method,params)=>{
+  const value=await read(method,params);
+  if(method==='eth_getBlockByNumber'&&params[0]==='0x10'&&changed==='fork')return {...value,hash:h(90)};
+  if(method==='eth_chainId'&&++chains===2&&changed==='chain')return '0x2';
+  if(method==='eth_getBlockByNumber'&&params[0]==='pending'&&++pending===2&&changed==='expiry')return {...value,timestamp:'0x10000'};
+  return value;
+ };
+ const app=await f.open();await assert.rejects(app.prepare(openingAllocation(f)));assert.equal(f.records.size,0);assert.equal(f.state.sends,0);assert.equal(f.state.signatures,0);
+});

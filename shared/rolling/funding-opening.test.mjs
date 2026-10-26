@@ -5,7 +5,7 @@ const tick=()=>new Promise(setImmediate),defer=()=>Promise.withResolvers();
 const empty={status:'fee-needed',depositIds:[]};
 function fixture(){
  const seen=[],native=defer(),allocation=defer(),rate=defer(),construction=defer(),token={};let valid=true;
- const options={asset:'ETH',guard:async()=>assert(valid,'owner changed'),readStatus:async()=>{seen.push('status');return native.promise;},readAllocation:async()=>{seen.push('allocation');return allocation.promise;},readRate:async()=>{seen.push('rate');return rate.promise;},constructQuote:async value=>{seen.push('construct');assert.deepEqual(value,{amount:'200'});return construction.promise;},installQuote:async value=>{assert.equal(value,token);seen.push('install');return {breakdown:{maximumTotalWei:'1000000000000000000'}};},prepareQuote:async()=>{seen.push('quote');return {breakdown:{maximumTotalWei:'1000000000000000000'}};}};
+ const options={asset:'ETH',guard:async()=>assert(valid,'owner changed'),readStatus:async()=>{seen.push('status');return native.promise;},readAllocation:async()=>{seen.push('allocation');return allocation.promise;},readRate:async()=>{seen.push('rate');return rate.promise;},prepareQuote:async value=>{seen.push('quote');assert.deepEqual(value,{amount:'200'});await construction.promise;return {breakdown:{maximumTotalWei:'1000000000000000000'}};}};
  return {options,seen,native,allocation,rate,construction,token,invalidate:()=>valid=false};
 }
 for(const status of [{status:'fee-ready',depositIds:['1']},{status:'fee-needed',depositIds:['1']},{status:'recovering',intent:{intentId:'saved'}},{status:'locked'}])test('native '+status.status+' returns without any signup payment reads',async()=>{
@@ -15,29 +15,33 @@ for(const status of [{status:'fee-ready',depositIds:['1']},{status:'fee-needed',
 for(const asset of ['ETH','USDC'])test('fresh '+asset+' keeps full pricing before readiness, with independent fiat read',async()=>{
  const f=fixture();f.options.asset=asset;const pending=prepareRollingFundingOpening(f.options);await tick();assert.deepEqual(f.seen,['status']);
  f.native.resolve(empty);await tick();assert.deepEqual(f.seen,['status','allocation','rate']);
- f.allocation.resolve({amount:'200'});await tick();assert(!f.seen.includes('install'));if(asset==='ETH')assert(f.seen.includes('construct'));
- f.construction.resolve(f.token);await tick();assert(!f.seen.includes('install'));f.rate.resolve({price:2000n,decimals:0});
+ f.allocation.resolve({amount:'200'});await tick();assert(!f.seen.includes('quote'),'no quote freshness fence while rate is still held');
+ f.rate.resolve({price:2000n,decimals:0});await tick();assert.equal(f.seen.filter(x=>x==='quote').length,1);f.construction.resolve(f.token);
  const result=await pending;assert.equal(result.status,empty);assert(result.quote);
- assert.equal(f.seen.filter(x=>x===(asset==='ETH'?'install':'quote')).length,1);
+ assert.equal(f.seen.filter(x=>x==='quote').length,1);
  if(asset==='ETH')assert.equal(result.quote.usdEstimate,'2000.00');
 });
 test('failed native state starts no payment work',async()=>{
  const f=fixture(),error=Error('native'),pending=prepareRollingFundingOpening(f.options);f.native.reject(error);await assert.rejects(pending,e=>e===error);assert.deepEqual(f.seen,['status']);
 });
-for(const failed of ['allocation','construction','rate'])test('fresh '+failed+' failure drains active siblings and never installs',async()=>{
+for(const failed of ['allocation','rate'])test('fresh '+failed+' failure drains active sibling before returning a quote error',async()=>{
  const f=fixture(),error=Error(failed);let done=false;const pending=prepareRollingFundingOpening(f.options).finally(()=>done=true);f.native.resolve(empty);await tick();
- if(failed!=='allocation')f.allocation.resolve({amount:'200'});await tick();f[failed].reject(error);await tick();assert.equal(done,false);
- if(failed==='rate')f.construction.resolve(f.token);else f.rate.resolve(null);
- const result=await pending;assert.equal(result.quoteError,error);assert(!f.seen.includes('install'));
+ f[failed].reject(error);await tick();assert.equal(done,false);assert(!f.seen.includes('quote'));
+ if(failed==='rate')f.allocation.resolve({amount:'200'});else f.rate.resolve(null);
+ const result=await pending;assert.equal(result.quoteError,error);assert(!f.seen.includes('quote'));
+});
+test('fresh direct preparation failure is returned without another quote or payment',async()=>{
+ const f=fixture(),error=Error('quote'),pending=prepareRollingFundingOpening(f.options);f.native.resolve(empty);f.allocation.resolve({amount:'200'});f.rate.resolve(null);await tick();f.construction.reject(error);
+ const result=await pending;assert.equal(result.quoteError,error);assert.equal(f.seen.filter(x=>x==='quote').length,1);
 });
 test('owner replacement after native status starts no payment work',async()=>{
  const f=fixture(),pending=prepareRollingFundingOpening(f.options);await tick();f.invalidate();f.native.resolve(empty);await assert.rejects(pending,/owner changed/);assert.deepEqual(f.seen,['status']);
 });
-test('owner replacement after quote construction prevents installation',async()=>{
- const f=fixture(),pending=prepareRollingFundingOpening(f.options);f.native.resolve(empty);f.allocation.resolve({amount:'200'});f.construction.resolve(f.token);await tick();f.invalidate();f.rate.resolve(null);await assert.rejects(pending,/owner changed/);assert(!f.seen.includes('install'));
+test('owner replacement after quote preparation prevents publishing readiness',async()=>{
+ const f=fixture(),pending=prepareRollingFundingOpening(f.options);f.native.resolve(empty);f.allocation.resolve({amount:'200'});f.rate.resolve(null);await tick();f.invalidate();f.construction.resolve(f.token);await assert.rejects(pending,/owner changed/);
 });
-test('saved custody uses ordinary preparation only after native signup eligibility',async()=>{
- const f=fixture(),pending=prepareRollingFundingOpening(f.options);f.native.resolve(empty);f.allocation.resolve({amount:'200'});f.rate.resolve(null);f.construction.resolve(null);assert((await pending).quote);assert(f.seen.includes('quote'));assert(!f.seen.includes('install'));
+test('fresh signup uses one ordinary preparation after native eligibility',async()=>{
+ const f=fixture(),pending=prepareRollingFundingOpening(f.options);f.native.resolve(empty);f.allocation.resolve({amount:'200'});f.rate.resolve(null);f.construction.resolve(null);assert((await pending).quote);assert(f.seen.includes('quote'));
 });
 
 // Actual context and worker modules, with labelled native/session/provider gates.
@@ -65,7 +69,7 @@ async function openingContextFixture(){
  const module=new vm.SourceTextModule(await sourceFile('shared/rolling/funding-session.mjs'),{context});
  await module.link(async name=>{
   const exports=name==='./deployment.mjs'?{assertRollingDeploymentPreparation(){},prepareRollingDeployment:async()=>({deployment}),readRollingDeploymentRegistration:async()=>({deployment})}:{
-   createAggregateWallet:async()=>({async prepareReadOnly(){events.push('quote-start');await quote.promise;events.push('quote-end');return quoteToken;},async installPreparedQuote(token){assert.equal(token,quoteToken);events.push('install');installed++;return {breakdown:{maximumTotalWei:'1'}};},async prepare(){throw Error('Unexpected custody preparation');}}),
+   createAggregateWallet:async()=>({async prepareReadOnly(){throw Error('No split quote');},async installPreparedQuote(){throw Error('No split install');},async prepare(){events.push('quote-start');await quote.promise;events.push('quote-end');events.push('install');installed++;return {breakdown:{maximumTotalWei:'1'}};}}),
    starterFundingAllocation:async()=>({asset:'ETH',feeAmount:'200'}),timeFundingPreparation:(_observer,_step,read)=>read(),
   };
   return new vm.SyntheticModule(Object.keys(exports),function(){for(const [key,value]of Object.entries(exports))this.setExport(key,value);},{context});
@@ -78,7 +82,7 @@ test('early opening context binds the token to its issuing context and asset and
  await assert.rejects(other.funding.prepareOpening(async()=>empty,{asset:'ETH'},token),e=>e.code==='ROLLING_CONTEXT_CHANGED');
  await assert.rejects(f.funding.prepareOpening(async()=>empty,{asset:'USDC'},token),e=>e.code==='ROLLING_CONTEXT_CHANGED');
  await assert.rejects(f.funding.prepareOpening(async()=>empty,{asset:'ETH'},structuredClone(token)),e=>e.code==='ROLLING_CONTEXT_CHANGED');
- f.finish();const result=await f.funding.prepareOpening(async()=>empty,{asset:'ETH'},token);assert(result.quote);assert.equal(f.installed(),1);
+ f.finish();const result=await f.funding.prepareOpening(async()=>empty,{asset:'ETH'},token);assert(result.quote);assert.equal(f.installed(),1);assert.equal(f.events.filter(e=>e==='lease-enter').length,1);assert.equal(f.events.filter(e=>e==='lease-exit').length,1);
  await assert.rejects(f.funding.prepareOpening(async()=>empty,{asset:'ETH'},token),e=>e.code==='ROLLING_CONTEXT_CHANGED');
 });
 for(const mode of ['discard','status','owner','funded'])test('early opening context completes '+mode+' without starting payment work',async()=>{
@@ -111,7 +115,7 @@ async function workerOpeningFixture({nativeFailure=false}={}){
  for(const id of [2,3,4])assert.equal(result(id)?.error?.code,'ROLLING_BUSY');assert.equal(f.events.filter(x=>x==='quote-start').length,0);
  if(nativeFailure)native.reject(Error('Native failed'));else native.resolve(active);
  await tick();if(!nativeFailure)assert.equal(result(1),undefined);if(!nativeFailure){assert.equal(statusCalls,1);assert.equal(busy,true);status.resolve(empty);}
- await tick();if(nativeFailure){assert(result(1)?.error);assert(!f.events.includes('quote-start'));}else{assert(f.events.includes('quote-start'));f.quote.resolve();await tick();assert.equal(result(1),undefined);f.rate.resolve();await tick();await tick();}
+ await tick();if(nativeFailure){assert(result(1)?.error);assert(!f.events.includes('quote-start'));}else{assert(!f.events.includes('quote-start'),'fiat read must drain before quote freshness begins');assert.equal(busy,true);f.rate.resolve();await tick();assert(f.events.includes('quote-start'));assert.equal(result(1),undefined);f.quote.resolve();await tick();await tick();}
  assert(result(1));if(nativeFailure){assert(result(1).error);assert.equal(f.installed(),0);}else{assert(result(1).value.quote);assert.equal(f.installed(),1);assert.equal(busy,false);}
  send(5,'close');await tick();await tick();assert.equal(result(5)?.value,true);
 }

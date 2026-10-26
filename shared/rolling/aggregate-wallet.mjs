@@ -269,6 +269,10 @@ export async function createAggregateWallet({sdk,ethers,scope,network,board,bok,
    const depositor=wallet.address;
    const existing=readOnly?null:await read(async()=> (await journal(depositor)).inspectSummary());
    check(existing===null||priorPayment&&existing.txHash===priorPayment.txHash&&existing.outcome===priorPayment.outcome,'RECOVERY_REQUIRED');
+   // Unsigned custody may belong to an earlier selected Ethereum wallet. Do
+   // not hide its outstanding journal when preparing a replacement directly.
+   if(!readOnly&&unsignedQuote(previous.value)&&previous.value?.depositor&&previous.value.depositor!==depositor)
+    check(await read(async()=> (await journal(previous.value.depositor)).inspectSummary())===null,'RECOVERY_REQUIRED');
    let nonce=await timeFundingPreparation(onProgress,'nonce',()=>read(()=>provider.getTransactionCount(depositor,'pending')));if(priorPayment?.request.from===depositor)nonce=Math.max(nonce,priorPayment.request.nonce+1);check(Number.isSafeInteger(nonce)&&nonce>=0);
    const {collateral,fee,recipientSalt,bridgeSecret,bokScope,bokSecretHash,bokCommitment}=await timeFundingPreparation(onProgress,'secrets',async()=>{
    const collateral=await read(()=>sdk.deriveBoardDepositSecret({walletSecret,walletSalt,owner,

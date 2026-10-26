@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — fdf6395a published and pushed. Exact public worker SHA ff159df6a2aef84bc1a50bbce845a5ee6ba2ad8907c9f1ea720a488bd5130501 verified; no service restart. Root20 opening+48 receipt/native+34 discovery+6 application checks and actual build passed. Browser access denied after restart, no new timing claim. Owner prioritizes warm startup; cold SRS unchanged. Next direct fresh quote simplification being drafted; unchanged owner-fact write elimination reviewed separately.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — fdf6395a live; second reviewed warm batch integrated and built: direct single-lease fresh quote eliminates split prepare/install checks; browser native discovery skips exact unchanged staged fact writes. Root20 VM+28 custody+22 native checks passed; dependencies/SRS/server unchanged. Publishing second batch next. Browser access denied; no new timing acceptance.
 
 ## Ready internal work
 

@@ -5,6 +5,7 @@ import {prepareNativeWasmAssets,relocateNativeWasm,verifyNativeWasmCopy} from '.
 import {BB_WORKER_TIMING_PINS,instrumentBrowserWorker} from './bb-worker-timings.mjs';
 import {selectedNoteWitnesses,SELECTED_NOTE_PINS} from './selected-note-witnesses.mjs';
 import {efficientKernelWitnessWork,KERNEL_WORK_PINS} from './kernel-witness-work.mjs';
+import {skipUnchangedOwnerFacts,OWNER_FACT_WRITE_PATH} from './pxe-owner-fact-writes.mjs';
 import {reusePrivateLogEffects} from './pxe-log-projection.mjs';
 import {inspectOwnerDiscovery,OWNER_DISCOVERY_PINS} from './patch-pxe-owner-discovery.mjs';
 import {parallelPxeAnchorSnapshot} from './pxe-sync-snapshot.mjs';
@@ -114,6 +115,7 @@ const browserLazyAssets = {
     builder.onLoad({filter:/shared[\\/]sdk-entry\.mjs$/},async({path:filename})=>({contents:browserSdkEntry(await fs.readFile(filename,'utf8')),loader:'js'}));
     builder.onLoad({filter: /\.js$/}, async args => {
       const relative=path.relative(root,args.path).split(path.sep).join('/'),nativeContract=nativeContractAssets.get(relative);
+      if(relative===OWNER_FACT_WRITE_PATH){const source=await fs.readFile(args.path,'utf8');return {contents:assertTransformBindings(source,skipUnchangedOwnerFacts(source),relative),loader:'js'};}
       if(relative==='node_modules/@aztec-labs/accounts/dest/schnorr/index.js')return {contents:browserSchnorrEntry(await fs.readFile(args.path,'utf8')),loader:'js'};
       if(nativeContract){const source=await fs.readFile(args.path,'utf8');return {contents:assertTransformBindings(source,relocateNativeContract(source,nativeContract),relative),loader:'js'};}
 
@@ -174,7 +176,7 @@ for (const [src, dest] of assets) {
   if(record){const bytes=await fs.readFile(path.join(root,src));verifyNativeWasmCopy(bytes,record);await fs.writeFile(path.join(out,dest),bytes);}
   else await fs.copyFile(path.join(root,src),path.join(out,dest));
 }
-const inputs = [...new Set(['scripts/native-contract-assets.mjs',...nativeContractAssets.keys(),...[...nativeContractAssets.values()].map(value=>value.input),'scripts/native-wasm-assets.mjs',...nativeWasmAssets.keys(),'scripts/pxe-startup.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS),'shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
+const inputs = [...new Set(['scripts/native-contract-assets.mjs',...nativeContractAssets.keys(),...[...nativeContractAssets.values()].map(value=>value.input),'scripts/native-wasm-assets.mjs',...nativeWasmAssets.keys(),'scripts/pxe-startup.mjs','shared/pxe-startup-cache.mjs','shared/trusted-node-snapshot.mjs',...Object.keys(PXE_STARTUP_PINS),'shared/bb-worker-timings.mjs','scripts/bb-worker-timings.mjs',...Object.keys(BB_WORKER_TIMING_PINS),'scripts/selected-note-witnesses.mjs',...Object.keys(SELECTED_NOTE_PINS),'scripts/kernel-witness-work.mjs',...Object.keys(KERNEL_WORK_PINS),'scripts/pxe-owner-fact-writes.mjs','scripts/pxe-log-projection.mjs','node_modules/@aztec-labs/pxe/dest/node/caching_aztec_node.js','scripts/patch-pxe-owner-discovery.mjs',...OWNER_DISCOVERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path),...Object.keys(main.metafile.inputs), ...Object.keys(browser.metafile.inputs), ...Object.keys(workers.metafile.inputs), ...lazyInputs,
   ...assets.map(([src]) => src), 'scripts/pxe-simulation-logs.mjs', 'scripts/pxe-sync-snapshot.mjs', 'scripts/pxe-validated-prove.mjs', 'scripts/check-transform-bindings.mjs', 'shared/owner-envelope.mjs', 'shared/ordinary-post-fees.mjs', 'shared/like-fees.mjs', 'shared/ordinary-post-witnesses.mjs','scripts/rpc-zero-window.mjs', 'scripts/patch-indexeddb-atomicity.mjs',
   ...INDEXEDDB_ATOMICITY_PINS.map(pin=>'node_modules/@aztec-labs/kv-store/'+pin.path), 'scripts/toolchain.mjs', 'toolchain.json', 'scripts/patch-private-event-query.mjs',
   ...PRIVATE_EVENT_QUERY_PINS.map(pin=>'node_modules/@aztec-labs/pxe/'+pin.path), 'scripts/patch-pxe-reorg-anchor.mjs',

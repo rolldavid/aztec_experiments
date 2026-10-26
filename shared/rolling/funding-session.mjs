@@ -93,21 +93,20 @@ export async function fundingUsdEstimate({ethers,provider,chainId,wei}){
 
 // Native account state determines whether signup pricing is needed. A returning
 // account never prepares or waits for a signup payment that it will not use.
-export async function prepareRollingFundingOpening({asset,readStatus,readAllocation,readRate,prepareQuote,constructQuote,installQuote,guard}){
+export async function prepareRollingFundingOpening({asset,readStatus,readAllocation,readRate,prepareQuote,guard}){
    await guard();if(!['ETH','USDC'].includes(asset))throw fail('ROLLING_FUNDING_INVALID');
    const status=await readStatus();await guard();
    if(status?.intent||!['fee-needed','collateral-pending'].includes(status?.status)||!Array.isArray(status.depositIds)||status.depositIds.length!==0)return {status};
-   const overlap=asset==='ETH'&&typeof constructQuote==='function'&&typeof installQuote==='function';
    const reads=await Promise.allSettled([
-    async()=>{const allocation=await readAllocation();return overlap?{allocation,token:await constructQuote(allocation)}:allocation;},
+    readAllocation,
     readRate,
    ].map(read=>Promise.resolve().then(read)));
    await guard();
    try{
     for(const result of reads)if(result.status==='rejected')throw result.reason;
-    let quote;
-    if(overlap){const {allocation,token}=reads[0].value;quote=token===null?await prepareQuote(allocation):await installQuote(token);}
-    else quote=await prepareQuote(reads[0].value);
+    // Drain display-only work before preparing: the existing quote validity
+    // fence remains after every earlier await, with no handoff revalidation.
+    const quote=await prepareQuote(reads[0].value);
     await guard();
     return {status,quote:asset==='USDC'?quote:Object.freeze({...quote,usdEstimate:usdAmount(reads[1].value,quote.breakdown.maximumTotalWei)})};
    }catch(quoteError){await guard();return {status,quoteError};}
@@ -233,9 +232,7 @@ export async function createRollingFundingSession({sdk,ethers,config,account,dep
   return prepareRollingFundingOpening({asset,readStatus,guard,
    readAllocation:()=>timeFundingPreparation(onProgress,'allocation',()=>starterFundingAllocation({asset,minDeposit:deployment.economics.minDeposit,privateFeeCap:defaultPrivateFeeCap,provider:fundingProvider})),
    readRate:()=>asset==='USDC'?null:fundingUsdRate({ethers,provider:fundingProvider,chainId:network.chainId}),
-   prepareQuote:allocation=>aggregate.prepare(allocation),
-   constructQuote:allocation=>aggregate.prepareReadOnly(allocation),
-   installQuote:token=>aggregate.installPreparedQuote(token)});
+   prepareQuote:allocation=>aggregate.prepare(allocation)});
  }
  return Object.freeze({aggregate,node,defaultPrivateFeeCap,usdcAvailable:scope.usdcRelayAddress!==undefined,assertContext,
   async registrationDeployment(options){await guard();const result=await readRollingDeploymentRegistration(deploymentPreparation,options);await guard();return result;},

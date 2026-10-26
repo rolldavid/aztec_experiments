@@ -7,6 +7,8 @@ import {pathToFileURL} from 'node:url';
 import {registerHooks} from 'node:module';
 import {createHash} from 'node:crypto';
 import {OWNER_DISCOVERY_PINS,transformOwnerDiscovery,inspectOwnerDiscovery,patchOwnerDiscovery} from './patch-pxe-owner-discovery.mjs';
+import {skipUnchangedOwnerFacts,OWNER_FACT_WRITE_PATH} from './pxe-owner-fact-writes.mjs';
+import {assertTransformBindings} from './check-transform-bindings.mjs';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const nativeRoot=await realpath(new URL('../node_modules/@aztec-labs/pxe',import.meta.url));
 const originals=new Map(await Promise.all(OWNER_DISCOVERY_PINS.map(async p=>[p.path,await readFile(new URL('./testing/fixtures/pxe-owner-discovery-6.0.0/'+p.path,import.meta.url),'utf8')])));
@@ -44,7 +46,9 @@ test('symlink target and changed source reject before mutation',async t=>{
 });
 // Execute the actual installed native classes through the same exact source
 // transform, without changing the shared developer dependency tree.
-const hook=registerHooks({load(url,context,next){const result=next(url,context);const pin=OWNER_DISCOVERY_PINS.find(p=>url===pathToFileURL(join(nativeRoot,p.path)).href);return pin?{...result,source:sha(String(result.source))===pin.after?String(result.source):transformOwnerDiscovery(String(result.source),pin.path)}:result;}});
+const hook=registerHooks({load(url,context,next){const result=next(url,context);const pin=OWNER_DISCOVERY_PINS.find(p=>url===pathToFileURL(join(nativeRoot,p.path)).href);if(!pin)return result;
+ const source=sha(String(result.source))===pin.after?String(result.source):transformOwnerDiscovery(String(result.source),pin.path);
+ return {...result,source:pin.path.endsWith('/utility_execution_oracle.js')?assertTransformBindings(source,skipUnchangedOwnerFacts(source),OWNER_FACT_WRITE_PATH):source};}});
 const {LogService}=await import(pathToFileURL(join(nativeRoot,'dest/logs/log_service.js')));
 const {UtilityExecutionOracle}=await import(pathToFileURL(join(nativeRoot,'dest/contract_function_simulator/oracle/utility_execution_oracle.js')));
 const {buildACIRCallback}=await import(pathToFileURL(join(nativeRoot,'dest/contract_function_simulator/oracle/acir_callback.js')));
@@ -111,6 +115,8 @@ async function progressFixture(t){
  t.after(()=>db.close());
  const facts=new FactStore(db),tagging=new RecipientTaggingStore(db),writes=new StagedWriteCoordinator({kvStore:db,stagedStores:[facts,tagging]});
  f.args.factService=new FactService(facts,[f.owner]);f.args.recipientTaggingStore=tagging;
+ const factWrites={deletes:0,records:0};
+ for(const [method,counter] of [['deleteFactCollection','deletes'],['recordFact','records']]){const original=f.args.factService[method].bind(f.args.factService);f.args.factService[method]=(...args)=>{factWrites[counter]++;return original(...args);};}
  const state={logs:[],anchor:10,finalized:0,query:undefined,failValidation:false,stored:0};
  f.args.anchorBlockHeader={getBlockNumber:()=>state.anchor,toBlockParameter:async()=>({number:state.anchor,hash:new Fr(state.anchor)}),globalVariables:{timestamp:1000n}};
  f.args.l2TipsStore={getL2Tips:async()=>({finalized:{block:{number:state.finalized}}})};
@@ -128,7 +134,7 @@ async function progressFixture(t){
   commit:()=>writes.commit(changeSetId),abort:()=>writes.abort(changeSetId)};
  };
  const sync=async()=>{const op=start();try{const result=await op.fetch();await op.finish();await op.commit();return result;}catch(e){op.abort();throw e;}};
- return {...f,db,facts,writes,state,start,sync};
+ return {...f,db,facts,writes,factWrites,state,start,sync};
 }
 test('owner progress skips exact committed logs, accepts late same-index arrivals and bounds retained identities',async t=>{
  const f=await progressFixture(t);f.state.logs=[testLog(8),testLog(9)];assert.equal((await f.sync()).length,2);
@@ -181,4 +187,36 @@ test('owner progress does not mistake copied or changed ciphertext for an alread
  f.state.logs=[{...log,logData:[...log.logData,new Fr(99)]},{...log,txHash:new TxHash(new Fr(999))},{...log,noteHashes:[new Fr(33)]}];
  assert.equal((await f.sync()).length,3);
  const fresh=await progressFixture(t);fresh.state.logs=[log];assert.equal((await fresh.sync()).length,1,'empty native store restores without progress metadata');
+});
+
+test('identical native owner facts stage no delete or record writes, including empty collection',async t=>{
+ const f=await progressFixture(t);await f.sync();assert.deepEqual(f.factWrites,{deletes:0,records:0});
+ f.state.logs=[testLog(8),testLog(9)];await f.sync();assert.deepEqual(f.factWrites,{deletes:1,records:2});
+ f.state.anchor=11;f.state.logs.reverse();await f.sync();assert.deepEqual(f.factWrites,{deletes:1,records:2},'order does not change fact set');
+ f.state.logs=[testLog(9)];await f.sync();assert.deepEqual(f.factWrites,{deletes:2,records:3},'window shrink must prune');
+ f.state.logs=[];await f.sync();assert.deepEqual(f.factWrites,{deletes:3,records:3},'empty window removes old records');
+ await f.sync();assert.deepEqual(f.factWrites,{deletes:3,records:3});
+});
+for(const change of ['origin-number','origin-hash','payload','type','missing-origin'])test('native changed '+change+' is replaced before progress commit',async t=>{
+ const f=await progressFixture(t);f.state.logs=[testLog(8)];await f.sync();
+ const op=f.start();await op.fetch();const progress=[...op.oracle.ownerDiscoveryProgress.values()][0],record=[...progress.records.values()][0];
+ // Write through the real native staged store after discovery, as another
+ // operation contributor could. The final comparison must read this staged view.
+ await f.facts.deleteFactCollection(progress.key,op.changeSetId);
+ const origin=change==='missing-origin'?undefined:{...record.origin,...(change==='origin-number'?{blockNumber:7}:change==='origin-hash'?{blockHash:new Fr(777)}:{})};
+ await f.facts.recordFact(progress.key,change==='type'?new Fr(777):progress.type,[change==='payload'?new Fr(778):record.digest],origin,op.changeSetId);
+ const before={...f.factWrites};await op.finish();assert.deepEqual(f.factWrites,{deletes:before.deletes+1,records:before.records+1});await op.commit();
+ const next=f.start();await next.fetch();const actual=await f.facts.getFactCollection(progress.key,next.changeSetId);assert.equal(actual.facts.length,1);
+ assert(actual.facts[0].payload[0].equals(record.digest));assert(actual.facts[0].factTypeId.equals(progress.type));
+ assert.equal(actual.facts[0].originBlock.blockNumber,8);assert(actual.facts[0].originBlock.blockHash.equals(record.origin.blockHash));next.abort();
+ const saved={...f.factWrites};await f.sync();assert.deepEqual(f.factWrites,saved);
+});
+
+test('browser fact-write projection accepts only exact installed source and leaves it untouched',()=>{
+ const pin=OWNER_DISCOVERY_PINS.find(pin=>pin.path.endsWith('/utility_execution_oracle.js'));
+ const installed=transformOwnerDiscovery(originals.get(pin.path),pin.path),before=sha(installed);
+ assert.notEqual(sha(skipUnchangedOwnerFacts(installed)),before);assert.equal(before,pin.after);
+ assert.throws(()=>skipUnchangedOwnerFacts(installed+'\n'),/OWNER_FACT_WRITE_SOURCE/);
+ assert.throws(()=>skipUnchangedOwnerFacts(originals.get(pin.path)),/OWNER_FACT_WRITE_SOURCE/);
+ assert.throws(()=>skipUnchangedOwnerFacts(skipUnchangedOwnerFacts(installed)),/OWNER_FACT_WRITE_SOURCE/);
 });
