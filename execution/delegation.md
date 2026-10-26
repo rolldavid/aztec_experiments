@@ -1,3 +1,7 @@
+# Pause and functional verification —26 October2026
+
+Performance goal paused by owner. Root owns cleanup, functional verification and minimal Bok repair. bok_failure_review completed independent source and deployment review; all agents are complete. Bok repair is live and its reply checkpointed.
+
 # Resumed implementation —26 October2026
 
 - Root: integrate/publish Bok immutable prefetch and native postcommit poll removal;751 integrated checks and real browser-script build pass. Browser control currently reports disabled; no new browser timing claimed.

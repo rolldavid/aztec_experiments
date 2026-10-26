@@ -6,7 +6,7 @@ Objective state: **running**. Completed packages: 29/59.
 
 ## In progress
 
-- **Same-owner signup restart and stuck-deposit refund (G21)** — c993 UI live/pushed. Actual funded warm2.166935s; Like11.420380s (19.20% vs14.134775s), bio16.215390s, name24.028s. Fresh signup unfunded testETH prerequisite remains. Like/Unlike snapshot ancestry integrated and reviewed; affected563 checks pass after status-fixture updates and pinned-artifact selection. Pending publication and real measurement. Goals open.
+- **Same-owner signup restart and stuck-deposit refund (G21)** — 26 October: owner PAUSED performance goal. Cleanup and functional verification found missing native PXE synchronization in Bok direct proof path. Fix be6f9f72 reviewed, 81 checks passed, pushed/published; real pending Bok reply now rendered and unused budget returned. Ordinary post and bookmarks verified. Fresh signup/funding not rerun: owned test wallet has less than required 0.001 Sepolia ETH. Do not resume optimization without owner instruction.
 
 ## Ready internal work
 

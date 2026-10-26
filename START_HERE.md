@@ -4,7 +4,9 @@ Current handover: 26 October 2026. The owner's current request takes precedence 
 
 ## Live work and next action
 
-Latest26October: UI c9930368858f06622dfc2d13305b82662862b76e is live/pushed, prover remains636. Status now reads native FPC balance without preparing payments; checks/discovery preserved.765 affected tests and builds passed with independent review. Actual funded warm opening2.166935s; Like click-to-included-visible-count11.420380s (19.20% faster than14.134775s comparable baseline);58-byte bio Save-to-included-editor-close16.215390s. Prior636Unlike10.530325s has no goal-start baseline. Goals remain open. Browser works. Fresh signup needs testETH: owned wallet0.000313693859922125ETH, relay0.000249975721127208ETH; keep relay operating reserve. UI baseline `/private/tmp/ui-c9930368858f/next-baseline.json` SHAabf908f15a532b9de64865a18187e53459e8a4cd05de6b6053f8d8fa859af662.
+**Owner paused the performance goal on26October2026. Do not resume optimization automatically.** Cleanup and functional verification completed on UI99dcfe60fec9. Bok repairbe6f9f72 is pushed/live: its direct proof path now performs the native sync normally owned by EmbeddedWallet.sendTx.81 focused checks and independent review passed. Real ordinary post, Like/Unlike, bookmarks, profile/name changes and real Bok request/reply have current-session evidence. Bok reply rendered and unused budget returned; service ready, active0, no last failure. Fresh signup/funding were not repeated because the owned test wallet has0.000313693859922125ETH, below the0.001ETH collateral plus fees. Do not call funded reopening fresh signup. See [cleanup and functional report](docs/FUNCTIONAL_CHECK_20261026.md).
+
+UI baseline `/private/tmp/ui-99dcfe60fec9/next-baseline.json` SHA511a428c071d888b5a0bb87b421499cf34c811dd5b1381d5b2013e67040fc32e. Latest99 Like10.657020s (24.60% below comparable14.134775s baseline), Unlike11.604790s (no goal-start baseline). c993 funded warm opening2.166935s;58-byte bio16.215390s; name24.028000s. Targets remain unachieved and paused.
 
 
 26October measurement update: browser access is restored without changing settings. On live e291, funded warm reopen measured2.255125s and1.914850s; name creation20.912730s;58-byte bio18.548505s; repeated like visible-count14.691035s. No application edits were made for these measurements. The fresh signup2s and all-flow50% targets remain open. Saved traces are under execution/evidence/G21/stable6/other-transaction-latency/*e291*.json. The historical browser-blocked notes below are superseded by this update.
@@ -15,7 +17,7 @@ Bok runs the three-file `bff92b32` operator overlay with the existing bbf76 nati
 
 Both operator publishers retain the existing dependencies, credentials, security settings and attestor/control bytes. Failed drains restore normal restart policy without force-killing or duplicating work. The reviewed implementation and20 failure subcases are in `deploy/updates/20261026-operator/`. Other app/node/query/prover/proxy services were unchanged. Temporary transfer versions, archives and completed source-only agent drafts are removed; keep one retained build at `/private/tmp/rolling-browser-proof-spans-build`.
 
-**Next:** Continue measured current-release flows and source-backed sync optimization. Like baseline14.134775s is the visible-result endpoint;56.933s is canonical action lifetime and is not comparable. Combined opening snapshot is a design only,225–365lines across6–8files; it would save at most321–327ms. Separately inspect Like plain PXE sync's repeated prewrite reads without removing native reorg/state consistency. Funded reopening cannot qualify fresh signup.
+**Next:** Await owner direction. Performance work is paused; no optimization agent remains active. Unintegrated drafts are not live.
 
 ## Performance targets and evidence
 
@@ -53,10 +55,10 @@ Network: Aztec stable6.0.0, rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`,
 
 | Component | Installed source |
 | --- | --- |
-| Browser UI | `/opt/rolling-ui/releases/e291136f04155604e8414e0da0f3d97275a8ff67` |
+| Browser UI | `/opt/rolling-ui/releases/99dcfe60fec9a26abf4a4b2ace34ac6382a165e6` |
 | Running application | `/opt/rolling-app/releases/bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
-| Prover | `/opt/board-prover/releases/fresh-board-bbf76d92c0520f3e2192887b555b3a62d2fa4dcc` |
-| Bok | `/opt/rolling-bok/releases/operator-bff92b326bb112b08931cc4d750c805abecb2c52` |
+| Prover | `/opt/board-prover/releases/prover-gzip-636d0a581fe81108f09bfc04731e45c46ce35abf` |
+| Bok | `/opt/rolling-bok/releases/operator-be6f9f724e69faef3f64802ccbe4782fb7dce082` |
 | Moderator | `/opt/rolling-app/releases/operator-a0c2c10c199c3057b99da9b7941f54b2951f1cc1` |
 
 | Contract | Current address |
