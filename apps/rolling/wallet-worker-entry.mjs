@@ -190,7 +190,7 @@ async function invoke(method,args){
 // Never attach native exception contents to normal UI errors or stored telemetry.
 function temporaryActionDiagnostic(message,error){
  try{
-  if(settings?.profile!==true||message.method!=='application.executeAction')return;
+  if(settings?.profile!==true)return;
   const own=(value,key)=>Object.getOwnPropertyDescriptor(value??{},key)?.value;
   const text=value=>typeof value==='string'?value.slice(0,2048):undefined;
   const records=[];let current=error;
