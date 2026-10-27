@@ -16,6 +16,10 @@ A Draft 3 design-stage deliverable, intentionally disconnected from wallets and
 production services. It is not the delivered chain application. All fixtures and
 local actions are labelled in the interface; refresh resets local changes.
 
+For design review away from a checkout, [netlify-preview/](netlify-preview/README.md)
+deploys both the design preview and the connected app against a mock API and mock
+wallet runtime to https://rollingchat-preview.netlify.app.
+
 ## Run
 
 From a fresh repository checkout with Node installed (repository target Node 24):
